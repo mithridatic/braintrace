@@ -10,6 +10,7 @@ import brainunit as u
 import numpy as np
 
 from .h01 import ARCHIVE_SHA256
+from .h01_cell_types import donor_for_tags
 from .h01_connectivity import cell_sign
 from .h01_ei_cell import make_h01_ei_cell
 from .h01_spike_output import restrict_spike_output
@@ -135,10 +136,13 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
     basis = ("Source soma/axon/AIS samples extend halfway along adjacent edges; "
              "remaining cable gets dendrite properties. Myelin is not modeled. "
              "This is the existing inferred electrical partition, not measured channel placement.")
+    donors = {}
     for identity in identities:
         emit(f"Building electrical cell {identity}")
+        polarity = "E" if nodes[identity]["dale_sign"] == 1 else "I"
+        donors[identity] = donor_for_tags(annotations.metadata(identity).tags, polarity)
         cell, record = make_h01_ei_cell(imported[identity], annotations,
-            polarity="E" if nodes[identity]["dale_sign"] == 1 else "I",
+            polarity=polarity, donor=donors[identity],
             regions=_regions(imported[identity]), region_basis=basis,
             current_na=currents.get(identity, 0.), delay_ms=2., duration_ms=3.,
             max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
@@ -182,6 +186,6 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
                                    weight=edge["weight_us"]*u.uS, delay=delay_ms*u.ms)
     emit(f"Construction complete: {len(cells)} cells, {len(network.projections)} projections")
     return network, dict(nodes=deepcopy(topology["nodes"]), simulated_cell_ids=identities,
-        cells=records, contacts=edge_records, blocked_contacts=blocked, disconnected=disconnected,
+        cells=records, donors=donors, contacts=edge_records, blocked_contacts=blocked, disconnected=disconnected,
         qualification="Verified anatomical subset with assumed synapse dynamics and unqualified candidate cells.",
         topology_audit_sha256=topology.get("endpoint_audit_sha256"))

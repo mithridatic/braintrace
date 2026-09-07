@@ -21,6 +21,25 @@ def _time_average(times, values, start, stop):
     return float(np.trapezoid(np.interp(grid, times, values), grid)/(stop-start))
 
 
+SCALE_MECHANISMS = ("NaTg", "Kv3_1", "SK")
+SCALE_REGIONS = ("soma", "axon", "dend", "apic", "all")
+
+
+def _parse_scale(text):
+    """Parse ``MECHANISM:REGION:FACTOR`` (mirrors ``h01_l2_regional_density.parse_regional_density``)."""
+    parts = str(text).split(":")
+    if len(parts) != 3:
+        raise ValueError("Scale must be MECHANISM:REGION:FACTOR.")
+    if parts[0] not in SCALE_MECHANISMS:
+        raise ValueError("Scale mechanism must be one of "+", ".join(SCALE_MECHANISMS)+".")
+    if parts[1] not in SCALE_REGIONS:
+        raise ValueError("Scale region must be one of "+", ".join(SCALE_REGIONS)+".")
+    factor = float(parts[2])
+    if not np.isfinite(factor) or factor < 0:
+        raise ValueError("Scale factor must be nonnegative and finite.")
+    return {"mechanism": parts[0], "region": parts[1], "factor": factor}
+
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--current-na", type=float, required=True)
 parser.add_argument("--bias-na", type=float, default=0.)
@@ -40,6 +59,9 @@ parser.add_argument("--initial-mv", type=float, default=-80.)
 parser.add_argument("--scale-conductance", choices=("NaTg", "Kv3_1", "SK"))
 parser.add_argument("--conductance-factor", type=float, default=1.)
 parser.add_argument("--conductance-region", choices=("all", "soma", "axon"), default="all")
+parser.add_argument("--scale", action="append", default=[], metavar="MECH:REGION:FACTOR",
+                    help="repeatable regional density scale applied after the single --scale-conductance slot; "
+                         "mechanism NaTg, Kv3_1 or SK; region soma, axon, dend, apic or all")
 parser.add_argument("--cvode-atol", type=float)
 parser.add_argument("--passive", action="store_true")
 parser.add_argument("--nseg-factor", type=int, default=1)
@@ -93,6 +115,10 @@ if not np.isfinite(args.duration_ms) or args.duration_ms <= 0:
     parser.error("Duration must be positive and finite.")
 if args.cvode_atol is not None and (not np.isfinite(args.cvode_atol) or args.cvode_atol <= 0):
     parser.error("CVode absolute tolerance must be positive and finite.")
+try:
+    regional_scales = [_parse_scale(text) for text in args.scale]
+except ValueError as error:
+    parser.error(str(error))
 
 h.load_file("stdrun.hoc")
 h.load_file("import3d.hoc")
@@ -145,6 +171,17 @@ if args.scale_conductance is not None:
         if selected and args.scale_conductance in section.psection()["density_mechs"]:
             parameter = "gbar_"+args.scale_conductance
             setattr(section, parameter, getattr(section, parameter)*args.conductance_factor)
+for scale in regional_scales:
+    touched = 0
+    for section in cell.all:
+        family = section.name().split(".", 1)[1].split("[", 1)[0]
+        selected = scale["region"] == "all" or family == scale["region"]
+        if selected and scale["mechanism"] in section.psection()["density_mechs"]:
+            parameter = "gbar_"+scale["mechanism"]
+            setattr(section, parameter, getattr(section, parameter)*scale["factor"])
+            touched += 1
+    if not touched:
+        raise RuntimeError(f"Scale {scale} matched no section carrying the mechanism.")
 for section in cell.all:
     family = section.name().split(".", 1)[1].split("[", 1)[0]
     selected = (args.refine_region == "all" or family == args.refine_region
@@ -253,6 +290,7 @@ report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942
           "active_channels": not args.passive,
           "conductance_intervention": {"mechanism": args.scale_conductance, "factor": args.conductance_factor,
                                        "region": args.conductance_region},
+          "regional_scales": regional_scales,
           "nseg_factor": args.nseg_factor,
           "unselected_nseg_factor": args.unselected_nseg_factor,
           "refine_region": args.refine_region,

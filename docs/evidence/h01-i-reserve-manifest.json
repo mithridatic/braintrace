@@ -1,0 +1,100 @@
+{
+  "purpose": "SP4: the single reserve evaluation of the I cell, arm chosen by the stage-0 trough audit (h01_i_trough_audit.py on the retained e-kv3-close2 and r-source traces). Specification: docs/specs/2026-09-07-h01-i-reserve.md. Registered, not run; the user opens stage 1.",
+  "cap": 1,
+  "prior_evaluations": 0,
+  "max_concurrent": 1,
+  "abort_seconds": 900,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pv/kv3-phase-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "output_dir": "h01-i-reserve",
+  "inputs": {
+    "019": [
+      "--current-na",
+      "0.19",
+      "--duration-ms",
+      "1500"
+    ],
+    "027": [
+      "--current-na",
+      "0.27",
+      "--duration-ms",
+      "1500"
+    ]
+  },
+  "input_datum": "h01-pv-input-datum.json (forensics_2026_09_06: command current only, bias 0)",
+  "holdout": "0.23 nA (active-1.npz) is spent (h01-prediction-i.md) and is not an input. Noise1 sweep 48 stays sealed.",
+  "evaluation": "One parameter set at both spiking calibration inputs with every current probe on; scored with h01_usable_tier.py and h01_contract_score.py, both tiers per input, and re-audited with h01_i_trough_audit.py.",
+  "common_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "refine_region": "all",
+    "observe_spike_currents": true,
+    "observe_charge_balance": true
+  },
+  "finalist_flags": {
+    "sodium_h_tau_factor": 0.15,
+    "sodium_h_recovery_factor": 1.0,
+    "sodium_h_slope_mv": 5.0,
+    "somatic_kv3_tau_factor": 0.5,
+    "somatic_kv3_close_factor": 2.0,
+    "axon_calcium_decay_ms": 300.0,
+    "axon_calcium_gamma": 0.004,
+    "somatic_calva_factor": 0.5,
+    "scale_conductance": "NaTg",
+    "conductance_factor": 1.1,
+    "conductance_region": "soma"
+  },
+  "arms": {
+    "drive": "finalist flags plus scale [\"NaTg:axon:1.5\"] through the new repeatable slot; the somatic NaTg x1.1 stays in the old slot",
+    "recovery": "finalist flags with sodium_h_recovery_factor 0.5 (not chosen: finalist soma h at trough + 6 ms is 0.98 at both inputs)"
+  },
+  "stages": {
+    "0": {
+      "title": "Trough audit on the retained traces (no evaluation)",
+      "prediction": "Finalist soma NaTg h at trough + 6 ms is either >= 0.7 (availability is not the limit) or < 0.5 (recovery is the limit); the source refires within 6 ms at 0.27 nA and shows what sufficient availability looks like.",
+      "rejection": "No unflagged trough + 6 ms sample at one input: the rule cannot be applied and the reserve stays closed.",
+      "unchanged": "No model is run; the retained e-kv3-close2 and r-source traces are read only.",
+      "decision_file": "stage-0-decision.json"
+    },
+    "1": {
+      "title": "Reserve evaluation: post-trough axial drive (axonal NaTg x1.5, somatic NaTg x1.1 retained)",
+      "gate": "stage-0-decision.json",
+      "prediction": "0.27 nA: cycle 2 shortens from 16.4 to <= 12 ms, count 37 -> 40 to 43, cycle-1 width 0.221 +/- 0.006 ms unchanged, troughs of cycles 1-3 within 1 mV of -79.0/-79.3/-79.6 mV, peak <= +22 mV. 0.19 nA: cycle 2 shortens from 34.8 to <= 22 ms (beyond the 12.8 ms limit), count 14 -> 15 to 17, width 0.221 +/- 0.006 ms unchanged, troughs within 1 mV of -80.1/-80.5/-80.7 mV, peak <= +22 mV.",
+      "rejection": "Cycle 2 at 0.27 nA changes by less than the 12.8 ms decision limit, or the loop breaks: peak > +22 mV or cycle-1 width outside 20 percent of the human's (outside 0.214-0.320 ms at 0.27, 0.218-0.328 ms at 0.19). A rejection is FAIL at cap: the drive is not carried by axonal NaTg density on this geometry; the I cell stays experimental, borrowed, labelled.",
+      "unchanged": "Every finalist flag including the somatic NaTg x1.1 in the single slot, HL5BN1 geometry, kv3-phase-reference library, nseg x9, CVode 1e-10, 270-1270 ms pulse, bias 0, 1500 ms.",
+      "decision_file": "stage-1-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "g-natg-axon15",
+      "stage": "1",
+      "arm": "drive",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma",
+        "scale": [
+          "NaTg:axon:1.5"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    }
+  ]
+}

@@ -34,17 +34,18 @@ def render(report):
     lines = ["# H01 population: cell types and donor match", "",
              f"{s['cells']} cells from the released tags; **{s['matched']} have a donor matched in layer and class**",
              "(prediction: fewer than 40). Every interneuron's subtype is unknown in the tags; the parvalbumin",
-             "donor is assumed for all of them.", "", "## Donors", "", "| Polarity | Profile | Source | Layer | Class |",
-             "| --- | --- | --- | --- | --- |"]
-    lines += [f"| {k} | {d['profile']} | {d['source']} | {d['layer']} | {d['cell_class']} |" for k, d in DONORS.items()]
+             "donor is assumed for all of them.", "", "## Donors", "", "| Donor key | Polarity | Profile | Source | Layer | Class |",
+             "| --- | --- | --- | --- | --- | --- |"]
+    lines += [f"| {k} | {d['polarity']} | {d['profile']} | {d['source']} | {d['layer']} | {d['cell_class']} |"
+              for k, d in DONORS.items()]
     lines += ["", "## Match states", "", "| Match | Cells |", "| --- | --- |"]
     lines += [f"| {k} | {v} |" for k, v in s["by_match"].items()]
     lines += ["", "## Types", "", "| Layer | Class | Modifiers | Cells |", "| --- | --- | --- | --- |"]
     lines += [f"| {t['layer']} | {t['cell_class']} | {t['modifiers']} | {t['count']} |" for t in s["by_type"]]
-    lines += ["", "## Cells", "", "| Cell | Layer | Class | Modifiers | Polarity | Donor | Match |",
-              "| --- | --- | --- | --- | --- | --- | --- |"]
+    lines += ["", "## Cells", "", "| Cell | Layer | Class | Modifiers | Polarity | Donor key | Donor | Match |",
+              "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     lines += [f"| {r['cell_id']} | {r['layer']} | {r['cell_class']} | {', '.join(r['modifiers'])} | {r['polarity']} | "
-              f"{r['donor']} | {r['match']} |" for r in report["rows"]]
+              f"{r['donor_key']} | {r['donor']} | {r['match']} |" for r in report["rows"]]
     return "\n".join(lines) + "\n"
 
 

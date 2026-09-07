@@ -522,6 +522,43 @@ cyclical and temporal families and point at a slow state the model lacks.
 | P | Holdout 0.23 nA | Claimed rows pass; predicted failures occur | [prediction](evidence/h01-prediction-i.md) |
 
 
+### Y3 trough audit (2026-09-07, SP4 stage 0; narrows the open post-trough row, does not close it)
+
+**Observed.** On the retained finalist traces (`e-kv3-close2`, command-only input,
+x9 mesh, CVode 1e-10; [audit JSON](evidence/h01-i-trough-audit.json),
+[decision](evidence/h01-i-reserve/stage-0-decision.json)) the somatic NaTg
+inactivation gate has recovered by the time the human refires: soma h at the
+trough is 0.88 to 0.90 (0.19 nA) and 0.82 to 0.85 (0.27 nA); at trough + 6 ms it
+is 0.986 to 0.988 and 0.976 to 0.982 (medians 0.988 and 0.983, both above the
+pre-registered 0.7); at trough + 10 ms 0.977 to 0.982 and 0.944 to 0.969. Somatic
+Kv3 m has fallen to 0.001 by trough + 6 ms. The soma sits at -77 to -75 mV
+(0.19 nA) and -74.3 to -70 mV (0.27 nA) 6 to 10 ms after the trough, 15 to 20 mV
+below the -60.5 mV threshold, and the recorded axon midpoint is 0.7 to 1.5 mV
+*below* the soma throughout the trough and its recovery (e.g. -80.5 against -79.0
+at the 0.27 nA cycle-1 trough). The axial current into the soma from its
+neighbours is outward at every trough sample: -0.16 nA (0.19 nA) and -0.23 to
+-0.26 nA (0.27 nA). The source (published fit) at the same cycles has soma h 0.49
+to 0.62 at the trough and 0.86 to 0.95 at trough + 6 ms, refiring within 5.8 ms
+at 0.27 nA; its axon also sits 3 to 8 mV below its soma.
+
+**Reading.** Sodium availability at the soma is not what limits the finalist's
+refiring: the gate is 98 % available within 6 ms, above the level at which the
+source refires. What is absent after the trough is an inward drive: no compartment
+adjacent to the soma is depolarised relative to it, and the axon probe is more
+hyperpolarised than the soma. Y3's open post-trough row is therefore narrowed
+from "drive or recovery/availability" to drive on the existing axon-first
+initiation pathway; the reserve evaluation registered in
+`evidence/h01-i-reserve-manifest.json` (axonal NaTg x1.5 with the somatic x1.1
+retained, cap 1, not yet run) tests whether axonal sodium density supplies it.
+Nothing here closes the row: the audit is a reading of state, not an intervention,
+and the drive's boundary is still unidentified.
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| A | Soma NaTg h at trough, +6, +10 ms, finalist vs source, both inputs | 0.98 at +6 ms in the finalist (rule: >= 0.7); source 0.86 to 0.95 | [audit](evidence/h01-i-trough-audit.md) |
+| A | Axial current into the soma and axon-soma difference after the trough | Outward -0.16 / -0.23 nA; axon 0.7 to 1.5 mV below the soma | same |
+
+
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
@@ -804,6 +841,39 @@ form (plateau, not a local maximum), the 0.65 arm's trough (block), the B0 count
 **Not explained.** The last 10 to 20 ms of late cycle, the rise excess over 351 V/s
 (dendritic load), the width (1.01 against 0.91 ms), the resting potential (−84 against
 −72). Sweep 55 was not opened; the cap closed first.
+
+### Y4 registered predictions for the gain split (SP3, registered 2026-09-07, no observation yet)
+
+No run has been made; this block records what was predicted so that a miss can later be
+scored against the prediction. Spec: [gain split](specs/2026-09-07-h01-e-gain-split.md);
+manifest `docs/evidence/h01-e-gain-manifest.json` (cap 4, `prior_evaluations 0`).
+
+**Matryoshka reading (from retained tables, no run).** The frozen B3 profile's counts
+5/8, 10/10, 13/12 (human/model at 250/310/350 pA) give a human f-I slope of 0.083
+spikes/pA between 250 and 310 pA against a model slope of 0.033 (0.075 vs 0.050 between
+310 and 350; 0.087 vs 0.039 Hz/pA in mean-full-cycle rate). Late cycles are uniform within
+each input (model 184-157 ms at 250 pA, 121-116 ms at 310 pA), so the error is a gain error
+repeating across cycles, not an adaptation error; SK doses translate the curve and cannot
+rotate it. Rest -84 vs literature -72 mV is parked because the donor's own pre-pulse
+samples match the model within 1 mV. Controlling property named: a current present
+between spikes at low input and absent at high input, distributed Ih or the linear leak.
+
+**Registered predictions.**
+
+| Stage | Arm | Prediction | Rejection |
+| --- | --- | --- | --- |
+| 0 | `g0-b3` (B3 at sweeps 43, 50, 53, 56) | sweep-43 onset and late-return rows within 1 mV; sweep-56 count 1 (five human repeats, range 0, exact) and first-spike latency within the repeat limit; 250/310 reproduce 8 and 10 spikes | sweep 43 fails 1 mV: B3's Stage B levers broke F5; G arms judged on the change of the 43 rows |
+| G | `g1-ih-half` (`ih_density_factor 37.5`) | 250 pA count 5-7, late cycles >= 200 ms; 310 pA count 9-10, rate within 1.5 Hz; baseline -1 to -3 mV; sweep-43 return moves <= 1 mV; 200 pA count 1 | 310 count < 9, or 250 count still >= 8 |
+| G | `g2-leak-150` (`leak_factor 1.5`, reversal unchanged) | both counts fall, 250 pA proportionally more (250 <= 6, 310 >= 8); 200 pA count 0-1 | 250 and 310 fall by the same spike count (pure shift) |
+| G3 | reserve dose of the better arm (dose written into `stage-g-decision.json` first) | 250 count 5 +/- 1, 310 rate within 1.5 Hz, sweep 43 within 1 mV, 200 count 1 | as the chosen arm |
+
+**Status.** Y4 stays open. Sweep 54 (330 pA) is sealed as the new E holdout
+(`h01-prediction-e3.json` must exist before export; its Allen count metadata, 12 spikes, was
+visible). PASS at cap promotes nothing without the SP2 transfer gate; FAIL at cap names the
+reassessment (gain set outside the passive family: human slow Na inactivation or Kv7/M
+kinetics absent from the Allen genome, or a second human L2/3 donor with a recorded f-I
+curve). The observation entry replaces this block when `stage-g0-decision.json` and
+`stage-g-decision.json` land, in the same commit.
 
 ### Y5 under the population edge list
 

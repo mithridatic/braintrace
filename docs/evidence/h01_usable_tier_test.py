@@ -124,7 +124,7 @@ def test_render_lists_counts_verdicts_and_tables():
 
 def test_main_writes_both_files(monkeypatch, tmp_path):
     monkeypatch.setattr(tier, "EVIDENCE", tmp_path)
-    monkeypatch.setattr(tier, "score_cell", lambda cell, spec: {"cell": cell, "model": "m", "counts": {},
+    monkeypatch.setattr(tier, "score_cell", lambda cell, spec, root=None: {"cell": cell, "model": "m", "counts": {},
                                                                  "repeats": [], "rows": [], "tables": {}})
     tier.main(["--cell", "I"])
     assert (tmp_path/"h01-usable-tier-i.json").exists() and (tmp_path/"h01-usable-tier-i.md").exists()
@@ -157,3 +157,106 @@ def test_score_cell_keeps_input_counts_and_reads_real_repeat_files(tmp_path, mon
     assert len(widths) == 6
     assert all(r["limit"] == pytest.approx(.2*r["human"]) for r in widths)
     assert "| b | 3 | 4 | FAIL |" in tier.render(report)
+
+
+def test_rate_limit_is_unavailable_without_human_spikes():
+    """A subthreshold input (sweep 43) must not pass the rate row on 0 == 0."""
+    view = {"rate_hz": 0., "adaptation_ratio": None, "width_ms": [], "ahp_mv": []}
+    limits = tier.usable_limits(view, [])
+    assert limits["rate_hz"]["limit"] is None
+    rows = tier.compare("110 pA", view, view, limits)
+    assert [r["verdict"] for r in rows] == ["unavailable", "unavailable"]
+
+
+def test_qc_view_reports_first_spike_latency_from_the_pulse_start():
+    table = tier.cycle_table(*synthetic([50., 60.]), (40., 200.), "x")
+    assert "peak_ms" in table[0]
+    assert tier.qc_view(table, (40., 200.))["first_spike_ms"] == pytest.approx(10.4, abs=.1)
+    assert tier.qc_view([], (40., 200.))["first_spike_ms"] is None
+
+
+def test_repeat_rows_use_the_repeat_range_and_make_a_zero_range_exact():
+    repeats = [{"repeat_count": 1, "first_spike_ms": 10.}, {"repeat_count": 1, "first_spike_ms": 12.},
+               {"repeat_count": 1, "first_spike_ms": 11.}, {"repeat_count": 1, "first_spike_ms": 10.5},
+               {"repeat_count": 1, "first_spike_ms": 11.5}, {}]
+    human = {"count": 1, "first_spike_ms": 10.}
+    rows = tier.repeat_rows("200 pA", human, {"count": 1, "first_spike_ms": 12.5}, repeats)
+    assert [r["row"] for r in rows] == ["count", "first_spike_ms"]
+    assert rows[0]["limit"] == 0. and rows[0]["verdict"] == "pass" and rows[0]["contract"] == "pass"
+    assert rows[1]["limit"] == pytest.approx(2.*1.47)
+    assert rows[1]["verdict"] == "pass" and rows[1]["contract"] == "no contract row"
+    assert rows[1]["basis"].startswith("human repeat range x DLF over 6 repeats")
+    extra = tier.repeat_rows("200 pA", human, {"count": 2, "first_spike_ms": 14.}, repeats)
+    assert [r["verdict"] for r in extra] == ["fail", "fail"]
+    assert extra[0]["contract"] == "fail"
+    missing = tier.repeat_rows("200 pA", human, {"count": 0, "first_spike_ms": None}, repeats)
+    assert [r["verdict"] for r in missing] == ["fail", "unavailable"]
+    assert tier.repeat_rows("x", human, human, [{}])[0]["verdict"] == "unavailable"
+
+
+def test_parse_input_and_resolve_spec_fill_candidate_and_override_inputs():
+    assert tier.parse_input("200 pA=.cache/h.npz@h01-e-gain/g0-b3-sweep56") == (
+        "200 pA", (".cache/h.npz", "h01-e-gain/g0-b3-sweep56"))
+    for bad in ("200 pA", "200 pA=only-human", "=a@b", "x=@b", "x=a@"):
+        with pytest.raises(ValueError, match="LABEL=HUMAN_NPZ@MODEL_STEM"):
+            tier.parse_input(bad)
+    spec = tier.resolve_spec(tier.CELLS["E-gain"], "g1-ih-half")
+    assert spec["inputs"]["200 pA"] == (".cache/human-pyramidal-l2/sweep-56.npz", "h01-e-gain/g1-ih-half-sweep56")
+    assert spec["output"] == "h01-e-gain/g1-ih-half-usable" and "g1-ih-half" in spec["model"]
+    assert spec["repeat_inputs"] == {"200 pA": (56, 59, 60, 61, 62)}
+    assert set(spec["inputs"]) == {"110 pA", "200 pA", "250 pA", "310 pA"}
+    overridden = tier.resolve_spec(tier.CELLS["E"], inputs=["a=h.npz@m", "b=h2.npz@m2"])
+    assert overridden["inputs"] == {"a": ("h.npz", "m"), "b": ("h2.npz", "m2")}
+    assert "output" not in overridden and tier.CELLS["E"]["inputs"]["250 pA"][1].startswith("h01-e-energetic")
+
+
+def test_score_cell_adds_repeat_rows_for_a_repeat_input(tmp_path, monkeypatch):
+    import h5py
+
+    monkeypatch.setattr(tier, "EVIDENCE", tmp_path)
+    time, one = synthetic([50.])
+    _, two = synthetic([50., 90.])
+    _, flat = synthetic([])
+    np.savez(tmp_path/"h.npz", time_ms=time, corrected_voltage_mv=one)
+    np.savez(tmp_path/"m.npz", time_ms=time, voltage_mv=two)
+    np.savez(tmp_path/"h0.npz", time_ms=time, corrected_voltage_mv=flat)
+    np.savez(tmp_path/"m0.npz", time_ms=time, voltage_mv=flat)
+    with h5py.File(tmp_path/"repeats.nwb", "w") as nwb:
+        for sweep in (1, 2, 3):
+            group = nwb.create_group(f"acquisition/timeseries/Sweep_{sweep}")
+            group.create_dataset("data", data=(one+14.)/1000.)
+            group.create_dataset("starting_time", data=0.).attrs["rate"] = 50000.
+    spec = {"model": "fixture", "pulse_ms": (40., 200.), "repeats": ("repeats.nwb", (1, 2, 3), (40., 200.)),
+            "repeat_inputs": {"200 pA": (1, 2, 3)},
+            "inputs": {"200 pA": ("h.npz", "m"), "110 pA": ("h0.npz", "m0")}}
+    report = tier.score_cell("E-gain", spec, root=tmp_path)
+    assert report["repeats"][0]["repeat_count"] == 1
+    by_row = {(r["input"], r["row"]): r for r in report["rows"]}
+    assert by_row[("200 pA", "count")]["verdict"] == "fail" and by_row[("200 pA", "count")]["limit"] == 0.
+    assert by_row[("200 pA", "first_spike_ms")]["verdict"] == "pass"
+    assert by_row[("200 pA", "rate_hz")]["verdict"] == "unavailable"
+    assert by_row[("110 pA", "rate_hz")]["verdict"] == "unavailable"
+    assert ("110 pA", "count") not in by_row
+    assert report["counts"] == {"200 pA": {"human": 1, "model": 2}, "110 pA": {"human": 0, "model": 0}}
+    text = tier.render(report)
+    assert "| 200 pA | count |  | 1 | 2 | 0 |  | fail | fail |" in text
+
+
+def test_main_accepts_candidate_root_inputs_and_output(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake(cell, spec, root):
+        seen.update(cell=cell, spec=spec, root=root)
+        return {"cell": cell, "model": spec["model"], "counts": {}, "repeats": [], "rows": [], "tables": {}}
+    monkeypatch.setattr(tier, "EVIDENCE", tmp_path)
+    monkeypatch.setattr(tier, "score_cell", fake)
+    tier.main(["--cell", "E-gain", "--candidate", "g0-b3", "--root", str(tmp_path)])
+    assert (tmp_path/"h01-e-gain/g0-b3-usable.json").exists() and (tmp_path/"h01-e-gain/g0-b3-usable.md").exists()
+    assert seen["root"] == tmp_path and seen["spec"]["inputs"]["250 pA"][1] == "h01-e-gain/g0-b3-sweep50"
+    tier.main(["--cell", "E", "--inputs", "350 pA=.cache/x.npz@h01-e-usable/b3-sk035-ca-decay-sweep55",
+               "--output", "custom/stem"])
+    assert seen["spec"]["inputs"] == {"350 pA": (".cache/x.npz", "h01-e-usable/b3-sk035-ca-decay-sweep55")}
+    assert (tmp_path/"custom/stem.md").exists()
+    with pytest.raises(SystemExit) as error:
+        tier.main(["--cell", "E", "--inputs", "broken"])
+    assert error.value.code == 2
