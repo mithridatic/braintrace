@@ -11,8 +11,9 @@ import pytest
 
 from .h01_anatomy_test import imported
 from .h01_connectivity_test import annotations, edge, report
-from .h01_connectivity import select_connectivity
+from .h01_connectivity import select_connectivity, cell_sign
 from .h01_network import make_h01_network
+from .h01_cell_types import DEFAULT_DONOR_KEYS
 
 
 @pytest.fixture
@@ -44,6 +45,9 @@ def test_construct_and_run_with_source_signed_receptors(arguments, disconnected)
         assert messages[0].startswith("Loading cell")
         assert messages[-1].startswith("Construction complete: 3 cells")
         assert all(record["n_compartments"] > 0 for record in evidence["cells"].values())
+        assert evidence["donors"] == {identity: DEFAULT_DONOR_KEYS["E" if cell_sign(arguments["annotations"].metadata(identity).tags) == 1 else "I"]
+                                      for identity in evidence["simulated_cell_ids"]}
+        assert all(evidence["cells"][k]["donor"] == v for k, v in evidence["donors"].items())
         result = network.run(dt=.001*u.ms, duration=.003*u.ms)
         for traces in result.traces.values():
             assert np.isfinite(traces["voltage"].to_decimal(u.mV)).all()

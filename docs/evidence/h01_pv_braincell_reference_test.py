@@ -9,7 +9,7 @@ import pytest
 from braintrace.datasets import h01_pv_cell
 
 
-@pytest.mark.parametrize("mode", ["candidate", "source"])
+@pytest.mark.parametrize("mode", ["candidate", "source", "finalist"])
 def test_driver_records_selected_profile_and_requested_window(tmp_path, monkeypatch, mode):
     calls = {}
     def build(reference, current, **kwargs):

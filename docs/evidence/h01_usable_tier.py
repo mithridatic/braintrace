@@ -60,6 +60,17 @@ CELLS = {
         "model": "SP3 gain-split candidate {candidate} (docs/specs/2026-09-07-h01-e-gain-split.md)",
         "output": "h01-e-gain/{candidate}-usable",
     },
+    "SST-L3": {
+        "pulse_ms": (270., 1270.),
+        "inputs": {
+            "100 pA": (".cache/human-sst-l3/active-0.npz", "h01-sst-reproduction/{candidate}-100"),
+            "150 pA": (".cache/human-sst-l3/active-1.npz", "h01-sst-reproduction/{candidate}-150"),
+        },
+        "repeats": (".cache/human-sst-l3/571700399_ephys.nwb", (44, 45, 46, 47), (1020., 2020.)),
+        "repeat_inputs": {"100 pA": (44, 45, 46, 47)},
+        "model": "HL5MN1 published fit {candidate}, unmodified (docs/specs/2026-09-07-h01-donor-hl5mn1-import.md)",
+        "output": "h01-sst-reproduction/{candidate}-usable",
+    },
 }
 
 

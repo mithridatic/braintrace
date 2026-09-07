@@ -1,0 +1,51 @@
+{
+  "purpose": "SP6c/SP6d: NEURON reproduction of the published HL5MN1 (Yao 2022 HL23SST) fit at two recorded Allen long-square inputs of specimen 571700636, with a dt-halving pair for the decision limits. Specification: docs/specs/2026-09-07-h01-donor-hl5mn1-import.md. Registered before any run; stage 1 opens only after .worktrees/h01-network/docs/evidence/h01-network-throughput.json exists (SP1 owns the machine) and the user approves.",
+  "cap": 4,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 900,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-sst-l3/neuron-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "output_dir": "h01-sst-reproduction",
+  "compile_first": "docker run --rm -v <worktree>/.cache/human-sst-l3/neuron-reference:/work -w /work braintrace-h01-neuron:9.0.2 nrnivmodl mod  (byte-identical to the HL5BN1 mod files; compiled once, x86_64/ stays in the cache)",
+  "inputs": {
+    "100": ["--current-na", "0.100", "--duration-ms", "1500"],
+    "150": ["--current-na", "0.150", "--duration-ms", "1500"]
+  },
+  "input_datum": "h01-sst-acquisition.json exports: sweep 44 (100 pA, bias 43.28 pA held, not injected: command-only input as in the PV finding) and sweep 35 (150 pA, bias 52.72 pA held). Human counts 14 and 34; sweep-44 repeats 44-47 give 14, 14, 13, 12.",
+  "stages": {
+    "1": {
+      "title": "Published fit, unmodified, fixed step 0.025 ms, and its dt-halving repeat",
+      "prediction": "Counts equal the Allen sweeps exactly: 14 at 100 pA and 34 at 150 pA; first-spike latency within the dt-pair limit (|dt 0.025 - dt 0.0125| x 2.95) of 24.16 ms and 13.0 ms after step onset; every trace finite; axon-first initiation as in the HL5BN1 donor is not assumed and is only recorded.",
+      "rejection": "A count differing from the Allen sweep by more than 1 at either input (12-14 is the human repeat band at 100 pA, so a model outside it also fails the repeat row), or a dt pair whose count differs (numerics not converged: report 'time level open', no verdict).",
+      "unchanged": "NeuronTemplate.hoc, the eleven mod files, every value of biophys_HL5MN1.hoc, 34 C, initial -81.5 mV (the hoc e_pas), 270-1270 ms step, bias 0, 1500 ms, nseg factor 1 (the template's own segmentation), no CVode.",
+      "decision_file": "../h01-donors/stage-hl5mn1-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "source",
+      "stage": "1",
+      "flags": {
+        "biophys": "/work/source/biophys_HL5MN1.hoc",
+        "morphology": "/work/morphologies/HL5MN1.swc",
+        "initial_mv": -81.5,
+        "dt_ms": 0.025
+      },
+      "settings": {}
+    },
+    {
+      "name": "source-dt-half",
+      "stage": "1",
+      "flags": {
+        "biophys": "/work/source/biophys_HL5MN1.hoc",
+        "morphology": "/work/morphologies/HL5MN1.swc",
+        "initial_mv": -81.5,
+        "dt_ms": 0.0125
+      },
+      "settings": {}
+    }
+  ]
+}
