@@ -130,6 +130,78 @@
         "stop_ms": 2100.0,
         "record_soma_currents": false
       }
+    },
+    {
+      "name": "b-sk-half",
+      "stage": "B",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "regional_density": [
+          "SK:soma:0.5"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    },
+    {
+      "name": "b-ca-decay",
+      "stage": "B",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    },
+    {
+      "name": "b-leak-rev",
+      "stage": "B",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -2.0,
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
     }
   ]
 }
