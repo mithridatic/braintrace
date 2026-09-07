@@ -1,0 +1,175 @@
+{
+  "spec": "docs/specs/2026-09-07-h01-transfer-isolation.md",
+  "polarity": "I",
+  "purpose": "SP2 structural split: does the copied NEURON mesh carry the full 270-1270 ms PV train at 0.19 and 0.27 nA? Tooling only; every command is launched by hand as a detached job.",
+  "braincell_python": ".cache/validation/Scripts/python.exe",
+  "braincell_module": "docs.evidence.h01_pv_braincell_reference",
+  "braincell_profile_key": "candidate",
+  "profile_alignment_required": true,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pv/kv3-phase-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "output_dir": "h01-i-transfer",
+  "reference_dir": "h01-i-energetic",
+  "references": {
+    "019": "e-kv3-close2-019",
+    "027": "e-kv3-close2-027",
+    "023": "p-close2-023"
+  },
+  "mesh_source": "h01-i-energetic/e-kv3-close2-027.json",
+  "finalist_candidate_json": "h01-i-energetic/e-kv3-close2.candidate.json",
+  "dt_ms": 0.005,
+  "half_dt_ms": 0.0025,
+  "fallback_dt_ms": 0.000625,
+  "windows_ms": {
+    "full": [270.0, 1270.0],
+    "halving": [270.0, 329.5]
+  },
+  "gate": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "halving_fraction": 0.5,
+  "caps": {
+    "braincell": 8,
+    "neuron": 3
+  },
+  "cap_note": "The programme table says 2 NEURON runs (B1 at 0.19 and 0.27). The NEURON dt-halving partner at D/2 over 330 ms is a third NEURON run; the B1 0.27 run windowed to 270-329.5 ms is its dt-D partner. Approval needed for the third run, or drop it and read the NEURON gate validity from the existing 0.000625 pair.",
+  "order": [
+    "r-braincell-matched-027",
+    "r-braincell-matched-027-halfdt",
+    "r-neuron-fixed-027-halfdt",
+    "a0-maxcv-027",
+    "a1-matched-027",
+    "a1-matched-019",
+    "b1-fixed-027",
+    "b1-fixed-019",
+    "a1-matched-023"
+  ],
+  "prediction": "A1 passes every event at 0.19 and 0.27 nA against the CVode reference with max |rise error| <= 0.044 ms and equal counts; A0 fails on rise from event 7 as before; the 0.23 control behaves as 0.19/0.27.",
+  "rejection": "Any A1 event beyond its gate while the halving pair at the same mesh and dt is under half the gate on every event.",
+  "unchanged": "Morphology, conductance tables, gate laws, stimulus 270 ms on for 1000 ms, initial -80 mV, 34 C, reversals, Ra, cm, no alignment.",
+  "cost_anchors": {
+    "braincell_matched_330ms_dt0.000625_s": 556,
+    "braincell_matched_1500ms_dt0.000625_s_derived": 2500,
+    "braincell_matched_dt0.005": "unmeasured; r-braincell-matched-027 measures it first",
+    "neuron_fixed_330ms_dt0.000625_s": 72
+  },
+  "arms": [
+    {
+      "name": "r-braincell-matched-027",
+      "role": "halving pair, dt D",
+      "simulator": "braincell",
+      "mesh": "copied",
+      "current_na": 0.27,
+      "dt_ms": 0.005,
+      "duration_ms": 330.0,
+      "reference": "027",
+      "window": "halving"
+    },
+    {
+      "name": "r-braincell-matched-027-halfdt",
+      "role": "halving pair, dt D/2",
+      "simulator": "braincell",
+      "mesh": "copied",
+      "current_na": 0.27,
+      "dt_ms": 0.0025,
+      "duration_ms": 330.0,
+      "reference": "027",
+      "window": "halving",
+      "pair_of": "r-braincell-matched-027"
+    },
+    {
+      "name": "r-neuron-fixed-027-halfdt",
+      "role": "halving pair, dt D/2",
+      "simulator": "neuron",
+      "mesh": "x9",
+      "current_na": 0.27,
+      "dt_ms": 0.0025,
+      "duration_ms": 330.0,
+      "candidate_json": "b1-fixed.candidate.json",
+      "reference": "027",
+      "window": "halving",
+      "pair_of": "b1-fixed-027"
+    },
+    {
+      "name": "a0-maxcv-027",
+      "role": "A0 control: current MaxCVLen mesh",
+      "simulator": "braincell",
+      "mesh": "MaxCVLen",
+      "max_cv_um": 2.5,
+      "current_na": 0.27,
+      "dt_ms": 0.005,
+      "duration_ms": 1500.0,
+      "reference": "027",
+      "window": "full"
+    },
+    {
+      "name": "a1-matched-027",
+      "role": "A1",
+      "simulator": "braincell",
+      "mesh": "copied",
+      "current_na": 0.27,
+      "dt_ms": 0.005,
+      "duration_ms": 1500.0,
+      "reference": "027",
+      "window": "full"
+    },
+    {
+      "name": "a1-matched-019",
+      "role": "A1",
+      "simulator": "braincell",
+      "mesh": "copied",
+      "current_na": 0.19,
+      "dt_ms": 0.005,
+      "duration_ms": 1500.0,
+      "reference": "019",
+      "window": "full"
+    },
+    {
+      "name": "a1-matched-023",
+      "role": "A1 spent-holdout control",
+      "simulator": "braincell",
+      "mesh": "copied",
+      "current_na": 0.23,
+      "dt_ms": 0.005,
+      "duration_ms": 1500.0,
+      "reference": "023",
+      "window": "full"
+    },
+    {
+      "name": "b1-fixed-027",
+      "role": "B1",
+      "simulator": "neuron",
+      "mesh": "x9",
+      "current_na": 0.27,
+      "dt_ms": 0.005,
+      "duration_ms": 1500.0,
+      "candidate_json": "b1-fixed.candidate.json",
+      "reference": "027",
+      "window": "full"
+    },
+    {
+      "name": "b1-fixed-019",
+      "role": "B1",
+      "simulator": "neuron",
+      "mesh": "x9",
+      "current_na": 0.19,
+      "dt_ms": 0.005,
+      "duration_ms": 1500.0,
+      "candidate_json": "b1-fixed.candidate.json",
+      "reference": "019",
+      "window": "full"
+    }
+  ],
+  "decision_arms": {
+    "a1": ["a1-matched-019", "a1-matched-027"],
+    "b1": ["b1-fixed-019", "b1-fixed-027"],
+    "a0": ["a0-maxcv-027"],
+    "braincell_halving": ["r-braincell-matched-027", "r-braincell-matched-027-halfdt"],
+    "neuron_halving": ["b1-fixed-027", "r-neuron-fixed-027-halfdt"]
+  },
+  "qualification": "Numerical transfer only on donor anatomy; identifies no channel cause and no human waveform validity."
+}

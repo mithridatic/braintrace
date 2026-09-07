@@ -274,6 +274,31 @@ flowchart TD
 | A0 | Refine only the BrainCell axon to 0.25 um | All gates pass 8/8; not a controlled swap | [axon-only control](evidence/h01-i-axon025-transfer-audit.json) |
 | A1, B1 | 2x2 half-split: mesh x integration, everything else held equal | Decision "mesh": matched cells pass, MaxCVLen cells fail on rise; scheme swap within gate | [isolation split](evidence/h01-pv-transfer-isolation.md), [audit](evidence/h01-pv-transfer-isolation-audit.json) |
 
+### Y2 registered prediction for SP2 (2026-09-07, no new observation)
+
+Specification: [SP2 transfer isolation](specs/2026-09-07-h01-transfer-isolation.md);
+manifest `evidence/h01-transfer-i-manifest.json`. No run has been made; this entry
+registers the prediction before the first arm is launched.
+
+**Prediction.** With the NEURON x9 per-branch counts copied (`--mesh-from`), the
+BrainCell candidate passes every event of the full 270-1270 ms train at 0.19 and
+0.27 nA against the CVode finalist reference and against NEURON fixed step at the
+BrainCell dt: equal counts and every rise error within 0.1 ms (expected largest
+0.044 ms, the eight-event value). The MaxCVLen 2.5 um control fails on rise from
+event 7 as before. The 0.23 nA spent holdout behaves as the other two inputs.
+
+**Rejection.** Any A1 event beyond its gate while the dt-halving pair at the same
+mesh and dt is under half the gate on every event. If A1 fails at event k while the
+NEURON fixed-step arm passes, the difference is an implementation difference at
+event k and the next split is a channel-by-channel state comparison at that event;
+if both fail, the time level is open and Y2 is reassessed rather than closed.
+
+**Precondition found while preparing the arms.** The BrainCell I candidate profile
+carries the pre-finalist somatic Kv3 closing factor 0.5; the finalist NEURON
+reference carries 2.0. The scorer refuses to score until the registry re-key
+registers a finalist I profile, so no full-train verdict can be read through the
+present profile.
+
 ## Y3. The PV candidate's spike train differs from the human recording
 
 **Behavior.** Against the human recording, the candidate's first spike lasts
@@ -1062,6 +1087,8 @@ biological uncertainty.
   whether the electrical region map is correct.
 - Y2: transfer of the full 1270 ms train and the other inputs at the copied
   mesh; whether equal counts also equal compartment placement on every branch.
+  SP2 prediction registered 2026-09-07 (see the Y2 entry); untested until the
+  finalist I profile is registered.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
   of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
   train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one
