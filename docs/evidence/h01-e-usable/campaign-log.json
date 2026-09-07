@@ -94,5 +94,37 @@
       "--output",
       "/evidence/h01-e-usable/a-axon-na-soma09-sweep50"
     ]
+  },
+  {
+    "name": "b0-survivor",
+    "input": "sweep53",
+    "seconds": 660.7149890000001,
+    "returncode": 0,
+    "aborted": false,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "h01-e-usable-b0-survivor-sweep53",
+      "-v",
+      "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/.cache/human-pyramidal-l2:/work",
+      "-v",
+      "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/docs/evidence:/evidence",
+      "-w",
+      "/work/kv3-closing-source",
+      "braintrace-h01-neuron:9.0.2",
+      "python",
+      "/evidence/h01_l2_neuron_reference.py",
+      "--candidate-json",
+      "/evidence/h01-e-usable/b0-survivor.candidate.json",
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--output",
+      "/evidence/h01-e-usable/b0-survivor-sweep53"
+    ]
   }
 ]

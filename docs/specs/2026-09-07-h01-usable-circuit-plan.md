@@ -221,3 +221,8 @@ Appended per workstream as it closes.
   width pass, AHP within 1.7 mV (unresolvable at 2 mV), adaptation fails (10.9 against
   8.0). Stage B0 (separate manifest, evaluation 4 of 8) runs the survivor at 310 pA
   before any lever moves; prediction 8 to 10 spikes, late cycles 120 to 200 ms.
+- **W3 Stage B0 (661 s, evaluation 4).** The survivor at 310 pA fires 5 against the
+  human 10; prediction of 8 to 10 FAILED and the rejection clause is met. The first two
+  cycles match (38, 16 against 38, 12 ms); the late train runs at half the human's rate
+  (242 to 253 against 110 to 124 ms). Threshold, peak, trough held. Stage B runs its
+  three arms at 310 pA on the survivor (`h01-e-usable-b-manifest.json`).
