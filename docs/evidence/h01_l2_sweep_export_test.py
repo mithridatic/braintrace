@@ -46,7 +46,17 @@ def test_sealed_sweep_refuses_export_until_its_prediction_exists(cache, tmp_path
     monkeypatch.setattr(export, "EVIDENCE", evidence)
     assert sealed_reason(7) is None
     assert "sealed until h01-prediction-e2.json" in sealed_reason(55)
-    with pytest.raises(SystemExit, match="sealed"):
-        main(["--cache", str(cache), "--sweep", "55"])
+    assert "sealed until h01-prediction-e3.json" in sealed_reason(54)
+    for sweep in ("54", "55"):
+        with pytest.raises(SystemExit, match="sealed"):
+            main(["--cache", str(cache), "--sweep", sweep])
     (evidence/"h01-prediction-e2.json").write_text("{}")
     assert sealed_reason(55) is None
+    assert sealed_reason(54) is not None
+
+
+def test_sweep_56_is_calibration_and_the_driver_choices_cover_every_seal():
+    from docs.evidence.h01_l2_sweep_export import CALIBRATION, DRIVER_SWEEPS, SEALED
+    assert 56 in CALIBRATION and 56 not in SEALED
+    assert set(DRIVER_SWEEPS) == set(CALIBRATION) | set(SEALED)
+    assert sealed_reason(56) is None

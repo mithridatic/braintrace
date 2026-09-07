@@ -7,6 +7,10 @@
   "different_proofread_records": 0,
   "qualified_circuit_contacts": 0,
   "full_export_scanned": false,
+  "export_shards_listed": 166,
+  "export_shards_scanned": 9,
+  "export_scan_statement": "9 of 166 shards scanned (8,991,719 records); absence of a contact is not established",
+  "export_scan_coverage_source": "docs/evidence/h01-export-scan-coverage.json",
   "circuit_defaults_changed": true,
   "artifacts": [
     {

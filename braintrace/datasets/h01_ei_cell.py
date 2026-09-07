@@ -6,9 +6,13 @@ import braincell
 import brainunit as u
 from braincell.mech import Channel, Ion, StateProbe
 from . import h01_l2_channels, h01_pv_calcium
-from .h01_ei_profiles import get_ei_profile, channel_controls
+from .h01_cell_types import DEFAULT_DONOR_KEYS
+from .h01_ei_profiles import get_donor_profile, channel_controls
 from .h01_discretization import BoundaryAlignedCV
 from .h01_construction import H01Cell
+
+_ION_FREE_MECHANISMS = frozenset({"Ih"})
+_CALCIUM_MECHANISMS = frozenset({"SK", "Ca_HVA", "Ca_LVA"})
 
 
 def _validate_regions(morphology, regions, polarity):
@@ -37,7 +41,7 @@ def _validate_regions(morphology, regions, polarity):
 
 
 def _paint_profile(cell, profile, regions, *, active=True):
-    prefix = "H01L2" if profile.polarity == "E" else "H01PV"
+    prefix = profile.channel_prefix
     for family, cm, leak, channels, calcium in profile.regions:
         if family not in regions:
             continue
@@ -49,9 +53,15 @@ def _paint_profile(cell, profile, regions, *, active=True):
                                    E=profile.reversal_mv*u.mV))
         if not active:
             continue
+        mechanisms = {mechanism for mechanism, _ in channels}
+        if calcium is None and mechanisms & _CALCIUM_MECHANISMS:
+            raise ValueError(f"Region {family!r} lists a calcium mechanism without a calcium tuple.")
+        if calcium is not None or mechanisms-_ION_FREE_MECHANISMS:
+            # Ih is the one registered mechanism whose root type needs no ion; every other channel
+            # needs the fixed sodium/potassium ions (SP2: the B3 axon row carries NaTs, no calcium).
+            cell.paint(region, Ion("SodiumFixed", name="sodium", E=profile.sodium_reversal_mv*u.mV))
+            cell.paint(region, Ion("PotassiumFixed", name="potassium", E=profile.potassium_reversal_mv*u.mV))
         if calcium is not None:
-            cell.paint(region, Ion("SodiumFixed", name="sodium", E=(53. if profile.polarity == "E" else 50.)*u.mV))
-            cell.paint(region, Ion("PotassiumFixed", name="potassium", E=(-107. if profile.polarity == "E" else -85.)*u.mV))
             cell.paint(region, Ion("H01PV_Calcium", name="calcium", decay=calcium[0]*u.ms, gamma=calcium[1]))
         for mechanism, density in channels:
             cell.paint(region, Channel(prefix+"_"+mechanism, name="pv_"+mechanism,
@@ -59,10 +69,10 @@ def _paint_profile(cell, profile, regions, *, active=True):
                        **channel_controls(profile, family, mechanism)))
 
 
-def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis,
+def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, donor=None,
                      mode="candidate", current_na=0., delay_ms=2., duration_ms=3.,
                      max_cv_length_um=10., solver="staggered", pop_size=()):
-    """Build an H01 cell with the selected candidate for its explicit E/I role.
+    """Build an H01 cell with the selected donor physiology for its explicit E/I role.
 
     Parameters
     ----------
@@ -77,8 +87,12 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis,
         I requires a nonempty axon. H01 dendrites do not specify apical identity.
     region_basis : str
         Explanation of measured labels and inferred electrical boundaries.
+    donor : str, optional
+        Donor key from ``h01_cell_types.DONORS``; its polarity must equal
+        ``polarity``. Default: the polarity's default donor.
     mode : str, optional
-        Candidate defaults or explicit source reproduction.
+        Candidate defaults, explicit source reproduction, or an experimental
+        mode the donor registers (``finalist`` for I, ``b3`` for E).
     current_na, delay_ms, duration_ms : float, optional
         Somatic current pulse in nA and milliseconds.
     max_cv_length_um : float, optional
@@ -95,7 +109,12 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis,
     evidence : dict
         Measured identity, borrowed profile, and inferred electrical mapping.
     """
-    profile = get_ei_profile(polarity, mode=mode)
+    if polarity not in DEFAULT_DONOR_KEYS:
+        raise ValueError("Choose polarity E or I.")
+    donor = DEFAULT_DONOR_KEYS[polarity] if donor is None else donor
+    profile = get_donor_profile(donor, mode=mode)
+    if profile.polarity != polarity:
+        raise ValueError(f"Donor {donor} is {profile.polarity}, not {polarity}.")
     if solver == "h01_staggered_scan":
         from . import h01_dhs_scan  # Register only on explicit selection.
     if not isinstance(region_basis, str) or not region_basis.strip():
@@ -120,7 +139,7 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis,
     cell.place(soma, braincell.CurrentClamp(delay=delay_ms*u.ms, durations=duration_ms*u.ms,
                                           amplitudes=current_na*u.nA))
     evidence = {"measured_anatomy": anatomy.provenance, "source_tags": list(metadata.tags),
-                "borrowed_dynamics": asdict(profile), "modeled_polarity": polarity,
+                "borrowed_dynamics": asdict(profile), "modeled_polarity": polarity, "donor": donor,
                 "inferred_region_basis": region_basis, "electrical_intervals": intervals,
                 "solver": solver, "max_cv_length_um": max_cv_length_um,
                 "synaptic_connectivity": "Not supplied by this single-cell builder."}
