@@ -1221,6 +1221,49 @@ its physiology is not yet reproduced in this project's solver, and its BrainCell
 blocked by a known mechanism difference (HL5MN1 soma NaTg `vshiftm 13, vshifth 15, slopem 7` and
 default Ih shifts versus the HL5BN1 values hardcoded in `h01_pv_rates`).
 
+### Y6 second donor, Allen 527952884 / model 626170709 (SP6c, 2026-09-07; acquisition and registry only, no run)
+
+Observed (acquisition facts, `evidence/h01-l4-acquisition.json`; decision
+`evidence/h01-donors/stage-allen-l4-decision.json`):
+
+- The Allen perisomatic bundle 626170709 (zip sha256 `a623a0aa...`, 143,426 bytes) fits human
+  specimen 527952884 (`H16.06.008.01.31.06`, MTG layer 4, spiny, apical truncated, 24 y female,
+  epilepsy resection) with the same template (329230710) as the imported L2 donor 626170538. The
+  genome references exactly the eleven mechanisms of that import (Im, Ih, NaTs, Nap, K_P, K_T, SK,
+  Kv3_1, Ca_HVA, Ca_LVA, CaDynamics), all somatic; the eleven `.mod` files are byte-identical to
+  `.cache/human-pyramidal-l2/source-model/`. The five other bundle files (Kd, Kv2like, NaTa, NaV,
+  Im_v2) are unused. The fit JSON by its own well-known file (626185209) equals the bundle's
+  `fit_parameters.json` (sha256 `1aa0e2c5...`).
+- The recordings behind the fit are NWB 618205555 (`527952752_ephys.nwb`, 17,976,764 bytes,
+  sha256 `e321fe93...`), IVSCC 1.0, 50 kHz. The fit sweeps 69-72 are four repeats of the
+  `Square - 2s Suprathreshold` protocol at 100 pA (1020-3020 ms) with holding currents -16.7 to
+  -19.6 pA and bridge balance 9.16 Mohm; the -20 mV crossing counts read from the NWB equal
+  Allen's `num_spikes` (20, 17, 19, 20). The `Long Square` family runs -110 to 170 pA in 20 pA
+  steps at 1020-2020 ms; sweep 39 (90 pA) gives 12 spikes, first at 33.88 ms after onset.
+- Exported for the driver: sweep 69 (100 pA, 20 spikes, first 32.18 ms), sweep 39 (90 pA), sweep
+  66 (60 pA 2-s square, 1 spike; repeats 66-68 give 1, 2, 1); pre-step corrected voltage -80.4 to
+  -81.0 mV against the fit's `v_init` -80.82 mV.
+- The parameter generator that builds the registry constant from `fit_parameters.json`
+  reproduces the committed `E_SOURCE` when applied to the L2 donor's `541563728_fit.json`, so
+  the two Allen donors enter through one verified path.
+
+Registry consequence (`h01_cell_types.DONORS["l4-pyramidal-allen-527952884"]`, channel family
+`H01L2`): the eighteen L4 pyramids without modifiers resolve to it (matched) and the four
+`sparsely-spiny` L4 pyramids by the layer-and-class rule (match `modifier`); the type-matched
+count is 55 of 104 (`evidence/h01-population-types.md`). L2 pyramids stay on 541563728; L3, L5,
+L6 and WM pyramids and every `excitatory/spiny-with-atypical-tree` cell stay on the polarity
+default, labelled.
+
+Not observed: any simulated response. The NEURON reproduction at the two registered inputs
+(manifest `evidence/h01-l4-reproduction-manifest.json`, dt 0.005 ms with a 0.0025 ms partner;
+prediction: counts 20 at sweep 69 and 12 at sweep 39 exactly, first spikes within the dt-pair
+limit of 32.18 and 33.88 ms; rejection: a count off by more than 1) is untested because the
+machine was shared by measured runs when this section was written. Unlike HL5MN1, no mechanism
+difference blocks the BrainCell transfer of this donor: `H01L2_*` already carry its eleven
+mechanisms, and the transfer waits only for the SP2 matched-mesh gate on its own recordings. Y6
+stays **open** with two donors imported and type-matched and neither reproduced in this
+project's solver. The donor cap of two is reached.
+
 ## Measurement function qualification
 
 The simulation is the measurement function. Its numerical error must be small
@@ -1291,7 +1334,8 @@ biological uncertainty.
   the rise rate is load-limited but the load cannot be the lever (peak and
   trough move with it).
 - Y6: the HL5MN1 reproduction (registered, untested) and the kinetic-shift parameters the
-  `H01PV_*` channels need before the donor can be transferred to BrainCell.
+  `H01PV_*` channels need before the donor can be transferred to BrainCell; the Allen 527952884
+  L4 reproduction (registered, untested; manifest `h01-l4-reproduction-manifest.json`).
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
   The measured E-to-I candidate contact (annotation 54906016, excitatory type)
   found by the C3 edge list awaits endpoint verification.
