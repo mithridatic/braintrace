@@ -122,3 +122,36 @@ Abort limit for the 12-cell construction check: 900 s wall; a kill records "unte
   builds without the empty-contacts error; `cell_order` ordering by node count then id.
 - `cells`: prefix, below-incident and above-total rejected.
 - Coverage on `h01_network.py` >= 90 %.
+
+## Addendum 2026-09-07 (registered before the second 12-cell check, SP8 staged build)
+
+Predictions for the repeat 12-cell construction check (`--build --include-isolated --cells 12
+--control ei`, measured under load), written before the run:
+
+1. The `Invalid electrical region interval.` failure on isolated cell `2451406889` does not
+   recur (the 1e-9 snap in `h01_ei_cell._snap_interval` covers the 2e-16 overshoot); all 12
+   cells of `cell_order` build.
+2. Construction completes under the 900 s abort limit. Point estimate from the SP1
+   proportional rule: ~275 s alone; under load the first attempt reached the incident cells'
+   `make_h01_ei_cell` end at 318 s, so the load-inflated expectation is 320-450 s.
+3. Compartments about 1.12x the 4-cell 75,605, i.e. ~85,000 (derived from the largest-component
+   node ratio 276,064 / 245,769 = 1.123; nodes and compartments are assumed proportional).
+4. Peak RSS about 1.12x the SP1 1.35 GB, i.e. ~1.5 GB (derived); rejection if over 6 GB.
+
+If construction completes, two 1 ms runs at dt 0.005 ms follow (control `ei`, then
+`disconnected`): all traces finite; the `disconnected` run's conductance probes (`*_g`) are
+identically zero while the `ei` run's are not; `init_state_seconds` and
+`compile_and_run_seconds` are recorded. SP1's a = 245 s (init + compile at 4 cells) scales to
+~275 s at 12 cells by the same rule; a 12-cell point is "inside 2x the SP1 linear prediction"
+when construction, init + compile, and RSS each fall within [0.5x, 2x] of these derived values.
+
+### Addendum 2026-09-07, 16:26 (after the construction check, before the run-phase retry)
+
+The build-only check completed at 883.3 s construction under load (within the 900 s abort). The
+first 1 ms `ei` run was killed by the same 900 s construction abort with 3 of 12 cells left to
+discretize (the run's construction pace was ~55 s behind the build-only pace under varying
+load); it is recorded as untested, not negative. For the two run-phase attempts that follow the
+construction abort is set, before launch, to 1,350 s (1.5x the measured 883 s point); the 600 s
+silence kill and a 2,700 s total wall cap stay. Predictions for the run phase are unchanged
+(finite traces; disconnected conductance probes zero; init + compile + 200 steps ~276 s scaled
+from SP1, expected higher under load; RSS ~1.5 GB, reject over 6 GB).

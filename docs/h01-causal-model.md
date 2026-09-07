@@ -1245,6 +1245,39 @@ construction check before 40 is approved. Isolated-cell construction itself is n
 three cells of 1,540-3,499 nodes (1.5-2.2 s each), so the population path is exercised but
 not yet sized.
 
+#### Y5 population, 2026-09-07 (16:55): the 12-cell staged build measured (SP8 staged build step)
+
+Observed ([12-cell build](evidence/h01-population-build-12.json),
+[page](evidence/h01-population-build-12.md); **all under load**, predictions registered in the
+builder-spec addenda before each launch): the region-interval defect did not recur; all 12 cells
+of `cell_order` built in every launch. Construction **883.3 s** (build-only) and **873.9 s**
+(run attempt 2), both under the 900 s abort; **84,097 compartments** (1.112x the 4-cell 75,605,
+prediction ~1.12x held); build-only peak tree RSS **690 MB**. The run phase is **untested**: the
+first 1 ms `ei` attempt was killed by the 900 s construction abort with 3 small cells left
+(~55 s behind the build-only pace), and the retry (construction limit 1,350 s, registered)
+completed construction, then `network.init_state()` produced no log line for 600 s and the
+silence watchdog killed it at 1,509 s wall with RSS 1,075 MB. So `init_state` at 12 cells
+under load is **> 600 s** (lower bound), against 212-275 s for SP1's whole init + compile +
+200 steps at 4 cells alone. `init_state_seconds`, `compile_and_run_seconds`, trace finiteness,
+the disconnected conductance-probe check, and the run-phase RSS peak are untested (the
+`disconnected` arm was not launched: identical `init_state` path, same kill). Rejection rules
+(nonfinite trace, RSS > 6 GB) were never triggered on any observed reading.
+
+Against the SP1 linear prediction (1.123x nodes): construction 3.2x (275 s predicted) and the
+`init_state` lower bound alone 2.17x (276 s predicted); compartments 0.99x. The 12-cell point
+is **outside 2x** on time, inside on size. Both time excesses are load-confounded (SP1 was
+measured alone; the 4 incident cells alone took 318 s under load in the first attempt), so the
+excess is not attributed to cell count without an alone-machine repeat.
+
+Derived (proportional in largest-component nodes from the under-load 12-cell point; not
+measured): 40 cells ~1,720 s construction, `init_state` > 1,170 s, build RSS ~1.3 GB, run RSS
+> 2.0 GB; 104 cells ~8,970 s construction, `init_state` > 6,100 s, build RSS ~6.9 GB, run RSS
+> 10.7 GB. The 40-cell stage is **not approved** by this check: the run phase at 12 cells is
+untested. Instrument change required first: the example emits no progress line inside
+`init_state`, so the 10-minute silence rule cannot separate a live long initialization from a
+hang; add a per-cell progress callback (or a build-only `init_state` timing mode) and re-run the
+12-cell `ei` and `disconnected` arms under it.
+
 ## Y6. Per-type donors
 
 Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and
