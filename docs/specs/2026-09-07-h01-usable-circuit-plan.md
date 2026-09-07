@@ -196,3 +196,21 @@ Appended per workstream as it closes.
 - **W6c.** A 6000-sample scan ran at 176 s per cell (projected 5 h) and was stopped
   after one cell; relaunched at 3000 samples per cell (double the released coverage,
   projected 2.5 h) as a detached process with per-cell checkpoints.
+- **W6d.** Eight candidate edges re-checked at 5 x 5 x 2 voxels, 17 to 19 s each (the
+  six-hour stall was the batch, not the volume). E-to-I 54906016 is not verified:
+  presynaptic endpoint background throughout the box; the reciprocal wiring stays
+  illustrative as a tested negative. Five edges within one voxel, two within two
+  (`h01-endpoint-recheck-5voxel.json`).
+- **W6e.** `h01-population-status.md` written; the tutorial points at it.
+- **W4 (in progress).** Literature pinned (`h01-ie-synapse-literature.json`): 3.1 nS
+  (1.4 to 3.9), decay 4.18 ms, delay 2.3 ms, reversal about -75 mV; the circuit's
+  assumed 20 nS is 6.5 times the human median. The E model rests at -84 mV, below
+  the receptor reversal, so the I-to-E synapse is depolarising at rest; the pair test
+  holds E depolarised with a constant current. Prediction before the pair runs: with
+  the literature conductance the somatic IPSP at a -60 mV hold is below 0.1 mV
+  (the assumed 20 nS moved the soma 0.003 mV at rest with a 4 mV driving force; at
+  15 mV driving force and 6.5 times less conductance the same attenuation gives
+  about 0.002 mV), and the receptor-site response is 10 to 100 times larger: the
+  pair's deficit is the electrotonic distance of the receptor site, not the
+  conductance. Rejection: a somatic IPSP above 0.5 mV with the literature
+  conductance.
