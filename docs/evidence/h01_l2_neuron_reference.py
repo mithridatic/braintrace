@@ -231,7 +231,10 @@ def main():
     for row in conditions["erev"]:
         for sec in sections:
             if sec.name().split("[")[0] == row["section"]:
-                sec.ena, sec.ek = row["ena"], row["ek"]
+                if h.ismembrane("na_ion", sec=sec):
+                    sec.ena = row["ena"]
+                if h.ismembrane("k_ion", sec=sec):
+                    sec.ek = row["ek"]
     if args.sodium_recovery_factor is not None:
         for sec in sections:
             if sec.name().split("[")[0] == "soma":
