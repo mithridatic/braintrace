@@ -52,6 +52,9 @@ def build_parser():
     parser.add_argument("--i-delay-ms", type=float, default=2.)
     parser.add_argument("--e-pulse-ms", type=float, default=3.)
     parser.add_argument("--i-pulse-ms", type=float, default=3.)
+    parser.add_argument("--inhibitory-weight-us", type=float, default=.02)
+    parser.add_argument("--inhibitory-reversal-mv", type=float, default=-80.)
+    parser.add_argument("--inhibitory-tau-ms", type=float, default=5.)
     return parser
 
 
@@ -74,6 +77,8 @@ def main(argv=None):
             control=args.control, connectivity=args.connectivity, max_cv_length_um=args.max_cv_um, solver=args.solver,
             pulse_delays_ms={"E": args.e_delay_ms, "I": args.i_delay_ms},
             pulse_durations_ms={"E": args.e_pulse_ms, "I": args.i_pulse_ms},
+            inhibitory_weight_us=args.inhibitory_weight_us, inhibitory_reversal_mv=args.inhibitory_reversal_mv,
+            inhibitory_tau_ms=args.inhibitory_tau_ms,
             currents_na={"E": args.e_current_na, "I": default_i_current_na(args.connectivity, args.i_current_na)})
         print("Circuit constructed:", args.control, flush=True)
         result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")

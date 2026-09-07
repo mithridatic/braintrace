@@ -177,3 +177,22 @@ Appended per workstream as it closes.
   soma-bearing component (a segmentation artefact or a merge) and the largest holds a
   median 77 percent of the nodes (minimum 25 percent). Five of six verified contact
   endpoints sit on a soma-bearing component (`h01-population-components.md`).
+- **W2.** Sealed: PV Noise 1 sweep 48 (siblings closed), L2 sweep 55; the exporter refuses
+  sweep 55 until `h01-prediction-e2.json` exists; count stated as not closed.
+- **W3 Stage A (2 evaluations, 593 and 427 s).** The initiation site is established:
+  with transient sodium at 3.814 S/cm2 in the 60 um stub the axon crosses -20 mV
+  0.2 ms before the soma, the threshold moves from -52 to -57 mV (human -56), and the
+  human's two-stage upstroke appears as a plateau of dV/dt against V at the human's
+  slope (144 to 185 V/s from -52 to -42 mV against the human 110 to 179; the
+  candidate had 10 to 75). The energetic search's structural FAIL is lifted. Somatic
+  sodium 1.3 keeps the train (cycles 55, 29, 309, 316 ms against the human 60, 34,
+  220, 307) but overshoots the main rise (830 against 351 V/s) and the peak (42
+  against 36 mV) and deepens the trough (-72.6 against -69.6); somatic sodium 0.65
+  lands the upstroke (532 V/s, 33 mV) and then blocks (soma -31 mV from 1100 ms).
+  Prediction misses recorded: the shoulder was registered as a local dV/dt maximum
+  and is a plateau; the 0.65 arm's trough band assumed a continuing train. Stage A2
+  (somatic sodium 0.9) registered and launched; Stage B gates on it
+  (`h01-e-usable/stage-a-decision.json`).
+- **W6c.** A 6000-sample scan ran at 176 s per cell (projected 5 h) and was stopped
+  after one cell; relaunched at 3000 samples per cell (double the released coverage,
+  projected 2.5 h) as a detached process with per-cell checkpoints.

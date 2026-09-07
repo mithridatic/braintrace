@@ -194,3 +194,10 @@ def test_measured_topology_has_only_source_supported_direction(imported, monkeyp
         assert contact['enabled'] == bool(count)
         result = network.run(dt=.001*u.ms, duration=.003*u.ms)
         assert np.isfinite(result.traces['E']['voltage'].to_decimal(u.mV)).all()
+
+
+def test_inhibitory_receptor_parameters_are_recorded(imported):
+    with brainstate.environ.context(precision=64):
+        _, evidence = make_h01_ei_circuit(**arguments(imported), inhibitory_reversal_mv=-75., inhibitory_tau_ms=4.18)
+    assert evidence["cells"]["E"]["incoming_synapse"] == {"name": "inh", "reversal_mv": -75., "tau_ms": 4.18}
+    assert evidence["cells"]["I"]["incoming_synapse"]["tau_ms"] == 2.

@@ -13,7 +13,8 @@ from .h01_measured_contact import measured_ie_contact
 def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
                         currents_na=None, control="ei", connectivity="measured", excitatory_weight_us=.01,
                         inhibitory_weight_us=.02, delay_ms=.5, max_cv_length_um=10., solver="staggered",
-                        pulse_delays_ms=None, pulse_durations_ms=None):
+                        pulse_delays_ms=None, pulse_durations_ms=None, inhibitory_reversal_mv=-80.,
+                        inhibitory_tau_ms=5.):
     """Build the measured I-to-E contact or explicit illustrative wiring.
 
     Parameters
@@ -38,6 +39,10 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         Nonnegative contact conductances in microsiemens.
     delay_ms : float, optional
         Nonnegative transmission delay. Network rounds up to a whole step.
+    inhibitory_reversal_mv, inhibitory_tau_ms : float, optional
+        Reversal potential and decay of the I-to-E receptor. Defaults are the
+        assumed -80 mV and 5 ms; the literature pins in
+        ``docs/evidence/h01-ie-synapse-literature.json`` give -75 mV and 4.18 ms.
     max_cv_length_um : float, optional
         Maximum spatial compartment length.
     solver : str, optional
@@ -89,7 +94,7 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
             max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
         soma = imported.anatomy().soma_location()
         incoming = "inh" if role == "E" else "exc"
-        reversal, tau = (-80., 5.) if role == "E" else (0., 2.)
+        reversal, tau = (inhibitory_reversal_mv, inhibitory_tau_ms) if role == "E" else (0., 2.)
         receptor_site = post_site if measured and role == "E" else soma
         output_site = pre_site if measured and role == "I" else soma
         cell.place(receptor_site, Synapse("ExpSyn", name=incoming, e=reversal*u.mV, tau=tau*u.ms, weight=1.*u.uS))

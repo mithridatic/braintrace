@@ -24,3 +24,11 @@ def test_i_drive_defaults_differ_by_pair_and_explicit_values_win():
     assert default_i_current_na("measured", None) == 1.
     assert default_i_current_na("illustrative", None) == 0.
     assert default_i_current_na("measured", .25) == .25
+
+
+def test_inhibitory_receptor_flags_default_to_the_assumed_values():
+    from examples.h01_ei_circuit import build_parser
+    args = build_parser().parse_args(["--output", "x"])
+    assert (args.inhibitory_weight_us, args.inhibitory_reversal_mv, args.inhibitory_tau_ms) == (.02, -80., 5.)
+    args = build_parser().parse_args(["--output", "x", "--inhibitory-weight-us", "0.0031", "--inhibitory-reversal-mv", "-75"])
+    assert args.inhibitory_weight_us == .0031 and args.inhibitory_reversal_mv == -75.
