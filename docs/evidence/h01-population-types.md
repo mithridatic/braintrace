@@ -13,6 +13,17 @@ donor is assumed for all of them.
 | l3-sst-interneuron-hl5mn1 | I | h01-sst-l3-hl5mn1 | ModelDB 267587 HL5MN1 = Yao 2022 HL23SST (Allen human specimen 571700636, MTG layer 3, aspiny) | L3 | interneuron |
 | l4-pyramidal-allen-527952884 | E | h01-l4-allen-527952884 | Allen specimen 527952884, model 626170709 (MTG layer 4 pyramidal, perisomatic fit) | L4 | pyramidal |
 
+## Donor physiology notes
+
+Reproduction of each imported donor's published fit in this project's NEURON container, and the
+usable-tier verdicts on its own recordings. A donor without a note (the two original donors) is
+scored on its own pages. A pass is not required to enter the population; the verdicts are labels.
+
+| Donor key | Reproduction | Label | Decision |
+| --- | --- | --- | --- |
+| l4-pyramidal-allen-527952884 | rejected | type-matched, reproduction rejected, usable verdicts: 100 pA: rate_hz pass, adaptation_ratio fail, width_ms 19 fail, ahp_mv 19 unresolvable, count pass, first_spike_ms pass; 90 pA: rate_hz fail, adaptation_ratio fail, width_ms 8 fail, ahp_mv 8 unresolvable | [h01-donors/stage-allen-l4-decision.json](h01-donors/stage-allen-l4-decision.json) |
+| l3-sst-interneuron-hl5mn1 | rejected | type-matched, reproduction rejected, usable verdicts: 100 pA: rate_hz fail, adaptation_ratio pass, width_ms 14 fail, ahp_mv 11 fail/3 pass, count pass, first_spike_ms fail; 150 pA: rate_hz pass, adaptation_ratio pass, width_ms 30 fail, ahp_mv 28 fail/2 pass | [h01-donors/stage-hl5mn1-decision.json](h01-donors/stage-hl5mn1-decision.json) |
+
 ## Match states
 
 | Match | Cells |

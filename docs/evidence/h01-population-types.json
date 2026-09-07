@@ -203,6 +203,18 @@
    "WM pyramidal"
   ]
  },
+ "donor_notes": {
+  "l4-pyramidal-allen-527952884": {
+   "status": "rejected",
+   "label": "type-matched, reproduction rejected, usable verdicts: 100 pA: rate_hz pass, adaptation_ratio fail, width_ms 19 fail, ahp_mv 19 unresolvable, count pass, first_spike_ms pass; 90 pA: rate_hz fail, adaptation_ratio fail, width_ms 8 fail, ahp_mv 8 unresolvable",
+   "decision": "h01-donors/stage-allen-l4-decision.json"
+  },
+  "l3-sst-interneuron-hl5mn1": {
+   "status": "rejected",
+   "label": "type-matched, reproduction rejected, usable verdicts: 100 pA: rate_hz fail, adaptation_ratio pass, width_ms 14 fail, ahp_mv 11 fail/3 pass, count pass, first_spike_ms fail; 150 pA: rate_hz pass, adaptation_ratio pass, width_ms 30 fail, ahp_mv 28 fail/2 pass",
+   "decision": "h01-donors/stage-hl5mn1-decision.json"
+  }
+ },
  "rows": [
   {
    "cell_id": "546925828",
