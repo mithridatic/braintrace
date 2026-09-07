@@ -1,0 +1,198 @@
+{
+  "stage": "1",
+  "candidate": "g-natg-axon15",
+  "candidate_sha256": "f4a2aa6c24d887343e7003a0a226d6f6d702dfd707e31ad05d44773ea9c5dcbe",
+  "verdict": "NO RESULT",
+  "decision": "NO RESULT at cap: both containers exited 139 (SIGSEGV) before writing a trace; the drive prediction is untested, not rejected; cap 1 is spent by the launch; no re-run and no parameter change",
+  "gate": {
+    "file": ".worktrees/h01-transfer/docs/evidence/h01-i-transfer/step1-decision.json",
+    "present_at_utc": "2026-09-07T22:38:30Z",
+    "wait_started_utc": "2026-09-07T22:27Z"
+  },
+  "launch_utc": "2026-09-07T22:38:45Z",
+  "runner_pid": 40720,
+  "runs": [
+    {
+      "input": "019",
+      "seconds": 10.94788290001452,
+      "returncode": 139,
+      "aborted": false,
+      "docker_die_exit": 139,
+      "outputs_written": false
+    },
+    {
+      "input": "027",
+      "seconds": 8.308058700000402,
+      "returncode": 139,
+      "aborted": false,
+      "docker_die_exit": 139,
+      "outputs_written": false
+    }
+  ],
+  "runner_wall_clock_s": 19.26,
+  "container_stderr": "not retained: h01_campaign.py runs docker with capture_output=True and does not record it; --rm removed the containers",
+  "concurrent_containers": [
+    "h01-e-gain-g0-b3-sweep43 (another agent) was running during both runs"
+  ],
+  "bands": [
+    {
+      "input": "0.19 nA",
+      "row": "cycle2_ms",
+      "predicted": "<= 22.0 (from 34.76)",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.19 nA",
+      "row": "count",
+      "predicted": "15 to 17 (from 14)",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.19 nA",
+      "row": "width1_ms",
+      "predicted": "0.221 +/- 0.006",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.19 nA",
+      "row": "peak_mv",
+      "predicted": "<= 22.0",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.19 nA",
+      "row": "trough1_mv",
+      "predicted": "within 1 of -80.13",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.19 nA",
+      "row": "trough2_mv",
+      "predicted": "within 1 of -80.54",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.19 nA",
+      "row": "trough3_mv",
+      "predicted": "within 1 of -80.65",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.27 nA",
+      "row": "cycle2_ms",
+      "predicted": "<= 12.0 (from 16.37)",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.27 nA",
+      "row": "count",
+      "predicted": "40 to 43 (from 37)",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.27 nA",
+      "row": "width1_ms",
+      "predicted": "0.221 +/- 0.006",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.27 nA",
+      "row": "peak_mv",
+      "predicted": "<= 22.0",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.27 nA",
+      "row": "trough1_mv",
+      "predicted": "within 1 of -78.99",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.27 nA",
+      "row": "trough2_mv",
+      "predicted": "within 1 of -79.3",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    },
+    {
+      "input": "0.27 nA",
+      "row": "trough3_mv",
+      "predicted": "within 1 of -79.61",
+      "observed": null,
+      "held": null,
+      "status": "untested: no trace"
+    }
+  ],
+  "bands_held": 0,
+  "bands_missed": 0,
+  "bands_untested": 14,
+  "rejection": {
+    "cycle2_027_change_ms": null,
+    "cycle_limit_ms": 12.8,
+    "change_below_limit": null,
+    "loop_breaks": [],
+    "met": null,
+    "note": "not applicable: no cycle table exists"
+  },
+  "initiation_axon_first": {
+    "019": null,
+    "027": null
+  },
+  "tiers": {
+    "0.19 nA": {
+      "usable_verdict": "untested",
+      "contract": {
+        "verdict": "untested"
+      }
+    },
+    "0.27 nA": {
+      "usable_verdict": "untested",
+      "contract": {
+        "verdict": "untested"
+      }
+    }
+  },
+  "preparation_checks": {
+    "image_help": "docker run --rm -v <worktree>/docs/evidence:/evidence braintrace-h01-neuron:9.0.2 python /evidence/h01_pv_neuron_reference.py --help: usage printed, lists --scale MECH:REGION:FACTOR (22:30Z)",
+    "dry_run": "h01_campaign.py --stage 1 --dry-run: gate open, g-natg-axon15 selected at 019 and 027",
+    "mounts": ".cache junction in this worktree -> .worktrees/h01-braincell/.cache; /work/source/NeuronTemplate.hoc resolves",
+    "driver_api_toy_check": "one bare h.Section with the library NaTg: psection() and gbar_NaTg setattr x1.5 both succeed in the image (rc 0); not a model run"
+  },
+  "reassessment": {
+    "prediction": "untested; the registered bands stand as written and were neither held nor missed",
+    "i_cell_status": "experimental, borrowed, labelled (unchanged)",
+    "noise1_seal": "closed (unchanged)",
+    "open_rows": [
+      "post-trough inward drive (refire within 6-10 ms of a -79 mV trough at every input)",
+      "accommodation along the train (threshold climb -61 to -55 mV, late fall -294 V/s)",
+      "count 14 vs 12 (0.19 nA) and 37 vs 43 (0.27 nA)",
+      "cycle-1 width 0.221 vs 0.267-0.273 ms"
+    ],
+    "returned_to_user": "whether a crashed container counts as the spent reserve, and if not, a crash-diagnosis run (stderr retained) before any re-evaluation; the runner should record container stderr"
+  }
+}
