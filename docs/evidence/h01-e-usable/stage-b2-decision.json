@@ -36,5 +36,16 @@
    "SK:soma:0.5"
   ]
  },
- "returned_question": "extend the cap by two (dose step, then sweep 55 prediction)?"
+ "returned_question": "extend the cap by two (dose step, then sweep 55 prediction)?",
+ "audit_2026_09_07": {
+  "source": "b2-audit.json",
+  "corrections": [
+   "Usable rate AND cycle-2 width fail; AHP is unresolvable, with cycle-2 absolute error 6.037 mV.",
+   "No sweep50 evaluation exists for these exact B2 flags.",
+   "The original 135-165 ms individual late-cycle prediction was missed; cycle 4 is 174.936 ms. Changing to a mean after observation does not rescue that prediction."
+  ],
+  "late_cycles_definition": "cycles 4 onward",
+  "late_cycles_mean_ms": 148.4245197746169,
+  "status": "Original decision retained as history; audited rows supersede its all-but-rate and AHP-within-0.5 claims."
+ }
 }

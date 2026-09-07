@@ -32,17 +32,23 @@ window. Its soma-to-site ratio (1/14) is larger than the literature receptor's
 The receptor is a Norton source (conductance transient with reversal) feeding the
 E load at the receptor site. What reaches the soma is that source seen through the
 dendritic Transmit path: a 110-fold attenuation for a small conductance. A
-human-sized unitary conductance therefore cannot move this E soma by more than
-about 0.01 mV from this site, whatever its reversal. The deficit the 0.003 mV
-delivery result exposed is the placement (the site's electrotonic distance and its
-7 mV offset below the soma), not the borrowed conductance, which was already 6.5
-times the human median.
+human-sized unitary conductance moved this E soma by about 0.008 mV in the
+tested drifting state at a reversal of -75 mV. This does not bound the response
+at other reversals or membrane states. The site-to-soma difference is consistent
+with strong attenuation, but the runs change conductance, reversal and decay
+together and do not isolate placement as the sole cause.
 
 ## Prediction scored
 
-- Somatic IPSP below 0.1 mV with the literature conductance: **held** (0.008 mV).
-- Site response 10 to 100 times the soma's: **held, above the band** (110 times).
+- Somatic response magnitude below 0.1 mV: **held** (0.008 mV); predicted IPSP
+  polarity was not observed (the response is depolarising).
+- Site response 10 to 100 times the soma's: **outside the registered band** (111.3 times).
 - Rejection (somatic IPSP above 0.5 mV): not met.
+
+Audit: both connected and disconnected E event lists are empty. These runs
+cannot score spike suppression or E cycle-length change. Site latency is 0.5 ms;
+soma latency to 10 percent is 2.38 ms. The wrapper still restores I sodium
+closing kinetics, so this is diagnostic pair evidence, not a qualified E/I pair.
 
 ## What follows
 

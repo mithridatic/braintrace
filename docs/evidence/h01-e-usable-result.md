@@ -5,11 +5,14 @@ at 310 pA); runs in `h01-e-usable/`; decisions `stage-{a,a2,b0,b,b2}-decision.js
 8 of 8 evaluations used (427 to 687 s each). Human data: sweeps 50 (250 pA) and 53
 (310 pA, spent as a holdout on 2026-09-06). Sweep 55 stays sealed and was not run.
 
-**Verdict: the E cell's family is fixed and its count is one step from the usable
-rate; the cap closes before that step and before the sweep 55 prediction.** The
-structural FAIL of the energetic search (no initiation site) is lifted; the finalist
-passes every usable row but rate at 310 pA (8.4 against 10 Hz, limit 1.5) and rate
-and adaptation are inside the limits at 250 pA except adaptation.
+**Audited verdict: B2 fails usable rate and cycle-2 width at 310 pA.**
+The initiation-site intervention produces axon-first firing on the donor geometry.
+B2 has 9 of 10 spikes, rate 8.388 against 10.002 Hz (limit 1.500), and cycle-2
+width 1.009 against 1.269 ms (limit 0.202). AHP is unresolvable under the usable
+tier; its cycle-2 error is 6.037 mV, so it is not uniformly within 0.5 mV.
+The 250 pA result below belongs to A2, not the combined B2 profile.
+See the re-scored [B2 rows](h01-e-usable/b2-audit.md). The bounded continuation
+is registered in [its spec](../specs/2026-09-07-h01-e-bounded-continuation.md).
 
 ## Search tree
 

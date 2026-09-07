@@ -1,0 +1,478 @@
+{
+ "cell": "E",
+ "model": "B2 SK 0.5 / calcium decay 1.0; sweep 50 not evaluated on these flags",
+ "counts": {
+  "310 pA": {
+   "human": 10,
+   "model": 9
+  }
+ },
+ "repeats": [
+  {
+   "input": "repeat 56",
+   "cycle": 1,
+   "cycle_ms": 207.76,
+   "ahp_mv": -70.0000017285347,
+   "width_ms": 0.966530565644689,
+   "peak_mv": 36.21875351667404,
+   "threshold_mv": -54.71875289082527
+  },
+  {
+   "input": "repeat 59",
+   "cycle": 1,
+   "cycle_ms": 210.66000000000008,
+   "ahp_mv": -69.53125217556953,
+   "width_ms": 0.9610438201962097,
+   "peak_mv": 36.187502056360245,
+   "threshold_mv": -55.15625098347664
+  },
+  {
+   "input": "repeat 60",
+   "cycle": 1,
+   "cycle_ms": 154.53999999999996,
+   "ahp_mv": -69.62500283122063,
+   "width_ms": 0.9649580794864505,
+   "peak_mv": 35.84375089406967,
+   "threshold_mv": -54.75000062584877
+  },
+  {
+   "input": "repeat 61",
+   "cycle": 1,
+   "cycle_ms": 201.07999999999993,
+   "ahp_mv": -69.87500333786011,
+   "width_ms": 0.966311928865025,
+   "peak_mv": 36.12500286102295,
+   "threshold_mv": -54.50000011920929
+  },
+  {
+   "input": "repeat 62",
+   "cycle": 1,
+   "cycle_ms": 205.79999999999995,
+   "ahp_mv": -70.21875450015068,
+   "width_ms": 0.9584751158563449,
+   "peak_mv": 35.87500235438347,
+   "threshold_mv": -54.96875339746475
+  }
+ ],
+ "rows": [
+  {
+   "input": "310 pA",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 10.001555797568509,
+   "model": 8.388141592882,
+   "limit": 1.5002333696352763,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "fail",
+   "contract": "no contract row"
+  },
+  {
+   "input": "310 pA",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": 9.947281713344251,
+   "model": 9.811447068575424,
+   "limit": 2.486820428336063,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 1,
+   "human": 0.9128560164754163,
+   "model": 1.0065340094149633,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 2,
+   "human": 1.2690307278455748,
+   "model": 1.009411334145625,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "fail",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 3,
+   "human": 1.0937104341232953,
+   "model": 0.9864853477797624,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 4,
+   "human": 0.9860242798531544,
+   "model": 0.9869519130136268,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 5,
+   "human": 0.9882447920297182,
+   "model": 0.9864238092986852,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 6,
+   "human": 0.9767491645955033,
+   "model": 0.9860603705649282,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 7,
+   "human": 0.9841531460481292,
+   "model": 0.985785539437984,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 8,
+   "human": 0.9794904440964274,
+   "model": 0.9855756156671305,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 9,
+   "human": 0.9670550450932751,
+   "model": 0.9854130454207279,
+   "limit": 0.2024368446265953,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of the human width; spread from human repeats",
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 1,
+   "human": -69.56250363588333,
+   "model": -69.9922429574753,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 2,
+   "human": -64.96875131130219,
+   "model": -71.00594819179655,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 3,
+   "human": -67.62500250339508,
+   "model": -70.95589774042247,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 4,
+   "human": -69.15625327825546,
+   "model": -71.05743355059526,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 5,
+   "human": -69.50000444054604,
+   "model": -71.10017661859246,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 6,
+   "human": -69.56250363588333,
+   "model": -71.1298392060096,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 7,
+   "human": -69.43750151991844,
+   "model": -71.15090599511707,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 8,
+   "human": -69.62500283122063,
+   "model": -71.16605134924451,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 9,
+   "human": -69.84375187754631,
+   "model": -71.17700835453813,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  }
+ ],
+ "tables": {
+  "310 pA": {
+   "human": [
+    {
+     "input": "310 pA",
+     "cycle": 1,
+     "cycle_ms": 38.01999999999998,
+     "ahp_mv": -69.56250363588333,
+     "width_ms": 0.9128560164754163,
+     "peak_mv": 35.34375360608101,
+     "threshold_mv": -56.40625351667404
+    },
+    {
+     "input": "310 pA",
+     "cycle": 2,
+     "cycle_ms": 12.1400000000001,
+     "ahp_mv": -64.96875131130219,
+     "width_ms": 1.2690307278455748,
+     "peak_mv": 33.562502324581146,
+     "threshold_mv": -55.03125259280205
+    },
+    {
+     "input": "310 pA",
+     "cycle": 3,
+     "cycle_ms": 60.8599999999999,
+     "ahp_mv": -67.62500250339508,
+     "width_ms": 1.0937104341232953,
+     "peak_mv": 34.625003546476364,
+     "threshold_mv": -53.87500071525574
+    },
+    {
+     "input": "310 pA",
+     "cycle": 4,
+     "cycle_ms": 109.75999999999999,
+     "ahp_mv": -69.15625327825546,
+     "width_ms": 0.9860242798531544,
+     "peak_mv": 33.90625348687172,
+     "threshold_mv": -53.250001311302185
+    },
+    {
+     "input": "310 pA",
+     "cycle": 5,
+     "cycle_ms": 115.29999999999995,
+     "ahp_mv": -69.50000444054604,
+     "width_ms": 0.9882447920297182,
+     "peak_mv": 33.65625298023224,
+     "threshold_mv": -52.78125175833702
+    },
+    {
+     "input": "310 pA",
+     "cycle": 6,
+     "cycle_ms": 119.20000000000005,
+     "ahp_mv": -69.56250363588333,
+     "width_ms": 0.9767491645955033,
+     "peak_mv": 33.34375327825546,
+     "threshold_mv": -52.93750160932541
+    },
+    {
+     "input": "310 pA",
+     "cycle": 7,
+     "cycle_ms": 122.1400000000001,
+     "ahp_mv": -69.43750151991844,
+     "width_ms": 0.9841531460481292,
+     "peak_mv": 33.34375327825546,
+     "threshold_mv": -53.43750262260437
+    },
+    {
+     "input": "310 pA",
+     "cycle": 8,
+     "cycle_ms": 116.15999999999985,
+     "ahp_mv": -69.62500283122063,
+     "width_ms": 0.9794904440964274,
+     "peak_mv": 33.00000211596489,
+     "threshold_mv": -52.87500241398811
+    },
+    {
+     "input": "310 pA",
+     "cycle": 9,
+     "cycle_ms": 123.53999999999996,
+     "ahp_mv": -69.84375187754631,
+     "width_ms": 0.9670550450932751,
+     "peak_mv": 32.75000160932541,
+     "threshold_mv": -53.18750211596489
+    },
+    {
+     "input": "310 pA",
+     "cycle": 10,
+     "cycle_ms": 120.76000000000022,
+     "ahp_mv": -69.9062510728836,
+     "width_ms": 0.9645281811692712,
+     "peak_mv": 32.68750241398811,
+     "threshold_mv": -54.281251072883606
+    }
+   ],
+   "model": [
+    {
+     "input": "310 pA",
+     "cycle": 1,
+     "cycle_ms": 37.807555880747486,
+     "ahp_mv": -69.9922429574753,
+     "width_ms": 1.0065340094149633,
+     "peak_mv": 38.508046118496324,
+     "threshold_mv": -57.241444501682274
+    },
+    {
+     "input": "310 pA",
+     "cycle": 2,
+     "cycle_ms": 13.963739702022394,
+     "ahp_mv": -71.00594819179655,
+     "width_ms": 1.009411334145625,
+     "peak_mv": 38.92103963996741,
+     "threshold_mv": -57.35049806901544
+    },
+    {
+     "input": "310 pA",
+     "cycle": 3,
+     "cycle_ms": 49.21648535518352,
+     "ahp_mv": -70.95589774042247,
+     "width_ms": 0.9864853477797624,
+     "peak_mv": 37.051786551605936,
+     "threshold_mv": -57.22204570255021
+    },
+    {
+     "input": "310 pA",
+     "cycle": 4,
+     "cycle_ms": 174.9363336056672,
+     "ahp_mv": -71.05743355059526,
+     "width_ms": 0.9869519130136268,
+     "peak_mv": 37.15859179477974,
+     "threshold_mv": -57.219659028791654
+    },
+    {
+     "input": "310 pA",
+     "cycle": 5,
+     "cycle_ms": 151.46642361310296,
+     "ahp_mv": -71.10017661859246,
+     "width_ms": 0.9864238092986852,
+     "peak_mv": 37.1498566106396,
+     "threshold_mv": -57.22355614334531
+    },
+    {
+     "input": "310 pA",
+     "cycle": 6,
+     "cycle_ms": 146.01700379177396,
+     "ahp_mv": -71.1298392060096,
+     "width_ms": 0.9860603705649282,
+     "peak_mv": 37.14506207257391,
+     "threshold_mv": -57.221967677714304
+    },
+    {
+     "input": "310 pA",
+     "cycle": 7,
+     "cycle_ms": 142.0046514372782,
+     "ahp_mv": -71.15090599511707,
+     "width_ms": 0.985785539437984,
+     "peak_mv": 37.14083270925562,
+     "threshold_mv": -57.22351028517822
+    },
+    {
+     "input": "310 pA",
+     "cycle": 8,
+     "cycle_ms": 139.11821323412119,
+     "ahp_mv": -71.16605134924451,
+     "width_ms": 0.9855756156671305,
+     "peak_mv": 37.13712551696796,
+     "threshold_mv": -57.22318680970343
+    },
+    {
+     "input": "310 pA",
+     "cycle": 9,
+     "cycle_ms": 137.0044929657579,
+     "ahp_mv": -71.17700835453813,
+     "width_ms": 0.9854130454207279,
+     "peak_mv": 37.134236909305315,
+     "threshold_mv": -57.224475834089276
+    }
+   ]
+  }
+ }
+}
