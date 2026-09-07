@@ -1,6 +1,6 @@
 # E cell usable tier
 
-Model: B2 SK 0.5 / calcium decay 1.0; sweep 50 not evaluated on these flags. Contract column: the approved
+Model: b2-sk-half-ca-decay; exact frozen candidate, unpromoted. Contract column: the approved
 1 mV / 0.05 ms / exact-count contract; rows it lacks say so. `unresolvable` means the
 human spread exceeds half the usable limit.
 
@@ -16,15 +16,15 @@ human spread exceeds half the usable limit.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 310 pA | rate_hz |  | 10 | 8.39 | 1.5 |  | fail | no contract row | 15 percent of the human rate; no human repeats at this input |
 | 310 pA | adaptation_ratio |  | 9.95 | 9.81 | 2.49 |  | pass | no contract row | 25 percent of the human ratio; no human repeats at this input |
-| 310 pA | width_ms | 1 | 0.913 | 1.01 | 0.202 | 0.0118 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 2 | 1.27 | 1.01 | 0.202 | 0.0118 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 3 | 1.09 | 0.986 | 0.202 | 0.0118 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 4 | 0.986 | 0.987 | 0.202 | 0.0118 | pass | pass | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 5 | 0.988 | 0.986 | 0.202 | 0.0118 | pass | pass | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 6 | 0.977 | 0.986 | 0.202 | 0.0118 | pass | pass | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 7 | 0.984 | 0.986 | 0.202 | 0.0118 | pass | pass | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 8 | 0.979 | 0.986 | 0.202 | 0.0118 | pass | pass | 20 percent of the human width; spread from human repeats |
-| 310 pA | width_ms | 9 | 0.967 | 0.985 | 0.202 | 0.0118 | pass | pass | 20 percent of the human width; spread from human repeats |
+| 310 pA | width_ms | 1 | 0.913 | 1.01 | 0.183 | 0.0118 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 2 | 1.27 | 1.01 | 0.254 | 0.0118 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 3 | 1.09 | 0.986 | 0.219 | 0.0118 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 4 | 0.986 | 0.987 | 0.197 | 0.0118 | pass | pass | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 5 | 0.988 | 0.986 | 0.198 | 0.0118 | pass | pass | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 6 | 0.977 | 0.986 | 0.195 | 0.0118 | pass | pass | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 7 | 0.984 | 0.986 | 0.197 | 0.0118 | pass | pass | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 8 | 0.979 | 0.986 | 0.196 | 0.0118 | pass | pass | 20 percent of this human cycle's width; spread from human repeats |
+| 310 pA | width_ms | 9 | 0.967 | 0.985 | 0.193 | 0.0118 | pass | pass | 20 percent of this human cycle's width; spread from human repeats |
 | 310 pA | ahp_mv | 1 | -69.6 | -70 | 2 | 1.01 | unresolvable | pass | 2 mV of trough depth; spread from human repeats |
 | 310 pA | ahp_mv | 2 | -65 | -71 | 2 | 1.01 | unresolvable | fail | 2 mV of trough depth; spread from human repeats |
 | 310 pA | ahp_mv | 3 | -67.6 | -71 | 2 | 1.01 | unresolvable | fail | 2 mV of trough depth; spread from human repeats |

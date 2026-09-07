@@ -1,4 +1,9 @@
-# E cell under the usable tier: result (W3, 2026-09-07)
+# E cell under the usable tier: original W3 result (2026-09-07)
+
+The [bounded continuation is complete](h01-e-continuation-result.md): B3 gives
+8/5, 10/10 and 12/13 spikes at 250/310/350 pA. It fixes the 310 pA rate but
+fails across inputs and remains unpromoted. The sections below retain the
+original eight-evaluation campaign; its returned dose/prediction work is now done.
 
 Manifests `h01-e-usable-manifest.json` (Stages A, A2), `-b0-`, `-b-`, `-b2-` (Stage B
 at 310 pA); runs in `h01-e-usable/`; decisions `stage-{a,a2,b0,b,b2}-decision.json`.
@@ -8,7 +13,7 @@ at 310 pA); runs in `h01-e-usable/`; decisions `stage-{a,a2,b0,b,b2}-decision.js
 **Audited verdict: B2 fails usable rate and cycle-2 width at 310 pA.**
 The initiation-site intervention produces axon-first firing on the donor geometry.
 B2 has 9 of 10 spikes, rate 8.388 against 10.002 Hz (limit 1.500), and cycle-2
-width 1.009 against 1.269 ms (limit 0.202). AHP is unresolvable under the usable
+width 1.009 against 1.269 ms (per-cycle limit 0.254). AHP is unresolvable under the usable
 tier; its cycle-2 error is 6.037 mV, so it is not uniformly within 0.5 mV.
 The 250 pA result below belongs to A2, not the combined B2 profile.
 See the re-scored [B2 rows](h01-e-usable/b2-audit.md). The bounded continuation

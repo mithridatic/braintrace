@@ -1,5 +1,11 @@
 # I cell usable tier
 
+Continuation audit: the existing finalist already has axon-first -20 mV crossing
+at all three inputs, so an absent axonal crossing does not explain its missing
+burst. See [the retained initiation audit](h01-i-initiation-audit.md). The model
+and unqualified status are unchanged; width rows were regenerated with per-cycle
+allowances. No I reserve was spent.
+
 Model: candidate with somatic Kv3 close factor 2.0 (energetic search finalist). Contract column: the approved
 1 mV / 0.05 ms / exact-count contract; rows it lacks say so. `unresolvable` means the
 human spread exceeds half the usable limit.
@@ -18,18 +24,18 @@ human spread exceeds half the usable limit.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0.19 nA | rate_hz |  | 12.2 | 14.6 | 1.83 |  | fail | no contract row | 15 percent of the human rate; no human repeats at this input |
 | 0.19 nA | adaptation_ratio |  | 13 | 2.42 | 3.24 |  | fail | no contract row | 25 percent of the human ratio; no human repeats at this input |
-| 0.19 nA | width_ms | 1 | 0.273 | 0.221 | 0.0577 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 2 | 0.277 | 0.221 | 0.0577 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 3 | 0.278 | 0.221 | 0.0577 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 4 | 0.283 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 5 | 0.288 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 6 | 0.29 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 7 | 0.291 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 8 | 0.292 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 9 | 0.292 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 10 | 0.3 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 11 | 0.298 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.19 nA | width_ms | 12 | 0.299 | 0.222 | 0.0577 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
+| 0.19 nA | width_ms | 1 | 0.273 | 0.221 | 0.0547 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 2 | 0.277 | 0.221 | 0.0554 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 3 | 0.278 | 0.221 | 0.0556 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 4 | 0.283 | 0.222 | 0.0566 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 5 | 0.288 | 0.222 | 0.0576 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 6 | 0.29 | 0.222 | 0.0581 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 7 | 0.291 | 0.222 | 0.0581 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 8 | 0.292 | 0.222 | 0.0584 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 9 | 0.292 | 0.222 | 0.0585 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 10 | 0.3 | 0.222 | 0.06 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 11 | 0.298 | 0.222 | 0.0595 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.19 nA | width_ms | 12 | 0.299 | 0.222 | 0.0599 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
 | 0.19 nA | ahp_mv | 1 | -78.8 | -80.1 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |
 | 0.19 nA | ahp_mv | 2 | -78.7 | -80.5 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |
 | 0.19 nA | ahp_mv | 3 | -78.9 | -80.6 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |
@@ -44,32 +50,32 @@ human spread exceeds half the usable limit.
 | 0.19 nA | ahp_mv | 12 | -79.2 | -80.8 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |
 | 0.23 nA | rate_hz |  | 30.9 | 26.5 | 4.63 |  | pass | no contract row | 15 percent of the human rate; no human repeats at this input |
 | 0.23 nA | adaptation_ratio |  | 6.41 | 2.1 | 1.6 |  | fail | no contract row | 25 percent of the human ratio; no human repeats at this input |
-| 0.23 nA | width_ms | 1 | 0.274 | 0.221 | 0.0571 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 2 | 0.281 | 0.221 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 3 | 0.282 | 0.222 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 4 | 0.28 | 0.222 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 5 | 0.282 | 0.222 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 6 | 0.282 | 0.223 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 7 | 0.282 | 0.223 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 8 | 0.284 | 0.223 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 9 | 0.283 | 0.223 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 10 | 0.284 | 0.223 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 11 | 0.283 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 12 | 0.284 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 13 | 0.286 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 14 | 0.285 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 15 | 0.286 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 16 | 0.287 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 17 | 0.285 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 18 | 0.286 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 19 | 0.287 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 20 | 0.285 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 21 | 0.285 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 22 | 0.287 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 23 | 0.287 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 24 | 0.29 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 25 | 0.289 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.23 nA | width_ms | 26 | 0.29 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
+| 0.23 nA | width_ms | 1 | 0.274 | 0.221 | 0.0549 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 2 | 0.281 | 0.221 | 0.0561 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 3 | 0.282 | 0.222 | 0.0563 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 4 | 0.28 | 0.222 | 0.056 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 5 | 0.282 | 0.222 | 0.0565 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 6 | 0.282 | 0.223 | 0.0563 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 7 | 0.282 | 0.223 | 0.0564 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 8 | 0.284 | 0.223 | 0.0567 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 9 | 0.283 | 0.223 | 0.0566 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 10 | 0.284 | 0.223 | 0.0568 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 11 | 0.283 | 0.224 | 0.0566 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 12 | 0.284 | 0.224 | 0.0567 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 13 | 0.286 | 0.224 | 0.0572 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 14 | 0.285 | 0.224 | 0.057 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 15 | 0.286 | 0.224 | 0.0572 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 16 | 0.287 | 0.224 | 0.0573 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 17 | 0.285 | 0.224 | 0.057 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 18 | 0.286 | 0.224 | 0.0572 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 19 | 0.287 | 0.224 | 0.0574 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 20 | 0.285 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 21 | 0.285 | 0.224 | 0.0571 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 22 | 0.287 | 0.224 | 0.0574 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 23 | 0.287 | 0.224 | 0.0573 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 24 | 0.29 | 0.224 | 0.0579 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 25 | 0.289 | 0.224 | 0.0578 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.23 nA | width_ms | 26 | 0.29 | 0.224 | 0.0579 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
 | 0.23 nA | ahp_mv | 1 | -78.9 | -79.4 | 2 | 0.551 | pass | pass | 2 mV of trough depth; spread from human repeats |
 | 0.23 nA | ahp_mv | 2 | -78.2 | -79.9 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |
 | 0.23 nA | ahp_mv | 3 | -78.3 | -80.1 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |
@@ -98,43 +104,43 @@ human spread exceeds half the usable limit.
 | 0.23 nA | ahp_mv | 26 | -79.7 | -80.4 | 2 | 0.551 | pass | pass | 2 mV of trough depth; spread from human repeats |
 | 0.27 nA | rate_hz |  | 43.6 | 36.6 | 6.55 |  | fail | no contract row | 15 percent of the human rate; no human repeats at this input |
 | 0.27 nA | adaptation_ratio |  | 4.25 | 1.86 | 1.06 |  | fail | no contract row | 25 percent of the human ratio; no human repeats at this input |
-| 0.27 nA | width_ms | 1 | 0.267 | 0.221 | 0.0559 | 0.00605 | pass | pass | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 2 | 0.274 | 0.221 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 3 | 0.276 | 0.221 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 4 | 0.277 | 0.222 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 5 | 0.277 | 0.222 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 6 | 0.276 | 0.223 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 7 | 0.276 | 0.223 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 8 | 0.276 | 0.223 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 9 | 0.277 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 10 | 0.277 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 11 | 0.277 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 12 | 0.277 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 13 | 0.278 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 14 | 0.276 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 15 | 0.279 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 16 | 0.279 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 17 | 0.279 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 18 | 0.28 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 19 | 0.279 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 20 | 0.279 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 21 | 0.28 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 22 | 0.28 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 23 | 0.282 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 24 | 0.281 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 25 | 0.281 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 26 | 0.281 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 27 | 0.282 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 28 | 0.283 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 29 | 0.281 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 30 | 0.282 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 31 | 0.282 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 32 | 0.283 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 33 | 0.281 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 34 | 0.283 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 35 | 0.283 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 36 | 0.282 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
-| 0.27 nA | width_ms | 37 | 0.283 | 0.224 | 0.0559 | 0.00605 | fail | fail | 20 percent of the human width; spread from human repeats |
+| 0.27 nA | width_ms | 1 | 0.267 | 0.221 | 0.0534 | 0.00605 | pass | pass | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 2 | 0.274 | 0.221 | 0.0548 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 3 | 0.276 | 0.221 | 0.0552 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 4 | 0.277 | 0.222 | 0.0554 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 5 | 0.277 | 0.222 | 0.0554 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 6 | 0.276 | 0.223 | 0.0552 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 7 | 0.276 | 0.223 | 0.0552 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 8 | 0.276 | 0.223 | 0.0552 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 9 | 0.277 | 0.224 | 0.0555 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 10 | 0.277 | 0.224 | 0.0554 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 11 | 0.277 | 0.224 | 0.0554 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 12 | 0.277 | 0.224 | 0.0554 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 13 | 0.278 | 0.224 | 0.0556 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 14 | 0.276 | 0.224 | 0.0553 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 15 | 0.279 | 0.224 | 0.0558 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 16 | 0.279 | 0.224 | 0.0558 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 17 | 0.279 | 0.224 | 0.0558 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 18 | 0.28 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 19 | 0.279 | 0.224 | 0.0558 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 20 | 0.279 | 0.224 | 0.0558 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 21 | 0.28 | 0.224 | 0.0559 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 22 | 0.28 | 0.224 | 0.056 | 0.00605 | pass | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 23 | 0.282 | 0.224 | 0.0564 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 24 | 0.281 | 0.224 | 0.0563 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 25 | 0.281 | 0.224 | 0.0562 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 26 | 0.281 | 0.224 | 0.0562 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 27 | 0.282 | 0.224 | 0.0564 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 28 | 0.283 | 0.224 | 0.0566 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 29 | 0.281 | 0.224 | 0.0562 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 30 | 0.282 | 0.224 | 0.0563 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 31 | 0.282 | 0.224 | 0.0563 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 32 | 0.283 | 0.224 | 0.0565 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 33 | 0.281 | 0.224 | 0.0563 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 34 | 0.283 | 0.224 | 0.0566 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 35 | 0.283 | 0.224 | 0.0566 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 36 | 0.282 | 0.224 | 0.0564 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
+| 0.27 nA | width_ms | 37 | 0.283 | 0.224 | 0.0565 | 0.00605 | fail | fail | 20 percent of this human cycle's width; spread from human repeats |
 | 0.27 nA | ahp_mv | 1 | -78.9 | -79 | 2 | 0.551 | pass | pass | 2 mV of trough depth; spread from human repeats |
 | 0.27 nA | ahp_mv | 2 | -78.1 | -79.3 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |
 | 0.27 nA | ahp_mv | 3 | -78 | -79.6 | 2 | 0.551 | pass | fail | 2 mV of trough depth; spread from human repeats |

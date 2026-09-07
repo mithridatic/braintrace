@@ -1,0 +1,131 @@
+{
+ "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+ "verified": "All three reports match frozen candidate and input hashes; finite monotonic traces through2100ms, nseg9 and CVode1e-10. Numerical refinement not run.",
+ "files": {
+  "b3-all-inputs-usable.json": {
+   "bytes": 35853,
+   "sha256": "80997d61e61be7d66cb44ca54be90ca8a08e7a9c40c763d41102dd63cfbf9e9f",
+   "storage": "versioned evidence"
+  },
+  "b3-all-inputs-usable.md": {
+   "bytes": 12275,
+   "sha256": "c86d901009ffc0f380dc0f6e25d7c898efb6d829d83d56ab8e77ee10246d863d",
+   "storage": "versioned evidence"
+  },
+  "b3-calibration-usable.json": {
+   "bytes": 20946,
+   "sha256": "94e10d88e79999b439a5ff4535983a80eb907767030125fcccce4df4f7c1fe60",
+   "storage": "versioned evidence"
+  },
+  "b3-calibration-usable.md": {
+   "bytes": 7296,
+   "sha256": "ffeac2c427853de2181fc0da110c71def019be2eadefd175e969dd6b4636b295",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep50-initiation.json": {
+   "bytes": 3377,
+   "sha256": "345e1c1dd31f8e34e1b2ae2011f54eb9a81f3bde012bd50258607994d2c3c70e",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep50-raw.json": {
+   "bytes": 212,
+   "sha256": "8cc2cae1b1c626d1162973c120d054d5a81c955b426e2b2cde652ceebc2e8b2d",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep50-raw.npz": {
+   "bytes": 14924905,
+   "sha256": "f45639356725a7b0feecb251f211229ab9f4b0604adaff3affa2e319212ba09a",
+   "storage": "local trace, not committed"
+  },
+  "b3-sk035-ca-decay-sweep50.json": {
+   "bytes": 28519,
+   "sha256": "209707109e18e46dd9bb9abde6ac30223dfc027c3f075552c52e94132d1356a9",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep50.npz": {
+   "bytes": 16148740,
+   "sha256": "bb1a942fcfa519502173d9db88a63690482c1476863a70136a54dac04a4212cd",
+   "storage": "local trace, not committed"
+  },
+  "b3-sk035-ca-decay-sweep53-initiation.json": {
+   "bytes": 3975,
+   "sha256": "3ca9187691f399dbb99a7f898de59c6be7340c54d5c85d891849054600cf727b",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep53-raw.json": {
+   "bytes": 212,
+   "sha256": "e0e93b1040ae1581492663094d48c65ebcd7d046fb67ab45017831ce71cea609",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep53-raw.npz": {
+   "bytes": 15552735,
+   "sha256": "488459b6e40f4d7d09146fee49862a936d84cf234dd1e7afc1881e44d6258fcf",
+   "storage": "local trace, not committed"
+  },
+  "b3-sk035-ca-decay-sweep53.json": {
+   "bytes": 28519,
+   "sha256": "52f85ac9f1e88d0a8051916932f2b2873ef26aaf241bf6b88441071f40cf92e1",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep53.npz": {
+   "bytes": 16831622,
+   "sha256": "3e4b5dd65106f2049891f843c8f936e1239201519c150de19c3ea84ca2c3d741",
+   "storage": "local trace, not committed"
+  },
+  "b3-sk035-ca-decay-sweep55-initiation.json": {
+   "bytes": 4563,
+   "sha256": "0187c6c27b271817f0903e894e474def4f401a2343a56c4465f390fd2da9fc3a",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep55-raw.json": {
+   "bytes": 212,
+   "sha256": "a6d90cedd54aff69a856c8b8b4040b3cd07656879bdbff0cb665f3ba101e0817",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep55-raw.npz": {
+   "bytes": 16257535,
+   "sha256": "009f89709a33563c46d4e7fd85b1afa4451f7eada633a1d237a40dcdbacf27f8",
+   "storage": "local trace, not committed"
+  },
+  "b3-sk035-ca-decay-sweep55.json": {
+   "bytes": 28519,
+   "sha256": "9a60188c3db95949f6cbb3178d996d6b592f9d93c7f147592ac50cf47f9f0283",
+   "storage": "versioned evidence"
+  },
+  "b3-sk035-ca-decay-sweep55.npz": {
+   "bytes": 17587093,
+   "sha256": "e9f46c1b8cf3ee6875dd036b081d6468a79c8a730cf0762cd4125545ffb3fb8a",
+   "storage": "local trace, not committed"
+  },
+  "b3-sk035-ca-decay.candidate.json": {
+   "bytes": 460,
+   "sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+   "storage": "versioned evidence"
+  },
+  "b3-sweep50-event-contract.json": {
+   "bytes": 12900,
+   "sha256": "4478fe3ebed6902b84d60825b1600a4811414ee54ccdea785c9d7204f5500c7e",
+   "storage": "versioned evidence"
+  },
+  "b3-sweep53-event-contract.json": {
+   "bytes": 25581,
+   "sha256": "c9fc56dae3c67710f5c0b99f48194b69372e291bb53af818bb5d2a0f82785b33",
+   "storage": "versioned evidence"
+  },
+  "b3-sweep53-usable.json": {
+   "bytes": 13659,
+   "sha256": "b7a17b919a4565e33357967859fac5e5e0c79ffff8df9b0b6e144f8811ae4733",
+   "storage": "versioned evidence"
+  },
+  "b3-sweep53-usable.md": {
+   "bytes": 4754,
+   "sha256": "bb4c9bdb1814982373071797748e01fa169e81f4f35a7a360ee79efb4dec051f",
+   "storage": "versioned evidence"
+  },
+  "b3-sweep55-event-contract.json": {
+   "bytes": 32874,
+   "sha256": "a983535991905f88120817e5476d41d45e283f06f9a371dd4fd49eb5a8bc712c",
+   "storage": "versioned evidence"
+  }
+ }
+}

@@ -24,8 +24,9 @@ transmission delay, decay 4.4 against 4.18 ms) and is **depolarising**: the site
 sits at −77 to −78 mV, below the −75 mV reversal, while the soma is at −71. The
 assumed response is not an IPSP shape: the 20 nS shunt at −80 mV pins the site near
 −79 mV while the control keeps depolarising, so the difference grows for the whole
-window. Its soma-to-site ratio (1/14) is larger than the literature receptor's
-(1/110) because a shunt that large lowers the site's own input resistance.
+window. Its ratio of peak soma and peak site differences (1/14) is larger than
+the literature condition's (1/110), but those peaks occur at different times.
+These ratios are descriptive; they are not matched transfer-impedance estimates.
 
 ## Reading in the energetic frame
 
@@ -62,7 +63,6 @@ closing kinetics, so this is diagnostic pair evidence, not a qualified E/I pair.
    the E model's dendritic attenuation (its dendrites carry cm 2.303 and passive
    membrane; the axial load already explained the rise-rate fault). Both are
    returned to the user.
-3. The E cell rests at −84 mV, 12 mV below the human's −72; at the human's rest the
-   site would sit near the reversal and the unitary IPSP would be near zero in
-   either sign. The resting potential belongs to the E usable-tier work (leak
-   reversal is a Stage B lever).
+3. The E cell rests at −84 mV, 12 mV below the human's −72. These drifting runs
+   do not establish the receptor-site voltage or response at a steady human-like
+   rest. Resting-state correction and a matched-state synaptic test remain open.

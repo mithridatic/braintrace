@@ -59,7 +59,8 @@ def test_usable_limits_fall_back_to_cyclical_spread():
     assert limits["rate_hz"]["limit"] == pytest.approx(6.)
     assert limits["adaptation_ratio"]["limit"] == pytest.approx(1.)
     assert limits["width_ms"]["basis"].endswith("spread from human repeats")
-    assert limits["width_ms"]["limit"] == pytest.approx(.2*1.1)
+    assert limits["width_ms"]["limit"] is None
+    assert limits["width_ms"]["fraction"] == .2
     assert limits["width_ms"]["spread"] == pytest.approx(.1*2.95)
     assert limits["ahp_mv"]["limit"] == 2.
     fallback = tier.usable_limits(view, [{}])
@@ -74,6 +75,20 @@ def test_verdict_states():
     assert tier.verdict(1., 1.1, 1., .6) == "unresolvable"
     assert tier.verdict(None, 1., 1., None) == "unavailable"
     assert tier.verdict(1., 1., None, None) == "unavailable"
+
+
+@pytest.mark.parametrize("spread,expected", [(0., ["fail", "pass"]),
+                                            (.11, ["unresolvable", "pass"])])
+def test_width_allowance_and_resolution_use_each_human_cycle(spread, expected):
+    human = {"rate_hz": 10., "adaptation_ratio": 2.,
+             "width_ms": [1., 2.], "ahp_mv": [-80., -80.]}
+    model = {**human, "width_ms": [1.25, 1.7]}
+    limits = tier.usable_limits(human, [])
+    limits["width_ms"]["spread"] = spread
+    rows = [r for r in tier.compare("x", human, model, limits) if r["row"] == "width_ms"]
+    assert [r["limit"] for r in rows] == pytest.approx([.2, .4])
+    assert [r["verdict"] for r in rows] == expected
+    assert [r["contract"] for r in rows] == ["fail", "fail"]
 
 
 def test_contract_verdict_only_for_contract_rows():
@@ -113,3 +128,32 @@ def test_main_writes_both_files(monkeypatch, tmp_path):
                                                                  "repeats": [], "rows": [], "tables": {}})
     tier.main(["--cell", "I"])
     assert (tmp_path/"h01-usable-tier-i.json").exists() and (tmp_path/"h01-usable-tier-i.md").exists()
+
+
+def test_score_cell_keeps_input_counts_and_reads_real_repeat_files(tmp_path, monkeypatch):
+    """The file-to-report path preserves mismatched counts and per-cycle limits."""
+    import h5py
+
+    monkeypatch.setattr(tier, "EVIDENCE", tmp_path)
+    time, human = synthetic([50., 70., 100.])
+    _, extra = synthetic([50., 70., 100., 140.])
+    for label, voltage in (("a", human), ("b", extra)):
+        np.savez(tmp_path/f"{label}-human.npz", time_ms=time, corrected_voltage_mv=human)
+        np.savez(tmp_path/f"{label}-model.npz", time_ms=time, voltage_mv=voltage)
+    with h5py.File(tmp_path/"repeats.nwb", "w") as nwb:
+        for sweep, voltage in ((1, human), (2, human), (3, np.full_like(human, -70.))):
+            group = nwb.create_group(f"acquisition/timeseries/Sweep_{sweep}")
+            group.create_dataset("data", data=(voltage+14.)/1000.)
+            group.create_dataset("starting_time", data=0.).attrs["rate"] = 50000.
+    spec = {"model": "fixture", "pulse_ms": (40., 200.),
+            "repeats": ("repeats.nwb", (1, 2, 3), (40., 200.)),
+            "inputs": {label: (f"{label}-human.npz", f"{label}-model") for label in ("a", "b")}}
+    report = tier.score_cell("E", spec, root=tmp_path)
+    assert report["counts"] == {"a": {"human": 3, "model": 3},
+                                "b": {"human": 3, "model": 4}}
+    assert report["repeats"][-1] == {}
+    assert len(report["tables"]["b"]["model"]) == 4
+    widths = [r for r in report["rows"] if r["row"] == "width_ms"]
+    assert len(widths) == 6
+    assert all(r["limit"] == pytest.approx(.2*r["human"]) for r in widths)
+    assert "| b | 3 | 4 | FAIL |" in tier.render(report)

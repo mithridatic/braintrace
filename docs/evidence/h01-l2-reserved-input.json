@@ -21,6 +21,9 @@
   "command_pa": 350.0,
   "selection_rule": "highest long-square command not adjacent (20 pA) to any opened sweep and not listed in the source fit; 52 and 54 rejected as neighbours of 53, 51 as the source-fit sweep",
   "count_status": "The Allen analysis spike counts of every sweep are on disk and were read by the sweep inventory of 2026-09-06; count is therefore NOT closed for this seal. Waveform, timing, peaks and the per-cycle table are closed.",
-  "release_condition": "h01-prediction-e2.json written before export; h01_l2_sweep_export refuses the export otherwise"
+  "release_condition": "h01-prediction-e2.json written before export; h01_l2_sweep_export refuses the export otherwise",
+  "status": "opened after prediction commit 306459e and B3 calibration decision; now spent",
+  "waveform_sha256": "44bea6529b6128eae49c246116e97dbe2c36e3e3b4459d28380d10ac4985f47f",
+  "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
  }
 }

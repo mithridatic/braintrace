@@ -92,13 +92,15 @@ def usable_limits(human_view, repeats):
               "adaptation_ratio": {"limit": None if human_view["adaptation_ratio"] is None else
                                    ADAPTATION_FRACTION*human_view["adaptation_ratio"], "spread": None,
                                    "basis": "25 percent of the human ratio; no human repeats at this input"}}
-    for key, limit, basis in (("width_ms", WIDTH_FRACTION*float(np.mean(human_view["width_ms"] or [0.])),
-                               "20 percent of the human width"), ("ahp_mv", AHP_MV, "2 mV of trough depth")):
+    for key, limit, basis in (("width_ms", None, "20 percent of this human cycle's width"),
+                              ("ahp_mv", AHP_MV, "2 mV of trough depth")):
         spread = repeat_spread([r.get(key) for r in repeats])
         source = "spread from human repeats"
         if spread is None:
             spread, source = cyclical_spread(human_view[key]), "spread from the human cyclical range"
         limits[key] = {"limit": limit, "spread": spread, "basis": f"{basis}; {source}"}
+        if key == "width_ms":
+            limits[key]["fraction"] = WIDTH_FRACTION
     return limits
 
 
@@ -128,8 +130,11 @@ def compare(label, human_view, model_view, limits):
                      "contract": "no contract row"})
     for key in ("width_ms", "ahp_mv"):
         for index, (h, m) in enumerate(zip(human_view[key], model_view[key]), start=1):
-            rows.append({"input": label, "row": key, "cycle": index, "human": h, "model": m, **limits[key],
-                         "verdict": verdict(h, m, limits[key]["limit"], limits[key]["spread"]),
+            cycle_limit = dict(limits[key])
+            if "fraction" in cycle_limit:
+                cycle_limit["limit"] = cycle_limit["fraction"]*h
+            rows.append({"input": label, "row": key, "cycle": index, "human": h, "model": m, **cycle_limit,
+                         "verdict": verdict(h, m, cycle_limit["limit"], cycle_limit["spread"]),
                          "contract": contract_verdict(key, h, m)})
     return rows
 

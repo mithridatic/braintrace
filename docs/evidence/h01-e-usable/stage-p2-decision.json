@@ -1,0 +1,106 @@
+{
+ "stage": "P2",
+ "decision": "All registered model-output prediction bands held; human usable and original contract qualification still fail. End bounded continuation; no promotion or further fitting.",
+ "new_successful_runs": 3,
+ "total_E_successful_evaluations": 11,
+ "failed_startups": 2,
+ "prediction_commit": "306459e",
+ "prediction_scored": {
+  "count": {
+   "band": [
+    11,
+    14
+   ],
+   "observed": 12,
+   "verdict": "held"
+  },
+  "rate_hz": {
+   "band": [
+    10,
+    14
+   ],
+   "observed": 11.633885421834524,
+   "verdict": "held"
+  },
+  "adaptation_ratio": {
+   "band": [
+    7,
+    11
+   ],
+   "observed": 8.38859120707936,
+   "verdict": "held"
+  },
+  "first_crossing_after_pulse_ms": {
+   "band": [
+    25,
+    40
+   ],
+   "observed": 27.48819742236401,
+   "verdict": "held"
+  },
+  "late_cycles_ms_cycles4_onward": {
+   "band": [
+    80,
+    125
+   ],
+   "observed": [
+    80.15681848361055,
+    121.5283175858267,
+    109.02286436982399,
+    106.01358768041268,
+    103.18962377482308,
+    101.05265281828315,
+    99.36727916906034,
+    98.03613283071059,
+    96.97541165711164
+   ],
+   "verdict": "held"
+  },
+  "first_threshold_mv": {
+   "band": [
+    -58,
+    -56
+   ],
+   "observed": -57.26177268596253,
+   "verdict": "held"
+  },
+  "first_peak_mv": {
+   "band": [
+    38,
+    41
+   ],
+   "observed": 38.964269311936796,
+   "verdict": "held"
+  },
+  "first_ahp_mv": {
+   "band": [
+    -71,
+    -68
+   ],
+   "observed": -69.80530477494031,
+   "verdict": "held"
+  },
+  "first_width_ms": {
+   "band": [
+    0.9,
+    1.12
+   ],
+   "observed": 1.01284135377864,
+   "verdict": "held"
+  },
+  "axon_leads_ms": {
+   "band": [
+    0.15,
+    0.25
+   ],
+   "observed": 0.20291201053737495,
+   "verdict": "held"
+  }
+ },
+ "human_count": 13,
+ "model_count": 12,
+ "usable": "rate and adaptation pass; cycle3 width fails; AHP unresolvable; unmatched human event13 is retained in exact-count failure",
+ "holdout_status": "sweep55 spent; PV Noise1 remains sealed",
+ "source": "b3-all-inputs-usable.json",
+ "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
+}

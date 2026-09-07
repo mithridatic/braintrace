@@ -64,3 +64,18 @@ that import failure; h5py now imports only inside export_sweep. Driver --help wa
 verified in the actual pinned image before the successful P2 retry. Both failed
 launches exited before integration and remain in the campaign log. Future driver
 changes must include this lightweight actual-image startup check.
+
+## Per-cycle width scoring repair
+
+Final audit confirmed usable_limits stores a mean-width allowance and compare
+applies it to every cycle. The approved W1 rule is 20 percent of each human
+cycle's width. At sweep55 cycle2, the 0.248439 ms error exceeds the mean-based
+0.214007 allowance but is inside the correct 0.253622 allowance. This changes
+that row's verdict, though the candidate still fails other rows and inputs.
+
+Reproduce with unequal human widths; then make compare derive the width allowance
+from its matched human cycle before resolvability and verdict. Keep the same
+repeat spread, 20 percent fraction, contract limits, and rate/adaptation rules.
+Regenerate baseline and B2/B3 usable tables from retained traces. Explicitly retain
+missing/extra event counts: paired width rows cannot cover unmatched events.
+No parameter fitting, input changes, or simulations follow this scoring repair.
