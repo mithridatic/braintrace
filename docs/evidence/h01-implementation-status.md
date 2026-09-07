@@ -6,7 +6,7 @@ complete. This audit separates missing capability from failed qualification.
 | Capability | Current evidence | Remaining work |
 | --- | --- | --- |
 | H01 anatomy and annotations | Importers and selected measured E/I components are in use | Electrical region assignments remain inferred |
-| Distinct E and I mechanisms | Frozen profiles, channel laws, calcium and cell builders exist | Full reference transfer and human-response qualification |
+| Distinct E and I mechanisms | Frozen profiles, channel laws, calcium and cell builders exist. I transfer (SP2, 2026-09-07): at the copied NEURON mesh and dt 0.005 the timing gates hold at every event of the 330 ms halving pair and against the CVode finalist (max rise 0.018 ms, width 0.003 ms); the peak is 0.43 mV low at dt 0.005 and 0.22 mV low at 0.0025 under both the sampled and the interpolated metric, first order in dt, Richardson limit within 0.012 mV of CVode ([result](h01-i-transfer-result.md), [JSON](h01-i-transfer/step1b-decision.json)) | Full-train transfer at 0.19/0.27 nA untested: SP2 stopped as `time_level_open` on the peak gate; human-response qualification |
 | Current stimulation and voltage recording | Donor and H01 runners save direct traces | Complete required input coverage |
 | Synapses, delays and spike output | E/I circuit builder and four connection controls exist | Qualified default I response and circuit numerical checks |
 | Direct E/I causal checks | Real H01 four-control audit records excitation and delayed E firing | Diagnostic I override is not a validated default |

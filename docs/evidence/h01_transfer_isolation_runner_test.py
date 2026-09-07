@@ -165,3 +165,44 @@ def test_manifest_names_the_finalist_mode_and_it_is_aligned(capsys):
     runner.main(["--manifest", str(FOLDER/"h01-transfer-i-manifest.json"), "--check-alignment"])
     printed = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert printed["profile_alignment"]["aligned"] is True
+
+
+def test_peak_method_is_threaded_into_scores_and_the_decision_json(tmp_path, capsys):
+    manifest = copy.deepcopy(MANIFEST)
+    root = tmp_path
+    out = root/"docs/evidence"/manifest["output_dir"]
+    ref = root/"docs/evidence"/manifest["reference_dir"]
+    out.mkdir(parents=True), ref.mkdir(parents=True)
+    for stem in manifest["references"].values():
+        np.savez(ref/(stem+".npz"), **_trace())
+    np.savez(out/"a1-matched-027.npz", **_trace())
+    for arm in manifest["arms"]:
+        arm["window"] = "halving"
+    scored = runner.score_manifest(root, manifest, peak_method="interpolated")
+    row = scored["scores"]["a1-matched-027"]
+    assert row["peak_method"] == "interpolated" and set(row["gate"]) == {
+        "rise_crossing_ms", "peak_interpolated_voltage_mv", "time_above_threshold_ms"}
+    assert {"peak_sample_voltage_mv", "peak_interpolated_voltage_mv"} <= set(row["events"][0]["errors"])
+    assert set(row["events"][0]["in_gate"]) == set(row["gate"])
+    assert scored["halving"]["braincell_halving"]["status"] == "untested"
+    report = runner.decision_report(manifest, scored)
+    assert report["peak_method"] == "interpolated" and report["decision"] == "untested"
+    default = runner.score_manifest(root, manifest)
+    assert default["scores"]["a1-matched-027"]["peak_method"] == "sample"
+    assert "peak_sample_voltage_mv" in default["scores"]["a1-matched-027"]["gate"]
+
+
+def test_reference_root_reads_reference_traces_from_another_tree(tmp_path):
+    manifest = copy.deepcopy(MANIFEST)
+    root, elsewhere = tmp_path/"here", tmp_path/"sibling"
+    out = root/"docs/evidence"/manifest["output_dir"]
+    ref = elsewhere/"docs/evidence"/manifest["reference_dir"]
+    out.mkdir(parents=True), ref.mkdir(parents=True)
+    for stem in manifest["references"].values():
+        np.savez(ref/(stem+".npz"), **_trace())
+    np.savez(out/"a1-matched-027.npz", **_trace())
+    for arm in manifest["arms"]:
+        arm["window"] = "halving"
+    scored = runner.score_manifest(root, manifest, reference_root=elsewhere)
+    assert scored["scores"]["a1-matched-027"]["passed"]
+    assert scored["reference_sha256"]["027"] and scored["reference_root"] == str(elsewhere)

@@ -323,6 +323,25 @@ Evidence: `evidence/h01-i-transfer/step1-decision.json`,
 held-equal alignment is checkable and scoring is no longer refused. Every arm is still
 untested.
 
+### Y2 observation, SP2 step 1b (2026-09-07, offline re-score, no run)
+
+Registered before re-scoring (spec amendment): the peak-sample difference is a sampling
+convention; the parabolic vertex through the three samples around each maximum, applied to
+both traces, brings the halving pair under 0.05 mV and the dt 0.005 trace under 0.1 mV of
+the CVode finalist at every event. Observation: it does not. Interpolation moves the peaks by
+at most 0.018 mV; the halving difference stays +0.213/+0.211/+0.211 mV and the reference
+difference -0.435/-0.434/-0.432 mV (dt 0.0025: -0.221/-0.223/-0.221 mV). Timing gates are
+unchanged and valid. Both legs failed, so under the registered rejection SP2 stops as
+`time_level_open`; no full-train arm was launched (seven arms untested). Reading: the
+BrainCell peak amplitude at the copied mesh converges first order in dt (17.505 -> 17.718 mV
+at event 1, NEURON 17.940 mV); the derived first-order Richardson limit is within 0.012 mV of
+CVode at every event, so the peak difference is the integration order at this step, not the
+mesh and not the sampling. Y2 stays open; the full train is unscored at every input.
+Evidence: `evidence/h01-i-transfer/step1b-decision.json`,
+[result page](evidence/h01-i-transfer-result.md), runner output
+`evidence/h01-i-transfer/sp2-i-decision.json` (decision `untested` for the full-train arms,
+`gate_valid` false, `peak_method` interpolated).
+
 ## Y3. The PV candidate's spike train differs from the human recording
 
 **Behavior.** Against the human recording, the candidate's first spike lasts
@@ -1198,7 +1217,10 @@ biological uncertainty.
 - Y2: transfer of the full 1270 ms train and the other inputs at the copied
   mesh; whether equal counts also equal compartment placement on every branch.
   SP2 prediction registered 2026-09-07 (see the Y2 entry); the finalist I profile is
-  registered and alignment checks, the arms are untested.
+  registered and alignment checks. SP2 stopped 2026-09-07 as `time_level_open`: the peak
+  gate is not reachable at dt 0.005 or 0.0025 (first-order peak convergence, limit within
+  0.012 mV of CVode), timing gates valid; seven full-train arms untested pending a decision
+  on the peak gate, the fallback step, or the integration order.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
   of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
   train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one
