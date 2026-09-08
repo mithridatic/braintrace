@@ -74,3 +74,11 @@ rounding), the signature of the vectorised geometry attachment / DHS assembly re
 1.3e-9 mV after 200 steps. The 40-cell stage was **not launched**. Next split (not run): the same rerun with the donor registry
 pinned to SP1's assignment for 3955003482, judged at 1e-9 on all four cells, or the three unchanged cells alone at 2e-9.
 
+
+## Addendum 2026-09-07, 20:35: equivalence split 2, cell 3955003482 pinned to SP1's donor (registered 19:55; **prediction held**)
+
+Same d1 configuration on the merged tree with `3955003482` pinned to `l2-pyramidal-allen-541563728` by an in-process override of `donor_for_tags` (recorded in [the JSON](h01-network-equivalence-post-merge-pinned.json) under `donor_override`; the merged registry would assign `l4-pyramidal-allen-527952884`, an intended SP6c change, not a fault). Label: **measured beside one NEURON container** (Stage G; CPU 20-40 %, vmmemWSL 3-5.6 cores, SearchIndexer 1.7-4.8, bdservicehost ~1.6).
+
+Per-cell max abs voltage difference against `bench-d1` (rule 2e-9 mV): 3955003482 **2.20e-10**, 4157825456 **1.325e-9**, 4188575291 **2.13e-11**, 5584343344 **3.59e-10**; spike arrays bitwise identical (0 events both sides); conductance probes and `time_ms` bitwise identical; keys and shapes identical. **Held.** Timing: construction 152.3 s (SP1 266.2), init_state 116.0 s (cell 3955003482 68.9), compile + 200 steps 17.5 s, init + run 133.5 s (SP1 212.4), wall 295.0 s (SP1 484.7), peak RSS 1,354 MB; speedup 1.75x construction, 1.59x init + run, beside the NEURON container (2.7x / 2.4x on the quieter 19:42 run).
+
+The first comparison of this run (20:29) failed in the compare script itself (`max()` over an empty list: the per-cell reduction matched keys without the `cell_` prefix), not in the data; fixed, unit-tested, and rerun offline on the recorded trace. The 40-cell stages proceed as registered.

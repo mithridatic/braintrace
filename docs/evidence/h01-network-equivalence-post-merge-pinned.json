@@ -1,0 +1,380 @@
+{
+ "reference": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-network\\.cache\\h01\\bench-d1",
+ "rerun": "C:\\Users\\J\\AppData\\Local\\Temp\\claude\\C--Users-J-Documents-Projects-connectome-agent-braintrace-source\\59762c69-587a-4ed2-83cc-b548416f9360\\scratchpad\\sp8c\\equiv-d1-pinned",
+ "tolerance_mv": 2e-09,
+ "donor_override": {
+  "override": "in-process patch of braintrace.datasets.h01_network.donor_for_tags for L4 pyramidal tags",
+  "pinned": {
+   "3955003482": "l2-pyramidal-allen-541563728"
+  },
+  "registry_would_assign": {
+   "l4-pyramidal-allen-527952884": "l2-pyramidal-allen-541563728"
+  },
+  "sp1_donor": "l2-pyramidal-allen-541563728",
+  "merged_registry_donor": "l4-pyramidal-allen-527952884"
+ },
+ "same_keys": true,
+ "arrays": {
+  "cell_3955003482_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_3955003482_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 2.198703441536054e-10
+  },
+  "cell_3955003482_syn_124698307_g": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "max_abs_diff": 0.0
+  },
+  "cell_3955003482_syn_124698307_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 3.524291969370097e-11
+  },
+  "cell_3955003482_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 2.198987658630358e-10
+  },
+  "cell_4157825456_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_4157825456_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 1.325247467320878e-09
+  },
+  "cell_4157825456_syn_8105899_g": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "max_abs_diff": 0.0
+  },
+  "cell_4157825456_syn_8105899_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 5.4143356464919634e-11
+  },
+  "cell_4157825456_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 1.325247467320878e-09
+  },
+  "cell_4188575291_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_4188575291_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 1.1311840353300795e-11
+  },
+  "cell_4188575291_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 2.1259438653942198e-11
+  },
+  "cell_5584343344_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_5584343344_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 2.674482857401017e-11
+  },
+  "cell_5584343344_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 3.587530272852746e-10
+  },
+  "time_ms": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "max_abs_diff": 0.0
+  }
+ },
+ "all_bitwise_equal": false,
+ "max_abs_diff_all_arrays": 1.325247467320878e-09,
+ "within_tolerance": true,
+ "spikes_identical": true,
+ "sp1_d1": {
+  "construction_seconds": 266.16772590001347,
+  "initialization_and_run_seconds": 212.3785510000016,
+  "wall_seconds": 484.68128859999706,
+  "peak_rss_mb": 1342.03515625,
+  "n_compartments": null
+ },
+ "sp1_d1r": {
+  "construction_seconds": 243.6337588999886,
+  "initialization_and_run_seconds": 274.916204499983
+ },
+ "rerun_timing": {
+  "construction_seconds": 152.28025589999743,
+  "init_state_seconds": 116.00562650000211,
+  "compile_and_run_seconds": 17.523772199987434,
+  "initialization_and_run_seconds": 133.52939720000722,
+  "n_compartments": 75605,
+  "init_peak_rss_mb": 1073.203125,
+  "run_peak_rss_mb": 1354.41796875,
+  "init_seconds_by_cell": {
+   "cell_3955003482": 68.90462280000793,
+   "cell_4157825456": 13.013741899980232,
+   "cell_4188575291": 16.610166400001617,
+   "cell_5584343344": 17.476165599975502
+  },
+  "wall_seconds": 295.00010959999054,
+  "peak_rss_mb_tree": 1360.26953125,
+  "status": "completed",
+  "kill_reason": null,
+  "load": [
+   {
+    "t": 159,
+    "cpu_percent": 39.8,
+    "other_cores": [
+     [
+      "System Idle Process",
+      0,
+      59.4
+     ],
+     [
+      "vmmemWSL",
+      21724,
+      4.01
+     ],
+     [
+      "System",
+      4,
+      3.37
+     ],
+     [
+      "dwm.exe",
+      2996,
+      1.93
+     ],
+     [
+      "WindowsTerminal.exe",
+      15932,
+      1.88
+     ],
+     [
+      "bdservicehost.exe",
+      4044,
+      1.56
+     ]
+    ],
+    "avail_gb": 32.05
+   },
+   {
+    "t": 191,
+    "cpu_percent": 19.9,
+    "other_cores": [
+     [
+      "System Idle Process",
+      0,
+      80.55
+     ],
+     [
+      "SearchIndexer.exe",
+      4144,
+      1.66
+     ],
+     [
+      "com.docker.backend.exe",
+      12512,
+      1.22
+     ],
+     [
+      "WindowsTerminal.exe",
+      15932,
+      1.02
+     ],
+     [
+      "System",
+      4,
+      0.92
+     ],
+     [
+      "dwm.exe",
+      2996,
+      0.84
+     ]
+    ],
+    "avail_gb": 32.03
+   },
+   {
+    "t": 223,
+    "cpu_percent": 29.6,
+    "other_cores": [
+     [
+      "System Idle Process",
+      0,
+      71.53
+     ],
+     [
+      "vmmemWSL",
+      21724,
+      3.06
+     ],
+     [
+      "SearchIndexer.exe",
+      4144,
+      1.81
+     ],
+     [
+      "dwm.exe",
+      2996,
+      1.35
+     ],
+     [
+      "WindowsTerminal.exe",
+      15932,
+      1.32
+     ],
+     [
+      "System",
+      4,
+      1.14
+     ]
+    ],
+    "avail_gb": 32.43
+   },
+   {
+    "t": 255,
+    "cpu_percent": 39.1,
+    "other_cores": [
+     [
+      "System Idle Process",
+      0,
+      61.65
+     ],
+     [
+      "vmmemWSL",
+      21724,
+      5.38
+     ],
+     [
+      "System",
+      4,
+      3.52
+     ],
+     [
+      "WindowsTerminal.exe",
+      15932,
+      1.83
+     ],
+     [
+      "dwm.exe",
+      2996,
+      1.81
+     ],
+     [
+      "SearchIndexer.exe",
+      4144,
+      1.81
+     ]
+    ],
+    "avail_gb": 32.19
+   },
+   {
+    "t": 286,
+    "cpu_percent": 39.5,
+    "other_cores": [
+     [
+      "System Idle Process",
+      0,
+      62.06
+     ],
+     [
+      "vmmemWSL",
+      21724,
+      5.56
+     ],
+     [
+      "SearchIndexer.exe",
+      4144,
+      4.81
+     ],
+     [
+      "System",
+      4,
+      2.83
+     ],
+     [
+      "dwm.exe",
+      2996,
+      1.72
+     ],
+     [
+      "WindowsTerminal.exe",
+      15932,
+      1.7
+     ]
+    ],
+    "avail_gb": 31.78
+   }
+  ]
+ },
+ "per_cell_max_abs_diff_mV": {
+  "3955003482": 2.198987658630358e-10,
+  "4157825456": 1.325247467320878e-09,
+  "4188575291": 2.1259438653942198e-11,
+  "5584343344": 3.587530272852746e-10
+ },
+ "donors": {
+  "sp1": null,
+  "rerun": {
+   "3955003482": "l2-pyramidal-allen-541563728",
+   "4157825456": "l2-pyramidal-allen-541563728",
+   "4188575291": "l2-pyramidal-allen-541563728",
+   "5584343344": "l5-pv-basket-hl5bn1"
+  }
+ },
+ "speedup": {
+  "construction": 1.748,
+  "init_plus_run": 1.591,
+  "total": 1.674,
+  "label": "SP1 d1 seconds divided by rerun seconds; SP1 was machine-alone, the rerun load is recorded in run.json"
+ },
+ "status": "pass"
+}
