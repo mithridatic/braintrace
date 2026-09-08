@@ -1,6 +1,6 @@
 # H01 E cell: gain split (SP3, 2026-09-07)
 
-Status: registered before any run. Binds SP3 of the
+Status: CLOSED 2026-09-08, FAIL at 3 of 4 (see Outcome). Binds SP3 of the
 [population programme](2026-09-07-h01-population-programme.md); inherits the SP0 rules
 (Matryoshka before splitting, prediction/rejection/unchanged before every run, cap is a
 stop, killed = untested, both tiers in every verdict, causal model updated in the decision
@@ -186,3 +186,28 @@ stage-gate and flag-hash semantics are unchanged.
 
 Dry run on 2026-09-08 (`--stage 0 --dry-run`): `g0-b3 sweep43 skip`, `g0-b3 sweep50/53/56
 resume evaluation 1`, `evaluations used 1 of 4 after this invocation`.
+
+## Outcome (2026-09-08): FAIL at 3 of 4 evaluations
+
+Closed under section 5's fail rule, applied at three of four evaluations by the fail-fast rule
+(Hartshorne p034/p179). Decision `h01-e-gain/stage-close-decision.json`; result page
+`docs/evidence/h01-e-gain-result.md`.
+
+| Eval | Arm | Verdict |
+| --- | --- | --- |
+| 1 | `g0-b3` | B3 reproduced (8/10 at 250/310); 200 pA count 4 vs the exact band 1; sweep-43 late return +1.4..+1.7 mV (own rejection met) |
+| 2 | `g1-ih-half` | REJECTED: 250 pA count still 8; rest -1.7 mV, 310 rate -0.23 Hz |
+| 3 | `g2-leak-150` | REJECTED: sweep-43 return -3.8 mV, 310 count 6; counts 0/0/6 at 200/250/310 pA |
+| 4 | combined Ih half + leak x1.5 | **registered, not spent**: the additive prediction of arms 2 and 3 (rest -2.7 mV, 250 pA silent, 310 count <= 6, sweep-43 about -4.5 mV) fails every registered band, and the section 4 dose rule has no admissible dose (leak 1.1875: 310 rate -1.51 Hz, sweep-43 -1.2..-1.4 mV), so spending it cannot change the decision |
+
+Established: SK/Ca set the late rate at 310 pA (insensitive to Ih density); Ih density does not set
+the low-drive count; leak sets rheobase as a step, not a slope, and moves F5 in a fixed ratio with
+the count. Unresolved: the current that removes three spikes at 200-250 pA with 310 pA and F5 fixed.
+
+Reassessment (section 5, named): the low-drive gain (4 spikes at 200 pA vs human 1; 8 vs 5 at
+250 pA; correct at 310 pA) is set outside the fit's passive family. Candidates: a slow sodium
+inactivation or Kv7/M kinetics absent from the Allen genome, or a second human L2/3 donor with a
+recorded f-I curve (SP6b lead). Each is a new spec with its own cap; no fifth evaluation here.
+
+Unchanged: the E cell stays at frozen B3 (`e4825c83...`), unpromoted; B3's sweep-43 late-return miss
+stands as a known defect of B3. Sweep 54 (330 pA) stays sealed (no `h01-prediction-e3.json`).

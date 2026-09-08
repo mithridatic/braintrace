@@ -387,8 +387,11 @@ page (``docs/evidence/h01-population-status.md``) lists, layer by layer, what th
 contacts, assumed synaptic numbers with literature pins recorded, and a four-cell
 construction that has run one time step. The E cell gained an axonal initiation
 site on 2026-09-07 (``docs/evidence/h01-e-usable/stage-a-decision.json``), which
-moved its threshold and upstroke shape to the human's; its peak and count are
-under search.
+moved its threshold and upstroke shape to the human's. It stays at the frozen,
+unpromoted B3 profile: the gain split of its passive family closed as FAIL on
+2026-09-08 (``docs/evidence/h01-e-gain-result.md``), leaving the low-drive count
+(4 spikes at 200 pA against the donor's 1, 8 against 5 at 250 pA) to a
+voltage- or use-dependent current the fit does not have.
 
 Provenance and license
 ---------------------
