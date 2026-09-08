@@ -12,6 +12,13 @@ compartments and two supported projections now builds, initializes and executes
 [trace audit](h01-ready-40-ei-1ms-trace-audit.json),
 [result](h01-ready-40-result.md)).
 
+The first full-104 build exposed an endpoint rounding inconsistency, repaired
+without moving the measured soma. The corrected mapping passes geometry and
+strict soma-region membership checks on all 104 cells
+([audit](h01-ready-104-soma-audit.json),
+[diagnosis and result](h01-ready-104-endpoint-result.md)); full construction is
+being retried.
+
 Full-104 runtime, driven activity, final-population controls and physiological
 qualification remain open. The table below preserves the earlier programme's
 close snapshot; its failed-import and 12-cell runtime limits are superseded by

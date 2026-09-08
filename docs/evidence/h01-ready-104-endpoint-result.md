@@ -23,8 +23,15 @@ The failure shows why valid source geometry does not by itself prove electrical
 construction. Endpoints must be canonical in both location and interval mappings;
 an epsilon-relaxed membership check would hide that inconsistency.
 
-All 104 geometry and soma/region memberships are being audited under an
-1,800-second wall cap and 600-second silence cap before the full build retry.
-The audit is `h01-ready-104-soma-audit.json`, with process state in
-`h01-ready-104-soma-launch.json`. Its result is pending. Full-104 construction,
-runtime, matched controls and physiological qualification remain open.
+The subsequent audit passed for all 104 unique cells in 478.749 seconds:
+all 2,804,445 directed source segments are present, every electrical partition
+is valid, and every selected soma lies inside its electrical soma region.
+Evidence: [all-cell audit](h01-ready-104-soma-audit.json) and
+[launch/completion](h01-ready-104-soma-launch.json), exit 0. Its 1,800-second
+wall cap and 600-second silence cap were not reached.
+
+The full build retry is running with the same anatomy, donor mapping, CV policy,
+solver and input settings under source commit `b46ee7d`. The retry is recorded
+in `h01-ready-104-build-r2-launch.json`; raw output stays in
+`.cache/h01/readiness/104-build-r2-build.json`. Full-104 construction, runtime,
+matched controls and physiological qualification remain open until measured.

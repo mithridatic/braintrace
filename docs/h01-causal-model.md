@@ -1991,6 +1991,12 @@ before and passes after the change. See the
 one full-population construction boundary; the all-104 membership audit and build
 retry remain pending.
 
+The subsequent [all-104 geometry and soma audit](evidence/h01-ready-104-soma-audit.json)
+passed in 478.749 seconds, verifying all source segments and strict soma-region
+membership for every expected cell. This closes that membership boundary across
+the full population; it permits the build retry but does not establish full
+electrical construction or simulation.
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).
