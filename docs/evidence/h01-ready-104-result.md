@@ -202,3 +202,11 @@ explicit component selection (h01-corrected-wheel-audit.json). This is package
 preparation, not installed all104 runtime. Packaging uses a package-only Git
 archive: a full-repository archive unnecessarily included gigabytes of evidence
 and was stopped and removed. Await archive completion before extraction.
+
+Corrected all104 construction reached its 2400-second cap after registering
+95 cells, while discretizing cell 620880207. No complete build artifact was
+produced. h01-104-corrected-construction-decision.json records UNTESTED_TIMEOUT,
+not numerical failure. A post-timeout process check found no remaining worker
+with this exact output prefix. The automatic comparison correctly refused to
+pass the nonzero terminal result. About 30.44 GiB was available near the end;
+observed delay is not explained by low available RAM alone. No retry launched.

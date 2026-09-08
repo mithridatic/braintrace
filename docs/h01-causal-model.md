@@ -2211,3 +2211,9 @@ subthreshold; h01-four-soma-runtime-decision.json retains peaks and source hashe
 The formerly problematic 7196644737 now peaks at 48.182 mV on component 6;
 this supports the practical importance of source-supported component choice.
 It is not matched-recording physiology or full104 runtime qualification.
+
+The corrected all104 build timed out after 2400 seconds with 95 cells registered.
+Evidence: h01-104-corrected-construction-decision.json. This leaves full corrected
+construction unverified; it does not contradict the four-cell construction or
+runtime passes. Available RAM was about 30.44 GiB near termination, so memory
+exhaustion is not established as the cause. No automatic retry occurred.

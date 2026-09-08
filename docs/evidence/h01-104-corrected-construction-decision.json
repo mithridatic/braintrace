@@ -1,0 +1,14 @@
+{
+  "exit_code": 124,
+  "seconds": 2400.063509700005,
+  "status": "timeout; no construction pass",
+  "remaining_workers_stopped_after_launcher_timeout": [],
+  "registered_cells": 95,
+  "last_log_lines": [
+    "[2138.6s] Discretizing cell 5015035926 and selecting its output site",
+    "[2326.6s] Registered cell 5015035926: 17792 compartments",
+    "[2326.6s] Discretizing cell 620880207 and selecting its output site"
+  ],
+  "verdict": "UNTESTED_TIMEOUT",
+  "scope": "Corrected full construction incomplete; no runtime verdict"
+}

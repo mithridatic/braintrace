@@ -77,3 +77,12 @@ about 9.93 GiB; unique old traces were NOT deleted. Source/cache data retained.
 For packaging use a package-only git archive, await completion, then extract/build.
 Do not archive the entire evidence-heavy repository. Preserve unrelated untracked
 campaign JSON, profiles, 40-cell records and the live r2 launch record.
+
+## New terminal update
+
+Corrected all104 construction is STOPPED: exit124 after 2400 seconds, 95 cells
+registered; no complete build artifact. Automatic comparison session13397 ended
+with refusal on the nonzero exit. Decision is UNTESTED_TIMEOUT in
+h01-104-corrected-construction-decision.json. No matching worker remained at the
+post-timeout check. Do not treat the active-construction snapshot above as current.
+The older runtime is a separate job; inspect it independently. No retry launched.
