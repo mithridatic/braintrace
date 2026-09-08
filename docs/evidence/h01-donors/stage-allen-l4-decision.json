@@ -1,0 +1,197 @@
+{
+  "stage": "allen-l4",
+  "donor_key": "l4-pyramidal-allen-527952884",
+  "specification": "docs/specs/2026-09-07-h01-donor-allen-l4-import.md",
+  "acquisition": "h01-l4-acquisition.json",
+  "manifest": "h01-l4-reproduction-manifest.json",
+  "decision": "reproduction run (4 of cap 4, all rc 0, none aborted): REJECTED by the registered rule at the lower input, prediction missed within one at the fit input. The unmodified Allen 626170709 fit gives 19 spikes at sweep 69 (Allen 20; repeat band 17-20 held) and 8 at sweep 39 (Allen 12; off by 4). The dt pair agrees on both counts and on the first spike to 0.0016 ms (pair limits 0.0047 and 0.0044 ms); first spikes 33.74 and 39.60 ms after onset against 32.18 and 33.88 ms. The donor stays in the population as type-matched with these labels.",
+  "reproduction_status": "rejected",
+  "reproduction_json": "h01-l4-reproduction.json",
+  "verifications": {
+    "mechanism_set_equals_the_imported_626170538_set": "pass: genome references exactly CaDynamics, Ca_HVA, Ca_LVA, Ih, Im, K_P, K_T, Kv3_1, NaTs, Nap, SK (soma only); the eleven bundle .mod files are byte-identical (sha256) to .cache/human-pyramidal-l2/source-model; Kd, Kv2like, NaTa, NaV, Im_v2 ship in the bundle unused and are not compiled",
+    "fit_sweeps_69_72_protocol": "pass: Square - 2s Suprathreshold, 100 pA, 1020-3020 ms, 50 kHz; leak_pa -16.73/-19.63/-19.63/-17.30 pA, bridge 9.16 Mohm; NWB bias_current equals leak_pa within 0.01 pA; -20 mV crossing counts 20/17/19/20 equal Allen num_spikes",
+    "per_sweep_bias_and_bridge_from_ephys_sweeps": "pass: 76-sweep table joined (bias, leak_pa, bridge, num_spikes); Long Square 40-43 bias 0, sweep 39 +2.33 pA, 2-s squares -16.7 to -19.6 pA",
+    "fit_json_equals_bundle": "pass: well-known file 626185209 and the bundle's fit_parameters.json share sha256 1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+    "nwb_fetched": "pass: HTTP 200, Content-Length 17,976,764, sha256 e321fe93fb63c6af9118ff72df30756bf2e5599fecc54ab8f6f58c51d14fff5a, aibs_specimen_id 527952884, H16.06.008.01.31.06, IVSCC 1.0",
+    "model_zip_fetched": "pass: HTTP 200, Content-Disposition neuronal_model_626170709.zip, 143,426 bytes, sha256 a623a0aa761b2fce5411ac978f59ee04eebf2495d948c6f1131f7415d490d0fc",
+    "parameter_generator_cross_check": "pass: h01_l4_parameters.region_tuples applied to the cached L2 fit 541563728_fit.json equals the committed E_SOURCE",
+    "actual_image_help_check": "pass: docker run --rm -v <worktree>/docs/evidence:/evidence -v <worktree>/.cache/human-pyramidal-l4:/work -w /work/neuron-reference braintrace-h01-neuron:9.0.2 python /evidence/h01_l2_neuron_reference.py --help exits 0 and lists --donor-json (2026-09-07)",
+    "manifest_check": "pass: h01_campaign.check_manifest accepts the manifest (cap 4, 2 candidates x 2 inputs); docker_command renders the ready commands below"
+  },
+  "population_match": {
+    "before": 37,
+    "after": 55,
+    "cells_taken": "18 L4 pyramids without modifiers (matched) and 4 sparsely-spiny L4 pyramids (modifier)"
+  },
+  "registered_prediction": "counts 20 (sweep 69, 100 pA, 2 s) and 12 (sweep 39, 90 pA, 1 s) reproduced exactly; first spike within the dt-pair limit of 32.18 and 33.88 ms after onset",
+  "registered_rejection": "count differs by more than 1 at either input, or the dt pair disagrees on the count",
+  "bands": {
+    "100 pA": {
+      "sweep": 69,
+      "registered_count": 20,
+      "model_count_dt": 19,
+      "model_count_dt_half": 19,
+      "count_exact_prediction": "missed_within_one",
+      "repeat_band": "17-20: held",
+      "dt_pair_count": "agrees",
+      "registered_first_spike_ms": 32.18,
+      "model_first_spike_ms_dt": 33.743,
+      "model_first_spike_ms_dt_half": 33.742,
+      "first_spike_pair_limit_ms": 0.0047,
+      "first_spike_prediction": "missed",
+      "finite": true
+    },
+    "90 pA": {
+      "sweep": 39,
+      "registered_count": 12,
+      "model_count_dt": 8,
+      "model_count_dt_half": 8,
+      "count_exact_prediction": "rejected",
+      "repeat_band": null,
+      "dt_pair_count": "agrees",
+      "registered_first_spike_ms": 33.88,
+      "model_first_spike_ms_dt": 39.602,
+      "model_first_spike_ms_dt_half": 39.601,
+      "first_spike_pair_limit_ms": 0.0044,
+      "first_spike_prediction": "missed",
+      "finite": true
+    }
+  },
+  "usable_tier": {
+    "source": {
+      "counts": {
+        "100 pA": {
+          "human": 20,
+          "model": 19
+        },
+        "90 pA": {
+          "human": 12,
+          "model": 8
+        }
+      },
+      "verdicts_by_row": {
+        "100 pA": {
+          "rate_hz": {
+            "pass": 1
+          },
+          "adaptation_ratio": {
+            "fail": 1
+          },
+          "width_ms": {
+            "fail": 19
+          },
+          "ahp_mv": {
+            "unresolvable": 19
+          },
+          "count": {
+            "pass": 1
+          },
+          "first_spike_ms": {
+            "pass": 1
+          }
+        },
+        "90 pA": {
+          "rate_hz": {
+            "fail": 1
+          },
+          "adaptation_ratio": {
+            "fail": 1
+          },
+          "width_ms": {
+            "fail": 8
+          },
+          "ahp_mv": {
+            "unresolvable": 8
+          }
+        }
+      },
+      "page": "h01-l4-reproduction/source-usable.md"
+    },
+    "source-dt-half": {
+      "verdicts_by_row": {
+        "100 pA": {
+          "rate_hz": {
+            "pass": 1
+          },
+          "adaptation_ratio": {
+            "fail": 1
+          },
+          "width_ms": {
+            "fail": 19
+          },
+          "ahp_mv": {
+            "unresolvable": 19
+          },
+          "count": {
+            "pass": 1
+          },
+          "first_spike_ms": {
+            "pass": 1
+          }
+        },
+        "90 pA": {
+          "rate_hz": {
+            "fail": 1
+          },
+          "adaptation_ratio": {
+            "fail": 1
+          },
+          "width_ms": {
+            "fail": 8
+          },
+          "ahp_mv": {
+            "unresolvable": 8
+          }
+        }
+      },
+      "page": "h01-l4-reproduction/source-dt-half-usable.md",
+      "note": "same verdict multiset as the dt run"
+    },
+    "rule": "a pass is not required to enter the population; the verdicts are labels"
+  },
+  "population_label": "type-matched, reproduction rejected, usable verdicts: 100 pA: rate_hz pass, adaptation_ratio fail, width_ms 19 fail, ahp_mv 19 unresolvable, count pass, first_spike_ms pass; 90 pA: rate_hz fail, adaptation_ratio fail, width_ms 8 fail, ahp_mv 8 unresolvable",
+  "braincell_transfer": "not blocked by mechanisms (H01L2_* carry the eleven); waits for the SP2 matched-mesh gate on its own recordings",
+  "wall_clock_seconds": {
+    "runs": [
+      {
+        "name": "source",
+        "input": "69",
+        "seconds": 38.2215061999741,
+        "returncode": 0,
+        "aborted": false
+      },
+      {
+        "name": "source",
+        "input": "39",
+        "seconds": 30.890051800000947,
+        "returncode": 0,
+        "aborted": false
+      },
+      {
+        "name": "source-dt-half",
+        "input": "69",
+        "seconds": 69.85246600001119,
+        "returncode": 0,
+        "aborted": false
+      },
+      {
+        "name": "source-dt-half",
+        "input": "39",
+        "seconds": 55.474371799995424,
+        "returncode": 0,
+        "aborted": false
+      }
+    ],
+    "total": 194.4,
+    "measured_by": "h01_campaign.py campaign-log.json (perf_counter around docker run)"
+  },
+  "container_stderr": {
+    "note": "Recorded under the SP6d runner, which wrote <candidate>-<input>.stderr.txt. After the feat/h01-braincell merge the runner writes <stem>.stderr.log and records stderr_tail/stderr_log in campaign-log rows; these historical files are kept as named and nothing is lost (all four were empty).",
+    "source-39.stderr.txt": "empty",
+    "source-69.stderr.txt": "empty",
+    "source-dt-half-39.stderr.txt": "empty",
+    "source-dt-half-69.stderr.txt": "empty"
+  },
+  "run_date": "2026-09-07",
+  "note": "The fit sweep itself lands inside the human repeat band; the miss grows at the lower, unfitted input (rheobase-side gain too low: 8 for 12 at 90 pA). Conditions not varied: command-only input (held bias -16.7 / +2.3 pA not injected), v_init -80.818 mV, two 30 um x 1 um axon sections, nseg factor 1, fixed step. A gain split at the unfitted input is a new registration, not part of SP6d."
+}

@@ -165,3 +165,107 @@ def test_manifest_names_the_finalist_mode_and_it_is_aligned(capsys):
     runner.main(["--manifest", str(FOLDER/"h01-transfer-i-manifest.json"), "--check-alignment"])
     printed = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert printed["profile_alignment"]["aligned"] is True
+
+
+def test_peak_method_is_threaded_into_scores_and_the_decision_json(tmp_path, capsys):
+    manifest = copy.deepcopy(MANIFEST)
+    root = tmp_path
+    out = root/"docs/evidence"/manifest["output_dir"]
+    ref = root/"docs/evidence"/manifest["reference_dir"]
+    out.mkdir(parents=True), ref.mkdir(parents=True)
+    for stem in manifest["references"].values():
+        np.savez(ref/(stem+".npz"), **_trace())
+    np.savez(out/"a1-matched-027.npz", **_trace())
+    for arm in manifest["arms"]:
+        arm["window"] = "halving"
+    scored = runner.score_manifest(root, manifest, peak_method="interpolated")
+    row = scored["scores"]["a1-matched-027"]
+    assert row["peak_method"] == "interpolated" and set(row["gate"]) == {
+        "rise_crossing_ms", "peak_interpolated_voltage_mv", "time_above_threshold_ms"}
+    assert {"peak_sample_voltage_mv", "peak_interpolated_voltage_mv"} <= set(row["events"][0]["errors"])
+    assert set(row["events"][0]["in_gate"]) == set(row["gate"])
+    assert scored["halving"]["braincell_halving"]["status"] == "untested"
+    report = runner.decision_report(manifest, scored)
+    assert report["peak_method"] == "interpolated" and report["decision"] == "untested"
+    default = runner.score_manifest(root, manifest)
+    assert default["scores"]["a1-matched-027"]["peak_method"] == "sample"
+    assert "peak_sample_voltage_mv" in default["scores"]["a1-matched-027"]["gate"]
+
+
+def test_reference_root_reads_reference_traces_from_another_tree(tmp_path):
+    manifest = copy.deepcopy(MANIFEST)
+    root, elsewhere = tmp_path/"here", tmp_path/"sibling"
+    out = root/"docs/evidence"/manifest["output_dir"]
+    ref = elsewhere/"docs/evidence"/manifest["reference_dir"]
+    out.mkdir(parents=True), ref.mkdir(parents=True)
+    for stem in manifest["references"].values():
+        np.savez(ref/(stem+".npz"), **_trace())
+    np.savez(out/"a1-matched-027.npz", **_trace())
+    for arm in manifest["arms"]:
+        arm["window"] = "halving"
+    scored = runner.score_manifest(root, manifest, reference_root=elsewhere)
+    assert scored["scores"]["a1-matched-027"]["passed"]
+    assert scored["reference_sha256"]["027"] and scored["reference_root"] == str(elsewhere)
+
+
+def test_gate_amendment_names_the_half_millivolt_peak_row_and_the_richardson_pairs():
+    assert MANIFEST["gate"] == {"rise_crossing_ms": .1, "peak_sample_voltage_mv": .5, "time_above_threshold_ms": .01}
+    assert "0.5 mV" in MANIFEST["gate_amendment"]
+    arms = {arm["name"]: arm for arm in MANIFEST["arms"]}
+    for name, partner in MANIFEST["richardson_pairs"].items():
+        assert arms[partner]["dt_ms"] == pytest.approx(arms[name]["dt_ms"]/2.)
+        assert arms[partner]["current_na"] == arms[name]["current_na"]
+        assert arms[partner]["simulator"] == arms[name]["simulator"]
+
+
+def _peak_scaled(scale, events=3):
+    t = np.arange(0., 340.001, .01)
+    v = np.full_like(t, -80.)
+    for k in range(events):
+        v += scale*120.*np.exp(-((t-(275.+6.*k))/.3)**2)
+    return {"time_ms": t, "voltage_mv": v}
+
+
+def test_richardson_peaks_extrapolate_first_order_toward_the_reference():
+    reference, coarse, fine = _peak_scaled(1.), _peak_scaled(.99), _peak_scaled(.995)
+    rows = runner.richardson_peaks(reference, coarse, fine, (270., 329.5), "interpolated")
+    assert [row["event"] for row in rows] == [1, 2, 3]
+    for row in rows:
+        assert row["peak_half_dt_mv"] > row["peak_dt_mv"]
+        assert row["peak_richardson_mv"] == pytest.approx(2.*row["peak_half_dt_mv"]-row["peak_dt_mv"])
+        assert abs(row["peak_richardson_error_mv"]) < .02
+    assert runner.richardson_peaks(reference, coarse, _peak_scaled(.995, events=2), (270., 329.5)) == []
+
+
+def test_attach_richardson_fills_partnered_events_and_nulls_the_rest():
+    score = runner.score_pair(_trace(), _trace(), (270., 329.5), MANIFEST["gate"])
+    richardson = [{"event": 1, "peak_richardson_mv": 40.1, "peak_richardson_error_mv": .1}]
+    runner.attach_richardson(score, richardson)
+    assert score["richardson_events"] == 1
+    assert score["events"][0]["peak_richardson_mv"] == 40.1 and score["events"][0]["peak_richardson_error_mv"] == .1
+    assert all(row["peak_richardson_mv"] is None and row["peak_richardson_error_mv"] is None
+               for row in score["events"][1:])
+
+
+def test_score_manifest_adds_the_richardson_column_from_the_half_dt_partner(tmp_path):
+    manifest = copy.deepcopy(MANIFEST)
+    root = tmp_path
+    out = root/"docs/evidence"/manifest["output_dir"]
+    ref = root/"docs/evidence"/manifest["reference_dir"]
+    out.mkdir(parents=True), ref.mkdir(parents=True)
+    for stem in manifest["references"].values():
+        np.savez(ref/(stem+".npz"), **_peak_scaled(1.))
+    np.savez(out/"a1-matched-027.npz", **_peak_scaled(.99))
+    np.savez(out/"r-braincell-matched-027.npz", **_peak_scaled(.99))
+    np.savez(out/"r-braincell-matched-027-halfdt.npz", **_peak_scaled(.995))
+    for arm in manifest["arms"]:
+        arm["window"] = "halving"
+    scored = runner.score_manifest(root, manifest, peak_method="interpolated")
+    for name in ("a1-matched-027", "r-braincell-matched-027"):
+        rows = scored["scores"][name]["events"]
+        assert scored["scores"][name]["richardson_events"] == 3
+        assert all(abs(row["peak_richardson_error_mv"]) < .02 for row in rows)
+        assert all(abs(row["errors"]["peak_interpolated_voltage_mv"]) > .5 for row in rows)
+    assert "richardson_events" not in scored["scores"]["b1-fixed-027"]
+    report = runner.decision_report(manifest, scored)
+    assert report["gate"]["peak_sample_voltage_mv"] == .5 and "0.5 mV" in report["gate_amendment"]

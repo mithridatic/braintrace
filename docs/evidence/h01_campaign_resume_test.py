@@ -1,6 +1,7 @@
 """Per-input skip, untested-resume, evaluation counting, abort override, and dry-run plan of the runner."""
 
 import json
+import subprocess
 
 import pytest
 
@@ -104,12 +105,9 @@ def test_abort_override_above_manifest_needs_a_registered_reason():
 def test_run_candidate_runs_only_the_requested_inputs_under_the_given_abort(tmp_path, monkeypatch):
     seen = []
 
-    class Done:
-        returncode = 0
-
     def fake(command, **kwargs):
         seen.append((command[-1], kwargs.get("timeout")))
-        return Done()
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
     monkeypatch.setattr(campaign.subprocess, "run", fake)
     manifest = _manifest()
     rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], False, inputs=["027"], abort_seconds=1200)
@@ -136,9 +134,8 @@ def test_main_dry_run_prints_the_plan_and_writes_no_log(tmp_path, monkeypatch, c
 
 
 def test_main_resume_completes_untested_inputs_without_a_new_evaluation(tmp_path, monkeypatch, capsys):
-    class Done:
-        returncode = 0
-    monkeypatch.setattr(campaign.subprocess, "run", lambda command, **kwargs: Done())
+    monkeypatch.setattr(campaign.subprocess, "run",
+                        lambda command, **kwargs: subprocess.CompletedProcess(command, 0, stdout="", stderr=""))
     manifest = _ungated(_manifest(1))
     candidate = manifest["candidates"][0]
     _finish(tmp_path, manifest, candidate, "019")

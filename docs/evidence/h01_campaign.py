@@ -314,6 +314,26 @@ def abort_limit(manifest, override, reason):
     return override
 
 
+def _capture_text(value):
+    """Decode a captured stream (str, bytes or None) to text."""
+    if value is None:
+        return ""
+    return value.decode(errors="replace") if isinstance(value, bytes) else str(value)
+
+
+def persist_container_output(folder, stem, stdout, stderr):
+    """Write ``<stem>.stderr.log`` (stderr, then the stdout tail) and return the last 20 stderr lines.
+
+    The log is written on every real run so a container that dies before its report
+    (for example exit 139) still leaves its diagnostic text behind ``--rm``.
+    """
+    stderr, stdout = _capture_text(stderr), _capture_text(stdout)
+    stdout_tail = stdout.splitlines()[-50:]
+    text = stderr+"\n--- stdout tail ---\n"+"\n".join(stdout_tail)+"\n"
+    (folder/f"{stem}.stderr.log").write_text(text, encoding="utf-8")
+    return stderr.splitlines()[-20:]
+
+
 def run_candidate(root, manifest, candidate, dry_run, inputs=None, abort_seconds=None):
     """Write the flag file, run the chosen inputs in turn under the abort limit, and return timings.
 
@@ -335,7 +355,8 @@ def run_candidate(root, manifest, candidate, dry_run, inputs=None, abort_seconds
     Returns
     -------
     list of dict
-        One row per input: name, input, seconds, returncode, aborted, command.
+        One row per input: name, input, seconds, returncode, aborted, stderr_tail,
+        stderr_log (``<output_dir>/<stem>.stderr.log``, written on every real run), command.
     """
     folder = root/"docs/evidence"/manifest["output_dir"]
     folder.mkdir(parents=True, exist_ok=True)
@@ -344,22 +365,29 @@ def run_candidate(root, manifest, candidate, dry_run, inputs=None, abort_seconds
     rows = []
     for input_name in (list(manifest["inputs"]) if inputs is None else inputs):
         command = docker_command(root, manifest, candidate, input_name)
+        stem = f"{candidate['name']}-{input_name}"
         start = time.perf_counter()
-        code, aborted = None, False
+        code, aborted, tail, log_name = None, False, [], None
         if not dry_run:
             try:
-                code = subprocess.run(command, env={**os.environ, "MSYS_NO_PATHCONV": "1"}, capture_output=True,
-                                      text=True, timeout=limit).returncode
-            except subprocess.TimeoutExpired:
+                completed = subprocess.run(command, env={**os.environ, "MSYS_NO_PATHCONV": "1"}, capture_output=True,
+                                           text=True, timeout=limit)
+                code = completed.returncode
+                stdout, stderr = completed.stdout, completed.stderr
+            except subprocess.TimeoutExpired as expired:
                 aborted = True
+                stdout, stderr = expired.stdout, expired.stderr
                 subprocess.run(["docker", "kill", container_name(manifest, candidate, input_name)],
                                capture_output=True, text=True, check=False)
                 for suffix in (".json", ".npz"):
-                    stale = folder/f"{candidate['name']}-{input_name}{suffix}"
+                    stale = folder/f"{stem}{suffix}"
                     if stale.exists():
                         stale.unlink()
+            tail = persist_container_output(folder, stem, stdout, stderr)
+            log_name = f"{manifest['output_dir']}/{stem}.stderr.log"
         rows.append({"name": candidate["name"], "input": input_name, "seconds": time.perf_counter()-start,
-                     "returncode": code, "aborted": aborted, "command": command})
+                     "returncode": code, "aborted": aborted, "stderr_tail": tail, "stderr_log": log_name,
+                     "command": command})
     return rows
 
 

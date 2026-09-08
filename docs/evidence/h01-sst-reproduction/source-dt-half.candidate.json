@@ -1,0 +1,6 @@
+{
+  "biophys": "/work/source/biophys_HL5MN1.hoc",
+  "dt_ms": 0.0125,
+  "initial_mv": -81.5,
+  "morphology": "/work/morphologies/HL5MN1.swc"
+}

@@ -265,3 +265,29 @@ def test_candidate_json_accepts_the_donor_flags(monkeypatch, tmp_path):
     scope = _cli_scope(monkeypatch, ["--candidate-json", str(candidate)])
     assert scope["biophys_procedure"] == "biophys_HL5MN1" and scope["args"].initial_mv == -81.5
     assert scope["candidate_record"]["file"] == "source.candidate.json"
+
+
+class _DeletedSectionArray:
+    """Stand-in for a hoc section array whose only section was deleted: any access aborts."""
+
+    def __getitem__(self, index):
+        raise RuntimeError("section in the object was deleted")
+
+    def __iter__(self):
+        raise RuntimeError("section in the object was deleted")
+
+
+def test_myelin_geometry_skips_a_template_array_of_deleted_sections(monkeypatch):
+    """HL5BN1's template deletes ``myelin[1]`` and never recreates it; the driver must not touch it."""
+    scope = _cli_scope(monkeypatch, [])
+    live = {("myelin", 0): False}
+    scope["h"] = SimpleNamespace(section_exists=lambda name, index, cell: float(live.get((name, index), False)))
+    cell = SimpleNamespace(myelin=_DeletedSectionArray())
+    assert scope["_existing_sections"](cell, "myelin") == []
+    section = object()
+    live[("myelin", 0)] = True
+    cell = SimpleNamespace(myelin={0: section})
+    assert scope["_existing_sections"](cell, "myelin") == [section]
+    text = SOURCE.read_text()
+    assert "for m in cell.myelin" not in text
+    assert '_existing_sections(cell, "myelin")' in text

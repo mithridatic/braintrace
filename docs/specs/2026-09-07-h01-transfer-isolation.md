@@ -174,3 +174,83 @@ without a measured estimate is not launched.
 Tests on fixtures only: no NEURON, no BrainCell run longer than a few steps. The runner's
 scoring is tested with synthetic traces shaped like the isolation test. Coverage is reported
 for `h01_l2_cell.py` and the three evidence scripts.
+
+## Amendment 2026-09-07 (after step 1, before any further code or run): interpolated peak metric
+
+Step 1 (`docs/evidence/h01-i-transfer/step1-decision.json`) showed the two timing gates
+(rise crossing, time above -20 mV) inside the halved gate at every event of the dt 0.005 /
+0.0025 halving pair, while the peak-sample voltage differed by 0.21-0.23 mV, and by
+0.45 mV (dt 0.005) then 0.22 mV (dt 0.0025) against the NEURON CVode finalist. The peak
+difference halves with dt: first-order convergence of a **sampling convention**, not of the
+solution. BrainCell records the end-of-step voltage (first sample at dt) on a fixed grid,
+so the recorded maximum sits up to dt/2 away from the true peak on a waveform that turns
+over at about 1e5 mV/s^2, and the sampled maximum is biased low by an amount proportional to
+the grid step; CVode samples where its adaptive step lands. The two traces therefore never
+sample the same instant near the peak, and comparing sampled maxima measures the grids,
+not the membrane.
+
+**Metric registered.** `peak_interpolated_voltage_mv`: the vertex of the parabola through
+the three samples around the discrete maximum of each event, computed in the general
+three-point (Lagrange) form so that it is exact for a parabola on any grid, uniform or not.
+It is applied identically to both traces (BrainCell and the NEURON CVode reference) by the
+same function. A flat triple or a vertex outside the three-sample span falls back to the
+sampled maximum. The sampled metric (`peak_sample_voltage_mv`) is still computed and
+reported beside it on every row; the default `peak_method="sample"` leaves every existing
+result reproducible. The runner takes `--peak-method` and records `peak_method` in every
+decision JSON. Timing gates are unchanged and were already valid at dt 0.005.
+
+**Prediction (before re-scoring).** With the interpolated metric the existing step-1 traces
+give: (a) halving pair `r-braincell-matched-027` vs `-halfdt`, 270-329.5 ms, peak
+difference under 0.05 mV at every event; (b) `r-braincell-matched-027` (dt 0.005) vs the
+NEURON finalist `e-kv3-close2-027`, peak difference under 0.1 mV at every event.
+
+**Rejection.** Either (a) or (b) fails at any event: SP2 stops as `time_level_open`; no
+further run is launched.
+
+**If it holds.** The registered arms run one at a time in manifest order, skipping the two
+already done: `a0-maxcv-027`, `a1-matched-027`, `a1-matched-019`, `a1-matched-023`, then
+NEURON `b1-fixed-027`, `b1-fixed-019`, `r-neuron-fixed-027-halfdt`. The decision literal
+is read on the interpolated metric with the timing gates unchanged; both peak metrics are
+reported. The 0.23 nA arm is a spent-holdout control, scored and never used to choose.
+The BrainCell full-train cost is derived (about 525 s per run at dt 0.005, an upper bound
+from the 330 ms wall clock); NEURON fixed-step full-train cost is unmeasured.
+
+## Amendment 2026-09-07 (after step 1b, user decision, before any further code or run): peak row at 0.5 mV, Richardson column
+
+Step 1b located the peak deficit in the integrator's first-order convergence in dt (the peak
+climbs 0.21 mV per halving and its first-order Richardson limit is within 0.012 mV of CVode
+at every event), not in the mesh and not in the sampling. The usable tier does not score the
+peak, and the human contract tolerates 1 mV on it. The user therefore decided:
+
+**Gate for the full-train arms (A0, A1, B1, window 270-1270 ms).** Count equal; rise crossing
+0.1 ms; time above -20 mV 0.01 ms (both unchanged); peak row: dt-0.005 interpolated peak error
+under **0.5 mV** (half the human contract's 1 mV), read with `--peak-method interpolated`. The
+manifest `gate` peak limit becomes 0.5; the halving-pair validity keeps the spec's "half the
+gate" rule on the same amended gate (0.05 ms / 0.25 mV / 0.005 ms). Under this rule the
+existing step-1 BrainCell pair (interpolated peak difference 0.213 mV) is inside the half
+gate, so the BrainCell time level is valid for the amended gate; the NEURON pair
+(`b1-fixed-027` vs `r-neuron-fixed-027-halfdt`) is still to be run.
+
+**Derived column.** Beside both peak metrics every row carries the first-order Richardson
+extrapolation of the actual peak, `2 x peak(dt 0.0025) - peak(dt 0.005)`, and its error
+against the reference, for every event where a dt-0.0025 partner trace of the same arm exists
+(manifest `richardson_pairs`; the partners are 330 ms, so the column is filled for the events
+inside 270-329.5 ms and null elsewhere). It is reported, never gated.
+
+**Registered prediction.** A1 (`a1-matched-027`, `a1-matched-019`) passes count, both timing
+gates and the 0.5 mV peak row at every event over 270-1270 ms against the CVode finalist.
+A0 (`a0-maxcv-027`, MaxCVLen 2.5 um) fails at least one late-event rise crossing. B1
+(`b1-fixed-027`, `b1-fixed-019`, NEURON fixed step at dt 0.005) matches the CVode finalist
+inside the timing gate at every event. `a1-matched-023` is scored as a spent-holdout control
+and is never used to decide.
+
+**Rejection and decision literals.** Unchanged from the decision-rule table: `mesh` when A1 and
+B1 pass everywhere and the halving pairs are inside the half gate;
+`implementation_difference_at_event_k` when A1 fails at event k while B1 passes; `integration`
+when B1 fails; `time_level_open` when a halving pair is over the half gate. A killed run is
+untested and is reported as such.
+
+**Runs.** One at a time, detached, 600 s watchdog for BrainCell (derived, unmeasured cost
+about 525 s per full train; never quoted as measured) and the 900 s abort for NEURON; wall
+clocks recorded per arm. Order: `a1-matched-027`, `a1-matched-019`, `a1-matched-023`,
+`a0-maxcv-027`, `b1-fixed-027`, `b1-fixed-019`, `r-neuron-fixed-027-halfdt`.

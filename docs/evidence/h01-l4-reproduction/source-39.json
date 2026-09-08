@@ -1,0 +1,607 @@
+{
+  "model_id": 626170709,
+  "specimen_id": 527952884,
+  "donor": {
+    "donor_key": "l4-pyramidal-allen-527952884",
+    "file": "/work/neuron-reference/donor.json",
+    "fit": "527952884_fit.json",
+    "morphology": "morphology.swc",
+    "morphology_sha256": "9ebca5cc4ab87d55631d5760b6c909f6d4c16a32301220bd51e99580d677032e"
+  },
+  "sweep": 39,
+  "waveform_sha256": "b01a9b7df835064f166006060ccc5faadb962e87aa6d716690000b6c7d3ed1f2",
+  "soma_observation_units": {
+    "axon_voltage_mv": "mV; axon[1](0.5), distal half of the 60 um stub"
+  },
+  "neuron_version": "9.0.2",
+  "dt_ms": 0.005,
+  "solver": "fixed step",
+  "cvode_atol": null,
+  "integration_seconds": 20.79931736900471,
+  "input": "source command only; bias not added",
+  "added_bias_na": 0.0,
+  "nseg_factor": 1,
+  "requested_stop_ms": 2520.0,
+  "observed_stop_ms": 2520.0000000434006,
+  "recording_convention": "raw fixed-step samples",
+  "calcium_removal_intervention": {
+    "factor": 1.0,
+    "source_decay_ms": 175.16982466877238,
+    "applied_decay_ms": 175.16982466877238
+  },
+  "sodium_recovery_factor": null,
+  "sodium_opening_factor": null,
+  "kv3_closing_factor": null,
+  "sodium_density_factor": 1.0,
+  "ih_density_factor": 1.0,
+  "leak_factor": 1.0,
+  "ih_distribution": null,
+  "leak_reversal_shift_mv": 0.0,
+  "regional_density_interventions": [],
+  "insert_density_interventions": [],
+  "capacitance_factors": [],
+  "charge_balance_geometry": null,
+  "candidate_json": {
+    "file": "source.candidate.json",
+    "values": {
+      "dt_ms": 0.005
+    },
+    "sha256": "d378f56b00307a52192f133a0aa08ce4d6d4d7922ca173565fa7858b2c6bb969"
+  },
+  "applied_passive_parameters": [
+    {
+      "ra": 14.9970627156,
+      "cm": [
+        {
+          "section": "soma",
+          "cm": 1.0
+        },
+        {
+          "section": "axon",
+          "cm": 1.0
+        },
+        {
+          "section": "dend",
+          "cm": 1.5826204667213606
+        },
+        {
+          "section": "apic",
+          "cm": 1.5826204667213606
+        }
+      ],
+      "e_pas": -80.81838607788086
+    }
+  ],
+  "mechanism_source_sha256": {
+    "CaDynamics.mod": "f012def9758f7d0244b81c54291edea6597c15fad99b9f7b5725b121a3567f16",
+    "Ca_HVA.mod": "021d34cf9ef3e76b0f2afee1a1eeab40eed56d0d3b1362b7e1019f4433273c71",
+    "Ca_LVA.mod": "a7a9ef262541dc96f5d19afd97778f9320808d01ce397350f1f2be3db30f920f",
+    "Ih.mod": "8616325d83add9a1a6546972352b4a62e57095ba25f3c6b5a57ab8b397e2d662",
+    "Im.mod": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+    "K_P.mod": "2254697617c8da162ff8e5495e4d512fce53f77b44b86754855f11cee4ab3b3e",
+    "K_T.mod": "1cb9d72f985ef028922cafafed079df5c47b87a893001304181ec48881367ba7",
+    "Kv3_1.mod": "e636c3437a9d9ccb69a0a7efc09fcfe1f16ad97f0468615b70fdbc352fe0855c",
+    "NaTs.mod": "d75ed63d6367fe27c6e5671704594a510e8d83b57db835f30fc36e2f24bef6cf",
+    "Nap.mod": "979d21508f5b089e7b782835ea7f60311223bdc3a8e5242056c594305d2fb220",
+    "SK.mod": "079f1e3cac7444696d480b8e02853b215cd93e0c7b9986dbb54925fc49eddbeb"
+  },
+  "mechanism_library_sha256": "6ff8dda8b29f6f64fecad601ad7624c88e664076219228e9544455f0102ef1ec",
+  "initial_mv": -80.81838607788086,
+  "temperature_c": 34.0,
+  "voltage_convention": "model internal voltage; compare to corrected human voltage",
+  "fit_sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+  "applied_genome": [
+    {
+      "section": "soma",
+      "name": "gbar_Im",
+      "value": 0.0003408221448736093,
+      "mechanism": "Im",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Ih",
+      "value": 0.005766004813494249,
+      "mechanism": "Ih",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_NaTs",
+      "value": 2.053808334514681,
+      "mechanism": "NaTs",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Nap",
+      "value": 0.0019835830648151534,
+      "mechanism": "Nap",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_K_P",
+      "value": 8.370143738944957e-05,
+      "mechanism": "K_P",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_K_T",
+      "value": 0.0005156799865624617,
+      "mechanism": "K_T",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_SK",
+      "value": 0.48416836488227766,
+      "mechanism": "SK",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Kv3_1",
+      "value": 0.44920028925755756,
+      "mechanism": "Kv3_1",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Ca_HVA",
+      "value": 0.0009610538621567574,
+      "mechanism": "Ca_HVA",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Ca_LVA",
+      "value": 0.009648645320742421,
+      "mechanism": "Ca_LVA",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gamma_CaDynamics",
+      "value": 7.4272125002753e-05,
+      "mechanism": "CaDynamics",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "decay_CaDynamics",
+      "value": 175.16982466877238,
+      "mechanism": "CaDynamics",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "g_pas",
+      "value": 0.0004325404210761702,
+      "mechanism": "",
+      "section_count": 1
+    },
+    {
+      "section": "axon",
+      "name": "g_pas",
+      "value": 0.0002680384185644075,
+      "mechanism": "",
+      "section_count": 2
+    },
+    {
+      "section": "dend",
+      "name": "g_pas",
+      "value": 1.6307512951158188e-05,
+      "mechanism": "",
+      "section_count": 20
+    },
+    {
+      "section": "apic",
+      "name": "g_pas",
+      "value": 1.037799308786824e-07,
+      "mechanism": "",
+      "section_count": 21
+    }
+  ],
+  "sections": [
+    {
+      "name": "soma[0]",
+      "length_um": 9.54937744140625,
+      "nseg": 1,
+      "cm_uf_cm2": 1.0,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": null,
+      "area_um2": 286.48443559082386
+    },
+    {
+      "name": "dend[0]",
+      "length_um": 41.19861997071352,
+      "nseg": 3,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "soma[0]",
+      "area_um2": 77.22904863723701
+    },
+    {
+      "name": "dend[1]",
+      "length_um": 100.56378079007015,
+      "nseg": 5,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[0]",
+      "area_um2": 139.88205432289996
+    },
+    {
+      "name": "dend[2]",
+      "length_um": 67.44552887312783,
+      "nseg": 3,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[0]",
+      "area_um2": 93.88652114903793
+    },
+    {
+      "name": "dend[3]",
+      "length_um": 33.89393081983944,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "soma[0]",
+      "area_um2": 87.51593574846436
+    },
+    {
+      "name": "dend[4]",
+      "length_um": 9.718321352174263,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[3]",
+      "area_um2": 19.323965734157042
+    },
+    {
+      "name": "dend[5]",
+      "length_um": 157.45033002561976,
+      "nseg": 7,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[4]",
+      "area_um2": 239.65316043829793
+    },
+    {
+      "name": "dend[6]",
+      "length_um": 83.93636378433851,
+      "nseg": 5,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[4]",
+      "area_um2": 127.67356429721914
+    },
+    {
+      "name": "dend[7]",
+      "length_um": 248.41427316051278,
+      "nseg": 13,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[3]",
+      "area_um2": 456.8365703335214
+    },
+    {
+      "name": "dend[8]",
+      "length_um": 0.8550200886154563,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "soma[0]",
+      "area_um2": 1.8302526368651186
+    },
+    {
+      "name": "dend[9]",
+      "length_um": 31.160033108503463,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[8]",
+      "area_um2": 54.1581257225491
+    },
+    {
+      "name": "dend[10]",
+      "length_um": 23.382492656495167,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[8]",
+      "area_um2": 44.00063045544268
+    },
+    {
+      "name": "dend[11]",
+      "length_um": 39.044077282346464,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[10]",
+      "area_um2": 61.227490089724974
+    },
+    {
+      "name": "dend[12]",
+      "length_um": 61.39853250550949,
+      "nseg": 3,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[10]",
+      "area_um2": 97.18195949195406
+    },
+    {
+      "name": "dend[13]",
+      "length_um": 10.357458253358107,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "soma[0]",
+      "area_um2": 17.420182415619472
+    },
+    {
+      "name": "dend[14]",
+      "length_um": 62.25759018888075,
+      "nseg": 3,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[13]",
+      "area_um2": 90.17673797846903
+    },
+    {
+      "name": "dend[15]",
+      "length_um": 85.78115293511583,
+      "nseg": 5,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[13]",
+      "area_um2": 136.03002264883327
+    },
+    {
+      "name": "dend[16]",
+      "length_um": 22.248495278078096,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[15]",
+      "area_um2": 33.59391179303643
+    },
+    {
+      "name": "dend[17]",
+      "length_um": 13.140720130395199,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[15]",
+      "area_um2": 21.630275583347
+    },
+    {
+      "name": "dend[18]",
+      "length_um": 60.871563970260354,
+      "nseg": 3,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[17]",
+      "area_um2": 94.7229875646037
+    },
+    {
+      "name": "dend[19]",
+      "length_um": 144.81600414892858,
+      "nseg": 7,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "dend[17]",
+      "area_um2": 220.22648215871513
+    },
+    {
+      "name": "apic[0]",
+      "length_um": 22.373403781512103,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "soma[0]",
+      "area_um2": 97.64426965691104
+    },
+    {
+      "name": "apic[1]",
+      "length_um": 15.397775209498937,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[0]",
+      "area_um2": 47.5498566138807
+    },
+    {
+      "name": "apic[2]",
+      "length_um": 133.32392981985527,
+      "nseg": 7,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[1]",
+      "area_um2": 259.24697095443014
+    },
+    {
+      "name": "apic[3]",
+      "length_um": 9.480895872051715,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[1]",
+      "area_um2": 23.40609260481852
+    },
+    {
+      "name": "apic[4]",
+      "length_um": 3.2242507840383037,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[3]",
+      "area_um2": 7.3011867043379235
+    },
+    {
+      "name": "apic[5]",
+      "length_um": 229.47254268828016,
+      "nseg": 11,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[4]",
+      "area_um2": 412.7352640036173
+    },
+    {
+      "name": "apic[6]",
+      "length_um": 5.64575585859774,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[4]",
+      "area_um2": 12.78458791567811
+    },
+    {
+      "name": "apic[7]",
+      "length_um": 9.824110033085079,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[6]",
+      "area_um2": 22.5446083170771
+    },
+    {
+      "name": "apic[8]",
+      "length_um": 223.77162741130215,
+      "nseg": 11,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[7]",
+      "area_um2": 409.60398214121915
+    },
+    {
+      "name": "apic[9]",
+      "length_um": 18.93473063599918,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[7]",
+      "area_um2": 41.766784779306136
+    },
+    {
+      "name": "apic[10]",
+      "length_um": 39.84838360929437,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[9]",
+      "area_um2": 80.00905224748503
+    },
+    {
+      "name": "apic[11]",
+      "length_um": 224.4473417508127,
+      "nseg": 11,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[10]",
+      "area_um2": 376.946141071125
+    },
+    {
+      "name": "apic[12]",
+      "length_um": 355.24379681782295,
+      "nseg": 17,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[10]",
+      "area_um2": 689.4841355908342
+    },
+    {
+      "name": "apic[13]",
+      "length_um": 219.55158468332547,
+      "nseg": 11,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[12]",
+      "area_um2": 362.25837014860525
+    },
+    {
+      "name": "apic[14]",
+      "length_um": 156.34638332478013,
+      "nseg": 7,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[12]",
+      "area_um2": 259.20858202965223
+    },
+    {
+      "name": "apic[15]",
+      "length_um": 238.79311063082423,
+      "nseg": 11,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[9]",
+      "area_um2": 408.50629646972453
+    },
+    {
+      "name": "apic[16]",
+      "length_um": 69.39629574781742,
+      "nseg": 3,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[6]",
+      "area_um2": 126.68394976511541
+    },
+    {
+      "name": "apic[17]",
+      "length_um": 136.72838285535732,
+      "nseg": 7,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[3]",
+      "area_um2": 247.654223523511
+    },
+    {
+      "name": "apic[18]",
+      "length_um": 20.504201593350587,
+      "nseg": 1,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[0]",
+      "area_um2": 55.769198951993104
+    },
+    {
+      "name": "apic[19]",
+      "length_um": 199.11134502078295,
+      "nseg": 9,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[18]",
+      "area_um2": 296.20787557523727
+    },
+    {
+      "name": "apic[20]",
+      "length_um": 176.05955344108287,
+      "nseg": 9,
+      "cm_uf_cm2": 1.5826204667213606,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "apic[18]",
+      "area_um2": 261.69755400579027
+    },
+    {
+      "name": "axon[0]",
+      "length_um": 30.0,
+      "nseg": 1,
+      "cm_uf_cm2": 1.0,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "soma[0]",
+      "area_um2": 94.24777960769379
+    },
+    {
+      "name": "axon[1]",
+      "length_um": 30.0,
+      "nseg": 1,
+      "cm_uf_cm2": 1.0,
+      "ra_ohm_cm": 14.9970627156,
+      "parent": "axon[0]",
+      "area_um2": 94.24777960769379
+    }
+  ],
+  "samples": 504001,
+  "qualification": "Source setup reproduction; physiology and convergence unqualified"
+}

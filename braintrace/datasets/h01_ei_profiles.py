@@ -61,6 +61,11 @@ _PHYSIOLOGY = {
         source="ModelDB 267587 HL5MN1 (= Yao 2022 HL23SST); agmccrei/HumanL5Circuit_AGM2022 commit dd472f19a0d1bfbbba59677cfd82c6e9f8a80590; Allen specimen 571700636",
         initial_mv=-81.5, axial_ohm_cm=100.,
         reversal_mv={"candidate": -81.5, "source": -81.5}),
+    "l4-pyramidal-allen-527952884": dict(
+        digest="1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+        source="Allen specimen 527952884; model 626170709; fit SHA256 1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+        initial_mv=-80.81838607788086, axial_ohm_cm=14.9970627156,
+        reversal_mv={"candidate": -80.81838607788086, "source": -80.81838607788086}),
 }
 # Donors whose candidate and experimental modes carry phase controls in ``channel_controls``
 # (looked up by polarity and mode below); donors without a candidate get none.
@@ -177,7 +182,7 @@ def channel_controls(profile, family, mechanism):
         Constructor keywords (``m_open``, ``m_close``, ``h_open``, ``h_close``,
         ``h_slope``). Empty for unchanged source mechanisms, for every
         mechanism the mode does not control in that family, and for donors
-        without a candidate (the HL5MN1 import), whatever their polarity.
+        without a candidate (the HL5MN1 and Allen L4 imports), whatever their polarity.
 
     Examples
     --------

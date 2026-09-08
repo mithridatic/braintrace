@@ -1,0 +1,1116 @@
+{
+  "donor": "Allen human specimen 527952884 (H16.06.008.01.31.06), MTG layer 4, spiny, apical truncated; perisomatic model 626170709 (template 329230710); donor key l4-pyramidal-allen-527952884",
+  "licence": "Allen Institute Terms of Use (https://alleninstitute.org/terms-of-use/): research and non-commercial use, citation required (Allen Cell Types Database, Allen Institute for Brain Science, celltypes.brain-map.org), no commercial redistribution without written permission",
+  "files": {
+    "626170709.zip": {
+      "url": "http://api.brain-map.org/neuronal_model/download/626170709",
+      "sha256": "a623a0aa761b2fce5411ac978f59ee04eebf2495d948c6f1131f7415d490d0fc",
+      "bytes": 143426
+    },
+    "527952752_ephys.nwb": {
+      "url": "http://api.brain-map.org/api/v2/well_known_file_download/618205555",
+      "sha256": "e321fe93fb63c6af9118ff72df30756bf2e5599fecc54ab8f6f58c51d14fff5a",
+      "bytes": 17976764
+    },
+    "527952884_fit.json": {
+      "url": "https://api.brain-map.org/api/v2/well_known_file_download/626185209",
+      "sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+      "bytes": 2917
+    },
+    "allen-cell-detail.json": {
+      "url": "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[specimen__id$eq527952884]",
+      "sha256": "65d9554005d9b3969215febc146da675fdbb0b617de8d4159a5db17fbfa82b1f",
+      "bytes": 1821
+    },
+    "neuronal-models.json": {
+      "url": "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[specimen_id$eq527952884],rma::include,well_known_files,neuronal_model_template",
+      "sha256": "193110277e11186882eaba081dee0710419233be9c7245559f7b08d38c2759f5",
+      "bytes": 667
+    }
+  },
+  "bundle_files": {
+    "fit_parameters.json": {
+      "sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+      "bytes": 2917
+    },
+    "reconstruction.swc": {
+      "sha256": "9ebca5cc4ab87d55631d5760b6c909f6d4c16a32301220bd51e99580d677032e",
+      "bytes": 303514
+    },
+    "ephys_sweeps.json": {
+      "sha256": "2b3e58fed418fe3c38d6438e33648bcdf8ac41897700f715b74f03947cb25803",
+      "bytes": 60453
+    },
+    "manifest.json": {
+      "sha256": "5bb94187ae1e77d77220569c976753176fb153cf266ce7bdee134a1d44f36131",
+      "bytes": 3254
+    },
+    "model_metadata.json": {
+      "sha256": "eed6e2470947f22ac67cbd8fb4f662b41c09c70c938773705d1b019be7ef9d34",
+      "bytes": 3327
+    }
+  },
+  "verification_1_mechanism_set": {
+    "genome_mechanisms": [
+      "CaDynamics",
+      "Ca_HVA",
+      "Ca_LVA",
+      "Ih",
+      "Im",
+      "K_P",
+      "K_T",
+      "Kv3_1",
+      "NaTs",
+      "Nap",
+      "SK"
+    ],
+    "identical_to_l2_import": true,
+    "mod_files": {
+      "CaDynamics": {
+        "bundle_sha256": "f012def9758f7d0244b81c54291edea6597c15fad99b9f7b5725b121a3567f16",
+        "l2_import_sha256": "f012def9758f7d0244b81c54291edea6597c15fad99b9f7b5725b121a3567f16",
+        "identical": true
+      },
+      "Ca_HVA": {
+        "bundle_sha256": "021d34cf9ef3e76b0f2afee1a1eeab40eed56d0d3b1362b7e1019f4433273c71",
+        "l2_import_sha256": "021d34cf9ef3e76b0f2afee1a1eeab40eed56d0d3b1362b7e1019f4433273c71",
+        "identical": true
+      },
+      "Ca_LVA": {
+        "bundle_sha256": "a7a9ef262541dc96f5d19afd97778f9320808d01ce397350f1f2be3db30f920f",
+        "l2_import_sha256": "a7a9ef262541dc96f5d19afd97778f9320808d01ce397350f1f2be3db30f920f",
+        "identical": true
+      },
+      "Ih": {
+        "bundle_sha256": "8616325d83add9a1a6546972352b4a62e57095ba25f3c6b5a57ab8b397e2d662",
+        "l2_import_sha256": "8616325d83add9a1a6546972352b4a62e57095ba25f3c6b5a57ab8b397e2d662",
+        "identical": true
+      },
+      "Im": {
+        "bundle_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+        "l2_import_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+        "identical": true
+      },
+      "K_P": {
+        "bundle_sha256": "2254697617c8da162ff8e5495e4d512fce53f77b44b86754855f11cee4ab3b3e",
+        "l2_import_sha256": "2254697617c8da162ff8e5495e4d512fce53f77b44b86754855f11cee4ab3b3e",
+        "identical": true
+      },
+      "K_T": {
+        "bundle_sha256": "1cb9d72f985ef028922cafafed079df5c47b87a893001304181ec48881367ba7",
+        "l2_import_sha256": "1cb9d72f985ef028922cafafed079df5c47b87a893001304181ec48881367ba7",
+        "identical": true
+      },
+      "Kv3_1": {
+        "bundle_sha256": "e636c3437a9d9ccb69a0a7efc09fcfe1f16ad97f0468615b70fdbc352fe0855c",
+        "l2_import_sha256": "e636c3437a9d9ccb69a0a7efc09fcfe1f16ad97f0468615b70fdbc352fe0855c",
+        "identical": true
+      },
+      "NaTs": {
+        "bundle_sha256": "d75ed63d6367fe27c6e5671704594a510e8d83b57db835f30fc36e2f24bef6cf",
+        "l2_import_sha256": "d75ed63d6367fe27c6e5671704594a510e8d83b57db835f30fc36e2f24bef6cf",
+        "identical": true
+      },
+      "Nap": {
+        "bundle_sha256": "979d21508f5b089e7b782835ea7f60311223bdc3a8e5242056c594305d2fb220",
+        "l2_import_sha256": "979d21508f5b089e7b782835ea7f60311223bdc3a8e5242056c594305d2fb220",
+        "identical": true
+      },
+      "SK": {
+        "bundle_sha256": "079f1e3cac7444696d480b8e02853b215cd93e0c7b9986dbb54925fc49eddbeb",
+        "l2_import_sha256": "079f1e3cac7444696d480b8e02853b215cd93e0c7b9986dbb54925fc49eddbeb",
+        "identical": true
+      }
+    },
+    "unused_bundle_mod_files": [
+      "Im_v2",
+      "Kd",
+      "Kv2like",
+      "NaTa",
+      "NaV"
+    ]
+  },
+  "verification_2_fit_sweeps": {
+    "sweeps": [
+      69,
+      70,
+      71,
+      72
+    ],
+    "rows": [
+      {
+        "sweep": 69,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -16.734821861597027,
+        "leak_pa": -16.7348213195801,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 20
+      },
+      {
+        "sweep": 70,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -19.628814199035283,
+        "leak_pa": -19.6288146972656,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 17
+      },
+      {
+        "sweep": 71,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -19.628814199035283,
+        "leak_pa": -19.6288146972656,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 19
+      },
+      {
+        "sweep": 72,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -17.301037338879333,
+        "leak_pa": -17.3010368347168,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 20
+      }
+    ],
+    "protocol": "Square - 2s Suprathreshold, 100 pA, 1020-3020 ms, 50 kHz"
+  },
+  "verification_3_nwb": {
+    "http": "200, Content-Disposition 527952752_ephys.nwb",
+    "pipeline": [
+      "pipeline",
+      "IVSCC",
+      "version",
+      "1.0"
+    ],
+    "specimen_id": 527952884,
+    "specimen_name": "H16.06.008.01.31.06",
+    "sweeps": [
+      {
+        "sweep": 4,
+        "stimulus": "Ramp",
+        "amplitude_pa": 800.000010681146,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1701000,
+        "bias_current_pa": null,
+        "leak_pa": null,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 10
+      },
+      {
+        "sweep": 5,
+        "stimulus": "Ramp",
+        "amplitude_pa": 800.000010681146,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1701000,
+        "bias_current_pa": null,
+        "leak_pa": null,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 12
+      },
+      {
+        "sweep": 6,
+        "stimulus": "Ramp",
+        "amplitude_pa": 800.000010681146,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1701000,
+        "bias_current_pa": null,
+        "leak_pa": null,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 10
+      },
+      {
+        "sweep": 7,
+        "stimulus": "Short Square",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": null,
+        "leak_pa": null,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 9,
+        "stimulus": "Short Square",
+        "amplitude_pa": 299.999997066536,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": null,
+        "leak_pa": null,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 10,
+        "stimulus": "Short Square",
+        "amplitude_pa": 400.000005340573,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 1.950298863379052,
+        "leak_pa": 1.95029890537262,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 12,
+        "stimulus": "Short Square",
+        "amplitude_pa": 450.000009477591,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 1.950298863379052,
+        "leak_pa": 1.95029890537262,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 13,
+        "stimulus": "Short Square",
+        "amplitude_pa": 469.999983376823,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.089336074625249,
+        "leak_pa": 4.08933591842651,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 14,
+        "stimulus": "Short Square",
+        "amplitude_pa": 489.999985031631,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.089336074625249,
+        "leak_pa": 4.08933591842651,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 15,
+        "stimulus": "Short Square",
+        "amplitude_pa": 499.999985859034,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.089336074625249,
+        "leak_pa": 4.08933591842651,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 16,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.089336074625249,
+        "leak_pa": 4.08933591842651,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 17,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.089336074625249,
+        "leak_pa": 4.08933591842651,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 18,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.089336074625249,
+        "leak_pa": 4.08933591842651,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 19,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 1.4469959518786935,
+        "leak_pa": 1.44699597358704,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 20,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 1.4469959518786935,
+        "leak_pa": 1.44699597358704,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 21,
+        "stimulus": "Short Square",
+        "amplitude_pa": 519.999987513842,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 3.711858945210089,
+        "leak_pa": 3.71185898780823,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 23,
+        "stimulus": "Short Square",
+        "amplitude_pa": 519.999987513842,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 1.1324316050859151,
+        "leak_pa": 1.13243162631989,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 24,
+        "stimulus": "Short Square",
+        "amplitude_pa": 529.999988341245,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 2.07612464546425,
+        "leak_pa": 2.07612466812134,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 25,
+        "stimulus": "Short Square",
+        "amplitude_pa": 529.999988341245,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 2.07612464546425,
+        "leak_pa": 2.07612466812134,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 26,
+        "stimulus": "Short Square",
+        "amplitude_pa": 529.999988341245,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 2.07612464546425,
+        "leak_pa": 2.07612466812134,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 27,
+        "stimulus": "Short Square",
+        "amplitude_pa": 529.999988341245,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.1522492909285,
+        "leak_pa": 4.15224933624268,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 28,
+        "stimulus": "Short Square",
+        "amplitude_pa": 529.999988341245,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 4.1522492909285,
+        "leak_pa": 4.15224933624268,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 29,
+        "stimulus": "Long Square",
+        "amplitude_pa": -110.000002162547,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 31,
+        "stimulus": "Long Square",
+        "amplitude_pa": -69.9999988529321,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 32,
+        "stimulus": "Long Square",
+        "amplitude_pa": -50.0000006675716,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 33,
+        "stimulus": "Long Square",
+        "amplitude_pa": -29.9999990127642,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 34,
+        "stimulus": "Long Square",
+        "amplitude_pa": -9.99999996004197,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 35,
+        "stimulus": "Long Square",
+        "amplitude_pa": 9.99999996004197,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 36,
+        "stimulus": "Long Square",
+        "amplitude_pa": 29.9999990127642,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 37,
+        "stimulus": "Long Square",
+        "amplitude_pa": 50.0000006675716,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 5.976722155381919,
+        "leak_pa": 5.976722240448,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 39,
+        "stimulus": "Long Square",
+        "amplitude_pa": 90.0000005077395,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 2.327775992794212,
+        "leak_pa": 2.3277759552002,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 12
+      },
+      {
+        "sweep": 40,
+        "stimulus": "Long Square",
+        "amplitude_pa": 110.000002162547,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": -2.22044598645181e-13,
+        "leak_pa": -2.22044604925031e-13,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 17
+      },
+      {
+        "sweep": 41,
+        "stimulus": "Long Square",
+        "amplitude_pa": 129.99999687846,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": -2.22044598645181e-13,
+        "leak_pa": -2.22044604925031e-13,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 21
+      },
+      {
+        "sweep": 42,
+        "stimulus": "Long Square",
+        "amplitude_pa": 149.999998533268,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": -2.22044598645181e-13,
+        "leak_pa": -2.22044604925031e-13,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 25
+      },
+      {
+        "sweep": 43,
+        "stimulus": "Long Square",
+        "amplitude_pa": 170.000000188075,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": -2.22044598645181e-13,
+        "leak_pa": -2.22044604925031e-13,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 29
+      },
+      {
+        "sweep": 48,
+        "stimulus": "Long Square",
+        "amplitude_pa": 50.0000006675716,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": -10.380622576799947,
+        "leak_pa": -10.3806228637695,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 50,
+        "stimulus": "Long Square",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": -1.950298863379052,
+        "leak_pa": -1.95029890537262,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 51,
+        "stimulus": "Long Square",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": -1.950298863379052,
+        "leak_pa": -1.95029890537262,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 2
+      },
+      {
+        "sweep": 56,
+        "stimulus": "Noise 2",
+        "amplitude_pa": 141.24999780929,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1401000,
+        "bias_current_pa": -7.801195453516208,
+        "leak_pa": -7.80119562149048,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 25
+      },
+      {
+        "sweep": 58,
+        "stimulus": "Noise 2",
+        "amplitude_pa": 141.24999780929,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1401000,
+        "bias_current_pa": -5.221767896551599,
+        "leak_pa": -5.22176790237427,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 29
+      },
+      {
+        "sweep": 66,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -16.734821861597027,
+        "leak_pa": -16.7348213195801,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 67,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -16.734821861597027,
+        "leak_pa": -16.7348213195801,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 2
+      },
+      {
+        "sweep": 68,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -16.734821861597027,
+        "leak_pa": -16.7348213195801,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 1
+      },
+      {
+        "sweep": 69,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -16.734821861597027,
+        "leak_pa": -16.7348213195801,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 20
+      },
+      {
+        "sweep": 70,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -19.628814199035283,
+        "leak_pa": -19.6288146972656,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 17
+      },
+      {
+        "sweep": 71,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -19.628814199035283,
+        "leak_pa": -19.6288146972656,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 19
+      },
+      {
+        "sweep": 72,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -17.301037338879333,
+        "leak_pa": -17.3010368347168,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 20
+      },
+      {
+        "sweep": 73,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 139.999997705864,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -17.301037338879333,
+        "leak_pa": -17.3010368347168,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 36
+      },
+      {
+        "sweep": 74,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 139.999997705864,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -17.301037338879333,
+        "leak_pa": -17.3010368347168,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 37
+      },
+      {
+        "sweep": 75,
+        "stimulus": "Square - 2s Suprathreshold",
+        "amplitude_pa": 139.999997705864,
+        "sampling_rate_hz": 50000.0,
+        "samples": 501000,
+        "bias_current_pa": -17.301037338879333,
+        "leak_pa": -17.3010368347168,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 37
+      },
+      {
+        "sweep": 77,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 529.999988341245,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -16.92356151050678,
+        "leak_pa": -16.9235610961914,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": null
+      },
+      {
+        "sweep": 79,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -18.49638324447067,
+        "leak_pa": -18.4963836669922,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 81,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -13.777917175217258,
+        "leak_pa": -13.7779169082642,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 82,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -13.777917175217258,
+        "leak_pa": -13.7779169082642,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 83,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -15.979868470128444,
+        "leak_pa": -15.979868888855,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 84,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -15.979868470128444,
+        "leak_pa": -15.979868888855,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 86,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -18.7480343749602,
+        "leak_pa": -18.7480335235596,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 87,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -18.7480343749602,
+        "leak_pa": -18.7480335235596,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 88,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -18.7480343749602,
+        "leak_pa": -18.7480335235596,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 89,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -18.7480343749602,
+        "leak_pa": -18.7480335235596,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 91,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -24.850581661906013,
+        "leak_pa": -24.8505821228027,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 92,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -22.334066887563786,
+        "leak_pa": -22.3340663909912,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 93,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -22.334066887563786,
+        "leak_pa": -22.3340663909912,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 95,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -19.314249852242504,
+        "leak_pa": -19.3142490386963,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 97,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -19.314249852242504,
+        "leak_pa": -19.3142490386963,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 98,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -19.314249852242504,
+        "leak_pa": -19.3142490386963,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 99,
+        "stimulus": "Short Square - Triple",
+        "amplitude_pa": 549.999989996053,
+        "sampling_rate_hz": 50000.0,
+        "samples": 183450,
+        "bias_current_pa": -19.314249852242504,
+        "leak_pa": -19.3142490386963,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 3
+      },
+      {
+        "sweep": 101,
+        "stimulus": "Ramp to Rheobase",
+        "amplitude_pa": 203.12500292885,
+        "sampling_rate_hz": 50000.0,
+        "samples": 2101000,
+        "bias_current_pa": -10.19188466261367,
+        "leak_pa": -10.1918849945068,
+        "bridge_balance_mohm": 9.15750885009766,
+        "allen_num_spikes": 65
+      },
+      {
+        "sweep": 105,
+        "stimulus": "Test",
+        "amplitude_pa": 0.0,
+        "sampling_rate_hz": 50000.0,
+        "samples": 201000,
+        "bias_current_pa": null,
+        "leak_pa": null,
+        "bridge_balance_mohm": null,
+        "allen_num_spikes": null
+      }
+    ]
+  },
+  "fit": {
+    "passive": {
+      "ra": 14.9970627156,
+      "cm": [
+        {
+          "section": "soma",
+          "cm": 1.0
+        },
+        {
+          "section": "axon",
+          "cm": 1.0
+        },
+        {
+          "section": "dend",
+          "cm": 1.5826204667213606
+        },
+        {
+          "section": "apic",
+          "cm": 1.5826204667213606
+        }
+      ],
+      "e_pas": -80.81838607788086
+    },
+    "conditions": {
+      "celsius": 34.0,
+      "erev": [
+        {
+          "ena": 53.0,
+          "section": "soma",
+          "ek": -107.0
+        }
+      ],
+      "v_init": -80.81838607788086
+    },
+    "fitting": {
+      "junction_potential": -14.0,
+      "sweeps": [
+        69,
+        70,
+        71,
+        72
+      ]
+    },
+    "swc_header": "# source file(s): C:/Users/alexh/Desktop/Working/H16.06.008.01.31.06_536349129_p_DendriteAxon.swc_assembled.swc_interpolated.swc",
+    "explained_variance_ratio": 0.419721387801357
+  },
+  "neuron_reference": {
+    "donor_key": "l4-pyramidal-allen-527952884",
+    "model_id": 626170709,
+    "specimen_id": 527952884,
+    "fit": "527952884_fit.json",
+    "fit_sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+    "morphology": "morphology.swc",
+    "morphology_sha256": "9ebca5cc4ab87d55631d5760b6c909f6d4c16a32301220bd51e99580d677032e",
+    "sweeps": [
+      69,
+      39,
+      66
+    ],
+    "mechanisms": [
+      "CaDynamics",
+      "Ca_HVA",
+      "Ca_LVA",
+      "Ih",
+      "Im",
+      "K_P",
+      "K_T",
+      "Kv3_1",
+      "NaTs",
+      "Nap",
+      "SK"
+    ],
+    "specification": "docs/specs/2026-09-07-h01-donor-allen-l4-import.md"
+  },
+  "exports": [
+    {
+      "sweep": 69,
+      "export": "sweep-69.npz",
+      "export_sha256": "9612e43e8c59c8defdd91de5a02cdf3158841401b55d065e43ad1e37bdb15f0e",
+      "stimulus": "Square - 2s Suprathreshold",
+      "amplitude_pa": 100.000001335143,
+      "step_ms": [
+        1020.0,
+        3020.0
+      ],
+      "sample_count": 501000,
+      "sampling_rate_hz": 50000.0,
+      "junction_correction_mv": -14.0,
+      "bias_current_pa": -16.734821861597027,
+      "leak_pa": -16.7348213195801,
+      "bridge_balance_mohm": 9.15750885009766,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0,
+        100.0
+      ],
+      "pre_step_mean_corrected_mv": -80.87226133470571,
+      "crossing_count_minus20mv": 20,
+      "allen_num_spikes": 20,
+      "first_crossing_after_onset_ms": 32.180000000000064
+    },
+    {
+      "sweep": 39,
+      "export": "sweep-39.npz",
+      "export_sha256": "b01a9b7df835064f166006060ccc5faadb962e87aa6d716690000b6c7d3ed1f2",
+      "stimulus": "Long Square",
+      "amplitude_pa": 90.0000005077395,
+      "step_ms": [
+        1020.0,
+        2020.0
+      ],
+      "sample_count": 401000,
+      "sampling_rate_hz": 50000.0,
+      "junction_correction_mv": -14.0,
+      "bias_current_pa": 2.327775992794212,
+      "leak_pa": 2.3277759552002,
+      "bridge_balance_mohm": 9.15750885009766,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0,
+        90.0
+      ],
+      "pre_step_mean_corrected_mv": -81.02693105467935,
+      "crossing_count_minus20mv": 12,
+      "allen_num_spikes": 12,
+      "first_crossing_after_onset_ms": 33.88000000000011
+    },
+    {
+      "sweep": 66,
+      "export": "sweep-66.npz",
+      "export_sha256": "5f3b27864a3d3a2226169fa86e9eee6cba5901e7eb091e14f67bc98dae286e93",
+      "stimulus": "Square - 2s Suprathreshold",
+      "amplitude_pa": 59.9999980255284,
+      "step_ms": [
+        1020.0,
+        3020.0
+      ],
+      "sample_count": 501000,
+      "sampling_rate_hz": 50000.0,
+      "junction_correction_mv": -14.0,
+      "bias_current_pa": -16.734821861597027,
+      "leak_pa": -16.7348213195801,
+      "bridge_balance_mohm": 9.15750885009766,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0,
+        60.0
+      ],
+      "pre_step_mean_corrected_mv": -80.38022801149705,
+      "crossing_count_minus20mv": 1,
+      "allen_num_spikes": 1,
+      "first_crossing_after_onset_ms": 93.6400000000001
+    }
+  ],
+  "interpretation": "Allen reports voltages uncorrected for the -14 mV liquid junction potential; the export applies it once in corrected_voltage_mv. bias_current is the holding current, separate from the command levels; the driver plays the command only unless --include-recorded-bias.",
+  "qualification": "Acquisition provenance only; model behaviour is not validated."
+}
