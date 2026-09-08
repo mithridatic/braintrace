@@ -254,3 +254,61 @@ untested and is reported as such.
 about 525 s per full train; never quoted as measured) and the 900 s abort for NEURON; wall
 clocks recorded per arm. Order: `a1-matched-027`, `a1-matched-019`, `a1-matched-023`,
 `a0-maxcv-027`, `b1-fixed-027`, `b1-fixed-019`, `r-neuron-fixed-027-halfdt`.
+
+## Amendment 2026-09-07 (user decision after the full-train arms, registered before any further run): close on simulator identity; dt qualification; one confirming BrainCell train
+
+**(a) Transfer gate closes on the measured simulator identity.** Y2's question, "does BrainCell
+reproduce the NEURON model?", is answered on the measured identity between BrainCell at the copied
+mesh and NEURON at the same fixed step (`sp2-i-decision.json`, supplementary row): over
+270-329.5 ms at 0.27 nA the two agree to 1.2e-9 ms rise, 5.4e-6 mV interpolated peak and
+1.9e-11 ms width at every event. The answer is yes at equal dt and mesh. The remaining error is
+the fixed-step integrator against the CVode reference (B1 fails the 0.1 ms rise gate from event 6
+at 0.27 nA and event 3 at 0.19 nA with a per-interval drift) and is a numerical qualification of
+the reference comparison, not a transfer fault. The decision-table literal `integration` is the
+B1 outcome; the identity gate is recorded as **closed** in `h01-i-transfer/sp2-close-decision.json`.
+The A1-vs-CVode full-train arms are no longer the closing condition.
+
+**(b) Registered numerical qualification (NEURON only).** Find the fixed-step dt at which the
+NEURON full train (270-1270 ms) meets the human contract's 1 ms crossing tolerance at every event
+against the CVode finalist (`e-kv3-close2-027`, `e-kv3-close2-019`; atol 1e-10) at 0.27 and
+0.19 nA, by dt halving in NEURON. Series: dt 0.0025, 0.00125, and 0.000625 if needed, both inputs;
+cap 6 NEURON runs; abort 900 s each; measured anchors at dt 0.005 under load: 232 s (0.27 nA),
+153 s (0.19 nA). Arms `q-neuron-fixed-{027,019}-dt{0025,00125,000625}`, the B1 candidate file, the
+x9 mesh, 1500 ms. "Met" at a dt means: equal nonzero event count over 270-1270 ms and
+|rise crossing error| <= 1 ms at every paired event, at both inputs. Decision limits are taken
+from the adjacent-dt pairs: for each input and each adjacent pair (dt, dt/2) the ratio of the last
+paired event's rise error and of the max |rise error| is recorded; first order predicts 2.
+
+Prediction: the late-event rise error scales first order with dt (7.42 ms at dt 0.005 at 0.27 nA
+-> about 3.7, 1.9, 0.9 ms at 0.0025, 0.00125, 0.000625; 14.75 ms at 0.19 nA -> about 7.4, 3.7,
+1.8 ms), so 1 ms is met at dt 0.000625 or finer at 0.27 nA. Rejection: the error does not halve
+with dt (adjacent-pair ratio far from 2, outside 1.5-2.5); then the reference itself (CVode atol
+1e-10) must be questioned before any dt is named. Any run whose derived cost (twice the measured
+adjacent-dt wall clock) exceeds the 900 s abort is not launched and is recorded as
+"not launched, derived cost", per SP0; a killed run is untested. The dt found, or "not reached
+within cap", is recorded under Measurement function qualification in `docs/h01-causal-model.md`.
+
+**(c) One confirming BrainCell full train.** `a1-matched-027` (copied mesh, finalist profile,
+dt 0.005, 1500 ms, 0.27 nA), 1500 s abort, no silence kill (the driver prints nothing until it
+finishes; its cost exceeds 600 s under load and is otherwise unmeasured). Scored against
+`b1-fixed-027` (identity gate: |rise| <= 1e-8 ms, |interpolated peak| <= 1e-6 mV, |width| <= 1e-8 ms,
+equal count, at every event over 270-1270 ms; prediction: identity at every event of the full
+train) and against the CVode finalist under the amended full-train gate (prediction: the same
+failing events as B1, first failure at event 6). Rejection of (c): any event outside the identity
+gate; then the identity of (a) holds over 330 ms only and the close is reported with that limit.
+
+**Runs.** One at a time, detached (PowerShell `Start-Process`, stdout and stderr persisted per arm,
+polled with sleeps under 10 min): the NEURON series first (0.27 then 0.19 at each dt), then the
+single BrainCell run. Interpreter for BrainCell: the sibling `.cache/validation` python with
+`PYTHONPATH` at this worktree; the PV library for NEURON is the sibling
+`.cache/human-pv/kv3-phase-reference` mounted at `/work`. Every wall clock is recorded; no
+unmeasured duration is quoted. Other containers running on the host at each start are listed.
+
+**Records.** Runner: `--score --peak-method interpolated` gains the dt-series scoring
+(`dt_series` in the manifest) and the identity comparison (`identity_pairs`), with tests on
+fixtures; `--close` writes `h01-i-transfer/sp2-close-decision.json` (identity gate closed or not;
+dt found or "not reached within cap"; per-dt late-event error table with adjacent-pair ratios;
+BrainCell A1 identity rows; wall clocks; hashes). `h01-i-transfer-result.md` is rewritten from it;
+the transfer rows of `h01-implementation-status.md` (the "do not continue serial physiological
+tuning" directive is retired if the identity gate closes, replaced by the dt requirement) and
+`h01-population-status.md` are updated, and a dated Y2 entry is appended in the same commit.

@@ -51,7 +51,29 @@ def check_manifest(manifest):
     for field in ("prediction", "rejection", "unchanged"):
         if not manifest.get(field):
             raise ValueError(f"Manifest lacks a pre-registered {field}.")
+    check_dt_series(manifest, names)
+    for name, partner in manifest.get("identity_pairs", {}).items():
+        if name not in by_name or partner not in by_name or by_name[name]["simulator"] == by_name[partner]["simulator"]:
+            raise ValueError(f"identity pair {name}/{partner} must name two arms of different simulators")
     return names
+
+
+def check_dt_series(manifest, arm_names):
+    """Raise when the NEURON dt ladder breaks its cap, its halving relation, or its prediction fields."""
+    series = manifest.get("dt_series")
+    if series is None:
+        return
+    for field in ("cap", "gate", "prediction", "rejection", "rungs"):
+        if not series.get(field):
+            raise ValueError(f"dt_series lacks {field}")
+    new = [rung for rung in series["rungs"] if rung["name"] not in arm_names]
+    if len(new) > series["cap"]:
+        raise ValueError(f"{len(new)} new dt_series runs exceed the cap {series['cap']}")
+    for current in {rung["current_na"] for rung in series["rungs"]}:
+        ladder = sorted((rung["dt_ms"] for rung in series["rungs"] if rung["current_na"] == current), reverse=True)
+        for coarse, fine in zip(ladder, ladder[1:]):
+            if not np.isclose(fine, coarse/2., rtol=1e-12, atol=0.):
+                raise ValueError(f"dt_series rungs at {current} nA must halve dt: {coarse} -> {fine}")
 
 
 def braincell_command(root, manifest, arm):
@@ -252,6 +274,135 @@ def decision_report(manifest, scored):
             "qualification": manifest["qualification"], **scored}
 
 
+def rise_summary(score):
+    """Late-event and maximal rise error of a scored pair, and whether the 1 ms human crossing tolerance is met."""
+    rows = score["events"]
+    max_abs = score["max_abs_rise_error_ms"]
+    return {"count_equal": score["same_nonzero_event_count"], "reference_count": score["reference_count"],
+            "actual_count": score["actual_count"], "paired_events": len(rows),
+            "last_event_rise_error_ms": rows[-1]["errors"]["rise_crossing_ms"] if rows else None,
+            "max_abs_rise_error_ms": max_abs,
+            "met": bool(score["same_nonzero_event_count"] and rows and all(row["in_gate"]["rise_crossing_ms"] for row in rows))}
+
+
+def adjacent_ratios(rungs):
+    """Error ratios of every adjacent (dt, dt/2) pair present at one input; first order predicts 2."""
+    present = sorted((r for r in rungs if r.get("status") != "untested"), key=lambda r: -r["dt_ms"])
+    ratios = []
+    for coarse, fine in zip(present, present[1:]):
+        if not np.isclose(fine["dt_ms"], coarse["dt_ms"]/2., rtol=1e-12, atol=0.):
+            continue
+        pair = {"dt_ms": coarse["dt_ms"], "half_dt_ms": fine["dt_ms"]}
+        for key in ("last_event_rise_error_ms", "max_abs_rise_error_ms"):
+            a, b = coarse[key], fine[key]
+            pair[key+"_ratio"] = None if a is None or not b else a/b
+        common = min(coarse["paired_events"], fine["paired_events"])
+        pair["common_event"] = common or None
+        if common:
+            a, b = (r["events"][common-1]["errors"]["rise_crossing_ms"] for r in (coarse, fine))
+            pair["common_event_rise_errors_ms"] = [a, b]
+            pair["common_event_rise_error_ratio"] = None if not b else a/b
+        ratios.append(pair)
+    return ratios
+
+
+def score_dt_series(root, manifest, load=load_trace, peak_method="sample", reference_root=None):
+    """Score every present NEURON dt rung against the CVode finalist under the human 1 ms rise tolerance."""
+    series = manifest.get("dt_series")
+    if series is None:
+        return None
+    evidence = root/"docs/evidence"
+    reference_dir = Path(reference_root or root)/"docs/evidence"/manifest["reference_dir"]
+    window = manifest["windows_ms"][series["window"]]
+    rungs, hashes = [], {}
+    for rung in series["rungs"]:
+        path = evidence/manifest["output_dir"]/(rung["name"]+".npz")
+        row = {k: rung[k] for k in ("name", "current_na", "dt_ms", "reference")}
+        if not path.exists():
+            rungs.append({**row, "status": "untested", "reason": "trace absent"})
+            continue
+        hashes[rung["name"]] = hashlib.sha256(path.read_bytes()).hexdigest()
+        reference = load(reference_dir/(manifest["references"][rung["reference"]]+".npz"))
+        score = score_pair(reference, load(path), window, series["gate"], peak_method)
+        rungs.append({**row, **rise_summary(score), "events": score["events"]})
+    by_current = {c: [r for r in rungs if r["current_na"] == c] for c in sorted({r["current_na"] for r in rungs})}
+    ratios = {str(c): adjacent_ratios(rows) for c, rows in by_current.items()}
+    met = {}
+    for dt in sorted({r["dt_ms"] for r in rungs}, reverse=True):
+        at_dt = [r for r in rungs if r["dt_ms"] == dt]
+        met[str(dt)] = (len(at_dt) == len(by_current) and all(r.get("met") for r in at_dt))
+    found = [float(dt) for dt, ok in met.items() if ok]
+    by_input = {str(c): max((r["dt_ms"] for r in rows if r.get("met")), default="not reached within cap")
+                for c, rows in by_current.items()}
+    return {"gate": series["gate"], "window_ms": list(window), "prediction": series["prediction"],
+            "rejection": series["rejection"], "rungs": rungs, "adjacent_ratios": ratios,
+            "met_at_both_inputs_by_dt": met, "dt_found_ms": max(found) if found else "not reached within cap",
+            "dt_found_by_input_ms": by_input, "inputs_sha256": hashes}
+
+
+def score_identity(root, manifest, load=load_trace, peak_method="sample"):
+    """Per-event identity of each BrainCell arm against its NEURON fixed-step partner at the same dt and mesh."""
+    evidence = root/"docs/evidence"/manifest["output_dir"]
+    arms = {arm["name"]: arm for arm in manifest["arms"]}
+    out = {}
+    for name, partner in manifest.get("identity_pairs", {}).items():
+        paths = [evidence/(n+".npz") for n in (partner, name)]
+        if not all(p.exists() for p in paths):
+            out[name] = {"status": "untested", "reason": "trace absent", "reference": partner}
+            continue
+        window = manifest["windows_ms"][arms[name]["window"]]
+        reference, actual = load(paths[0]), load(paths[1])
+        score = score_pair(reference, actual, window, manifest["identity_gate"], peak_method)
+        maxima = {key: max((abs(r["errors"][key]) for r in score["events"]), default=None)
+                  for key in ("peak_interpolated_voltage_mv", "peak_sample_voltage_mv", "time_above_threshold_ms")}
+        out[name] = {"reference": partner, **score, "max_abs_peak_error_mv": maxima[PEAK_KEYS[peak_method]],
+                     "max_abs_peak_sample_error_mv": maxima["peak_sample_voltage_mv"],
+                     "max_abs_width_error_ms": maxima["time_above_threshold_ms"],
+                     "raw_voltage_max_abs_diff_mv": raw_voltage_difference(reference, actual, window)}
+    return out
+
+
+def raw_voltage_difference(reference, actual, window):
+    """Largest |voltage difference| over the window, the reference interpolated onto the actual grid."""
+    keep = (actual["time_ms"] >= window[0]) & (actual["time_ms"] <= window[1])
+    on_grid = np.interp(actual["time_ms"][keep], reference["time_ms"], reference["voltage_mv"])
+    return float(np.max(np.abs(actual["voltage_mv"][keep]-on_grid)))
+
+
+def reproduces(measured, quoted):
+    """Whether each measured maximum, rounded to two significant figures, equals the quoted decision value."""
+    return all(measured.get(key) is not None and float(f"{measured[key]:.2g}") == value for key, value in quoted.items())
+
+
+def wall_clocks(root, manifest):
+    """Every ``*.timing.json`` under the output directory, keyed by file stem."""
+    folder = root/"docs/evidence"/manifest["output_dir"]
+    return {p.name[:-len(".timing.json")]: json.loads(p.read_text()) for p in sorted(folder.glob("*.timing.json"))}
+
+
+def close_report(manifest, report, series, identity, clocks):
+    """Assemble the SP2 close decision: identity gate, dt qualification, BrainCell identity rows, clocks, hashes."""
+    basis = identity.get(manifest["close"]["identity_basis"], {})
+    confirming = {n: row for n, row in identity.items() if n != manifest["close"]["identity_basis"]}
+    measured = {"rise_crossing_ms": basis.get("max_abs_rise_error_ms"),
+                "peak_interpolated_voltage_mv": basis.get("max_abs_peak_error_mv"),
+                "time_above_threshold_ms": basis.get("max_abs_width_error_ms")}
+    quoted = manifest["close"]["identity_values"]
+    return {"spec": manifest["spec"], "date": manifest["close"]["date"], "amendment": manifest["close"]["amendment"],
+            "identity_gate": {"closed": bool(basis) and reproduces(measured, quoted),
+                              "closing_rule": "user decision (a): the basis arm reproduces the quoted identity values",
+                              "decision_values": quoted, "basis_measured": measured,
+                              "basis_arm": manifest["close"]["identity_basis"], "basis": basis,
+                              "confirming_full_train": confirming, "confirming_gate": manifest["identity_gate"],
+                              "confirming_prediction_held": bool(confirming) and all(
+                                  row.get("passed", False) for row in confirming.values())},
+            "dt_qualification": series, "full_train_vs_cvode": {n: report["scores"][n] for n in manifest["decision_arms"]["a1"]
+                                                                + manifest["decision_arms"]["b1"]},
+            "decision": report["decision"], "gate_valid": report["gate_valid"], "peak_method": report["peak_method"],
+            "wall_clocks": clocks, "inputs_sha256": report["inputs_sha256"], "reference_sha256": report["reference_sha256"],
+            "qualification": manifest["qualification"]}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
@@ -261,6 +412,8 @@ def main(argv=None):
     parser.add_argument("--peak-method", choices=tuple(PEAK_KEYS), default="sample",
                         help="peak metric that enters the gate; both peaks are reported either way")
     parser.add_argument("--reference-root", type=Path, help="tree holding the reference .npz traces")
+    parser.add_argument("--close", action="store_true",
+                        help="with --score: also write sp2-close-decision.json (identity gate, dt series, clocks)")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
     manifest = json.loads(args.manifest.read_text())
@@ -285,6 +438,13 @@ def main(argv=None):
         out.write_text(json.dumps(report, indent=2)+"\n")
         print(json.dumps({"decision": report["decision"], "gate_valid": report["gate_valid"], "peak_method": args.peak_method,
                           "a1_passed": report["a1_passed"], "b1_passed": report["b1_passed"]}))
+        if args.close:
+            series = score_dt_series(root, manifest, peak_method=args.peak_method, reference_root=args.reference_root)
+            identity = score_identity(root, manifest, peak_method=args.peak_method)
+            close = close_report(manifest, report, series, identity, wall_clocks(root, manifest))
+            out.with_name("sp2-close-decision.json").write_text(json.dumps(close, indent=2)+"\n")
+            print(json.dumps({"identity_closed": close["identity_gate"]["closed"],
+                              "dt_found_ms": None if series is None else series["dt_found_ms"]}))
 
 
 if __name__ == "__main__":

@@ -605,5 +605,1185 @@
    "peak_rss_build_only_gb": 6.85,
    "peak_rss_gb_lower_bound_from_init_state_kill": 10.66
   }
- }
+ },
+ "quiet_machine_attempt_2026-09-07T17": {
+  "generated_at": "2026-09-07T18:26:40",
+  "measurement": "measured, machine quiet except the C3 rescan",
+  "quiet_definition": "docker ps shows only synapse; no python process other than the C3 rescan worker (h01_c3_edge_list.py) above 300 MB; checked twice 60 s apart before launch and re-checked before each stage",
+  "spec": "docs/specs/2026-09-07-h01-population-builder.md addendum 2026-09-07 17:05 (predictions registered before launch)",
+  "load_note": "Quiet by the stated definition throughout (docker: only synapse; no python above 300 MB besides the C3 rescan worker, which was not observed running). CPU was not idle: during the init-only stage comsolbatch.exe (~2.6 cores), bdservicehost.exe (~1.9 cores), SearchIndexer (~1 core) and two Codex sandbox setups were active (87 % of 20 logical cores at 17:56); by the ei run (18:07-18:17) only this interpreter and bdservicehost (~1 core) were active (25 % CPU). The init-only numbers are therefore CPU-confounded by COMSOL; the two 1 ms runs are the clean points.",
+  "instrumentation": "per-cell init_state progress lines and a 60 s heartbeat (elapsed s, RSS) from braintrace/datasets/h01_network_init.py; --init-only mode",
+  "limits": {
+   "silence_kill_s": 600.0,
+   "init_state_abort_s": 1500.0,
+   "wall_cap_s": 3600.0,
+   "construction_abort_s": null
+  },
+  "rejection_rules": {
+   "nonfinite_trace": "reject",
+   "peak_rss_over_6gb": "reject",
+   "init_state_over_1500_s": "reject"
+  },
+  "runs": {
+   "init_only_ei": {
+    "label": "init-only",
+    "command": [
+     "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+     "-u",
+     "-m",
+     "examples.h01_verified_network",
+     "--topology",
+     "docs/evidence/h01-verified-network.json",
+     "--cache",
+     "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+     "--include-isolated",
+     "--cells",
+     "12",
+     "--solver",
+     "h01_staggered_scan",
+     "--output",
+     "C:\\Users\\J\\AppData\\Local\\Temp\\claude\\C--Users-J-Documents-Projects-connectome-agent-braintrace-source\\59762c69-587a-4ed2-83cc-b548416f9360\\scratchpad\\sp8b\\init-only\\network",
+     "--init-only",
+     "--control",
+     "ei"
+    ],
+    "started_at": "2026-09-07T17:43:29",
+    "status": "completed",
+    "peak_rss_by_pid": {
+     "6404:python.exe": 6.1640625,
+     "35272:python.exe": 1297.265625
+    },
+    "silence_seconds": 600.0,
+    "init_state_abort_seconds": 1500.0,
+    "wall_cap_seconds": 3600.0,
+    "rss_samples": [
+     [
+      30,
+      368
+     ],
+     [
+      61,
+      481
+     ],
+     [
+      92,
+      542
+     ],
+     [
+      124,
+      464
+     ],
+     [
+      155,
+      579
+     ],
+     [
+      186,
+      467
+     ],
+     [
+      218,
+      590
+     ],
+     [
+      250,
+      590
+     ],
+     [
+      283,
+      538
+     ],
+     [
+      316,
+      522
+     ],
+     [
+      347,
+      536
+     ],
+     [
+      378,
+      532
+     ],
+     [
+      410,
+      525
+     ],
+     [
+      443,
+      524
+     ],
+     [
+      476,
+      523
+     ],
+     [
+      507,
+      522
+     ],
+     [
+      538,
+      527
+     ],
+     [
+      569,
+      567
+     ],
+     [
+      600,
+      607
+     ],
+     [
+      631,
+      616
+     ],
+     [
+      662,
+      617
+     ],
+     [
+      693,
+      650
+     ],
+     [
+      724,
+      690
+     ],
+     [
+      756,
+      667
+     ],
+     [
+      787,
+      671
+     ],
+     [
+      818,
+      637
+     ],
+     [
+      849,
+      640
+     ],
+     [
+      880,
+      689
+     ],
+     [
+      911,
+      784
+     ],
+     [
+      943,
+      789
+     ],
+     [
+      975,
+      814
+     ],
+     [
+      1006,
+      814
+     ],
+     [
+      1037,
+      855
+     ],
+     [
+      1069,
+      897
+     ],
+     [
+      1100,
+      913
+     ],
+     [
+      1131,
+      922
+     ],
+     [
+      1162,
+      975
+     ],
+     [
+      1193,
+      994
+     ],
+     [
+      1225,
+      1001
+     ],
+     [
+      1256,
+      1059
+     ],
+     [
+      1287,
+      1075
+     ],
+     [
+      1318,
+      1110
+     ],
+     [
+      1349,
+      1190
+     ],
+     [
+      1380,
+      1271
+     ]
+    ],
+    "wall_seconds": 1393.5315525999758,
+    "exit_code": 0,
+    "finished_at": "2026-09-07T18:06:42",
+    "peak_rss_mb_tree": 1303.3984375,
+    "peak_rss_mb_real_interpreter_watcher": 1297.265625,
+    "build_record_present": true,
+    "construction_seconds": 744.2183362000214,
+    "n_compartments": 84097,
+    "compartments_by_cell": {
+     "3955003482": 33965,
+     "4157825456": 12966,
+     "4188575291": 13989,
+     "5584343344": 14685,
+     "2530864375": 413,
+     "3178243558": 966,
+     "3751392341": 748,
+     "2451406889": 1697,
+     "678539249": 1037,
+     "4420044370": 1054,
+     "4260528559": 1207,
+     "2820958695": 1370
+    },
+    "control": "ei",
+    "enabled_contacts": [
+     "124698307",
+     "8105899"
+    ],
+    "removed_contacts": [],
+    "execution": "constructed and initialized; not compiled or simulated",
+    "dt_ms": null,
+    "duration_ms": null,
+    "init_state_seconds": 635.4034717999748,
+    "init_seconds_by_cell": {
+     "cell_3955003482": 275.7851513000205,
+     "cell_4157825456": 90.50736980000511,
+     "cell_4188575291": 92.19257070001913,
+     "cell_5584343344": 98.43826190000982,
+     "cell_2530864375": 7.596897999988869,
+     "cell_3178243558": 10.892194899992319,
+     "cell_3751392341": 8.898531299986644,
+     "cell_2451406889": 12.896734699985245,
+     "cell_678539249": 10.416650700004539,
+     "cell_4420044370": 8.833547099988209,
+     "cell_4260528559": 9.068479699984891,
+     "cell_2820958695": 9.873795100022107
+    },
+    "init_peak_rss_mb": 1289.91015625,
+    "run_peak_rss_mb": null,
+    "compile_and_run_seconds": null,
+    "initialization_and_run_seconds": null,
+    "rss_convention": "psutil resident set of this interpreter; peak_wset where the platform reports it",
+    "stage_timestamps_s": {
+     "Loading cell 4188575291, component 0": 0.2,
+     "Checking pre cable location for contact 124698307": 20.8,
+     "Loading cell 3955003482, component 0": 26.9,
+     "Checking post cable location for contact 124698307": 72.7,
+     "Loading cell 5584343344, component 0": 88.6,
+     "Checking pre cable location for contact 8105899": 100.7,
+     "Loading cell 4157825456, component 0": 104.8,
+     "Checking post cable location for contact 8105899": 119.5,
+     "Loading cell 678539249, component 0 (isolated, largest component 0 of 4480 nodes, fraction 0.774)": 124.0,
+     "Loading cell 2451406889, component 0 (isolated, largest component 0 of 3750 nodes, fraction 0.970)": 125.2,
+     "Loading cell 2530864375, component 0 (isolated, largest component 0 of 1540 nodes, fraction 0.854)": 126.7,
+     "Loading cell 2820958695, component 0 (isolated, largest component 0 of 4864 nodes, fraction 0.488)": 127.3,
+     "Loading cell 3178243558, component 0 (isolated, largest component 0 of 2748 nodes, fraction 0.371)": 128.7,
+     "Loading cell 3751392341, component 0 (isolated, largest component 0 of 3499 nodes, fraction 0.990)": 129.7,
+     "Loading cell 4260528559, component 0 (isolated, largest component 0 of 4790 nodes, fraction 0.560)": 130.9,
+     "Loading cell 4420044370, component 0 (isolated, largest component 0 of 4624 nodes, fraction 0.999)": 132.8,
+     "Building electrical cell 3955003482": 134.7,
+     "Building electrical cell 4157825456": 253.5,
+     "Building electrical cell 4188575291": 296.5,
+     "Building electrical cell 5584343344": 347.0,
+     "Building electrical cell 2530864375": 381.4,
+     "Building electrical cell 3178243558": 382.7,
+     "Building electrical cell 3751392341": 385.5,
+     "Building electrical cell 2451406889": 389.3,
+     "Building electrical cell 678539249": 393.9,
+     "Building electrical cell 4420044370": 400.1,
+     "Building electrical cell 4260528559": 404.9,
+     "Building electrical cell 2820958695": 410.1,
+     "Discretizing cell 3955003482 and selecting its output site": 413.2,
+     "Registered cell 3955003482: 33965 compartments": 567.6,
+     "Discretizing cell 4157825456 and selecting its output site": 567.6,
+     "Registered cell 4157825456: 12966 compartments": 618.5,
+     "Discretizing cell 4188575291 and selecting its output site": 618.5,
+     "Registered cell 4188575291: 13989 compartments": 676.5,
+     "Discretizing cell 5584343344 and selecting its output site": 676.5,
+     "Registered cell 5584343344: 14685 compartments": 711.6,
+     "Discretizing cell 2530864375 and selecting its output site": 711.6,
+     "Registered cell 2530864375: 413 compartments": 713.1,
+     "Discretizing cell 3178243558 and selecting its output site": 713.1,
+     "Registered cell 3178243558: 966 compartments": 715.8,
+     "Discretizing cell 3751392341 and selecting its output site": 715.8,
+     "Registered cell 3751392341: 748 compartments": 718.6,
+     "Discretizing cell 2451406889 and selecting its output site": 718.6,
+     "Registered cell 2451406889: 1697 compartments": 723.3,
+     "Discretizing cell 678539249 and selecting its output site": 723.3,
+     "Registered cell 678539249: 1037 compartments": 728.4,
+     "Discretizing cell 4420044370 and selecting its output site": 728.4,
+     "Registered cell 4420044370: 1054 compartments": 734.2,
+     "Discretizing cell 4260528559 and selecting its output site": 734.2,
+     "Registered cell 4260528559: 1207 compartments": 740.2,
+     "Discretizing cell 2820958695 and selecting its output site": 740.2,
+     "Registered cell 2820958695: 1370 compartments": 744.2,
+     "Construction complete: 12 cells, 2 projections": 744.2,
+     "Initializing cell states only": 744.6,
+     "Initializing cell_3955003482 (1/12, 33965 compartments)": 744.6,
+     "heartbeat: init_state cell_3955003482 elapsed 60 s, RSS 630 MB": 804.6,
+     "heartbeat: init_state cell_3955003482 elapsed 120 s, RSS 682 MB": 864.7,
+     "heartbeat: init_state cell_3955003482 elapsed 180 s, RSS 780 MB": 924.7,
+     "heartbeat: init_state cell_3955003482 elapsed 240 s, RSS 808 MB": 984.8,
+     "Initialized cell_3955003482 in 275.8 s": 1020.4,
+     "Initializing cell_4157825456 (2/12, 12966 compartments)": 1020.4,
+     "heartbeat: init_state cell_4157825456 elapsed 60 s, RSS 894 MB": 1080.4,
+     "Initialized cell_4157825456 in 90.5 s": 1110.9,
+     "Initializing cell_4188575291 (3/12, 13989 compartments)": 1110.9,
+     "heartbeat: init_state cell_4188575291 elapsed 60 s, RSS 972 MB": 1170.9,
+     "Initialized cell_4188575291 in 92.2 s": 1203.1,
+     "Initializing cell_5584343344 (4/12, 14685 compartments)": 1203.1,
+     "heartbeat: init_state cell_5584343344 elapsed 60 s, RSS 1054 MB": 1263.1,
+     "Initialized cell_5584343344 in 98.4 s": 1301.6,
+     "Initializing cell_2530864375 (5/12, 413 compartments)": 1301.6,
+     "Initialized cell_2530864375 in 7.6 s": 1309.2,
+     "Initializing cell_3178243558 (6/12, 966 compartments)": 1309.2,
+     "Initialized cell_3178243558 in 10.9 s": 1320.0,
+     "Initializing cell_3751392341 (7/12, 748 compartments)": 1320.0,
+     "Initialized cell_3751392341 in 8.9 s": 1328.9,
+     "Initializing cell_2451406889 (8/12, 1697 compartments)": 1328.9,
+     "Initialized cell_2451406889 in 12.9 s": 1341.8,
+     "Initializing cell_678539249 (9/12, 1037 compartments)": 1341.8,
+     "Initialized cell_678539249 in 10.4 s": 1352.3,
+     "Initializing cell_4420044370 (10/12, 1054 compartments)": 1352.3,
+     "Initialized cell_4420044370 in 8.8 s": 1361.1,
+     "Initializing cell_4260528559 (11/12, 1207 compartments)": 1361.1,
+     "Initialized cell_4260528559 in 9.1 s": 1370.2,
+     "Initializing cell_2820958695 (12/12, 1370 compartments)": 1370.2,
+     "Initialized cell_2820958695 in 9.9 s": 1380.0,
+     "Cell states initialized in 635.4 s, peak RSS 1290 MB": 1380.0,
+     "Init-only mode: exiting before compile and stepping": 1380.4
+    },
+    "heartbeat_lines": 7,
+    "log": "scratchpad sp8b/init-only/child.log (not committed)"
+   },
+   "run_1ms_ei": {
+    "label": "run-ei",
+    "command": [
+     "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+     "-u",
+     "-m",
+     "examples.h01_verified_network",
+     "--topology",
+     "docs/evidence/h01-verified-network.json",
+     "--cache",
+     "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+     "--include-isolated",
+     "--cells",
+     "12",
+     "--solver",
+     "h01_staggered_scan",
+     "--output",
+     "C:\\Users\\J\\AppData\\Local\\Temp\\claude\\C--Users-J-Documents-Projects-connectome-agent-braintrace-source\\59762c69-587a-4ed2-83cc-b548416f9360\\scratchpad\\sp8b\\run-ei\\network",
+     "--duration-ms",
+     "1",
+     "--dt-ms",
+     "0.005",
+     "--control",
+     "ei"
+    ],
+    "started_at": "2026-09-07T18:06:47",
+    "status": "completed",
+    "peak_rss_by_pid": {
+     "18340:python.exe": 6.16796875,
+     "39968:python.exe": 1990.875
+    },
+    "silence_seconds": 600.0,
+    "init_state_abort_seconds": 1500.0,
+    "wall_cap_seconds": 3600.0,
+    "rss_samples": [
+     [
+      30,
+      324
+     ],
+     [
+      60,
+      487
+     ],
+     [
+      91,
+      469
+     ],
+     [
+      122,
+      585
+     ],
+     [
+      152,
+      665
+     ],
+     [
+      183,
+      519
+     ],
+     [
+      214,
+      507
+     ],
+     [
+      244,
+      507
+     ],
+     [
+      275,
+      512
+     ],
+     [
+      305,
+      616
+     ],
+     [
+      336,
+      690
+     ],
+     [
+      366,
+      635
+     ],
+     [
+      397,
+      780
+     ],
+     [
+      427,
+      818
+     ],
+     [
+      457,
+      896
+     ],
+     [
+      488,
+      920
+     ],
+     [
+      518,
+      978
+     ],
+     [
+      549,
+      1054
+     ],
+     [
+      579,
+      1117
+     ],
+     [
+      610,
+      1292
+     ],
+     [
+      641,
+      1944
+     ]
+    ],
+    "wall_seconds": 643.5627219000016,
+    "exit_code": 0,
+    "finished_at": "2026-09-07T18:17:31",
+    "peak_rss_mb_tree": 1997.0234375,
+    "peak_rss_mb_real_interpreter_watcher": 1990.875,
+    "build_record_present": true,
+    "construction_seconds": 338.51986850000685,
+    "n_compartments": 84097,
+    "compartments_by_cell": {
+     "3955003482": 33965,
+     "4157825456": 12966,
+     "4188575291": 13989,
+     "5584343344": 14685,
+     "2530864375": 413,
+     "3178243558": 966,
+     "3751392341": 748,
+     "2451406889": 1697,
+     "678539249": 1037,
+     "4420044370": 1054,
+     "4260528559": 1207,
+     "2820958695": 1370
+    },
+    "control": "ei",
+    "enabled_contacts": [
+     "124698307",
+     "8105899"
+    ],
+    "removed_contacts": [],
+    "execution": "finite compiled smoke run",
+    "dt_ms": 0.005,
+    "duration_ms": 1.0,
+    "init_state_seconds": 265.0334841000149,
+    "init_seconds_by_cell": {
+     "cell_3955003482": 97.50617130001774,
+     "cell_4157825456": 38.513214200007496,
+     "cell_4188575291": 49.69441279998864,
+     "cell_5584343344": 42.94180250001955,
+     "cell_2530864375": 2.6346764999907464,
+     "cell_3178243558": 4.737576599989552,
+     "cell_3751392341": 4.305800100002671,
+     "cell_2451406889": 5.34490550000919,
+     "cell_678539249": 4.867973099986557,
+     "cell_4420044370": 4.166872899979353,
+     "cell_4260528559": 4.729542399989441,
+     "cell_2820958695": 5.588063400005922
+    },
+    "init_peak_rss_mb": 1287.35546875,
+    "run_peak_rss_mb": 1999.671875,
+    "compile_and_run_seconds": 29.773813700012397,
+    "initialization_and_run_seconds": 294.80729690002045,
+    "rss_convention": "psutil resident set of this interpreter; peak_wset where the platform reports it",
+    "stage_timestamps_s": {
+     "Loading cell 4188575291, component 0": 0.2,
+     "Checking pre cable location for contact 124698307": 18.0,
+     "Loading cell 3955003482, component 0": 23.5,
+     "Checking post cable location for contact 124698307": 50.6,
+     "Loading cell 5584343344, component 0": 56.3,
+     "Checking pre cable location for contact 8105899": 60.1,
+     "Loading cell 4157825456, component 0": 61.9,
+     "Checking post cable location for contact 8105899": 67.4,
+     "Loading cell 678539249, component 0 (isolated, largest component 0 of 4480 nodes, fraction 0.774)": 69.3,
+     "Loading cell 2451406889, component 0 (isolated, largest component 0 of 3750 nodes, fraction 0.970)": 69.8,
+     "Loading cell 2530864375, component 0 (isolated, largest component 0 of 1540 nodes, fraction 0.854)": 70.2,
+     "Loading cell 2820958695, component 0 (isolated, largest component 0 of 4864 nodes, fraction 0.488)": 70.5,
+     "Loading cell 3178243558, component 0 (isolated, largest component 0 of 2748 nodes, fraction 0.371)": 71.1,
+     "Loading cell 3751392341, component 0 (isolated, largest component 0 of 3499 nodes, fraction 0.990)": 71.5,
+     "Loading cell 4260528559, component 0 (isolated, largest component 0 of 4790 nodes, fraction 0.560)": 72.0,
+     "Loading cell 4420044370, component 0 (isolated, largest component 0 of 4624 nodes, fraction 0.999)": 72.7,
+     "Building electrical cell 3955003482": 73.7,
+     "Building electrical cell 4157825456": 146.0,
+     "Building electrical cell 4188575291": 160.0,
+     "Building electrical cell 5584343344": 189.6,
+     "Building electrical cell 2530864375": 202.3,
+     "Building electrical cell 3178243558": 202.7,
+     "Building electrical cell 3751392341": 203.3,
+     "Building electrical cell 2451406889": 204.1,
+     "Building electrical cell 678539249": 205.3,
+     "Building electrical cell 4420044370": 206.8,
+     "Building electrical cell 4260528559": 208.7,
+     "Building electrical cell 2820958695": 210.6,
+     "Discretizing cell 3955003482 and selecting its output site": 212.5,
+     "Registered cell 3955003482: 33965 compartments": 282.5,
+     "Discretizing cell 4157825456 and selecting its output site": 282.5,
+     "Registered cell 4157825456: 12966 compartments": 296.9,
+     "Discretizing cell 4188575291 and selecting its output site": 296.9,
+     "Registered cell 4188575291: 13989 compartments": 313.5,
+     "Discretizing cell 5584343344 and selecting its output site": 313.5,
+     "Registered cell 5584343344: 14685 compartments": 324.6,
+     "Discretizing cell 2530864375 and selecting its output site": 324.6,
+     "Registered cell 2530864375: 413 compartments": 325.1,
+     "Discretizing cell 3178243558 and selecting its output site": 325.1,
+     "Registered cell 3178243558: 966 compartments": 326.0,
+     "Discretizing cell 3751392341 and selecting its output site": 326.0,
+     "Registered cell 3751392341: 748 compartments": 327.3,
+     "Discretizing cell 2451406889 and selecting its output site": 327.3,
+     "Registered cell 2451406889: 1697 compartments": 329.3,
+     "Discretizing cell 678539249 and selecting its output site": 329.3,
+     "Registered cell 678539249: 1037 compartments": 331.4,
+     "Discretizing cell 4420044370 and selecting its output site": 331.4,
+     "Registered cell 4420044370: 1054 compartments": 333.8,
+     "Discretizing cell 4260528559 and selecting its output site": 333.8,
+     "Registered cell 4260528559: 1207 compartments": 336.8,
+     "Discretizing cell 2820958695 and selecting its output site": 336.8,
+     "Registered cell 2820958695: 1370 compartments": 338.5,
+     "Construction complete: 12 cells, 2 projections": 338.5,
+     "Initializing cell states and running 1.0 ms": 338.8,
+     "Initializing cell_3955003482 (1/12, 33965 compartments)": 338.8,
+     "heartbeat: init_state cell_3955003482 elapsed 60 s, RSS 780 MB": 398.8,
+     "Initialized cell_3955003482 in 97.5 s": 436.3,
+     "Initializing cell_4157825456 (2/12, 12966 compartments)": 436.3,
+     "Initialized cell_4157825456 in 38.5 s": 474.8,
+     "Initializing cell_4188575291 (3/12, 13989 compartments)": 474.8,
+     "Initialized cell_4188575291 in 49.7 s": 524.5,
+     "Initializing cell_5584343344 (4/12, 14685 compartments)": 524.5,
+     "Initialized cell_5584343344 in 42.9 s": 567.5,
+     "Initializing cell_2530864375 (5/12, 413 compartments)": 567.5,
+     "Initialized cell_2530864375 in 2.6 s": 570.1,
+     "Initializing cell_3178243558 (6/12, 966 compartments)": 570.1,
+     "Initialized cell_3178243558 in 4.7 s": 574.8,
+     "Initializing cell_3751392341 (7/12, 748 compartments)": 574.8,
+     "Initialized cell_3751392341 in 4.3 s": 579.1,
+     "Initializing cell_2451406889 (8/12, 1697 compartments)": 579.1,
+     "Initialized cell_2451406889 in 5.3 s": 584.5,
+     "Initializing cell_678539249 (9/12, 1037 compartments)": 584.5,
+     "Initialized cell_678539249 in 4.9 s": 589.4,
+     "Initializing cell_4420044370 (10/12, 1054 compartments)": 589.4,
+     "Initialized cell_4420044370 in 4.2 s": 593.5,
+     "Initializing cell_4260528559 (11/12, 1207 compartments)": 593.5,
+     "Initialized cell_4260528559 in 4.7 s": 598.3,
+     "Initializing cell_2820958695 (12/12, 1370 compartments)": 598.3,
+     "Initialized cell_2820958695 in 5.6 s": 603.8,
+     "Cell states initialized in 265.0 s, peak RSS 1287 MB": 603.8,
+     "Compiling and stepping": 603.8,
+     "Finite simulation traces saved": 633.6
+    },
+    "heartbeat_lines": 1,
+    "log": "scratchpad sp8b/run-ei/child.log (not committed)",
+    "traces": {
+     "all_finite": true,
+     "nonfinite_arrays": [],
+     "conductance_probe_max_abs_uS": {
+      "cell_3955003482_syn_124698307_g": 0.0,
+      "cell_4157825456_syn_8105899_g": 0.0
+     },
+     "conductance_probes_all_zero": true,
+     "voltage_range_mV": {
+      "cell_3955003482_output_voltage": [
+       -83.99874447715264,
+       -83.98027124968233
+      ],
+      "cell_3955003482_syn_124698307_voltage": [
+       -83.9796428575829,
+       -83.92342728478962
+      ],
+      "cell_3955003482_voltage": [
+       -83.9987433512799,
+       -83.9802713396166
+      ],
+      "cell_4157825456_output_voltage": [
+       -84.01780343833121,
+       -83.98038723778916
+      ],
+      "cell_4157825456_syn_8105899_voltage": [
+       -83.97964326371807,
+       -83.9241932351809
+      ],
+      "cell_4157825456_voltage": [
+       -84.01780343833121,
+       -83.98038723778916
+      ],
+      "cell_4188575291_output_voltage": [
+       -84.03423611764711,
+       -83.98022826543645
+      ],
+      "cell_4188575291_voltage": [
+       -84.00110278286871,
+       -83.98050843634185
+      ],
+      "cell_5584343344_output_voltage": [
+       -81.10553619658405,
+       -80.00605911618779
+      ],
+      "cell_5584343344_voltage": [
+       -80.93859062660967,
+       -80.00497177988794
+      ],
+      "cell_2530864375_output_voltage": [
+       -80.93600895931347,
+       -80.00498127439556
+      ],
+      "cell_2530864375_voltage": [
+       -80.93600895931347,
+       -80.00498127439556
+      ],
+      "cell_3178243558_output_voltage": [
+       -84.02983516210529,
+       -83.98042145298713
+      ],
+      "cell_3178243558_voltage": [
+       -84.02983577982118,
+       -83.98042155500892
+      ],
+      "cell_3751392341_output_voltage": [
+       -80.93797699758377,
+       -80.00497245994629
+      ],
+      "cell_3751392341_voltage": [
+       -80.93797679669677,
+       -80.0049724253355
+      ],
+      "cell_2451406889_output_voltage": [
+       -80.94015934651279,
+       -80.00497073775796
+      ],
+      "cell_2451406889_voltage": [
+       -80.94015934651279,
+       -80.00497073775796
+      ],
+      "cell_678539249_output_voltage": [
+       -80.94116328684909,
+       -80.00498099188957
+      ],
+      "cell_678539249_voltage": [
+       -80.94116328684909,
+       -80.00498099188957
+      ],
+      "cell_4420044370_output_voltage": [
+       -81.48915542108001,
+       -79.32385968684258
+      ],
+      "cell_4420044370_voltage": [
+       -81.48915542108001,
+       -79.32385968684258
+      ],
+      "cell_4260528559_output_voltage": [
+       -81.48916336530053,
+       -79.30776102013164
+      ],
+      "cell_4260528559_voltage": [
+       -81.48916343052258,
+       -79.30776129304765
+      ],
+      "cell_2820958695_output_voltage": [
+       -80.93575937301685,
+       -80.00496661855209
+      ],
+      "cell_2820958695_voltage": [
+       -80.9357590597671,
+       -80.0049665861742
+      ]
+     },
+     "n_samples": 200
+    }
+   },
+   "run_1ms_disconnected": {
+    "label": "run-disconnected",
+    "command": [
+     "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+     "-u",
+     "-m",
+     "examples.h01_verified_network",
+     "--topology",
+     "docs/evidence/h01-verified-network.json",
+     "--cache",
+     "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+     "--include-isolated",
+     "--cells",
+     "12",
+     "--solver",
+     "h01_staggered_scan",
+     "--output",
+     "C:\\Users\\J\\AppData\\Local\\Temp\\claude\\C--Users-J-Documents-Projects-connectome-agent-braintrace-source\\59762c69-587a-4ed2-83cc-b548416f9360\\scratchpad\\sp8b\\run-disconnected\\network",
+     "--duration-ms",
+     "1",
+     "--dt-ms",
+     "0.005",
+     "--control",
+     "disconnected"
+    ],
+    "started_at": "2026-09-07T18:17:35",
+    "status": "completed",
+    "peak_rss_by_pid": {
+     "43840:python.exe": 6.1640625,
+     "19616:python.exe": 1979.78515625
+    },
+    "silence_seconds": 600.0,
+    "init_state_abort_seconds": 1500.0,
+    "wall_cap_seconds": 3600.0,
+    "rss_samples": [
+     [
+      29,
+      484
+     ],
+     [
+      60,
+      470
+     ],
+     [
+      90,
+      588
+     ],
+     [
+      121,
+      523
+     ],
+     [
+      151,
+      520
+     ],
+     [
+      182,
+      512
+     ],
+     [
+      212,
+      603
+     ],
+     [
+      243,
+      613
+     ],
+     [
+      273,
+      690
+     ],
+     [
+      304,
+      640
+     ],
+     [
+      334,
+      797
+     ],
+     [
+      364,
+      858
+     ],
+     [
+      395,
+      922
+     ],
+     [
+      425,
+      1000
+     ],
+     [
+      456,
+      1140
+     ],
+     [
+      486,
+      1404
+     ]
+    ],
+    "wall_seconds": 508.4617226999835,
+    "exit_code": 0,
+    "finished_at": "2026-09-07T18:26:03",
+    "peak_rss_mb_tree": 1985.91796875,
+    "peak_rss_mb_real_interpreter_watcher": 1979.78515625,
+    "build_record_present": true,
+    "construction_seconds": 270.516713399993,
+    "n_compartments": 84097,
+    "compartments_by_cell": {
+     "3955003482": 33965,
+     "4157825456": 12966,
+     "4188575291": 13989,
+     "5584343344": 14685,
+     "2530864375": 413,
+     "3178243558": 966,
+     "3751392341": 748,
+     "2451406889": 1697,
+     "678539249": 1037,
+     "4420044370": 1054,
+     "4260528559": 1207,
+     "2820958695": 1370
+    },
+    "control": "disconnected",
+    "enabled_contacts": [],
+    "removed_contacts": [
+     "124698307",
+     "8105899"
+    ],
+    "execution": "finite compiled smoke run",
+    "dt_ms": 0.005,
+    "duration_ms": 1.0,
+    "init_state_seconds": 201.59354859997984,
+    "init_seconds_by_cell": {
+     "cell_3955003482": 89.03176959999837,
+     "cell_4157825456": 25.889110899996012,
+     "cell_4188575291": 31.540815899992594,
+     "cell_5584343344": 29.112160799995763,
+     "cell_2530864375": 2.0907209000142757,
+     "cell_3178243558": 2.8116042999899946,
+     "cell_3751392341": 2.729637599986745,
+     "cell_2451406889": 4.089979800017318,
+     "cell_678539249": 3.1907605000014883,
+     "cell_4420044370": 3.4755672000173945,
+     "cell_4260528559": 3.5362203999829944,
+     "cell_2820958695": 4.09308140000212
+    },
+    "init_peak_rss_mb": 1289.80859375,
+    "run_peak_rss_mb": 1987.84375,
+    "compile_and_run_seconds": 29.25382250000257,
+    "initialization_and_run_seconds": 230.84736990000238,
+    "rss_convention": "psutil resident set of this interpreter; peak_wset where the platform reports it",
+    "stage_timestamps_s": {
+     "Loading cell 4188575291, component 0": 0.1,
+     "Checking pre cable location for contact 124698307": 10.0,
+     "Loading cell 3955003482, component 0": 13.3,
+     "Checking post cable location for contact 124698307": 31.4,
+     "Loading cell 5584343344, component 0": 35.6,
+     "Checking pre cable location for contact 8105899": 38.8,
+     "Loading cell 4157825456, component 0": 40.0,
+     "Checking post cable location for contact 8105899": 44.2,
+     "Loading cell 678539249, component 0 (isolated, largest component 0 of 4480 nodes, fraction 0.774)": 45.7,
+     "Loading cell 2451406889, component 0 (isolated, largest component 0 of 3750 nodes, fraction 0.970)": 46.1,
+     "Loading cell 2530864375, component 0 (isolated, largest component 0 of 1540 nodes, fraction 0.854)": 46.5,
+     "Loading cell 2820958695, component 0 (isolated, largest component 0 of 4864 nodes, fraction 0.488)": 46.7,
+     "Loading cell 3178243558, component 0 (isolated, largest component 0 of 2748 nodes, fraction 0.371)": 47.1,
+     "Loading cell 3751392341, component 0 (isolated, largest component 0 of 3499 nodes, fraction 0.990)": 47.5,
+     "Loading cell 4260528559, component 0 (isolated, largest component 0 of 4790 nodes, fraction 0.560)": 47.9,
+     "Loading cell 4420044370, component 0 (isolated, largest component 0 of 4624 nodes, fraction 0.999)": 48.5,
+     "Building electrical cell 3955003482": 49.0,
+     "Building electrical cell 4157825456": 107.2,
+     "Building electrical cell 4188575291": 125.9,
+     "Building electrical cell 5584343344": 140.2,
+     "Building electrical cell 2530864375": 149.8,
+     "Building electrical cell 3178243558": 150.2,
+     "Building electrical cell 3751392341": 150.8,
+     "Building electrical cell 2451406889": 151.4,
+     "Building electrical cell 678539249": 152.6,
+     "Building electrical cell 4420044370": 153.5,
+     "Building electrical cell 4260528559": 154.5,
+     "Building electrical cell 2820958695": 155.7,
+     "Discretizing cell 3955003482 and selecting its output site": 156.8,
+     "Registered cell 3955003482: 33965 compartments": 204.2,
+     "Discretizing cell 4157825456 and selecting its output site": 204.2,
+     "Registered cell 4157825456: 12966 compartments": 222.9,
+     "Discretizing cell 4188575291 and selecting its output site": 222.9,
+     "Registered cell 4188575291: 13989 compartments": 249.9,
+     "Discretizing cell 5584343344 and selecting its output site": 249.9,
+     "Registered cell 5584343344: 14685 compartments": 261.5,
+     "Discretizing cell 2530864375 and selecting its output site": 261.5,
+     "Registered cell 2530864375: 413 compartments": 261.9,
+     "Discretizing cell 3178243558 and selecting its output site": 261.9,
+     "Registered cell 3178243558: 966 compartments": 262.9,
+     "Discretizing cell 3751392341 and selecting its output site": 262.9,
+     "Registered cell 3751392341: 748 compartments": 263.9,
+     "Discretizing cell 2451406889 and selecting its output site": 263.9,
+     "Registered cell 2451406889: 1697 compartments": 265.2,
+     "Discretizing cell 678539249 and selecting its output site": 265.2,
+     "Registered cell 678539249: 1037 compartments": 266.4,
+     "Discretizing cell 4420044370 and selecting its output site": 266.4,
+     "Registered cell 4420044370: 1054 compartments": 267.6,
+     "Discretizing cell 4260528559 and selecting its output site": 267.6,
+     "Registered cell 4260528559: 1207 compartments": 269.3,
+     "Discretizing cell 2820958695 and selecting its output site": 269.3,
+     "Registered cell 2820958695: 1370 compartments": 270.5,
+     "Construction complete: 12 cells, 0 projections": 270.5,
+     "Initializing cell states and running 1.0 ms": 270.8,
+     "Initializing cell_3955003482 (1/12, 33965 compartments)": 270.8,
+     "heartbeat: init_state cell_3955003482 elapsed 60 s, RSS 793 MB": 330.8,
+     "Initialized cell_3955003482 in 89.0 s": 359.8,
+     "Initializing cell_4157825456 (2/12, 12966 compartments)": 359.8,
+     "Initialized cell_4157825456 in 25.9 s": 385.7,
+     "Initializing cell_4188575291 (3/12, 13989 compartments)": 385.7,
+     "Initialized cell_4188575291 in 31.5 s": 417.3,
+     "Initializing cell_5584343344 (4/12, 14685 compartments)": 417.3,
+     "Initialized cell_5584343344 in 29.1 s": 446.4,
+     "Initializing cell_2530864375 (5/12, 413 compartments)": 446.4,
+     "Initialized cell_2530864375 in 2.1 s": 448.5,
+     "Initializing cell_3178243558 (6/12, 966 compartments)": 448.5,
+     "Initialized cell_3178243558 in 2.8 s": 451.3,
+     "Initializing cell_3751392341 (7/12, 748 compartments)": 451.3,
+     "Initialized cell_3751392341 in 2.7 s": 454.0,
+     "Initializing cell_2451406889 (8/12, 1697 compartments)": 454.0,
+     "Initialized cell_2451406889 in 4.1 s": 458.1,
+     "Initializing cell_678539249 (9/12, 1037 compartments)": 458.1,
+     "Initialized cell_678539249 in 3.2 s": 461.3,
+     "Initializing cell_4420044370 (10/12, 1054 compartments)": 461.3,
+     "Initialized cell_4420044370 in 3.5 s": 464.8,
+     "Initializing cell_4260528559 (11/12, 1207 compartments)": 464.8,
+     "Initialized cell_4260528559 in 3.5 s": 468.3,
+     "Initializing cell_2820958695 (12/12, 1370 compartments)": 468.3,
+     "Initialized cell_2820958695 in 4.1 s": 472.4,
+     "Cell states initialized in 201.6 s, peak RSS 1290 MB": 472.4,
+     "Compiling and stepping": 472.4,
+     "Finite simulation traces saved": 501.6
+    },
+    "heartbeat_lines": 1,
+    "log": "scratchpad sp8b/run-disconnected/child.log (not committed)",
+    "traces": {
+     "all_finite": true,
+     "nonfinite_arrays": [],
+     "conductance_probe_max_abs_uS": {
+      "cell_3955003482_syn_124698307_g": 0.0,
+      "cell_4157825456_syn_8105899_g": 0.0
+     },
+     "conductance_probes_all_zero": true,
+     "voltage_range_mV": {
+      "cell_3955003482_output_voltage": [
+       -83.99874447715264,
+       -83.98027124968233
+      ],
+      "cell_3955003482_syn_124698307_voltage": [
+       -83.9796428575829,
+       -83.92342728478962
+      ],
+      "cell_3955003482_voltage": [
+       -83.9987433512799,
+       -83.9802713396166
+      ],
+      "cell_4157825456_output_voltage": [
+       -84.01780343833121,
+       -83.98038723778916
+      ],
+      "cell_4157825456_syn_8105899_voltage": [
+       -83.97964326371807,
+       -83.9241932351809
+      ],
+      "cell_4157825456_voltage": [
+       -84.01780343833121,
+       -83.98038723778916
+      ],
+      "cell_4188575291_output_voltage": [
+       -84.03423611764711,
+       -83.98022826543645
+      ],
+      "cell_4188575291_voltage": [
+       -84.00110278286871,
+       -83.98050843634185
+      ],
+      "cell_5584343344_output_voltage": [
+       -81.10553619658405,
+       -80.00605911618779
+      ],
+      "cell_5584343344_voltage": [
+       -80.93859062660967,
+       -80.00497177988794
+      ],
+      "cell_2530864375_output_voltage": [
+       -80.93600895931347,
+       -80.00498127439556
+      ],
+      "cell_2530864375_voltage": [
+       -80.93600895931347,
+       -80.00498127439556
+      ],
+      "cell_3178243558_output_voltage": [
+       -84.02983516210529,
+       -83.98042145298713
+      ],
+      "cell_3178243558_voltage": [
+       -84.02983577982118,
+       -83.98042155500892
+      ],
+      "cell_3751392341_output_voltage": [
+       -80.93797699758377,
+       -80.00497245994629
+      ],
+      "cell_3751392341_voltage": [
+       -80.93797679669677,
+       -80.0049724253355
+      ],
+      "cell_2451406889_output_voltage": [
+       -80.94015934651279,
+       -80.00497073775796
+      ],
+      "cell_2451406889_voltage": [
+       -80.94015934651279,
+       -80.00497073775796
+      ],
+      "cell_678539249_output_voltage": [
+       -80.94116328684909,
+       -80.00498099188957
+      ],
+      "cell_678539249_voltage": [
+       -80.94116328684909,
+       -80.00498099188957
+      ],
+      "cell_4420044370_output_voltage": [
+       -81.48915542108001,
+       -79.32385968684258
+      ],
+      "cell_4420044370_voltage": [
+       -81.48915542108001,
+       -79.32385968684258
+      ],
+      "cell_4260528559_output_voltage": [
+       -81.48916336530053,
+       -79.30776102013164
+      ],
+      "cell_4260528559_voltage": [
+       -81.48916343052258,
+       -79.30776129304765
+      ],
+      "cell_2820958695_output_voltage": [
+       -80.93575937301685,
+       -80.00496661855209
+      ],
+      "cell_2820958695_voltage": [
+       -80.9357590597671,
+       -80.0049665861742
+      ]
+     },
+     "n_samples": 200
+    }
+   }
+  },
+  "summary": {
+   "construction_seconds": [
+    744.2183362000214,
+    338.51986850000685,
+    270.516713399993
+   ],
+   "init_state_seconds": {
+    "init_only_ei": 635.4034717999748,
+    "run_1ms_ei": 265.0334841000149,
+    "run_1ms_disconnected": 201.59354859997984
+   },
+   "compile_and_run_seconds_ei": 29.773813700012397,
+   "compile_and_run_seconds_disconnected": 29.25382250000257,
+   "initialization_and_run_seconds_ei": 294.80729690002045,
+   "peak_rss_mb_real_interpreter_inside": [
+    1289.91015625,
+    1999.671875,
+    1987.84375
+   ],
+   "peak_rss_mb_tree_watcher": [
+    1303.3984375,
+    1997.0234375,
+    1985.91796875
+   ],
+   "n_compartments": 84097,
+   "all_traces_finite": {
+    "ei": true,
+    "disconnected": true
+   },
+   "disconnected_conductance_probes_zero": true,
+   "ei_conductance_probes_nonzero": false,
+   "rss_over_6gb": false,
+   "untested": [
+    "ei conductance probes nonzero (not discriminable: 1 ms at zero input, soma pulses start at 2 ms, no presynaptic spike)"
+   ]
+  },
+  "sp1_linear_prediction_12": {
+   "construction_s": 275.0,
+   "construction_s_range_1p11x": [
+    266.0,
+    311.0
+   ],
+   "init_compile_run_s": 275.6382821267125,
+   "init_state_s_range_1x_3x_of_a": [
+    245.0,
+    736.0
+   ],
+   "peak_rss_gb": 1.4808684679516133
+  },
+  "inside_2x_sp1_prediction": {
+   "construction": true,
+   "init_plus_compile_run": true,
+   "peak_rss": true,
+   "all": true,
+   "note": "each of construction, init + compile + 200 steps, and RSS within [0.5x, 2x] of the SP1-derived value (spec addendum rule)"
+  },
+  "projection": {
+   "basis": "proportional in largest-component nodes from the two clean 1 ms runs of this attempt (init-only stage excluded as COMSOL-confounded); derived, not measured",
+   "40_cells": {
+    "nodes": 537152,
+    "nodes_ratio_to_4": 2.186,
+    "construction_s": 593,
+    "init_state_s": 454,
+    "compile_and_run_1ms_s": 58,
+    "peak_rss_gb": 3.8,
+    "label": "derived (proportional rule), not measured"
+   },
+   "104_cells": {
+    "nodes": 2804549,
+    "nodes_ratio_to_4": 11.411,
+    "construction_s": 3094,
+    "init_state_s": 2370,
+    "compile_and_run_1ms_s": 302,
+    "peak_rss_gb": 19.84,
+    "label": "derived (proportional rule), not measured"
+   }
+  },
+  "verdict_40_cell_stage": "approved by this check"
+ },
+ "latest_attempt": "quiet_machine_attempt_2026-09-07T17"
 }
