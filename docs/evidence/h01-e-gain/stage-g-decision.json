@@ -1,0 +1,724 @@
+{
+ "stage": "G",
+ "manifest": "docs/evidence/h01-e-gain-manifest.json",
+ "spec": "docs/specs/2026-09-07-h01-e-gain-split.md",
+ "gate": "h01-e-gain/stage-g0-decision.json (decision stage-g-opens-as-registered)",
+ "image": "braintrace-h01-neuron:9.0.2",
+ "base": {
+  "candidate": "g0-b3",
+  "sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
+ },
+ "arms": {
+  "g1-ih-half": {
+   "evaluation_index": 2,
+   "candidate_sha256": "b407cb3d6e0a6388d2f2e0a507cdda9394787650b7ce01f9e96543b0c69b9162",
+   "flag": "ih_density_factor 37.5 (from 75)",
+   "inputs": {
+    "sweep43": "completed",
+    "sweep50": "completed",
+    "sweep53": "completed",
+    "sweep56": "not run: arm rejected at 250 pA"
+   },
+   "runs": [
+    {
+     "input": "sweep43",
+     "wall_seconds": 439.9,
+     "returncode": 0,
+     "aborted": false,
+     "integration_seconds": 435.8
+    },
+    {
+     "input": "sweep50",
+     "wall_seconds": 772.4,
+     "returncode": 0,
+     "aborted": false,
+     "integration_seconds": 767.8
+    },
+    {
+     "input": "sweep53",
+     "wall_seconds": 809.7,
+     "returncode": 0,
+     "aborted": false,
+     "integration_seconds": 804.9
+    }
+   ],
+   "host": "2026-09-08 03:19-03:55Z, launched by the previous agent one container at a time (file times); host state during those runs not recorded by this agent; end times 03:27:02Z (43), 03:40:49Z (50), 03:55:13Z (53)",
+   "counts": {
+    "110 pA": 0,
+    "200 pA": "not run",
+    "250 pA": 8,
+    "310 pA": 10
+   },
+   "rates_hz": {
+    "250 pA": 7.565,
+    "310 pA": 9.818
+   },
+   "sweep43_rows": [
+    {
+     "key": "sub_1019_mv",
+     "human_mv": -84.5,
+     "g0_model_mv": -83.96942181251588,
+     "g0_residual_mv": 0.5305781874841244,
+     "arm_model_mv": -85.70096447091422,
+     "arm_residual_mv": -1.200964470914215,
+     "change_mv": -1.7315426583983395,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 2.521232289609543e-09
+    },
+    {
+     "key": "sub_1021_mv",
+     "human_mv": -83.78125,
+     "g0_model_mv": -82.87309880906065,
+     "g0_residual_mv": 0.9081511909393498,
+     "arm_model_mv": -84.6040874026329,
+     "arm_residual_mv": -0.8228374026328993,
+     "change_mv": -1.730988593572249,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 1.2247057412650975e-08
+    },
+    {
+     "key": "sub_1025_mv",
+     "human_mv": -82.09375762939453,
+     "g0_model_mv": -81.29451143131892,
+     "g0_residual_mv": 0.7992461980756076,
+     "arm_model_mv": -83.01815591994607,
+     "arm_residual_mv": -0.9243982905515367,
+     "change_mv": -1.7236444886271443,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 2.3324155051795973e-09
+    },
+    {
+     "key": "sub_1040_mv",
+     "human_mv": -78.53125,
+     "g0_model_mv": -77.91335780286335,
+     "g0_residual_mv": 0.6178921971366549,
+     "arm_model_mv": -79.55997996852888,
+     "arm_residual_mv": -1.0287299685288787,
+     "change_mv": -1.6466221656655335,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 3.2087043919659666e-07
+    },
+    {
+     "key": "sub_1120_mv",
+     "human_mv": -74.1875,
+     "g0_model_mv": -73.76138932164993,
+     "g0_residual_mv": 0.42611067835007077,
+     "arm_model_mv": -74.74814249657466,
+     "arm_residual_mv": -0.5606424965746584,
+     "change_mv": -0.9867531749247291,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 7.415351603867748e-07
+    },
+    {
+     "key": "sub_1520_mv",
+     "human_mv": -75.6875,
+     "g0_model_mv": -73.97187822174021,
+     "g0_residual_mv": 1.7156217782597878,
+     "arm_model_mv": -74.64660247010264,
+     "arm_residual_mv": 1.0408975298973644,
+     "change_mv": -0.6747242483624234,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 4.174171479576217e-08
+    },
+    {
+     "key": "sub_2019_mv",
+     "human_mv": -75.6875,
+     "g0_model_mv": -73.97348188150774,
+     "g0_residual_mv": 1.7140181184922625,
+     "arm_model_mv": -74.64816513828771,
+     "arm_residual_mv": 1.039334861712291,
+     "change_mv": -0.6746832567799714,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 7.090376286100764e-08
+    },
+    {
+     "key": "sub_2021_mv",
+     "human_mv": -76.46875,
+     "g0_model_mv": -75.07227283949251,
+     "g0_residual_mv": 1.3964771605074873,
+     "arm_model_mv": -75.74677301234459,
+     "arm_residual_mv": 0.7219769876554096,
+     "change_mv": -0.6745001728520776,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 8.506980080369432e-08
+    },
+    {
+     "key": "sub_2040_mv",
+     "human_mv": -81.8125,
+     "g0_model_mv": -80.12682352216432,
+     "g0_residual_mv": 1.6856764778356848,
+     "arm_model_mv": -80.84226981912366,
+     "arm_residual_mv": 0.9702301808763423,
+     "change_mv": -0.7154462969593425,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 3.7388364404478125e-07
+    },
+    {
+     "key": "sub_2120_mv",
+     "human_mv": -85.75,
+     "g0_model_mv": null,
+     "g0_residual_mv": null,
+     "arm_model_mv": null,
+     "arm_residual_mv": null,
+     "change_mv": null,
+     "arm_verdict_1mv": "unavailable",
+     "numerical_limit_mv": 7.511087247280557e-07
+    }
+   ],
+   "sweep43_late_return_change_mv": [
+    -0.7154462969593425,
+    -0.6745001728520776
+   ],
+   "sweep43_onset_change_mv": [
+    -1.7315426583983395,
+    -0.9867531749247291
+   ],
+   "bands": [
+    {
+     "band": "250 pA count 5-7 with late cycles >= 200 ms (human 5)",
+     "predicted": "5-7; cycles 4-8 >= 200 ms",
+     "observed": "count 8 (g0-b3 8); cycles 4-8 190.4, 174.1, 167.4, 162.7, 159.5 ms (g0-b3 184 -> 157 ms); rate 7.57 Hz (g0-b3 7.73, human 4.79)",
+     "held": false
+    },
+    {
+     "band": "310 pA count 9-10 and rate within 1.5 Hz of 10.0 Hz (human 10)",
+     "predicted": "9-10; |rate - 10.0| <= 1.5 Hz",
+     "observed": "count 10; rate 9.82 Hz (change -0.23 Hz from g0-b3 10.05)",
+     "held": true
+    },
+    {
+     "band": "pre-pulse baseline -1 to -3 mV from B3 (sweep-43 sub_1019 row)",
+     "predicted": "-1 to -3 mV",
+     "observed": "-1.73 mV (-83.97 -> -85.70 mV)",
+     "held": true
+    },
+    {
+     "band": "sweep-43 late-return rows move <= 1 mV relative to g0-b3 (+1.40..+1.72 mV)",
+     "predicted": "|change| <= 1 mV at 1520/2019/2021/2040 ms",
+     "observed": "changes -0.72 to -0.67 mV; residuals now +1.04, +1.04, +0.72, +0.97 mV (1520/2019 still fail the absolute 1 mV row by 0.04 mV; 2021/2040 pass)",
+     "held": true
+    },
+    {
+     "band": "sweep-43 onset rows (1019-1120 ms) stay within 1 mV",
+     "predicted": "|residual| <= 1 mV at 5 rows",
+     "observed": "residuals -1.20, -0.82, -0.92, -1.03, -0.56 mV: 1019 and 1040 fail by 0.20 and 0.03 mV (the -1.7 mV baseline shift carries the pre-pulse rest below the donor); 1021/1025/1120 pass",
+     "held": false
+    },
+    {
+     "band": "200 pA count 1 (exact repeat band; g0-b3 4)",
+     "predicted": 1,
+     "observed": "not run: arm rejected at 250 pA before sweep 56 was launched",
+     "held": null
+    },
+    {
+     "band": "axon-first initiation at every active input",
+     "predicted": "axon first",
+     "observed": "axon first at 50/53: leads 0.213/0.207 ms, no shoulder; 56 not run",
+     "held": true
+    },
+    {
+     "band": "no width cycle newly failing relative to b3-all-inputs-usable.md",
+     "predicted": "same failing set",
+     "observed": "failing width cycles [('310 pA', 2)] vs B3/g0-b3 [('310 pA', 2)] at 250/310 pA",
+     "held": true
+    }
+   ],
+   "rejection": {
+    "clause": "310 count < 9, or 250 count still >= 8",
+    "met": true,
+    "reading": "250 pA count 8: still >= 8. Halving the distributed Ih moved the rest -1.7 mV and the 310 pA rate -0.23 Hz but removed no spike at 250 pA; cycles 4-8 shortened from 184-157 to 190-159 ms range only at the first late cycle. The lever translates the resting potential; it does not rotate the f-I curve.",
+    "sweep43_move_clause": {
+     "met": false,
+     "change_mv": [
+      -0.7154462969593425,
+      -0.6745001728520776
+     ]
+    },
+    "initiation_clause": {
+     "met": false
+    }
+   },
+   "verdicts_per_input": {
+    "sweep43 (110 pA)": "late return moved -0.68..-0.72 mV (held); pre-pulse rest -1.7 mV (held); onset rows 1019/1040 now -1.20/-1.03 mV (absolute 1 mV row fails by 0.20/0.03 mV); contract 5 pass 4 fail 1 unavailable, same tally as g0-b3 with the failing rows redistributed",
+    "sweep50 (250 pA)": "count 8 (human 5) FAIL both tiers; rate 7.57 vs 4.79 Hz fail (limit 0.72); adaptation pass; widths pass; axon first",
+    "sweep53 (310 pA)": "count 10 pass; rate 9.82 vs 10.00 Hz pass (limit 1.5); adaptation pass; width cycle 2 fails as in B3; axon first",
+    "sweep56 (200 pA)": "not run: arm rejected at 250 pA (campaign-log status written by hand)"
+   },
+   "verdict": "REJECTED on the registered clause (250 pA count still 8); 310 pA, initiation, widths and the sweep-43 late-return change held; the lever moved the rest, not the gain"
+  },
+  "g2-leak-150": {
+   "evaluation_index": 3,
+   "candidate_sha256": "555a5e5ca804f8623bc49cf40d9a18289234cca9ed9100906bf0606671cc3f3d",
+   "flag": "leak_factor 1.5 (g_pas x1.5 in soma/axon/dend/apic; reversal shift -4 mV unchanged)",
+   "inputs": {
+    "sweep43": "completed",
+    "sweep50": "completed",
+    "sweep53": "completed",
+    "sweep56": "completed"
+   },
+   "runs": [
+    {
+     "input": "sweep43",
+     "wall_seconds": 447.1,
+     "returncode": 0,
+     "aborted": false,
+     "integration_seconds": 443.9
+    },
+    {
+     "input": "sweep50",
+     "wall_seconds": 491.4,
+     "returncode": 0,
+     "aborted": false,
+     "integration_seconds": 487.9
+    },
+    {
+     "input": "sweep53",
+     "wall_seconds": 988.9,
+     "returncode": 0,
+     "aborted": false,
+     "integration_seconds": 981.1
+    },
+    {
+     "input": "sweep56",
+     "wall_seconds": 678.5,
+     "returncode": 0,
+     "aborted": false,
+     "integration_seconds": 673.6
+    }
+   ],
+   "host": {
+    "g2-leak-150 sweep43": "2026-09-07/08 ~03:56-04:03:41Z, previous agent; host state not recorded",
+    "g2-leak-150 sweep50": "04:07:35Z-04:15:46Z, shared: two SP8 BrainCell build-only processes (examples.h01_verified_network --build --control ei, x2) and four P_NP pytest workers on the host; 0 spikes, hence 491 s",
+    "g2-leak-150 sweep53": "04:16:42Z-04:33:11Z, shared at launch with the same SP8 BrainCell build-only jobs; 989 s for 6 spikes (1.2x the 828 s g0-b3 10-spike run on an unshared host)",
+    "g2-leak-150 sweep56": "04:34:10Z start, host unshared at launch (no SP8 or P_NP python process remained; docker: synapse only)"
+   },
+   "counts": {
+    "110 pA": 0,
+    "200 pA": 0,
+    "250 pA": 0,
+    "310 pA": 6
+   },
+   "rates_hz": {
+    "250 pA": 0.0,
+    "310 pA": 6.015
+   },
+   "sweep43_rows": [
+    {
+     "key": "sub_1019_mv",
+     "human_mv": -84.5,
+     "g0_model_mv": -83.96942181251588,
+     "g0_residual_mv": 0.5305781874841244,
+     "arm_model_mv": -84.9648692863223,
+     "arm_residual_mv": -0.4648692863222976,
+     "change_mv": -0.9954474738064221,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 2.521232289609543e-09
+    },
+    {
+     "key": "sub_1021_mv",
+     "human_mv": -83.78125,
+     "g0_model_mv": -82.87309880906065,
+     "g0_residual_mv": 0.9081511909393498,
+     "arm_model_mv": -83.88370137220022,
+     "arm_residual_mv": -0.10245137220022116,
+     "change_mv": -1.010602563139571,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 1.2247057412650975e-08
+    },
+    {
+     "key": "sub_1025_mv",
+     "human_mv": -82.09375762939453,
+     "g0_model_mv": -81.29451143131892,
+     "g0_residual_mv": 0.7992461980756076,
+     "arm_model_mv": -82.3971439768002,
+     "arm_residual_mv": -0.30338634740566306,
+     "change_mv": -1.1026325454812707,
+     "arm_verdict_1mv": "pass",
+     "numerical_limit_mv": 2.3324155051795973e-09
+    },
+    {
+     "key": "sub_1040_mv",
+     "human_mv": -78.53125,
+     "g0_model_mv": -77.91335780286335,
+     "g0_residual_mv": 0.6178921971366549,
+     "arm_model_mv": -79.58664736822735,
+     "arm_residual_mv": -1.0553973682273465,
+     "change_mv": -1.6732895653640014,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 3.2087043919659666e-07
+    },
+    {
+     "key": "sub_1120_mv",
+     "human_mv": -74.1875,
+     "g0_model_mv": -73.76138932164993,
+     "g0_residual_mv": 0.42611067835007077,
+     "arm_model_mv": -77.46501927023509,
+     "arm_residual_mv": -3.2775192702350893,
+     "change_mv": -3.70362994858516,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 7.415351603867748e-07
+    },
+    {
+     "key": "sub_1520_mv",
+     "human_mv": -75.6875,
+     "g0_model_mv": -73.97187822174021,
+     "g0_residual_mv": 1.7156217782597878,
+     "arm_model_mv": -77.74834427376236,
+     "arm_residual_mv": -2.0608442737623562,
+     "change_mv": -3.776466052022144,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 4.174171479576217e-08
+    },
+    {
+     "key": "sub_2019_mv",
+     "human_mv": -75.6875,
+     "g0_model_mv": -73.97348188150774,
+     "g0_residual_mv": 1.7140181184922625,
+     "arm_model_mv": -77.74865431895493,
+     "arm_residual_mv": -2.0611543189549337,
+     "change_mv": -3.775172437447196,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 7.090376286100764e-08
+    },
+    {
+     "key": "sub_2021_mv",
+     "human_mv": -76.46875,
+     "g0_model_mv": -75.07227283949251,
+     "g0_residual_mv": 1.3964771605074873,
+     "arm_model_mv": -78.8307236839393,
+     "arm_residual_mv": -2.361973683939297,
+     "change_mv": -3.7584508444467843,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 8.506980080369432e-08
+    },
+    {
+     "key": "sub_2040_mv",
+     "human_mv": -81.8125,
+     "g0_model_mv": -80.12682352216432,
+     "g0_residual_mv": 1.6856764778356848,
+     "arm_model_mv": -83.19047615820092,
+     "arm_residual_mv": -1.377976158200923,
+     "change_mv": -3.0636526360366076,
+     "arm_verdict_1mv": "fail",
+     "numerical_limit_mv": 3.7388364404478125e-07
+    },
+    {
+     "key": "sub_2120_mv",
+     "human_mv": -85.75,
+     "g0_model_mv": null,
+     "g0_residual_mv": null,
+     "arm_model_mv": null,
+     "arm_residual_mv": null,
+     "change_mv": null,
+     "arm_verdict_1mv": "unavailable",
+     "numerical_limit_mv": 7.511087247280557e-07
+    }
+   ],
+   "sweep43_late_return_change_mv": [
+    -3.776466052022144,
+    -3.0636526360366076
+   ],
+   "sweep43_onset_change_mv": [
+    -3.70362994858516,
+    -0.9954474738064221
+   ],
+   "bands": [
+    {
+     "band": "both counts fall, 250 pA proportionally more: 250 count <= 6 (human 5)",
+     "predicted": "<= 6",
+     "observed": "count 0 (g0-b3 8, drop 8); soma plateau -66.8 mV, no spike inside the pulse; rate 0 Hz (human 4.79)",
+     "held": true
+    },
+    {
+     "band": "310 pA count >= 8 (human 10)",
+     "predicted": ">= 8",
+     "observed": "count 6 (g0-b3 10, drop 4); rate 6.02 Hz (change -4.03 Hz from g0-b3, human 10.00); cycles 75.8, 40.2, 137.8, 229.8, 215.3, 208.3 ms",
+     "held": false
+    },
+    {
+     "band": "310 pA rate within 1.5 Hz of 10.0 Hz (registered for the dose rule)",
+     "predicted": "|rate - 10.0| <= 1.5 Hz",
+     "observed": "6.02 Hz, -3.99 Hz",
+     "held": false
+    },
+    {
+     "band": "200 pA count 0-1 (exact repeat band 1; g0-b3 4)",
+     "predicted": "0-1",
+     "observed": "count 0",
+     "held": true
+    },
+    {
+     "band": "sweep-43 late-return rows move <= 1 mV relative to g0-b3 (+1.40..+1.72 mV)",
+     "predicted": "|change| <= 1 mV",
+     "observed": "changes -3.78 to -3.06 mV; residuals now -2.06, -2.06, -2.36, -1.38 mV (the return overshoots the donor by 1.4-2.4 mV in the other direction)",
+     "held": false
+    },
+    {
+     "band": "sweep-43 onset rows (1019-1120 ms) stay within 1 mV",
+     "predicted": "|residual| <= 1 mV at 5 rows",
+     "observed": "residuals -0.46, -0.10, -0.30, -1.06, -3.28 mV: 1019/1021/1025 pass (rest -1.0 mV from g0-b3), 1040 fails by 0.06 mV, 1120 fails by 2.28 mV (the pulse plateau is 3.7 mV lower: leak x1.5 cuts the input resistance)",
+     "held": false
+    },
+    {
+     "band": "axon-first initiation at every active input",
+     "predicted": "axon first",
+     "observed": "310 pA: axon first, leads 0.217 ms, no shoulder; 250 pA and 200 pA: no spike, so the site is untestable there",
+     "held": true
+    },
+    {
+     "band": "no width cycle newly failing relative to b3-all-inputs-usable.md",
+     "predicted": "same failing set",
+     "observed": "failing width cycles [('310 pA', 2)] vs B3/g0-b3 [('310 pA', 2)]",
+     "held": true
+    }
+   ],
+   "rejection": {
+    "clause": "250 and 310 counts fall by the same spike count (pure shift, no rotation)",
+    "met": false,
+    "reading": "drops differ: 250 pA -8 spikes (8 -> 0), 310 pA -4 spikes (10 -> 6); the curve rotates, but by collapsing the 250 pA point to zero and taking 310 pA to 6 (rate 6.02 Hz, -3.99 Hz), not by landing the 250 pA count near 5 with 310 pA held.",
+    "sweep43_move_clause": {
+     "clause": "moving the sweep-43 return by more than 1 mV rejects the arm (manifest Stage G rejection; g0 judging condition 1)",
+     "met": true,
+     "change_mv": [
+      -3.776466052022144,
+      -3.0636526360366076
+     ],
+     "reading": "late-return rows move -3.06 to -3.78 mV, past the donor to -1.4..-2.4 mV: the arm is rejected on sweep 43 independently of its counts."
+    },
+    "initiation_clause": {
+     "met": false
+    }
+   },
+   "verdicts_per_input": {
+    "sweep43 (110 pA)": "late return moved -3.06..-3.78 mV, now -1.38..-2.36 mV below the donor (REJECTED: > 1 mV move); pulse plateau (1120 ms) -3.28 mV; rest rows 1019/1021/1025 pass; contract 3 pass 6 fail 1 unavailable",
+    "sweep50 (250 pA)": "count 0 (human 5) FAIL both tiers; soma plateau -66.8 mV; rate and adaptation unavailable (no spike); initiation untestable",
+    "sweep53 (310 pA)": "count 6 (human 10) FAIL; rate 6.02 vs 10.00 Hz fail (limit 1.5); axon first (leads 0.217 ms)",
+    "sweep56 (200 pA)": "count 0 (human 1, exact band): pass (registered 0-1) but by silence"
+   },
+   "verdict": "REJECTED on the sweep-43 return (moved -3.8 mV) and the 310 pA count (6 < 8); the registered pure-shift clause is NOT met (drops -8 and -4 differ), so the leak does rotate the curve, by silencing 250 pA rather than by landing it"
+  }
+ },
+ "gain_tables": {
+  "human_counts_200_250_310_350": [
+   1,
+   5,
+   10,
+   13
+  ],
+  "g0-b3": [
+   {
+    "segment_pa": [
+     200,
+     250
+    ],
+    "human_counts": [
+     1,
+     5
+    ],
+    "model_counts": [
+     4,
+     8
+    ],
+    "human_spikes_per_pa": 0.08,
+    "model_spikes_per_pa": 0.08,
+    "ratio_model_over_human": 1.0
+   },
+   {
+    "segment_pa": [
+     250,
+     310
+    ],
+    "human_counts": [
+     5,
+     10
+    ],
+    "model_counts": [
+     8,
+     10
+    ],
+    "human_spikes_per_pa": 0.0833,
+    "model_spikes_per_pa": 0.0333,
+    "ratio_model_over_human": 0.4
+   },
+   {
+    "segment_pa": [
+     310,
+     350
+    ],
+    "human_counts": [
+     10,
+     13
+    ],
+    "model_counts": [
+     10,
+     12
+    ],
+    "human_spikes_per_pa": 0.075,
+    "model_spikes_per_pa": 0.05,
+    "ratio_model_over_human": 0.667
+   }
+  ],
+  "g1-ih-half": [
+   {
+    "segment_pa": [
+     250,
+     310
+    ],
+    "human_counts": [
+     5,
+     10
+    ],
+    "model_counts": [
+     8,
+     10
+    ],
+    "human_spikes_per_pa": 0.0833,
+    "model_spikes_per_pa": 0.0333,
+    "ratio_model_over_human": 0.4,
+    "source": "g1-ih-half sweep50/53"
+   },
+   {
+    "segment_pa": [
+     200,
+     250
+    ],
+    "note": "200 pA not run (arm rejected at 250 pA)"
+   }
+  ],
+  "g2-leak-150": [
+   {
+    "segment_pa": [
+     200,
+     250
+    ],
+    "human_counts": [
+     1,
+     5
+    ],
+    "model_counts": [
+     0,
+     0
+    ],
+    "human_spikes_per_pa": 0.08,
+    "model_spikes_per_pa": 0.0,
+    "ratio_model_over_human": 0.0,
+    "source": "g2-leak-150 sweep56/50"
+   },
+   {
+    "segment_pa": [
+     250,
+     310
+    ],
+    "human_counts": [
+     5,
+     10
+    ],
+    "model_counts": [
+     0,
+     6
+    ],
+    "human_spikes_per_pa": 0.0833,
+    "model_spikes_per_pa": 0.1,
+    "ratio_model_over_human": 1.2,
+    "source": "g2-leak-150 sweep50/53"
+   }
+  ],
+  "rate_slope_hz_per_pa_250_310": {
+   "human_hz_per_pa_250_310": 0.0869,
+   "g0-b3": 0.0386,
+   "g1-ih-half": 0.0375,
+   "g2-leak-150": 0.1003
+  }
+ },
+ "g3_selection": {
+  "registered_rule": "the arm with the larger |delta(250 count)| / |delta(310 rate)| per unit factor change; factor interpolated linearly to land 250 count 5 while the 310 rate change stays within 1.5 Hz; the dose is written here before g3-reserve is appended",
+  "per_arm": {
+   "g1-ih-half": {
+    "delta_250_count": 0,
+    "delta_310_rate_hz": -0.227,
+    "factor_change": -37.5,
+    "ratio_abs_count_over_abs_rate": 0.0
+   },
+   "g2-leak-150": {
+    "delta_250_count": -8,
+    "delta_310_rate_hz": -4.03,
+    "factor_change": 0.5,
+    "ratio_abs_count_over_abs_rate": 1.985
+   }
+  },
+  "better_arm_by_rule": "g2-leak-150 (g1-ih-half removed no spike at 250 pA, so its ratio is 0)",
+  "does_g2_rotate": true,
+  "rotation_reading": "g2 rotates the curve in the registered sense (unequal drops: -8 at 250 pA, -4 at 310 pA) but not usably: the 250 pA point collapses to 0 and the 310 pA rate falls -4.03 Hz.",
+  "linear_dose": {
+   "leak_factor": 1.1875,
+   "predicted_250_count": 5,
+   "predicted_310_rate_hz": 8.534,
+   "predicted_310_rate_change_hz": -1.511,
+   "predicted_sweep43_late_return_change_mv": [
+    -1.42,
+    -1.15
+   ],
+   "admissible": false,
+   "reading": "linear interpolation puts the 310 rate change at -1.511 Hz (limit 1.5) and the sweep-43 late-return move at -1.15 mV (limit 1): the registered dose is outside both constraints at the same time, and the 8 -> 0 collapse at 250 pA shows the count is not linear in leak_factor (the 250 pA plateau sits 10 mV under threshold at x1.5), so the interpolation is not a measured estimate."
+  },
+  "selection": "Dissection-rule alternative registered by the coordinator: combined arm, ih_density_factor 37.5 (Ih half) plus leak_factor 1.5 on B3 (Hartshorne p202/p204: dissect the two steady inter-spike currents together when neither alone separates the response); recorded, NOT run",
+  "selection_basis": "g2 rotates the curve but the registered dose rule yields no admissible dose (see linear_dose) and both arms are rejected on registered clauses (G1 at 250 pA; G2 on the sweep-43 return and the 310 count), so the manifest's G3 clause ('if neither arm rotated the curve usably, G3 is not run') and the coordinator's registered alternative are recorded side by side; the choice to spend evaluation 4 is the coordinator's.",
+  "predicted_if_run": "additive reading of the two arms: rest about -2.7 mV below B3 (-1.7 Ih, -1.0 leak), pulse plateau at 250 pA below -67 mV so count 0 at 200 and 250 pA, 310 pA count <= 6 with rate below 6.0 Hz, sweep-43 late return about -4.5 mV from g0-b3: every registered Stage G band fails; the combined arm would spend the last evaluation on a predicted FAIL",
+  "g3_run": false,
+  "campaign_status_if_g3_not_run": "FAIL at 3 of 4 (manifest fail_rule): the gain is set outside the fit's passive family; reassessment names human slow Na inactivation or Kv7/M kinetics absent from the Allen genome, or a second human L2/3 donor with a recorded f-I curve (SP6b lead)"
+ },
+ "evaluations_spent": 3,
+ "cap": 4,
+ "decision": "both-arms-rejected; g3 recorded (combined Ih half + leak x1.5), not run",
+ "decision_text": "Stage G is complete at evaluations 2 and 3 of 4. g1-ih-half (Ih halved) is rejected on its registered clause: the 250 pA count stays 8; it moved the rest -1.7 mV and the 310 pA rate -0.23 Hz, kept axon-first initiation and every width verdict, and moved the sweep-43 late return -0.7 mV (allowed), so halving Ih translates the resting potential without rotating the f-I curve. g2-leak-150 (leak x1.5) is rejected on the sweep-43 return (moved -3.1..-3.8 mV, past the donor) and on the 310 pA count (6 < 8, rate 6.02 Hz); its registered pure-shift clause is not met because the drops differ (-8 at 250 pA, -4 at 310 pA), i.e. the leak rotates the curve, but by collapsing 250 pA to silence (plateau -66.8 mV) rather than landing it near 5. The registered dose rule names g2 as the better arm (g1's ratio is 0) and a linear dose of leak_factor 1.1875, whose interpolated 310 rate change (-1.51 Hz) and sweep-43 move (-1.15 mV) both sit outside their constraints, so no admissible dose exists under the rule. The G3 selection recorded here is therefore the coordinator's registered Dissection-rule alternative (combined Ih half + leak x1.5 on B3); it is not run, and the additive reading of the two arms predicts it fails every Stage G band. Under the manifest fail_rule the campaign stands at FAIL with 3 of 4 evaluations spent unless the coordinator elects to spend evaluation 4 on the combined arm.",
+ "files": {
+  "h01-e-gain/g1-ih-half-sweep43.json": {
+   "sha256": "4fa68484c2bdf0bbfd9fbc6db94706ba1eb9586b07b0f3d0f2f888ffd94fef6e",
+   "candidate_sha256": "b407cb3d6e0a6388d2f2e0a507cdda9394787650b7ce01f9e96543b0c69b9162",
+   "integration_seconds": 435.8
+  },
+  "h01-e-gain/g1-ih-half-sweep50.json": {
+   "sha256": "a792bcb013627a795345311f7c7922d9b8c354c92ab9ae74a651c92247c86be9",
+   "candidate_sha256": "b407cb3d6e0a6388d2f2e0a507cdda9394787650b7ce01f9e96543b0c69b9162",
+   "integration_seconds": 767.8
+  },
+  "h01-e-gain/g1-ih-half-sweep53.json": {
+   "sha256": "1e21d5e8d0c4f597592e9f208b7d35659f1e7d892e33310e046d1da43f376df7",
+   "candidate_sha256": "b407cb3d6e0a6388d2f2e0a507cdda9394787650b7ce01f9e96543b0c69b9162",
+   "integration_seconds": 804.9
+  },
+  "h01-e-gain/g1-ih-half-sweep43-contract.json": {
+   "sha256": "b6f49821b8a9a10499d58784d949e626eb57b18f0c785d550042b26d4daf808b"
+  },
+  "h01-e-gain/g1-ih-half-usable.json": {
+   "sha256": "a1d8f417013fce8517de0349b7a9821f76d60b15d1e48c7898eb1cc2fed62b69"
+  },
+  "h01-e-gain/g2-leak-150-sweep43.json": {
+   "sha256": "703d53498a28c25d655c72db61d1099b94b3e0487281d6a3dc42318a157364b3",
+   "candidate_sha256": "555a5e5ca804f8623bc49cf40d9a18289234cca9ed9100906bf0606671cc3f3d",
+   "integration_seconds": 443.9
+  },
+  "h01-e-gain/g2-leak-150-sweep50.json": {
+   "sha256": "d57a49dd08a00967ae99c250f01861e8f17651beced2564b02fb6675d61f6506",
+   "candidate_sha256": "555a5e5ca804f8623bc49cf40d9a18289234cca9ed9100906bf0606671cc3f3d",
+   "integration_seconds": 487.9
+  },
+  "h01-e-gain/g2-leak-150-sweep53.json": {
+   "sha256": "f5cf2758e5a53b19fcc89f4904fdb9565114fba33d917c6085db56a81963be84",
+   "candidate_sha256": "555a5e5ca804f8623bc49cf40d9a18289234cca9ed9100906bf0606671cc3f3d",
+   "integration_seconds": 981.1
+  },
+  "h01-e-gain/g2-leak-150-sweep56.json": {
+   "sha256": "b7eee13ac7a9caf76391cf443183abc0dde4050ee0f131a493b9baf8c1fdc94f",
+   "candidate_sha256": "555a5e5ca804f8623bc49cf40d9a18289234cca9ed9100906bf0606671cc3f3d",
+   "integration_seconds": 673.6
+  },
+  "h01-e-gain/g2-leak-150-sweep43-contract.json": {
+   "sha256": "f1e241965e7a9339b98b624685a6feada76cba781d42c80a24a9e79c90806203"
+  },
+  "h01-e-gain/g2-leak-150-usable.json": {
+   "sha256": "8afa22ffe6ef2b70287fcc3b6ec0a16c355cd603672d938b4a676ccefe9d29c7"
+  }
+ },
+ "campaign_log": "h01-e-gain/campaign-log.json"
+}

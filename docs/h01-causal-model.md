@@ -1201,6 +1201,58 @@ unshared host; the 1500 s abort held every run with at least 655 s to spare, so 
 measured 3274 s per evaluation, and the concurrent-pair duration is unmeasured. Evaluations
 spent: 1 of 4.
 
+### Y4 observed under Stage G of the gain split (2026-09-08, evaluations 2 and 3 of 4; both arms rejected)
+
+**Observation.** Two single-flag arms on B3 at sweeps 43/50/53(/56), image `braintrace-h01-neuron:9.0.2`,
+one container at a time. `g1-ih-half` (`ih_density_factor 37.5` from 75, sha256 `b407cb3d...`): counts
+0/8/10 at 110/250/310 pA (B3 0/8/10), 310 pA rate 9.82 Hz (-0.23 Hz), 250 pA rate 7.57 Hz (-0.16 Hz),
+cycles 4-8 at 250 pA 190 -> 159 ms (B3 184 -> 157), rest -85.70 mV (-1.73 mV from B3), sweep-43 late
+return +0.72..+1.04 mV (moved -0.68..-0.72 mV), axon-first at 50/53 (0.213/0.207 ms), widths unchanged;
+sweep 56 not run (arm rejected at 250 pA). `g2-leak-150` (`leak_factor 1.5`, reversal shift unchanged,
+sha256 `555a5e5c...`): counts 0/0/0/6 at 110/200/250/310 pA (B3 0/4/8/10), 250 pA soma plateau -66.8 mV
+and 200 pA plateau -70.9 mV (no spike), 310 pA rate 6.02 Hz (-4.03 Hz), cycles 75.8/40.2/137.8/229.8/
+215.3/208.3 ms, axon-first at 310 pA (0.217 ms), rest -84.96 mV (-1.0 mV), pulse plateau at 110 pA
+-77.47 mV (-3.7 mV), sweep-43 late return -1.38..-2.36 mV (moved -3.06..-3.78 mV, past the donor).
+Conditions: recorded command plus recorded bias, nseg x9, CVode 1e-10, stop 2100 ms; g2 sweeps 50 and 53
+ran beside two SP8 BrainCell build-only processes (491 s for 0 spikes, 989 s for 6 spikes), sweep 56 on an
+unshared host (679 s); g1's three runs and g2's sweep 43 were launched by the previous agent (440/772/810,
+447 s). Decision file `evidence/h01-e-gain/stage-g-decision.json` (`decision` = `both-arms-rejected; g3
+recorded (combined Ih half + leak x1.5), not run`), page `evidence/h01-e-gain-stage-g.md`, tables
+`evidence/h01-e-gain/g1-ih-half-usable.md`, `evidence/h01-e-gain/g2-leak-150-usable.md`.
+
+**Bands.** G1: five of seven scored held (310 count and rate, rest shift -1..-3 mV, sweep-43 move
+<= 1 mV, initiation, widths); the 250 pA count band (5-7) missed at 8 and two onset rows slipped
+outside 1 mV by 0.20/0.03 mV as the rest fell; registered rejection ("250 count still >= 8") **met**.
+G2: four of eight held (250 count <= 6 at 0, 200 count 0-1 at 0, initiation where testable, widths);
+310 count >= 8 missed at 6, 310 rate -4.0 Hz, sweep-43 late return moved -3.8 mV (the manifest's
+"more than 1 mV" clause **met**) and the plateau row -3.3 mV; the registered pure-shift clause is
+**not met** (drops -8 at 250 pA and -4 at 310 pA differ).
+
+**What it narrows.** (1) Distributed Ih is not the current that sets the low-drive excess: halving it
+removes no spike at 250 pA and shortens no late cycle beyond 6 ms, while moving the rest 1.7 mV. Ih at
+this density acts on the resting potential and the post-pulse return (which it improved by 0.7 mV), not on
+the f-I slope. The registered controlling property ("a current present between spikes at low input and
+small at high input") is not Ih. (2) The linear leak does rotate the curve (the 250-310 pA slope goes
+from 0.033 to 0.100 spikes/pA, past the human 0.083), but it does so by raising rheobase above 250 pA:
+at x1.5 the 250 pA plateau sits 10 mV under threshold, so the 250 pA count is a step in the leak, not a
+line, and the registered linear dose (1.1875, predicted 310 rate -1.51 Hz and sweep-43 move -1.2..-1.4 mV)
+is outside both constraints. A leak dose that lands 250 pA at 5 would have to sit inside the step between
+x1.0 (count 8) and x1.5 (count 0) and is unmeasured; the same dose moves the sweep-43 return past the donor
+before it gets there (the return already crosses at -3.8 mV per 0.5 factor), so leak alone cannot hold F5
+and land the count together. (3) Both passive levers move the sweep-43 return and the f-I curve in a fixed
+ratio (Ih: -0.7 mV per 0 spikes; leak: -3.8 mV per -8 spikes at 250 pA); a lever that rotates the curve
+without moving F5 must be voltage- or use-dependent, which is the manifest's reassessment (human slow Na
+inactivation or Kv7/M kinetics absent from the Allen genome). (4) Axon-first initiation and the width set
+are insensitive to both levers (Stage A result stands under a 1.7 mV rest shift and a 1.5x leak).
+(5) The combined arm registered as the Dissection alternative (Ih half + leak x1.5) is predicted from the
+two observations to be silent at 200 and 250 pA with a sweep-43 return about -4.5 mV: it would spend the
+last evaluation on a predicted FAIL; recorded, not run.
+
+**Status.** Y4 stays open. Stage G complete; G3 not run; evaluations spent 3 of 4. Under the manifest fail
+rule the gain split stands at FAIL unless evaluation 4 is spent on the recorded combined arm; the
+reassessment names the gain set outside the fit's passive family (slow Na inactivation or Kv7/M kinetics,
+or a second human L2/3 donor with a recorded f-I curve, SP6b lead).
+
 ### Y5 under the population edge list
 
 The C3 relationship-index scan of all 104 proofread cells returns 123
