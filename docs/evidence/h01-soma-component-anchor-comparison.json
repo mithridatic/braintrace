@@ -1,0 +1,200 @@
+{
+  "scope": "Four-cell component comparison against cell-table anchor; nearest source soma samples, not membrane distance or connectivity repair",
+  "anchor_scale_um": [
+    0.008,
+    0.008,
+    0.033
+  ],
+  "input_hashes": {
+    "docs\\evidence\\h01-cellmatrix-mapping-audit.json": "360d8c334f8f1b280dd860c69a633cdee6bcb7b6de09a369f4225433e80a899e",
+    ".cache\\h01\\cellmatrix_404_c3.mat": "d4203c00c1e1995273b1e96543a3e51f84fe5de44ce26349d41cfbac3a608839",
+    ".cache\\h01\\H01_multisynaptic_stats.m": "47561f5a6ffb7d7e6fdaac990533042be253a988182fa207f67414f59476a616",
+    ".cache\\h01\\H01_EM_8nm.vsvi": "92656856c80f520eccc58b5180ee857f701fb782fd9fb27530feae7f3f3ae475",
+    ".cache\\h01\\proofread104.zip": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47"
+  },
+  "rows": [
+    {
+      "cell": "3470629528",
+      "base_id": 4168833735,
+      "anchor_voxel": [
+        220585,
+        158822,
+        1024
+      ],
+      "anchor_um": [
+        1764.68,
+        1270.576,
+        33.792
+      ],
+      "components": [
+        {
+          "member": "3470629528.0.swc",
+          "soma_samples": 38,
+          "nearest_soma_sample_distance_um": 22.49231699936669,
+          "largest_soma_sample_distance_um": 23.67729452450172,
+          "largest_soma_radius_um": 1.6400000000000001
+        },
+        {
+          "member": "3470629528.1.swc",
+          "soma_samples": 101,
+          "nearest_soma_sample_distance_um": 5.558861753992433,
+          "largest_soma_sample_distance_um": 8.1901218550154,
+          "largest_soma_radius_um": 9.534612305000001
+        }
+      ]
+    },
+    {
+      "cell": "4138580687",
+      "base_id": 4634401300,
+      "anchor_voxel": [
+        207669,
+        177654,
+        896
+      ],
+      "anchor_um": [
+        1661.352,
+        1421.232,
+        29.568
+      ],
+      "components": [
+        {
+          "member": "4138580687.0.swc",
+          "soma_samples": 2,
+          "nearest_soma_sample_distance_um": 80.31100742114992,
+          "largest_soma_sample_distance_um": 101.32861820828315,
+          "largest_soma_radius_um": 0.122151543
+        },
+        {
+          "member": "4138580687.2.swc",
+          "soma_samples": 40,
+          "nearest_soma_sample_distance_um": 1.4323924043362428,
+          "largest_soma_sample_distance_um": 1.4323924043362428,
+          "largest_soma_radius_um": 6.788244141
+        }
+      ]
+    },
+    {
+      "cell": "4668874666",
+      "base_id": 5540597983,
+      "anchor_voxel": [
+        322208,
+        199786,
+        896
+      ],
+      "anchor_um": [
+        2577.664,
+        1598.288,
+        29.568
+      ],
+      "components": [
+        {
+          "member": "4668874666.0.swc",
+          "soma_samples": 8,
+          "nearest_soma_sample_distance_um": 83.74977435193475,
+          "largest_soma_sample_distance_um": 85.93898934127611,
+          "largest_soma_radius_um": 0.759770996
+        },
+        {
+          "member": "4668874666.1.swc",
+          "soma_samples": 124,
+          "nearest_soma_sample_distance_um": 2.9122664713244917,
+          "largest_soma_sample_distance_um": 3.0115305078981907,
+          "largest_soma_radius_um": 3.2924350589999998
+        },
+        {
+          "member": "4668874666.10.swc",
+          "soma_samples": 1,
+          "nearest_soma_sample_distance_um": 190.27326038095842,
+          "largest_soma_sample_distance_um": 190.27326038095842,
+          "largest_soma_radius_um": 0.202385773
+        },
+        {
+          "member": "4668874666.12.swc",
+          "soma_samples": 3,
+          "nearest_soma_sample_distance_um": 600.8405346653967,
+          "largest_soma_sample_distance_um": 907.4378755953489,
+          "largest_soma_radius_um": 0.128
+        }
+      ]
+    },
+    {
+      "cell": "7196644737",
+      "base_id": 7371141223,
+      "anchor_voxel": [
+        209245,
+        254711,
+        768
+      ],
+      "anchor_um": [
+        1673.96,
+        2037.688,
+        25.344
+      ],
+      "components": [
+        {
+          "member": "7196644737.0.swc",
+          "soma_samples": 4,
+          "nearest_soma_sample_distance_um": 72.53703369314191,
+          "largest_soma_sample_distance_um": 72.53703369314191,
+          "largest_soma_radius_um": 0.161817795
+        },
+        {
+          "member": "7196644737.13.swc",
+          "soma_samples": 2,
+          "nearest_soma_sample_distance_um": 6.213155398024392,
+          "largest_soma_sample_distance_um": 9.102982588141177,
+          "largest_soma_radius_um": 3.119585205
+        },
+        {
+          "member": "7196644737.14.swc",
+          "soma_samples": 3,
+          "nearest_soma_sample_distance_um": 9.143023569913781,
+          "largest_soma_sample_distance_um": 9.143023569913781,
+          "largest_soma_radius_um": 2.904
+        },
+        {
+          "member": "7196644737.15.swc",
+          "soma_samples": 1,
+          "nearest_soma_sample_distance_um": 7.883096092272274,
+          "largest_soma_sample_distance_um": 7.883096092272274,
+          "largest_soma_radius_um": 3.1476340329999997
+        },
+        {
+          "member": "7196644737.18.swc",
+          "soma_samples": 5,
+          "nearest_soma_sample_distance_um": 222.19628254541067,
+          "largest_soma_sample_distance_um": 222.19628254541067,
+          "largest_soma_radius_um": 0.31773101800000003
+        },
+        {
+          "member": "7196644737.20.swc",
+          "soma_samples": 1,
+          "nearest_soma_sample_distance_um": 248.49959229141604,
+          "largest_soma_sample_distance_um": 248.49959229141604,
+          "largest_soma_radius_um": 0.056008926
+        },
+        {
+          "member": "7196644737.3.swc",
+          "soma_samples": 2,
+          "nearest_soma_sample_distance_um": 72.42064071105685,
+          "largest_soma_sample_distance_um": 73.17938925681189,
+          "largest_soma_radius_um": 0.078797211
+        },
+        {
+          "member": "7196644737.6.swc",
+          "soma_samples": 70,
+          "nearest_soma_sample_distance_um": 1.4038019803376827,
+          "largest_soma_sample_distance_um": 3.681617036031874,
+          "largest_soma_radius_um": 3.980135742
+        },
+        {
+          "member": "7196644737.7.swc",
+          "soma_samples": 14,
+          "nearest_soma_sample_distance_um": 192.04730190502553,
+          "largest_soma_sample_distance_um": 194.96887678806596,
+          "largest_soma_radius_um": 0.722656921
+        }
+      ]
+    }
+  ]
+}

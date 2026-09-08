@@ -2174,3 +2174,13 @@ This challenges the anatomical representativeness of those selected components;
 a finite run of them cannot settle that issue. It does not establish a new
 causal account of the numerical failure or authorize artificial reconnection.
 Source cell-body evidence must resolve component choice before another launch.
+
+Cell-table anchor comparison supports the four alternative soma components:
+3470629528.1, 4138580687.2, 4668874666.1 and 7196644737.6. Their nearest labelled
+soma samples are respectively 5.559, 1.432, 2.912 and 1.404 um from the source
+anchor. All are closer than the currently selected components' soma samples.
+The comparison binds the source table, metadata, archive and identity mapping
+by hash in h01-soma-component-anchor-comparison.json. This provides independent
+anatomical support for explicit selection corrections, but does not recover
+omitted branches or join disconnected components. Existing r2 remains evidence
+only for its recorded, unchanged component choices.
