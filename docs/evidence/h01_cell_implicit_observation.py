@@ -38,7 +38,7 @@ def main():
     """Run the registered unchanged-cell observation and save its evidence."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--dt-ms', type=float, choices=[.005,.0025], default=.005)
+    parser.add_argument('--dt-ms', type=float, choices=[.005,.0025,.00125,.000625,.0003125], default=.005)
     args = parser.parse_args()
     started = time.perf_counter()
     emit = lambda message: print(f'[{time.perf_counter()-started:.1f}s] {message}', flush=True)
@@ -88,7 +88,9 @@ def main():
         traces = args.output.with_suffix('.npz')
         np.savez_compressed(traces, **arrays)
         with np.load(baseline_path, allow_pickle=False) as baseline:
-            old, new = baseline['cell_'+identity+'_voltage'], arrays['voltage']
+            stride = round((.005 if args.dt_ms == .005 else .0025)/args.dt_ms)
+            np.testing.assert_allclose(baseline['time_ms'], arrays['time_ms'][stride-1::stride], rtol=0, atol=1e-12)
+            old, new = baseline['cell_'+identity+'_voltage'], arrays['voltage'][stride-1::stride]
             finite = np.isfinite(old) & np.isfinite(new)
             delta = float(np.max(np.abs(old[finite]-new[finite])))
             masks_match = bool(np.array_equal(np.isfinite(old), np.isfinite(new)))

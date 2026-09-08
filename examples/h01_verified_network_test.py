@@ -134,3 +134,15 @@ def test_all_nonfinite_arrays_reported_even_when_time_is_invalid(run_fixture):
     record = json.loads((output.parent/(output.name+'-build.json')).read_text())
     assert set(record['nonfinite_arrays']) == {'time_ms','cell_one_voltage','cell_one_output_voltage','cell_one_events'}
     assert record['nonfinite_arrays']['cell_one_voltage']['first_time_ms'] is None
+
+
+def test_explicit_implicit_solver_is_forwarded(run_fixture, monkeypatch):
+    _,_,network = run_fixture
+    captured = {}
+    def build(*args, **kwargs):
+        captured.update(kwargs)
+        return network, dict(cells={'one':{'n_compartments':1}})
+    monkeypatch.setattr(example,'make_h01_network',build)
+    monkeypatch.setattr(sys,'argv',sys.argv+['--solver','h01_staggered_calcium_implicit'])
+    example.main()
+    assert captured['solver'] == 'h01_staggered_calcium_implicit'

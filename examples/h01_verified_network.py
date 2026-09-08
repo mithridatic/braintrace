@@ -46,7 +46,7 @@ def main():
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--current-na", type=float, default=0., help="Same assumed soma pulse for each incident cell.")
-    parser.add_argument("--solver", default="h01_staggered_scan", choices=["h01_staggered_scan", "staggered"])
+    parser.add_argument("--solver", default="h01_staggered_scan", choices=["h01_staggered_scan", "staggered", "h01_staggered_calcium_implicit"])
     args = parser.parse_args()
     if args.disconnected:
         if args.control not in ("ei", "disconnected"):

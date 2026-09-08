@@ -76,3 +76,12 @@ historical scalar decision predates this correction and is superseded by these
 33 passing checks (kernel 100%, solver 96% line coverage). Unsupported non-ohmic
 currents and non-family ordering are rejected. No-calcium traces match the
 existing scan exactly; ordinary-regime differences shrink with timestep.
+
+## Finer timestep evidence
+
+The [extended refinement](h01-ready-cell7196644737-refinement-decision.json)
+records consecutive voltage errors of 6.364916, 3.471139, 1.819563 and 0.933343
+mV as dt halves from .005 to .0003125 ms. The last pair (.000625/.0003125 ms)
+passes the 1 mV limit and retains one event each, with .0003125 ms timing
+separation. All recorded arrays remain finite and calcium remains positive.
+This qualifies only this isolated comparison. Full104 refinement remains open.

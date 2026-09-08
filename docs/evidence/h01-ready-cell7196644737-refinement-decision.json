@@ -1,0 +1,55 @@
+{
+  "decision": "ISOLATED_FINE_PAIR_PASS",
+  "scope": "one cell, 10ms, assumed 1nA input; no full104 or physiology qualification",
+  "comparisons": [
+    {
+      "coarse": "implicit005",
+      "fine": "implicit0025",
+      "max_voltage_difference_mV": 6.364915590023713,
+      "event_count_match": true,
+      "max_event_timing_difference_ms": 0.004999999999999893,
+      "passed": false
+    },
+    {
+      "coarse": "implicit0025",
+      "fine": "implicit00125",
+      "max_voltage_difference_mV": 3.4711386227890273,
+      "event_count_match": true,
+      "max_event_timing_difference_ms": 4.440892098500626e-16,
+      "passed": false
+    },
+    {
+      "coarse": "implicit00125",
+      "fine": "implicit000625",
+      "max_voltage_difference_mV": 1.8195633913774145,
+      "event_count_match": true,
+      "max_event_timing_difference_ms": 4.440892098500626e-16,
+      "passed": false
+    },
+    {
+      "coarse": "implicit000625",
+      "fine": "implicit0003125",
+      "max_voltage_difference_mV": 0.9333431178712033,
+      "event_count_match": true,
+      "max_event_timing_difference_ms": 0.0003124999999997158,
+      "passed": true
+    }
+  ],
+  "inputs": {
+    ".cache\\h01\\readiness\\cell7196644737-implicit005.npz": "f4f7d29f2dc7b17ba2a51f537c765c7b66a3994a652d636a9ecf330430b9d06e",
+    ".cache\\h01\\readiness\\cell7196644737-implicit005.json": "fa0b49317d71c6295a4b62e8d4b110bd7d29086353ab5ba27a05f28985a7200d",
+    "docs\\evidence\\h01-ready-cell7196644737-implicit005-launch.json": "a161a7e61ee6f4188a388c68cbdd821109e4be1aa9bdb168a93498f864939135",
+    ".cache\\h01\\readiness\\cell7196644737-implicit0025.npz": "94b9eefd46e07a4d150d280b8dc3e30229e311379f317aa3dd09cb723f7542e2",
+    ".cache\\h01\\readiness\\cell7196644737-implicit0025.json": "558b8021f909114051148e0e8050b47bfd813b614b93ea71a01d25b3af0a621c",
+    "docs\\evidence\\h01-ready-cell7196644737-implicit0025-launch.json": "235f8746d37c2e6f07cf6c753d4c018d8be036abb434ca3cb6ca93d55de7f650",
+    ".cache\\h01\\readiness\\cell7196644737-implicit00125.npz": "5875349217cb67530eed7c9eb9b34d91184db7eeef660b0b5b09a34d63401541",
+    ".cache\\h01\\readiness\\cell7196644737-implicit00125.json": "e842a82c8651e95d61a24fa72531212f7c380b979fdcfa8dab219ad2ac8779b9",
+    "docs\\evidence\\h01-ready-cell7196644737-implicit00125-launch.json": "54c06558ceac95680155e338ede398fc82a82c7a6389e19d09964a0a0df68a6d",
+    ".cache\\h01\\readiness\\cell7196644737-implicit000625.npz": "3d5456727c0e8df37170a2a9b06ad87aa9d80f7a66dd6cd7ba6bc6fe93904679",
+    ".cache\\h01\\readiness\\cell7196644737-implicit000625.json": "7c9ac5fa9c870036d672e29c0031d7379e02a5deb9ea701dcc030420dccbb7f6",
+    "docs\\evidence\\h01-ready-cell7196644737-implicit000625-launch.json": "9c1dfb9e2262f0165e0292080eb2395c8fb02ffa076fdf70c1a7c8209ff73cc7",
+    ".cache\\h01\\readiness\\cell7196644737-implicit0003125.npz": "9b67ceb9a9b5358187223aff8a5f61bd0de2d7246a62046dc11d19ab503eef51",
+    ".cache\\h01\\readiness\\cell7196644737-implicit0003125.json": "328801a5329d0135794bc1a9ba1a46b4cc68fde6ceb3204f5470cfed2ba3b1b4",
+    "docs\\evidence\\h01-ready-cell7196644737-implicit0003125-launch.json": "75d1de8a8039cf67c02a9e7598832b212a8a3635c3bd57a8c585206ebf0ca0b4"
+  }
+}
