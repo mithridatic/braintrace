@@ -1,0 +1,110 @@
+{
+  "scope": "exact endpoint-coordinate comparison; no model promotion",
+  "annotation_source": "docs\\evidence\\h01-resolved-edge-list-3000.json",
+  "rows": [
+    {
+      "pre_cell": "4157825456",
+      "post_cell": "5654281423",
+      "pre_site": 56597827359,
+      "existing_annotation": "19690278",
+      "existing_endpoint_verified": false,
+      "identity_agreement": true
+    },
+    {
+      "pre_cell": "955432427",
+      "post_cell": "1304599410",
+      "pre_site": 114500362164,
+      "existing_annotation": "51821909",
+      "existing_endpoint_verified": false,
+      "identity_agreement": true
+    },
+    {
+      "pre_cell": "5654281423",
+      "post_cell": "5175880292",
+      "pre_site": 91666076357,
+      "existing_annotation": null,
+      "existing_endpoint_verified": null,
+      "identity_agreement": null
+    },
+    {
+      "pre_cell": "955432427",
+      "post_cell": "620880207",
+      "pre_site": 78743284619,
+      "existing_annotation": null,
+      "existing_endpoint_verified": null,
+      "identity_agreement": null
+    },
+    {
+      "pre_cell": "5654281423",
+      "post_cell": "4157825456",
+      "pre_site": 127961471469,
+      "existing_annotation": "87007535",
+      "existing_endpoint_verified": false,
+      "identity_agreement": true
+    },
+    {
+      "pre_cell": "620880207",
+      "post_cell": "1304599410",
+      "pre_site": 43614948969,
+      "existing_annotation": null,
+      "existing_endpoint_verified": null,
+      "identity_agreement": null
+    },
+    {
+      "pre_cell": "4830551047",
+      "post_cell": "5136107765",
+      "pre_site": 90716375566,
+      "existing_annotation": "89339102",
+      "existing_endpoint_verified": false,
+      "identity_agreement": true
+    },
+    {
+      "pre_cell": "4476359994",
+      "post_cell": "4607885827",
+      "pre_site": 635399554450,
+      "existing_annotation": null,
+      "existing_endpoint_verified": null,
+      "identity_agreement": null
+    },
+    {
+      "pre_cell": "2252715458",
+      "post_cell": "2195261734",
+      "pre_site": 83863506806,
+      "existing_annotation": "79265497",
+      "existing_endpoint_verified": false,
+      "identity_agreement": true
+    },
+    {
+      "pre_cell": "1304599410",
+      "post_cell": "620880207",
+      "pre_site": 150586026221,
+      "existing_annotation": "582047",
+      "existing_endpoint_verified": false,
+      "identity_agreement": true
+    },
+    {
+      "pre_cell": "4188575291",
+      "post_cell": "4711567524",
+      "pre_site": 635401678819,
+      "existing_annotation": null,
+      "existing_endpoint_verified": null,
+      "identity_agreement": null
+    },
+    {
+      "pre_cell": "4157825456",
+      "post_cell": "5654281423",
+      "pre_site": 92085295466,
+      "existing_annotation": null,
+      "existing_endpoint_verified": null,
+      "identity_agreement": null
+    },
+    {
+      "pre_cell": "5654281423",
+      "post_cell": "4157825456",
+      "pre_site": 163419121542,
+      "existing_annotation": null,
+      "existing_endpoint_verified": null,
+      "identity_agreement": null
+    }
+  ]
+}

@@ -2127,3 +2127,11 @@ export candidates with sampled partner membership, not accepted circuit edges
 or a complete graph. Raw retained records are cached and hash-bound by the
 summary so subsequent identity checks need not repeat the scan. No new network
 request or simulation was used for this pass.
+
+The partial source connectivity inventory now retains records associated with
+all104 cells, independently of simulation eligibility: 13 internal candidates,
+five self candidates, 25891 unresolved incoming partners and 1149 unresolved
+outgoing partners in eight cached export shards. Evidence:
+h01-cached-connectivity-inventory.json. This is partial sampled-membership
+connectivity, not proof that unmapped partners lie outside the selected cells.
+The enabled simulation graph remains two contacts; Y5 completeness stays open.

@@ -114,3 +114,21 @@ export candidates with sampled partner membership, not accepted circuit edges
 or a complete graph. Raw retained records are cached and hash-bound by the
 summary so subsequent identity checks need not repeat the scan. No new network
 request or simulation was used for this pass.
+
+## Partial source connectivity inventory
+
+The eight cached shards contain 27058 retained synapse records associated with
+all 104 cells under the explicit axon-base and sampled C3 mappings. The new
+h01-cached-connectivity-inventory.json separates 13 internal candidates, five
+self candidates, 25891 incoming records with unresolved presynaptic ownership,
+and 1149 outgoing records with unresolved postsynaptic ownership. Unknown
+partners are not classified as outside the 104: incomplete membership can also
+cause that result. No duplicate source-ID pairs or conflicting duplicate records
+were found in this retained set. These counts cover eight shards only.
+
+This inventory preserves the source-import view independently of the two enabled
+simulation contacts. It is not a complete 104-cell connectome. Source membership,
+partner identity, and cable-placement eligibility remain separate fields of work.
+The exact-coordinate comparison additionally found six of the 13 internal
+candidates in the prior annotation list, all with matching assigned cells and
+failed endpoint checks; seven had no exact endpoint-coordinate match.
