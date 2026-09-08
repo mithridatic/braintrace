@@ -1,0 +1,154 @@
+{
+ "stage": "close",
+ "closed_utc": "2026-09-08T04:50:00Z",
+ "spec": "docs/specs/2026-09-07-h01-e-gain-split.md",
+ "manifest": "docs/evidence/h01-e-gain-manifest.json",
+ "gates": [
+  "h01-e-gain/stage-g0-decision.json (decision stage-g-opens-as-registered)",
+  "h01-e-gain/stage-g-decision.json (decision both-arms-rejected; g3 recorded (combined Ih half + leak x1.5), not run)"
+ ],
+ "campaign_log": "h01-e-gain/campaign-log.json",
+ "image": "braintrace-h01-neuron:9.0.2",
+ "decision": "FAIL",
+ "decision_rule": "manifest fail_rule: no arm meets the pass rule by the cap. Applied at 3 of 4 under the fail-fast rule (Hartshorne p034/p179): the one remaining evaluation has a registered additive prediction that fails every registered band, so spending it cannot change the decision.",
+ "decision_text": "SP3 (E gain split) closes as FAIL with three of four evaluations spent. Evaluation 1 (g0-b3) reproduced B3 at 250/310 pA, measured the low-drive excess (4 spikes at 200 pA against the exact repeat band of 1) and met its own rejection clause on the sweep-43 late return (+1.4 to +1.7 mV). Evaluation 2 (g1-ih-half) removed no spike at 250 pA. Evaluation 3 (g2-leak-150) silenced 250 pA and moved the sweep-43 return -3.8 mV. Evaluation 4 (combined Ih half + leak x1.5) is registered and not spent because its additive prediction fails every registered band. The E cell stays at frozen B3, unpromoted.",
+ "evaluations": {
+  "spent": 3,
+  "cap": 4,
+  "registered_not_spent": 1
+ },
+ "arms": [
+  {
+   "evaluation_index": 1,
+   "candidate": "g0-b3",
+   "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+   "flag": "B3 unchanged",
+   "verdict": "B3 reproduced (8/10 at 250/310 pA, cycle tables identical to 0.01 ms); 200 pA count 4 against the exact band 1 (miss); sweep-43 late return +1.40 to +1.72 mV (registered rejection met); axon-first at 50/53/56.",
+   "decision_json": "h01-e-gain/stage-g0-decision.json",
+   "json_paths": {
+    "bands": "stage-g0-decision.json#/bands",
+    "rejection": "stage-g0-decision.json#/rejection",
+    "gain": "stage-g0-decision.json#/gain_spikes_per_pa",
+    "sweep43_rows": "stage-g0-decision.json#/sweep43_rows",
+    "usable_tier": "stage-g0-decision.json#/usable_tier"
+   },
+   "page": "h01-e-gain-stage0.md"
+  },
+  {
+   "evaluation_index": 2,
+   "candidate": "g1-ih-half",
+   "candidate_sha256": "b407cb3d6e0a6388d2f2e0a507cdda9394787650b7ce01f9e96543b0c69b9162",
+   "flag": "ih_density_factor 37.5 (from 75)",
+   "verdict": "REJECTED on the registered clause: 250 pA count still 8 (band 5-7); rest -1.73 mV, 310 pA rate -0.23 Hz, sweep-43 return -0.7 mV; the lever moved the rest, not the gain. Sweep 56 not run.",
+   "decision_json": "h01-e-gain/stage-g-decision.json",
+   "json_paths": {
+    "bands": "stage-g-decision.json#/arms/g1-ih-half/bands",
+    "rejection": "stage-g-decision.json#/arms/g1-ih-half/rejection",
+    "verdicts_per_input": "stage-g-decision.json#/arms/g1-ih-half/verdicts_per_input",
+    "gain": "stage-g-decision.json#/gain_tables/g1-ih-half"
+   },
+   "page": "h01-e-gain-stage-g.md"
+  },
+  {
+   "evaluation_index": 3,
+   "candidate": "g2-leak-150",
+   "candidate_sha256": "555a5e5ca804f8623bc49cf40d9a18289234cca9ed9100906bf0606671cc3f3d",
+   "flag": "leak_factor 1.5 (g_pas x1.5 in soma/axon/dend/apic; reversal shift -4 mV unchanged)",
+   "verdict": "REJECTED on the sweep-43 return (moved -3.06 to -3.78 mV, past the donor) and the 310 pA count (6 < 8); counts 0/0/6 at 200/250/310 pA, 250 pA plateau -66.8 mV; pure-shift clause not met (drops -8 and -4), so the leak rotates the curve by silencing 250 pA, not by landing it.",
+   "decision_json": "h01-e-gain/stage-g-decision.json",
+   "json_paths": {
+    "bands": "stage-g-decision.json#/arms/g2-leak-150/bands",
+    "rejection": "stage-g-decision.json#/arms/g2-leak-150/rejection",
+    "verdicts_per_input": "stage-g-decision.json#/arms/g2-leak-150/verdicts_per_input",
+    "gain": "stage-g-decision.json#/gain_tables/g2-leak-150"
+   },
+   "page": "h01-e-gain-stage-g.md"
+  },
+  {
+   "evaluation_index": 4,
+   "candidate": "g3 (combined ih_density_factor 37.5 + leak_factor 1.5 on B3)",
+   "candidate_sha256": null,
+   "flag": "ih_density_factor 37.5 and leak_factor 1.5 together (coordinator's Dissection-rule alternative, Hartshorne p202/p204)",
+   "status": "registered, not spent",
+   "reason_not_spent": "The additive reading of evaluations 2 and 3 predicts rest about -2.7 mV below B3, 250 pA plateau below -67 mV (count 0 at 200 and 250 pA), 310 pA count <= 6 with rate below 6.0 Hz, and a sweep-43 late return about -4.5 mV from g0-b3: every registered Stage G band fails. The registered linear dose rule also yields no admissible dose (leak_factor 1.1875: 310 rate change -1.51 Hz against 1.5, sweep-43 move -1.15 to -1.42 mV against 1). Under the fail-fast rule an evaluation whose registered prediction is a FAIL on every band cannot change the campaign decision and is not spent.",
+   "verdict": "not run; no observation",
+   "decision_json": "h01-e-gain/stage-g-decision.json",
+   "json_paths": {
+    "selection": "stage-g-decision.json#/g3_selection/selection",
+    "linear_dose": "stage-g-decision.json#/g3_selection/linear_dose",
+    "predicted_if_run": "stage-g-decision.json#/g3_selection/predicted_if_run"
+   }
+  }
+ ],
+ "gain_tables": {
+  "human_counts_200_250_310_350": [1, 5, 10, 13],
+  "human_spikes_per_pa": {"200-250": 0.08, "250-310": 0.0833, "310-350": 0.075},
+  "g0-b3_counts_200_250_310_350": [4, 8, 10, 12],
+  "g0-b3_spikes_per_pa": {"200-250": 0.08, "250-310": 0.0333, "310-350": 0.05},
+  "g1-ih-half_counts_250_310": [8, 10],
+  "g1-ih-half_spikes_per_pa": {"250-310": 0.0333},
+  "g2-leak-150_counts_200_250_310": [0, 0, 6],
+  "g2-leak-150_spikes_per_pa": {"200-250": 0.0, "250-310": 0.1},
+  "rate_slope_hz_per_pa_250_310": {"human": 0.0869, "g0-b3": 0.0386, "g1-ih-half": 0.0375, "g2-leak-150": 0.1003},
+  "note": "350 pA column for g0-b3 is the retained B3 sweep-55 trace (same flags, same sha256); no G arm ran 350 pA."
+ },
+ "established": {
+  "sk_ca_set_late_rate_at_310": {
+   "statement": "Somatic SK (0.35) with calcium decay 1.0 is sufficient, on this geometry with the axonal initiation site, to set the late inter-spike interval at 310 pA to the donor's (10 spikes, 10.05 vs 10.00 Hz, cycles 4-10 within 110-124 ms), and this setting is insensitive to the Ih density (9.82 Hz at Ih half). It is not sufficient for the low-drive count: the same dose leaves 8 spikes at 250 pA and 4 at 200 pA.",
+   "mechanism": "SK is a calcium-activated potassium current whose magnitude follows the per-spike calcium entry; it translates the whole f-I curve (the same interval correction at every input) and cannot rotate it.",
+   "evidence": ["h01-e-usable/stage-b3-decision.json", "h01-e-gain/stage-g0-decision.json#/usable_tier", "h01-e-gain/stage-g-decision.json#/arms/g1-ih-half/rates_hz"]
+  },
+  "ih_density_does_not_set_low_drive_count": {
+   "statement": "Halving the uniform distributed Ih density (9.99e-5 to about 5.0e-5 S/cm2) is not sufficient to remove any spike at 250 pA (8 -> 8) and shortens no late cycle by more than 6 ms; it moves the rest -1.73 mV and the sweep-43 late return -0.7 mV.",
+   "mechanism": "At this density Ih is a standing depolarising conductance near rest: it offsets the resting potential and the post-pulse return, and its contribution between spikes at 250 pA is not the current that carries the three excess spikes.",
+   "evidence": ["h01-e-gain/stage-g-decision.json#/arms/g1-ih-half"]
+  },
+  "leak_sets_rheobase_as_step_not_slope": {
+   "statement": "Scaling g_pas by 1.5 raises rheobase above 250 pA (count 8 -> 0, soma plateau -66.8 mV, about 10 mV under threshold) and takes 310 pA from 10 to 6; the count at 250 pA is a step in the leak, not a line, so no leak dose lands it at 5 while the 310 pA rate stays within 1.5 Hz. The same lever moves the sweep-43 return -3.8 mV per 0.5 factor, past the donor.",
+   "mechanism": "g_pas sets the input resistance; a fixed command moves the pulse plateau in proportion, and the count is a threshold crossing of that plateau. Because the plateau and the subthreshold return are the same passive quantity, the leak cannot hold F5 within 1 mV and land the low-drive count together.",
+   "evidence": ["h01-e-gain/stage-g-decision.json#/arms/g2-leak-150", "h01-e-gain/stage-g-decision.json#/g3_selection/linear_dose"]
+  }
+ },
+ "unresolved_link": "The current that removes three spikes at 200-250 pA while leaving the 310 pA train and the sweep-43 return fixed. Both passive levers move the f-I curve and F5 in a fixed ratio, so this current must be voltage- or use-dependent and is outside the fit's passive family.",
+ "reassessment": {
+  "statement": "The low-drive gain (4 spikes at 200 pA vs human 1; 8 vs 5 at 250 pA; correct at 310 pA) is set outside the fit's passive family.",
+  "candidates": [
+   "a slow sodium inactivation absent from the Allen genome",
+   "Kv7/M kinetics absent from the Allen genome",
+   "a second human L2/3 donor with a recorded f-I curve (SP6b lead)"
+  ],
+  "not_a_fifth_evaluation": "No fifth evaluation and no dose beyond G3 under this spec; any of the three candidates is a new spec with its own cap."
+ },
+ "b3_unchanged": {
+  "candidate_json": "h01-e-usable/b3-sk035-ca-decay.candidate.json",
+  "sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+  "promoted": false,
+  "flags": "calcium_decay_factor 1.0, distribute_ih true, insert_density NaTs:axon:3.814, kv3_closing_factor 0.9, leak_reversal_shift_mv -4.0, regional_density SK:soma:0.35, sodium_density_factor 0.9, sodium_opening_factor 2.0, sodium_recovery_factor 1.0; nseg_factor 9, cvode_atol 1e-10, stop 2100 ms; recorded command plus recorded bias",
+  "known_defects": [
+   "sweep-43 late-return rows (1520/2019/2021/2040 ms) miss the donor by +1.40 to +1.72 mV against the 1 mV contract; onset rows hold (+0.43 to +0.91 mV)",
+   "200 pA: 4 spikes against the exact repeat band of 1; first spike 78 ms early (inside the 82.6 ms repeat limit)",
+   "250 pA: 8 spikes against 5; rate 7.73 vs 4.79 Hz",
+   "310 pA cycle-2 width 1.011 vs 1.269 ms; 350 pA cycle-3 width 0.996 vs 1.430 ms",
+   "every AHP row unresolvable under the usable tier (human repeat spread 1.01 mV against a 1 mV half-limit)"
+  ]
+ },
+ "what_a_user_gets": {
+  "profile": "frozen B3 (unpromoted), donor geometry Allen 541563728, mechanism library kv3-closing-source",
+  "verdicts_per_input_both_tiers": {
+   "sweep43 (110 pA)": "1 mV contract: 5 pass / 4 fail / 1 unavailable; onset rows +0.43..+0.91 mV pass, late-return rows +1.40..+1.72 mV fail. Usable tier: subthreshold input, no rate rows.",
+   "sweep56 (200 pA)": "1 mV contract: count 4 vs 1 fail. Usable tier: count 4 against the exact repeat band of 1 FAIL; first-spike latency 127.4 vs 205.8 ms pass (residual -78.4 ms inside the 82.6 ms repeat limit); axon first (0.219 ms).",
+   "sweep50 (250 pA)": "1 mV contract: count 8 vs 5 fail; 3 extra events. Usable tier: count FAIL, rate 7.73 vs 4.79 Hz FAIL (limit 0.72), adaptation pass, widths pass on all 5 paired cycles, AHP unresolvable; axon first (0.213 ms).",
+   "sweep53 (310 pA)": "1 mV contract: count 10 pass; first peak +3.17 mV fail; third rising crossing 36.25 ms early fail. Usable tier: count pass, rate 10.05 vs 10.00 Hz pass, adaptation pass, width cycle 2 FAIL (1.011 vs 1.269 ms), AHP unresolvable; axon first (0.207 ms).",
+   "sweep55 (350 pA, retained B3 trace, holdout spent)": "1 mV contract: count 12 vs 13 fail; human event 13 unmatched. Usable tier: rate 11.63 vs 13.27 Hz pass, adaptation pass, width cycle 3 FAIL (0.996 vs 1.430 ms), AHP unresolvable."
+  },
+  "not": "a usable shared E profile; a BrainCell/H01 transfer pass; a human-qualified cell"
+ },
+ "holdout": "sweep 54 (330 pA) stays sealed: no h01-prediction-e3.json was written under this spec (h01-l2-reserved-input.json unchanged)",
+ "files": {
+  "result_page": "h01-e-gain-result.md",
+  "stage_pages": ["h01-e-gain-stage0.md", "h01-e-gain-stage-g.md"],
+  "decisions": ["h01-e-gain/stage-g0-decision.json", "h01-e-gain/stage-g-decision.json"],
+  "tables": ["h01-e-gain/g0-b3-usable.md", "h01-e-gain/g1-ih-half-usable.md", "h01-e-gain/g2-leak-150-usable.md", "h01-e-usable/b3-all-inputs-usable.md"],
+  "causal_model": "docs/h01-causal-model.md (Y4 closing entry 2026-09-08)"
+ }
+}

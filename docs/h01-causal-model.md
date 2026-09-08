@@ -1255,6 +1255,33 @@ rule the gain split stands at FAIL unless evaluation 4 is spent on the recorded 
 reassessment names the gain set outside the fit's passive family (slow Na inactivation or Kv7/M kinetics,
 or a second human L2/3 donor with a recorded f-I curve, SP6b lead).
 
+### Y4 closed for the gain split (2026-09-08, SP3 FAIL at 3 of 4; evaluation 4 registered, not spent)
+
+**What closes.** The passive family as the lever for the E cell's low-drive gain. Three evaluations
+(`g0-b3`, `g1-ih-half`, `g2-leak-150`) under `docs/specs/2026-09-07-h01-e-gain-split.md`; decision
+`evidence/h01-e-gain/stage-close-decision.json`, page `evidence/h01-e-gain-result.md`. Evaluation 4
+(combined Ih half + leak x1.5) is registered and not spent: the additive reading of evaluations 2 and 3
+predicts rest -2.7 mV, 250 pA silent, 310 count <= 6 and a sweep-43 return about -4.5 mV, a FAIL on every
+registered band, so it cannot change the decision (fail-fast, Hartshorne p034/p179). Established, with
+mechanism: (1) somatic SK 0.35 with calcium decay 1.0 is sufficient to set the late rate at 310 pA
+(10.05 vs 10.00 Hz) and is insensitive to the Ih density (9.82 Hz at Ih half); it translates the f-I curve
+and cannot rotate it. (2) Distributed Ih density does not set the low-drive count: halving it removes no
+spike at 250 pA and moves the rest -1.73 mV; at this density Ih is a standing depolarising conductance
+near rest. (3) The leak sets rheobase as a step, not a slope: g_pas x1.5 takes 250 pA from 8 to 0 (plateau
+-66.8 mV) and 310 pA from 10 to 6, and moves the sweep-43 return -3.8 mV per 0.5 factor; plateau and
+subthreshold return are the same passive quantity, so no leak dose holds F5 and lands the count.
+
+**What narrows.** The current that removes three spikes at 200-250 pA while leaving the 310 pA train and
+the sweep-43 return fixed is necessarily voltage- or use-dependent: both passive levers move the f-I curve
+and F5 in a fixed ratio. Candidates, named by the spec's reassessment: a slow sodium inactivation or Kv7/M
+kinetics absent from the Allen genome, or a second human L2/3 donor with a recorded f-I curve (SP6b lead).
+Axon-first initiation and the width set are insensitive to both passive levers (Stage A stands).
+
+**What stays open.** The low-drive gain itself (4 vs 1 at 200 pA, 8 vs 5 at 250 pA); the early widths
+(cycle 2 at 310, cycle 3 at 350 pA); B3's sweep-43 late return (+1.4..+1.7 mV, a known defect of the frozen
+profile); every AHP row (unresolvable under the repeat spread). The E cell stays at frozen B3
+(`e4825c83...`), unpromoted. Sweep 54 (330 pA) stays sealed. Each candidate is a new spec with its own cap.
+
 ### Y5 under the population edge list
 
 The C3 relationship-index scan of all 104 proofread cells returns 123
@@ -1751,6 +1778,13 @@ biological uncertainty.
   2026-09-06: the late subthreshold return is inside two human repeat limits;
   the rise rate is load-limited but the load cannot be the lever (peak and
   trough move with it).
+  Gain split (SP3) closed 2026-09-08 as FAIL at 3 of 4: the passive family (SK/Ca,
+  Ih density, leak) is excluded as the lever for the low-drive gain (4 vs 1 at
+  200 pA, 8 vs 5 at 250 pA, correct at 310 pA). Open: the voltage- or use-dependent
+  current that removes the low-drive spikes with 310 pA and F5 fixed (slow Na
+  inactivation or Kv7/M kinetics absent from the Allen genome, or a second human
+  L2/3 donor with a recorded f-I curve); the early widths at 310/350 pA; B3's
+  sweep-43 late return. B3 frozen, unpromoted (`evidence/h01-e-gain-result.md`).
 - Y6: both imported donors were run once (SP6d, 2026-09-07) and their published fits do not
   reproduce their own Allen counts under this project's conditions (HL5MN1 16/30 for 14/34;
   Allen 527952884 19/8 for 20/12); which unchanged condition carries each difference is
