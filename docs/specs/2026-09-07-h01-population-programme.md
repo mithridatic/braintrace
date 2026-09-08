@@ -370,3 +370,51 @@ SP0 -> SP6a registry (serial, small)
   from an installed wheel for the final N and D; the four control traces load and differ only
   where the plan says; the representation table cites a JSON for every cell; full suites pass
   with the Abseil preload; `feat/h01-braincell` merges cleanly and `main` waits for approval.
+
+## Outcome (close 2026-09-08)
+
+One line per SP: decision literal as it stands in the evidence, then the path. A killed or
+stopped run is untested, never negative. The user's stop decision is recorded last.
+
+- SP0: done; this spec, the worktree table and the causal-model rule bound SP1-SP9 (approved
+  2026-09-07). Evidence: this file; `docs/h01-causal-model.md` (per-SP entries).
+- SP1: measured; no decision literal in the JSON, the fit is `summary.fit` a = 245.4 s,
+  b = 0.0576 s/step (11.5 s per simulated ms) on 10/200/200/2000 steps. Evidence:
+  `docs/evidence/h01-network-throughput.json`, `h01-network-throughput.md`.
+- SP2: `identity_gate.closed: true` (user decision (a), simulator identity); `decision: "untested"`
+  is the `decide()` literal for the unrun a1-matched-019; `dt_qualification.dt_found_by_input_ms`
+  {0.27: 0.000625, 0.19: "not reached within cap"}. Evidence:
+  `docs/evidence/h01-i-transfer/sp2-close-decision.json`, `h01-i-transfer-result.md`.
+- SP3: `decision: "FAIL"` at 3 of 4 evaluations, `closed_utc 2026-09-08T04:50:00Z`, reassessment
+  outside the passive family; B3 unpromoted; sweep 54 sealed. Evidence:
+  `docs/evidence/h01-e-gain/stage-close-decision.json`, `h01-e-gain-result.md`.
+- SP4: `decision: "FAIL at cap: rejection clause met"` (`verdict FAIL`, `bands_held 10/14`); Noise1
+  sweep 48 stays sealed. Evidence: `docs/evidence/h01-i-reserve/stage-1-decision.json`,
+  `h01-i-reserve-result.md`.
+- SP5: benchmark `status: "completed"` (347.0 s, 2 E spikes at 0.6 nA); stage 1
+  `status: "stopped by the user before completion; untested"`, `gate_verdict: "not discriminable:
+  no 300 ms arm completed"`, cap not spent. Evidence: `docs/evidence/h01-ie-inhibition/benchmark.json`,
+  `docs/evidence/h01-ie-inhibition/decision.json`, `h01-ie-inhibition-result.md`.
+- SP6: 6a registry re-keyed (`donor_key` per cell, `summary.matched 55`); 6b survey selected two
+  imports; 6c/6d both imported and `reproduction_status: "rejected"` (HL5MN1 16/14 and 30/34;
+  Allen L4 19/20 and 8/12), both stay type-matched and labelled. Evidence:
+  `docs/evidence/h01-population-types.json`, `docs/evidence/h01-donor-survey.md`,
+  `docs/evidence/h01-donors/stage-hl5mn1-decision.json`, `stage-allen-l4-decision.json`.
+- SP7: 7a `status: "complete"`, 104 of 104 cells; 7b `full_export_scanned: false`, 9 of 166 shards;
+  7c `verdict: "suspected merge: undetermined"`; 7d recheck 10 of 10 completed, no new verified edge
+  (126 candidates, 3 verified). Evidence: `docs/evidence/h01-c3-scan-3000.watchdog.json`,
+  `h01-measured-connectivity-summary.json`, `h01-pair-merge-check.json`,
+  `h01-endpoint-recheck-5voxel-3000.json`, `h01-resolved-edge-list-3000.json`.
+- SP8: 12 cells `run_1ms_ei` and `run_1ms_disconnected` `status: "completed"`, all traces finite;
+  40 cells `status: "stopped by the user after the single build-only attempt failed; stages 2-5
+  untested"`, `population_deliverable`: the measured 12-cell network; 104 derived (19.8 GB).
+  Evidence: `docs/evidence/h01-population-build-12.json`, `h01-population-build-40.json`.
+- SP9: truth pass 59 of 59 judged fixes applied (`docs/evidence/h01-docs-truth-pass.md`, JSON never
+  edited); `h01-network-execution.log` renamed to `h01-network-execution-2026-09-06-memory-failure.log`;
+  adapter contract `docs/specs/2026-09-08-h01-example21-adapter-contract.md` (spec only); final
+  table `docs/evidence/h01-population-status.md` (every row cites its decision JSON); merge
+  readiness `docs/evidence/h01-merge-readiness-2026-09-07.md` (separate session); `main` waits for
+  the user's approval.
+- User's stop decision, 2026-09-07 22:10 PDT: stop every running arm and open no new evaluation;
+  the SP5 300 ms `disconnected` arm (launched 21:58) and SP8 stages 2-5 after the failed 40-cell
+  build are untested, not negative; the programme closes on the evidence above.

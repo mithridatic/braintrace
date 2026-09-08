@@ -1863,6 +1863,48 @@ biological uncertainty.
 
 ## Unresolved
 
+**Programme close (2026-09-08).** The H01 population programme (SP0-SP9,
+`docs/specs/2026-09-07-h01-population-programme.md`) closed on the user's stop decision of
+2026-09-07 22:10 PDT with no promotion and no pass. Per Y-section, with the decision JSON that
+carries each verdict (the dated entries below are kept as written):
+
+- Y1 (region map, axonal outflow): **open**; no SP ran against it.
+- Y2 (transfer): **closed** on simulator identity
+  (`docs/evidence/h01-i-transfer/sp2-close-decision.json` `identity_gate.closed true`, basis
+  1.2e-9 ms / 5.4e-6 mV / 1.9e-11 ms; full train 36 = 36 events at 0.27 nA). The residue is a
+  time-step requirement under Measurement function qualification: dt 0.000625 meets 1 ms at
+  0.27 nA, 0.19 nA "not reached within cap" (`dt_qualification.dt_found_by_input_ms`); the
+  performance commits are equivalent to 2e-9 mV and 1.6-2.7x faster
+  (`h01-network-equivalence-post-merge-pinned.json` `status pass`, `speedup.total 1.674`;
+  `h01-network-equivalence-post-merge.json` `speedup.total 2.575`).
+- Y3 (I cell): **narrowed**; both sodium boundaries excluded (somatic availability by the
+  trough audit, axonal density by the reserve: `docs/evidence/h01-i-reserve/stage-1-decision.json`
+  `decision "FAIL at cap: rejection clause met"`, `bands_held 10/14`). Post-trough drive and
+  accommodation stay open; the finalist stays experimental, borrowed, labelled.
+- Y4 (E cell): **narrowed**; the passive family is closed for the low-drive gain
+  (`docs/evidence/h01-e-gain/stage-close-decision.json` `decision FAIL`, `evaluations spent 3 / cap 4`,
+  `closed_utc 2026-09-08T04:50:00Z`, `established`: SK/Ca sets the late rate at 310 pA, Ih does
+  not set the low-drive count, leak shifts rheobase as a step). Axon-first initiation is
+  established (`stage-g0-decision.json` `initiation`). Open: the low-drive current (slow Na
+  inactivation, Kv7/M, or a second donor), early widths, the sweep-43 late return. B3 unpromoted.
+- Y5 (pair, edge list, population): **narrowed**. Edge list: 104 of 104 cells rescanned at
+  3,000 samples, 126 candidates, 3 verified, unchanged (`h01-c3-scan-3000.watchdog.json`
+  `status complete`; `h01-resolved-edge-list-3000.json` `counts`); merge check
+  `h01-pair-merge-check.json` `verdict "suspected merge: undetermined"`; export 9 of 166 shards
+  (`h01-measured-connectivity-summary.json` `full_export_scanned false`). Population: 12 cells
+  measured with `ei` and `disconnected` controls at 1 ms (`h01-population-build-12.json`
+  `quiet_machine_attempt_2026-09-07T17`, all traces finite); the 40-cell build failed on a
+  one-point SWC branch affecting 7 of 104 components (`h01-population-build-40.json`
+  `runs.build-only status failed`, `status`, `population_deliverable`); 104 derived only. Pair:
+  functional inhibition **open**, untested (`docs/evidence/h01-ie-inhibition/decision.json`
+  `status "stopped by the user before completion; untested"`, `gate_verdict "not discriminable"`;
+  benchmark `h01-ie-inhibition/benchmark.json` `seconds 347.0`, `e_spike_count 2`).
+- Y6 (per-type donors): **narrowed**; two donors imported, both published fits reproduced and
+  rejected by the registered count rule (`docs/evidence/h01-donors/stage-hl5mn1-decision.json`,
+  `stage-allen-l4-decision.json` `reproduction_status rejected`; `population_match 30 -> 37 -> 55`).
+  49 cells remain without a type-matched donor; the conditions carrying the count differences
+  are unsplit.
+
 - Y1: which upstream axonal segment reduces the outflow in the axon-only case;
   whether the electrical region map is correct.
 - Y2: closed 2026-09-07 on simulator identity (BrainCell = NEURON fixed step over the full train at the copied

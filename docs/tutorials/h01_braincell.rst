@@ -274,7 +274,7 @@ stage each asset before replacement. Corrupt caches raise. Source verification
 status is recorded separately from proofread morphology status.
 
 Experimental active transfer (single-cell tool qualification pending)
---------------------------------------------------------------------
+---------------------------------------------------------------------
 
 The active-model work adds Wilbers 2023 human sodium and mixed potassium
 kinetics. These are borrowed human population models, not measurements of
@@ -379,6 +379,84 @@ record under ``docs/evidence``.
      - Candidate contact ``54906016`` unverified
      - Not in the default circuit; ``--connectivity illustrative`` uses a
        different, explicitly illustrative pair.
+
+The population programme closed on 2026-09-08 without a pass. The rows below
+mirror ``docs/evidence/h01-population-status.md``; each cites the decision
+JSON under ``docs/evidence`` that carries its numbers.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Layer
+     - What a user gets (2026-09-08 close)
+     - Decision JSON
+   * - Anatomy
+     - 104 proofread cells, 3,327 components, every cell with a soma-bearing
+       component; the builder never joins fragments; 7 of 104 largest
+       components do not load (one-point SWC branch).
+     - ``h01-population-components.json``, ``h01-population-build-40.json``
+   * - Cell types
+     - Layer and class for all 104 cells from the released tags; no
+       interneuron subtypes; donor resolved per cell (``donor_key``).
+     - ``h01-population-types.json``
+   * - Physiology per type
+     - 104 = 30 measured on the donor's own recordings (28 L2 pyramids, 2 L5
+       interneurons; neither passes the 1 mV contract) + 25 type-matched
+       borrowed with the published fit reproduced and rejected (18 L4
+       pyramids, 7 L3 interneurons) + 49 polarity- or partially-matched
+       borrowed; 55 of 104 match their donor in layer and class.
+     - ``h01-population-types.json``,
+       ``h01-donors/stage-allen-l4-decision.json``,
+       ``h01-donors/stage-hl5mn1-decision.json``
+   * - E cell
+     - Frozen B3, unpromoted; SP3 gain split FAIL at 3 of 4 (closed
+       2026-09-08): SK/Ca sets the late rate at 310 pA, Ih does not set the
+       low-drive count, leak shifts rheobase as a step; reassessment names
+       slow Na inactivation, Kv7/M, or a second human donor.
+     - ``h01-e-gain/stage-close-decision.json``
+   * - I cell
+     - Finalist experimental, borrowed, labelled; SP4 reserve FAIL at cap
+       (count 37 to 34 at 0.27 nA, 10 of 14 bands held); somatic
+       availability and axonal density both excluded.
+     - ``h01-i-reserve/stage-1-decision.json``
+   * - Transfer
+     - Y2 closed on simulator identity; dt 0.000625 meets 1 ms at 0.27 nA,
+       0.19 nA not reached within cap; performance commits equivalent to
+       2e-9 mV and 1.6-2.7x faster.
+     - ``h01-i-transfer/sp2-close-decision.json``,
+       ``h01-network-equivalence-post-merge-pinned.json``
+   * - Connectivity
+     - 104 of 104 cells rescanned at 3,000 samples: 126 candidates, 3
+       verified, 2 constructible, 6 incident; export 9 of 166 shards; merge
+       check on the 72-candidate pair undetermined.
+     - ``h01-c3-scan-3000.watchdog.json``,
+       ``h01-resolved-edge-list-3000.json``, ``h01-pair-merge-check.json``,
+       ``h01-measured-connectivity-summary.json``
+   * - Synapses
+     - Assumed values (20 nS, -80 mV, 5 ms, 0.5 ms); human literature pins
+       recorded (3.1 nS, 4.18 ms, 2.31 ms, about -75 mV).
+     - ``h01-ie-synapse-literature.json``
+   * - Pair
+     - 100 ms benchmark measured (347 s; E fires 2 at 0.6 nA); the 300 ms
+       arms were stopped by the user; functional inhibition untested.
+     - ``h01-ie-inhibition/benchmark.json``,
+       ``h01-ie-inhibition/decision.json``, ``h01-ie-pair-response.json``
+   * - Population run
+     - 12 cells measured with ``ei`` and ``disconnected`` controls at 1 ms
+       (84,097 compartments, finite traces); the 40-cell build failed on a
+       one-point SWC branch affecting 7 cells; 104 cells derived only (about
+       19.8 GB).
+     - ``h01-population-build-12.json``, ``h01-population-build-40.json``,
+       ``h01-network-throughput.json``
+   * - Holdouts
+     - L2 sweep 54 and PV Noise1 sweep 48 sealed; sweeps 53 and 55 and the
+       0.23 nA long square spent.
+     - ``h01-l2-reserved-input.json``, ``h01-pv-input-datum.json``,
+       ``h01-e-gain/stage-close-decision.json``
+   * - Example 21
+     - Interface-contract spec only, no code:
+       ``docs/specs/2026-09-08-h01-example21-adapter-contract.md``.
+     - none (nothing was run)
 
 The one-page energetic map ``docs/evidence/h01-circuit-z-map.md`` places these
 elements on the source-to-load path and names the parasitic elements the
