@@ -1963,8 +1963,14 @@ with 165,084 compartments and two projections in 240.850 seconds, exit 0
 ([launch record](evidence/h01-ready-40-build-launch.json)). This directly
 extends verified construction from 12 to 40 cells and includes both previously
 blocked components in the prefix. Initialization and simulation of this larger
-population remain untested at this checkpoint; see the
+population were untested at that construction checkpoint; see the
 [continuation result](evidence/h01-ready-40-result.md).
+
+The [40-cell initialization](evidence/h01-ready-40-init-summary.json) then
+completed for all expected population IDs in 226.172 seconds with peak resident
+memory 2,466.867 MiB, exit 0. The rerun's construction metadata matches the
+preceding build exactly. This closes initialization at 40 cells, while finite
+compiled stepping, full-104 runtime and the physiological gates remain open.
 
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
