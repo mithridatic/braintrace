@@ -39,3 +39,26 @@ and runs the complete selected suite. Preserve this order and verify modules
 are not already loaded before starting their coverage. Logs and report hashes
 are retained in the decision. This is a targeted installed-library check;
 neither the full suite nor full-population wheel execution is implied.
+
+## Launcher for the final installed runs
+
+`docs/evidence/h01_installed_network.py` verifies the wheel hash and installed
+payload, requires Python isolated mode, rejects source-import contamination,
+and records example/library provenance before and after execution. Its 23
+tests pass with 100% coverage, including real subprocess failure cases. The
+actual example's help invocation also passes; its
+[provenance record](h01-ready-104-wheel-cli-provenance.json) is explicitly a
+CLI check, not a runtime result.
+
+Use the existing supervisor with this command shape for the remaining runs:
+
+```powershell
+.cache/validation/Scripts/python.exe -I docs/evidence/h01_installed_network.py `
+  --audit docs/evidence/h01-ready-104-wheel-audit.json `
+  --example examples/h01_verified_network.py `
+  --provenance <new-run-provenance.json> -- <registered-example-arguments>
+```
+
+Each real run needs a fresh provenance path and its registered limits.
+Successful launcher completion must still pass the independent runtime and
+applicable control/refinement gates.
