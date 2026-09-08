@@ -193,3 +193,48 @@ untested; both tiers stated), co-located `*_test.py` (AGENTS.md rule 9):
    scoring pass; `_score_runtime` parameter-equality check passes.
 7. Cost gate: any test predicted over 15 min carries a measured estimate and approval
    (programme "Compute" decision); otherwise it uses `--cells` and a shortened episode.
+
+## 8. Example 21 model changes and structural plasticity
+
+The user's 2026-09-08 discussion asks whether adapting Example 21 itself is
+necessary. Yes: the current single-compartment model and recurrent-current
+weights cannot preserve the H01 network merely by loading SparseTopology.
+Implementation remains deferred; this section records the required design.
+
+The H01 model path must own compartment states, receptor conductances, delayed
+events, input placement and a compiler-visible step. SparseTopology remains a
+connectivity view rather than the complete executable biological model. Retain
+the existing Example 21 model as a comparison condition. More anatomical detail
+is not evidence of better task accuracy, sample efficiency or compute efficiency.
+Measure those outcomes separately before claiming an improvement.
+
+Connection addition and pruning require contact identities that survive edge
+sorting and checkpoint reload. Each contact must retain source cell, target cell,
+target component and cable location, receptor type, delay, conductance units,
+and provenance. Multiple contacts between the same cell pair remain distinct.
+Source contacts retain their original evidence even when disabled. Newly grown
+contacts are labelled learned/model-generated, not measured H01 synapses.
+
+Structural edits occur at a declared episode boundary. Preserve parameter and
+optimizer state for surviving contact identities, initialize state for added
+contacts, and remove pruned contacts from delivery. Receptor state, queued events
+and eligibility traces need an explicit reset or migration policy; reusing a
+sparse array index alone is insufficient. For the initial implementation, reset
+all episode dynamical state and eligibility traces after the edit, preserve
+surviving parameters and optimizer moments by contact identity, and start the
+next episode from the normal reset state. This does not define mid-episode
+plasticity. Rebuild/recompile when shapes change and include that cost in reports.
+
+Conductance magnitude must remain nonnegative; excitation/inhibition is governed
+by receptor reversal and cell identity, not a negative physical conductance.
+The signed SparseTopology representation must therefore be translated explicitly
+into the H01 receptor model, rather than copied into a conductance parameter.
+Growth candidates require an explicit placement rule; missing source geometry
+cannot be silently replaced with an invented measured attachment.
+
+Future tests must cover two contacts on the same cell pair, contact reordering,
+pruning an edge with pending delivery at an episode boundary, all recurrent
+contacts pruned, newly added contact state, checkpoint identity preservation,
+and the distinction between measured and learned connectivity. Gradient-rule
+claims still require the finite-window oracle described above. This section
+adds no training result and changes no existing physiological acceptance gate.
