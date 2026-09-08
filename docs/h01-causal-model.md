@@ -2141,3 +2141,12 @@ The r2 retry completed all104 initialization in 853.693 seconds after
 checkpoint and exact construction comparison are recorded in
 h01-ready-104-implicit-r2-init-decision.json. The worker is now in the combined
 compile/run stage; no runtime or physiology pass follows from initialization.
+
+Cached-candidate cable-placement diagnostic: all 13 internal candidates have at
+least one endpoint more than 13 um from every source SWC parent edge of the
+assigned cell, even including disconnected components. The hash-bound evidence
+is docs/evidence/h01-cached-candidate-skeleton-distances.json. This is a
+centerline diagnostic, not a membrane-distance or false-merge verdict. It
+requires resolving source ownership, coordinates, or missing branches before
+promoting those records; it does not establish that the biological contacts
+are absent. No simulation contact or anatomical geometry was changed.

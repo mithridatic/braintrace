@@ -132,3 +132,14 @@ partner identity, and cable-placement eligibility remain separate fields of work
 The exact-coordinate comparison additionally found six of the 13 internal
 candidates in the prior annotation list, all with matching assigned cells and
 failed endpoint checks; seven had no exact endpoint-coordinate match.
+
+The 13 cached internal candidates were compared with every straight parent edge
+in each assigned cell's source SWC, across all components. Every candidate has
+at least one endpoint over 13 um from the nearest edge (minimum worse-endpoint
+distance 13.528 um). Evidence: h01-cached-candidate-skeleton-distances.json,
+including source archive and candidate-summary hashes and coordinate scales.
+These are centerline distances, not membrane-surface distances. They do not
+identify whether ownership, coordinate interpretation, or missing skeleton
+branches caused the mismatch. None is promoted to a simulation contact from
+this diagnostic. Simply loosening an endpoint tolerance is not justified;
+source identity and placement must be resolved first.
