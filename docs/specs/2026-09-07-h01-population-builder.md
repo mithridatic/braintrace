@@ -203,3 +203,86 @@ these launches: 10 minutes without a progress or heartbeat line, or the 1,500 s 
 no separate construction abort is applied on the quiet machine (the heartbeat and per-stage
 lines cover it). The "inside 2x the SP1 linear prediction" test of the earlier addendum
 applies to construction (275 s), init + compile + 200 steps (276 s) and RSS (1.48 GB).
+
+### Addendum 2026-09-07, 18:35 (40-cell stage; registered before any 40-cell launch)
+
+Stage 3 of 4 -> 12 -> 40 -> 104, approved by the quiet-machine 12-cell check (attempt 3, 18:26).
+Cells: the first 40 of `cell_order` (`--include-isolated --cells 40`), i.e. the 4 incident cells,
+the 8 isolated cells of the 12-cell stage and the next 28 isolated cells by largest-component node
+count (5,199 to 13,309 nodes each); 537,152 largest-component nodes, 1.946x the 12-cell 276,064
+and 2.186x the 4-cell 245,769. Five launches, one at a time, all with `--solver
+h01_staggered_scan`, `--current-na 1` (the pair's I pulse amplitude; the builder's soma pulse is
+fixed at 2-5 ms, so the two 1 ms runs receive no current and the four arms keep identical inputs):
+
+1. build-only: `--build --include-isolated --cells 40 --control ei`;
+2. `--init-only --control ei`;
+3. 1 ms at dt 0.005 ms (200 steps), `--control ei`;
+4. 1 ms at dt 0.005 ms, `--control disconnected`;
+5. 3 ms at dt 0.005 ms (600 steps), `--control ei`.
+
+Wait condition before launch 1 (one simulation at a time on this machine): the SP5 rerun's
+`benchmark.json` in the `h01-pair` worktree holds a completed record labelled "quiet", `docker ps`
+shows only `synapse`, and no python process other than the C3 rescan worker uses more than
+300 MB; re-checked before every launch. Every number is labelled with the observed CPU load
+(system CPU percent and the non-H01 processes above 0.25 cores, such as comsolbatch,
+bdservicehost, SearchIndexer, sampled every 30 s by the watcher).
+
+Predictions (proportional in largest-component nodes from the two clean 12-cell 1 ms runs,
+construction 338.5 / 270.5 s, init_state 265.0 / 201.6 s, compile + 200 steps 29.8 / 29.3 s,
+peak RSS 1,988-2,000 MB; all **derived**, none measured):
+
+1. Compartments about 1.946x 84,097, i.e. **~163,600**; every one of the 40 cells builds
+   (no `Invalid electrical region interval.` recurrence; nothing fabricated).
+2. Construction **~590 s** (range 530-660 s from the two clean points), same in each launch.
+3. `init_state` **~450 s** (390-520 s); the 33,965-compartment cell `3955003482` remains the
+   largest single term (~97 s clean); per-cell seconds recorded, so a superlinear cost is visible
+   directly. The `--init-only` figure is the reference; the run launches repeat it.
+4. Compile + 1 ms **~60 s** (57-58 s from the two points). Compile + 3 ms: the compile/step
+   split is unmeasured at 12 cells, so only a range is derived: 60 s (all compile) to 175 s (all
+   stepping, 3x); recorded, not predicted to a point.
+5. Peak RSS of the real interpreter (psutil `peak_wset`, read inside the process) **~3.8 GB**;
+   the process-tree sum from the watcher agrees within 20 MB as at 12 cells.
+6. All traces finite in the three runs. The `disconnected` run's `*_g` conductance probes are
+   identically zero. In the 3 ms `ei` run at least one presynaptic spike occurs and at least one
+   conductance probe becomes nonzero after the 0.5 ms delay (the coordinator's prediction).
+   Derived counter-expectation, stated before the run: in the pair the I cell `5584343344` under
+   the same 1 nA, 3 ms pulse spiked 6.78 ms after pulse onset (14.78 ms for an 8 ms onset,
+   `h01-ie-pair-result.md`), and the E cell `4157825456` has never been observed to spike under
+   this pulse; with the onset fixed at 2 ms a 3 ms run holds 1 ms of pulse, so no presynaptic
+   spike is expected and the ei-nonzero half of prediction 6 is expected to be **not
+   discriminable** (untested, not failed) in this protocol. Either outcome is recorded as observed.
+7. "Inside 2x the 12-cell-derived prediction": construction, `init_state`, compile + 1 ms and
+   RSS each within [0.5x, 2x] of 590 s, 450 s, 60 s and 3.8 GB.
+
+Rejection: a nonfinite trace, peak RSS over **8 GB**, or `init_state_seconds` over **1,500 s**.
+Aborts (kill, recorded as untested, not negative): build-only launch 1,500 s wall; each of
+launches 2-5 1,800 s wall; any launch 600 s (10 minutes) without a progress or heartbeat line.
+
+After the runs: the 104-cell projection is re-derived from the 40-cell point by the same
+proportional rule (2,804,549 / 537,152 = 5.221x) and labelled derived; the SP8 "reduce N" clause
+is evaluated against available RAM read with `psutil.virtual_memory()` at the time of writing
+(headroom rule: the projected 104-cell peak RSS must be under available RAM less 4 GB, and the
+projected construction and `init_state` must each stay under the 1 h no-hour-plus limit as single
+jobs, or a reduced N is proposed with the same rule).
+
+### Addendum 2026-09-07, 19:30 (equivalence step after the performance merge; registered before the run)
+
+`feat/h01-braincell` (performance commits to `h01_construction`, `h01_anatomy`, `h01_dhs_scan`,
+`h01_l2_cell`, `h01_pv_cell`; 410 datasets tests pass there, 45 `h01_network*` tests pass here
+after the merge, commit 0488c84) is merged into this worktree before the 40-cell stage. One
+registered equivalence step precedes the five 40-cell launches, under the same wait condition:
+the SP1 d1 configuration (4 incident cells, `--build --dt-ms 0.005 --duration-ms 1.0 --solver
+h01_staggered_scan --control ei`, zero soma current) is rerun with the merged code and its trace
+arrays compared with the SP1 recording `.cache/h01/bench-d1` (the SP1 repeat `bench-d1r` is
+bitwise identical to it, checked before this run: max abs difference 0.0 mV).
+
+Prediction: every voltage and conductance array within 1e-9 mV (uS) of the SP1 recording, and
+identical spike-event arrays (SP1 recorded zero spikes in 1 ms at zero input, so "identical
+spike times" here means zero events in both); bitwise equality is recorded as observed, not
+predicted (XLA fusion changes may reorder floating-point sums). Construction, `init_state` and
+compile + run seconds are recorded beside SP1's 266.2 s construction and 212.4 s init + run
+(d1; d1r 243.6 / 274.9). Rejection: any array differing by more than 1e-9, or any spike-array
+difference: the 40-cell stage is then **not launched** and the difference is reported. Kill
+rules for this launch: 600 s silence, 1,500 s wall. The result goes into
+`docs/evidence/h01-network-throughput.md` as a dated addendum and into the causal model's
+measurement-function table.
