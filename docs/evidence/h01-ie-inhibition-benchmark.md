@@ -1,46 +1,61 @@
-# SP5 100 ms benchmark: untested (killed at the 900 s abort)
+# SP5 100 ms benchmark: measured, machine quiet except the C3 rescan
 
-Record: `h01-ie-inhibition/benchmark-2026-09-07-killed.json` (2026-09-07, historical; superseded by the rerun record `h01-ie-inhibition/benchmark.json`). Spec:
-[functional inhibition](../specs/2026-09-07-h01-functional-inhibition.md); manifest
-`h01-ie-inhibition-manifest.json`. Cap accounting corrected 2026-09-07: a killed run is untested and does not spend the cap (`prior_evaluations` 0).
+Record: `h01-ie-inhibition/benchmark.json` (2026-09-07 19:28 to 19:34). Spec:
+[functional inhibition](../specs/2026-09-07-h01-functional-inhibition.md) with the 2026-09-07
+addendum (1500 s abort); manifest `h01-ie-inhibition-manifest.json`. Run 1 of the cap of 6.
 
 ## What ran
 
 `python -m docs.evidence.h01_ie_functional_inhibition benchmark` from the `h01-pair` root
 (`PYTHONPATH=.`, validation interpreter from the sibling `h01-braincell` cache;
-`braintrace.__file__` resolved to `h01-pair`). Arm `disconnected`, 100 ms, E 0.6 nA constant,
-I pulses at 20, 45, 70, 95 ms, dt 0.005 ms, launched detached at 15:54:14.
+`braintrace.__file__` resolved to `h01-pair`), on commit `c56616a` (programme tip merged with
+the BrainCell construction/init/DHS performance commits). Arm `disconnected`, 100 ms, E 0.6 nA
+constant, I pulses at 20, 45, 70, 95 ms, dt 0.005 ms, launched detached at 19:28:40 after the
+wait condition held (E-gain evaluation 1 inputs all completed, `docker ps` only `synapse`, no
+python job over 300 MB, CPU 29 percent). Abort registered at 1500 s; not reached.
 
-## Measured (under load)
+## Measured
 
 | Quantity | Value |
 | --- | --- |
-| Wall clock | not measured: killed at 913 s (16:09:50) with no trace and no run-log entry |
-| Wrapper output | `Circuit constructed: disconnected` at about 190 s, nothing after |
-| Load | CPU at 100 percent throughout; about 12 other H01 python jobs running (C3 edge-list scan, PV braincell reference, E gain split, I energetic, verified network) |
-| Predicted (anchor 4.25 s per simulated ms) | 425 s; the run exceeded it by more than a factor of two |
-| E spikes, E spike times, I spike times, finiteness | unobserved |
+| Wall clock | 347.0 s (3.47 s per simulated ms, construction included) |
+| Predicted (anchor 4.25 s per simulated ms) | 425 s; measured is 0.82 of the anchor |
+| E spikes | 2, at 21.775 and 38.31 ms |
+| I spikes | 1, at 27.125 ms (event time; voltage peak 32.5 mV at 23.585 ms, from the 20 ms pulse) |
+| I at the 45, 70, 95 ms pulses | depolarises to about -60 mV at pulse end, no spike |
+| E after 40 ms | settles near -69 mV under the constant drive, no further spike to 100 ms |
+| Finiteness | every saved array finite |
 
-All timing is **measured under load**; the anchor was taken on a quieter machine.
+Predictions: E fires >= 1 spike by 100 ms (held); first spike between 20 and 60 ms (held,
+21.775 ms); I fires once per pulse (not held: 1 of the 3 evaluable pulses).
 
 ## Drive rule
 
-The registered rule (>= 1 E spike in 100 ms: 0.6 nA stands; none: report) could not be
-evaluated, because no E trace exists. The drive was not changed. Whether E fires at 0.6 nA in
-this circuit remains unobserved; the single permitted change to 0.8 nA stays a coordinator
-decision and is not triggered by this result.
+E fired 2 spikes at 0.6 nA, so the registered drive stands; it was not changed. Flag for the
+coordinator: the 300 ms control rule (>= 3 E spikes with two full cycles) is undecided by this
+window, since E fired twice before 40 ms and then accommodated for 60 ms; whether a third spike
+appears within 300 ms is unobserved. The single permitted change to 0.8 nA remains the
+coordinator's decision.
 
-## Derived cost (labelled derived, lower bounds only)
+## Derived cost (labelled derived)
 
-From 913 s for less than 100 simulated ms: at least 9.13 s per simulated ms under load.
+From the measured 3.47 s per simulated ms, scaled linearly:
 
-| Arm | Derived lower bound |
+| Arm | Derived cost |
 | --- | --- |
-| each 300 ms arm (disconnected, measured, soma) | >= 2740 s (>= 45.7 min) |
-| measured-halved (300 ms, dt 0.0025) | >= 5480 s (>= 91.3 min) |
+| each 300 ms arm (disconnected, measured, soma) | 1041 s (17.4 min) |
+| measured-halved (300 ms, dt 0.0025) | 2082 s (34.7 min) |
 
-These are floors, not estimates: the benchmark did not finish. Every 300 ms arm exceeds the
-15 min approval threshold under the current load, so no 300 ms arm may be launched on this
-record (SP0). Options for the coordinator: rerun the benchmark when the machine is quieter, or
-raise the abort for the benchmark alone with a measured estimate in hand from SP1 (11.5 s per
-simulated ms, 4 cells, which predicts about 19 min for 100 ms and 58 min per 300 ms arm).
+If about 120 s of the 347 s is construction (the `Circuit constructed` line appeared between
+12 s and 133 s; the log was polled every 2 min), the simulation rate is about 2.27 s per
+simulated ms and a 300 ms arm is about 800 s (13.3 min), the halved arm about 1480 s (24.7 min);
+that split is derived, not measured. On the linear estimate every 300 ms arm is above the 15 min
+approval threshold, so approval is needed before any 300 ms arm. No 300 ms arm was launched.
+
+## Historical: first attempt, killed (untested)
+
+Record: `h01-ie-inhibition/benchmark-2026-09-07-killed.json`. Launched 15:54:14 under load (CPU
+100 percent, about 12 other H01 jobs), killed at the 900 s abort at 16:09:50 with no trace and
+no run-log entry (`Circuit constructed` at about 190 s, nothing after). By the programme rule a
+killed run is untested and does not spend the cap (`prior_evaluations` reverted to 0 before the
+rerun).

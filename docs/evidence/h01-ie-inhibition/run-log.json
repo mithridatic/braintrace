@@ -1,0 +1,60 @@
+[
+ {
+  "arm": "disconnected",
+  "duration_ms": 100.0,
+  "drive_na": 0.6,
+  "seconds": 347.0,
+  "command": [
+   "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+   "-m",
+   "docs.evidence.h01_i_source_closing_circuit",
+   "--connectivity",
+   "measured",
+   "--solver",
+   "h01_staggered_scan",
+   "--i-current-na",
+   "1",
+   "--i-delay-ms",
+   "8",
+   "--i-pulse-ms",
+   "3",
+   "--control",
+   "disconnected",
+   "--e-current-na",
+   "0.6",
+   "--e-delay-ms",
+   "0",
+   "--e-pulse-ms",
+   "100.0",
+   "--duration-ms",
+   "100.0",
+   "--inhibitory-weight-us",
+   "0.0031",
+   "--inhibitory-reversal-mv",
+   "-75.0",
+   "--inhibitory-tau-ms",
+   "4.18",
+   "--dt-ms",
+   "0.005",
+   "--receptor-site",
+   "measured",
+   "--cache",
+   "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+   "--i-pulse-onsets-ms",
+   "20.0",
+   "45.0",
+   "70.0",
+   "95.0",
+   "--output",
+   "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\inh-disconnected-100ms"
+  ],
+  "seconds_per_simulated_ms": 3.47,
+  "e_events_ms": [
+   21.775,
+   38.31
+  ],
+  "i_events_ms": [
+   27.125
+  ]
+ }
+]

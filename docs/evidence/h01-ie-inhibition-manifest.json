@@ -2,7 +2,7 @@
  "purpose": "SP5 stage 1: functional inhibition at the measured I-to-E pair (contact 8105899). Specification: docs/specs/2026-09-07-h01-functional-inhibition.md. Registered 2026-09-07, not run.",
  "cap": 6,
  "halving_cap": 2,
- "prior_evaluations": 0,
+ "prior_evaluations": 1,
  "cwd": "the h01-pair worktree root, PYTHONPATH=.",
  "interpreter": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
  "cache_note": "h01-pair is a sparse checkout without .cache; the H01 archive and the interpreter are read from the sibling h01-braincell worktree (sibling_cache()). Traces land in <cache>/h01/inh-<arm>-<ms>ms.npz (gitignored); records in docs/evidence/h01-ie-inhibition/.",
@@ -377,6 +377,7 @@
  "stage_2": "listed, not opened: the same arms with profiles promoted by SP2/SP3; own manifest then",
  "benchmark_record": "docs/evidence/h01-ie-inhibition/benchmark.json (rerun record); historical: docs/evidence/h01-ie-inhibition/benchmark-2026-09-07-killed.json (2026-09-07 15:54: killed at 900 s under load, untested, does not spend the cap)",
  "cap_notes": [
-  "2026-09-07: prior_evaluations reverted from 1 to 0; the 15:54 benchmark was killed at 900 s and by the programme rule a killed run is untested and does not spend the cap. Rerun registered with a 1500 s abort (spec addendum 2026-09-07)."
+  "2026-09-07: prior_evaluations reverted from 1 to 0; the 15:54 benchmark was killed at 900 s and by the programme rule a killed run is untested and does not spend the cap. Rerun registered with a 1500 s abort (spec addendum 2026-09-07).",
+  "2026-09-07 19:34: benchmark rerun completed in 347 s on c56616a (run 1 of 6 spent); record docs/evidence/h01-ie-inhibition/benchmark.json"
  ]
 }
