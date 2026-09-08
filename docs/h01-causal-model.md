@@ -2098,3 +2098,11 @@ The [source gate](evidence/h01-ready-104-implicit-build-decision.json) and
 This closes construction provenance for the numerical replacement in Y5;
 initialization, driven runtime and fullpopulation refinement remain unqualified.
 Measured construction time is 1134.833 s, not a runtime throughput measurement.
+
+The repaired solver's full104 initialization is now verified against its saved
+construction reference: exactly104 initialized identities, unchanged cell and
+contact metadata, 808,495 CVs, 925.829 s initialization and 8722.531 MiB peak
+resident memory through that stage. The
+[initialization decision](evidence/h01-ready-104-implicit-init-decision.json)
+narrows Y5 to the still-running compiled driven test and later qualification;
+it does not close runtime, delivery, refinement or physiology.

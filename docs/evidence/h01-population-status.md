@@ -34,6 +34,13 @@ the continuation evidence above. The physiological verdicts are unchanged.
 The [E source-audit amendment](h01-e-gain-source-audit.md) also supersedes
 the earlier claims of absent M current and necessity outside the passive family.
 
+The numerical failure has since been reproduced in isolation and repaired by an
+opt-in implicit calcium solve; the isolated fine timestep pair passes its
+registered comparison. The repaired full104 construction and initialization now
+pass, with all 808,495 compartments retained. Compilation and the driven 10 ms
+run are underway, not qualified. See the [current continuation result](h01-ready-104-result.md)
+and [initialization decision](h01-ready-104-implicit-init-decision.json).
+
 ## Earlier programme-close snapshot
 
 One table, no pass claimed. Every row cites the decision JSON that carries its numbers; prose

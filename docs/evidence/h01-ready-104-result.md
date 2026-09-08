@@ -109,3 +109,10 @@ verdicts bind that saved reference by hash. The
 [compact summary](h01-ready-104-implicit-build-summary.json) retains all identities,
 donors, compartment counts and contact settings. Initialization is in progress;
 no driven runtime or physiological qualification is claimed.
+
+The [implicit-solver initialization checkpoint](h01-ready-104-implicit-init-decision.json)
+now verifies all104 population identities and exact construction metadata, with
+808,495 compartments. Initialization took 925.829 seconds; process peak resident
+memory through initialization was 8722.531 MiB (8.52 GiB). The checkpoint was
+preserved before compilation. The same process has entered compilation and
+stepping; no driven runtime verdict is available yet.
