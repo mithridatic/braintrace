@@ -1,0 +1,10 @@
+{
+  "status": "exploratory source join; no model promotion",
+  "shard": ".cache\\h01\\export000000000000.avro",
+  "records": 998235,
+  "seconds": 40.709868300007656,
+  "axon_base_matches": 17,
+  "internal_hits": [],
+  "mapping_sha256": "360d8c334f8f1b280dd860c69a633cdee6bcb7b6de09a369f4225433e80a899e",
+  "scope": "first shard, capped at 120 seconds checked each 100000 records; completeness needs source count comparison"
+}

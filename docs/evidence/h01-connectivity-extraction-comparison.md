@@ -89,3 +89,19 @@ The embedded comparison consists of 95 agreements, seven differing IDs and
 two absent entries, rather than nine conflicting IDs. The table association
 does not map every axon base segment or itself supply synaptic connections.
 The audit now retains each associated H01 cell and the spatial checkpoint hash.
+
+The first cached shard join scanned all 998235 records in approximately
+40 seconds, matching 17 proofreading axon-base records and no internal target
+under the single-ID table mapping. Only 2/17 source neuron IDs equal that
+cell-table ID. This demonstrates that one table ID per cell does not represent
+all its matched axon records in this export; it does not by itself diagnose a
+release error. The retained 17 raw rows and existing sampled-owner comparison
+are in h01-author-join-shard0-id-check.json. Do not scale the incomplete
+single-ID join to the full export and interpret its misses as absent edges.
+
+Reusing the retained 17 source rows, all 17 presynaptic neuron IDs have
+exactly the expected owner in the saved multi-segment lookup. Applying that
+lookup to postsynaptic IDs gives {0: 17} by owner count;
+internal different-cell row indices: [].
+This check used no further scan or network request. Sampled membership remains
+incomplete and does not prove absence for an unmapped postsynaptic ID.
