@@ -1,8 +1,8 @@
 # SP5 100 ms benchmark: untested (killed at the 900 s abort)
 
-Record: `h01-ie-inhibition/benchmark.json` (2026-09-07). Spec:
+Record: `h01-ie-inhibition/benchmark-2026-09-07-killed.json` (2026-09-07, historical; superseded by the rerun record `h01-ie-inhibition/benchmark.json`). Spec:
 [functional inhibition](../specs/2026-09-07-h01-functional-inhibition.md); manifest
-`h01-ie-inhibition-manifest.json`. Run 1 of the cap of 6, spent.
+`h01-ie-inhibition-manifest.json`. Cap accounting corrected 2026-09-07: a killed run is untested and does not spend the cap (`prior_evaluations` 0).
 
 ## What ran
 
