@@ -34,9 +34,9 @@ def main():
     parser.add_argument("--control", default="ei", choices=["ei", "e_only", "i_only", "disconnected"],
                         help="Projection control: which presynaptic Dale signs keep their projections.")
     parser.add_argument("--include-isolated", action="store_true",
-                        help="Also build cells without constructible contacts from their soma-bearing largest component.")
+                        help="Also build cells without constructible contacts using the component inventory selections.")
     parser.add_argument("--cells", type=int, help="Build only the first N cells of the evidence cell_order.")
-    parser.add_argument("--components", type=Path, default=Path("docs/evidence/h01-population-components.json"),
+    parser.add_argument("--components", type=Path, default=Path("docs/evidence/h01-population-components-soma.json"),
                         help="Component inventory used for isolated cells.")
     parser.add_argument("--init-only", action="store_true",
                         help="Construct, run init_state cell by cell (timed, peak RSS recorded), then exit without compiling or stepping.")

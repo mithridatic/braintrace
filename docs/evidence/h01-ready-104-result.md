@@ -156,3 +156,16 @@ The running r2 remains an unchanged numerical test of its recorded components.
 Before another population launch, resolve these four selections against source
 cell-body evidence and account for omitted branches. Do not join disconnected
 components or silently replace them in the existing run's reference.
+
+Explicit component-selection support is implemented and the example now defaults
+to h01-population-components-soma.json. The original inventory remains unchanged
+for reproduction. The regression first demonstrated selection being ignored;
+the corrected network and CLI suites pass 67 tests, with 100% statement coverage
+of h01_network.py. Invalid selections, loaded hash/component/node mismatches,
+legacy behavior, and contact-selected components are covered. Four actual source
+morphologies also load with matching hashes, node counts and valid soma locations
+(h01-soma-components-load-check.json; 10.617 seconds). These checks do not perform
+electrical construction or simulation. Corrected full-population readiness stays
+open. The mistake was treating a soma label on the largest component as sufficient
+cell-body evidence; future selection overrides carry independent source evidence
+and loaded-source checks rather than relying on node count alone.

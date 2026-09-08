@@ -2184,3 +2184,11 @@ by hash in h01-soma-component-anchor-comparison.json. This provides independent
 anatomical support for explicit selection corrections, but does not recover
 omitted branches or join disconnected components. Existing r2 remains evidence
 only for its recorded, unchanged component choices.
+
+The four anchor-supported component corrections now have explicit planner and
+loader support, while contact-selected components and historical inventories
+retain their behavior. Real archive imports pass hash/node-count checks and
+resolve soma locations for all four (h01-soma-components-load-check.json).
+The 67 network/CLI tests pass with full network-module statement coverage.
+This resolves the ignored-selection software path, not whole-cell reconstruction
+or corrected electrical runtime. Those remain open pending new build evidence.
