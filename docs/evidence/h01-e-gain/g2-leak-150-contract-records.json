@@ -1,0 +1,25 @@
+{
+ "purpose": "SP3 Stage G: g2-leak-150 sweep-43 contract rows (1 mV subthreshold samples) with the registered E 0.11 numerical limit set; judged on the change relative to g0-b3.",
+ "numerical_pairs": [
+  {
+   "name": "E 0.11 tolerance F3F5",
+   "input": "E 0.11",
+   "caveat": "ab-into-F3F5 at CVode 1e-10 vs 1e-11; proxy limit for every sweep-43 E record (traces read from the sibling h01-braincell worktree; this sparse checkout excludes .npz)",
+   "traces": [
+    "../../../h01-braincell/docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz",
+    "../../../h01-braincell/docs/evidence/h01-l2-campaign-fine/c-into-F3F5-atol11-sweep43.npz"
+   ]
+  }
+ ],
+ "records": [
+  {
+   "cell": "E",
+   "name": "g2-leak-150",
+   "role": "candidate",
+   "input": "E 0.11",
+   "limits": "E 0.11 tolerance F3F5",
+   "settings": "nseg x9, CVode 1e-10, recorded bias, B3 flags with leak_factor 1.5",
+   "trace": "h01-e-gain/g2-leak-150-sweep43.npz"
+  }
+ ]
+}
