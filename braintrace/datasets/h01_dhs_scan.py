@@ -15,6 +15,8 @@ BrainUnit quantities. These kernels do not replace the default integrator.
 """
 import brainstate
 import brainunit as u
+import jax.lax
+import jax.numpy as jnp
 import numpy as np
 from braincell.quad import _staggered as original
 from braincell.quad import register_integrator
@@ -39,33 +41,49 @@ def _triang(diags, solves, lowers, uppers, levels):
     if levels[0].shape[0] == 0:
         return diags, solves
 
+    d_unit = u.get_unit(diags)
+    s_unit = u.get_unit(solves)
+    d_raw = u.get_mantissa(diags)
+    s_raw = u.get_mantissa(solves)
+    l_raw = u.get_mantissa(lowers)
+    u_raw = u.get_mantissa(uppers)
+    children, parents, valid = levels
+
     def level_step(carry, indices):
         d, s = carry
-        children, parents, valid = indices
-        multiplier = uppers[children] / d[:, children]
-        delta_d = -lowers[children] * multiplier
-        delta_s = -s[:, children] * multiplier
-        d = d.at[:, parents].add(u.math.where(valid, delta_d, u.math.zeros_like(delta_d)))
-        s = s.at[:, parents].add(u.math.where(valid, delta_s, u.math.zeros_like(delta_s)))
+        c, p, v = indices
+        multiplier = u_raw[c] / d[:, c]
+        delta_d = jnp.where(v, -l_raw[c] * multiplier, 0.0)
+        delta_s = jnp.where(v, -s[:, c] * multiplier, 0.0)
+        d = d.at[:, p].add(delta_d)
+        s = s.at[:, p].add(delta_s)
         return (d, s), None
 
-    result, _ = brainstate.transform.scan(level_step, (diags, solves), levels)
-    return result
+    (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid))
+    res_d = u.Quantity(d_out, d_unit) if d_unit != u.UNITLESS else d_out
+    res_s = u.Quantity(s_out, s_unit) if s_unit != u.UNITLESS else s_out
+    return res_d, res_s
 
 
 def _backsub(diags, solves, lowers, indices):
     """Apply the original recursive-doubling jumps in a compiled scan."""
     original._check_comp_backsub(diags, solves, lowers, indices)
-    zero = 0.*u.UNITLESS if isinstance(lowers, u.Quantity) else 0.
-    lowers = lowers.at[0].set(zero)
-    lower_effect, solve_effect = -lowers/diags, solves/diags
+    d_unit = u.get_unit(diags)
+    s_unit = u.get_unit(solves)
+    d_raw = u.get_mantissa(diags)
+    s_raw = u.get_mantissa(solves)
+    l_raw = u.get_mantissa(lowers)
+    l_raw = l_raw.at[0].set(0.0)
+    lower_effect = -l_raw / d_raw
+    solve_effect = s_raw / d_raw
 
     def jump_step(carry, parents):
         lower, solution = carry
-        return (lower*lower[:, parents], solution+lower*solution[:, parents]), None
+        return (lower * lower[:, parents], solution + lower * solution[:, parents]), None
 
-    (_, result), _ = brainstate.transform.scan(jump_step, (lower_effect, solve_effect), indices)
-    return result
+    (_, result), _ = jax.lax.scan(jump_step, (lower_effect, solve_effect), indices)
+    res_v = u.Quantity(result, s_unit / d_unit) if (s_unit / d_unit) != u.UNITLESS else result
+    return res_v
 
 
 def _voltage_step(target, t, dt, *args):
@@ -97,7 +115,7 @@ def _staggered_scan_step(target, *args):
     if hasattr(target, "cache_ion_total_currents"):
         target.cache_ion_total_currents(target.V.value)
     _voltage_step(target, t, dt, *args)
-    point_v = target._cv_to_point(target.V.value)
+    point_v = target._cv_to_point_unchecked(target.V.value) if hasattr(target, "_cv_to_point_unchecked") else target._cv_to_point(target.V.value)
     if target.ion_channel_update_order == "family":
         target._integrate_runtime_synapse_dynamics(point_v)
         target._update_ion_channel_families(point_v)

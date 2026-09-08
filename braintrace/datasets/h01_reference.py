@@ -7,6 +7,7 @@ from braincell.filter import AllRegion, RootLocation
 from braincell.mech import Channel, Ion, StateProbe
 
 from . import h01_channels  # Register the source-specific mechanisms.
+from .h01_construction import H01Cell
 
 
 def make_reference_cell(current_na=.1, *, sodium_ms_cm2=9.601446023,
@@ -41,8 +42,8 @@ def make_reference_cell(current_na=.1, *, sodium_ms_cm2=9.601446023,
     branch = braincell.Soma(lengths=np.array([10.])*u.um,
                            radii_proximal=np.array([5.])*u.um,
                            radii_distal=np.array([5.])*u.um)
-    cell = braincell.Cell(braincell.Morphology(root_name="soma", root_branch=branch),
-                         V_init=-70.0*u.mV, solver="staggered")
+    cell = H01Cell(braincell.Morphology(root_name="soma", root_branch=branch),
+                   V_init=-70.0*u.mV, solver="staggered")
     cell.paint(AllRegion(), braincell.CableProperty(membrane_capacitance=1*u.uF/u.cm**2,
                axial_resistivity=200*u.ohm*u.cm, resting_potential=-70*u.mV))
     cell.paint(AllRegion(), Ion("SodiumFixed", E=68*u.mV))

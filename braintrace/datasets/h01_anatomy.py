@@ -24,6 +24,11 @@ def _label(code):
 def _geometry_signature(morphology):
     if not isinstance(morphology, Morphology):
         return None
+    cached = getattr(morphology, "_h01_geom_sig", None)
+    if cached is not None:
+        cached_sig, n_b, n_e = cached
+        if len(morphology.branches) == n_b and len(morphology.edges) == n_e:
+            return cached_sig
     digest = hashlib.sha256()
     branches = morphology.branches
     indices = {id(view): index for index, view in enumerate(branches)}
@@ -34,11 +39,20 @@ def _geometry_signature(morphology):
             if array is None:
                 digest.update(b"None")
             else:
-                values = np.asarray(array.to_decimal(u.um), dtype="<f8")
+                if (isinstance(array, u.Quantity) and array.unit == u.um
+                        and isinstance(array.mantissa, np.ndarray) and array.mantissa.dtype == np.float64):
+                    values = array.mantissa
+                else:
+                    values = np.asarray(array.to_decimal(u.um), dtype="<f8")
                 digest.update(values.tobytes())
     for edge in morphology.edges:
         digest.update(str((indices[id(edge.parent)], indices[id(edge.child)], edge.parent_x, edge.child_x)).encode())
-    return digest.hexdigest()
+    sig = digest.hexdigest()
+    try:
+        morphology._h01_geom_sig = (sig, len(branches), len(morphology.edges))
+    except (AttributeError, TypeError):
+        pass
+    return sig
 
 
 @dataclass(frozen=True)
@@ -107,7 +121,8 @@ class H01Anatomy:
         self._signature = _geometry_signature(self.morphology)
         rows = imported.source_rows
         xyz = rows[:, 2:5] * POSITION_UM
-        keys = [tuple(np.round(p, 6)) for p in xyz]
+        xyz_round = np.round(xyz, 6)
+        keys = [tuple(p) for p in xyz_round]
         if len(set(keys)) != len(keys):
             raise ValueError("Coincident source points make annotation identity ambiguous.")
         lookup = dict(zip(keys, range(len(rows))))
@@ -116,24 +131,53 @@ class H01Anatomy:
         starts, ends, branch_ids, fractions, endpoints = [], [], [], [], []
         expected_edges = {frozenset((int(r[0]), int(r[6]))) for r in rows if r[6] != -1}
         actual_edges = []
+        row_nodes = rows[:, 0].astype(int)
         for branch_index, view in enumerate(self.morphology.branches):
             branch = view.branch
-            lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
-            if lengths.sum() <= 0:
+            if (isinstance(branch.lengths, u.Quantity) and branch.lengths.unit == u.um
+                    and isinstance(branch.lengths.mantissa, np.ndarray) and branch.lengths.mantissa.dtype == np.float64):
+                lengths = branch.lengths.mantissa
+            else:
+                lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
+            l_sum = lengths.sum()
+            if l_sum <= 0:
                 raise ValueError("Annotation mapping requires positive cable length.")
-            bounds = np.r_[0., np.cumsum(lengths)] / lengths.sum()
-            proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
-            distal = np.asarray(branch.points_distal.to_decimal(u.um))
-            for j, (p, q) in enumerate(zip(proximal, distal)):
+            bounds = np.empty(len(lengths) + 1, dtype=float)
+            bounds[0] = 0.0
+            bounds[1:] = np.cumsum(lengths) / l_sum
+
+            if (isinstance(branch.points_proximal, u.Quantity) and branch.points_proximal.unit == u.um
+                    and isinstance(branch.points_proximal.mantissa, np.ndarray)):
+                proximal = branch.points_proximal.mantissa
+            else:
+                proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
+
+            if (isinstance(branch.points_distal, u.Quantity) and branch.points_distal.unit == u.um
+                    and isinstance(branch.points_distal.mantissa, np.ndarray)):
+                distal = branch.points_distal.mantissa
+            else:
+                distal = np.asarray(branch.points_distal.to_decimal(u.um))
+
+            p_rnd = np.round(proximal, 6)
+            q_rnd = np.round(distal, 6)
+            p_keys = [tuple(v) for v in p_rnd]
+            q_keys = [tuple(v) for v in q_rnd]
+
+            for j in range(len(proximal)):
                 try:
-                    a, b = (lookup[tuple(np.round(v, 6))] for v in (p, q))
+                    a = lookup[p_keys[j]]
+                    b = lookup[q_keys[j]]
                 except KeyError as exc:
                     raise ValueError("Morphology endpoints do not match H01 source samples.") from exc
-                actual_edges.append(frozenset((int(rows[a, 0]), int(rows[b, 0]))))
-                self._nodes.setdefault(int(rows[a, 0]), (branch_index, float(bounds[j])))
-                self._nodes.setdefault(int(rows[b, 0]), (branch_index, float(bounds[j + 1])))
-                starts.append(p)
-                ends.append(q)
+                ra = row_nodes[a]
+                rb = row_nodes[b]
+                actual_edges.append(frozenset((ra, rb)))
+                if ra not in self._nodes:
+                    self._nodes[ra] = (branch_index, float(bounds[j]))
+                if rb not in self._nodes:
+                    self._nodes[rb] = (branch_index, float(bounds[j + 1]))
+                starts.append(proximal[j])
+                ends.append(distal[j])
                 branch_ids.append(branch_index)
                 fractions.append((bounds[j], bounds[j + 1]))
                 endpoints.append((a, b))
@@ -144,6 +188,12 @@ class H01Anatomy:
         self._endpoints = np.asarray(endpoints)
         self._vectors = self._ends - self._starts
         self._length2 = np.sum(self._vectors**2, axis=1)
+        self._lengths = np.sqrt(self._length2)
+        self._row_id_to_index = {int(row[0]): i for i, row in enumerate(rows)}
+        self._adjacency = [[] for _ in rows]
+        for (a, b), length in zip(self._endpoints, self._lengths):
+            self._adjacency[a].append((b, length))
+            self._adjacency[b].append((a, length))
 
     @property
     def label_counts(self):
@@ -244,31 +294,26 @@ class H01Anatomy:
         """
         if not np.isfinite(radius_um) or radius_um <= 0:
             raise ValueError("radius_um must be positive and finite.")
-        rows = self.imported.source_rows
-        ids = {int(row[0]): i for i, row in enumerate(rows)}
-        anchor = ids[node_id]
-        adjacency = [[] for _ in rows]
-        lengths = np.sqrt(self._length2)
-        for (a, b), length in zip(self._endpoints, lengths):
-            adjacency[a].append((b, length))
-            adjacency[b].append((a, length))
-        distance = np.full(len(rows), np.inf)
+        anchor = self._row_id_to_index[node_id]
+        distance = np.full(len(self._row_id_to_index), np.inf)
         distance[anchor] = 0.
         stack = [anchor]
+        adj = self._adjacency
         while stack:
             a = stack.pop()
-            for b, length in adjacency[a]:
+            d_a = distance[a]
+            for b, length in adj[a]:
                 if np.isinf(distance[b]):
-                    distance[b] = distance[a] + length
+                    distance[b] = d_a + length
                     stack.append(b)
         intervals = []
-        for (a, b), length, branch, (lo, hi) in zip(self._endpoints, lengths, self._branches, self._fractions):
+        for (a, b), length, branch, (lo, hi) in zip(self._endpoints, self._lengths, self._branches, self._fractions):
             if distance[a] < distance[b]:
-                left, right = 0., np.clip((radius_um-distance[a])/length, 0., 1.)
+                left, right = 0., np.clip((radius_um - distance[a]) / length, 0., 1.)
             else:
-                left, right = 1-np.clip((radius_um-distance[b])/length, 0., 1.), 1.
+                left, right = 1. - np.clip((radius_um - distance[b]) / length, 0., 1.), 1.
             if right > left:
-                intervals.append((int(branch), float(lo+left*(hi-lo)), float(lo+right*(hi-lo))))
+                intervals.append((int(branch), float(lo + left * (hi - lo)), float(lo + right * (hi - lo))))
         return _Region(self._signature, tuple(intervals),
                        f"inferred_geodesic_neighborhood:node={node_id},radius_um={radius_um}")
 
@@ -292,14 +337,25 @@ class H01Anatomy:
         self._check_label(label)
         if policy not in ("strict", "sample_neighborhood"):
             raise ValueError("policy must be strict or sample_neighborhood.")
+        left = self._labels[self._endpoints[:, 0]] == label
+        right = self._labels[self._endpoints[:, 1]] == label
+        both = left & right
         intervals = []
-        for branch, (lo, hi), (a, b) in zip(self._branches, self._fractions, self._endpoints):
-            left, right = self._labels[a] == label, self._labels[b] == label
-            if left and right:
-                intervals.append((int(branch), float(lo), float(hi)))
-            elif policy == "sample_neighborhood" and (left or right):
-                mid = (lo + hi) / 2
-                intervals.append((int(branch), float(lo if left else mid), float(mid if left else hi)))
+        if policy == "strict":
+            idx = np.flatnonzero(both)
+            for i in idx:
+                intervals.append((int(self._branches[i]), float(self._fractions[i, 0]), float(self._fractions[i, 1])))
+        else:
+            idx = np.flatnonzero(left | right)
+            for i in idx:
+                b = int(self._branches[i])
+                lo, hi = float(self._fractions[i, 0]), float(self._fractions[i, 1])
+                if both[i]:
+                    intervals.append((b, lo, hi))
+                elif left[i]:
+                    intervals.append((b, lo, (lo + hi) / 2))
+                else:
+                    intervals.append((b, (lo + hi) / 2, hi))
         return _Region(self._signature, tuple(intervals), policy)
 
     def project(self, positions_um, *, max_distance_um):
@@ -332,12 +388,15 @@ class H01Anatomy:
         result = []
         for point in positions:
             t = np.clip(np.sum((point - self._starts) * self._vectors, axis=1) / self._length2, 0., 1.)
-            distances = np.linalg.norm(self._starts + t[:, None] * self._vectors - point, axis=1)
-            best = int(np.argmin(distances))
-            distance = float(distances[best])
+            diff = self._starts + t[:, None] * self._vectors - point
+            dist2 = np.sum(diff**2, axis=1)
+            best = int(np.argmin(dist2))
+            min_dist2 = dist2[best]
+            distance = float(np.sqrt(min_dist2))
             location, status = None, "too_far"
             if distance <= max_distance_um:
-                candidates = np.flatnonzero(np.abs(distances - distance) <= 1e-9)
+                tol2 = 2.0 * distance * 1e-9 + 1e-18
+                candidates = np.flatnonzero(dist2 - min_dist2 <= tol2)
                 sites = set()
                 for candidate in candidates:
                     fraction = t[candidate]
