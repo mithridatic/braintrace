@@ -6,9 +6,9 @@
     "abort_seconds": 1500,
     "inputs": {
       "sweep43": "completed",
-      "sweep50": "untested",
-      "sweep53": "untested",
-      "sweep56": "untested"
+      "sweep50": "completed",
+      "sweep53": "completed",
+      "sweep56": "completed"
     },
     "runs": [
       {
@@ -138,6 +138,117 @@
           "--output",
           "/evidence/h01-e-gain/g0-b3-sweep56"
         ]
+      },
+      {
+        "name": "g0-b3",
+        "input": "sweep53",
+        "seconds": 827.9454598999873,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-gain/g0-b3-sweep53.stderr.log",
+        "command": [
+          "docker",
+          "run",
+          "--rm",
+          "--name",
+          "h01-e-gain-g0-b3-sweep53",
+          "-v",
+          "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/.cache/human-pyramidal-l2:/work",
+          "-v",
+          "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-e-split/docs/evidence:/evidence",
+          "-w",
+          "/work/kv3-closing-source",
+          "braintrace-h01-neuron:9.0.2",
+          "python",
+          "/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/evidence/h01-e-gain/g0-b3.candidate.json",
+          "--cache",
+          "/work",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/evidence/h01-e-gain/g0-b3-sweep53"
+        ]
+      },
+      {
+        "name": "g0-b3",
+        "input": "sweep56",
+        "seconds": 781.0998923000006,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-gain/g0-b3-sweep56.stderr.log",
+        "command": [
+          "docker",
+          "run",
+          "--rm",
+          "--name",
+          "h01-e-gain-g0-b3-sweep56",
+          "-v",
+          "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/.cache/human-pyramidal-l2:/work",
+          "-v",
+          "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-e-split/docs/evidence:/evidence",
+          "-w",
+          "/work/kv3-closing-source",
+          "braintrace-h01-neuron:9.0.2",
+          "python",
+          "/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/evidence/h01-e-gain/g0-b3.candidate.json",
+          "--cache",
+          "/work",
+          "--sweep",
+          "56",
+          "--include-recorded-bias",
+          "--output",
+          "/evidence/h01-e-gain/g0-b3-sweep56"
+        ]
+      },
+      {
+        "name": "g0-b3",
+        "input": "sweep50",
+        "seconds": 845.0,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-gain/g0-b3-sweep50.stderr.log",
+        "command": [
+          "docker",
+          "run",
+          "--rm",
+          "--name",
+          "h01-e-gain-g0-b3-sweep50",
+          "-v",
+          "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/.cache/human-pyramidal-l2:/work",
+          "-v",
+          "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-e-split/docs/evidence:/evidence",
+          "-w",
+          "/work/kv3-closing-source",
+          "braintrace-h01-neuron:9.0.2",
+          "python",
+          "/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/evidence/h01-e-gain/g0-b3.candidate.json",
+          "--cache",
+          "/work",
+          "--sweep",
+          "50",
+          "--include-recorded-bias",
+          "--output",
+          "/evidence/h01-e-gain/g0-b3-sweep50"
+        ],
+        "manual_record": {
+          "reason": "runner process (launched 2026-09-08T01:38:40Z) died at 01:42:08Z with empty stdout/stderr; container h01-e-gain-g0-b3-sweep50 ran on and wrote the report",
+          "container_launch_utc": "2026-09-08T01:38:40Z",
+          "container_gone_utc": "2026-09-08T01:52:45Z",
+          "wall_seconds_basis": "docker ps polled at 30 s; 845 s = launch to first poll with the container gone",
+          "integration_seconds": 813.2293116210203,
+          "report_sha256": "d0ff5f544fb872b8bf5ca2cf797a810780ceb6720b8aa3bea9342ca6e9d30cb0",
+          "report_candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
+        }
       }
     ]
   }
