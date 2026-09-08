@@ -58,3 +58,8 @@ The first driven `ei` 10 ms run is now supervised under the
 4,673.661 seconds and 18,262,754,560 peak bytes, with a 6,000-second wall cap,
 600-second silence cap and 4 GiB free-memory reserve. This is a pending
 measurement; the completed 1 ms result above remains the verified runtime scope.
+
+The [installed-wheel preparation](h01-ready-104-wheel-audit.md) passes source,
+installation and isolated-import checks (106 packaged files, 31 H01 modules).
+The final full-population execution with imports pinned to that wheel remains
+pending; source-run success does not substitute for it.
