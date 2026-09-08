@@ -264,3 +264,25 @@ is evaluated against available RAM read with `psutil.virtual_memory()` at the ti
 (headroom rule: the projected 104-cell peak RSS must be under available RAM less 4 GB, and the
 projected construction and `init_state` must each stay under the 1 h no-hour-plus limit as single
 jobs, or a reduced N is proposed with the same rule).
+
+### Addendum 2026-09-07, 19:30 (equivalence step after the performance merge; registered before the run)
+
+`feat/h01-braincell` (performance commits to `h01_construction`, `h01_anatomy`, `h01_dhs_scan`,
+`h01_l2_cell`, `h01_pv_cell`; 410 datasets tests pass there, 45 `h01_network*` tests pass here
+after the merge, commit 0488c84) is merged into this worktree before the 40-cell stage. One
+registered equivalence step precedes the five 40-cell launches, under the same wait condition:
+the SP1 d1 configuration (4 incident cells, `--build --dt-ms 0.005 --duration-ms 1.0 --solver
+h01_staggered_scan --control ei`, zero soma current) is rerun with the merged code and its trace
+arrays compared with the SP1 recording `.cache/h01/bench-d1` (the SP1 repeat `bench-d1r` is
+bitwise identical to it, checked before this run: max abs difference 0.0 mV).
+
+Prediction: every voltage and conductance array within 1e-9 mV (uS) of the SP1 recording, and
+identical spike-event arrays (SP1 recorded zero spikes in 1 ms at zero input, so "identical
+spike times" here means zero events in both); bitwise equality is recorded as observed, not
+predicted (XLA fusion changes may reorder floating-point sums). Construction, `init_state` and
+compile + run seconds are recorded beside SP1's 266.2 s construction and 212.4 s init + run
+(d1; d1r 243.6 / 274.9). Rejection: any array differing by more than 1e-9, or any spike-array
+difference: the 40-cell stage is then **not launched** and the difference is reported. Kill
+rules for this launch: 600 s silence, 1,500 s wall. The result goes into
+`docs/evidence/h01-network-throughput.md` as a dated addendum and into the causal model's
+measurement-function table.
