@@ -7,12 +7,12 @@
  "manifest": "docs/evidence/h01-e-gain-manifest.json",
  "spec": "docs/specs/2026-09-07-h01-e-gain-split.md",
  "launched_utc": "2026-09-07T22:36:07Z",
- "finished_utc": "2026-09-08T00:04:52Z",
+ "finished_utc": "2026-09-08T02:21:43Z",
  "conditions": {
-  "host": "shared for the whole window: another agent's containers (h01-i-reserve-*, h01-l4-reproduction-*, h01-i-transfer-*) ran beside every Stage 0 run; a BrainCell timing run finished (step1-decision.json, 22:35:47Z) before launch as required",
+  "host": "first launch (sweep 43) shared with another agent's containers; the 50/53/56 completion of 2026-09-08 ran on an unshared host (docker ps: synapse only; no python process above 300 MB other than the C3 rescan worker), one container at a time, after SP8's quiet-machine record landed in h01-population-build-12.json",
   "abort_seconds": 1500,
   "max_concurrent": 2,
-  "runs_in_this_evaluation": "four serial runs, one container at a time",
+  "runs_in_this_evaluation": "four serial runs, one container at a time, across two launches (per-input resume; evaluation 1 of 4)",
   "cache": "../h01-braincell/.cache/human-pyramidal-l2 (sparse checkout without .cache or .npz)",
   "driver_sweep_choices": [
    43,
@@ -21,59 +21,79 @@
    54,
    55,
    56
-  ]
+  ],
+  "runner_note": "the sweep-50 runner process died 3.5 min into its container run; the container completed and its report records the g0-b3 hash; sweep 53 and 56 ran under a cmd wrapper with python -u and completed with rc 0"
  },
  "runs": [
   {
    "input": "sweep43",
-   "runner_wall_seconds": 819.8,
-   "returncode": 0,
-   "aborted": false,
+   "launch": "2026-09-07 22:36:07",
    "start_utc": "2026-09-07T22:36:07Z",
    "end_utc": "2026-09-07T22:49:47Z",
+   "wall_seconds": 820,
+   "wall_basis": "runner (first launch, host shared with another agent's containers)",
    "integration_seconds": 814.9,
-   "status": "completed"
+   "returncode": 0,
+   "status": "completed",
+   "host": "shared (h01-i-reserve-*, h01-l4-reproduction-*, h01-i-transfer-* containers beside it)",
+   "report_sha256": "623d1e6228486f99d2274fce04817d4ef31d0462cd801a23f1e9522059757128",
+   "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
   },
   {
    "input": "sweep50",
-   "runner_wall_seconds": 1502.8,
-   "returncode": null,
-   "aborted": true,
-   "start_utc": "2026-09-07T22:49:47Z",
-   "end_utc": "2026-09-07T23:14:50Z",
-   "integration_seconds": null,
-   "status": "killed at the 1500 s abort: untested"
+   "start_utc": "2026-09-08T01:38:40Z",
+   "end_utc": "2026-09-08T01:52:45Z",
+   "wall_seconds": 845,
+   "wall_basis": "container launch to the first 30 s docker-ps poll with the container gone; the runner process died at 01:42:08Z (empty stdout/stderr, no traceback) while the container ran on and wrote the report; row recorded through the runner's record_rows with a manual_record block",
+   "integration_seconds": 813.2,
+   "returncode": 0,
+   "status": "completed",
+   "host": "unshared: docker ps showed only synapse; no python process above 300 MB",
+   "report_sha256": "d0ff5f544fb872b8bf5ca2cf797a810780ceb6720b8aa3bea9342ca6e9d30cb0",
+   "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
   },
   {
    "input": "sweep53",
-   "runner_wall_seconds": 1500.7,
-   "returncode": null,
-   "aborted": true,
-   "start_utc": "2026-09-07T23:14:50Z",
-   "end_utc": "2026-09-07T23:39:51Z",
-   "integration_seconds": null,
-   "status": "killed at the 1500 s abort: untested"
+   "start_utc": "2026-09-08T01:53:17Z",
+   "end_utc": "2026-09-08T02:07:09Z",
+   "wall_seconds": 828,
+   "wall_basis": "runner (cmd wrapper, python -u); container 01:53:17Z to 02:07:09Z",
+   "integration_seconds": 823.0,
+   "returncode": 0,
+   "status": "completed",
+   "host": "unshared",
+   "report_sha256": "06838574ea2ea28f06761c9417bf60edc9cb68e4e7277cfe7f5a6e7dc4e3c0ba",
+   "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
   },
   {
    "input": "sweep56",
-   "runner_wall_seconds": 1500.7,
-   "returncode": null,
-   "aborted": true,
-   "start_utc": "2026-09-07T23:39:51Z",
-   "end_utc": "2026-09-08T00:04:52Z",
-   "integration_seconds": null,
-   "status": "killed at the 1500 s abort: untested"
+   "start_utc": "2026-09-08T02:08:25Z",
+   "end_utc": "2026-09-08T02:21:43Z",
+   "wall_seconds": 781,
+   "wall_basis": "runner (cmd wrapper, python -u); container 02:08:25Z to 02:21:43Z",
+   "integration_seconds": 777.3,
+   "returncode": 0,
+   "status": "completed",
+   "host": "unshared",
+   "report_sha256": "fb9bafcd27b12d5dd66630d08dc9e62f615384313acc36811535e7a44d241398",
+   "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
   }
  ],
  "wall_clock_summary": {
   "sweep43_seconds": 820,
-  "sweep43_integration_seconds": 814.9,
-  "sweep50_seconds": ">1500 (killed)",
-  "sweep53_seconds": ">1500 (killed)",
-  "sweep56_seconds": ">1500 (killed)",
-  "anchor_250_310_seconds": "649-665 (h01-e-continuation-result.md, unshared host)",
-  "evaluation_lower_bound_seconds": 5320,
-  "note": "The 250/310 anchor was exceeded by more than 2.3x under the shared host; sweep 56 (one spike) also exceeded 1500 s. No completed measurement of 50/53/56 exists from this evaluation, so no duration for them is quoted."
+  "sweep50_seconds": 845,
+  "sweep53_seconds": 828,
+  "sweep56_seconds": 781,
+  "integration_seconds": {
+   "sweep43": 814.9,
+   "sweep50": 813.2,
+   "sweep53": 823.0,
+   "sweep56": 777.3
+  },
+  "evaluation_wall_seconds": 3274,
+  "evaluation_integration_seconds": 3228.4,
+  "anchor_250_310_seconds": "649-665 (h01-e-continuation-result.md, unshared host, earlier image state)",
+  "note": "Measured cost of one evaluation (four serial runs): 3274 s wall (54.6 min), 3228.4 s integration, on an unshared host for 50/53/56 and a shared host for 43. The 250/310 runs took 845/828 s against the 649-665 s anchor (1.25-1.3x); the one-spike-predicted 200 pA run took 781 s. Every run finished inside the 1500 s abort."
  },
  "sweep43_rows": [
   {
@@ -176,10 +196,22 @@
    "held": false
   },
   {
+   "band": "sweep 50 reproduces the retained B3 count 8 exactly (different count = campaign stops)",
+   "predicted": 8,
+   "observed": "8; cycle table identical to b3-all-inputs-usable.md to 0.01 ms; width and AHP rows identical",
+   "held": true
+  },
+  {
+   "band": "sweep 53 reproduces the retained B3 count 10 exactly (different count = campaign stops)",
+   "predicted": 10,
+   "observed": "10; cycle table identical to b3-all-inputs-usable.md to 0.01 ms; width and AHP rows identical",
+   "held": true
+  },
+  {
    "band": "sweep-56 count 1 (repeat band 56/59/60/61/62, range 0, exact)",
-   "predicted": "1",
-   "observed": "untested: run killed at 1500 s",
-   "held": null,
+   "predicted": 1,
+   "observed": 4,
+   "held": false,
    "repeat_band": {
     "counts": [
      1,
@@ -189,135 +221,203 @@
      1
     ],
     "limit": 0
-   }
+   },
+   "reading": "model cycles 130.6, 69.1, 259.8, 295.7 ms (mean full-cycle rate 4.8 Hz) against one human spike at 207.8 ms; the model fires three spikes the donor does not"
   },
   {
-   "band": "sweep-56 first-spike latency within repeat range x 1.47",
-   "predicted": "within 82.6 ms of the repeat mean",
-   "observed": "untested: run killed at 1500 s",
-   "held": null,
-   "repeat_band": {
-    "latencies_ms": [
-     205.8,
-     208.7,
-     152.5,
-     199.0,
-     203.9
-    ],
-    "limit_ms": 82.6
-   }
-  },
-  {
-   "band": "sweep 50 reproduces 8 spikes within solver noise",
-   "predicted": "8",
-   "observed": "untested: run killed at 1500 s",
-   "held": null
-  },
-  {
-   "band": "sweep 53 reproduces 10 spikes within solver noise",
-   "predicted": "10",
-   "observed": "untested: run killed at 1500 s",
-   "held": null
+   "band": "sweep-56 first-spike latency within repeat range x 1.47 (82.6 ms)",
+   "predicted": "|model - human| <= 82.6 ms",
+   "observed": "model 127.4 ms vs human sweep-56 205.8 ms: residual -78.4 ms (3.6 ms inside the limit); repeat latencies 205.8/208.7/152.5/199.0/203.9 ms",
+   "held": true
   },
   {
    "band": "axon-first initiation at every active input",
    "predicted": "axon first",
-   "observed": "no active input completed; sweep 43 is subthreshold (0 spikes, h01_initiation_score: no complete spike inside the pulse)",
-   "held": null
+   "observed": "axon first at 50/53/56: axon leads by 0.213, 0.207, 0.219 ms; no shoulder",
+   "held": true
   }
  ],
  "rejection": {
   "clause": "Sweep 43 fails the 1 mV row: B3's Stage B levers broke F5; every Stage G arm is judged on the change of its sweep-43 rows relative to g0-b3, not on an absolute pass.",
   "met": true,
   "reading": "Late-return rows fail by +1.4 to +1.7 mV with onset rows passing: the pre-pulse rest and the pulse onset match the donor; the post-pulse return sits about 1.7 mV depolarised. The levers in play on F5 are leak_reversal_shift_mv -4 and ih_density_factor 75 (distributed).",
-  "count_stop_clause": "A different 250 or 310 pA count than B3 stops the campaign: not evaluable, both runs killed (untested)."
+  "count_stop_clause": "A different 250 or 310 pA count than B3 stops the campaign: NOT triggered; sweep 50 gives 8 and sweep 53 gives 10, identical to the retained B3 traces cycle for cycle.",
+  "unregistered_miss": "The 200 pA count prediction (1) missed: the model fires 4. This was a prediction, not a stop clause; it is carried into Stage G as the row the two arms predict differently (G1: count 1; G2: count 0-1), so both arms now need a drop of three spikes at 200 pA."
  },
  "gain_spikes_per_pa": [
   {
    "segment_pa": "200-250",
    "human_spikes_per_pa": 0.08,
-   "model_spikes_per_pa": null,
-   "model_source": "untested: sweep 56 killed, 250 from the retained B3 trace",
-   "ratio_model_over_human": null
+   "model_spikes_per_pa": 0.08,
+   "ratio_model_over_human": 1.0,
+   "model_source": "this evaluation: g0-b3-sweep56 and g0-b3-sweep50",
+   "human_counts": [
+    1,
+    5
+   ],
+   "model_counts": [
+    4,
+    8
+   ]
   },
   {
    "segment_pa": "250-310",
    "human_spikes_per_pa": 0.0833,
    "model_spikes_per_pa": 0.0333,
-   "model_source": "retained B3 traces (h01-e-usable/b3-sk035-ca-decay-sweep50/53/55), same flags and sha256, not this evaluation",
-   "ratio_model_over_human": 0.4
+   "ratio_model_over_human": 0.4,
+   "model_source": "this evaluation: g0-b3-sweep50 and g0-b3-sweep53",
+   "human_counts": [
+    5,
+    10
+   ],
+   "model_counts": [
+    8,
+    10
+   ]
   },
   {
    "segment_pa": "310-350",
    "human_spikes_per_pa": 0.075,
    "model_spikes_per_pa": 0.05,
-   "model_source": "retained B3 traces (h01-e-usable/b3-sk035-ca-decay-sweep50/53/55), same flags and sha256, not this evaluation",
-   "ratio_model_over_human": 0.67
+   "ratio_model_over_human": 0.667,
+   "model_source": "310 from this evaluation (g0-b3-sweep53); 350 from the retained B3 trace h01-e-usable/b3-sk035-ca-decay-sweep55 (same flags, same sha256)",
+   "human_counts": [
+    10,
+    13
+   ],
+   "model_counts": [
+    10,
+    12
+   ]
   }
  ],
  "gain_rate_hz_per_pa_250_310": {
   "human": 0.0869,
-  "model_retained_b3": 0.0386
+  "model": 0.0386,
+  "source": "this evaluation (g0-b3-sweep50/53)"
  },
  "usable_tier": {
   "file": "h01-e-gain/g0-b3-usable.md",
-  "note": "110 pA from this evaluation; 250/310/350 columns are the retained B3 traces re-scored through the E-gain scorer (same flags, same sha256), labelled in the table; 200 pA repeat rows carry the human band only (model untested).",
+  "note": "110/200/250/310 pA from this evaluation; the 350 pA column is the retained B3 trace h01-e-usable/b3-sk035-ca-decay-sweep55 (same flags, same sha256), labelled. Both tiers per row; retained per-cycle tables included.",
   "counts": {
    "110 pA": {
     "human": 0,
     "model": 0
    },
-   "250 pA (retained B3 trace, not Stage 0)": {
+   "200 pA": {
+    "human": 1,
+    "model": 4
+   },
+   "250 pA": {
     "human": 5,
     "model": 8
    },
-   "310 pA (retained B3 trace, not Stage 0)": {
+   "310 pA": {
     "human": 10,
     "model": 10
    },
-   "350 pA (retained B3 trace, not Stage 0)": {
+   "350 pA (retained B3 trace sweep 55, not this evaluation)": {
     "human": 13,
     "model": 12
    }
   },
-  "repeat_band_200pa": {
-   "counts": [
-    1,
-    1,
-    1,
-    1,
-    1
-   ],
-   "first_spike_ms": [
-    205.8,
-    208.7,
-    152.5,
-    199.0,
-    203.9
-   ],
-   "latency_limit_ms": 82.6
-  }
+  "rows_200pa": {
+   "count": {
+    "human": 1,
+    "model": 4,
+    "limit": 0.0,
+    "usable": "fail",
+    "contract": "fail"
+   },
+   "first_spike_ms": {
+    "human": 205.76,
+    "model": 127.35008740186527,
+    "limit": 82.5846000000001,
+    "usable": "pass"
+   }
+  },
+  "rates_hz": {
+   "250 pA": {
+    "human": 4.789960243329981,
+    "model": 7.727641200341114,
+    "verdict": "fail"
+   },
+   "310 pA": {
+    "human": 10.001555797568509,
+    "model": 10.045347252900331,
+    "verdict": "pass"
+   }
+  },
+  "width_ahp_250_310": "identical to b3-all-inputs-usable.md (diff of the width_ms and ahp_mv rows: no change); no cycle newly failing",
+  "model_200pa_cycles_ms": [
+   130.59,
+   69.1,
+   259.82,
+   295.65
+  ],
+  "human_200pa_cycles_ms": [
+   207.76
+  ]
  },
  "initiation": {
-  "file": "h01-e-gain/g0-b3-sweep43-initiation.json",
-  "result": "no active run completed; not evaluable"
- },
- "decision": null,
- "decision_text": "Stage 0 is incomplete: three of four runs were killed at the 1500 s abort (untested), so the 250/310 same-image repeat, the 200 pA count and the axon-first check were not observed. The one observed band splits: onset rows held, late-return rows missed by up to 1.72 mV (registered rejection clause met). Stage G does NOT open as registered: its gate needs a completed Stage 0 evaluation with a measured cost, and its per-evaluation cost is at least 820 + 3 x 1500 s under the observed host conditions with the 1500 s abort itself too short. The `decision` field is left null deliberately so the runner's gate stays closed until the second approval records one.",
- "stage_g_opens": false,
- "stage_g_cost_estimate": {
-  "measured_runs": {
-   "sweep43_seconds": 820
-  },
-  "unmeasured_runs": [
-   "sweep50",
-   "sweep53",
-   "sweep56"
+  "files": [
+   "h01-e-gain/g0-b3-sweep50-initiation.json",
+   "h01-e-gain/g0-b3-sweep53-initiation.json",
+   "h01-e-gain/g0-b3-sweep56-initiation.json"
   ],
-  "lower_bound_per_evaluation_seconds": 5320,
-  "statement": "One Stage G arm at four inputs costs at least 5320 s (88.7 min) under the conditions observed here, and its three active runs did not finish inside 1500 s at all; the only usable anchor for 50/53 is 649-665 s on an unshared host, which was not reproduced. Two arms concurrently would double the container load on the same host."
+  "axon_first": {
+   "sweep50": {
+    "axon_first": true,
+    "axon_leads_ms": 0.21300938523563673,
+    "spikes": 8
+   },
+   "sweep53": {
+    "axon_first": true,
+    "axon_leads_ms": 0.20679612136564174,
+    "spikes": 10
+   },
+   "sweep56": {
+    "axon_first": true,
+    "axon_leads_ms": 0.21889070482052375,
+    "spikes": 4
+   }
+  },
+  "result": "axon first at every active input"
  },
- "recommendation": "Before any Stage G approval: re-run the three killed inputs of g0-b3 on an unshared host (or raise abort_seconds after measuring) to complete evaluation 1; the runner re-runs all four inputs of a candidate, so a completion costs sweep 43 again unless the runner learns per-input skipping. Judge G arms on the change of the sweep-43 late-return rows relative to +1.4 to +1.7 mV, as the rejection clause prescribes.",
+ "decision": "stage-g-opens-as-registered",
+ "decision_text": "Evaluation 1 (g0-b3) is complete: four of four inputs measured, every run rc 0 inside the 1500 s abort. The campaign-stop clause is not triggered (250/310 counts 8/10 reproduce B3 exactly). The registered rejection clause is met: sweep-43 late-return rows miss by +1.40 to +1.72 mV while onset rows hold, so every Stage G arm is judged on the change of its sweep-43 late-return rows relative to g0-b3 (+1.4 to +1.7 mV), not on an absolute 1 mV pass. The 200 pA count prediction missed (4 spikes against the exact repeat band of 1); it is carried into Stage G as a scored row (G1 predicts 1, G2 predicts 0-1). Axon-first initiation held at 50/53/56. Stage G opens as registered (g1-ih-half and g2-leak-150 at sweeps 43/50/53/56) with the measured cost below; this decision does not launch it, and each Stage G launch still needs per-job approval under the run-duration rule.",
+ "stage_g_opens": true,
+ "stage_g_cost_estimate": {
+  "measured_runs_seconds": {
+   "sweep43": 820,
+   "sweep50": 845,
+   "sweep53": 828,
+   "sweep56": 781
+  },
+  "measured_evaluation_wall_seconds": 3274,
+  "measured_evaluation_integration_seconds": 3228.4,
+  "statement": "One evaluation at four inputs measured 3274 s wall (54.6 min) run serially, one container at a time (50/53/56 on an unshared host). Two Stage G arms run concurrently per the manifest (max_concurrent 2); the cost of two containers side by side on this host is not measured, and the 1500 s abort held every serial run with 655-720 s to spare."
+ },
+ "recommendation": "Stage G may be approved per job on the measured 3274 s per evaluation; run the two arms one container at a time unless a concurrent-pair duration is measured first. Score both arms on the change of the sweep-43 late-return rows and on the 200 pA count (base 4).",
  "evaluations_spent": 1,
- "cap": 4
+ "cap": 4,
+ "resume_launched_utc": "2026-09-08T01:38:40Z",
+ "gain_reading": "Human counts 1/5/10/13 at 200/250/310/350 pA; model 4/8/10/12. The model matches the human slope between 200 and 250 pA (0.080 vs 0.080 spikes/pA) but sits three spikes above the donor at both inputs, then flattens between 250 and 310 pA (0.033 vs 0.083) to meet the pinned 310 pA point, and stays flat above it (0.050 vs 0.075). The error is an excess of firing at low drive (200-250 pA) that the 310 pA pin absorbs, not a uniformly compressed slope; the first spike at 200 pA comes 78 ms early and is followed by three spikes the donor never fires.",
+ "contract_sweep43": {
+  "file": "h01-e-gain/g0-b3-sweep43-contract.json",
+  "summary": {
+   "pass": 5,
+   "fail": 4,
+   "unavailable": 1
+  },
+  "note": "re-scored 2026-09-08 from the same trace; rows unchanged"
+ },
+ "stage_g_judging_conditions": [
+  "sweep-43 late-return rows: judged on the change relative to g0-b3's +1.72/+1.71/+1.40/+1.69 mV (1520/2019/2021/2040 ms); an arm moving them by more than 1 mV is rejected as registered",
+  "sweep-43 onset rows must stay within 1 mV (g0-b3: +0.43 to +0.91 mV)",
+  "200 pA count: g0-b3 gives 4 against the exact band 1; G1 registered 1, G2 registered 0-1",
+  "250/310 counts and rates: registered predictions unchanged (G1: 250 count 5-7, 310 count 9-10 and rate within 1.5 Hz of 10.0; G2: 250 <= 6, 310 >= 8, not a pure shift)",
+  "axon-first initiation at 50/53/56 (g0-b3 leads 0.21-0.22 ms)",
+  "no width cycle newly failing relative to b3-all-inputs-usable.md"
+ ]
 }

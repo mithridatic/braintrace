@@ -6,15 +6,19 @@
    "human": 0,
    "model": 0
   },
-  "250 pA (retained B3 trace, not Stage 0)": {
+  "200 pA": {
+   "human": 1,
+   "model": 4
+  },
+  "250 pA": {
    "human": 5,
    "model": 8
   },
-  "310 pA (retained B3 trace, not Stage 0)": {
+  "310 pA": {
    "human": 10,
    "model": 10
   },
-  "350 pA (retained B3 trace, not Stage 0)": {
+  "350 pA (retained B3 trace sweep 55, not this evaluation)": {
    "human": 13,
    "model": 12
   }
@@ -107,7 +111,80 @@
    "contract": "no contract row"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "200 pA",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 0.0,
+   "model": 4.803271666002805,
+   "limit": null,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  },
+  {
+   "input": "200 pA",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": null,
+   "model": 4.278616277933354,
+   "limit": null,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  },
+  {
+   "input": "200 pA",
+   "row": "width_ms",
+   "cycle": 1,
+   "human": 0.966530565644689,
+   "model": 0.9883133081900723,
+   "limit": 0.1933061131289378,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "200 pA",
+   "row": "ahp_mv",
+   "cycle": 1,
+   "human": -70.0000017285347,
+   "model": -70.72194041558718,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "200 pA",
+   "row": "count",
+   "cycle": null,
+   "human": 1,
+   "model": 4,
+   "limit": 0.0,
+   "spread": null,
+   "basis": "human repeat range x DLF over 5 repeats at this command",
+   "verdict": "fail",
+   "contract": "fail"
+  },
+  {
+   "input": "200 pA",
+   "row": "first_spike_ms",
+   "cycle": null,
+   "human": 205.76,
+   "model": 127.35008740186527,
+   "limit": 82.5846000000001,
+   "spread": null,
+   "basis": "human repeat range x DLF over 5 repeats at this command",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "250 pA",
    "row": "rate_hz",
    "cycle": null,
    "human": 4.789960243329981,
@@ -119,7 +196,7 @@
    "contract": "no contract row"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "adaptation_ratio",
    "cycle": null,
    "human": 7.976649153531817,
@@ -131,7 +208,7 @@
    "contract": "no contract row"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "width_ms",
    "cycle": 1,
    "human": 0.9358637951231685,
@@ -144,7 +221,7 @@
    "contract": "fail"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "width_ms",
    "cycle": 2,
    "human": 1.1346650602597492,
@@ -157,7 +234,7 @@
    "contract": "fail"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "width_ms",
    "cycle": 3,
    "human": 0.97477237351859,
@@ -170,7 +247,7 @@
    "contract": "pass"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "width_ms",
    "cycle": 4,
    "human": 0.9711216485673049,
@@ -183,7 +260,7 @@
    "contract": "pass"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "width_ms",
    "cycle": 5,
    "human": 0.9630846725035553,
@@ -196,7 +273,7 @@
    "contract": "pass"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "ahp_mv",
    "cycle": 1,
    "human": -69.56250363588333,
@@ -208,7 +285,7 @@
    "contract": "pass"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "ahp_mv",
    "cycle": 2,
    "human": -67.09375375509262,
@@ -220,7 +297,7 @@
    "contract": "fail"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "ahp_mv",
    "cycle": 3,
    "human": -70.21875450015068,
@@ -232,7 +309,7 @@
    "contract": "pass"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "ahp_mv",
    "cycle": 4,
    "human": -70.28125369548798,
@@ -244,7 +321,7 @@
    "contract": "pass"
   },
   {
-   "input": "250 pA (retained B3 trace, not Stage 0)",
+   "input": "250 pA",
    "row": "ahp_mv",
    "cycle": 5,
    "human": -70.59375339746475,
@@ -256,7 +333,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "rate_hz",
    "cycle": null,
    "human": 10.001555797568509,
@@ -268,7 +345,7 @@
    "contract": "no contract row"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "adaptation_ratio",
    "cycle": null,
    "human": 9.947281713344251,
@@ -280,7 +357,7 @@
    "contract": "no contract row"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 1,
    "human": 0.9128560164754163,
@@ -293,7 +370,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 2,
    "human": 1.2690307278455748,
@@ -306,7 +383,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 3,
    "human": 1.0937104341232953,
@@ -319,7 +396,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 4,
    "human": 0.9860242798531544,
@@ -332,7 +409,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 5,
    "human": 0.9882447920297182,
@@ -345,7 +422,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 6,
    "human": 0.9767491645955033,
@@ -358,7 +435,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 7,
    "human": 0.9841531460481292,
@@ -371,7 +448,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 8,
    "human": 0.9794904440964274,
@@ -384,7 +461,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 9,
    "human": 0.9670550450932751,
@@ -397,7 +474,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "width_ms",
    "cycle": 10,
    "human": 0.9645281811692712,
@@ -410,7 +487,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 1,
    "human": -69.56250363588333,
@@ -422,7 +499,7 @@
    "contract": "pass"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 2,
    "human": -64.96875131130219,
@@ -434,7 +511,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 3,
    "human": -67.62500250339508,
@@ -446,7 +523,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 4,
    "human": -69.15625327825546,
@@ -458,7 +535,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 5,
    "human": -69.50000444054604,
@@ -470,7 +547,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 6,
    "human": -69.56250363588333,
@@ -482,7 +559,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 7,
    "human": -69.43750151991844,
@@ -494,7 +571,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 8,
    "human": -69.62500283122063,
@@ -506,7 +583,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 9,
    "human": -69.84375187754631,
@@ -518,7 +595,7 @@
    "contract": "fail"
   },
   {
-   "input": "310 pA (retained B3 trace, not Stage 0)",
+   "input": "310 pA",
    "row": "ahp_mv",
    "cycle": 10,
    "human": -69.9062510728836,
@@ -530,7 +607,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "rate_hz",
    "cycle": null,
    "human": 13.269052147374937,
@@ -542,7 +619,7 @@
    "contract": "no contract row"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "adaptation_ratio",
    "cycle": null,
    "human": 7.861252115059119,
@@ -554,7 +631,7 @@
    "contract": "no contract row"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 1,
    "human": 0.9042990124514745,
@@ -567,7 +644,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 2,
    "human": 1.2681100580998645,
@@ -580,7 +657,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 3,
    "human": 1.4296078373365617,
@@ -593,7 +670,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 4,
    "human": 1.061775433548064,
@@ -606,7 +683,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 5,
    "human": 1.0365862513860975,
@@ -619,7 +696,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 6,
    "human": 1.0317777745367493,
@@ -632,7 +709,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 7,
    "human": 1.018250449893003,
@@ -645,7 +722,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 8,
    "human": 1.0203249778812733,
@@ -658,7 +735,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 9,
    "human": 1.0311970392688181,
@@ -671,7 +748,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 10,
    "human": 1.0265490573842726,
@@ -684,7 +761,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 11,
    "human": 1.0264134579947495,
@@ -697,7 +774,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "width_ms",
    "cycle": 12,
    "human": 1.024859403715027,
@@ -710,7 +787,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 1,
    "human": -70.062500923872,
@@ -722,7 +799,7 @@
    "contract": "pass"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 2,
    "human": -65.00000277161598,
@@ -734,7 +811,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 3,
    "human": -64.87500065565109,
@@ -746,7 +823,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 4,
    "human": -68.03125286102295,
@@ -758,7 +835,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 5,
    "human": -68.50000241398811,
@@ -770,7 +847,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 6,
    "human": -68.93750423192978,
@@ -782,7 +859,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 7,
    "human": -69.15625327825546,
@@ -794,7 +871,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 8,
    "human": -68.7187514603138,
@@ -806,7 +883,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 9,
    "human": -68.81250211596489,
@@ -818,7 +895,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 10,
    "human": -68.90625277161598,
@@ -830,7 +907,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 11,
    "human": -68.53125387430191,
@@ -842,7 +919,7 @@
    "contract": "fail"
   },
   {
-   "input": "350 pA (retained B3 trace, not Stage 0)",
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
    "row": "ahp_mv",
    "cycle": 12,
    "human": -69.31250312924385,
@@ -859,10 +936,66 @@
    "human": [],
    "model": []
   },
-  "250 pA (retained B3 trace, not Stage 0)": {
+  "200 pA": {
    "human": [
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "200 pA",
+     "cycle": 1,
+     "cycle_ms": 207.76,
+     "ahp_mv": -70.0000017285347,
+     "width_ms": 0.966530565644689,
+     "peak_mv": 36.21875351667404,
+     "threshold_mv": -54.71875289082527,
+     "peak_ms": 1225.76
+    }
+   ],
+   "model": [
+    {
+     "input": "200 pA",
+     "cycle": 1,
+     "cycle_ms": 130.59208689809861,
+     "ahp_mv": -70.72194041558718,
+     "width_ms": 0.9883133081900723,
+     "peak_mv": 37.17599811240434,
+     "threshold_mv": -57.207500475756135,
+     "peak_ms": 1147.3500874018653
+    },
+    {
+     "input": "200 pA",
+     "cycle": 2,
+     "cycle_ms": 69.10038594500816,
+     "ahp_mv": -70.90211394478341,
+     "width_ms": 0.9864507385693742,
+     "peak_mv": 37.09141099603476,
+     "threshold_mv": -57.206897501440956,
+     "peak_ms": 1216.4557610455072
+    },
+    {
+     "input": "200 pA",
+     "cycle": 3,
+     "cycle_ms": 259.8198699230966,
+     "ahp_mv": -71.04154136664275,
+     "width_ms": 0.9849305593450026,
+     "peak_mv": 37.04178270026855,
+     "threshold_mv": -57.20741906112464,
+     "peak_ms": 1476.301570480375
+    },
+    {
+     "input": "200 pA",
+     "cycle": 4,
+     "cycle_ms": 295.65403611578904,
+     "ahp_mv": -71.10500004080166,
+     "width_ms": 0.984352267030772,
+     "peak_mv": 37.03747657117405,
+     "threshold_mv": -57.20810886681702,
+     "peak_ms": 1771.9736238050052
+    }
+   ]
+  },
+  "250 pA": {
+   "human": [
+    {
+     "input": "250 pA",
      "cycle": 1,
      "cycle_ms": 59.98000000000002,
      "ahp_mv": -69.56250363588333,
@@ -872,7 +1005,7 @@
      "peak_ms": 1078.1
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 2,
      "cycle_ms": 34.25999999999999,
      "ahp_mv": -67.09375375509262,
@@ -882,7 +1015,7 @@
      "peak_ms": 1111.98
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 3,
      "cycle_ms": 220.1199999999999,
      "ahp_mv": -70.21875450015068,
@@ -892,7 +1025,7 @@
      "peak_ms": 1332.38
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 4,
      "cycle_ms": 307.4200000000001,
      "ahp_mv": -70.28125369548798,
@@ -902,7 +1035,7 @@
      "peak_ms": 1639.78
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 5,
      "cycle_ms": 273.28,
      "ahp_mv": -70.59375339746475,
@@ -914,7 +1047,7 @@
    ],
    "model": [
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 1,
      "cycle_ms": 58.5837307428294,
      "ahp_mv": -70.35576998532694,
@@ -924,7 +1057,7 @@
      "peak_ms": 1075.3880572240037
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 2,
      "cycle_ms": 20.937886315820606,
      "ahp_mv": -70.85357890771333,
@@ -934,7 +1067,7 @@
      "peak_ms": 1096.3344812607083
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 3,
      "cycle_ms": 46.29375697799355,
      "ahp_mv": -70.96802015716118,
@@ -944,7 +1077,7 @@
      "peak_ms": 1142.5725733474565
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 4,
      "cycle_ms": 184.31981043396127,
      "ahp_mv": -71.05594270076924,
@@ -954,7 +1087,7 @@
      "peak_ms": 1326.9199999990833
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 5,
      "cycle_ms": 171.5068310755628,
      "ahp_mv": -71.10794308542104,
@@ -964,7 +1097,7 @@
      "peak_ms": 1498.4439927122176
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 6,
      "cycle_ms": 164.93297658936262,
      "ahp_mv": -71.14247778393127,
@@ -974,7 +1107,7 @@
      "peak_ms": 1663.3873961284905
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 7,
      "cycle_ms": 160.4626986017804,
      "ahp_mv": -71.16591350779323,
@@ -984,7 +1117,7 @@
      "peak_ms": 1823.8576954094128
     },
     {
-     "input": "250 pA (retained B3 trace, not Stage 0)",
+     "input": "250 pA",
      "cycle": 8,
      "cycle_ms": 157.38519823287106,
      "ahp_mv": -71.18201077463536,
@@ -995,10 +1128,10 @@
     }
    ]
   },
-  "310 pA (retained B3 trace, not Stage 0)": {
+  "310 pA": {
    "human": [
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 1,
      "cycle_ms": 38.01999999999998,
      "ahp_mv": -69.56250363588333,
@@ -1008,7 +1141,7 @@
      "peak_ms": 1056.26
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 2,
      "cycle_ms": 12.1400000000001,
      "ahp_mv": -64.96875131130219,
@@ -1018,7 +1151,7 @@
      "peak_ms": 1067.66
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 3,
      "cycle_ms": 60.8599999999999,
      "ahp_mv": -67.62500250339508,
@@ -1028,7 +1161,7 @@
      "peak_ms": 1128.8
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 4,
      "cycle_ms": 109.75999999999999,
      "ahp_mv": -69.15625327825546,
@@ -1038,7 +1171,7 @@
      "peak_ms": 1238.8
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 5,
      "cycle_ms": 115.29999999999995,
      "ahp_mv": -69.50000444054604,
@@ -1048,7 +1181,7 @@
      "peak_ms": 1353.98
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 6,
      "cycle_ms": 119.20000000000005,
      "ahp_mv": -69.56250363588333,
@@ -1058,7 +1191,7 @@
      "peak_ms": 1473.24
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 7,
      "cycle_ms": 122.1400000000001,
      "ahp_mv": -69.43750151991844,
@@ -1068,7 +1201,7 @@
      "peak_ms": 1595.3
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 8,
      "cycle_ms": 116.15999999999985,
      "ahp_mv": -69.62500283122063,
@@ -1078,7 +1211,7 @@
      "peak_ms": 1711.54
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 9,
      "cycle_ms": 123.53999999999996,
      "ahp_mv": -69.84375187754631,
@@ -1088,7 +1221,7 @@
      "peak_ms": 1835.12
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 10,
      "cycle_ms": 120.76000000000022,
      "ahp_mv": -69.9062510728836,
@@ -1100,7 +1233,7 @@
    ],
    "model": [
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 1,
      "cycle_ms": 37.78029323770602,
      "ahp_mv": -69.98017923488018,
@@ -1110,7 +1243,7 @@
      "peak_ms": 1054.6344256334103
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 2,
      "cycle_ms": 13.476864019608684,
      "ahp_mv": -70.96061974078326,
@@ -1120,7 +1253,7 @@
      "peak_ms": 1068.1614156274984
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 3,
      "cycle_ms": 24.351598241218426,
      "ahp_mv": -70.85586753884054,
@@ -1130,7 +1263,7 @@
      "peak_ms": 1092.4000476372332
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 4,
      "cycle_ms": 120.67372843935527,
      "ahp_mv": -70.93190683720567,
@@ -1140,7 +1273,7 @@
      "peak_ms": 1213.0688009012842
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 5,
      "cycle_ms": 134.70043027893394,
      "ahp_mv": -70.98981849914473,
@@ -1150,7 +1283,7 @@
      "peak_ms": 1347.7881086331067
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 6,
      "cycle_ms": 126.54927012940357,
      "ahp_mv": -71.02850863135656,
@@ -1160,7 +1293,7 @@
      "peak_ms": 1474.3487629336867
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 7,
      "cycle_ms": 122.79645131690359,
      "ahp_mv": -71.05703617543608,
@@ -1170,7 +1303,7 @@
      "peak_ms": 1597.155782120767
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 8,
      "cycle_ms": 119.83536338366162,
      "ahp_mv": -71.07823224321028,
@@ -1180,7 +1313,7 @@
      "peak_ms": 1716.9977486968844
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 9,
      "cycle_ms": 117.62114174711292,
      "ahp_mv": -71.09415734387746,
@@ -1190,7 +1323,7 @@
      "peak_ms": 1834.6239942623693
     },
     {
-     "input": "310 pA (retained B3 trace, not Stage 0)",
+     "input": "310 pA",
      "cycle": 10,
      "cycle_ms": 115.9323234959511,
      "ahp_mv": -71.10620095173853,
@@ -1201,10 +1334,10 @@
     }
    ]
   },
-  "350 pA (retained B3 trace, not Stage 0)": {
+  "350 pA (retained B3 trace sweep 55, not this evaluation)": {
    "human": [
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 1,
      "cycle_ms": 30.579999999999927,
      "ahp_mv": -70.062500923872,
@@ -1214,7 +1347,7 @@
      "peak_ms": 1048.7
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 2,
      "cycle_ms": 11.820000000000164,
      "ahp_mv": -65.00000277161598,
@@ -1224,7 +1357,7 @@
      "peak_ms": 1060.04
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 3,
      "cycle_ms": 23.019999999999982,
      "ahp_mv": -64.87500065565109,
@@ -1234,7 +1367,7 @@
      "peak_ms": 1082.3
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 4,
      "cycle_ms": 77.19999999999982,
      "ahp_mv": -68.03125286102295,
@@ -1244,7 +1377,7 @@
      "peak_ms": 1160.6
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 5,
      "cycle_ms": 80.38000000000011,
      "ahp_mv": -68.50000241398811,
@@ -1254,7 +1387,7 @@
      "peak_ms": 1240.9
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 6,
      "cycle_ms": 86.01999999999998,
      "ahp_mv": -68.93750423192978,
@@ -1264,7 +1397,7 @@
      "peak_ms": 1326.9
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 7,
      "cycle_ms": 86.68000000000006,
      "ahp_mv": -69.15625327825546,
@@ -1274,7 +1407,7 @@
      "peak_ms": 1413.6
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 8,
      "cycle_ms": 87.11999999999989,
      "ahp_mv": -68.7187514603138,
@@ -1284,7 +1417,7 @@
      "peak_ms": 1500.78
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 9,
      "cycle_ms": 85.58000000000015,
      "ahp_mv": -68.81250211596489,
@@ -1294,7 +1427,7 @@
      "peak_ms": 1586.24
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 10,
      "cycle_ms": 93.41999999999985,
      "ahp_mv": -68.90625277161598,
@@ -1304,7 +1437,7 @@
      "peak_ms": 1679.66
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 11,
      "cycle_ms": 89.46000000000004,
      "ahp_mv": -68.53125387430191,
@@ -1314,7 +1447,7 @@
      "peak_ms": 1769.18
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 12,
      "cycle_ms": 90.74000000000001,
      "ahp_mv": -69.31250312924385,
@@ -1324,7 +1457,7 @@
      "peak_ms": 1859.96
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 13,
      "cycle_ms": 92.92000000000007,
      "ahp_mv": -69.03125116229057,
@@ -1336,7 +1469,7 @@
    ],
    "model": [
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 1,
      "cycle_ms": 30.77122707969056,
      "ahp_mv": -69.80530477494031,
@@ -1346,7 +1479,7 @@
      "peak_ms": 1047.6553377554671
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 2,
      "cycle_ms": 11.560393069967631,
      "ahp_mv": -70.88310159329882,
@@ -1356,7 +1489,7 @@
      "peak_ms": 1059.2747734481088
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 3,
      "cycle_ms": 18.610786124782408,
      "ahp_mv": -70.83468062898638,
@@ -1366,7 +1499,7 @@
      "peak_ms": 1077.774432990346
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 4,
      "cycle_ms": 80.15681848361055,
      "ahp_mv": -70.77797314489436,
@@ -1376,7 +1509,7 @@
      "peak_ms": 1157.8860375762688
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 5,
      "cycle_ms": 121.5283175858267,
      "ahp_mv": -70.85610518939379,
@@ -1386,7 +1519,7 @@
      "peak_ms": 1279.4367345628123
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 6,
      "cycle_ms": 109.02286436982399,
      "ahp_mv": -70.89796266193363,
@@ -1396,7 +1529,7 @@
      "peak_ms": 1388.4719383998763
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 7,
      "cycle_ms": 106.01358768041268,
      "ahp_mv": -70.93061842193356,
@@ -1406,7 +1539,7 @@
      "peak_ms": 1494.4957752835508
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 8,
      "cycle_ms": 103.18962377482308,
      "ahp_mv": -70.95560805843212,
@@ -1416,7 +1549,7 @@
      "peak_ms": 1597.6936934133155
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 9,
      "cycle_ms": 101.05265281828315,
      "ahp_mv": -70.97503784723197,
@@ -1426,7 +1559,7 @@
      "peak_ms": 1698.7519384729524
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 10,
      "cycle_ms": 99.36727916906034,
      "ahp_mv": -70.9902534113526,
@@ -1436,7 +1569,7 @@
      "peak_ms": 1798.1239930696984
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 11,
      "cycle_ms": 98.03613283071059,
      "ahp_mv": -71.00224086310901,
@@ -1446,7 +1579,7 @@
      "peak_ms": 1896.163317340141
     },
     {
-     "input": "350 pA (retained B3 trace, not Stage 0)",
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
      "cycle": 12,
      "cycle_ms": 96.97541165711164,
      "ahp_mv": -71.01171940276623,
