@@ -2090,3 +2090,11 @@ The full104 source run at .000625 ms is registered and underway; its result is
 not yet available. The installed wheel predating this solver remains unsuitable
 as the final package qualification artifact and must be rebuilt from the final
 qualified source.
+
+The explicit implicit-solver full104 construction retains all 808,495 CVs and two
+supported projections, with exact model metadata parity apart from solver name.
+The [source gate](evidence/h01-ready-104-implicit-build-decision.json) and
+[transition gate](evidence/h01-ready-104-implicit-solver-decision.json) both pass.
+This closes construction provenance for the numerical replacement in Y5;
+initialization, driven runtime and fullpopulation refinement remain unqualified.
+Measured construction time is 1134.833 s, not a runtime throughput measurement.

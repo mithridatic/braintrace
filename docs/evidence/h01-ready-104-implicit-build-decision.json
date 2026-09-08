@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "scope": "104-cell construction only",
+  "expected_cells": 104,
+  "simulated_cells": 104,
+  "n_compartments": 808495,
+  "failures": [],
+  "runtime_qualified": false,
+  "physiology_qualified": false,
+  "inputs": {
+    "build": {
+      "path": ".cache\\h01\\readiness\\104-implicit-construction-reference.json",
+      "sha256": "a32286fa4dbe2fd1865a7cc50415df32a13906d76b6ac3c217ca7891a94cfd68"
+    },
+    "imports": {
+      "path": "docs\\evidence\\h01-population-import-104.json",
+      "sha256": "33163864f76adce5669ab2cb0fb6b168c762c0252faa390f401022537609e578"
+    },
+    "topology": {
+      "path": "docs\\evidence\\h01-verified-network.json",
+      "sha256": "48e1057da70891574565151c727e897e6ed67ac34d8c90b4818c4de8d7400e65"
+    }
+  }
+}

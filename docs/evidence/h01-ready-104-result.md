@@ -97,3 +97,15 @@ A fresh [implicit-solver wheel](h01-ready-104-implicit-wheel-audit.md) from
 526d57f now passes payload/origin checks and 33 installed regression tests.
 This is package preparation only; the full104 source process is still running
 and a full104 installed run remains required.
+
+The implicit-solver full104 construction now passes the
+[source construction gate](h01-ready-104-implicit-build-decision.json) and
+[solver-transition gate](h01-ready-104-implicit-solver-decision.json). It contains
+808,495 compartments and both supported projections; every cell field other than
+the named solver exactly matches the prior full104 reference. Construction took
+1134.833 seconds. The immutable construction checkpoint was copied before the
+runner overwrites its working metadata during initialization/runtime; both gate
+verdicts bind that saved reference by hash. The
+[compact summary](h01-ready-104-implicit-build-summary.json) retains all identities,
+donors, compartment counts and contact settings. Initialization is in progress;
+no driven runtime or physiological qualification is claimed.
