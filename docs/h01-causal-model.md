@@ -1972,6 +1972,14 @@ memory 2,466.867 MiB, exit 0. The rerun's construction metadata matches the
 preceding build exactly. This closes initialization at 40 cells, while finite
 compiled stepping, full-104 runtime and the physiological gates remain open.
 
+The [40-cell compiled smoke](evidence/h01-ready-40-ei-1ms-summary.json) then
+completed 200 steps at dt 0.005 ms, with all 125 saved arrays finite and the
+expected time grid and 40 population identities independently checked
+([trace audit](evidence/h01-ready-40-ei-1ms-trace-audit.json)). Compile plus
+stepping took 121.588 seconds, peak resident memory 4,336.469 MiB. There were
+zero spikes before the pulse onset; this establishes finite short-window
+execution at 40 cells, not driven activity, delivery or full-104 readiness.
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).

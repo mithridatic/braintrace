@@ -1,6 +1,6 @@
 # H01 40-cell construction continuation
 
-2026-09-08. **Construction and initialization PASS; simulation pending.**
+2026-09-08. **Construction, initialization and finite 1 ms compiled smoke PASS.**
 
 The repaired loader constructed 40 cells, 165,084 compartments and two
 projections in 240.850 seconds (245.793 seconds process wall time, exit 0).
@@ -25,12 +25,24 @@ Evidence: [initialization summary](h01-ready-40-init-summary.json) and
 initialization estimate is superseded by this measurement.
 
 Runtime: Python 3.13.14, BrainCell 0.1.0, brainstate 0.5.4, brainunit 0.5.2,
-JAX/JAXlib 0.11.1, NumPy 2.5.2. The next 1 ms compiled `ei` smoke has its live
-record in `h01-ready-40-ei-1ms-launch.json`, with a 1,800-second wall cap and
-600-second silence cap. Its measured setup estimate is about 484 seconds;
-compile plus stepping remains projected at 60 seconds until measured.
+JAX/JAXlib 0.11.1, NumPy 2.5.2.
 
-Remaining: compiled multi-step simulation, all four matched controls,
-then staged 104-cell measurements sized from the observed memory and timing.
+The 1 ms compiled `ei` smoke completed with exit 0. Construction took 298.205
+seconds, initialization 266.111 seconds and compile plus stepping 121.588
+seconds; peak resident memory was 4,336.469 MiB. The earlier 60-second estimate
+underestimated compilation/stepping by about 2x. Cell settings, donor choices,
+contacts, compartment counts and IDs match the init-only reference exactly.
+Evidence: [run summary](h01-ready-40-ei-1ms-summary.json),
+[launch/completion](h01-ready-40-ei-1ms-launch.json), and
+[independent trace audit](h01-ready-40-ei-1ms-trace-audit.json).
+
+The trace audit verifies all 40 expected cells, 200 samples at 0.005 ms on the
+exact end-of-step time grid, finite values in all 125 arrays, Boolean event
+values, and zero spikes. It retains per-cell voltage extrema and the raw trace
+file hash. Because the run ends before the 2 ms pulse onset, zero spikes cannot
+qualify the assumed drive or demonstrate synaptic delivery.
+
+Remaining: all four matched controls at the final population size, and staged
+104-cell measurements sized from the observed memory and timing.
 The 1 ms smoke precedes the assumed pulse onset at 2 ms and cannot qualify
 spiking or delivery. Physiological and functional-inhibition gates remain open.

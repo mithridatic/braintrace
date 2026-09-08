@@ -1,4 +1,23 @@
-# H01 population: what a user gets today (2026-09-08 close)
+# H01 population readiness
+
+## Current continuation evidence (2026-09-08)
+
+All 104 largest soma-bearing components now import with every one of their
+2,804,445 directed source segments preserved
+([audit](h01-population-import-104.json)). The reader failure reported in the
+programme-close table below is repaired. A 40-cell network with 165,084
+compartments and two supported projections now builds, initializes and executes
+200 compiled steps (1 ms), with all recorded arrays finite
+([run summary](h01-ready-40-ei-1ms-summary.json),
+[trace audit](h01-ready-40-ei-1ms-trace-audit.json),
+[result](h01-ready-40-result.md)).
+
+Full-104 runtime, driven activity, final-population controls and physiological
+qualification remain open. The table below preserves the earlier programme's
+close snapshot; its failed-import and 12-cell runtime limits are superseded by
+the continuation evidence above. The physiological verdicts are unchanged.
+
+## Earlier programme-close snapshot
 
 One table, no pass claimed. Every row cites the decision JSON that carries its numbers; prose
 pages are linked second. Where a row states a count it is the JSON's count. Programme spec:

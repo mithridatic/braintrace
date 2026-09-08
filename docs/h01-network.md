@@ -1,5 +1,13 @@
 # H01 verified connection network
 
+Current continuation (2026-09-08): all 104 largest soma-bearing components
+import with source segments preserved, and a 40-cell network builds,
+initializes and runs 1 ms with finite traces. See the
+[current readiness evidence](evidence/h01-population-status.md) and
+[40-cell result](evidence/h01-ready-40-result.md). This supersedes the earlier
+reader failure and 12-cell runtime limit described below; full-104 execution,
+driven response and physiological qualification remain open.
+
 The offline topology contains all 104 source neuron IDs: 79 E (+1) and 25 I
 (-1). Three synapses have exact endpoint identity checks in the saved population
 audit. This is a partial connection map. The saved topology reflects the
