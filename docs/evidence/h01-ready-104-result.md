@@ -134,3 +134,25 @@ The r2 retry completed all104 initialization in 853.693 seconds after
 checkpoint and exact construction comparison are recorded in
 h01-ready-104-implicit-r2-init-decision.json. The worker is now in the combined
 compile/run stage; no runtime or physiology pass follows from initialization.
+
+## Population soma-component selection finding
+
+A source-only check of all 104 selected components found four cells whose
+largest soma-labelled source radius lies in another component. Evidence:
+h01-population-stimulus-source-inventory.json (construction hash and exact
+selected member source hashes checked). The contrasts are 7196644737: component
+0 radius 0.161818 um versus component 6 radius 3.980136 um; 4138580687: component
+0 radius 0.122152 um versus component 2 radius 6.788244 um; 4668874666: selected
+radius 0.759771 um versus component 1 radius 3.292435 um; 3470629528: selected
+radius 1.64 um versus component 1 radius 9.534612 um.
+
+The largest-node component policy does not ensure selection of the largest
+labelled soma. All cells receive a 1 nA point clamp at the selected component's
+soma location. These source radii are not CV areas or measured membrane current
+densities. The finding questions anatomical representativeness of four selected
+components, including the isolated calcium-failure cell; it does not undo the
+numerical diagnosis or prove that radius alone selects the correct cell body.
+The running r2 remains an unchanged numerical test of its recorded components.
+Before another population launch, resolve these four selections against source
+cell-body evidence and account for omitted branches. Do not join disconnected
+components or silently replace them in the existing run's reference.

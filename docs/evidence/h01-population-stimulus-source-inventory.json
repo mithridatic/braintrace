@@ -1,0 +1,975 @@
+{
+  "scope": "Source soma sample radii and fixed stimulus inventory; these are not reconstructed CV areas or current densities",
+  "construction_sha256": "65be385b8c5357ca4de3b2ef4286b464971bda17af452f6c92f428f555cc08ad",
+  "rows": [
+    {
+      "cell": "3955003482",
+      "input_na": 1.0,
+      "source_soma_sample_id": 62156,
+      "source_soma_radius_um": 7.299577148,
+      "source_soma_samples": 167
+    },
+    {
+      "cell": "4157825456",
+      "input_na": 1.0,
+      "source_soma_sample_id": 45433,
+      "source_soma_radius_um": 7.287802246,
+      "source_soma_samples": 101
+    },
+    {
+      "cell": "4188575291",
+      "input_na": 1.0,
+      "source_soma_sample_id": 50642,
+      "source_soma_radius_um": 5.42558252,
+      "source_soma_samples": 77
+    },
+    {
+      "cell": "5584343344",
+      "input_na": 1.0,
+      "source_soma_sample_id": 38228,
+      "source_soma_radius_um": 4.643461426,
+      "source_soma_samples": 46
+    },
+    {
+      "cell": "2530864375",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1294,
+      "source_soma_radius_um": 2.597244873,
+      "source_soma_samples": 22
+    },
+    {
+      "cell": "3178243558",
+      "input_na": 1.0,
+      "source_soma_sample_id": 2412,
+      "source_soma_radius_um": 4.137423340000001,
+      "source_soma_samples": 55
+    },
+    {
+      "cell": "3751392341",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1589,
+      "source_soma_radius_um": 4.439157227,
+      "source_soma_samples": 17
+    },
+    {
+      "cell": "2451406889",
+      "input_na": 1.0,
+      "source_soma_sample_id": 100,
+      "source_soma_radius_um": 2.31,
+      "source_soma_samples": 57
+    },
+    {
+      "cell": "678539249",
+      "input_na": 1.0,
+      "source_soma_sample_id": 771,
+      "source_soma_radius_um": 3.996203369,
+      "source_soma_samples": 24
+    },
+    {
+      "cell": "4420044370",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1943,
+      "source_soma_radius_um": 3.7870705570000003,
+      "source_soma_samples": 18
+    },
+    {
+      "cell": "4260528559",
+      "input_na": 1.0,
+      "source_soma_sample_id": 2962,
+      "source_soma_radius_um": 3.71643335,
+      "source_soma_samples": 19
+    },
+    {
+      "cell": "2820958695",
+      "input_na": 1.0,
+      "source_soma_sample_id": 2938,
+      "source_soma_radius_um": 3.652664307,
+      "source_soma_samples": 35
+    },
+    {
+      "cell": "5965472721",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4808,
+      "source_soma_radius_um": 3.3258479000000003,
+      "source_soma_samples": 16
+    },
+    {
+      "cell": "6126390733",
+      "input_na": 1.0,
+      "source_soma_sample_id": 3450,
+      "source_soma_radius_um": 3.4329929200000002,
+      "source_soma_samples": 18
+    },
+    {
+      "cell": "7196644737",
+      "input_na": 1.0,
+      "source_soma_sample_id": 145,
+      "source_soma_radius_um": 0.161817795,
+      "source_soma_samples": 4
+    },
+    {
+      "cell": "3680152874",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4184,
+      "source_soma_radius_um": 3.381701416,
+      "source_soma_samples": 37
+    },
+    {
+      "cell": "3761379470",
+      "input_na": 1.0,
+      "source_soma_sample_id": 270,
+      "source_soma_radius_um": 3.614605957,
+      "source_soma_samples": 37
+    },
+    {
+      "cell": "4711641825",
+      "input_na": 1.0,
+      "source_soma_sample_id": 335,
+      "source_soma_radius_um": 3.582849365,
+      "source_soma_samples": 26
+    },
+    {
+      "cell": "2325998949",
+      "input_na": 1.0,
+      "source_soma_sample_id": 2152,
+      "source_soma_radius_um": 3.0014455570000003,
+      "source_soma_samples": 59
+    },
+    {
+      "cell": "4467761196",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1546,
+      "source_soma_radius_um": 3.592311768,
+      "source_soma_samples": 34
+    },
+    {
+      "cell": "4853956860",
+      "input_na": 1.0,
+      "source_soma_sample_id": 3301,
+      "source_soma_radius_um": 4.708120605,
+      "source_soma_samples": 33
+    },
+    {
+      "cell": "4125702786",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4585,
+      "source_soma_radius_um": 4.245193359,
+      "source_soma_samples": 40
+    },
+    {
+      "cell": "4932057570",
+      "input_na": 1.0,
+      "source_soma_sample_id": 2937,
+      "source_soma_radius_um": 2.9584104000000004,
+      "source_soma_samples": 29
+    },
+    {
+      "cell": "4830551047",
+      "input_na": 1.0,
+      "source_soma_sample_id": 3587,
+      "source_soma_radius_um": 3.104943848,
+      "source_soma_samples": 31
+    },
+    {
+      "cell": "1787105373",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4188,
+      "source_soma_radius_um": 3.7917854,
+      "source_soma_samples": 38
+    },
+    {
+      "cell": "5173982155",
+      "input_na": 1.0,
+      "source_soma_sample_id": 3956,
+      "source_soma_radius_um": 3.99464502,
+      "source_soma_samples": 74
+    },
+    {
+      "cell": "5060444657",
+      "input_na": 1.0,
+      "source_soma_sample_id": 8644,
+      "source_soma_radius_um": 2.630182617,
+      "source_soma_samples": 131
+    },
+    {
+      "cell": "5013648003",
+      "input_na": 1.0,
+      "source_soma_sample_id": 6082,
+      "source_soma_radius_um": 5.795055176,
+      "source_soma_samples": 41
+    },
+    {
+      "cell": "2001418787",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1294,
+      "source_soma_radius_um": 4.696553711,
+      "source_soma_samples": 69
+    },
+    {
+      "cell": "5805562981",
+      "input_na": 1.0,
+      "source_soma_sample_id": 3546,
+      "source_soma_radius_um": 3.516327637,
+      "source_soma_samples": 42
+    },
+    {
+      "cell": "3571083397",
+      "input_na": 1.0,
+      "source_soma_sample_id": 180,
+      "source_soma_radius_um": 5.3425273440000005,
+      "source_soma_samples": 62
+    },
+    {
+      "cell": "7893125555",
+      "input_na": 1.0,
+      "source_soma_sample_id": 735,
+      "source_soma_radius_um": 4.325470703,
+      "source_soma_samples": 84
+    },
+    {
+      "cell": "546925828",
+      "input_na": 1.0,
+      "source_soma_sample_id": 6609,
+      "source_soma_radius_um": 4.01154834,
+      "source_soma_samples": 19
+    },
+    {
+      "cell": "4668874666",
+      "input_na": 1.0,
+      "source_soma_sample_id": 3216,
+      "source_soma_radius_um": 0.759770996,
+      "source_soma_samples": 8
+    },
+    {
+      "cell": "955432427",
+      "input_na": 1.0,
+      "source_soma_sample_id": 10979,
+      "source_soma_radius_um": 4.241055664,
+      "source_soma_samples": 19
+    },
+    {
+      "cell": "4010150634",
+      "input_na": 1.0,
+      "source_soma_sample_id": 11373,
+      "source_soma_radius_um": 3.8012004390000005,
+      "source_soma_samples": 51
+    },
+    {
+      "cell": "4197933517",
+      "input_na": 1.0,
+      "source_soma_sample_id": 6506,
+      "source_soma_radius_um": 4.274403809000001,
+      "source_soma_samples": 74
+    },
+    {
+      "cell": "2104047922",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4875,
+      "source_soma_radius_um": 4.929595703,
+      "source_soma_samples": 44
+    },
+    {
+      "cell": "4476359994",
+      "input_na": 1.0,
+      "source_soma_sample_id": 420,
+      "source_soma_radius_um": 4.410928223,
+      "source_soma_samples": 32
+    },
+    {
+      "cell": "4138580687",
+      "input_na": 1.0,
+      "source_soma_sample_id": 12466,
+      "source_soma_radius_um": 0.122151543,
+      "source_soma_samples": 2
+    },
+    {
+      "cell": "2888180252",
+      "input_na": 1.0,
+      "source_soma_sample_id": 7989,
+      "source_soma_radius_um": 3.9526010740000004,
+      "source_soma_samples": 32
+    },
+    {
+      "cell": "810151953",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1345,
+      "source_soma_radius_um": 4.165065918000001,
+      "source_soma_samples": 31
+    },
+    {
+      "cell": "4607885827",
+      "input_na": 1.0,
+      "source_soma_sample_id": 14592,
+      "source_soma_radius_um": 4.940788574,
+      "source_soma_samples": 46
+    },
+    {
+      "cell": "5061320552",
+      "input_na": 1.0,
+      "source_soma_sample_id": 14640,
+      "source_soma_radius_um": 4.874738281,
+      "source_soma_samples": 81
+    },
+    {
+      "cell": "1830470325",
+      "input_na": 1.0,
+      "source_soma_sample_id": 10066,
+      "source_soma_radius_um": 4.191299315999999,
+      "source_soma_samples": 20
+    },
+    {
+      "cell": "3139317430",
+      "input_na": 1.0,
+      "source_soma_sample_id": 11754,
+      "source_soma_radius_um": 4.896516113,
+      "source_soma_samples": 59
+    },
+    {
+      "cell": "6833911543",
+      "input_na": 1.0,
+      "source_soma_sample_id": 13172,
+      "source_soma_radius_um": 4.909890625,
+      "source_soma_samples": 71
+    },
+    {
+      "cell": "3383650350",
+      "input_na": 1.0,
+      "source_soma_sample_id": 655,
+      "source_soma_radius_um": 4.95288916,
+      "source_soma_samples": 25
+    },
+    {
+      "cell": "5439194879",
+      "input_na": 1.0,
+      "source_soma_sample_id": 6632,
+      "source_soma_radius_um": 3.992664307,
+      "source_soma_samples": 43
+    },
+    {
+      "cell": "1072605926",
+      "input_na": 1.0,
+      "source_soma_sample_id": 2717,
+      "source_soma_radius_um": 3.527217773,
+      "source_soma_samples": 38
+    },
+    {
+      "cell": "4554213569",
+      "input_na": 1.0,
+      "source_soma_sample_id": 7713,
+      "source_soma_radius_um": 2.9576315920000003,
+      "source_soma_samples": 16
+    },
+    {
+      "cell": "2047644309",
+      "input_na": 1.0,
+      "source_soma_sample_id": 9636,
+      "source_soma_radius_um": 4.8526157229999995,
+      "source_soma_samples": 48
+    },
+    {
+      "cell": "547114083",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1910,
+      "source_soma_radius_um": 4.615821289,
+      "source_soma_samples": 25
+    },
+    {
+      "cell": "2306214824",
+      "input_na": 1.0,
+      "source_soma_sample_id": 18218,
+      "source_soma_radius_um": 4.330197266,
+      "source_soma_samples": 43
+    },
+    {
+      "cell": "3432315514",
+      "input_na": 1.0,
+      "source_soma_sample_id": 18034,
+      "source_soma_radius_um": 3.2097626949999998,
+      "source_soma_samples": 22
+    },
+    {
+      "cell": "5536146025",
+      "input_na": 1.0,
+      "source_soma_sample_id": 8645,
+      "source_soma_radius_um": 4.563388672,
+      "source_soma_samples": 59
+    },
+    {
+      "cell": "3954491075",
+      "input_na": 1.0,
+      "source_soma_sample_id": 16934,
+      "source_soma_radius_um": 4.476048828,
+      "source_soma_samples": 42
+    },
+    {
+      "cell": "4365276903",
+      "input_na": 1.0,
+      "source_soma_sample_id": 2800,
+      "source_soma_radius_um": 3.6111828609999996,
+      "source_soma_samples": 23
+    },
+    {
+      "cell": "883843993",
+      "input_na": 1.0,
+      "source_soma_sample_id": 423,
+      "source_soma_radius_um": 4.255388184,
+      "source_soma_samples": 34
+    },
+    {
+      "cell": "2903686765",
+      "input_na": 1.0,
+      "source_soma_sample_id": 22999,
+      "source_soma_radius_um": 3.606935547,
+      "source_soma_samples": 56
+    },
+    {
+      "cell": "4437316933",
+      "input_na": 1.0,
+      "source_soma_sample_id": 10070,
+      "source_soma_radius_um": 3.356419434,
+      "source_soma_samples": 43
+    },
+    {
+      "cell": "2889815798",
+      "input_na": 1.0,
+      "source_soma_sample_id": 7833,
+      "source_soma_radius_um": 5.943599121,
+      "source_soma_samples": 38
+    },
+    {
+      "cell": "3836078296",
+      "input_na": 1.0,
+      "source_soma_sample_id": 1195,
+      "source_soma_radius_um": 5.023429688,
+      "source_soma_samples": 34
+    },
+    {
+      "cell": "3093748739",
+      "input_na": 1.0,
+      "source_soma_sample_id": 24737,
+      "source_soma_radius_um": 5.831290039000001,
+      "source_soma_samples": 45
+    },
+    {
+      "cell": "5355296383",
+      "input_na": 1.0,
+      "source_soma_sample_id": 25200,
+      "source_soma_radius_um": 3.177269775,
+      "source_soma_samples": 45
+    },
+    {
+      "cell": "2074305737",
+      "input_na": 1.0,
+      "source_soma_sample_id": 26541,
+      "source_soma_radius_um": 4.604072754,
+      "source_soma_samples": 32
+    },
+    {
+      "cell": "4522237537",
+      "input_na": 1.0,
+      "source_soma_sample_id": 7486,
+      "source_soma_radius_um": 5.027249023,
+      "source_soma_samples": 49
+    },
+    {
+      "cell": "3111823553",
+      "input_na": 1.0,
+      "source_soma_sample_id": 11176,
+      "source_soma_radius_um": 3.966459473,
+      "source_soma_samples": 63
+    },
+    {
+      "cell": "1669770671",
+      "input_na": 1.0,
+      "source_soma_sample_id": 14711,
+      "source_soma_radius_um": 4.43001416,
+      "source_soma_samples": 40
+    },
+    {
+      "cell": "1465400601",
+      "input_na": 1.0,
+      "source_soma_sample_id": 13705,
+      "source_soma_radius_um": 4.1500854490000005,
+      "source_soma_samples": 40
+    },
+    {
+      "cell": "1900905433",
+      "input_na": 1.0,
+      "source_soma_sample_id": 16870,
+      "source_soma_radius_um": 4.134849121,
+      "source_soma_samples": 45
+    },
+    {
+      "cell": "5215113731",
+      "input_na": 1.0,
+      "source_soma_sample_id": 6724,
+      "source_soma_radius_um": 4.0037553710000005,
+      "source_soma_samples": 103
+    },
+    {
+      "cell": "5687162964",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4083,
+      "source_soma_radius_um": 3.758143311,
+      "source_soma_samples": 43
+    },
+    {
+      "cell": "5319188363",
+      "input_na": 1.0,
+      "source_soma_sample_id": 31287,
+      "source_soma_radius_um": 3.849279541,
+      "source_soma_samples": 51
+    },
+    {
+      "cell": "3519995546",
+      "input_na": 1.0,
+      "source_soma_sample_id": 31699,
+      "source_soma_radius_um": 4.475630371,
+      "source_soma_samples": 42
+    },
+    {
+      "cell": "3470629528",
+      "input_na": 1.0,
+      "source_soma_sample_id": 31642,
+      "source_soma_radius_um": 1.6400000000000001,
+      "source_soma_samples": 38
+    },
+    {
+      "cell": "7052969349",
+      "input_na": 1.0,
+      "source_soma_sample_id": 18230,
+      "source_soma_radius_um": 5.110394043,
+      "source_soma_samples": 58
+    },
+    {
+      "cell": "3812058320",
+      "input_na": 1.0,
+      "source_soma_sample_id": 22316,
+      "source_soma_radius_um": 5.253958496,
+      "source_soma_samples": 30
+    },
+    {
+      "cell": "751294744",
+      "input_na": 1.0,
+      "source_soma_sample_id": 31896,
+      "source_soma_radius_um": 6.319509277,
+      "source_soma_samples": 106
+    },
+    {
+      "cell": "5175880292",
+      "input_na": 1.0,
+      "source_soma_sample_id": 35100,
+      "source_soma_radius_um": 5.181700684000001,
+      "source_soma_samples": 67
+    },
+    {
+      "cell": "2252715458",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4348,
+      "source_soma_radius_um": 4.766280762,
+      "source_soma_samples": 34
+    },
+    {
+      "cell": "4535129012",
+      "input_na": 1.0,
+      "source_soma_sample_id": 36121,
+      "source_soma_radius_um": 4.922913085999999,
+      "source_soma_samples": 34
+    },
+    {
+      "cell": "1684504313",
+      "input_na": 1.0,
+      "source_soma_sample_id": 35811,
+      "source_soma_radius_um": 5.519621094000001,
+      "source_soma_samples": 46
+    },
+    {
+      "cell": "2848552900",
+      "input_na": 1.0,
+      "source_soma_sample_id": 37265,
+      "source_soma_radius_um": 5.586995605,
+      "source_soma_samples": 42
+    },
+    {
+      "cell": "4039221194",
+      "input_na": 1.0,
+      "source_soma_sample_id": 37490,
+      "source_soma_radius_um": 10.474887695,
+      "source_soma_samples": 163
+    },
+    {
+      "cell": "2103991145",
+      "input_na": 1.0,
+      "source_soma_sample_id": 15484,
+      "source_soma_radius_um": 5.075122070000001,
+      "source_soma_samples": 83
+    },
+    {
+      "cell": "2195261734",
+      "input_na": 1.0,
+      "source_soma_sample_id": 9726,
+      "source_soma_radius_um": 4.687105957,
+      "source_soma_samples": 51
+    },
+    {
+      "cell": "1304599410",
+      "input_na": 1.0,
+      "source_soma_sample_id": 27163,
+      "source_soma_radius_um": 5.113825195,
+      "source_soma_samples": 65
+    },
+    {
+      "cell": "810970127",
+      "input_na": 1.0,
+      "source_soma_sample_id": 11930,
+      "source_soma_radius_um": 5.98981543,
+      "source_soma_samples": 89
+    },
+    {
+      "cell": "4641147055",
+      "input_na": 1.0,
+      "source_soma_sample_id": 39404,
+      "source_soma_radius_um": 4.03951001,
+      "source_soma_samples": 89
+    },
+    {
+      "cell": "5654281423",
+      "input_na": 1.0,
+      "source_soma_sample_id": 52072,
+      "source_soma_radius_um": 4.591016602,
+      "source_soma_samples": 149
+    },
+    {
+      "cell": "5136107765",
+      "input_na": 1.0,
+      "source_soma_sample_id": 56295,
+      "source_soma_radius_um": 3.9729082030000002,
+      "source_soma_samples": 47
+    },
+    {
+      "cell": "3329117097",
+      "input_na": 1.0,
+      "source_soma_sample_id": 56666,
+      "source_soma_radius_um": 6.146340820000001,
+      "source_soma_samples": 87
+    },
+    {
+      "cell": "4873639924",
+      "input_na": 1.0,
+      "source_soma_sample_id": 58174,
+      "source_soma_radius_um": 4.283210449,
+      "source_soma_samples": 165
+    },
+    {
+      "cell": "5015035926",
+      "input_na": 1.0,
+      "source_soma_sample_id": 58196,
+      "source_soma_radius_um": 4.493693359,
+      "source_soma_samples": 171
+    },
+    {
+      "cell": "620880207",
+      "input_na": 1.0,
+      "source_soma_sample_id": 63142,
+      "source_soma_radius_um": 5.559719238,
+      "source_soma_samples": 90
+    },
+    {
+      "cell": "5216806368",
+      "input_na": 1.0,
+      "source_soma_sample_id": 64147,
+      "source_soma_radius_um": 5.476396484,
+      "source_soma_samples": 227
+    },
+    {
+      "cell": "4711567524",
+      "input_na": 1.0,
+      "source_soma_sample_id": 6241,
+      "source_soma_radius_um": 5.171377929999999,
+      "source_soma_samples": 155
+    },
+    {
+      "cell": "5352961465",
+      "input_na": 1.0,
+      "source_soma_sample_id": 59432,
+      "source_soma_radius_um": 5.243288086,
+      "source_soma_samples": 102
+    },
+    {
+      "cell": "4582188328",
+      "input_na": 1.0,
+      "source_soma_sample_id": 9282,
+      "source_soma_radius_um": 6.43698877,
+      "source_soma_samples": 73
+    },
+    {
+      "cell": "5832764277",
+      "input_na": 1.0,
+      "source_soma_sample_id": 4735,
+      "source_soma_radius_um": 5.317334473,
+      "source_soma_samples": 259
+    },
+    {
+      "cell": "3503540481",
+      "input_na": 1.0,
+      "source_soma_sample_id": 78213,
+      "source_soma_radius_um": 5.308925293000001,
+      "source_soma_samples": 117
+    },
+    {
+      "cell": "1874244336",
+      "input_na": 1.0,
+      "source_soma_sample_id": 760,
+      "source_soma_radius_um": 5.689279785,
+      "source_soma_samples": 49
+    },
+    {
+      "cell": "1930502394",
+      "input_na": 1.0,
+      "source_soma_sample_id": 86255,
+      "source_soma_radius_um": 5.214196289,
+      "source_soma_samples": 109
+    }
+  ],
+  "elapsed_seconds": 3.665680899983272,
+  "small_soma_component_checks": [
+    {
+      "cell": "4138580687",
+      "components": [
+        {
+          "member": "4138580687.0.swc",
+          "soma_samples": 2,
+          "largest_soma_radius_um": 0.122151543
+        },
+        {
+          "member": "4138580687.1.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "4138580687.2.swc",
+          "soma_samples": 40,
+          "largest_soma_radius_um": 6.788244141
+        },
+        {
+          "member": "4138580687.3.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "4138580687.4.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        }
+      ]
+    },
+    {
+      "cell": "7196644737",
+      "components": [
+        {
+          "member": "7196644737.0.swc",
+          "soma_samples": 4,
+          "largest_soma_radius_um": 0.161817795
+        },
+        {
+          "member": "7196644737.1.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.10.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.11.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.12.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.13.swc",
+          "soma_samples": 2,
+          "largest_soma_radius_um": 3.119585205
+        },
+        {
+          "member": "7196644737.14.swc",
+          "soma_samples": 3,
+          "largest_soma_radius_um": 2.904
+        },
+        {
+          "member": "7196644737.15.swc",
+          "soma_samples": 1,
+          "largest_soma_radius_um": 3.1476340329999997
+        },
+        {
+          "member": "7196644737.16.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.17.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.18.swc",
+          "soma_samples": 5,
+          "largest_soma_radius_um": 0.31773101800000003
+        },
+        {
+          "member": "7196644737.19.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.2.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.20.swc",
+          "soma_samples": 1,
+          "largest_soma_radius_um": 0.056008926
+        },
+        {
+          "member": "7196644737.21.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.22.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.23.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.24.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.25.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.26.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.27.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.28.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.29.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.3.swc",
+          "soma_samples": 2,
+          "largest_soma_radius_um": 0.078797211
+        },
+        {
+          "member": "7196644737.30.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.31.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.4.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.5.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.6.swc",
+          "soma_samples": 70,
+          "largest_soma_radius_um": 3.980135742
+        },
+        {
+          "member": "7196644737.7.swc",
+          "soma_samples": 14,
+          "largest_soma_radius_um": 0.722656921
+        },
+        {
+          "member": "7196644737.8.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        },
+        {
+          "member": "7196644737.9.swc",
+          "soma_samples": 0,
+          "largest_soma_radius_um": null
+        }
+      ]
+    }
+  ],
+  "all_cell_larger_soma_components": [
+    {
+      "cell": "7196644737",
+      "selected_radius_um": 0.161817795,
+      "larger_soma_component": {
+        "member": "7196644737.6.swc",
+        "soma_samples": 70,
+        "largest_soma_radius_um": 3.980135742
+      },
+      "ratio": 24.596403269492086
+    },
+    {
+      "cell": "4668874666",
+      "selected_radius_um": 0.759770996,
+      "larger_soma_component": {
+        "member": "4668874666.1.swc",
+        "soma_samples": 124,
+        "largest_soma_radius_um": 3.2924350589999998
+      },
+      "ratio": 4.333457155292619
+    },
+    {
+      "cell": "4138580687",
+      "selected_radius_um": 0.122151543,
+      "larger_soma_component": {
+        "member": "4138580687.2.swc",
+        "soma_samples": 40,
+        "largest_soma_radius_um": 6.788244141
+      },
+      "ratio": 55.57231594692177
+    },
+    {
+      "cell": "3470629528",
+      "selected_radius_um": 1.6400000000000001,
+      "larger_soma_component": {
+        "member": "3470629528.1.swc",
+        "soma_samples": 101,
+        "largest_soma_radius_um": 9.534612305000001
+      },
+      "ratio": 5.813787990853659
+    }
+  ],
+  "cells_with_larger_soma_elsewhere": 4
+}

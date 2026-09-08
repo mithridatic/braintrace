@@ -2165,3 +2165,12 @@ h01-cached-full-base-join.json. The old retention filter did not hide any
 exact-base-supported internal pair within these files. This does not resolve
 release mapping or the unscanned 157 shards, and does not invalidate separately
 verified contacts from the annotation source. No model change follows.
+
+The all104 source soma inventory reveals four component-selection exceptions:
+7196644737, 4138580687, 4668874666 and 3470629528 have larger labelled soma
+samples in components other than those selected by largest node count. See
+h01-population-stimulus-source-inventory.json and h01-ready-104-result.md.
+This challenges the anatomical representativeness of those selected components;
+a finite run of them cannot settle that issue. It does not establish a new
+causal account of the numerical failure or authorize artificial reconnection.
+Source cell-body evidence must resolve component choice before another launch.
