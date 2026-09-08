@@ -177,3 +177,29 @@ nothing during the simulation, so the only kill is at the abort. Result label: "
 machine quiet except the C3 rescan". The drive rule is unchanged: >= 1 E spike at 0.6 nA
 keeps the drive; none: report, the single permitted change to 0.8 nA stays the coordinator's
 decision. No 300 ms arm is launched from this task.
+
+## Addendum 2026-09-07: stage-1 arm aborts and drive contingency (registered before any 300 ms run)
+
+Approval received for the four 300 ms arms, run serially after SP3 Stage G, one simulation at
+a time. Registered before launch:
+
+- **Aborts.** 1800 s for each 300 ms arm at dt 0.005 (`disconnected`, `measured`, `soma`) and
+  3000 s for the dt-halving partner (`measured-halved`). Derivation: the benchmark measured
+  3.47 s per simulated ms with construction included (347 s per 100 ms), which scales linearly
+  to about 1041 s per 300 ms arm and about 2082 s for the halved arm; the construction share
+  is unmeasured (between 12 s and 133 s on the benchmark log), so the aborts carry a margin of
+  about 1.7x and 1.45x over the linear estimate. The wrapper prints nothing during the
+  simulation, so the abort is the only kill; a killed arm is untested and does not spend the cap.
+- **Wait condition.** Launch only once `h01-e-split/docs/evidence/h01-e-gain/stage-g-decision.json`
+  exists, `docker ps` shows only `synapse`, and no python process uses more than 300 MB;
+  polled every 5 to 10 minutes. Load is sampled and labelled at each launch.
+- **Predictions.** Unchanged from the registration table above.
+- **Drive contingency (stop rule made concrete).** If the disconnected 300 ms control fires
+  fewer than 3 E spikes at 0.6 nA, the single permitted drive change to 0.8 nA is applied to
+  the control only, recorded (run 3 of 6), and the task **stops after that control**: the
+  remaining arms at 0.8 nA need a further approval and are not run in this task. If the control
+  fires >= 3 E spikes, `schedule`, `measured`, `soma`, `measured-halved` and `score` follow in
+  that order at 0.6 nA.
+- **Cap accounting.** `prior_evaluations` is 1 (benchmark). Planned: disconnected (2 of 6),
+  measured (3), soma (4), measured-halved (1 of 2 halving). A drive change makes the 0.8 nA
+  control run 3 of 6 and stops the task.
