@@ -1,7 +1,8 @@
 # H01 all-104 readiness continuation
 
-**Construction PASS: all 104 cells, 808,495 compartments, two supported projections.**
-Initialization and full-population simulation remain unverified at this checkpoint.
+**Construction, initialization and 1 ms finite runtime PASS: all 104 cells,
+808,495 compartments, two supported projections.** Driven activity, controls,
+numerical refinement and physiological qualification remain open.
 
 The corrected full build completed in 1,034.034 seconds (1,045.012 seconds process
 wall time), exit 0. The independent construction gate verifies exact population
@@ -27,18 +28,27 @@ not a peak. The free-memory reserve checks continued independently. A regression
 using a 1 MiB sample followed by 5 GiB reproduced the failure, and explicit
 Int64 casts on both arguments and the initial value pass that regression.
 
-## Next execution stage
+## Full-population initialization and runtime
 
-The supervised 104-cell init/1 ms smoke job is live in
-`h01-ready-104-ei-1ms-launch.json`. The existing runner initializes each cell
-with timing and heartbeat, then executes 200 compiled steps at dt 0.005 ms.
-The [registered plan](h01-ready-104-ei-1ms-plan.json) projects 3,058 seconds total
-and 22,641 MiB peak memory from measured 40-cell costs and the full build time.
-Those are estimates. Limits: 3,600 seconds wall, 600 seconds silence, and 4 GiB
-free host memory. The peak counter now uses Int64.
+The [runtime gate](h01-ready-104-ei-1ms-decision.json) passes against the
+hash-verified construction reference. All 104 identities, cell settings,
+provenance, donors and compartments match. All 317 expected arrays are present
+and finite, including soma voltage, output voltage and events for every cell,
+and conductance/local voltage for both receptors. There are 200 end-of-step
+samples at dt 0.005 ms. No events occurred; both conductances are exactly zero.
+Soma voltages range from -84.036919 to -79.279315 mV across the window.
 
-This is a pre-stimulus smoke: the assumed 1 nA pulse starts at 2 ms. Completion
-will require auditing all 104 saved traces. Driven activity, four matched
-controls at 104 cells, numerical refinement and the outstanding physiological
-qualification remain open. The already verified 40-cell 1 ms runtime is a
-smaller baseline, not a substitute for those gates. The full goal is not complete.
+Measured costs: construction 1,126.407 seconds, initialization 836.600 seconds,
+compilation plus stepping 266.922 seconds. The process completed with exit 0
+in 2,271.368 seconds, within its 3,600-second cap. In-process peak resident
+memory was 13,930.617 MiB (13.60 GiB); the corrected Int64 supervisor recorded
+zero monitor errors. Its sampled tree peak is lower than the process-lifetime
+peak, as expected when samples miss a transient allocation. Evidence:
+[compact summary and trace audit](h01-ready-104-ei-1ms-summary.json),
+[terminal launch record](h01-ready-104-ei-1ms-launch.json). Raw build metadata
+and traces remain at their hash-linked `.cache/h01/readiness/` paths.
+
+This pre-stimulus smoke ends before the assumed 1 nA pulse at 2-5 ms. It does
+not test driven firing or synaptic delivery. Next are the driven 10 ms run,
+all four matched controls at 104 cells and the dt-halving comparison. The
+outstanding physiological gates remain separate. The full goal is not complete.

@@ -21,10 +21,16 @@ passes for all 104 cells: 808,495 compartments and two supported projections
 ([construction gate](h01-ready-104-build-r2-decision.json),
 [current all-104 result](h01-ready-104-result.md)).
 
-Full-104 runtime, driven activity, final-population controls and physiological
-qualification remain open. The table below preserves the earlier programme's
+The full 104-cell network now initializes and executes 200 compiled steps at
+dt 0.005 ms; all 317 expected arrays are finite and exact model/provenance
+matching passes ([runtime gate](h01-ready-104-ei-1ms-decision.json),
+[summary](h01-ready-104-ei-1ms-summary.json)). This is a pre-stimulus 1 ms
+window with no events. Driven activity, final-population controls, numerical
+refinement and physiological qualification remain open. The table below preserves the earlier programme's
 close snapshot; its failed-import and 12-cell runtime limits are superseded by
 the continuation evidence above. The physiological verdicts are unchanged.
+The [E source-audit amendment](h01-e-gain-source-audit.md) also supersedes
+the earlier claims of absent M current and necessity outside the passive family.
 
 ## Earlier programme-close snapshot
 

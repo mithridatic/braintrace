@@ -2,12 +2,13 @@
 
 Current continuation (2026-09-08): all 104 largest soma-bearing components
 import with source segments preserved; all 104 electrical cells now construct
-with 808,495 compartments and two projections. A 40-cell network also initializes
-and runs 1 ms with finite traces. See the
+with 808,495 compartments and two projections. All 104 cells initialize and
+run 1 ms (200 compiled steps) with all 317 expected trace arrays finite. See the
 [current readiness evidence](evidence/h01-population-status.md) and
 [104-cell result](evidence/h01-ready-104-result.md). This supersedes the earlier
-reader failure and 12-cell runtime limit described below; full-104 execution,
-driven response and physiological qualification remain open.
+reader failure and 12-cell runtime limit described below. The window ends before
+stimulation; driven response, matched controls, numerical refinement and
+physiological qualification remain open.
 
 The offline topology contains all 104 source neuron IDs: 79 E (+1) and 25 I
 (-1). Three synapses have exact endpoint identity checks in the saved population

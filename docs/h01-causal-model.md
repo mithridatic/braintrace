@@ -2003,8 +2003,14 @@ provenance and all expected identities. Construction took 1,034.034 seconds.
 This closes the full-population construction boundary in Y5. Its supervisor's
 peak-memory field is invalid due to an Int32 accumulator overflow; that metric
 is excluded rather than promoted. See the [result](evidence/h01-ready-104-result.md).
-Full-population initialization/stepping, controls and physiological qualification
-remain open.
+The subsequent [full-population runtime gate](evidence/h01-ready-104-ei-1ms-decision.json)
+passes for the same 104 identities and model metadata: 200 compiled steps,
+317 finite expected arrays, dt 0.005 ms. Initialization took 836.600 seconds,
+compilation/stepping 266.922 seconds, peak process memory 13,930.617 MiB.
+This closes initialization and finite pre-stimulus execution in Y5. Zero
+events and zero receptor conductances in the 1 ms window do not test the
+2-5 ms drive or delivery. Driven response, controls, numerical refinement and
+physiological qualification remain open.
 
 ### Y4 source-audit correction, 2026-09-08
 

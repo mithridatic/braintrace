@@ -1,0 +1,764 @@
+{
+  "status": "passed",
+  "scope": "finite runtime window only",
+  "cells": 104,
+  "dt_ms": 0.005,
+  "duration_ms": 1.0,
+  "steps": 200,
+  "control": "ei",
+  "failures": [],
+  "observations": [
+    {
+      "cell_id": "3955003482",
+      "voltage_min_mv": -80.83243974674149,
+      "voltage_max_mv": -80.81858586516526,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4157825456",
+      "voltage_min_mv": -84.01780343700803,
+      "voltage_max_mv": -83.98038723777094,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4188575291",
+      "voltage_min_mv": -84.0011027828756,
+      "voltage_max_mv": -83.98050843634518,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5584343344",
+      "voltage_min_mv": -80.93859062696833,
+      "voltage_max_mv": -80.00497177989104,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2530864375",
+      "voltage_min_mv": -80.93600895940044,
+      "voltage_max_mv": -80.00498127439594,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3178243558",
+      "voltage_min_mv": -84.02983577807473,
+      "voltage_max_mv": -83.98042155499789,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3751392341",
+      "voltage_min_mv": -80.9379767972759,
+      "voltage_max_mv": -80.004972425343,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2451406889",
+      "voltage_min_mv": -80.94015934636806,
+      "voltage_max_mv": -80.00497073775533,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "678539249",
+      "voltage_min_mv": -80.94116328700314,
+      "voltage_max_mv": -80.00498099190018,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4420044370",
+      "voltage_min_mv": -81.48915542108043,
+      "voltage_max_mv": -79.32385968699873,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4260528559",
+      "voltage_min_mv": -81.48916343052136,
+      "voltage_max_mv": -79.30776129285954,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2820958695",
+      "voltage_min_mv": -80.93575906017456,
+      "voltage_max_mv": -80.00496658617958,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5965472721",
+      "voltage_min_mv": -81.48872529537101,
+      "voltage_max_mv": -79.27931475208285,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "6126390733",
+      "voltage_min_mv": -80.94136310174675,
+      "voltage_max_mv": -80.0049706573512,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "7196644737",
+      "voltage_min_mv": -83.98832750307938,
+      "voltage_max_mv": -83.98060684766287,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3680152874",
+      "voltage_min_mv": -80.93657902647261,
+      "voltage_max_mv": -80.00497933343424,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3761379470",
+      "voltage_min_mv": -80.83565236297035,
+      "voltage_max_mv": -80.81857722772394,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4711641825",
+      "voltage_min_mv": -81.48903562493989,
+      "voltage_max_mv": -79.31340729846559,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2325998949",
+      "voltage_min_mv": -80.93590755213856,
+      "voltage_max_mv": -80.00496847855177,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4467761196",
+      "voltage_min_mv": -80.94385268621464,
+      "voltage_max_mv": -80.00497366251558,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4853956860",
+      "voltage_min_mv": -80.936311732513,
+      "voltage_max_mv": -80.00495232039005,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4125702786",
+      "voltage_min_mv": -80.9378713539565,
+      "voltage_max_mv": -80.00496390231852,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4932057570",
+      "voltage_min_mv": -83.97998838391305,
+      "voltage_max_mv": -83.95970225831744,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4830551047",
+      "voltage_min_mv": -80.9430047539274,
+      "voltage_max_mv": -80.00500424562355,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1787105373",
+      "voltage_min_mv": -80.93543608508735,
+      "voltage_max_mv": -80.00497189899134,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5173982155",
+      "voltage_min_mv": -84.01825413778423,
+      "voltage_max_mv": -83.98016088999007,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5060444657",
+      "voltage_min_mv": -80.9421968875698,
+      "voltage_max_mv": -80.00497764896869,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5013648003",
+      "voltage_min_mv": -83.98974310742007,
+      "voltage_max_mv": -83.98023482441133,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2001418787",
+      "voltage_min_mv": -80.83674579191995,
+      "voltage_max_mv": -80.81861724461213,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5805562981",
+      "voltage_min_mv": -80.9430232226228,
+      "voltage_max_mv": -80.00497728020581,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3571083397",
+      "voltage_min_mv": -84.00106674036405,
+      "voltage_max_mv": -83.98022045831407,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "7893125555",
+      "voltage_min_mv": -83.9997731708482,
+      "voltage_max_mv": -83.98032197268302,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "546925828",
+      "voltage_min_mv": -83.98258741479916,
+      "voltage_max_mv": -83.97256184413409,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4668874666",
+      "voltage_min_mv": -80.81914142053549,
+      "voltage_max_mv": -80.8184259622607,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "955432427",
+      "voltage_min_mv": -83.98460333921552,
+      "voltage_max_mv": -83.97749781396996,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4010150634",
+      "voltage_min_mv": -80.83566730115189,
+      "voltage_max_mv": -80.81858948182752,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4197933517",
+      "voltage_min_mv": -84.013808246402,
+      "voltage_max_mv": -83.98039547292511,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2104047922",
+      "voltage_min_mv": -81.4898305837207,
+      "voltage_max_mv": -79.42332510654171,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4476359994",
+      "voltage_min_mv": -80.94450678974275,
+      "voltage_max_mv": -80.00497506314471,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4138580687",
+      "voltage_min_mv": -83.97975121160368,
+      "voltage_max_mv": -83.92429580761308,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2888180252",
+      "voltage_min_mv": -80.82954760846117,
+      "voltage_max_mv": -80.81855334217727,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "810151953",
+      "voltage_min_mv": -83.99920900541211,
+      "voltage_max_mv": -83.98042393477328,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4607885827",
+      "voltage_min_mv": -84.03691901379781,
+      "voltage_max_mv": -83.98068204505286,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5061320552",
+      "voltage_min_mv": -81.48904270602439,
+      "voltage_max_mv": -79.31548495011151,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1830470325",
+      "voltage_min_mv": -83.99544519728666,
+      "voltage_max_mv": -83.98045158910686,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3139317430",
+      "voltage_min_mv": -80.83468226278998,
+      "voltage_max_mv": -80.81858995044023,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "6833911543",
+      "voltage_min_mv": -84.00326415139588,
+      "voltage_max_mv": -83.98053352569163,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3383650350",
+      "voltage_min_mv": -80.82889190177697,
+      "voltage_max_mv": -80.81855196324098,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5439194879",
+      "voltage_min_mv": -80.83534926251109,
+      "voltage_max_mv": -80.81860119142605,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1072605926",
+      "voltage_min_mv": -83.98489549919468,
+      "voltage_max_mv": -83.97744260181648,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4554213569",
+      "voltage_min_mv": -83.97988404458391,
+      "voltage_max_mv": -83.93823457405091,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2047644309",
+      "voltage_min_mv": -83.98266062924444,
+      "voltage_max_mv": -83.97264258619116,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "547114083",
+      "voltage_min_mv": -83.98154700841958,
+      "voltage_max_mv": -83.95986003812008,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2306214824",
+      "voltage_min_mv": -80.83088871748008,
+      "voltage_max_mv": -80.81857236630837,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3432315514",
+      "voltage_min_mv": -83.99264001723539,
+      "voltage_max_mv": -83.9806718022014,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5536146025",
+      "voltage_min_mv": -84.01974436980768,
+      "voltage_max_mv": -83.98058370428437,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3954491075",
+      "voltage_min_mv": -80.83406633384394,
+      "voltage_max_mv": -80.81862005915112,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4365276903",
+      "voltage_min_mv": -83.9806220510788,
+      "voltage_max_mv": -83.96399982610849,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "883843993",
+      "voltage_min_mv": -83.98395324320127,
+      "voltage_max_mv": -83.97271169602716,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2903686765",
+      "voltage_min_mv": -80.83053665514349,
+      "voltage_max_mv": -80.81859405299225,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4437316933",
+      "voltage_min_mv": -83.99137328805679,
+      "voltage_max_mv": -83.98047935361467,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2889815798",
+      "voltage_min_mv": -80.9422485162142,
+      "voltage_max_mv": -80.00497551155368,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3836078296",
+      "voltage_min_mv": -80.83050847353303,
+      "voltage_max_mv": -80.81857853927772,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3093748739",
+      "voltage_min_mv": -80.82906557954006,
+      "voltage_max_mv": -80.81852686711899,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5355296383",
+      "voltage_min_mv": -83.980982010812,
+      "voltage_max_mv": -83.95871374432954,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2074305737",
+      "voltage_min_mv": -80.83341458359779,
+      "voltage_max_mv": -80.818594444015,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4522237537",
+      "voltage_min_mv": -80.83048120840586,
+      "voltage_max_mv": -80.81859853628556,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3111823553",
+      "voltage_min_mv": -83.99906614183611,
+      "voltage_max_mv": -83.98032179802844,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1669770671",
+      "voltage_min_mv": -83.99960311834262,
+      "voltage_max_mv": -83.98045625687072,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1465400601",
+      "voltage_min_mv": -83.98435536202813,
+      "voltage_max_mv": -83.97478285519996,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1900905433",
+      "voltage_min_mv": -81.48931107422516,
+      "voltage_max_mv": -79.3247080373901,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5215113731",
+      "voltage_min_mv": -84.01539021957346,
+      "voltage_max_mv": -83.98044097097585,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5687162964",
+      "voltage_min_mv": -80.83021734949641,
+      "voltage_max_mv": -80.81856636688191,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5319188363",
+      "voltage_min_mv": -83.98247313373692,
+      "voltage_max_mv": -83.9723325027736,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3519995546",
+      "voltage_min_mv": -83.98753039087565,
+      "voltage_max_mv": -83.98006404823292,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3470629528",
+      "voltage_min_mv": -83.99518355526162,
+      "voltage_max_mv": -83.9803330601134,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "7052969349",
+      "voltage_min_mv": -83.98339138404359,
+      "voltage_max_mv": -83.97886534745548,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3812058320",
+      "voltage_min_mv": -83.98593233120926,
+      "voltage_max_mv": -83.97793263835166,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "751294744",
+      "voltage_min_mv": -83.98549116189163,
+      "voltage_max_mv": -83.98017219340517,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5175880292",
+      "voltage_min_mv": -80.83386939486651,
+      "voltage_max_mv": -80.81861011937661,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2252715458",
+      "voltage_min_mv": -83.99710102138641,
+      "voltage_max_mv": -83.98052801020556,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4535129012",
+      "voltage_min_mv": -80.82600552587806,
+      "voltage_max_mv": -80.81854192935096,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1684504313",
+      "voltage_min_mv": -83.9929034356939,
+      "voltage_max_mv": -83.98031847174981,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2848552900",
+      "voltage_min_mv": -84.00477131221434,
+      "voltage_max_mv": -83.98053504470593,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4039221194",
+      "voltage_min_mv": -84.00354515038644,
+      "voltage_max_mv": -83.98021181060113,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2103991145",
+      "voltage_min_mv": -84.00217960978598,
+      "voltage_max_mv": -83.98034421359073,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "2195261734",
+      "voltage_min_mv": -83.98168675922797,
+      "voltage_max_mv": -83.96008472590061,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1304599410",
+      "voltage_min_mv": -83.98230161967234,
+      "voltage_max_mv": -83.97327045165798,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "810970127",
+      "voltage_min_mv": -84.0034662810887,
+      "voltage_max_mv": -83.98040856457168,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4641147055",
+      "voltage_min_mv": -83.98539470016786,
+      "voltage_max_mv": -83.97793654732509,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5654281423",
+      "voltage_min_mv": -84.00069218273494,
+      "voltage_max_mv": -83.98037040491884,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5136107765",
+      "voltage_min_mv": -83.98051510906997,
+      "voltage_max_mv": -83.95712027638191,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3329117097",
+      "voltage_min_mv": -83.99130530430784,
+      "voltage_max_mv": -83.98035019805673,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4873639924",
+      "voltage_min_mv": -83.99838146664881,
+      "voltage_max_mv": -83.98046057848663,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5015035926",
+      "voltage_min_mv": -84.00266870075288,
+      "voltage_max_mv": -83.98046134102103,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "620880207",
+      "voltage_min_mv": -83.98205299095062,
+      "voltage_max_mv": -83.9603211593299,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5216806368",
+      "voltage_min_mv": -84.01598909503146,
+      "voltage_max_mv": -83.98046898747734,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4711567524",
+      "voltage_min_mv": -84.00142053236686,
+      "voltage_max_mv": -83.98041396221834,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5352961465",
+      "voltage_min_mv": -80.8297933086397,
+      "voltage_max_mv": -80.81858607935672,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "4582188328",
+      "voltage_min_mv": -83.98862682161788,
+      "voltage_max_mv": -83.98024667420358,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "5832764277",
+      "voltage_min_mv": -80.83516712095573,
+      "voltage_max_mv": -80.81858590808545,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "3503540481",
+      "voltage_min_mv": -80.82918058988122,
+      "voltage_max_mv": -80.81857690540073,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1874244336",
+      "voltage_min_mv": -83.99334338763073,
+      "voltage_max_mv": -83.9805108941709,
+      "spike_count": 0,
+      "spike_times_ms": []
+    },
+    {
+      "cell_id": "1930502394",
+      "voltage_min_mv": -83.99112991652167,
+      "voltage_max_mv": -83.98035431810631,
+      "spike_count": 0,
+      "spike_times_ms": []
+    }
+  ],
+  "activity_qualified": false,
+  "physiology_qualified": false,
+  "inputs": {
+    "build": {
+      "path": ".cache\\h01\\readiness\\104-ei-1ms-build.json",
+      "sha256": "1a0d4801228c85e27808639445eb34948e655440ae88ec4049f9cbc0fa89facc"
+    },
+    "reference": {
+      "path": ".cache\\h01\\readiness\\104-build-r2-build.json",
+      "sha256": "9a32737637666ea8ce6c235798ea78ef984d335f47f688db8f640c26550b9001"
+    },
+    "construction_decision": {
+      "path": "docs\\evidence\\h01-ready-104-build-r2-decision.json",
+      "sha256": "789b3111ef1e15302654572a53e0df2e84e469e9a80dc371217c93358dcccca6"
+    },
+    "plan": {
+      "path": "docs\\evidence\\h01-ready-104-ei-1ms-plan.json",
+      "sha256": "e210134d02dddac6ae6d8abc81f34d552d6ccc28b6be3408d9f4cab4d375a196"
+    },
+    "traces": {
+      "path": ".cache\\h01\\readiness\\104-ei-1ms-traces.npz",
+      "sha256": "7abb43dc59a10aed999b9ceb6cb8ea87fb4f6350c4cf2b6b59f96838f59cc9b0"
+    }
+  }
+}
