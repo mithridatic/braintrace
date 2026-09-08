@@ -1425,6 +1425,27 @@ probes zero). The 104-cell RSS projection is near or past this machine's memory 
 construction and init each approach an hour; the 40-cell measurement must re-derive it before 104
 is considered, and the spec's "reduce N" clause is live for that stage.
 
+#### Y5 population, 2026-09-07 (21:30): 40-cell stage stopped; the population deliverable is the measured 12-cell network
+
+Registered ([spec addenda 18:35, 19:30, 19:55](specs/2026-09-07-h01-population-builder.md)): 40-cell predictions derived from the
+quiet 12-cell point (construction ~590 s, init_state ~450 s, compile + 1 ms ~60 s, RSS ~3.8 GB, ~163,600 compartments), preceded by a
+4-cell equivalence step after the performance merge.
+
+Observed: the equivalence step failed at 1e-9 on the first pass because the merged SP6c registry moved cell 3955003482 to the L4 donor
+527952884 (3.17 mV; intended change, recorded), and **held** with that cell pinned to SP1's donor (per-cell maxima 2.2e-10, 1.33e-9,
+2.1e-11, 3.6e-10 mV against the 2e-9 rule; spikes and probes bitwise; 1.6-2.7x faster). The single 40-cell build-only launch
+**failed at 83 s** ([build-40](evidence/h01-population-build-40.md)): `H01Archive.load` of isolated cell 5805562981 raised
+`from_points() requires at least two points`, because three leaf nodes lie one voxel (0.032 um) from a branch-point parent at the same
+radius and BrainCell's SWC reader (`np.allclose`, rtol 1e-5 at ~3,000 um) treats them as coincident, yielding a one-point branch. An
+offline load of all 104 largest components reproduces this on 7 of 104 (two inside the 40-cell prefix; one, 5965472721, at a
+branch-point node rather than a leaf). The user stopped all remaining runs; stages 2-5 are untested and no repair was committed.
+
+Consequence: **the population deliverable is the measured 12-cell network** (attempt 3: 84,097 compartments, construction 270-339 s,
+init_state 202-265 s, compile + 200 steps ~30 s, RSS 2.0 GB, finite, disconnected probes zero). 40 and 104 cells remain **derived**
+(40: ~590 / ~450 / ~60 s, 3.8 GB; 104: ~3,100 / ~2,370 / ~300 s, ~19.8 GB, past the RAM headroom rule at 38.9 GB available), and the
+next split before any larger stage is the zero-length-twig repair in `_h01_swc.normalize` (collapse a node within the reader's
+tolerance of a branch-point parent at equal radius with 0 or >= 2 children), tested on the 7 failing components.
+
 ## Y6. Per-type donors
 
 Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and

@@ -1,0 +1,134 @@
+{
+ "stage": "40 cells (SP8 stage 3 of 4 -> 12 -> 40 -> 104)",
+ "generated_at": "2026-09-07T22:12:55",
+ "spec": "docs/specs/2026-09-07-h01-population-builder.md addenda 18:35 (predictions, rejection, aborts), 19:30 and 19:55 (equivalence steps)",
+ "status": "stopped by the user after the single build-only attempt failed; stages 2-5 untested",
+ "preconditions": {
+  "equivalence_step": "held with 3955003482 pinned to SP1's donor (all four cells within 2e-9 mV; h01-network-equivalence-post-merge-pinned.json)",
+  "wait_condition": "SP5 benchmark completed and labelled quiet; no heavy python; docker clause waived by the coordinator for one NEURON container (Stage G)"
+ },
+ "runs": {
+  "build-only": {
+   "command": [
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+    "-u",
+    "-m",
+    "examples.h01_verified_network",
+    "--topology",
+    "docs/evidence/h01-verified-network.json",
+    "--cache",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+    "--solver",
+    "h01_staggered_scan",
+    "--include-isolated",
+    "--cells",
+    "40",
+    "--current-na",
+    "1",
+    "--components",
+    "docs/evidence/h01-population-components.json",
+    "--output",
+    "C:\\Users\\J\\AppData\\Local\\Temp\\claude\\C--Users-J-Documents-Projects-connectome-agent-braintrace-source\\59762c69-587a-4ed2-83cc-b548416f9360\\scratchpad\\sp8c\\build-only\\network",
+    "--build",
+    "--control",
+    "ei"
+   ],
+   "started_at": "2026-09-07T21:06:01",
+   "finished_at": "2026-09-07T21:07:24",
+   "status": "failed",
+   "wall_seconds": 82.55780959999538,
+   "exit_code": 1,
+   "peak_rss_mb_tree": 563.48046875,
+   "peak_rss_by_pid": {
+    "39604:python.exe": 6.0546875,
+    "28236:python.exe": 557.42578125
+   },
+   "construction_seconds": null,
+   "n_compartments": null,
+   "load_label": "measured beside one NEURON container (Stage G); system CPU mean 36 % of 20 logical cores; other processes above 0.25 cores: SearchIndexer.exe 4.88 cores; WindowsTerminal.exe 1.41 cores; System 1.65 cores; dwm.exe 1.40 cores",
+   "cells_loaded_before_failure": [
+    "[0.1s] Loading cell 4188575291, component 0",
+    "[15.4s] Loading cell 3955003482, component 0",
+    "[35.8s] Loading cell 5584343344, component 0",
+    "[40.4s] Loading cell 4157825456, component 0",
+    "[46.1s] Loading cell 546925828, component 1 (isolated, largest component 1 of 10766 nodes, fraction 0.725)",
+    "[47.4s] Loading cell 678539249, component 0 (isolated, largest component 0 of 4480 nodes, fraction 0.774)",
+    "[47.8s] Loading cell 955432427, component 0 (isolated, largest component 0 of 11524 nodes, fraction 0.884)",
+    "[49.2s] Loading cell 1787105373, component 0 (isolated, largest component 0 of 8785 nodes, fraction 0.986)",
+    "[49.9s] Loading cell 2001418787, component 0 (isolated, largest component 0 of 10557 nodes, fraction 0.636)",
+    "[51.2s] Loading cell 2104047922, component 0 (isolated, largest component 0 of 12567 nodes, fraction 0.685)",
+    "[52.5s] Loading cell 2325998949, component 0 (isolated, largest component 0 of 7480 nodes, fraction 0.748)",
+    "[53.3s] Loading cell 2451406889, component 0 (isolated, largest component 0 of 3750 nodes, fraction 0.970)",
+    "[53.8s] Loading cell 2530864375, component 0 (isolated, largest component 0 of 1540 nodes, fraction 0.854)",
+    "[54.0s] Loading cell 2820958695, component 0 (isolated, largest component 0 of 4864 nodes, fraction 0.488)",
+    "[54.5s] Loading cell 3178243558, component 0 (isolated, largest component 0 of 2748 nodes, fraction 0.371)",
+    "[54.9s] Loading cell 3571083397, component 0 (isolated, largest component 0 of 10636 nodes, fraction 0.493)",
+    "[56.3s] Loading cell 3680152874, component 0 (isolated, largest component 0 of 6121 nodes, fraction 0.692)",
+    "[56.8s] Loading cell 3751392341, component 0 (isolated, largest component 0 of 3499 nodes, fraction 0.990)",
+    "[57.3s] Loading cell 3761379470, component 0 (isolated, largest component 0 of 6157 nodes, fraction 0.714)",
+    "[58.0s] Loading cell 4010150634, component 0 (isolated, largest component 0 of 11673 nodes, fraction 0.878)",
+    "[59.6s] Loading cell 4125702786, component 3 (isolated, largest component 3 of 7896 nodes, fraction 0.540)",
+    "[60.6s] Loading cell 4138580687, component 0 (isolated, largest component 0 of 13309 nodes, fraction 0.644)",
+    "[62.0s] Loading cell 4197933517, component 0 (isolated, largest component 0 of 11725 nodes, fraction 0.515)",
+    "[63.8s] Loading cell 4260528559, component 0 (isolated, largest component 0 of 4790 nodes, fraction 0.560)",
+    "[64.5s] Loading cell 4420044370, component 0 (isolated, largest component 0 of 4624 nodes, fraction 0.999)",
+    "[65.1s] Loading cell 4467761196, component 0 (isolated, largest component 0 of 7517 nodes, fraction 0.760)",
+    "[65.8s] Loading cell 4476359994, component 0 (isolated, largest component 0 of 13220 nodes, fraction 0.865)",
+    "[67.4s] Loading cell 4668874666, component 0 (isolated, largest component 0 of 11436 nodes, fraction 0.307)",
+    "[68.6s] Loading cell 4711641825, component 0 (isolated, largest component 0 of 6744 nodes, fraction 0.886)",
+    "[69.1s] Loading cell 4830551047, component 1 (isolated, largest component 1 of 8314 nodes, fraction 0.678)",
+    "[70.0s] Loading cell 4853956860, component 0 (isolated, largest component 0 of 7794 nodes, fraction 0.960)",
+    "[70.7s] Loading cell 4932057570, component 1 (isolated, largest component 1 of 7929 nodes, fraction 0.343)",
+    "[71.7s] Loading cell 5013648003, component 0 (isolated, largest component 0 of 10358 nodes, fraction 0.514)",
+    "[73.0s] Loading cell 5060444657, component 0 (isolated, largest component 0 of 10327 nodes, fraction 0.451)",
+    "[74.3s] Loading cell 5173982155, component 3 (isolated, largest component 3 of 10156 nodes, fraction 0.348)",
+    "[75.6s] Loading cell 5805562981, component 0 (isolated, largest component 0 of 10603 nodes, fraction 0.720)"
+   ],
+   "traceback": "Traceback (most recent call last):\n  File \"<frozen runpy>\", line 203, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-network\\examples\\h01_verified_network.py\", line 139, in <module>\n    main()\n    ~~~~^^\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-network\\examples\\h01_verified_network.py\", line 91, in main\n    network, evidence = make_h01_network(topology, H01Archive(args.cache/\"proofread104.zip\"),\n                        ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        H01Annotations(args.cache), max_cv_length_um=args.max_cv_um, solver=args.solver, **options,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        currents_na={identity: args.current_na for identity in plan[\"simulated_cell_ids\"]}, progress=emit)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-network\\braintrace\\datasets\\h01_network.py\", line 297, in make_h01_network\n    imported[identity] = archive.load(identity, component=record[\"component\"])\n                         ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-network\\braintrace\\datasets\\h01.py\", line 243, in load\n    morphology, report = braincell.Morphology.from_swc(\n                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        path, mode=\"neuromorpho\", return_report=True,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\morph\\morphology.py\", line 414, in from_swc\n    return reader.read(path, return_report=return_report)\n           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\io\\swc\\reader.py\", line 88, in read\n    morpho = self._build_morpho(branches, context.nodes)\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\io\\swc\\reader.py\", line 356, in _build_morpho\n    child_branch=self._make_branch(\n                 ~~~~~~~~~~~~~~~~~^\n        branch_info,\n        ^^^^^^^^^^^^\n        nodes,\n        ^^^^^^\n        parent_branch_type=branches[parent_index].branch_type,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ),\n    ^\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\io\\swc\\reader.py\", line 413, in _make_branch\n    return branch_class_for_type(branch.branch_type).from_points(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        points=np.array(points, dtype=float) * u.um,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        radii=np.array(radii, dtype=float) * u.um,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\morph\\branch.py\", line 375, in from_points\n    raise ValueError(\"from_points() requires at least two points.\")\nValueError: from_points() requires at least two points.",
+   "log": "scratchpad sp8c/build-only/child.log (not committed)"
+  },
+  "init-only": {
+   "status": "untested",
+   "reason": "not launched: construction failed"
+  },
+  "run-1ms-ei": {
+   "status": "untested",
+   "reason": "not launched"
+  },
+  "run-1ms-disconnected": {
+   "status": "untested",
+   "reason": "not launched"
+  },
+  "run-3ms-ei": {
+   "status": "untested",
+   "reason": "not launched"
+  }
+ },
+ "diagnosis": {
+  "failing_cell": "5805562981 (isolated, largest component 0 of 10,603 nodes, fraction 0.720; 30th of 40 in cell_order)",
+  "exception": "ValueError: from_points() requires at least two points. (braincell.morph.branch.Branch.from_points, reached from braincell.io.swc.reader._make_branch via H01Archive.load -> Morphology.from_swc(mode='neuromorpho'))",
+  "cause": "Three leaf nodes of that component (original ids 3329, 7348, 7900) sit exactly one skeleton voxel (0.032 um) from a parent that is a branch point (two children) with the same radius. BrainCell's SWC reader decides whether to copy the attach point into the child branch with np.allclose (rtol 1e-5), which at coordinates near 3,000 um tolerates about 0.03 um, so the leaf is judged coincident with its parent and the child branch is built from a single point. braintrace's _h01_swc.normalize keeps every node as released (it invents no repairs), so nothing removed the zero-length twig.",
+  "scope": "Offline load of all 104 largest components with the merged code (H01Archive.load only; no simulation) reproduces the failure on 7 of 104: 5965472721 (13th in cell_order), 5805562981 (30th), 4365276903 (58th), 3111823553 (68th), 5687162964 (73rd), 4641147055 (90th), 5136107765 (92nd). Two of them are inside the 40-cell prefix; the 12-cell prefix is unaffected (it built three times today). In 5965472721 the coincident node is itself a branch point (two children), not a leaf, so a leaf-only repair would not cover it.",
+  "isolated_cells_loaded_before_failure": 36,
+  "not_fixed": "The user stopped all runs; no repair was committed. A candidate repair (collapse a node that is within the reader's tolerance of a branch-point parent, has the same radius and has 0 or >= 2 children) was drafted and reverted untested.",
+  "not_a_regression_of_the_perf_merge": "The reader tolerance is braincell's; the 12-cell build passed on the merged tree in the equivalence reruns, and the failing components were never constructed before."
+ },
+ "offline_load_scan": null,
+ "predictions_from_12_cells_40": {
+  "construction_s": 590,
+  "init_state_s": 450,
+  "compile_run_1ms_s": 60,
+  "peak_rss_gb": 3.8,
+  "n_compartments": 163600
+ },
+ "inside_2x_of_12_cell_prediction": "untested (no 40-cell measurement)",
+ "projection_104_cells": {
+  "construction_s": 3094,
+  "init_state_s": 2370,
+  "compile_run_1ms_s": 302,
+  "peak_rss_gb": 19.84,
+  "label": "derived from the quiet-machine 12-cell point (attempt 3) by the proportional rule 2,804,549 / 276,064 = 10.16x; not measured; no 40-cell measurement exists to re-derive it"
+ },
+ "reduce_n_clause": "not evaluable from a 40-cell measurement; from the 12-cell point the derived 104-cell RSS (19.8 GB) exceeded the headroom rule at 38.9 GB available RAM (psutil.virtual_memory, 18:30), so the clause is live; no N is proposed while 7 of 104 components fail to load",
+ "population_deliverable": "the measured 12-cell network (h01-population-build-12.json, attempt 3); 40 and 104 remain derived"
+}
