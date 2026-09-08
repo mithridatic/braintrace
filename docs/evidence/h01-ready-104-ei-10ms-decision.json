@@ -1,0 +1,39 @@
+{
+  "status": "failed",
+  "scope": "104-cell driven runtime at dt 0.005 ms, 10 ms duration",
+  "exit_code": 1,
+  "wall_seconds": 2704.7509376,
+  "failure": "Nonfinite trace: cell_7196644737/output_voltage",
+  "identified_cell": "7196644737",
+  "cell_compartments": 1647,
+  "modeled_incident_contacts": [],
+  "all_104_initialized_in_log": true,
+  "initialization_seconds_log_rounded": 837.5,
+  "traces_saved": false,
+  "limitation": "First nonfinite trace caused immediate raise before saving arrays; other cells and first divergence time cannot be qualified from this attempt.",
+  "monitor_errors": 0,
+  "sampled_tree_peak_bytes": 13897846784,
+  "next_action": "Preserve failed traces in runner, then exact isolated-cell reproduction and one dt-halving comparison; full104 remains required.",
+  "inputs": {
+    "launch": {
+      "path": "docs\\evidence\\h01-ready-104-ei-10ms-launch.json",
+      "sha256": "33612665c564c1c35ccf537fcd587f77f037576dbd54bc4639365548044bcaff"
+    },
+    "log": {
+      "path": "docs\\evidence\\h01-ready-104-ei-10ms.log",
+      "sha256": "60298257bce234b9142986f3ffa96bb7988c982ac8a7e7e82c31f7afa979d5fd"
+    },
+    "stderr": {
+      "path": "docs\\evidence\\h01-ready-104-ei-10ms.err",
+      "sha256": "529b4162eb339ae1eea3f3dc82fc140fc420f76cd424dbe9e3a144c25f5cb832"
+    },
+    "build_checkpoint": {
+      "path": ".cache\\h01\\readiness\\104-ei-10ms-build.json",
+      "sha256": "bc2efd826f1cd1c771be06f383d907cac90a38064e39a825860033c156fb153e"
+    },
+    "plan": {
+      "path": "docs\\evidence\\h01-ready-104-ei-10ms-plan.json",
+      "sha256": "f23f5c38b6fd54dd81f003d88e5603d4d7c8f8ff6d4fdf5d5b581a45998e275c"
+    }
+  }
+}

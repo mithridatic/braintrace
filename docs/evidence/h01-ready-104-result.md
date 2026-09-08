@@ -53,11 +53,22 @@ not test driven firing or synaptic delivery. Next are the driven 10 ms run,
 all four matched controls at 104 cells and the dt-halving comparison. The
 outstanding physiological gates remain separate. The full goal is not complete.
 
-The first driven `ei` 10 ms run is now supervised under the
-[registered plan](h01-ready-104-ei-10ms-plan.json). Its conservative estimate is
-4,673.661 seconds and 18,262,754,560 peak bytes, with a 6,000-second wall cap,
-600-second silence cap and 4 GiB free-memory reserve. This is a pending
-measurement; the completed 1 ms result above remains the verified runtime scope.
+The first driven `ei` 10 ms run **failed**, exit 1 after 2,704.751 seconds:
+`cell_7196644737/output_voltage` became nonfinite. This isolated cell has
+1,647 compartments. All 104 cells initialized; the resource limits were not
+hit and the supervisor recorded zero errors. The runner raised at the first
+nonfinite trace before saving any trace arrays, so first divergence time and
+the status of the remaining arrays are unknown. See the
+[failure decision](h01-ready-104-ei-10ms-decision.json) and
+[terminal launch record](h01-ready-104-ei-10ms-launch.json).
+
+The runner now retains all returned arrays, records every nonfinite array and
+its first affected sample, and exits nonzero. Initialization metadata is
+persisted before compilation. Twelve regression/CLI tests pass with 100%
+coverage. Next is an exact isolated-cell reproduction and one dt-halving
+comparison, each capped at 600 seconds. The failed identity stays in the full
+population; a corrected full-104 run remains required. The completed 1 ms
+result above remains the verified runtime scope.
 
 The [installed-wheel preparation](h01-ready-104-wheel-audit.md) passes source,
 installation and isolated-import checks (106 packaged files, 31 H01 modules).

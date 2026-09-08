@@ -2012,6 +2012,20 @@ events and zero receptor conductances in the 1 ms window do not test the
 2-5 ms drive or delivery. Driven response, controls, numerical refinement and
 physiological qualification remain open.
 
+### Y5 driven-window failure, 2026-09-08
+
+The [first full-104 10 ms run](evidence/h01-ready-104-ei-10ms-decision.json)
+fails with nonfinite output voltage on cell 7196644737 at dt 0.005 ms and
+1 nA soma pulses at 2-5 ms. All 104 cells initialized and no resource cap
+was reached. That cell has 1,647 compartments and no modeled incident
+projections, so a faithful isolated-cell reproduction is possible. The earlier
+1 ms finite result does not extend into this driven window. No mechanism or
+first divergence time is established: the old runner discarded the returned
+arrays when checking the first nonfinite value. The evidence-persistence repair
+retains failed arrays without changing dynamics; numerical diagnosis and a new
+full-population pass remain required. This narrows Y5's runtime boundary,
+and closes no physiological or delivery gate.
+
 ### Y4 source-audit correction, 2026-09-08
 
 The [hash-linked source audit](evidence/h01-e-gain-source-audit.json) verifies

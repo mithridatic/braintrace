@@ -25,7 +25,9 @@ The full 104-cell network now initializes and executes 200 compiled steps at
 dt 0.005 ms; all 317 expected arrays are finite and exact model/provenance
 matching passes ([runtime gate](h01-ready-104-ei-1ms-decision.json),
 [summary](h01-ready-104-ei-1ms-summary.json)). This is a pre-stimulus 1 ms
-window with no events. Driven activity, final-population controls, numerical
+window with no events. The first 10 ms run failed with nonfinite output voltage
+on cell 7196644737 ([decision](h01-ready-104-ei-10ms-decision.json)); its cause is
+under numerical diagnosis, and the cell has not been removed. Driven activity, final-population controls, numerical
 refinement and physiological qualification remain open. The table below preserves the earlier programme's
 close snapshot; its failed-import and 12-cell runtime limits are superseded by
 the continuation evidence above. The physiological verdicts are unchanged.
