@@ -1,0 +1,185 @@
+{
+ "reference": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-network\\.cache\\h01\\bench-d1",
+ "rerun": "C:\\Users\\J\\AppData\\Local\\Temp\\claude\\C--Users-J-Documents-Projects-connectome-agent-braintrace-source\\59762c69-587a-4ed2-83cc-b548416f9360\\scratchpad\\sp8c\\equiv-d1",
+ "tolerance_mv": 1e-09,
+ "same_keys": true,
+ "arrays": {
+  "cell_3955003482_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_3955003482_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 3.1673308849627375
+  },
+  "cell_3955003482_syn_124698307_g": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "max_abs_diff": 0.0
+  },
+  "cell_3955003482_syn_124698307_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 3.16125677892893
+  },
+  "cell_3955003482_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 3.167329843230277
+  },
+  "cell_4157825456_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_4157825456_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 1.325247467320878e-09
+  },
+  "cell_4157825456_syn_8105899_g": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "max_abs_diff": 0.0
+  },
+  "cell_4157825456_syn_8105899_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 5.4143356464919634e-11
+  },
+  "cell_4157825456_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 1.325247467320878e-09
+  },
+  "cell_4188575291_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_4188575291_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 1.1311840353300795e-11
+  },
+  "cell_4188575291_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 2.1259438653942198e-11
+  },
+  "cell_5584343344_events": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "ref_spikes": 0,
+   "new_spikes": 0,
+   "ref_spike_times_ms": [],
+   "new_spike_times_ms": [],
+   "identical_spike_times": true
+  },
+  "cell_5584343344_output_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 2.674482857401017e-11
+  },
+  "cell_5584343344_voltage": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": false,
+   "max_abs_diff": 3.587530272852746e-10
+  },
+  "time_ms": {
+   "present_in_both": true,
+   "same_shape": true,
+   "bitwise_equal": true,
+   "max_abs_diff": 0.0
+  }
+ },
+ "all_bitwise_equal": false,
+ "max_abs_diff_all_arrays": 3.1673308849627375,
+ "within_1e-9": false,
+ "spikes_identical": true,
+ "sp1_d1": {
+  "construction_seconds": 266.16772590001347,
+  "initialization_and_run_seconds": 212.3785510000016,
+  "wall_seconds": 484.68128859999706,
+  "peak_rss_mb": 1342.03515625,
+  "n_compartments": null
+ },
+ "sp1_d1r": {
+  "construction_seconds": 243.6337588999886,
+  "initialization_and_run_seconds": 274.916204499983
+ },
+ "rerun_timing": {
+  "construction_seconds": 97.91955230000895,
+  "init_state_seconds": 74.70508669997798,
+  "compile_and_run_seconds": 13.183713500009617,
+  "initialization_and_run_seconds": 87.88879860000452,
+  "n_compartments": 75605,
+  "init_peak_rss_mb": 1070.9140625,
+  "run_peak_rss_mb": 1347.23828125,
+  "init_seconds_by_cell": {
+   "cell_3955003482": 40.934536000015214,
+   "cell_4157825456": 9.928068000008352,
+   "cell_4188575291": 12.830407800007379,
+   "cell_5584343344": 11.011439099995187
+  },
+  "wall_seconds": 191.73405820000335,
+  "peak_rss_mb_tree": 1330.171875,
+  "status": "completed",
+  "kill_reason": null,
+  "load_label": "system CPU 19-26 % of 20 logical cores during the run; non-H01 processes above 0.25 cores: SearchIndexer ~1.5, com.docker.backend ~1.2, ProtonDrive ~0.9, bdservicehost ~0.7, Taskmgr ~0.8 (watcher samples every 30 s)"
+ },
+ "speedup": {
+  "construction": 2.718,
+  "init_plus_run": 2.416,
+  "total": 2.575,
+  "label": "SP1 d1 seconds divided by rerun seconds; SP1 was machine-alone, the rerun load is recorded in run.json"
+ },
+ "status": "REJECTED",
+ "diagnosis": {
+  "compare_script_errored": false,
+  "keys_and_shapes_identical": true,
+  "spike_arrays": "bitwise identical (zero events in both, 4 cells)",
+  "conductance_probes": "bitwise identical (identically zero in both)",
+  "cells_within_1e-9_mV": [
+   "4188575291 (max 2.1e-11)",
+   "5584343344 (max 3.6e-10)"
+  ],
+  "cells_marginally_over": [
+   "4157825456 (max 1.325e-9 on soma and output voltage at t = 0.99 ms; 5.4e-11 at the receptor site)"
+  ],
+  "cell_with_real_change": "3955003482: 3.16 mV at the first sample, 3.167 mV max at 0.645 ms; rest -80.82 mV (new) vs -83.98 mV (SP1)",
+  "cause_3955003482": "donor registry change, not a numerical change: the merged SP6c commits (415b038, 312e391) register the Allen L4 pyramidal donor 527952884 and assign it to the L4-tagged cell 3955003482 (initial_mv -80.818 vs -83.980; axial 15.0 vs 94.6 ohm cm; regions differ); SP1 built that cell with the L2 donor 541563728. The other three cells keep their donors and values (initial_mv, reversal_mv, axial_ohm_cm identical; channel_prefix and the two ion reversals are newly recorded fields with the values used before).",
+  "cause_sub_1e-9_differences": "axon electrical-interval endpoints differ at 2.2e-16 to 4.4e-16 (same interval count per region, same sorted set to that rounding) in all four cells: consistent with the vectorised geometry attachment / DHS assembly reordering floating-point sums; the resulting voltage differences are 1e-11 to 1.3e-9 mV over 200 steps.",
+  "reading": "prediction failed as registered because the merged programme tip changes one cell's donor; the performance commits themselves show mantissa-level effects only (one cell 1.33x over the 1e-9 line). Next split (not run): the rerun with the donor registry pinned to SP1's assignment for 3955003482 at 1e-9 on all four cells, or the three unchanged cells alone at 2e-9. The 40-cell stage was not launched."
+ }
+}
