@@ -54,3 +54,30 @@ Next remaining routes are supplementary analysis artifacts or a release-matched
 base-to-agglomeration source. Recoverability and the number of internal 104-cell
 edges remain unproven. Do not replace this gap with another spatial-sampling
 campaign or silently promote the 126 spatial candidates.
+
+## Supplementary cell table candidate
+
+cellmatrix_404_c3.mat (1142209 bytes), SHA256
+d4203c00c1e1995273b1e96543a3e51f84fe5de44ce26349d41cfbac3a608839,
+was downloaded to .cache/h01. H01_multisynaptic_stats.m documents column 5 as
+google agglomerated segment ID and column 6 as google base segment ID.
+Direct numerical overlap with H01 IDs is only 53 in column 5 and 7 in column 6;
+that overlap alone is not an identity mapping.
+
+A membership join using every proofreading record's base_segments found exactly
+one table base ID in each of all 104 records. This makes the table a candidate
+104-cell mapping source. Before promotion, check duplicate table base IDs,
+uniqueness of mapped C3 IDs, and release identity against embedded cb_agglo_lookup
+and existing spatial evidence. The initial exploratory dictionary join did not
+check duplicate table keys, so this is not yet an accepted mapping.
+
+The archive also contains cb_agglo_lookup keyed by a named agglomeration release;
+its first record includes main_agglo_seg 751294744. Inspect those embedded
+mappings before performing more spatial queries. No model connectivity changed.
+
+The saved h01-cellmatrix-mapping-audit.json now confirms one matched table
+base ID per record, no duplicate matched base keys, and 104 distinct C3 IDs.
+Only 95 match the archive main_agglo_seg in agg20200916_resolved; nine differ.
+The archive release key is not the authors script
+agg20200916c3_resolved_fixed. Preserve those nine explicit mismatches and resolve
+release semantics before accepting the table as the final identity bridge.
