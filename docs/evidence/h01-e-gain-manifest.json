@@ -1,0 +1,173 @@
+{
+  "purpose": "SP3 E gain split: one bounded causal split on the input-response relation (f-I slope). Specification: docs/specs/2026-09-07-h01-e-gain-split.md. Registered, not run.",
+  "cap": 4,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 1500,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": "../h01-braincell/.cache/human-pyramidal-l2",
+  "cache_note": "The h01-e-split worktree is a sparse checkout without .cache; the waveforms (sweep-43/50/53/56.npz, data only, gitignored) live in the sibling h01-braincell cache. Change cache_dir to .cache/human-pyramidal-l2 when the manifest runs from a root that holds the cache.",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-gain",
+  "inputs": {
+    "sweep43": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "43",
+      "--include-recorded-bias"
+    ],
+    "sweep50": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "50",
+      "--include-recorded-bias"
+    ],
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ],
+    "sweep56": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "56",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed (h01_l2_sweep_export.SEALED, prediction file h01-prediction-e3.json) and is not an input of any stage. Sweep 56 is calibration, not a holdout: its repeats feed the AHP spread and its count metadata is visible.",
+  "evaluation": "One parameter set at all four inputs; one evaluation = four serial runs in one container.",
+  "base_candidate": {
+    "file": "h01-e-usable/b3-sk035-ca-decay.candidate.json",
+    "sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
+  },
+  "stages": {
+    "0": {
+      "title": "Stage 0: frozen B3 at sweeps 43 and 56 (50 and 53 rerun under the new stems)",
+      "prediction": "Sweep-43 onset rows (1019-1120 ms) and late-return rows (1520-2120 ms) within 1 mV of the human (B3's Stage B levers did not touch F5). Sweep-56 count 1 (repeat band over 56/59/60/61/62 is exact) and first-spike latency within the repeat limit (range x 1.47). Sweep 50 and 53 reproduce b3-all-inputs-usable.md (8 and 10 spikes) within solver noise. Axon-first initiation at every active input.",
+      "rejection": "Sweep 43 fails the 1 mV row: B3's Stage B levers broke F5; every Stage G arm is judged on the change of its sweep-43 rows relative to g0-b3, not on an absolute pass. A different 250 or 310 pA count than B3 means the image or input differs and the campaign stops.",
+      "unchanged": "All B3 flags (b3-sk035-ca-decay.candidate.json, sha256 e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564): calcium_decay_factor 1.0, distribute_ih, ih_density_factor 75, insert_density NaTs:axon:3.814, kv3_closing_factor 0.9, leak_reversal_shift_mv -4, regional_density SK:soma:0.35, sodium_density_factor 0.9, sodium_opening_factor 2.0, sodium_recovery_factor 1.0; nseg factor 9; CVode 1e-10; stop 2100 ms; recorded command plus recorded bias; Allen 541563728 geometry; library kv3-closing-source; image braintrace-h01-neuron:9.0.2.",
+      "decision_file": "stage-g0-decision.json"
+    },
+    "G": {
+      "title": "Stage G: one steady inter-spike current halved (Ih) or the linear leak raised (1.5x), every arm at sweeps 43/50/53/56",
+      "gate": "stage-g0-decision.json",
+      "prediction": "g1-ih-half (ih_density_factor 37.5 from 75): 250 pA count 5-7 with late cycles >= 200 ms; 310 pA count 9-10 with rate within 1.5 Hz of 10.0 Hz; pre-pulse baseline -1 to -3 mV from B3; sweep-43 late return moves <= 1 mV; 200 pA count 1. g2-leak-150 (leak_factor 1.5, reversal unchanged): both counts fall, 250 pA proportionally more (rheobase shifts right): 250 count <= 6, 310 count >= 8; 200 pA count 0-1.",
+      "rejection": "g1-ih-half: 310 count < 9, or 250 count still >= 8. g2-leak-150: 250 and 310 fall by the same spike count (pure shift, no rotation). Either arm losing axon-first initiation or moving the sweep-43 return by more than 1 mV is a rejection of that arm.",
+      "unchanged": "As Stage 0 except the one named flag per arm.",
+      "decision_file": "stage-g-decision.json"
+    },
+    "G3": {
+      "title": "Stage G3: reserve dose of the better arm (candidate appended after stage-g-decision.json names the dose)",
+      "gate": "stage-g-decision.json",
+      "prediction": "Dose rule fixed before the run: the arm with the larger |delta(250 count)| / |delta(310 rate)| per unit factor change, factor interpolated linearly to land 250 count 5 while the 310 rate change stays within 1.5 Hz; the numerical dose is written into stage-g-decision.json before the candidate g3-reserve is appended. Predicted: 250 count 5 +/- 1, 310 rate within 1.5 Hz, sweep 43 within 1 mV, 200 count 1, axon-first.",
+      "rejection": "As the chosen arm. If neither G1 nor G2 rotated the curve (both rejected), G3 is not run and the campaign reports FAIL at 3 of 4.",
+      "unchanged": "As Stage 0 except the dosed flag.",
+      "decision_file": "stage-g3-decision.json"
+    }
+  },
+  "pass_rule": "One profile with rate and adaptation passing at 250/310 pA (and 350 from the retained B3 sweep-55 trace for g0-b3; 200 pA where resolvable), no width cycle newly failing relative to b3-all-inputs-usable.md, sweep-43 rows within 1 mV, axon-first at every active input.",
+  "fail_rule": "No arm meets the pass rule by the cap: FAIL, and the reassessment is a gain set outside the fit's passive family (human slow Na inactivation or Kv7/M kinetics absent from the Allen genome, or a second human L2/3 donor with a recorded f-I curve).",
+  "cost_anchor": "649-665 s per 250/310 pA run (measured, h01-e-continuation-result.md). Sweep 43 and sweep 56 unmeasured. One evaluation exceeds 15 min at the anchor alone, so each evaluation needs a measured estimate and approval before it opens; Stage 0 reports the 43 and 56 durations before Stage G.",
+  "scoring": [
+    "h01_usable_tier.py --cell E-gain --candidate <name> --root <root holding .cache>",
+    "h01_contract_score.py (1 mV rows, sweep 43)",
+    "h01_initiation_score.py --run h01-e-gain/<name>-sweepNN"
+  ],
+  "budget_note": "Stage 0: 1. Stage G: 2 = 3. Stage G3: 1 = 4. Nothing in reserve beyond G3.",
+  "candidates": [
+    {
+      "name": "g0-b3",
+      "stage": "0",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "record_soma_currents": false,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0
+      }
+    },
+    {
+      "name": "g1-ih-half",
+      "stage": "G",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 37.5,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "record_soma_currents": false,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0
+      }
+    },
+    {
+      "name": "g2-leak-150",
+      "stage": "G",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "record_soma_currents": false,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "leak_factor": 1.5
+      }
+    }
+  ],
+  "input_datums": {
+    "sweep43": "E 0.11",
+    "sweep50": "E 0.25",
+    "sweep53": "E 0.31",
+    "sweep56": "E 0.20"
+  },
+  "repeat_inputs_for_limits": [
+    "sweep56"
+  ]
+}

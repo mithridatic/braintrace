@@ -1,0 +1,24 @@
+{
+  "arm": "q-neuron-fixed-019-dt000625",
+  "simulator": "neuron",
+  "current_na": 0.19,
+  "dt_ms": 0.000625,
+  "duration_ms": 1500.0,
+  "mesh": "x9",
+  "started_utc": "2026-09-08T00:12:50.4423858Z",
+  "wall_clock_s": 351.1,
+  "exit_code": 0,
+  "killed_at_abort": false,
+  "abort_s": 900,
+  "silence_kill": false,
+  "pid": 42840,
+  "peak_working_set_bytes": 23842816,
+  "command": "docker run --rm --name h01-i-transfer-q-neuron-fixed-019-dt000625 -v C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/.cache/human-pv/kv3-phase-reference:/work -v C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-transfer/docs/evidence:/evidence -w /work braintrace-h01-neuron:9.0.2 python /evidence/h01_pv_neuron_reference.py --candidate-json /evidence/h01-i-transfer/b1-fixed.candidate.json --current-na 0.19 --dt-ms 0.000625 --duration-ms 1500 --output /evidence/h01-i-transfer/q-neuron-fixed-019-dt000625",
+  "interpreter": "braintrace-h01-neuron:9.0.2",
+  "pythonpath": null,
+  "other_containers_running_at_start": "synapse",
+  "outputs_present": {
+    "npz": true,
+    "json": true
+  }
+}

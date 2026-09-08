@@ -1,0 +1,195 @@
+{
+  "stage": "hl5mn1",
+  "donor_key": "l3-sst-interneuron-hl5mn1",
+  "specification": "docs/specs/2026-09-07-h01-donor-hl5mn1-import.md",
+  "acquisition": "h01-sst-acquisition.json",
+  "manifest": "h01-sst-reproduction-manifest.json",
+  "decision": "reproduction run (4 of cap 4, all rc 0, none aborted): REJECTED by the registered rule. The unmodified HL5MN1 fit gives 16 spikes at 100 pA (Allen 14, repeat band 12-14) and 30 at 150 pA (Allen 34): both counts differ by more than 1. The dt pair agrees on both counts (numerics converged for the count); first spikes 26.97 and 16.04 ms after onset against 24.16 and 13.0 ms, pair limits 0.134 and 0.113 ms. The donor stays in the population as type-matched with these labels.",
+  "reproduction_status": "rejected",
+  "reproduction_json": "h01-sst-reproduction.json",
+  "verifications": {
+    "hoc_identity_with_modeldb_267595": "pass: biophys_HL5MN1.hoc and biophys_HL23SST.hoc differ only in the procedure name",
+    "nwb_fetched_and_sweep_table_read": "pass: HTTP 200, 16,422,444 bytes, sha256 218aa144e2e3b63dbcb3fe57072572a7e305a89a57b69ddb36618a4ed9d5c45b, specimen 571700636, IVSCC 1.0, 50 kHz, Long Square 1020-2020 ms",
+    "fit_source_in_yao_2022_methods": "pass: bioRxiv 10.1101/2021.02.17.431698 v5 names 'putative SST (Neuron ID: 571700636)'; SWC header names H17.06.006.11.09.05"
+  },
+  "population_match": {
+    "before": 30,
+    "after": 37,
+    "cells_taken": "7 L3 interneurons without modifiers"
+  },
+  "registered_prediction": "counts 14 (sweep 44, 100 pA) and 34 (sweep 35, 150 pA) reproduced exactly; first spike within the dt-pair limit of 24.16 and 13.0 ms",
+  "registered_rejection": "count differs by more than 1 at either input",
+  "bands": {
+    "100 pA": {
+      "sweep": 44,
+      "registered_count": 14,
+      "model_count_dt": 16,
+      "model_count_dt_half": 16,
+      "count_exact_prediction": "rejected",
+      "repeat_band": "12-14: missed",
+      "dt_pair_count": "agrees",
+      "registered_first_spike_ms": 24.16,
+      "model_first_spike_ms_dt": 26.97,
+      "model_first_spike_ms_dt_half": 26.924,
+      "first_spike_pair_limit_ms": 0.1337,
+      "first_spike_prediction": "missed",
+      "finite": true
+    },
+    "150 pA": {
+      "sweep": 35,
+      "registered_count": 34,
+      "model_count_dt": 30,
+      "model_count_dt_half": 30,
+      "count_exact_prediction": "rejected",
+      "repeat_band": null,
+      "dt_pair_count": "agrees",
+      "registered_first_spike_ms": 13.0,
+      "model_first_spike_ms_dt": 16.042,
+      "model_first_spike_ms_dt_half": 16.004,
+      "first_spike_pair_limit_ms": 0.1128,
+      "first_spike_prediction": "missed",
+      "finite": true
+    }
+  },
+  "usable_tier": {
+    "source": {
+      "counts": {
+        "100 pA": {
+          "human": 14,
+          "model": 16
+        },
+        "150 pA": {
+          "human": 34,
+          "model": 30
+        }
+      },
+      "verdicts_by_row": {
+        "100 pA": {
+          "rate_hz": {
+            "fail": 1
+          },
+          "adaptation_ratio": {
+            "pass": 1
+          },
+          "width_ms": {
+            "fail": 14
+          },
+          "ahp_mv": {
+            "pass": 3,
+            "fail": 11
+          },
+          "count": {
+            "pass": 1
+          },
+          "first_spike_ms": {
+            "fail": 1
+          }
+        },
+        "150 pA": {
+          "rate_hz": {
+            "pass": 1
+          },
+          "adaptation_ratio": {
+            "pass": 1
+          },
+          "width_ms": {
+            "fail": 30
+          },
+          "ahp_mv": {
+            "fail": 28,
+            "pass": 2
+          }
+        }
+      },
+      "page": "h01-sst-reproduction/source-usable.md"
+    },
+    "source-dt-half": {
+      "verdicts_by_row": {
+        "100 pA": {
+          "rate_hz": {
+            "fail": 1
+          },
+          "adaptation_ratio": {
+            "pass": 1
+          },
+          "width_ms": {
+            "fail": 14
+          },
+          "ahp_mv": {
+            "pass": 3,
+            "fail": 11
+          },
+          "count": {
+            "pass": 1
+          },
+          "first_spike_ms": {
+            "fail": 1
+          }
+        },
+        "150 pA": {
+          "rate_hz": {
+            "pass": 1
+          },
+          "adaptation_ratio": {
+            "pass": 1
+          },
+          "width_ms": {
+            "fail": 30
+          },
+          "ahp_mv": {
+            "fail": 28,
+            "pass": 2
+          }
+        }
+      },
+      "page": "h01-sst-reproduction/source-dt-half-usable.md",
+      "note": "same verdict multiset as the dt run"
+    },
+    "rule": "a pass is not required to enter the population; the verdicts are labels"
+  },
+  "population_label": "type-matched, reproduction rejected, usable verdicts: 100 pA: rate_hz fail, adaptation_ratio pass, width_ms 14 fail, ahp_mv 11 fail/3 pass, count pass, first_spike_ms fail; 150 pA: rate_hz pass, adaptation_ratio pass, width_ms 30 fail, ahp_mv 28 fail/2 pass",
+  "braincell_transfer": "blocked: H01PV_* hardcode HL5BN1 NaTg shifts (0/10/9) and fitted Ih shifts; HL5MN1 soma uses vshiftm 13, vshifth 15, slopem 7 and default Ih shifts",
+  "wall_clock_seconds": {
+    "runs": [
+      {
+        "name": "source",
+        "input": "100",
+        "seconds": 7.348658400005661,
+        "returncode": 0,
+        "aborted": false
+      },
+      {
+        "name": "source",
+        "input": "150",
+        "seconds": 14.168072900007246,
+        "returncode": 0,
+        "aborted": false
+      },
+      {
+        "name": "source-dt-half",
+        "input": "100",
+        "seconds": 11.932297700026538,
+        "returncode": 0,
+        "aborted": false
+      },
+      {
+        "name": "source-dt-half",
+        "input": "150",
+        "seconds": 25.952730200020596,
+        "returncode": 0,
+        "aborted": false
+      }
+    ],
+    "total": 59.4,
+    "measured_by": "h01_campaign.py campaign-log.json (perf_counter around docker run)"
+  },
+  "container_stderr": {
+    "note": "Recorded under the SP6d runner, which wrote <candidate>-<input>.stderr.txt. After the feat/h01-braincell merge the runner writes <stem>.stderr.log and records stderr_tail/stderr_log in campaign-log rows; these historical files are kept as named and nothing is lost (all four were empty).",
+    "source-100.stderr.txt": "empty",
+    "source-150.stderr.txt": "empty",
+    "source-dt-half-100.stderr.txt": "empty",
+    "source-dt-half-150.stderr.txt": "empty"
+  },
+  "run_date": "2026-09-07",
+  "note": "The rejection is of the prediction 'the published fit reproduces the Allen counts in this project's NEURON container at command-only input from -81.5 mV'; it does not identify which of the unchanged conditions (hoc e_pas as the initial state, the held bias 43-53 pA not injected, the template's delete_axon(3,1.75,1,1) axon, the 34 C temperature) carries the difference. That split is a new registration, not part of SP6d. Kinetic-shift parameters for the BrainCell transfer remain open."
+}

@@ -28,6 +28,18 @@ DONORS = {
         "source": "ModelDB 267587 HL5BN1 (human layer 5 basket neuron; layer read from the model name)",
         "profile": "h01-pv-regional-mesh-axon2187", "channel_prefix": "H01PV",
         "sodium_reversal_mv": 50., "potassium_reversal_mv": -85.},
+    "l3-sst-interneuron-hl5mn1": {
+        "layer": "L3", "cell_class": "interneuron", "modifiers": (), "polarity": "I",
+        "subtype": "unknown (putative SST)",
+        "source": "ModelDB 267587 HL5MN1 = Yao 2022 HL23SST (Allen human specimen 571700636, MTG layer 3, aspiny)",
+        "profile": "h01-sst-l3-hl5mn1", "channel_prefix": "H01PV",
+        "sodium_reversal_mv": 50., "potassium_reversal_mv": -85.},
+    "l4-pyramidal-allen-527952884": {
+        "layer": "L4", "cell_class": "pyramidal", "modifiers": (), "polarity": "E",
+        "subtype": "regular-spiking pyramidal (spiny, apical truncated)",
+        "source": "Allen specimen 527952884, model 626170709 (MTG layer 4 pyramidal, perisomatic fit)",
+        "profile": "h01-l4-allen-527952884", "channel_prefix": "H01L2",
+        "sodium_reversal_mv": 53., "potassium_reversal_mv": -107.},
 }
 # The polarity default is the first registered donor of each sign; later donors do not replace it.
 DEFAULT_DONOR_KEYS = {"E": "l2-pyramidal-allen-541563728", "I": "l5-pv-basket-hl5bn1"}
@@ -100,7 +112,11 @@ def donor_for(kind):
 
         >>> from braintrace.datasets.h01_cell_types import cell_type, donor_for
         >>> donor_for(cell_type(["L4", "pyramidal", "neuron"]))
+        'l4-pyramidal-allen-527952884'
+        >>> donor_for(cell_type(["L5", "pyramidal", "neuron"]))
         'l2-pyramidal-allen-541563728'
+        >>> donor_for(cell_type(["L3", "interneuron", "neuron"]))
+        'l3-sst-interneuron-hl5mn1'
     """
     tests = (lambda d: (d["layer"], d["cell_class"], d["modifiers"]) == (kind.layer, kind.cell_class, kind.modifiers),
              lambda d: (d["layer"], d["cell_class"], d["modifiers"]) == (kind.layer, kind.cell_class, ()),
@@ -153,7 +169,7 @@ def donor_match(kind):
         mismatches.append("class")
     if kind.modifiers != donor["modifiers"]:
         mismatches.append("modifier")
-    note = ("interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+    note = (f"interneuron subtype is not in the tags; the {donor['subtype']} donor is assumed"
             if kind.polarity == "I" and kind.cell_class == "interneuron" else "")
     return {"donor": donor["profile"], "donor_key": key,
             "match": ", ".join(mismatches) or "matched", "note": note}

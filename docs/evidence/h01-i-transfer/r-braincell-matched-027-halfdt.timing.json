@@ -1,0 +1,19 @@
+{
+  "arm": "r-braincell-matched-027-halfdt",
+  "dt_ms": 0.0025,
+  "duration_ms": 330.0,
+  "started_utc": "2026-09-07T22:31:22.0793501Z",
+  "wall_clock_s": 246.0,
+  "exit_code": 0,
+  "killed_at_watchdog": false,
+  "watchdog_s": 600,
+  "peak_working_set_bytes": 6418432,
+  "pid": 18692,
+  "interpreter": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+  "pythonpath": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-transfer",
+  "mesh_from": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-transfer\\docs\\evidence\\h01-i-energetic\\e-kv3-close2-027.json",
+  "outputs_present": {
+    "npz": true,
+    "json": true
+  }
+}

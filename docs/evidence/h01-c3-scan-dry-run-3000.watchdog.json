@@ -1,0 +1,40 @@
+{
+ "checkpoint": "docs\\evidence\\h01-c3-scan-dry-run-3000.cells.json",
+ "cells_total": 104,
+ "cells_scanned": 1,
+ "statement": "1 of 104 cells scanned",
+ "status": "complete",
+ "stall_seconds": 600.0,
+ "max_relaunches": 3,
+ "launches": [
+  {
+   "started": "2026-09-07T14:43:09-07:00",
+   "command": [
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01-inspect\\Scripts\\python.exe",
+    "-u",
+    "docs\\evidence\\h01_c3_edge_list.py",
+    "--limit",
+    "3000",
+    "--cache",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+    "--archive",
+    "proofread104.zip",
+    "--output",
+    "docs\\evidence\\h01-c3-scan-dry-run-3000.json",
+    "--cells",
+    "2530864375"
+   ],
+   "log": "docs\\evidence\\h01-c3-scan-dry-run-3000.launch1.log",
+   "pid": 25208,
+   "outcome": "exit",
+   "exit_code": 0,
+   "ended": "2026-09-07T14:44:19-07:00",
+   "wall_seconds": 70.0,
+   "progress_lines": 4,
+   "launch": 1,
+   "cells_before": 0,
+   "cells_after": 1
+  }
+ ],
+ "kills": 0
+}

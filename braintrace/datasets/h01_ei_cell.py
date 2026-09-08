@@ -11,11 +11,25 @@ from .h01_ei_profiles import get_donor_profile, channel_controls
 from .h01_discretization import BoundaryAlignedCV
 from .h01_construction import H01Cell
 
+_ION_FREE_MECHANISMS = frozenset({"Ih"})
+_CALCIUM_MECHANISMS = frozenset({"SK", "Ca_HVA", "Ca_LVA"})
+
+
+def _snap_interval(row):
+    """Snap interval ends within 1e-9 of 0 or 1 onto the branch bounds (rounding only)."""
+    branch, lo, hi = row
+    if isinstance(lo, (int, float, np.floating)) and np.isfinite(lo) and abs(lo) <= 1e-9:
+        lo = 0.
+    if isinstance(hi, (int, float, np.floating)) and np.isfinite(hi) and abs(hi-1.) <= 1e-9:
+        hi = 1.
+    return branch, lo, hi
+
 
 def _validate_regions(morphology, regions, polarity):
     if not regions or set(regions)-{"soma", "axon", "dend", "apic"}:
         raise ValueError("Use explicit soma, axon, dend, or apic electrical regions.")
-    intervals = {name: tuple(region.evaluate(morphology).intervals) for name, region in regions.items()}
+    intervals = {name: tuple(_snap_interval(row) for row in region.evaluate(morphology).intervals)
+                 for name, region in regions.items()}
     required = ("soma", "axon") if polarity == "I" else ("soma",)
     if any(not intervals.get(name) for name in required):
         raise ValueError("Profile requires nonempty "+" and ".join(required)+" regions.")
@@ -50,9 +64,15 @@ def _paint_profile(cell, profile, regions, *, active=True):
                                    E=profile.reversal_mv*u.mV))
         if not active:
             continue
-        if calcium is not None:  # Ions painted only with calcium; SP2 owns widening this condition.
+        mechanisms = {mechanism for mechanism, _ in channels}
+        if calcium is None and mechanisms & _CALCIUM_MECHANISMS:
+            raise ValueError(f"Region {family!r} lists a calcium mechanism without a calcium tuple.")
+        if calcium is not None or mechanisms-_ION_FREE_MECHANISMS:
+            # Ih is the one registered mechanism whose root type needs no ion; every other channel
+            # needs the fixed sodium/potassium ions (SP2: the B3 axon row carries NaTs, no calcium).
             cell.paint(region, Ion("SodiumFixed", name="sodium", E=profile.sodium_reversal_mv*u.mV))
             cell.paint(region, Ion("PotassiumFixed", name="potassium", E=profile.potassium_reversal_mv*u.mV))
+        if calcium is not None:
             cell.paint(region, Ion("H01PV_Calcium", name="calcium", decay=calcium[0]*u.ms, gamma=calcium[1]))
         for mechanism, density in channels:
             cell.paint(region, Channel(prefix+"_"+mechanism, name="pv_"+mechanism,
@@ -82,7 +102,8 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
         Donor key from ``h01_cell_types.DONORS``; its polarity must equal
         ``polarity``. Default: the polarity's default donor.
     mode : str, optional
-        Candidate defaults or explicit source reproduction.
+        Candidate defaults, explicit source reproduction, or an experimental
+        mode the donor registers (``finalist`` for I, ``b3`` for E).
     current_na, delay_ms, duration_ms : float, optional
         Somatic current pulse in nA and milliseconds.
     max_cv_length_um : float, optional

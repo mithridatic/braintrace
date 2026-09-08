@@ -1,0 +1,147 @@
+{
+  "purpose": "Isolate the rc 139 of the first stage-1 launch (2026-09-07 22:38 UTC). Short 20 ms runs at 0.27 nA in braintrace-h01-neuron:9.0.2, library .cache/human-pv/kv3-phase-reference (12/12 mechanism hashes and the three donor file hashes match the finalist's retained report), one variable per run.",
+  "date_utc": "2026-09-08",
+  "cause": "docs/evidence/h01_pv_neuron_reference.py commit c2ce97a (SP6c donor import) added `[m for m in cell.myelin if m.parentseg() is not None]` to the geometry record. NeuronTemplate.hoc declares myelin[1], deletes every section in init (forall delete_section()), and recreates myelin only in delete_axon() for HL23PN1/HL23MN1/HL5MN1; HL5BN1 takes delete_axon_BPO(), so cell.myelin is a reference to a deleted section. Iterating it from Python throws hoc_execerror 'section in the object was deleted' as an unconverted C++ exception; the interpreter aborts (terminate called), exit 139. The new --scale code is not involved: the control without --scale crashes identically and the driver at ac5ed12 (which has --scale) runs.",
+  "not_the_cause": [
+    "--scale NaTg:axon:1.5 (control B without it crashes; identity C and soma D crash)",
+    "the mechanism library or donor files (hashes match the finalist report)",
+    "the 1500 ms duration (20 ms crashes too)",
+    "the concurrent container (the crash reproduces alone)"
+  ],
+  "fix": "_existing_sections(cell, name) walks indices with h.section_exists before reading the array; the geometry line uses it for myelin. Test: h01_pv_neuron_reference_test.py::test_myelin_geometry_skips_a_template_array_of_deleted_sections. HL5MN1 keeps its myelin geometry (section_exists is 1 there).",
+  "runner_repair": "h01_campaign.py now writes <stem>.stderr.log (stderr + stdout tail) for every real run and records stderr_tail (last 20 lines) and stderr_log per row; tests in h01_campaign_test.py.",
+  "splits": [
+    {
+      "split": "A-candidate",
+      "variable": "registered candidate (finalist flags + scale NaTg:axon:1.5), HEAD driver",
+      "duration_ms": 20.0,
+      "seconds": 8.1,
+      "returncode": 139,
+      "outputs_written": false,
+      "stderr_tail": [
+        "NEURON: section in the object was deleted",
+        " near line 0",
+        " }",
+        "  ^",
+        "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+        "  what():  hoc_execerror: section in the object was deleted"
+      ]
+    },
+    {
+      "split": "B-finalist-no-scale",
+      "variable": "control: finalist flags, no --scale, HEAD driver",
+      "duration_ms": 20.0,
+      "seconds": 7.75,
+      "returncode": 139,
+      "outputs_written": false,
+      "stderr_tail": [
+        "NEURON: section in the object was deleted",
+        " near line 0",
+        " }",
+        "  ^",
+        "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+        "  what():  hoc_execerror: section in the object was deleted"
+      ]
+    },
+    {
+      "split": "C-scale-axon-1.0",
+      "variable": "identity scale NaTg:axon:1.0, HEAD driver",
+      "duration_ms": 20.0,
+      "seconds": 7.01,
+      "returncode": 139,
+      "outputs_written": false,
+      "stderr_tail": [
+        "NEURON: section in the object was deleted",
+        " near line 0",
+        " }",
+        "  ^",
+        "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+        "  what():  hoc_execerror: section in the object was deleted"
+      ]
+    },
+    {
+      "split": "D-scale-soma-1.5",
+      "variable": "scale NaTg:soma:1.5, HEAD driver",
+      "duration_ms": 20.0,
+      "seconds": 7.38,
+      "returncode": 139,
+      "outputs_written": false,
+      "stderr_tail": [
+        "NEURON: section in the object was deleted",
+        " near line 0",
+        " }",
+        "  ^",
+        "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+        "  what():  hoc_execerror: section in the object was deleted"
+      ]
+    },
+    {
+      "split": "E-driver-ac5ed12",
+      "variable": "driver at commit ac5ed12 (--scale commit, before donor import), control candidate B",
+      "duration_ms": 20.0,
+      "returncode": 0,
+      "outputs_written": true,
+      "stderr_tail": []
+    },
+    {
+      "split": "E-driver-c2ce97a",
+      "variable": "driver at commit c2ce97a (SP6c donor-import commit; identical to HEAD before the fix), control candidate B",
+      "duration_ms": 20.0,
+      "returncode": 139,
+      "outputs_written": false,
+      "stderr_tail": [
+        "NEURON: section in the object was deleted",
+        " near line 0",
+        " }",
+        "  ^",
+        "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+        "  what():  hoc_execerror: section in the object was deleted"
+      ]
+    },
+    {
+      "split": "F-probe-faulthandler",
+      "variable": "probe_myelin.py: load HL5BN1, iterate cell.myelin under python -X faulthandler",
+      "returncode": 139,
+      "stderr_tail": [
+        "  File \"/evidence/h01-i-reserve/crash-isolation/probe_myelin.py\", line 21 in <module>",
+        "all: 29 axonal: 2",
+        "myelin count via hoc: n/a",
+        "axon-family names in all: ['NeuronTemplate[0].axon[0]', 'NeuronTemplate[0].axon[1]']",
+        "",
+        "Extension modules: _neuron_section, nrn, hoc, neuron.hoc, numpy._core._multiarray_umath, numpy.linalg._umath_linalg (total: 6)"
+      ],
+      "faulthandler_frame": "probe_myelin.py line 21: for m in cell.myelin"
+    },
+    {
+      "split": "G-probe-section-exists",
+      "variable": "h.section_exists on the built HL5BN1 cell",
+      "returncode": 0,
+      "observed": {
+        "myelin[0]": 0.0,
+        "myelin[1]": 0.0,
+        "axon[0]": 1.0,
+        "axon[1]": 1.0,
+        "axon[2]": 0.0,
+        "soma[0]": 1.0
+      }
+    },
+    {
+      "split": "H-fixed-driver-smoke",
+      "variable": "registered candidate A, fixed driver (_existing_sections guard)",
+      "duration_ms": 20.0,
+      "seconds": 5,
+      "returncode": 0,
+      "outputs_written": true,
+      "trace_finite": true,
+      "samples": 418,
+      "regional_scales": [
+        {
+          "mechanism": "NaTg",
+          "region": "axon",
+          "factor": 1.5
+        }
+      ],
+      "candidate_sha256": "f4a2aa6c24d887343e7003a0a226d6f6d702dfd707e31ad05d44773ea9c5dcbe"
+    }
+  ]
+}
