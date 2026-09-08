@@ -77,3 +77,18 @@ The [installed-wheel preparation](h01-ready-104-wheel-audit.md) passes source,
 installation and isolated-import checks (106 packaged files, 31 H01 modules).
 The final full-population execution with imports pinned to that wheel remains
 pending; source-run success does not substitute for it.
+
+## Implicit calcium continuation
+
+The [isolated diagnosis and repair](h01-ready-cell7196644737-result.md) now
+identifies the negative-calcium numerical failure and verifies finite 10 ms
+runs using an opt-in implicit calcium solve. The finer .000625/.0003125 ms
+comparison passes the isolated voltage and event timing limits. The full104
+[implicit driven run](h01-ready-104-implicit-ei-10ms-plan.json) is registered at
+.000625 ms with a 12000-second cap; its construction and runtime results remain
+pending. Its solver, morphology, donor and input provenance must pass both the
+new solver-transition comparison and the existing source-construction gate.
+
+The preceding installed wheel predates the numerical repair. Final packaging
+requires a fresh wheel and full-population execution of its actual installed
+code after the remaining runtime, control, refinement and physiological gates.

@@ -2078,3 +2078,15 @@ both registered timesteps with finite traces and positive calcium. The paired
 voltage difference is 6.364916 mV, so refinement is still unqualified, and the
 extreme ~383.8 mV response remains. Full104 readiness is not established. See
 [experimental repair evidence](evidence/h01-ready-cell7196644737-implicit-decision.json).
+
+The finer isolated comparison narrows Y5's numerical limit: consecutive timestep
+halving errors decrease from 6.364916 to 3.471139, 1.819563 and 0.933343 mV.
+At .000625/.0003125 ms, the exact 7196644737 model with the implicit solver and
+unchanged 1 nA pulse has finite traces, positive calcium, one event each and
+.0003125 ms event timing separation. This passes only the registered isolated
+comparison, not a general error bound or full104 refinement. Evidence:
+[refinement decision](evidence/h01-ready-cell7196644737-refinement-decision.json).
+The full104 source run at .000625 ms is registered and underway; its result is
+not yet available. The installed wheel predating this solver remains unsuitable
+as the final package qualification artifact and must be rebuilt from the final
+qualified source.
