@@ -52,3 +52,9 @@ This pre-stimulus smoke ends before the assumed 1 nA pulse at 2-5 ms. It does
 not test driven firing or synaptic delivery. Next are the driven 10 ms run,
 all four matched controls at 104 cells and the dt-halving comparison. The
 outstanding physiological gates remain separate. The full goal is not complete.
+
+The first driven `ei` 10 ms run is now supervised under the
+[registered plan](h01-ready-104-ei-10ms-plan.json). Its conservative estimate is
+4,673.661 seconds and 18,262,754,560 peak bytes, with a 6,000-second wall cap,
+600-second silence cap and 4 GiB free-memory reserve. This is a pending
+measurement; the completed 1 ms result above remains the verified runtime scope.
