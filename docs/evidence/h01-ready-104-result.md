@@ -169,3 +169,13 @@ electrical construction or simulation. Corrected full-population readiness stays
 open. The mistake was treating a soma label on the largest component as sufficient
 cell-body evidence; future selection overrides carry independent source evidence
 and loaded-source checks rather than relying on node count alone.
+
+The corrected four-cell electrical construction passes: 12563 compartments
+(7196644737: 1691; 4138580687: 1510; 4668874666: 3310; 3470629528: 6052),
+23.932 seconds construction and 28.964 seconds total subprocess time. The
+hash-bound h01-four-soma-construction-decision.json checks all four identities,
+selected members and source hashes, unchanged donor parameters, implicit solver,
+10 um CV policy, 1 nA inputs, positive CV counts and output-site registration.
+No initialization or simulation was performed. This removes the corrected
+components' electrical-construction uncertainty; it is not all104 construction
+or runtime qualification and does not restore their omitted source branches.

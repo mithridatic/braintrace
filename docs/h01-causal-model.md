@@ -2192,3 +2192,10 @@ resolve soma locations for all four (h01-soma-components-load-check.json).
 The 67 network/CLI tests pass with full network-module statement coverage.
 This resolves the ignored-selection software path, not whole-cell reconstruction
 or corrected electrical runtime. Those remain open pending new build evidence.
+
+Four source-supported replacement components now pass actual electrical
+construction with unchanged donors, solver, CV policy and input settings.
+The result totals 12563 compartments in 23.932 seconds; identities, source
+hashes and output registrations are checked in
+h01-four-soma-construction-decision.json. Initialization and runtime for these
+components remain open; existing r2 uses the historical selections.
