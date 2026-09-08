@@ -265,6 +265,9 @@ flowchart TD
     A --> A1[Copy NEURON counts: sufficient, both cells pass]
     B --> B1[Scheme swap: moves no event past its gate]
     A --> A0[Axon-only 0.25 um control: consistent, uncontrolled]
+    B --> B2[SP2 full train: B1 NEURON fixed step vs CVode fails from event 6 - integration, not mesh]
+    B2 --> ID[SP2 close: BrainCell identical to NEURON fixed step, 36/36 events - identity closed]
+    B2 --> DT[SP2 dt requirement: 1 ms met at dt 0.000625 at 0.27 nA; 0.19 nA not reached within cap]
 ```
 
 | Node | Split | Result | Evidence |
@@ -273,8 +276,16 @@ flowchart TD
 | T | Halve the BrainCell time step, physical parameters unchanged | First failed crossing remains outside the timing limit | [paired comparison](evidence/h01-pv-candidate-transfer-drift-halfdt-audit.json) |
 | A0 | Refine only the BrainCell axon to 0.25 um | All gates pass 8/8; not a controlled swap | [axon-only control](evidence/h01-i-axon025-transfer-audit.json) |
 | A1, B1 | 2x2 half-split: mesh x integration, everything else held equal | Decision "mesh": matched cells pass, MaxCVLen cells fail on rise; scheme swap within gate | [isolation split](evidence/h01-pv-transfer-isolation.md), [audit](evidence/h01-pv-transfer-isolation-audit.json) |
+| B2 (SP2) | Full 270-1270 ms train, NEURON fixed step at the BrainCell dt vs CVode finalist | Fails the 0.1 ms rise gate from event 6 (7.42 ms at event 36, 0.27 nA; 14.75 ms at event 14, 0.19 nA): integration, not mesh | [sp2-i-decision](evidence/h01-i-transfer/sp2-i-decision.json) |
+| ID (SP2 close) | BrainCell matched mesh vs NEURON fixed step, same dt, 0.27 nA full train | 36 = 36 events, rise 1.4e-7 ms, peak 8.3e-5 mV: simulator identity, gate closed 2026-09-07 | [sp2-close-decision](evidence/h01-i-transfer/sp2-close-decision.json) |
+| DT (SP2 close) | NEURON dt-halving series against CVode, 1 ms crossing tolerance | 1 ms met at dt 0.000625 at 0.27 nA; not reached within cap at 0.19 nA | [sp2-close-decision](evidence/h01-i-transfer/sp2-close-decision.json) |
 
 ### Y2 registered prediction for SP2 (2026-09-07, no new observation)
+
+*Superseded 2026-09-08 (historical registration, kept as written).* The registry re-key landed, six NEURON arms and the
+confirming BrainCell train `a1-matched-027` (616.7 s wall, exit 0) ran, and SP2 closed on simulator identity; see the SP2
+close entry below. JSON: `evidence/h01-i-transfer/sp2-close-decision.json` (`identity_gate.closed` true,
+`runs.neuron_runs_used` 6, `wall_clocks.a1-matched-027` 616.7).
 
 Specification: [SP2 transfer isolation](specs/2026-09-07-h01-transfer-isolation.md);
 manifest `evidence/h01-transfer-i-manifest.json`. No run has been made; this entry
@@ -301,6 +312,12 @@ present profile.
 
 ### Y2 observation, SP2 step 1 (2026-09-07)
 
+*Superseded 2026-09-08 by the SP2 close entry:* the 0.27 nA full train was scored (36 = 36 events, rise
+1.4e-7 ms, raw peak 8.3e-5 mV against NEURON fixed step) and the identity gate closed 2026-09-07; only the 0.19 nA
+BrainCell train and the 0.19 nA dt remain open (`evidence/h01-i-transfer/sp2-close-decision.json`
+`identity_gate.confirming_full_train.a1-matched-027`, `identity_gate.closed`). The "Y2 remains open" and
+"every arm is still untested" statements below are the state at the time of writing.
+
 Halving pair run at the copied mesh, 0.27 nA, 330 ms, finalist profile (aligned):
 dt 0.005 ms 115.6 s wall (0.35 s per simulated ms), dt 0.0025 ms 246.0 s (0.745 s per
 simulated ms). Over 270-329.5 ms both traces hold 3 events. Rise and width are inside
@@ -324,6 +341,10 @@ held-equal alignment is checkable and scoring is no longer refused. Every arm is
 untested.
 
 ### Y2 observation, SP2 step 1b (2026-09-07, offline re-score, no run)
+
+*Superseded 2026-09-08 by the SP2 close entry* (same JSON as above): "Y2 stays open; the full train is unscored at every
+input" held when written; the 0.27 nA train has since been scored and the identity gate closed. Open: the 0.19 nA
+BrainCell train and the 0.19 nA dt.
 
 Registered before re-scoring (spec amendment): the peak-sample difference is a sampling
 convention; the parabolic vertex through the three samples around each maximum, applied to
@@ -361,7 +382,7 @@ mesh, 601.5 s), the corrected relaunch ran 602.0 s. The derived 525 s cost was w
 mislaunch already showed the MaxCVLen configuration over the watchdog). (ii) NEURON fixed step
 `b1-fixed-027` (232.4 s) holds 36 events against the CVode finalist's 37 and fails the 0.1 ms rise gate
 from event 6, the rise error growing monotonically to 7.42 ms at event 36; `b1-fixed-019` (152.8 s)
-holds 14 = 14 events and fails from event 3, reaching 14.76 ms at event 14. Width stays at +0.003 ms
+holds 14 = 14 events and fails from event 3, reaching 14.75 ms at event 14. Width stays at +0.003 ms
 and the interpolated peak at -0.41 to -0.46 mV (inside 0.5 mV) at every event of both. (iii)
 `r-neuron-fixed-027-halfdt` (121.8 s): the NEURON halving pair is inside the half gate at every event
 with the same differences as the BrainCell pair (rise -0.0043/+0.0076/+0.0088 ms, interpolated peak
@@ -381,7 +402,8 @@ the decision table is `integration` (time level, not mesh). Y2 **narrows**: the 
 re-opened, the implementation-difference branch is excluded over the window where both simulators
 can be compared, and what remains open is the time level of the reference comparison (a CVode
 reference against a fixed step at 0.005 ms, or a fixed-step reference at a smaller dt) and the
-unrun full BrainCell train. Y2 does not close. JSON: `evidence/h01-i-transfer/sp2-i-decision.json`;
+unrun full BrainCell train. Y2 does not close (superseded 2026-09-08: the identity gate closed in the SP2 close entry
+below; `evidence/h01-i-transfer/sp2-close-decision.json`). JSON: `evidence/h01-i-transfer/sp2-i-decision.json`;
 page: [result](evidence/h01-i-transfer-result.md).
 
 ### Y2 observation, SP2 close (2026-09-07): identity closed, dt qualification, confirming full train
@@ -531,6 +553,12 @@ flowchart TD
 | L6 | Refine axon, soma, or dendrites alone | Only axonal refinement reproduces the late-interval change | [regional mesh](evidence/h01-pv-regional-mesh.md) |
 
 ### Y3 under the recorded input
+
+*Superseded 2026-09-06 (forensics; banner added 2026-09-08).* The 31.4 pA recorded bias is a holding current the published
+fit absorbed: the model input is command only and the bias-on residuals below (26/59, 22/39, the "+2 to +4 mV passive
+family", "the bias is part of the input", the passive-family dose as next split) are retired. JSON:
+`evidence/h01-pv-input-datum.json` `forensics_2026_09_06` (model at bias 0 rests within 0.07 mV of the human held baseline;
+with the bias applied the error is +2.42 mV, the predicted R_in x bias shift).
 
 **Behavior.** Every Y3 result above used bias 0. The recordings carry a
 31.445 pA acquisition bias at both calibration inputs
@@ -698,7 +726,9 @@ hyperpolarised than the soma. Y3's open post-trough row is therefore narrowed
 from "drive or recovery/availability" to drive on the existing axon-first
 initiation pathway; the reserve evaluation registered in
 `evidence/h01-i-reserve-manifest.json` (axonal NaTg x1.5 with the somatic x1.1
-retained, cap 1, not yet run) tests whether axonal sodium density supplies it.
+retained, cap 1) tests whether axonal sodium density supplies it. [Update 2026-09-08: the
+reserve evaluation was run 2026-09-07 (launched 22:51:42Z) and FAILED at cap, rejection clause
+met; see the reserve stage 1 entry below and `evidence/h01-i-reserve/stage-1-decision.json`.]
 Nothing here closes the row: the audit is a reading of state, not an intervention,
 and the drive's boundary is still unidentified.
 
@@ -873,19 +903,25 @@ therefore names a sub-system outside F1 to F5, the late return under
 hyperpolarising input, which is set by Ih kinetics or leak, not by the spike
 channels.
 
-**Prediction confirmed.** Stated before the six runs: F1 and F2 move the minima
+**Prediction partly confirmed.** Stated before the six runs: F1 and F2 move the minima
 toward zero and F4 away; F2 carries most of interval 2; no cell passes minima
-and crossings together. All held. The dose split was not run: a dose of F1 or
+and crossings together. Three of the five registered checks held (`stage-b-decision.json`
+`prediction_check`): "cell 110 best minima with i2 near +30" gave the best minima (m2 -0.01 mV)
+but i2 +49.9 ms, not +30; "cell 101 best i2 with minima near -3" held in direction (i2 +24.8,
+minima -2.1/-5.0 mV), not in size. The dose split was not run: a dose of F1 or
 F2 cannot pass the subthreshold rows, so it cannot change the verdict.
 
 **Steep X.** None. F2 for interval 2, F1 for the minima per unit interval,
 F4 for the rising and falling phases (0.11 ms with, 0.17 ms without).
 
 **Action.** The E campaign fails at 6 of 24 evaluations
-([result](evidence/h01-e-campaign2-result.md)). The next split, if approved, is
+([result](evidence/h01-e-campaign2-result.md); `evidence/h01-e-campaign2/stage-b-decision.json`
+`decision` "FAIL at 6 of 24 evaluations", `reserve` 18). The next split, if approved, is
 inside the passive-Ih family on the base cell: the Ih time constant and the
 leak conductance against the ten subthreshold samples under 0.11 nA, before any
-spike-channel dose. Eighteen evaluations remain in reserve.
+spike-channel dose. Eighteen evaluations remain in reserve. [Superseded 2026-09-08: the
+passive-Ih next split was overtaken by the energetic search and by the SP3 gain split, which
+closed the passive family FAIL (`evidence/h01-e-gain/stage-close-decision.json` `decision` FAIL).]
 
 ```mermaid
 flowchart TD
@@ -931,7 +967,11 @@ X); initiation arms could not run (no axonal sodium row, Stage Y). Holdout
 sweep 53 prediction: [record](evidence/h01-prediction-e.md).
 
 **Action.** The family change (an initiation site in the axon) is the user's
-decision; two evaluations of about 15 minutes each would test it.
+decision; two evaluations of about 15 minutes each would test it. [Superseded 2026-09-08:
+the usable-tier campaign made the family change (axonal NaTs, `insert_density NaTs:axon:3.814`)
+and axon-first initiation is established at every active input;
+`evidence/h01-e-gain/stage-g0-decision.json` `initiation.result` "axon first at every active
+input", `evidence/h01-e-gain/stage-close-decision.json` `established`.]
 
 | Node | Split | Result | Evidence |
 | --- | --- | --- | --- |
@@ -1000,9 +1040,13 @@ default profiles' firing and full numerical robustness remains open.
 
 ### Y5 registered prediction for SP5 (2026-09-07, no observation yet)
 
-No run has been made; this block records what was predicted so that a miss can later be
-scored against it. Spec: [functional inhibition](specs/2026-09-07-h01-functional-inhibition.md);
-manifest `docs/evidence/h01-ie-inhibition-manifest.json` (cap 6 + 2, `prior_evaluations 0`).
+This block records what was predicted so that a miss can later be scored against it. Status
+(2026-09-08): the 100 ms benchmark completed (347 s, run 1 of 6; manifest `prior_evaluations` 1;
+`docs/evidence/h01-ie-inhibition/benchmark.json` `seconds` 347.0); the stage-1 `disconnected` 300 ms
+arm launched 2026-09-07 21:58 was stopped by the user (untested, no cap spent;
+`docs/evidence/h01-ie-inhibition/decision.json` `status`, `cap_accounting`); arms 2-4 were not
+launched. Spec: [functional inhibition](specs/2026-09-07-h01-functional-inhibition.md);
+manifest `docs/evidence/h01-ie-inhibition-manifest.json` (cap 6 + 2, `prior_evaluations` now 1).
 Stage 1 uses the current unpromoted profiles through the closing-restored I wrapper.
 
 **What is fixed before the runs.** E drive 0.6 nA constant from 0 ms, a stimulus choice
@@ -1030,7 +1074,7 @@ depolarising, no E spikes in either control) is the only direct observation so f
 placement question (whether the PV contact belongs perisomatically) remains the user's decision;
 SP5 measures both placements.
 
-**SP5 benchmark, 2026-09-07 (observation: none; run untested).** The registered 100 ms disconnected benchmark at 0.6 nA was launched detached and killed at the 900 s abort with no trace written (`Circuit constructed` at about 190 s, nothing after; CPU at 100 percent under about 12 other H01 jobs). Whether E fires at 0.6 nA in this circuit is therefore still unobserved, the drive rule was not evaluated and the drive was not changed; the 300 ms arms are at least 45.7 min each under load (derived floor from 9.13 s per simulated ms), above the 15 min approval threshold. Run 1 of 6 spent. Record: `docs/evidence/h01-ie-inhibition/benchmark-2026-09-07-killed.json` (historical; the killed run does not spend the cap); page `evidence/h01-ie-inhibition-benchmark.md`.
+**SP5 benchmark, 2026-09-07 (observation: none; run untested).** The registered 100 ms disconnected benchmark at 0.6 nA was launched detached and killed at the 900 s abort with no trace written (`Circuit constructed` at about 190 s, nothing after; CPU at 100 percent under about 12 other H01 jobs). Whether E fires at 0.6 nA in this circuit is therefore still unobserved, the drive rule was not evaluated and the drive was not changed; the 300 ms arms are at least 45.7 min each under load (derived floor from 9.13 s per simulated ms), above the 15 min approval threshold. Record: `docs/evidence/h01-ie-inhibition/benchmark-2026-09-07-killed.json` (historical; the killed run is untested and does not spend the cap, manifest `cap_notes`; run 1 of 6 is the 19:28 rerun below); page `evidence/h01-ie-inhibition-benchmark.md`.
 
 **SP5 benchmark rerun, 2026-09-07 19:28 (observation: E fires at 0.6 nA; measured, machine quiet except the C3 rescan).** The registered 100 ms disconnected benchmark completed in 347 s (3.47 s per simulated ms, 0.82 of the 4.25 anchor) on commit `c56616a` (programme tip with the BrainCell performance commits) with every saved array finite. E fired 2 spikes (21.775, 38.31 ms) and then accommodated near -69 mV to 100 ms; I fired once (27.125 ms, from the 20 ms pulse) and did not fire to the 45, 70 or 95 ms pulses. The drive rule held (>= 1 E spike): 0.6 nA stands, unchanged; the 300 ms >= 3-spike control rule is undecided by this window. Derived (not measured): 1041 s (17.4 min) per 300 ms arm, 2082 s (34.7 min) for the halved arm, both above the 15 min approval threshold; no 300 ms arm launched. Run 1 of 6 spent. Record: `docs/evidence/h01-ie-inhibition/benchmark.json`; page `evidence/h01-ie-inhibition-benchmark.md`.
 
@@ -1070,7 +1114,13 @@ form (plateau, not a local maximum), the 0.65 arm's trough (block), the B0 count
 (dendritic load), the width (1.01 against 0.91 ms), the resting potential (−84 against
 −72). Sweep 55 was not opened; the cap closed first.
 
-### Y4 registered predictions for the gain split (SP3, registered 2026-09-07; Stage 0 observed below, Stage G not run)
+### Y4 registered predictions for the gain split (SP3, registered 2026-09-07; historical registration)
+
+*Historical registration (banner 2026-09-08).* Both decision files landed: Stage G ran with both arms rejected and g3
+recorded, not run (`evidence/h01-e-gain/stage-g-decision.json` `decision` "both-arms-rejected; g3 recorded (combined Ih
+half + leak x1.5), not run", `evaluations_spent` 3) and the split closed FAIL at 3 of 4 on 2026-09-08
+(`evidence/h01-e-gain/stage-close-decision.json` `decision` FAIL, `closed_utc` 2026-09-08T04:50:00Z). Sweep 54 stays
+sealed (no `h01-prediction-e3.json`). The text below is kept as registered.
 
 No run has been made; this block records what was predicted so that a miss can later be
 scored against the prediction. Spec: [gain split](specs/2026-09-07-h01-e-gain-split.md);
@@ -1103,7 +1153,12 @@ kinetics absent from the Allen genome, or a second human L2/3 donor with a recor
 curve). The observation entry replaces this block when `stage-g0-decision.json` and
 `stage-g-decision.json` land, in the same commit.
 
-### Y4 observed under Stage 0 of the gain split (2026-09-07/08, one evaluation, incomplete)
+### Y4 observed under Stage 0 of the gain split (2026-09-07/08, one evaluation, incomplete; SUPERSEDED)
+
+*Superseded by the completed Stage 0 entry below.* `evidence/h01-e-gain/stage-g0-decision.json` `runs` records sweeps
+50/53/56 completed (845/828/781 s, rc 0) and `decision` "stage-g-opens-as-registered" (`stage_g_opens` true); the
+"killed ... untested", "decision is null" and "Stage G does not open" statements below were true only at the time of
+writing.
 
 **Observation.** `g0-b3` (B3 flags, sha256 `e4825c83...`) ran at sweeps 43, 50, 53, 56 in
 `braintrace-h01-neuron:9.0.2`; decision file `evidence/h01-e-gain/stage-g0-decision.json`,
@@ -1253,7 +1308,10 @@ two observations to be silent at 200 and 250 pA with a sweep-43 return about -4.
 last evaluation on a predicted FAIL; recorded, not run.
 
 **Status.** Y4 stays open. Stage G complete; G3 not run; evaluations spent 3 of 4. Under the manifest fail
-rule the gain split stands at FAIL unless evaluation 4 is spent on the recorded combined arm; the
+rule the gain split stands at FAIL unless evaluation 4 is spent on the recorded combined arm [superseded by
+the closing entry below: the split closed FAIL with evaluation 4 registered and not spent (fail-fast);
+`evidence/h01-e-gain/stage-close-decision.json` `evaluations` spent 3, cap 4, registered_not_spent 1,
+`arms[3].status` "registered, not spent"]; the
 reassessment names the gain set outside the fit's passive family (slow Na inactivation or Kv7/M kinetics,
 or a second human L2/3 donor with a recorded f-I curve, SP6b lead).
 
@@ -1442,7 +1500,9 @@ Coverage ([coverage](evidence/h01-export-scan-coverage.json),
 [listing](evidence/h01-c3-export-listing.json)): the C3 synapse export holds 166 shards
 (32.86 GB); 9 are local and scanned (8,991,719 records), so `full_export_scanned` is false
 as "9 of 166 shards scanned", a measured denominator that was previously unknown. The
-3,000-sample rescan stands at 26 of 104 cells; a one-cell dry run under the watchdog
+3,000-sample rescan stood at 26 of 104 cells when this check was written; it completed 104 of 104 the
+same day (see SP7a/SP7d below; `evidence/h01-c3-scan-3000.watchdog.json` `status` complete,
+`cells_scanned` 104). A one-cell dry run under the watchdog
 ([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
 kill. Absence of a contact is not established by either scan.
 
@@ -1494,6 +1554,12 @@ not yet sized.
 
 #### Y5 population, 2026-09-07 (16:55): the 12-cell staged build measured (SP8 staged build step)
 
+*Historical (banner 2026-09-08).* The "not approved" verdict below was reversed by the 18:26 quiet-machine check
+(`evidence/h01-population-build-12.json` `quiet_machine_attempt_2026-09-07T17.verdict_40_cell_stage` "approved by this
+check"); the approved 40-cell build-only launch then failed at 82.6 s (ValueError `from_points` on cell 5805562981; 7 of
+104 components fail to load), stages 2-5 untested, runs stopped by the user; the deliverable is the 12-cell network
+(`evidence/h01-population-build-40.json` `runs.build-only` wall 82.56 s, status failed; `status`; `population_deliverable`).
+
 Observed ([12-cell build](evidence/h01-population-build-12.json),
 [page](evidence/h01-population-build-12.md); **all under load**, predictions registered in the
 builder-spec addenda before each launch): the region-interval defect did not recur; all 12 cells
@@ -1526,6 +1592,11 @@ hang; add a per-cell progress callback (or a build-only `init_state` timing mode
 12-cell `ei` and `disconnected` arms under it.
 
 #### Y5 population, 2026-09-07 (18:26): the 12-cell run phase measured on a quiet machine (SP8 staged build, instrumented)
+
+*Historical (banner 2026-09-08).* The 40-cell approval below stands as the check's verdict; the approved build-only launch
+failed at 82.6 s (ValueError `from_points` on cell 5805562981; 7 of 104 components fail to load), stages 2-5 untested,
+stopped by the user; the deliverable is the 12-cell network (`evidence/h01-population-build-40.json` `runs.build-only`,
+`status`, `population_deliverable`; see the 21:30 entry).
 
 Instrument ([spec addendum 17:05](specs/2026-09-07-h01-population-builder.md)): `Network.init_state`
 has no hook, so `h01_network_init.py` runs the same per-population `Cell.init_state` loop with
@@ -1618,7 +1689,12 @@ interneurons without modifiers resolve to it; the type-matched count is 37 of 10
 (`evidence/h01-population-types.md`). L1, L2, L4 interneurons and the modified L5 interneurons stay
 on HL5BN1, labelled.
 
-Not observed: any simulated response. The NEURON reproduction at the two registered inputs
+*Historical (banner 2026-09-08); see the SP6d reproduction entry below:* the published fit ran 4 of cap 4 (all rc 0) and
+was REJECTED by the registered count rule (16 spikes for 14 at 100 pA, 30 for 34 at 150 pA;
+`evidence/h01-donors/stage-hl5mn1-decision.json` `reproduction_status` rejected, `evidence/h01-sst-reproduction.json`
+`inputs`).
+
+Not observed at the time of writing: any simulated response. The NEURON reproduction at the two registered inputs
 (manifest `evidence/h01-sst-reproduction-manifest.json`, prediction: counts 14 and 34 exactly;
 rejection: a count off by more than 1) is untested because the machine was reserved for SP1
 when this section was written. Y6 is therefore **open**: the donor is imported and type-matched,
@@ -1659,7 +1735,12 @@ count is 55 of 104 (`evidence/h01-population-types.md`). L2 pyramids stay on 541
 L6 and WM pyramids and every `excitatory/spiny-with-atypical-tree` cell stay on the polarity
 default, labelled.
 
-Not observed: any simulated response. The NEURON reproduction at the two registered inputs
+*Historical (banner 2026-09-08); see the SP6d reproduction entry below:* the published fit ran 4 of cap 4 (all rc 0) and
+was REJECTED at sweep 39 (8 spikes for 12); sweep 69 gave 19 for 20, inside the 17-20 repeat band
+(`evidence/h01-donors/stage-allen-l4-decision.json` `reproduction_status` rejected, `bands`;
+`evidence/h01-l4-reproduction.json` `inputs`).
+
+Not observed at the time of writing: any simulated response. The NEURON reproduction at the two registered inputs
 (manifest `evidence/h01-l4-reproduction-manifest.json`, dt 0.005 ms with a 0.0025 ms partner;
 prediction: counts 20 at sweep 69 and 12 at sweep 39 exactly, first spikes within the dt-pair
 limit of 32.18 and 33.88 ms; rejection: a count off by more than 1) is untested because the
@@ -1796,9 +1877,12 @@ biological uncertainty.
   double-counted bias), the loop (sodium inflow ending within the upstroke) and
   the trough (Kv3 activation carried past the spike, its tail below −73 mV),
   each predicted on the closed 0.23 nA holdout.
-- Y4: the initiation site. The human's two-stage upstroke (shoulder, 351 V/s,
-  threshold −56 mV) needs a spike that arrives at the soma from outside it;
-  the fit is perisomatic. Family change is the user's decision. Closed on
+- Y4: the initiation site is no longer open: axon-first initiation at every active input is
+  established with B3's axonal NaTs and is insensitive to both passive levers
+  (`evidence/h01-e-gain/stage-g0-decision.json` `initiation.result`,
+  `evidence/h01-e-gain/stage-close-decision.json` `established`). Open Y4 items are the
+  low-drive gain (4 vs 1 at 200 pA, 8 vs 5 at 250 pA; `gain_tables`), the early widths, and
+  the sweep-43 late return (+1.4 to +1.7 mV; `b3_unchanged.known_defects`). Closed on
   2026-09-06: the late subthreshold return is inside two human repeat limits;
   the rise rate is load-limited but the load cannot be the lever (peak and
   trough move with it).

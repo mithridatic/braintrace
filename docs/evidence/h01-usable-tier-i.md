@@ -4,7 +4,12 @@ Continuation audit: the existing finalist already has axon-first -20 mV crossing
 at all three inputs, so an absent axonal crossing does not explain its missing
 burst. See [the retained initiation audit](h01-i-initiation-audit.md). The model
 and unqualified status are unchanged; width rows were regenerated with per-cycle
-allowances. No I reserve was spent.
+allowances. The I reserve was later spent: one evaluation (g-natg-axon15,
+axonal NaTg x1.5, launched 2026-09-07T22:51:42Z) FAILED at cap (cycle 2 at
+0.27 nA moved -0.126 ms against a 12.8 ms limit; count 37 -> 34; 10 of 14 bands
+held; [stage-1-decision.json](h01-i-reserve/stage-1-decision.json)). This page
+scores the finalist, not the reserve arm; see
+[h01-i-reserve-result.md](h01-i-reserve-result.md).
 
 Model: candidate with somatic Kv3 close factor 2.0 (energetic search finalist). Contract column: the approved
 1 mV / 0.05 ms / exact-count contract; rows it lacks say so. `unresolvable` means the

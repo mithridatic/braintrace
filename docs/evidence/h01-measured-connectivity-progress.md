@@ -16,11 +16,14 @@ segment has two cell owners. It contains no entries in `all_syn` or the
 incoming/outgoing `verified_synapses` fields. Morphology proofreading does
 not establish manual synapse verification.
 
-The initial spatial check resolves 79 records to released morphology IDs.
+Historical: the initial spatial check resolved 79 records to released morphology IDs at the
+time; the resolved edge list of 2026-09-06 shows all 104 cells identity-consistent in the
+proofread volume (`h01-resolved-edge-list.json#/cells`, 104/104 `identity_consistent`, no C3
+label shared by two cells).
 Each accepted identity has at least three distinct sampled voxels with the
 same nonzero cell label. Other samples must be background or that same label.
-Background supplies no identity evidence. The remaining 25 records need more
-checks. Different release IDs must not be joined by numerical equality alone.
+Background supplies no identity evidence. The remaining 25 records needed more
+checks at the time (since resolved, see above). Different release IDs must not be joined by numerical equality alone.
 
 ## Synapse evidence
 
@@ -92,10 +95,11 @@ pair with endpoint support.
 **E-to-I candidate 54906016** (`4157825456` to `5584343344`, type 2) is the
 only candidate in that direction. Its postsynaptic endpoint reads the I cell one
 slice away; its presynaptic endpoint reads background inside the 2-voxel box.
-It is not endpoint-verified. A 5-voxel re-verification of all 123 candidates
-was launched and stopped after six hours without completing its first batch of
-ten edges (network stall on the proofread volume), so the wider tolerance is
-untested. The reciprocal wiring in the circuit therefore stays illustrative and
+It is not endpoint-verified. The batch 5-voxel re-verification of all 123 candidates
+stalled (six hours without completing its first batch of ten edges); the one-edge-at-a-time
+recheck below completed it (8 of 8 edges, 17.4-18.9 s each, none over the 300 s budget;
+`h01-endpoint-recheck-5voxel.json`). 54906016 remains unverified at 5 voxels
+(`both_within_box` false). The reciprocal wiring in the circuit therefore stays illustrative and
 opt-in.
 
 **Caution on the largest pair.** 71 of the 123 candidates join
@@ -131,15 +135,19 @@ voxels; the three exact contacts are unchanged. Offsets of one voxel or one slic
 are candidates for a relaxed acceptance rule, which is a decision for the network
 builder, not this record.
 
-## 3,000-sample rescan (2026-09-07): stopped, untested
+## 3,000-sample rescan (2026-09-07): first launch stopped (historical; completed the same day, see below)
 
 `h01_c3_edge_list.py --limit 3000` ran detached with per-cell checkpoints and completed
-26 of 104 cells at 98 to 110 s each, then produced no progress line for 17 minutes
+26 of 104 cells at 61.2 to 113.9 s each, then produced no progress line for 17 minutes
 (a network stall on the volume, the same signature as the 2026-09-06 batch) and was
 killed under the fail-fast rule. The checkpoint `h01-resolved-edge-list-3000.cells.json`
-holds the 26 finished cells and the run resumes from it with the same limit; a 6,000-sample
+held the 26 finished cells; the rescan then resumed from that checkpoint under the watchdog
+and completed 104 of 104 cells in two launches (15:28:12 to 18:28:53; 7,268.3 s + 3,571.9 s
+wall, one 600.7 s stall kill), so the checkpoint now holds 104 cells
+(`h01-c3-scan-3000.watchdog.json#/status` complete, `#/cells_scanned` 104). A 6,000-sample
 attempt earlier the same day ran at 176 s per cell and was stopped after one cell as
-over budget. `full_export_scanned` stays false; the released 1,500-sample list stands.
+over budget. `full_export_scanned` stayed false (export coverage, not this scan); the released
+1,500-sample list stood until the completed rescan superseded it.
 
 ## SP7 connectivity completion tooling (2026-09-07)
 
@@ -147,13 +155,15 @@ Spec: [connectivity completion](../specs/2026-09-07-h01-connectivity-completion.
 
 - **Watchdog (SP7a).** [`h01_c3_scan_watchdog.py`](h01_c3_scan_watchdog.py) resumes
   `h01_c3_edge_list.py --limit 3000` from `h01-resolved-edge-list-3000.cells.json` (26 of 104
-  cells, key `{"limit": 3000, "archive": "proofread104.zip"}`), kills the child after 600 s
+  cells when this entry was written; now 104 of 104, key `{"limit": 3000, "archive": "proofread104.zip"}`), kills the child after 600 s
   without a `cell` line, relaunches at most 3 times, and records every launch with wall clocks.
   Launcher [`h01_c3_scan_watchdog.ps1`](h01_c3_scan_watchdog.ps1) (Start-Process, detached).
   One-cell dry run through the launcher on `2530864375` (fresh output name, so the 3,000
   checkpoint is untouched): 70.0 s wall, exit 0, no kill, 33 C3 ids, 0 edges
   ([record](h01-c3-scan-dry-run-3000.watchdog.json)). The full resume (78 cells at 61-114 s
-  each in the checkpoint, derived 1.3-2.5 h) has NOT been run; it needs approval.
+  each in the checkpoint, derived 1.3-2.5 h) had NOT been run when this entry was written; it
+  was approved and ran the same day (two launches, 7,268.3 s + 3,571.9 s wall, 104 of 104;
+  see the completed-rescan section below).
 - **Export coverage (SP7b).** The export prefix holds **166 shards, 32.86 GB**
   ([listing](h01-c3-export-listing.json)); 9 are local and all nine were already audited, so
   `full_export_scanned` is false as **"9 of 166 shards scanned"**
@@ -169,7 +179,11 @@ Spec: [connectivity completion](../specs/2026-09-07-h01-connectivity-completion.
   undetermined** ([json](h01-pair-merge-check.json), [table](h01-pair-merge-check.md)). The
   decisive online step is reading the C3 label at the 142 endpoint voxels against each cell's
   sampled `c3_ids`.
-- **Recheck (SP7d).** Not triggered: no new endpoint-verified edge exists until the rescan runs.
+- **Recheck (SP7d).** The rescan ran; a 10-edge 5-voxel recheck of the diff was executed
+  (`h01-endpoint-recheck-5voxel-3000.json`, 10 of 10 completed): none of the 3 new candidates
+  (101412196, 127313472, 143320914) is verified or within the box, and the 7 previously in-box
+  edges are unchanged, so the `prepare_connectivity` trigger did not fire because no new verified
+  edge exists (`h01-resolved-edge-list-3000.json#/counts/verified_edges` 3).
 
 Coverage state at the time of this entry: 26 of 104 cells at 3,000 samples; 9 of 166 export
 shards. Superseded by the completed rescan below.

@@ -46,7 +46,8 @@ def render(report):
     lines = ["# H01 population: cell types and donor match", "",
              f"{s['cells']} cells from the released tags; **{s['matched']} have a donor matched in layer and class**",
              "(prediction: fewer than 40). Every interneuron's subtype is unknown in the tags; the parvalbumin",
-             "donor is assumed for all of them.", "", "## Donors", "", "| Donor key | Polarity | Profile | Source | Layer | Class |",
+             "basket donor (HL5BN1) is assumed for 18 interneurons (L1/L2/L4/L5) and the putative-SST donor",
+             "(HL5MN1) for the 7 L3 interneurons.", "", "## Donors", "", "| Donor key | Polarity | Profile | Source | Layer | Class |",
              "| --- | --- | --- | --- | --- | --- |"]
     lines += [f"| {k} | {d['polarity']} | {d['profile']} | {d['source']} | {d['layer']} | {d['cell_class']} |"
               for k, d in DONORS.items()]

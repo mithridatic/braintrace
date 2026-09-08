@@ -2,7 +2,8 @@
 
 104 cells from the released tags; **55 have a donor matched in layer and class**
 (prediction: fewer than 40). Every interneuron's subtype is unknown in the tags; the parvalbumin
-donor is assumed for all of them.
+basket donor (HL5BN1) is assumed for 18 interneurons (L1/L2/L4/L5) and the putative-SST donor
+(HL5MN1) for the 7 L3 interneurons.
 
 ## Donors
 

@@ -273,8 +273,8 @@ Downloads validate pinned SHA-256 values after transport decompression and
 stage each asset before replacement. Corrupt caches raise. Source verification
 status is recorded separately from proofread morphology status.
 
-Experimental active transfer (qualification pending)
----------------------------------------------------
+Experimental active transfer (single-cell tool qualification pending)
+--------------------------------------------------------------------
 
 The active-model work adds Wilbers 2023 human sodium and mixed potassium
 kinetics. These are borrowed human population models, not measurements of
@@ -290,9 +290,14 @@ the largest-radius soma-labelled sample. This is an inferred active region,
 not a verified soma or AIS boundary. The rest of the morphology is passive.
 The command runs in 64-bit precision, uses compiled ``Cell.run``, and saves
 source identity, assumptions, electrical parameters and the voltage trace.
-Numerical and biological qualification are still in progress. In particular,
-the default 10 um maximum CV length is not spatially converged for the current
-experimental transfer. Use ``--max-cv-length-um`` and ``--dt-ms`` for refinement;
+Two transfers must be told apart. For this single-cell ``h01_active`` tool,
+numerical and biological qualification are still in progress: the default
+10 um maximum CV length is not spatially converged for the current
+experimental transfer. The I-cell BrainCell-vs-NEURON transfer gate (SP2) is
+not pending: it closed on 2026-09-07 on simulator identity (rise 1.2e-9 ms,
+peak 5.4e-6 mV, width 1.9e-11 ms), with a remaining dt requirement at 0.19 nA
+(1.864 ms at dt 0.000625, cap spent;
+``docs/evidence/h01-i-transfer/sp2-close-decision.json``). Use ``--max-cv-length-um`` and ``--dt-ms`` for refinement;
 do not treat a visible spike as validation.
 
 Use ``--align-active-boundaries`` to split the mesh at active-region endpoints.
@@ -353,8 +358,10 @@ record under ``docs/evidence``.
        (``h01-i-energetic-result.md``, ``h01-prediction-i.md``); its
        early burst and accommodation are unexplained. The E cell's rise rate is
        two to three times the human's and load-limited
-       (``h01-e-energetic-stage-r-budgets.md``); no E row passes. H01 has no
-       recording to compare against.
+       (``h01-e-energetic-stage-r-budgets.md``); the E cell passes neither the
+       1 mV contract nor the usable tier as a whole, though individual rows
+       pass (250 pA rate and several width rows,
+       ``h01-usable-tier-e.json``). H01 has no recording to compare against.
    * - I output event
      - Diagnostic only
      - The I cell emits a contact event only with the sodium closing-time
@@ -383,9 +390,17 @@ Two further pages state the circuit in the terms a user feels. The usable tier
 rate, adaptation, spike width and afterhyperpolarisation from a retained per-cycle
 table beside the 1 mV contract; neither cell passes it yet. The population status
 page (``docs/evidence/h01-population-status.md``) lists, layer by layer, what the
-104-cell network contains today: 30 cells with a type-matched donor, three verified
-contacts, assumed synaptic numbers with literature pins recorded, and a four-cell
-construction that has run one time step. The E cell gained an axonal initiation
+104-cell network contains today: 55 of 104 cells with a type-matched donor across
+four frozen donor profiles (Allen 541563728 L2, HL5BN1 PV, Allen 527952884 L4,
+HL5MN1 L3; the two added donors' published-fit reproductions were rejected,
+``docs/evidence/h01-donors/stage-*-decision.json``), three verified contacts,
+assumed synaptic numbers with literature pins recorded, a four-cell construction
+(one-step run), a measured 12-cell network (84,097 compartments) that ran 1 ms in
+ei and disconnected arms with finite traces
+(``docs/evidence/h01-population-build-12.json``), and a 40-cell build that FAILED
+(``H01Archive.load`` ValueError on cell 5805562981; 7 of 104 largest components
+fail to load; stages untested, runs stopped by the user;
+``docs/evidence/h01-population-build-40.json``). The E cell gained an axonal initiation
 site on 2026-09-07 (``docs/evidence/h01-e-usable/stage-a-decision.json``), which
 moved its threshold and upstroke shape to the human's. It stays at the frozen,
 unpromoted B3 profile: the gain split of its passive family closed as FAIL on

@@ -87,9 +87,19 @@ memory and raising `MemoryError`.
 ### Verified execution result
 
 The real circuit of 4 neurons, 2 projections, and 75,605 compartments initializes
-and runs with compiled time-stepping without memory errors:
+and runs with compiled time-stepping without memory errors. The verified execution
+result is a single 0.005 ms step (one sample per probe in the traces;
+`duration_ms` 0.005, `execution` "finite compiled smoke run" in
+[h01-verified-network-build.json](h01-verified-network-build.json)). Later runs of
+the same network are the current cost record: 10/200/2000 steps completed on
+2026-09-07 (d1: construction 266.2 s, init+run 212.4 s;
+[h01-network-throughput.json](h01-network-throughput.json)) and the pinned
+post-merge rerun (construction 152.3 s, init_state 116.0 s, compile+200 steps
+17.5 s, wall 295.0 s) held at 2e-9 mV
+([h01-network-equivalence-post-merge-pinned.json](h01-network-equivalence-post-merge-pinned.json)).
+The figures below are the original one-step record:
 
 - **Construction time**: 163.3 seconds
-- **Simulation initialization, JIT compilation, and execution**: 157.2 seconds
+- **Simulation initialization, JIT compilation, and execution**: 157.0 seconds
 - **Trace array output**: saved to [h01-verified-network-traces.npz](h01-verified-network-traces.npz)
 - **Voltages and conductances**: finite across all 75,605 compartments and probes.

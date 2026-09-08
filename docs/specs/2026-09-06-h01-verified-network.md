@@ -112,4 +112,6 @@ The subsequent one-step execution check rebuilt the circuit in 211.1 seconds
 but failed before stepping: BrainCell's dense axial-operator reduction raised
 MemoryError during initialization. Construction is verified; real execution
 remains blocked by solver memory. The failure is preserved in
-docs/evidence/h01-network-execution.log and the validation page.
+docs/evidence/h01-network-execution-2026-09-06-memory-failure.log (renamed at
+the SP9 close; it was h01-network-execution.log) and the validation page. The
+same-day sparse-DHS fix later let the network step (h01-verified-network-build.json).

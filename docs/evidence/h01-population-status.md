@@ -1,4 +1,4 @@
-# H01 population: what a user gets today (2026-09-07)
+# H01 population: what a user gets today (2026-09-08)
 
 One table, no pass claimed. Sources are the pages linked in each row.
 
@@ -12,18 +12,21 @@ One table, no pass claimed. Sources are the pages linked in each row.
 | Connectivity | 3,000-sample scan complete, 104 of 104 cells (2 launches, 1 stall kill, median 118.5 s per cell): 126 candidate contacts on 33 pairs (3 new candidates, all failing the 5-voxel recheck at one endpoint); 3 endpoint-verified (EE, EI, IE), unchanged from the 1,500-sample list; 2 constructible; E-to-I 54906016 unverified; 72 candidates on one pair suspected merge, undetermined; export 9 of 166 shards | A measured microcircuit: full_export_scanned remains false; absence of a contact is never established | [progress](h01-measured-connectivity-progress.md), [network](../h01-network.md) |
 | Synapses | One model (single-exponential conductance). Numbers were assumed (20 nS, −80 mV, 5 ms, 0.5 ms). Literature pins from human PV basket to pyramidal pairs now recorded: 3.1 nS (1.4 to 3.9), decay 4.2 ms, delay 2.3 ms, reversal about −75 mV | Measured H01 synaptic strength: none exists | [literature](h01-ie-synapse-literature.json) |
 | Pair behaviour | Delivery verified under the closing-restored diagnostic I wrapper; with the human-sized receptor one I spike moves the receptor site +0.86 mV and soma +0.008 mV in the tested drifting state | Functional inhibition at 300 ms untested: SP5 stage 1 registered (spec + addendum, aborts 1800/3000 s); the 100 ms benchmark measured 347 s and 2 E spikes at 0.6 nA; the 300 ms disconnected arm was launched 2026-09-07 21:58 and stopped by the user before completion (untested, no cap spent); arms 2 to 4 not launched. Neither W4 control had E spikes and the W4 voltage response is depolarising; nothing establishes impossibility at other states | [pair result](h01-ie-pair-result.md), [SP5 result](h01-ie-inhibition-result.md), [benchmark](h01-ie-inhibition-benchmark.md) |
-| Network construction | 4 cells, 2 synapses, 75,605 compartments built in 163 s; a compiled run of one 0.005 ms step took 157 s (other session, commits 9184269, dff10c7) | A simulated population: no run longer than one step exists; 98 cells have no accepted edge and are not simulated | [validation](h01-verified-network-validation.md) |
+| Network construction | 4 cells, 2 synapses, 75,605 compartments built in 163 s; a compiled run of one 0.005 ms step took 157 s (other session, commits 9184269, dff10c7) | A 12-cell network (84,097 compartments, including 8 edge-less isolated cells) ran 1 ms (200 steps at dt 0.005) in both ei and disconnected arms with finite traces (compile+run 29.8 s / 29.3 s; [12-cell JSON](h01-population-build-12.json)). The 40-cell build-only attempt failed on 2026-09-07T21:07 (ValueError in H01Archive.load on cell 5805562981; 7 of 104 largest components fail to load), stages 2-5 untested, stopped by the user; 40 and 104 remain derived ([40-cell JSON](h01-population-build-40.json)). 92 cells are unsimulated | [validation](h01-verified-network-validation.md) |
 | Holdouts | PV Noise1 sweep48 remains sealed and needs waveform replay; L2 sweep55 evaluated once after frozen prediction commit306459e, now spent | Independent donor validation: the prediction is on the same donor; Allen count metadata had already been seen | [I datum](h01-pv-input-datum.json), [L2 reservation](h01-l2-reserved-input.json), [P2 decision](h01-e-usable/stage-p2-decision.json) |
 
 ## What remains, in order of what a user would feel
 
 1. E cell: the passive family is exhausted for the low-drive gain ([SP3 result](h01-e-gain-result.md), FAIL at 3 of 4). What remains is a new spec on one of the named candidates (slow Na inactivation, Kv7/M kinetics, or a second human L2/3 donor with a recorded f-I curve), the early-spike widths at 310/350 pA, and B3's sweep-43 late return; then one shared profile and its transfer. B3 stays frozen and unpromoted until then.
 2. Functional inhibition at the pair with the literature conductance, and the placement
-   question the 0.003 mV result raises (the receptor site's electrotonic distance).
+   question the 0.008 mV somatic result raises (receptor site +0.86 mV, soma +0.008 mV for one I
+   spike with the human-sized receptor, [pair JSON](h01-ie-pair-response.json); the receptor site's
+   electrotonic distance).
 3. I cell post-trough drive and accommodation (reserve spent: axonal NaTg x1.5 moved the axon lead to 0.22-0.33 ms and the soma refired no sooner, [result](h01-i-reserve-result.md); somatic availability and axonal density are both excluded, the finalist already has axon-first crossing at all three inputs: [audit](h01-i-initiation-audit.md); the remaining family is a slow state the model lacks).
 4. Per-type donors: 49 cells have no type-matched donor (cap of two imports reached). Both imported
    donors' published fits were run once each (SP6d) and rejected by their registered count rule; the
    conditions that carry the difference (initial state, held bias, axon replacement) are unsplit.
-5. Population simulation beyond one step, and the matched E-only / I-only controls
-   (other session's builder).
+5. Population: the 7 unloadable components (BrainCell SWC reader tolerance) blocking the 40- and
+   104-cell builds, and windows longer than 1 ms; the 12-cell ei and disconnected 1 ms runs are done
+   ([12-cell JSON](h01-population-build-12.json), [40-cell JSON](h01-population-build-40.json)).
 6. I transfer: closed on simulator identity (BrainCell = NEURON fixed step over the full train at the copied mesh). What remains is a dt requirement, not a transfer question: dt 0.000625 ms meets the 1 ms crossing tolerance against CVode at 0.27 nA (0.981 ms); at 0.19 nA the step is unmeasured (1.864 ms at 0.000625, one more halving projected), and the 0.19 nA BrainCell train has not been run ([result](h01-i-transfer-result.md)).
