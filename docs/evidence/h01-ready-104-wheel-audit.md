@@ -19,3 +19,23 @@ Repository examples are not shipped in the wheel. The final installed runtime
 must execute the example script with isolated library imports pinned to this
 target, recording the example and wheel hashes with the run. That full-104
 execution is pending. Import success does not qualify runtime or physiology.
+
+## Installed-library regression tests
+
+The [installed-wheel test decision](h01-ready-104-wheel-tests.json) passes:
+51 tests in 2.85 seconds, covering importer provenance, malformed source input,
+short attachments, branching/translation invariants, anatomy selection and the
+soma endpoint repair. Coverage is 100% for `h01` and `_h01_reader`, and 97.46%
+for `h01_anatomy`. All 86 loaded production modules resolve to the installed
+target. The source root was appended only for test fixtures after importing
+the installed package; production origins were checked again after testing.
+
+The first attempt passed 27 selected tests but failed coverage because H01
+imports preceded measurement and the selection omitted validation tests.
+The second attempt started coverage before the dependency preload and hit the
+known Windows Abseil startup abort before testing. The passing invocation
+preloads `braintrace` and `braincell`, starts coverage, then imports H01 modules
+and runs the complete selected suite. Preserve this order and verify modules
+are not already loaded before starting their coverage. Logs and report hashes
+are retained in the decision. This is a targeted installed-library check;
+neither the full suite nor full-population wheel execution is implied.
