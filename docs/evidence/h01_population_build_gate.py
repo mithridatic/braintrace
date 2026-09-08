@@ -4,6 +4,11 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
+
+
+def _sha256(value):
+    return isinstance(value, str) and re.fullmatch(r'[0-9a-f]{64}', value) is not None
 
 
 def audit_build(build, imports, topology):
@@ -37,6 +42,7 @@ def audit_build(build, imports, topology):
             'import audit is not a completed pass')
     require(len(source_ids) == len(expected) == 104, 'import audit must contain 104 unique cells')
     require(all(row.get('passed') is True for row in source_rows), 'a source component failed import')
+    require(_sha256(imports.get('archive_sha256')), 'source archive hash is missing or malformed')
     topology_ids = [row['cell_id'] for row in topology.get('nodes', [])]
     require(len(topology_ids) == len(set(topology_ids)) and set(topology_ids) == expected,
             'topology population differs from import population')
@@ -58,7 +64,8 @@ def audit_build(build, imports, topology):
         provenance = record.get('measured_anatomy', {})
         require(provenance.get('member') == f"{identity}.{source['component']}.swc",
                 identity+': component differs')
-        require(provenance.get('source_sha256') == source.get('source_sha256'),
+        require(_sha256(source.get('source_sha256'))
+                and provenance.get('source_sha256') == source.get('source_sha256'),
                 identity+': source hash differs')
         require(provenance.get('archive_sha256') == imports.get('archive_sha256'),
                 identity+': archive hash differs')

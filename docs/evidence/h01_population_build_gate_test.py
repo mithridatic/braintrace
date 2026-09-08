@@ -1,6 +1,7 @@
 """Construction gate rejects partial populations and substituted anatomy."""
 
 from copy import deepcopy
+import hashlib
 import json
 import sys
 
@@ -12,13 +13,15 @@ from docs.evidence import h01_population_build_gate as gate
 @pytest.fixture
 def evidence():
     ids = [str(i) for i in range(104)]
-    sources = [dict(cell_id=i, component=0, source_sha256='source-'+i, passed=True) for i in ids]
-    imports = dict(status='completed', passed=True, cells=sources, archive_sha256='archive')
+    hashes = {i:hashlib.sha256(i.encode()).hexdigest() for i in ids}
+    archive_hash = hashlib.sha256(b'archive').hexdigest()
+    sources = [dict(cell_id=i, component=0, source_sha256=hashes[i], passed=True) for i in ids]
+    imports = dict(status='completed', passed=True, cells=sources, archive_sha256=archive_hash)
     contacts = [dict(annotation_id='edge', pre_cell='0', post_cell='1', dale_sign=1,
                      construction_ready=True)]
-    topology = dict(nodes=[dict(cell_id=i) for i in ids], contacts=contacts, archive_sha256='archive')
-    cells = {i: dict(measured_anatomy=dict(member=i+'.0.swc', source_sha256='source-'+i,
-                                        archive_sha256='archive'), donor='borrowed', n_compartments=1)
+    topology = dict(nodes=[dict(cell_id=i) for i in ids], contacts=contacts, archive_sha256=archive_hash)
+    cells = {i: dict(measured_anatomy=dict(member=i+'.0.swc', source_sha256=hashes[i],
+                                        archive_sha256=archive_hash), donor='borrowed', n_compartments=1)
              for i in ids}
     build = dict(simulated_cell_ids=ids, cells=cells, compartments_by_cell={i:1 for i in ids},
                  n_compartments=104, donors={i:'borrowed' for i in ids}, control='ei',
@@ -32,6 +35,20 @@ def test_complete_build_does_not_promote_runtime_or_physiology(evidence):
     assert result['expected_cells'] == result['simulated_cells'] == 104
     assert result['runtime_qualified'] is False
     assert result['physiology_qualified'] is False
+
+
+@pytest.mark.parametrize('kind', ['source', 'archive'])
+@pytest.mark.parametrize('invalid_hash', [None, '', 'g'*64])
+def test_matching_missing_hashes_cannot_qualify_provenance(evidence, kind, invalid_hash):
+    build, imports, topology = evidence
+    if kind == 'source':
+        imports['cells'][0]['source_sha256'] = invalid_hash
+        build['cells']['0']['measured_anatomy']['source_sha256'] = invalid_hash
+    else:
+        imports['archive_sha256'] = topology['archive_sha256'] = invalid_hash
+        for cell in build['cells'].values():
+            cell['measured_anatomy']['archive_sha256'] = invalid_hash
+    assert gate.audit_build(*evidence)['status'] == 'failed'
 
 
 @pytest.mark.parametrize('defect', [
