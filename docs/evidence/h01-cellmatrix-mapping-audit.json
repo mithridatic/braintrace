@@ -10,7 +10,9 @@
     ],
     "embedded_matches": {
       "goog14r0seg1.agg20200916_resolved": 95
-    }
+    },
+    "embedded_absent": 2,
+    "embedded_present_different": 7
   },
   "rows": [
     {
@@ -23,7 +25,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "751294744"
-      }
+      },
+      "existing_spatial_owners": [
+        "751294744"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1072605926_split_cad_merge_cad_out__in__2021-03-07 22.02.48.json",
@@ -35,7 +40,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1072605926"
-      }
+      },
+      "existing_spatial_owners": [
+        "1072605926"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_11287537830_split_cad_merge_cad_out__in__2021-02-23 11.46.01.json",
@@ -47,7 +55,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2451406889"
-      }
+      },
+      "existing_spatial_owners": [
+        "2451406889"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1130060083_split_cad_merge_cad_out__in__2021-02-23 11.41.52.json",
@@ -59,7 +70,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "810444511"
-      }
+      },
+      "existing_spatial_owners": [
+        "620880207"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_11841061678_split_cad_merge_cad_out__in__2021-03-26 16.58.32.json",
@@ -71,7 +85,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2306214824"
-      }
+      },
+      "existing_spatial_owners": [
+        "2306214824"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_12116319883_split_cad_merge_cad_out__in__2021-03-17 23.56.54.json",
@@ -83,7 +100,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3178243558"
-      }
+      },
+      "existing_spatial_owners": [
+        "3178243558"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1304599851_split_cad_merge_cad_out__in__2021-03-11 21.20.33.json",
@@ -95,7 +115,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1304599411"
-      }
+      },
+      "existing_spatial_owners": [
+        "1304599410"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_13486973660_split_cad_merge_cad_out__in__2021-02-04 23.07.37.json",
@@ -107,7 +130,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4490902946"
-      }
+      },
+      "existing_spatial_owners": [
+        "4476359994"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_14685759598_split_cad_merge_cad_out__in__2021-02-23 11.46.10.json",
@@ -119,7 +145,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5805562981"
-      }
+      },
+      "existing_spatial_owners": [
+        "5805562981"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1523542102_split_cad_merge_cad_out__in__2021-03-07 17.05.11.json",
@@ -131,7 +160,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "882880193"
-      }
+      },
+      "existing_spatial_owners": [
+        "810151953"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1538361367_split_cad_merge_cad_out__in__2021-01-28 22.46.52.json",
@@ -143,7 +175,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "883843993"
-      }
+      },
+      "existing_spatial_owners": [
+        "883843993"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1596386991_split_cad_merge_cad_out__in__2021-02-28 20.36.36.json",
@@ -155,7 +190,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1159349630"
-      }
+      },
+      "existing_spatial_owners": [
+        "1465400601"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1771276990_split_cad_merge_cad_out__in__2021-03-02 11.15.20.json",
@@ -167,7 +205,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1771276990"
-      }
+      },
+      "existing_spatial_owners": [
+        "810970127"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_1787105373_split_cad_merge_cad_out__in__2021-04-06 01.23.29.json",
@@ -179,7 +220,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1787105373"
-      }
+      },
+      "existing_spatial_owners": [
+        "1787105373"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2062084674_split_cad_merge_cad_out__in__2021-01-19 00.28.39.json",
@@ -191,7 +235,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1684504313"
-      }
+      },
+      "existing_spatial_owners": [
+        "1684504313"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2091316191_split_cad_merge_cad_out__in__2021-03-18 14.54.51.json",
@@ -203,7 +250,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2047644309"
-      }
+      },
+      "existing_spatial_owners": [
+        "2047644309"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2252030265_split_cad_merge_cad_out__in__2020-12-04 01.04.30.json",
@@ -215,7 +265,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1830470325"
-      }
+      },
+      "existing_spatial_owners": [
+        "1830470325"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2351915864_split_cad_merge_cad_out__in__2021-01-25 23.30.07.json",
@@ -227,7 +280,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2351915864"
-      }
+      },
+      "existing_spatial_owners": [
+        "2104047922"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2352981237_split_cad_merge_cad_out__in__2020-12-04 11.55.59.json",
@@ -239,7 +295,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1930502394"
-      }
+      },
+      "existing_spatial_owners": [
+        "1930502394"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2369744237_split_cad_merge_cad_out__in__2020-12-03 18.43.53.json",
@@ -251,7 +310,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2325998949"
-      }
+      },
+      "existing_spatial_owners": [
+        "2325998949"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2454443983_split_cad_merge_cad_out__in__2021-02-23 11.46.28.json",
@@ -263,7 +325,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2454443983"
-      }
+      },
+      "existing_spatial_owners": [
+        "1900905433"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2510978203_split_cad_merge_cad_out__in__2021-03-01 20.27.45.json",
@@ -275,7 +340,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2103991145"
-      }
+      },
+      "existing_spatial_owners": [
+        "2103991145"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2530864514_split_cad_merge_cad_out__in__2021-02-23 11.44.35.json",
@@ -287,7 +355,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2530864514"
-      }
+      },
+      "existing_spatial_owners": [
+        "2530864375"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2644826488_split_cad_merge_cad_out__in__2021-03-14 16.51.14.json",
@@ -299,7 +370,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1931553044"
-      }
+      },
+      "existing_spatial_owners": [
+        "1669770671"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2761735734_split_cad_merge_cad_out__in__2021-02-23 11.45.32.json",
@@ -311,7 +385,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "1874244336"
-      }
+      },
+      "existing_spatial_owners": [
+        "1874244336"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2786572808_split_cad_merge_cad_out__in__2021-03-23 22.58.43.json",
@@ -323,7 +400,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2568331341"
-      }
+      },
+      "existing_spatial_owners": [
+        "2001418787"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2801597557_split_cad_merge_cad_out__in__2021-04-07 12.15.12.json",
@@ -335,7 +415,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2074306274"
-      }
+      },
+      "existing_spatial_owners": [
+        "2074305737"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_2863125070_split_cad_merge_cad_out__in__2020-12-20 19.04.00.json",
@@ -347,7 +430,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2863125070"
-      }
+      },
+      "existing_spatial_owners": [
+        "2848552900"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3024364765_split_cad_merge_cad_out__in__2021-03-26 00.45.16.json",
@@ -359,7 +445,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2252715458"
-      }
+      },
+      "existing_spatial_owners": [
+        "2252715458"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3039360243_split_cad_merge_cad_out__in__2021-01-13 22.17.12.json",
@@ -371,7 +460,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2820841652"
-      }
+      },
+      "existing_spatial_owners": [
+        "2195261734"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3106392543_split_cad_merge_cad_out__in__2021-04-06 13.54.07.json",
@@ -383,7 +475,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2888180644"
-      }
+      },
+      "existing_spatial_owners": [
+        "2888180252"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3227669146_split_cad_merge_cad_out__in__2020-12-03 18.43.42.json",
@@ -395,7 +490,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2893276289"
-      }
+      },
+      "existing_spatial_owners": [
+        "2820958695"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3339994455_split_cad_merge_cad_out__in__2021-03-18 00.37.56.json",
@@ -407,7 +505,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2903686765"
-      }
+      },
+      "existing_spatial_owners": [
+        "2903686765"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3504868517_split_cad_merge_cad_out__in__2021-02-25 14.48.26.json",
@@ -419,7 +520,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3111823918"
-      }
+      },
+      "existing_spatial_owners": [
+        "3111823553"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3563171068_split_cad_merge_cad_out__in__2021-02-25 17.10.36.json",
@@ -431,7 +535,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3446873213"
-      }
+      },
+      "existing_spatial_owners": [
+        "3432315514"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3631210846_split_cad_merge_cad_out__in__2021-03-17 17.48.24.json",
@@ -443,7 +550,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3383650383"
-      }
+      },
+      "existing_spatial_owners": [
+        "3383650350"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3708173623_split_cad_merge_cad_out__in__2020-12-21 10.37.55.json",
@@ -455,7 +565,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3519995546"
-      }
+      },
+      "existing_spatial_owners": [
+        "3519995546"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3751392341_split_cad_merge_cad_out__in__2021-03-16 10.54.11.json",
@@ -467,7 +580,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3751392341"
-      }
+      },
+      "existing_spatial_owners": [
+        "3751392341"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3805181241_split_cad_merge_cad_out__in__2021-03-01 20.43.27.json",
@@ -479,7 +595,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3761379470"
-      }
+      },
+      "existing_spatial_owners": [
+        "3761379470"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3861936363_split_cad_merge_cad_out__in__2020-12-03 17.43.49.json",
@@ -491,7 +610,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3571083397"
-      }
+      },
+      "existing_spatial_owners": [
+        "3571083397"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_3924034490_split_cad_merge_cad_out__in__2021-02-23 21.52.58.json",
@@ -503,7 +625,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3093748739"
-      }
+      },
+      "existing_spatial_owners": [
+        "3093748739"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4029162155_split_cad_merge_cad_out__in__2021-04-08 13.17.18.json",
@@ -515,7 +640,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4029162155"
-      }
+      },
+      "existing_spatial_owners": [
+        "3680152874"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4039221194_split_cad_merge_cad_out__in__2021-02-28 18.53.32.json",
@@ -525,7 +653,10 @@
       "c3_ids": [
         3268682905
       ],
-      "embedded": {}
+      "embedded": {},
+      "existing_spatial_owners": [
+        "4039221194"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4070847746_split_cad_merge_cad_out__in__2021-04-12 19.07.31.json",
@@ -537,7 +668,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3329117097"
-      }
+      },
+      "existing_spatial_owners": [
+        "3329117097"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4142450656_split_cad_merge_cad_out__in__2020-12-03 18.44.26.json",
@@ -549,7 +683,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3139317430"
-      }
+      },
+      "existing_spatial_owners": [
+        "3139317430"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4155254986_split_cad_merge_cad_out__in__2021-03-25 17.50.10.json",
@@ -561,7 +698,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4010150634"
-      }
+      },
+      "existing_spatial_owners": [
+        "4010150634"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4168833735_split_cad_merge_cad_out__in__2020-12-03 11.26.02.json",
@@ -573,7 +713,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3470629528"
-      }
+      },
+      "existing_spatial_owners": [
+        "3470629528"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4169389448_split_cad_merge_cad_out__in__2021-02-11 18.36.54.json",
@@ -585,7 +728,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4052829299"
-      }
+      },
+      "existing_spatial_owners": [
+        "4125702786"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4260557631_split_cad_merge_cad_out__in__2021-03-07 16.17.54.json",
@@ -597,7 +743,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4188575291"
-      }
+      },
+      "existing_spatial_owners": [
+        "4188575291"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4275013244_split_cad_merge_cad_out__in__2020-12-11 21.53.08.json",
@@ -609,7 +758,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4275013244"
-      }
+      },
+      "existing_spatial_owners": [
+        "4260528559"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4300915475_split_cad_merge_cad_out__in__2021-01-05 14.48.34.json",
@@ -621,7 +773,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "2889815798"
-      }
+      },
+      "existing_spatial_owners": [
+        "2889815798"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4420044370_split_cad_merge_cad_out__in__2021-04-13 14.49.08.json",
@@ -633,7 +788,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4420044370"
-      }
+      },
+      "existing_spatial_owners": [
+        "4420044370"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4466461472_split_cad_merge_cad_out__in__2020-12-03 17.45.45.json",
@@ -645,7 +803,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3812058320"
-      }
+      },
+      "existing_spatial_owners": [
+        "3812058320"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4474521366_split_cad_merge_cad_out__in__2020-12-04 12.11.39.json",
@@ -657,7 +818,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4445420826"
-      }
+      },
+      "existing_spatial_owners": [
+        "4197933517"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4568609259_split_cad_merge_cad_out__in__2021-03-11 22.15.53.json",
@@ -669,7 +833,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4466387821"
-      }
+      },
+      "existing_spatial_owners": [
+        "4554213569"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4598805287_split_cad_merge_cad_out__in__2020-12-03 17.44.48.json",
@@ -681,7 +848,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4525930409"
-      }
+      },
+      "existing_spatial_owners": [
+        "4467761196"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4607785510_split_cad_merge_cad_out__in__2021-03-29 14.42.58.json",
@@ -693,7 +863,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4535129012"
-      }
+      },
+      "existing_spatial_owners": [
+        "4535129012"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4634401300_split_cad_merge_cad_out__in__2021-03-14 13.46.54.json",
@@ -705,7 +878,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4138580687"
-      }
+      },
+      "existing_spatial_owners": [
+        "4138580687"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4709392935_split_cad_merge_cad_out__in__2021-03-02 18.18.15.json",
@@ -717,7 +893,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4491340671"
-      }
+      },
+      "existing_spatial_owners": [
+        "3836078296"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4711641825_split_cad_merge_cad_out__in__2021-02-23 11.45.12.json",
@@ -729,7 +908,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4711641825"
-      }
+      },
+      "existing_spatial_owners": [
+        "4711641825"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4783361469_split_cad_merge_cad_out__in__2021-03-11 20.34.44.json",
@@ -741,7 +923,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3896803064"
-      }
+      },
+      "existing_spatial_owners": [
+        "3955003482"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4874004818_split_cad_merge_cad_out__in__2020-12-11 22.28.51.json",
@@ -753,7 +938,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4365276903"
-      }
+      },
+      "existing_spatial_owners": [
+        "4365276903"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4917763728_split_cad_merge_cad_out__in__2021-02-03 20.06.19.json",
@@ -765,7 +953,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4466811772"
-      }
+      },
+      "existing_spatial_owners": [
+        "4437316933"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4931751396_split_cad_merge_cad_out__in__2020-12-03 17.42.59.json",
@@ -777,7 +968,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4873639924"
-      }
+      },
+      "existing_spatial_owners": [
+        "4873639924"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4972868216_split_cad_merge_cad_out__in__2020-12-03 17.44.30.json",
@@ -789,7 +983,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4522237537"
-      }
+      },
+      "existing_spatial_owners": [
+        "4522237537"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4990623077_split_cad_merge_cad_out__in__2020-12-03 17.43.57.json",
@@ -801,7 +998,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4830551047"
-      }
+      },
+      "existing_spatial_owners": [
+        "4830551047"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_4999455438_split_cad_merge_cad_out__in__2021-02-07 19.47.27.json",
@@ -813,7 +1013,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4912287438"
-      }
+      },
+      "existing_spatial_owners": [
+        "4853956860"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5013648003_split_cad_merge_cad_out__in__2021-02-04 22.11.32.json",
@@ -825,7 +1028,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5013648003"
-      }
+      },
+      "existing_spatial_owners": [
+        "5013648003"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5091281635_split_cad_merge_cad_out__in__2021-01-03 01.19.40.json",
@@ -837,7 +1043,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4582188328"
-      }
+      },
+      "existing_spatial_owners": [
+        "4582188328"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5102072386_split_cad_merge_cad_out__in__2021-03-16 16.27.40.json",
@@ -849,7 +1058,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4519901676"
-      }
+      },
+      "existing_spatial_owners": [
+        "3503540481"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5117695254_split_cad_merge_cad_out__in__2021-04-08 15.37.51.json",
@@ -861,7 +1073,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "3969034166"
-      }
+      },
+      "existing_spatial_owners": [
+        "3954491075"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5145786852_split_cad_merge_cad_out__in__2021-03-10 21.37.29.json",
@@ -873,7 +1088,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4782879767"
-      }
+      },
+      "existing_spatial_owners": [
+        "4157825456"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5160214236_split_cad_merge_cad_out__in__2021-01-19 13.42.02.json",
@@ -885,7 +1103,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5044004371"
-      }
+      },
+      "existing_spatial_owners": [
+        "4607885827"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5209023651_split_cad_merge_cad_out__in__2020-12-03 17.42.39.json",
@@ -897,7 +1118,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5136412813"
-      }
+      },
+      "existing_spatial_owners": [
+        "4932057570"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5306836611_split_cad_merge_cad_out__in__2021-03-29 13.53.57.json",
@@ -909,7 +1133,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5175880292"
-      }
+      },
+      "existing_spatial_owners": [
+        "5175880292"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5397844936_split_cad_merge_cad_out__in__2021-02-23 14.58.00.json",
@@ -921,7 +1148,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5136107765"
-      }
+      },
+      "existing_spatial_owners": [
+        "5136107765"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5410050552_split_cad_merge_cad_out__in__2020-12-04 10.15.59.json",
@@ -933,7 +1163,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5060473867"
-      }
+      },
+      "existing_spatial_owners": [
+        "5060444657"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5421628758_split_cad_merge_cad_out__in__2021-03-01 22.08.22.json",
@@ -945,7 +1178,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5421628756"
-      }
+      },
+      "existing_spatial_owners": [
+        "5173982155"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5478296229_split_cad_merge_cad_out__in__2021-01-02 14.08.57.json",
@@ -957,7 +1193,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5216806368"
-      }
+      },
+      "existing_spatial_owners": [
+        "5216806368"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5540597983_split_cad_merge_cad_out__in__2020-12-03 17.42.07.json",
@@ -969,7 +1208,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5467125920"
-      }
+      },
+      "existing_spatial_owners": [
+        "4668874666"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5558688317_split_cad_merge_cad_out__in__2021-01-28 15.53.34.json",
@@ -981,7 +1223,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5355296383"
-      }
+      },
+      "existing_spatial_owners": [
+        "5355296383"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5599819336_split_cad_merge_cad_out__in__2020-12-28 18.44.35.json",
@@ -993,7 +1238,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "4726125087"
-      }
+      },
+      "existing_spatial_owners": [
+        "4711567524"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5623692860_split_cad_merge_cad_out__in__2021-03-23 17.24.11.json",
@@ -1005,7 +1253,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5579700531"
-      }
+      },
+      "existing_spatial_owners": [
+        "5536146025"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5733520924_split_cad_merge_cad_out__in__2021-02-23 21.18.43.json",
@@ -1017,7 +1268,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5427323196"
-      }
+      },
+      "existing_spatial_owners": [
+        "4641147055"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5758723446_split_cad_merge_cad_out__in__2021-02-11 17.23.47.json",
@@ -1029,7 +1283,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5147072947"
-      }
+      },
+      "existing_spatial_owners": [
+        "5439194879"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5760081176_split_cad_merge_cad_out__in__2021-02-01 14.37.26.json",
@@ -1041,7 +1298,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5352961465"
-      }
+      },
+      "existing_spatial_owners": [
+        "5352961465"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_576055096_split_cad_merge_cad_out__in__2021-02-26 10.56.04.json",
@@ -1051,7 +1311,10 @@
       "c3_ids": [
         546925828
       ],
-      "embedded": {}
+      "embedded": {},
+      "existing_spatial_owners": [
+        "546925828"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5803634703_split_cad_merge_cad_out__in__2020-12-03 18.43.34.json",
@@ -1063,7 +1326,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5803634703"
-      }
+      },
+      "existing_spatial_owners": [
+        "5061320552"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_5899564211_split_cad_merge_cad_out__in__2021-04-15 14.53.47.json",
@@ -1075,7 +1341,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5215113731"
-      }
+      },
+      "existing_spatial_owners": [
+        "5215113731"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6046888647_split_cad_merge_cad_out__in__2021-03-09 17.05.14.json",
@@ -1087,7 +1356,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5015035926"
-      }
+      },
+      "existing_spatial_owners": [
+        "5015035926"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6048143049_split_cad_merge_cad_out__in__2021-02-28 19.17.01.json",
@@ -1099,7 +1371,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "6048143049"
-      }
+      },
+      "existing_spatial_owners": [
+        "5584343344"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6081959447_split_cad_merge_cad_out__in__2021-03-18 17.56.41.json",
@@ -1111,7 +1386,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5965472721"
-      }
+      },
+      "existing_spatial_owners": [
+        "5965472721"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6090179673_split_cad_merge_cad_out__in__2021-02-09 14.49.23.json",
@@ -1123,7 +1401,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5319188363"
-      }
+      },
+      "existing_spatial_owners": [
+        "5319188363"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6169827896_split_cad_merge_cad_out__in__2021-01-25 16.58.35.json",
@@ -1135,7 +1416,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "6126390733"
-      }
+      },
+      "existing_spatial_owners": [
+        "6126390733"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6338075438_split_cad_merge_cad_out__in__2020-12-03 18.45.47.json",
@@ -1147,7 +1431,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5654281423"
-      }
+      },
+      "existing_spatial_owners": [
+        "5654281423"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_635012245_split_cad_merge_cad_out__in__2021-01-19 11.28.20.json",
@@ -1159,7 +1446,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "547114158"
-      }
+      },
+      "existing_spatial_owners": [
+        "547114083"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6385675633_split_cad_merge_cad_out__in__2021-03-25 16.50.25.json",
@@ -1171,7 +1461,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5832764277"
-      }
+      },
+      "existing_spatial_owners": [
+        "5832764277"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_6589462084_split_cad_merge_cad_out__in__2021-03-30 00.00.36.json",
@@ -1183,7 +1476,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "5892716308"
-      }
+      },
+      "existing_spatial_owners": [
+        "5687162964"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_7169500552_split_cad_merge_cad_out__in__2021-04-02 10.54.38.json",
@@ -1195,7 +1491,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "6833911543"
-      }
+      },
+      "existing_spatial_owners": [
+        "6833911543"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_722502986_split_cad_merge_cad_out__in__2020-12-16 14.40.29.json",
@@ -1207,7 +1506,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "678539249"
-      }
+      },
+      "existing_spatial_owners": [
+        "678539249"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_7371141223_split_cad_merge_cad_out__in__2021-02-09 16.22.41.json",
@@ -1219,7 +1521,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "6963452512"
-      }
+      },
+      "existing_spatial_owners": [
+        "7196644737"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_7559362193_split_cad_merge_cad_out__in__2020-12-22 15.26.18.json",
@@ -1231,7 +1536,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "7166360639"
-      }
+      },
+      "existing_spatial_owners": [
+        "7052969349"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_8038960303_split_cad_merge_cad_out__in__2021-03-02 17.08.02.json",
@@ -1243,7 +1551,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "7864332863"
-      }
+      },
+      "existing_spatial_owners": [
+        "7893125555"
+      ]
     },
     {
       "record": "proofread104_neurons_20210511/cell_graph_969989873_split_cad_merge_cad_out__in__2021-03-23 20.51.17.json",
@@ -1255,7 +1566,10 @@
       ],
       "embedded": {
         "goog14r0seg1.agg20200916_resolved": "955432427"
-      }
+      },
+      "existing_spatial_owners": [
+        "955432427"
+      ]
     }
   ],
   "archive_sha256": "364195428726bb09e1674323ffb66d280acf9de28f866b9e21bd2f86f0914881",
@@ -1364,5 +1678,13 @@
         "goog14r0seg1.agg20200916_resolved": "6963452512"
       }
     }
-  ]
+  ],
+  "spatial_comparison": {
+    "path": "docs\\evidence\\h01-resolved-edge-list-3000.cells.json",
+    "sha256": "fcb8c38221c8df027cc53f06d7d3e70b582dd7f4c8cff938e2dddec62649dead",
+    "owner_count_histogram": {
+      "1": 104
+    },
+    "distinct_single_owners": 104
+  }
 }

@@ -81,3 +81,11 @@ Only 95 match the archive main_agglo_seg in agg20200916_resolved; nine differ.
 The archive release key is not the authors script
 agg20200916c3_resolved_fixed. Preserve those nine explicit mismatches and resolve
 release semantics before accepting the table as the final identity bridge.
+
+All 104 candidate C3 IDs occur in the already saved 3000-sample spatial
+lookup, each owned by exactly one distinct H01 cell. This establishes a
+104-record association with the existing lookup without new spatial requests.
+The embedded comparison consists of 95 agreements, seven differing IDs and
+two absent entries, rather than nine conflicting IDs. The table association
+does not map every axon base segment or itself supply synaptic connections.
+The audit now retains each associated H01 cell and the spatial checkpoint hash.
