@@ -1,0 +1,115 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "records": [
+    {
+      "events": [
+        {
+          "rise_crossing_ms": 1073.2767070381174,
+          "fall_crossing_ms": 1074.191530486134,
+          "time_above_threshold_ms": 0.9148234480167048,
+          "peak_sample_time_ms": 1073.3937499378314,
+          "peak_sample_voltage_mv": 37.26845233959505
+        },
+        {
+          "rise_crossing_ms": 1099.778864992234,
+          "fall_crossing_ms": 1100.6884395564523,
+          "time_above_threshold_ms": 0.9095745642182465,
+          "peak_sample_time_ms": 1099.8968749432308,
+          "peak_sample_voltage_mv": 36.908285891216245
+        },
+        {
+          "rise_crossing_ms": 1258.6316681440524,
+          "fall_crossing_ms": 1259.5301562583759,
+          "time_above_threshold_ms": 0.898488114323527,
+          "peak_sample_time_ms": 1258.7506249755936,
+          "peak_sample_voltage_mv": 35.861875926887784
+        },
+        {
+          "rise_crossing_ms": 1551.835322543759,
+          "fall_crossing_ms": 1552.733220317085,
+          "time_above_threshold_ms": 0.8978977733258944,
+          "peak_sample_time_ms": 1551.954375035327,
+          "peak_sample_voltage_mv": 35.872907158113954
+        },
+        {
+          "rise_crossing_ms": 1826.754339710162,
+          "fall_crossing_ms": 1827.6517494029904,
+          "time_above_threshold_ms": 0.8974096928284325,
+          "peak_sample_time_ms": 1826.8737500913355,
+          "peak_sample_voltage_mv": 35.86131960312257
+        }
+      ],
+      "first_three_intervals_ms": [
+        26.502157954116683,
+        158.8528031518183,
+        293.2036543997067
+      ],
+      "first_interspike_minimum_mv": -71.07167943120871,
+      "first_peak_mv": 37.26845233959505
+    },
+    {
+      "events": [
+        {
+          "rise_crossing_ms": 1073.2767070380696,
+          "fall_crossing_ms": 1074.1915304860868,
+          "time_above_threshold_ms": 0.9148234480171595,
+          "peak_sample_time_ms": 1073.3937499378314,
+          "peak_sample_voltage_mv": 37.26845233961836
+        },
+        {
+          "rise_crossing_ms": 1100.0123014898527,
+          "fall_crossing_ms": 1100.9219669662562,
+          "time_above_threshold_ms": 0.9096654764034611,
+          "peak_sample_time_ms": 1100.1299999432783,
+          "peak_sample_voltage_mv": 36.917254404768144
+        },
+        {
+          "rise_crossing_ms": 1250.0387694710698,
+          "fall_crossing_ms": 1250.937260023229,
+          "time_above_threshold_ms": 0.8984905521592736,
+          "peak_sample_time_ms": 1250.158124973843,
+          "peak_sample_voltage_mv": 35.85916097877729
+        },
+        {
+          "rise_crossing_ms": 1541.2064255510604,
+          "fall_crossing_ms": 1542.104343293155,
+          "time_above_threshold_ms": 0.8979177420944779,
+          "peak_sample_time_ms": 1541.3256250331617,
+          "peak_sample_voltage_mv": 35.87328799143082
+        },
+        {
+          "rise_crossing_ms": 1813.6409927937395,
+          "fall_crossing_ms": 1814.5384157373494,
+          "time_above_threshold_ms": 0.897422943609854,
+          "peak_sample_time_ms": 1813.760000088664,
+          "peak_sample_voltage_mv": 35.86159611256962
+        }
+      ],
+      "first_three_intervals_ms": [
+        26.735594451783072,
+        150.02646798121714,
+        291.1676560799906
+      ],
+      "first_interspike_minimum_mv": -71.24953379369241,
+      "first_peak_mv": 37.26845233961836
+    }
+  ],
+  "qualification": "First-interval mechanism prediction only; later events remain separate targets.",
+  "checks": {
+    "first_interval_error_smaller": true,
+    "first_onset_change_within_0_1_ms": true,
+    "first_peak_change_within_0_1_mv": true
+  },
+  "first_interval_errors_ms": [
+    -7.349580608893575,
+    -7.116144111227186
+  ],
+  "first_onset_change_ms": -4.774847184307873e-11,
+  "first_peak_change_mv": 2.3305801732931286e-11,
+  "event_counts": [
+    5,
+    5
+  ],
+  "first_minimum_change_mv": -0.1778543624836999
+}

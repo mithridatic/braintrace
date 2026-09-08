@@ -1,0 +1,26 @@
+{
+ "stage": "B",
+ "manifest": "h01-e-usable-b-manifest.json",
+ "evaluations_used": 7,
+ "cap": 8,
+ "runs": {
+  "b-sk-half": "685 s",
+  "b-ca-decay": "687 s",
+  "b-leak-rev": "593 s"
+ },
+ "human_310pA": "10 spikes; cycles 38, 12, 61, 110, 115, 119, 122, 116, 124, 121 ms; first trough -69.6; first width 0.913 ms",
+ "observed": {
+  "b0-survivor": "5; 38, 16, 242, 253, 242; late mean 246; rate 5.31 Hz; trough -70.0; width 1.006",
+  "b-sk-half": "7; 38, 14, 57, 223, 195, 188, 183; late mean 169; rate 6.98; trough -70.0; width 1.007",
+  "b-ca-decay": "7; 38, 16, 191, 197, 189, 184, 181; late mean 188; rate 6.26; trough -70.0; width 1.006",
+  "b-leak-rev": "6; 34, 15, 210, 242, 232, 226; late mean 228; rate 5.40; trough -70.1; width 1.009"
+ },
+ "prediction_scored": {
+  "b-sk-half late cycles to 160 or less, count 7 to 9, AHP within 1 mV, width within 0.1 ms": "count and AHP and width held; late cycles shortened by 31 percent to 169 (band missed by 9 ms); the third cycle (57) reproduces the human's 61",
+  "b-ca-decay late cycles 195 to 220, count 6": "direction held, magnitude beyond the band (181 to 197, count 7)",
+  "b-leak-rev first cycle shorter by 3 to 6 ms, count 6, AHP 1 mV shallower": "first cycle and count held (34, 6); AHP unchanged (-70.1): that clause failed",
+  "rejection: no arm moves the mean late cycle by more than 21 ms": "not met (SK 77 ms, calcium 57 ms, leak 18 ms)"
+ },
+ "decision": "The late rate at 310 pA is set by the Modulate boundary of the E map: SK resistance growing with the calcium displacement. Halving SK and speeding calcium removal move the late cycles monotonically toward the human's without touching threshold, peak, trough or width; the leak reversal moves only the first cycle. No single arm reaches the usable rate limit (10 Hz within 1.5), so the stop rule is not met. The eighth and last evaluation is registered as Stage B2: SK half with calcium decay 1.0 together, to test that the two levers are one boundary and to locate how far it reaches. Prediction: late cycles 135 to 165 ms, count 8, rate 7.5 to 8.5 Hz, threshold, peak, trough and width unchanged within the Stage A limits. Rejection: late cycles above 175 ms (the levers are not additive) or any Stage A row moved.",
+ "returned_question": "If B2 lands short of the usable rate, the remaining distance to the human's 115 ms cycles needs a stronger dose (SK 0.25) or a second boundary (axonal or dendritic slow conductance), and the sweep 55 prediction needs one more evaluation beyond the cap: a cap extension is the user's decision."
+}

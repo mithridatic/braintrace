@@ -1,0 +1,130 @@
+{
+  "stage": "E",
+  "decision": "trough row passes at both inputs; open F, the rebound split, from the reserve",
+  "arms": {
+    "e-kv3-close2": {
+      "minimum_mv": {
+        "019": [
+          -80.1,
+          -80.5,
+          -80.8
+        ],
+        "027": [
+          -79.0,
+          -79.3,
+          -80.0
+        ]
+      },
+      "human_minimum_mv": {
+        "019": [
+          -78.8,
+          -78.7,
+          -79.2
+        ],
+        "027": [
+          -78.9,
+          -78.1,
+          -79.8
+        ]
+      },
+      "max_fall_v_s": -343,
+      "human_max_fall_v_s": -336,
+      "peak_rise_threshold": "unchanged (17.6 mV, 639 V/s, -60.7 mV)",
+      "spikes": {
+        "019": 14,
+        "027": 37
+      },
+      "early_cycles_ms": {
+        "019": [
+          31.2,
+          34.8,
+          39.2
+        ],
+        "027": [
+          13.6,
+          16.4,
+          17.1
+        ]
+      },
+      "human_early_cycles_ms": {
+        "019": [
+          21.7,
+          7.6,
+          10.2
+        ],
+        "027": [
+          12.7,
+          6.3,
+          5.9
+        ]
+      }
+    },
+    "e-kv3-close4": {
+      "minimum_mv": {
+        "019": [
+          -81.7,
+          -82.0,
+          -82.2
+        ],
+        "027": [
+          -80.7,
+          -81.1,
+          -81.4
+        ]
+      },
+      "spikes": {
+        "019": 14,
+        "027": 29
+      },
+      "reading": "overshoots the human by 2 to 3 mV; dose monotone."
+    }
+  },
+  "falling_phase_charge_pc_019_spike1": {
+    "r-candidate": {
+      "Kv3_1": -0.526,
+      "NaTg": 0.183,
+      "Ca_LVA": 0.019,
+      "axial": -0.226,
+      "capacitive": 0.281,
+      "applied": 0.286
+    },
+    "d-kv3-into-candidate": {
+      "Kv3_1": -0.519,
+      "NaTg": 0.142,
+      "Ca_LVA": 0.037,
+      "axial": -0.364,
+      "capacitive": 0.294,
+      "applied": 0.436
+    },
+    "e-kv3-close2": {
+      "Kv3_1": -0.622,
+      "NaTg": 0.179,
+      "Ca_LVA": 0.032,
+      "axial": -0.378,
+      "capacitive": 0.302,
+      "applied": 0.505
+    },
+    "e-kv3-close4": {
+      "Kv3_1": -0.69,
+      "NaTg": 0.179,
+      "Ca_LVA": 0.046,
+      "axial": -0.645,
+      "capacitive": 0.307,
+      "applied": 0.824
+    },
+    "r-source": {
+      "Kv3_1": -3.834,
+      "NaTg": 3.478,
+      "Ca_LVA": 0.182,
+      "axial": -0.397,
+      "capacitive": 0.376,
+      "applied": 0.339
+    }
+  },
+  "prediction_check": "Direction confirmed, magnitude exceeded: close-2 was predicted at -76.5 mV and reached -80.1; close-4 predicted -79 and reached -81.7. The fall rate did not leave its limit in either arm (prediction of a broken fall row in close-4 FAILED in the safe direction).",
+  "mechanism_correction": "The trough Kv3 current is 0.036 nA in the deep arm as in the shallow candidate, and the whole falling-phase Kv3 charge rises only from 0.53 to 0.62 pC (the source's 3.8 pC is a different regime: sodium flowing through the fall). So the depth is neither a trough balance nor a total-charge effect. What differs is where the potassium current is spent: in the candidate Kv3 has deactivated by -73 mV (closing tau 0.25x source) and the passive return takes over there; with the source's closing tau the Kv3 tail persists below -73 mV and carries the soma, and through the 0.16 nA axial path the coupled dendrites, to -80 mV before the return balances. Comparing d-kv3-into-candidate (opening 1x, closing 1x: -74.7 mV) with e-kv3-close2 (opening 0.5x, closing 1x: -80.1 mV) shows the activation reached during the short spike gates how much tail there is: opening rate and closing rate are one interdependent lever, the potassium activation carried past the end of the spike.",
+  "trade": "The deep trough removes the early burst: cycles 2-3 lengthen from 9-10 to 35-39 ms at 0.19 nA and from 4-5 to 16-17 ms at 0.27 nA, where the human fires at 6-10 ms after an equally deep trough. The human therefore carries an inward drive after the trough that the model lacks; the candidate's halved Ca_LVA is the registered suspect (its removal deepened the trough 1.4 mV, so restoring it should shorten the early cycles and lift the trough by about that much).",
+  "stage_f_prediction": "On e-kv3-close2, Ca_LVA restored to 1.0 (f-calva1) shortens cycles 2-3 at 0.27 nA from 16-17 toward 8-10 ms and lifts the trough by 1 to 1.5 mV (still inside 1.24 mV of the human at 0.27 nA); Ca_LVA doubled (f-calva2) shortens them further and lifts the trough 2 to 3 mV, leaving the limit. If neither arm shortens cycle 2 by more than 12.8 ms (model cycle limit), the rebound is not Ca_LVA and the burst goes to the user with 2 evaluations in reserve.",
+  "evaluations_used": 12,
+  "cap": 16
+}

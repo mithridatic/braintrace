@@ -1,0 +1,55 @@
+{
+  "decision": "supported",
+  "array_equality": {
+    "time_ms": true,
+    "voltage_mv": true,
+    "applied_current_na": true,
+    "raw_sample_index": true,
+    "soma_NaTs_ma_cm2": true,
+    "soma_Nap_ma_cm2": true,
+    "soma_K_P_ma_cm2": true,
+    "soma_K_T_ma_cm2": true,
+    "soma_Kv3_1_ma_cm2": true,
+    "soma_Im_ma_cm2": true,
+    "soma_SK_ma_cm2": true,
+    "soma_Ca_HVA_ma_cm2": true,
+    "soma_Ca_LVA_ma_cm2": true,
+    "soma_Ih_ma_cm2": true,
+    "soma_pas_ma_cm2": true,
+    "soma_icap_ma_cm2": true,
+    "soma_cai_mm": true,
+    "soma_Ih_m": true,
+    "soma_Im_m": true
+  },
+  "samples": 833375,
+  "changed_metadata": [
+    "kv3_closing_factor",
+    "integration_seconds",
+    "mechanism_source_sha256",
+    "mechanism_library_sha256"
+  ],
+  "checks": [
+    {
+      "stem": "h01-l2-sodium-opening-double-density130",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    },
+    {
+      "stem": "h01-l2-kv3-closing-control",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    }
+  ],
+  "source_and_library_match_preparation_and_clamp": true,
+  "qualification": "Default source equivalence only; no Kv3 intervention or physiological qualification.",
+  "sha256": {
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.json": "3570305f94a92379bb888af71126b0a6be3b3886e0b48133f4e522711c5ea25b",
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.npz": "bf8b02f6c20691765f1f09700a658de0ae6f0968368529bb9eb71b1d1016773d",
+    "docs\\evidence\\h01-l2-kv3-closing-control.json": "2ac8b43abbbf37410159dce76ccea05a87d06948b9e13196042154be90d99eac",
+    "docs\\evidence\\h01-l2-kv3-closing-control.npz": "bf8b02f6c20691765f1f09700a658de0ae6f0968368529bb9eb71b1d1016773d"
+  }
+}

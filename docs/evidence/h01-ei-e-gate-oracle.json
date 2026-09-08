@@ -1,0 +1,5779 @@
+{
+  "role": "E",
+  "source_hashes": {
+    "Ca_HVA.mod": "021d34cf9ef3e76b0f2afee1a1eeab40eed56d0d3b1362b7e1019f4433273c71",
+    "Ca_LVA.mod": "a7a9ef262541dc96f5d19afd97778f9320808d01ce397350f1f2be3db30f920f",
+    "Ih.mod": "8616325d83add9a1a6546972352b4a62e57095ba25f3c6b5a57ab8b397e2d662",
+    "Im.mod": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+    "Kv3_1.mod": "653befd15ec8f02af1ead3a7e5784149fe0c6e9021988d5ca822829449d83cb8",
+    "K_P.mod": "2254697617c8da162ff8e5495e4d512fce53f77b44b86754855f11cee4ab3b3e",
+    "K_T.mod": "1cb9d72f985ef028922cafafed079df5c47b87a893001304181ec48881367ba7",
+    "Nap.mod": "979d21508f5b089e7b782835ea7f60311223bdc3a8e5242056c594305d2fb220",
+    "NaTs.mod": "6ba797bada310a6b880f4ab2a86e915894cc205d411474c0ce78f806af532a1f",
+    "SK.mod": "079f1e3cac7444696d480b8e02853b215cd93e0c7b9986dbb54925fc49eddbeb"
+  },
+  "cases": [
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6424167244690335e-16,
+          "tau_ms": 0.009675826703931717
+        },
+        "h": {
+          "inf": 0.9944384081929181,
+          "tau_ms": 127.38959297773948
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6424167244690335e-16,
+          "tau_ms": 0.009675826703931717
+        },
+        "h": {
+          "inf": 0.9944384081929181,
+          "tau_ms": 127.38959297773948
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6424167244690335e-16,
+          "tau_ms": 0.009675826703931717
+        },
+        "h": {
+          "inf": 0.9944384081929181,
+          "tau_ms": 127.38959297773948
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6424167244690335e-16,
+          "tau_ms": 0.009675826703931717
+        },
+        "h": {
+          "inf": 0.9944384081929181,
+          "tau_ms": 127.38959297773948
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.008578325697499e-07,
+          "tau_ms": 0.6265435700793042
+        },
+        "h": {
+          "inf": 0.7876897703667745,
+          "tau_ms": 416.62069685789345
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.008578325697499e-07,
+          "tau_ms": 0.6265435700793042
+        },
+        "h": {
+          "inf": 0.7876897703667745,
+          "tau_ms": 416.62069685789345
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.008578325697499e-07,
+          "tau_ms": 0.6265435700793042
+        },
+        "h": {
+          "inf": 0.7876897703667745,
+          "tau_ms": 416.62069685789345
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.008578325697499e-07,
+          "tau_ms": 0.6265435700793042
+        },
+        "h": {
+          "inf": 0.7876897703667745,
+          "tau_ms": 416.62069685789345
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00013518971403679637,
+          "tau_ms": 1.8060677525954396
+        },
+        "h": {
+          "inf": 0.5930335577553986,
+          "tau_ms": 449.5840739716926
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00013518971403679637,
+          "tau_ms": 1.8060677525954396
+        },
+        "h": {
+          "inf": 0.5930335577553986,
+          "tau_ms": 449.5840739716926
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00013518971403679637,
+          "tau_ms": 1.8060677525954396
+        },
+        "h": {
+          "inf": 0.5930335577553986,
+          "tau_ms": 449.5840739716926
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00013518971403679637,
+          "tau_ms": 1.8060677525954396
+        },
+        "h": {
+          "inf": 0.5930335577553986,
+          "tau_ms": 449.5840739716926
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002510655138657842,
+          "tau_ms": 3.244653777838065
+        },
+        "h": {
+          "inf": 0.46939729068757396,
+          "tau_ms": 434.6414331765065
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002510655138657842,
+          "tau_ms": 3.244653777838065
+        },
+        "h": {
+          "inf": 0.46939729068757396,
+          "tau_ms": 434.6414331765065
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002510655138657842,
+          "tau_ms": 3.244653777838065
+        },
+        "h": {
+          "inf": 0.46939729068757396,
+          "tau_ms": 434.6414331765065
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002510655138657842,
+          "tau_ms": 3.244653777838065
+        },
+        "h": {
+          "inf": 0.46939729068757396,
+          "tau_ms": 434.6414331765065
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.16761818477848772,
+          "tau_ms": 6.93953592181011
+        },
+        "h": {
+          "inf": 0.2934279295859354,
+          "tau_ms": 374.1676436847307
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.16761818477848772,
+          "tau_ms": 6.93953592181011
+        },
+        "h": {
+          "inf": 0.2934279295859354,
+          "tau_ms": 374.1676436847307
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.16761818477848772,
+          "tau_ms": 6.93953592181011
+        },
+        "h": {
+          "inf": 0.2934279295859354,
+          "tau_ms": 374.1676436847307
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.16761818477848772,
+          "tau_ms": 6.93953592181011
+        },
+        "h": {
+          "inf": 0.2934279295859354,
+          "tau_ms": 374.1676436847307
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.24936245318608877,
+          "tau_ms": 7.03933440405474
+        },
+        "h": {
+          "inf": 0.27509198197175466,
+          "tau_ms": 365.10223480740524
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.24936245318608877,
+          "tau_ms": 7.03933440405474
+        },
+        "h": {
+          "inf": 0.27509198197175466,
+          "tau_ms": 365.10223480740524
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.24936245318608877,
+          "tau_ms": 7.03933440405474
+        },
+        "h": {
+          "inf": 0.27509198197175466,
+          "tau_ms": 365.10223480740524
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.24936245318608877,
+          "tau_ms": 7.03933440405474
+        },
+        "h": {
+          "inf": 0.27509198197175466,
+          "tau_ms": 365.10223480740524
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7891790093327248,
+          "tau_ms": 3.7759761212092093
+        },
+        "h": {
+          "inf": 0.19082544159799048,
+          "tau_ms": 315.5859216977468
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7891790093327248,
+          "tau_ms": 3.7759761212092093
+        },
+        "h": {
+          "inf": 0.19082544159799048,
+          "tau_ms": 315.5859216977468
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7891790093327248,
+          "tau_ms": 3.7759761212092093
+        },
+        "h": {
+          "inf": 0.19082544159799048,
+          "tau_ms": 315.5859216977468
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7891790093327248,
+          "tau_ms": 3.7759761212092093
+        },
+        "h": {
+          "inf": 0.19082544159799048,
+          "tau_ms": 315.5859216977468
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9252010450066254,
+          "tau_ms": 2.0222649721333834
+        },
+        "h": {
+          "inf": 0.15078460647000932,
+          "tau_ms": 286.8399111730211
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9252010450066254,
+          "tau_ms": 2.0222649721333834
+        },
+        "h": {
+          "inf": 0.15078460647000932,
+          "tau_ms": 286.8399111730211
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9252010450066254,
+          "tau_ms": 2.0222649721333834
+        },
+        "h": {
+          "inf": 0.15078460647000932,
+          "tau_ms": 286.8399111730211
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9252010450066254,
+          "tau_ms": 2.0222649721333834
+        },
+        "h": {
+          "inf": 0.15078460647000932,
+          "tau_ms": 286.8399111730211
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9986412635838131,
+          "tau_ms": 0.38631992983932134
+        },
+        "h": {
+          "inf": 0.0446618802205744,
+          "tau_ms": 189.08416518763474
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9986412635838131,
+          "tau_ms": 0.38631992983932134
+        },
+        "h": {
+          "inf": 0.0446618802205744,
+          "tau_ms": 189.08416518763474
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9986412635838131,
+          "tau_ms": 0.38631992983932134
+        },
+        "h": {
+          "inf": 0.0446618802205744,
+          "tau_ms": 189.08416518763474
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_HVA",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9986412635838131,
+          "tau_ms": 0.38631992983932134
+        },
+        "h": {
+          "inf": 0.0446618802205744,
+          "tau_ms": 189.08416518763474
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 4.822371560818946e-09,
+          "tau_ms": 8.466303282298504
+        },
+        "h": {
+          "inf": 0.9999605574132482,
+          "tau_ms": 23.705643936917085
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 4.822371560818946e-09,
+          "tau_ms": 8.466303282298504
+        },
+        "h": {
+          "inf": 0.9999605574132482,
+          "tau_ms": 23.705643936917085
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 4.822371560818946e-09,
+          "tau_ms": 8.466303282298504
+        },
+        "h": {
+          "inf": 0.9999605574132482,
+          "tau_ms": 23.705643936917085
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 4.822371560818946e-09,
+          "tau_ms": 8.466303282298504
+        },
+        "h": {
+          "inf": 0.9999605574132482,
+          "tau_ms": 23.705643936917085
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006529653375526923,
+          "tau_ms": 8.465927727337863
+        },
+        "h": {
+          "inf": 0.28140560742914383,
+          "tau_ms": 23.57505288156781
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006529653375526923,
+          "tau_ms": 8.465927727337863
+        },
+        "h": {
+          "inf": 0.28140560742914383,
+          "tau_ms": 23.57505288156781
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006529653375526923,
+          "tau_ms": 8.465927727337863
+        },
+        "h": {
+          "inf": 0.28140560742914383,
+          "tau_ms": 23.57505288156781
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006529653375526923,
+          "tau_ms": 8.465927727337863
+        },
+        "h": {
+          "inf": 0.28140560742914383,
+          "tau_ms": 23.57505288156781
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.012953727530695871,
+          "tau_ms": 8.452585701232923
+        },
+        "h": {
+          "inf": 0.022977369910025615,
+          "tau_ms": 22.14254899446906
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.012953727530695871,
+          "tau_ms": 8.452585701232923
+        },
+        "h": {
+          "inf": 0.022977369910025615,
+          "tau_ms": 22.14254899446906
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.012953727530695871,
+          "tau_ms": 8.452585701232923
+        },
+        "h": {
+          "inf": 0.022977369910025615,
+          "tau_ms": 22.14254899446906
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.012953727530695871,
+          "tau_ms": 8.452585701232923
+        },
+        "h": {
+          "inf": 0.022977369910025615,
+          "tau_ms": 22.14254899446906
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.06496916912866407,
+          "tau_ms": 8.366238136142249
+        },
+        "h": {
+          "inf": 0.004905405705722035,
+          "tau_ms": 18.66080545198883
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.06496916912866407,
+          "tau_ms": 8.366238136142249
+        },
+        "h": {
+          "inf": 0.004905405705722035,
+          "tau_ms": 18.66080545198883
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.06496916912866407,
+          "tau_ms": 8.366238136142249
+        },
+        "h": {
+          "inf": 0.004905405705722035,
+          "tau_ms": 18.66080545198883
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.06496916912866407,
+          "tau_ms": 8.366238136142249
+        },
+        "h": {
+          "inf": 0.004905405705722035,
+          "tau_ms": 18.66080545198883
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5,
+          "tau_ms": 6.644751571710586
+        },
+        "h": {
+          "inf": 0.00040448149784208087,
+          "tau_ms": 10.046477321539808
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5,
+          "tau_ms": 6.644751571710586
+        },
+        "h": {
+          "inf": 0.00040448149784208087,
+          "tau_ms": 10.046477321539808
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5,
+          "tau_ms": 6.644751571710586
+        },
+        "h": {
+          "inf": 0.00040448149784208087,
+          "tau_ms": 10.046477321539808
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5,
+          "tau_ms": 6.644751571710586
+        },
+        "h": {
+          "inf": 0.00040448149784208087,
+          "tau_ms": 10.046477321539808
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5825702064623147,
+          "tau_ms": 6.066318340355556
+        },
+        "h": {
+          "inf": 0.000295957113513077,
+          "tau_ms": 9.357105106255828
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5825702064623147,
+          "tau_ms": 6.066318340355556
+        },
+        "h": {
+          "inf": 0.000295957113513077,
+          "tau_ms": 9.357105106255828
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5825702064623147,
+          "tau_ms": 6.066318340355556
+        },
+        "h": {
+          "inf": 0.000295957113513077,
+          "tau_ms": 9.357105106255828
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5825702064623147,
+          "tau_ms": 6.066318340355556
+        },
+        "h": {
+          "inf": 0.000295957113513077,
+          "tau_ms": 9.357105106255828
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8972159750827483,
+          "tau_ms": 2.8310072943920948
+        },
+        "h": {
+          "inf": 5.307507822667364e-05,
+          "tau_ms": 7.383709260633409
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8972159750827483,
+          "tau_ms": 2.8310072943920948
+        },
+        "h": {
+          "inf": 5.307507822667364e-05,
+          "tau_ms": 7.383709260633409
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8972159750827483,
+          "tau_ms": 2.8310072943920948
+        },
+        "h": {
+          "inf": 5.307507822667364e-05,
+          "tau_ms": 7.383709260633409
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8972159750827483,
+          "tau_ms": 2.8310072943920948
+        },
+        "h": {
+          "inf": 5.307507822667364e-05,
+          "tau_ms": 7.383709260633409
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9655548043337889,
+          "tau_ms": 2.0144781171210546
+        },
+        "h": {
+          "inf": 1.7778551863194697e-05,
+          "tau_ms": 7.0029352190232075
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9655548043337889,
+          "tau_ms": 2.0144781171210546
+        },
+        "h": {
+          "inf": 1.7778551863194697e-05,
+          "tau_ms": 7.0029352190232075
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9655548043337889,
+          "tau_ms": 2.0144781171210546
+        },
+        "h": {
+          "inf": 1.7778551863194697e-05,
+          "tau_ms": 7.0029352190232075
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9655548043337889,
+          "tau_ms": 2.0144781171210546
+        },
+        "h": {
+          "inf": 1.7778551863194697e-05,
+          "tau_ms": 7.0029352190232075
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999546021312976,
+          "tau_ms": 1.693373775953965
+        },
+        "h": {
+          "inf": 3.43212879853116e-08,
+          "tau_ms": 6.773811330297123
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999546021312976,
+          "tau_ms": 1.693373775953965
+        },
+        "h": {
+          "inf": 3.43212879853116e-08,
+          "tau_ms": 6.773811330297123
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999546021312976,
+          "tau_ms": 1.693373775953965
+        },
+        "h": {
+          "inf": 3.43212879853116e-08,
+          "tau_ms": 6.773811330297123
+        }
+      }
+    },
+    {
+      "mechanism": "Ca_LVA",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999546021312976,
+          "tau_ms": 1.693373775953965
+        },
+        "h": {
+          "inf": 3.43212879853116e-08,
+          "tau_ms": 6.773811330297123
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9771252477059821,
+          "tau_ms": 12.770041268031706
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9771252477059821,
+          "tau_ms": 12.770041268031706
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9771252477059821,
+          "tau_ms": 12.770041268031706
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9771252477059821,
+          "tau_ms": 12.770041268031706
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.07188582965753655,
+          "tau_ms": 60.83887129232833
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.07188582965753655,
+          "tau_ms": 60.83887129232833
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.07188582965753655,
+          "tau_ms": 60.83887129232833
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.07188582965753655,
+          "tau_ms": 60.83887129232833
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.01224563762931782,
+          "tau_ms": 37.58862811035066
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.01224563762931782,
+          "tau_ms": 37.58862811035066
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.01224563762931782,
+          "tau_ms": 37.58862811035066
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.01224563762931782,
+          "tau_ms": 37.58862811035066
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0043794544947032355,
+          "tau_ms": 28.00880480268894
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0043794544947032355,
+          "tau_ms": 28.00880480268894
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0043794544947032355,
+          "tau_ms": 28.00880480268894
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0043794544947032355,
+          "tau_ms": 28.00880480268894
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0008206504119321824,
+          "tau_ms": 17.334579425272697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0008206504119321824,
+          "tau_ms": 17.334579425272697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0008206504119321824,
+          "tau_ms": 17.334579425272697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0008206504119321824,
+          "tau_ms": 17.334579425272697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006644835198146093,
+          "tau_ms": 16.320739148409984
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006644835198146093,
+          "tau_ms": 16.320739148409984
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006644835198146093,
+          "tau_ms": 16.320739148409984
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0006644835198146093,
+          "tau_ms": 16.320739148409984
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00020698967352316937,
+          "tau_ms": 11.711462332551697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00020698967352316937,
+          "tau_ms": 11.711462332551697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00020698967352316937,
+          "tau_ms": 11.711462332551697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00020698967352316937,
+          "tau_ms": 11.711462332551697
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 9.813436575166118e-05,
+          "tau_ms": 9.480116053731171
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 9.813436575166118e-05,
+          "tau_ms": 9.480116053731171
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 9.813436575166118e-05,
+          "tau_ms": 9.480116053731171
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 9.813436575166118e-05,
+          "tau_ms": 9.480116053731171
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.3182429958677934e-06,
+          "tau_ms": 2.831578031583081
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.3182429958677934e-06,
+          "tau_ms": 2.831578031583081
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.3182429958677934e-06,
+          "tau_ms": 2.831578031583081
+        }
+      }
+    },
+    {
+      "mechanism": "Ih",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.3182429958677934e-06,
+          "tau_ms": 2.831578031583081
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 3.8513973207064844e-11,
+          "tau_ms": 0.0006368674241894651
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 3.8513973207064844e-11,
+          "tau_ms": 0.0006368674241894651
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 3.8513973207064844e-11,
+          "tau_ms": 0.0006368674241894651
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 3.8513973207064844e-11,
+          "tau_ms": 0.0006368674241894651
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 5.544852472279492e-05,
+          "tau_ms": 0.7641398174942357
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 5.544852472279492e-05,
+          "tau_ms": 0.7641398174942357
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 5.544852472279492e-05,
+          "tau_ms": 0.7641398174942357
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 5.544852472279492e-05,
+          "tau_ms": 0.7641398174942357
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0020253203890498814,
+          "tau_ms": 4.613669727022466
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0020253203890498814,
+          "tau_ms": 4.613669727022466
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0020253203890498814,
+          "tau_ms": 4.613669727022466
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0020253203890498814,
+          "tau_ms": 4.613669727022466
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.014774031693273054,
+          "tau_ms": 12.381045272244256
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.014774031693273054,
+          "tau_ms": 12.381045272244256
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.014774031693273054,
+          "tau_ms": 12.381045272244256
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.014774031693273054,
+          "tau_ms": 12.381045272244256
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 45.503500778130096
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 45.503500778130096
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 45.503500778130096
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 45.503500778130096
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.3543436937742045,
+          "tau_ms": 49.0854668527817
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.3543436937742045,
+          "tau_ms": 49.0854668527817
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.3543436937742045,
+          "tau_ms": 49.0854668527817
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.3543436937742045,
+          "tau_ms": 49.0854668527817
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8320183851339245,
+          "tau_ms": 38.36517740692626
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8320183851339245,
+          "tau_ms": 38.36517740692626
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8320183851339245,
+          "tau_ms": 38.36517740692626
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.8320183851339245,
+          "tau_ms": 38.36517740692626
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9525741268224331,
+          "tau_ms": 21.812072460816964
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9525741268224331,
+          "tau_ms": 21.812072460816964
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9525741268224331,
+          "tau_ms": 21.812072460816964
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9525741268224331,
+          "tau_ms": 21.812072460816964
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999832985781519,
+          "tau_ms": 0.41938507367159794
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999832985781519,
+          "tau_ms": 0.41938507367159794
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999832985781519,
+          "tau_ms": 0.41938507367159794
+        }
+      }
+    },
+    {
+      "mechanism": "Im",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999832985781519,
+          "tau_ms": 0.41938507367159794
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.571372815378443e-05,
+          "tau_ms": 1.479618641621311
+        },
+        "h": {
+          "inf": 0.9998961778376888,
+          "tau_ms": 92.4936885207787
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.571372815378443e-05,
+          "tau_ms": 1.479618641621311
+        },
+        "h": {
+          "inf": 0.9998961778376888,
+          "tau_ms": 92.4936885207787
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.571372815378443e-05,
+          "tau_ms": 1.479618641621311
+        },
+        "h": {
+          "inf": 0.9998961778376888,
+          "tau_ms": 92.4936885207787
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 6.571372815378443e-05,
+          "tau_ms": 1.479618641621311
+        },
+        "h": {
+          "inf": 0.9998961778376888,
+          "tau_ms": 92.4936885207787
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.008376007698422946,
+          "tau_ms": 7.097022500014025
+        },
+        "h": {
+          "inf": 0.9386168925965079,
+          "tau_ms": 224.57808518695128
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.008376007698422946,
+          "tau_ms": 7.097022500014025
+        },
+        "h": {
+          "inf": 0.9386168925965079,
+          "tau_ms": 224.57808518695128
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.008376007698422946,
+          "tau_ms": 7.097022500014025
+        },
+        "h": {
+          "inf": 0.9386168925965079,
+          "tau_ms": 224.57808518695128
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.008376007698422946,
+          "tau_ms": 7.097022500014025
+        },
+        "h": {
+          "inf": 0.9386168925965079,
+          "tau_ms": 224.57808518695128
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.028165275749804368,
+          "tau_ms": 11.079873704364347
+        },
+        "h": {
+          "inf": 0.7485528706953373,
+          "tau_ms": 365.8218856347783
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.028165275749804368,
+          "tau_ms": 11.079873704364347
+        },
+        "h": {
+          "inf": 0.7485528706953373,
+          "tau_ms": 365.8218856347783
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.028165275749804368,
+          "tau_ms": 11.079873704364347
+        },
+        "h": {
+          "inf": 0.7485528706953373,
+          "tau_ms": 365.8218856347783
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.028165275749804368,
+          "tau_ms": 11.079873704364347
+        },
+        "h": {
+          "inf": 0.7485528706953373,
+          "tau_ms": 365.8218856347783
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.05436354572178029,
+          "tau_ms": 14.244126555275606
+        },
+        "h": {
+          "inf": 0.5453297388885201,
+          "tau_ms": 407.40004667257693
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.05436354572178029,
+          "tau_ms": 14.244126555275606
+        },
+        "h": {
+          "inf": 0.5453297388885201,
+          "tau_ms": 407.40004667257693
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.05436354572178029,
+          "tau_ms": 14.244126555275606
+        },
+        "h": {
+          "inf": 0.5453297388885201,
+          "tau_ms": 407.40004667257693
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.05436354572178029,
+          "tau_ms": 14.244126555275606
+        },
+        "h": {
+          "inf": 0.5453297388885201,
+          "tau_ms": 407.40004667257693
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.14675602998861478,
+          "tau_ms": 12.878879997880219
+        },
+        "h": {
+          "inf": 0.21879074544665134,
+          "tau_ms": 394.54055971099274
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.14675602998861478,
+          "tau_ms": 12.878879997880219
+        },
+        "h": {
+          "inf": 0.21879074544665134,
+          "tau_ms": 394.54055971099274
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.14675602998861478,
+          "tau_ms": 12.878879997880219
+        },
+        "h": {
+          "inf": 0.21879074544665134,
+          "tau_ms": 394.54055971099274
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.14675602998861478,
+          "tau_ms": 12.878879997880219
+        },
+        "h": {
+          "inf": 0.21879074544665134,
+          "tau_ms": 394.54055971099274
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.164751959074336,
+          "tau_ms": 12.247742413642136
+        },
+        "h": {
+          "inf": 0.1893030016858981,
+          "tau_ms": 386.99613303839345
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.164751959074336,
+          "tau_ms": 12.247742413642136
+        },
+        "h": {
+          "inf": 0.1893030016858981,
+          "tau_ms": 386.99613303839345
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.164751959074336,
+          "tau_ms": 12.247742413642136
+        },
+        "h": {
+          "inf": 0.1893030016858981,
+          "tau_ms": 386.99613303839345
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.164751959074336,
+          "tau_ms": 12.247742413642136
+        },
+        "h": {
+          "inf": 0.1893030016858981,
+          "tau_ms": 386.99613303839345
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.29528280680123237,
+          "tau_ms": 9.306565311671624
+        },
+        "h": {
+          "inf": 0.0791067836720067,
+          "tau_ms": 331.46363703174444
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.29528280680123237,
+          "tau_ms": 9.306565311671624
+        },
+        "h": {
+          "inf": 0.0791067836720067,
+          "tau_ms": 331.46363703174444
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.29528280680123237,
+          "tau_ms": 9.306565311671624
+        },
+        "h": {
+          "inf": 0.0791067836720067,
+          "tau_ms": 331.46363703174444
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.29528280680123237,
+          "tau_ms": 9.306565311671624
+        },
+        "h": {
+          "inf": 0.0791067836720067,
+          "tau_ms": 331.46363703174444
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.40361837462914696,
+          "tau_ms": 7.82840439436864
+        },
+        "h": {
+          "inf": 0.043483807471679,
+          "tau_ms": 290.46351811553626
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.40361837462914696,
+          "tau_ms": 7.82840439436864
+        },
+        "h": {
+          "inf": 0.043483807471679,
+          "tau_ms": 290.46351811553626
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.40361837462914696,
+          "tau_ms": 7.82840439436864
+        },
+        "h": {
+          "inf": 0.043483807471679,
+          "tau_ms": 290.46351811553626
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.40361837462914696,
+          "tau_ms": 7.82840439436864
+        },
+        "h": {
+          "inf": 0.043483807471679,
+          "tau_ms": 290.46351811553626
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9128797701570391,
+          "tau_ms": 3.040678622879073
+        },
+        "h": {
+          "inf": 0.0011963622248625523,
+          "tau_ms": 140.85062214118074
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9128797701570391,
+          "tau_ms": 3.040678622879073
+        },
+        "h": {
+          "inf": 0.0011963622248625523,
+          "tau_ms": 140.85062214118074
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9128797701570391,
+          "tau_ms": 3.040678622879073
+        },
+        "h": {
+          "inf": 0.0011963622248625523,
+          "tau_ms": 140.85062214118074
+        }
+      }
+    },
+    {
+      "mechanism": "K_P",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9128797701570391,
+          "tau_ms": 3.040678622879073
+        },
+        "h": {
+          "inf": 0.0011963622248625523,
+          "tau_ms": 140.85062214118074
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.02364465183273973,
+          "tau_ms": 0.15638183777046583
+        },
+        "h": {
+          "inf": 0.9998622593171277,
+          "tau_ms": 2.709268714197965
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.02364465183273973,
+          "tau_ms": 0.15638183777046583
+        },
+        "h": {
+          "inf": 0.9998622593171277,
+          "tau_ms": 2.709268714197965
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.02364465183273973,
+          "tau_ms": 0.15638183777046583
+        },
+        "h": {
+          "inf": 0.9998622593171277,
+          "tau_ms": 2.709268714197965
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.02364465183273973,
+          "tau_ms": 0.15638183777046583
+        },
+        "h": {
+          "inf": 0.9998622593171277,
+          "tau_ms": 2.709268714197965
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.21825541417643207,
+          "tau_ms": 0.41193698522460787
+        },
+        "h": {
+          "inf": 0.8581489350995123,
+          "tau_ms": 15.910380673063658
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.21825541417643207,
+          "tau_ms": 0.41193698522460787
+        },
+        "h": {
+          "inf": 0.8581489350995123,
+          "tau_ms": 15.910380673063658
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.21825541417643207,
+          "tau_ms": 0.41193698522460787
+        },
+        "h": {
+          "inf": 0.8581489350995123,
+          "tau_ms": 15.910380673063658
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.21825541417643207,
+          "tau_ms": 0.41193698522460787
+        },
+        "h": {
+          "inf": 0.8581489350995123,
+          "tau_ms": 15.910380673063658
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.34182489412938394,
+          "tau_ms": 0.4244721260704682
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 17.835152335740673
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.34182489412938394,
+          "tau_ms": 0.4244721260704682
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 17.835152335740673
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.34182489412938394,
+          "tau_ms": 0.4244721260704682
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 17.835152335740673
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.34182489412938394,
+          "tau_ms": 0.4244721260704682
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 17.835152335740673
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.4230305725979342,
+          "tau_ms": 0.40720054207574047
+        },
+        "h": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 12.318452275640624
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.4230305725979342,
+          "tau_ms": 0.40720054207574047
+        },
+        "h": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 12.318452275640624
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.4230305725979342,
+          "tau_ms": 0.40720054207574047
+        },
+        "h": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 12.318452275640624
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.4230305725979342,
+          "tau_ms": 0.40720054207574047
+        },
+        "h": {
+          "inf": 0.2689414213699951,
+          "tau_ms": 12.318452275640624
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5600535305712914,
+          "tau_ms": 0.35154088067153044
+        },
+        "h": {
+          "inf": 0.06913842034334682,
+          "tau_ms": 4.827143042226826
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5600535305712914,
+          "tau_ms": 0.35154088067153044
+        },
+        "h": {
+          "inf": 0.06913842034334682,
+          "tau_ms": 4.827143042226826
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5600535305712914,
+          "tau_ms": 0.35154088067153044
+        },
+        "h": {
+          "inf": 0.06913842034334682,
+          "tau_ms": 4.827143042226826
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5600535305712914,
+          "tau_ms": 0.35154088067153044
+        },
+        "h": {
+          "inf": 0.06913842034334682,
+          "tau_ms": 4.827143042226826
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5769694274020658,
+          "tau_ms": 0.34300611494423505
+        },
+        "h": {
+          "inf": 0.057324175898868755,
+          "tau_ms": 4.347008172493696
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5769694274020658,
+          "tau_ms": 0.34300611494423505
+        },
+        "h": {
+          "inf": 0.057324175898868755,
+          "tau_ms": 4.347008172493696
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5769694274020658,
+          "tau_ms": 0.34300611494423505
+        },
+        "h": {
+          "inf": 0.057324175898868755,
+          "tau_ms": 4.347008172493696
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5769694274020658,
+          "tau_ms": 0.34300611494423505
+        },
+        "h": {
+          "inf": 0.057324175898868755,
+          "tau_ms": 4.347008172493696
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6658902137487714,
+          "tau_ms": 0.2937919396215353
+        },
+        "h": {
+          "inf": 0.01984030573407751,
+          "tau_ms": 3.0131459275648855
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6658902137487714,
+          "tau_ms": 0.2937919396215353
+        },
+        "h": {
+          "inf": 0.01984030573407751,
+          "tau_ms": 3.0131459275648855
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6658902137487714,
+          "tau_ms": 0.2937919396215353
+        },
+        "h": {
+          "inf": 0.01984030573407751,
+          "tau_ms": 3.0131459275648855
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6658902137487714,
+          "tau_ms": 0.2937919396215353
+        },
+        "h": {
+          "inf": 0.01984030573407751,
+          "tau_ms": 3.0131459275648855
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7172851124799586,
+          "tau_ms": 0.2627250198271361
+        },
+        "h": {
+          "inf": 0.009951801866904324,
+          "tau_ms": 2.7912216069921287
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7172851124799586,
+          "tau_ms": 0.2627250198271361
+        },
+        "h": {
+          "inf": 0.009951801866904324,
+          "tau_ms": 2.7912216069921287
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7172851124799586,
+          "tau_ms": 0.2627250198271361
+        },
+        "h": {
+          "inf": 0.009951801866904324,
+          "tau_ms": 2.7912216069921287
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.7172851124799586,
+          "tau_ms": 0.2627250198271361
+        },
+        "h": {
+          "inf": 0.009951801866904324,
+          "tau_ms": 2.7912216069921287
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9097301769472593,
+          "tau_ms": 0.14400810778780582
+        },
+        "h": {
+          "inf": 0.000184071904963424,
+          "tau_ms": 2.709218366729236
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9097301769472593,
+          "tau_ms": 0.14400810778780582
+        },
+        "h": {
+          "inf": 0.000184071904963424,
+          "tau_ms": 2.709218366729236
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9097301769472593,
+          "tau_ms": 0.14400810778780582
+        },
+        "h": {
+          "inf": 0.000184071904963424,
+          "tau_ms": 2.709218366729236
+        }
+      }
+    },
+    {
+      "mechanism": "K_T",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9097301769472593,
+          "tau_ms": 0.14400810778780582
+        },
+        "h": {
+          "inf": 0.000184071904963424,
+          "tau_ms": 2.709218366729236
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6883867894148283e-08,
+          "tau_ms": 0.3164511414191635
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6883867894148283e-08,
+          "tau_ms": 0.3164511414191635
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6883867894148283e-08,
+          "tau_ms": 0.3164511414191635
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 1.6883867894148283e-08,
+          "tau_ms": 0.28480602727724713
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 2.522552720548282e-05,
+          "tau_ms": 1.199233740880474
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 2.522552720548282e-05,
+          "tau_ms": 1.199233740880474
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 2.522552720548282e-05,
+          "tau_ms": 1.199233740880474
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 2.522552720548282e-05,
+          "tau_ms": 1.0793103667924266
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00016132007936617797,
+          "tau_ms": 1.5665665817026215
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00016132007936617797,
+          "tau_ms": 1.5665665817026215
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00016132007936617797,
+          "tau_ms": 1.5665665817026215
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00016132007936617797,
+          "tau_ms": 1.4099099235323593
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0004521560537121334,
+          "tau_ms": 1.7869464641516783
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0004521560537121334,
+          "tau_ms": 1.7869464641516783
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0004521560537121334,
+          "tau_ms": 1.7869464641516783
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0004521560537121334,
+          "tau_ms": 1.6082518177365106
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002348689317701982,
+          "tau_ms": 2.1483450885388273
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002348689317701982,
+          "tau_ms": 2.1483450885388273
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002348689317701982,
+          "tau_ms": 2.1483450885388273
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.002348689317701982,
+          "tau_ms": 1.9335105796849446
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0028849435735162987,
+          "tau_ms": 2.1933229113543335
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0028849435735162987,
+          "tau_ms": 2.1933229113543335
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0028849435735162987,
+          "tau_ms": 2.1933229113543335
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0028849435735162987,
+          "tau_ms": 1.9739906202189001
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00891256919107943,
+          "tau_ms": 2.4360235930525005
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00891256919107943,
+          "tau_ms": 2.4360235930525005
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00891256919107943,
+          "tau_ms": 2.4360235930525005
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.00891256919107943,
+          "tau_ms": 2.1924212337472504
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0181692074498428,
+          "tau_ms": 2.584200507044952
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0181692074498428,
+          "tau_ms": 2.584200507044952
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0181692074498428,
+          "tau_ms": 2.584200507044952
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0181692074498428,
+          "tau_ms": 2.325780456340457
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5334550942439604,
+          "tau_ms": 3.275016515174199
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5334550942439604,
+          "tau_ms": 3.275016515174199
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5334550942439604,
+          "tau_ms": 3.275016515174199
+        }
+      }
+    },
+    {
+      "mechanism": "Kv3_1",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5334550942439604,
+          "tau_ms": 2.947514863656779
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 7.077996952333467e-09,
+          "tau_ms": 0.028077449924398718
+        },
+        "h": {
+          "inf": 0.9999996325457567,
+          "tau_ms": 0.2999894910486577
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 7.077996952333467e-09,
+          "tau_ms": 0.028077449924398718
+        },
+        "h": {
+          "inf": 0.9999996325457567,
+          "tau_ms": 0.2999894910486577
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 7.077996952333467e-09,
+          "tau_ms": 0.056154899848797436
+        },
+        "h": {
+          "inf": 0.9999996325457567,
+          "tau_ms": 0.2999894910486577
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 7.077996952333467e-09,
+          "tau_ms": 0.028077449924398718
+        },
+        "h": {
+          "inf": 0.9999996325457567,
+          "tau_ms": 0.2999894910486577
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0009580919885869629,
+          "tau_ms": 0.07320232380452595
+        },
+        "h": {
+          "inf": 0.9525741268224333,
+          "tau_ms": 1.341082001893515
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0009580919885869629,
+          "tau_ms": 0.07320232380452595
+        },
+        "h": {
+          "inf": 0.9525741268224333,
+          "tau_ms": 1.341082001893515
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0009580919885869629,
+          "tau_ms": 0.1464046476090519
+        },
+        "h": {
+          "inf": 0.9525741268224333,
+          "tau_ms": 1.341082001893515
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.0009580919885869629,
+          "tau_ms": 0.07320232380452595
+        },
+        "h": {
+          "inf": 0.9525741268224333,
+          "tau_ms": 1.341082001893515
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.018898224743920528,
+          "tau_ms": 0.12013819857724378
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 2.2224237794635684
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.018898224743920528,
+          "tau_ms": 0.12013819857724378
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 2.2224237794635684
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.018898224743920528,
+          "tau_ms": 0.24027639715448756
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 2.2224237794635684
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.018898224743920528,
+          "tau_ms": 0.12013819857724378
+        },
+        "h": {
+          "inf": 0.5,
+          "tau_ms": 2.2224237794635684
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.09254562315586191,
+          "tau_ms": 0.1702576416841938
+        },
+        "h": {
+          "inf": 0.15886910488091516,
+          "tau_ms": 1.8195297917336326
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.09254562315586191,
+          "tau_ms": 0.1702576416841938
+        },
+        "h": {
+          "inf": 0.15886910488091516,
+          "tau_ms": 1.8195297917336326
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.09254562315586191,
+          "tau_ms": 0.3405152833683876
+        },
+        "h": {
+          "inf": 0.15886910488091516,
+          "tau_ms": 1.8195297917336326
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.09254562315586191,
+          "tau_ms": 0.1702576416841938
+        },
+        "h": {
+          "inf": 0.15886910488091516,
+          "tau_ms": 1.8195297917336326
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5947712418300654,
+          "tau_ms": 0.21788468426113416
+        },
+        "h": {
+          "inf": 0.01295372753069587,
+          "tau_ms": 0.9991598932014218
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5947712418300654,
+          "tau_ms": 0.21788468426113416
+        },
+        "h": {
+          "inf": 0.01295372753069587,
+          "tau_ms": 0.9991598932014218
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5947712418300654,
+          "tau_ms": 0.43576936852226833
+        },
+        "h": {
+          "inf": 0.01295372753069587,
+          "tau_ms": 0.9991598932014218
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.5947712418300654,
+          "tau_ms": 0.21788468426113416
+        },
+        "h": {
+          "inf": 0.01295372753069587,
+          "tau_ms": 0.9991598932014218
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6719589401797423,
+          "tau_ms": 0.2093369194942976
+        },
+        "h": {
+          "inf": 0.009315959345066684,
+          "tau_ms": 0.934721040132679
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6719589401797423,
+          "tau_ms": 0.2093369194942976
+        },
+        "h": {
+          "inf": 0.009315959345066684,
+          "tau_ms": 0.934721040132679
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6719589401797423,
+          "tau_ms": 0.4186738389885952
+        },
+        "h": {
+          "inf": 0.009315959345066684,
+          "tau_ms": 0.934721040132679
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.6719589401797423,
+          "tau_ms": 0.2093369194942976
+        },
+        "h": {
+          "inf": 0.009315959345066684,
+          "tau_ms": 0.934721040132679
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9275998309053574,
+          "tau_ms": 0.13886890317880582
+        },
+        "h": {
+          "inf": 0.0015011822567369915,
+          "tau_ms": 0.6817696163612943
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9275998309053574,
+          "tau_ms": 0.13886890317880582
+        },
+        "h": {
+          "inf": 0.0015011822567369915,
+          "tau_ms": 0.6817696163612943
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9275998309053574,
+          "tau_ms": 0.27773780635761164
+        },
+        "h": {
+          "inf": 0.0015011822567369915,
+          "tau_ms": 0.6817696163612943
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9275998309053574,
+          "tau_ms": 0.13886890317880582
+        },
+        "h": {
+          "inf": 0.0015011822567369915,
+          "tau_ms": 0.6817696163612943
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9762713746321764,
+          "tau_ms": 0.10346475448155858
+        },
+        "h": {
+          "inf": 0.00046795672563293525,
+          "tau_ms": 0.5792201173445101
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9762713746321764,
+          "tau_ms": 0.10346475448155858
+        },
+        "h": {
+          "inf": 0.00046795672563293525,
+          "tau_ms": 0.5792201173445101
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9762713746321764,
+          "tau_ms": 0.20692950896311715
+        },
+        "h": {
+          "inf": 0.00046795672563293525,
+          "tau_ms": 0.5792201173445101
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9762713746321764,
+          "tau_ms": 0.10346475448155858
+        },
+        "h": {
+          "inf": 0.00046795672563293525,
+          "tau_ms": 0.5792201173445101
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999690691364701,
+          "tau_ms": 0.03663056280023587
+        },
+        "h": {
+          "inf": 5.958160078820966e-07,
+          "tau_ms": 0.3101052741142661
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999690691364701,
+          "tau_ms": 0.03663056280023587
+        },
+        "h": {
+          "inf": 5.958160078820966e-07,
+          "tau_ms": 0.3101052741142661
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999690691364701,
+          "tau_ms": 0.07326112560047174
+        },
+        "h": {
+          "inf": 5.958160078820966e-07,
+          "tau_ms": 0.3101052741142661
+        }
+      }
+    },
+    {
+      "mechanism": "NaTs",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "m": {
+          "inf": 0.9999690691364701,
+          "tau_ms": 0.03663056280023587
+        },
+        "h": {
+          "inf": 5.958160078820966e-07,
+          "tau_ms": 0.3101052741142661
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.9999753325172074,
+          "tau_ms": 852.701563387153
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.9999753325172074,
+          "tau_ms": 852.701563387153
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.9999753325172074,
+          "tau_ms": 852.701563387153
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.9999753325172074,
+          "tau_ms": 852.701563387153
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.97125150407346,
+          "tau_ms": 1754.3193850922687
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.97125150407346,
+          "tau_ms": 1754.3193850922687
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.97125150407346,
+          "tau_ms": 1754.3193850922687
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.97125150407346,
+          "tau_ms": 1754.3193850922687
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.8481288363433407,
+          "tau_ms": 2193.5804442313656
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.8481288363433407,
+          "tau_ms": 2193.5804442313656
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.8481288363433407,
+          "tau_ms": 2193.5804442313656
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.8481288363433407,
+          "tau_ms": 2193.5804442313656
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.6726070170677605,
+          "tau_ms": 1956.015155261219
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.6726070170677605,
+          "tau_ms": 1956.015155261219
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.6726070170677605,
+          "tau_ms": 1956.015155261219
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.6726070170677605,
+          "tau_ms": 1956.015155261219
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2931777789064325,
+          "tau_ms": 1434.6257322730144
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2931777789064325,
+          "tau_ms": 1434.6257322730144
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2931777789064325,
+          "tau_ms": 1434.6257322730144
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2931777789064325,
+          "tau_ms": 1434.6257322730144
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2535060166623379,
+          "tau_ms": 1385.8773337319371
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2535060166623379,
+          "tau_ms": 1385.8773337319371
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2535060166623379,
+          "tau_ms": 1385.8773337319371
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.2535060166623379,
+          "tau_ms": 1385.8773337319371
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.10156092789763668,
+          "tau_ms": 1159.325922309633
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.10156092789763668,
+          "tau_ms": 1159.325922309633
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.10156092789763668,
+          "tau_ms": 1159.325922309633
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.10156092789763668,
+          "tau_ms": 1159.325922309633
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.05315113639806372,
+          "tau_ms": 1038.002407886617
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.05315113639806372,
+          "tau_ms": 1038.002407886617
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.05315113639806372,
+          "tau_ms": 1038.002407886617
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.05315113639806372,
+          "tau_ms": 1038.002407886617
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.0010270880507115207,
+          "tau_ms": 578.129530356496
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.0010270880507115207,
+          "tau_ms": 578.129530356496
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.0010270880507115207,
+          "tau_ms": 578.129530356496
+        }
+      }
+    },
+    {
+      "mechanism": "Nap",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "h": {
+          "inf": 0.0010270880507115207,
+          "tau_ms": 578.129530356496
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -154.9,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -154.9,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -84.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -84.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -66.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -66.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -56.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -56.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -40.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -40.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -38.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -38.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -27.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -27.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": -20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": 20.0,
+      "mode": "source",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "opening",
+      "state": 0.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    },
+    {
+      "mechanism": "SK",
+      "voltage_mv": 20.0,
+      "mode": "candidate",
+      "phase": "closing",
+      "state": 1.0,
+      "calcium_mm": 0.0001,
+      "gates": {
+        "z": {
+          "inf": 0.0009098213063332165,
+          "tau_ms": 1.0
+        }
+      }
+    }
+  ],
+  "temperature_c": 34.0,
+  "oracle": "NEURON 9.0.2 exposed source rates"
+}

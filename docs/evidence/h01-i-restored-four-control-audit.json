@@ -1,0 +1,91 @@
+{
+  "records": {
+    "disconnected": {
+      "E": {
+        "events_ms": [
+          3.9725
+        ],
+        "first_incoming_ms": null
+      },
+      "I": {
+        "events_ms": [
+          3.245
+        ],
+        "first_incoming_ms": null
+      }
+    },
+    "i-only": {
+      "E": {
+        "events_ms": [
+          4.010000000000001
+        ],
+        "first_incoming_ms": 3.745
+      },
+      "I": {
+        "events_ms": [
+          3.245
+        ],
+        "first_incoming_ms": null
+      }
+    },
+    "e-only": {
+      "E": {
+        "events_ms": [
+          3.9725
+        ],
+        "first_incoming_ms": null
+      },
+      "I": {
+        "events_ms": [
+          3.245
+        ],
+        "first_incoming_ms": 4.4725
+      }
+    },
+    "reciprocal": {
+      "E": {
+        "events_ms": [
+          4.010000000000001
+        ],
+        "first_incoming_ms": 3.745
+      },
+      "I": {
+        "events_ms": [
+          3.245
+        ],
+        "first_incoming_ms": 4.510000000000001
+      }
+    }
+  },
+  "checks": {
+    "fixed_cells_and_time_grid": true,
+    "E_only_E_trace_exact": true,
+    "E_only_I_before_arrival_exact": true,
+    "E_only_I_initial_depolarization": true,
+    "reciprocal_E_matches_I_only": true,
+    "reciprocal_I_before_first_E_arrival_matches_E_only": true,
+    "reciprocal_E_before_I_arrival_matches_E_only": true,
+    "both_synaptic_delays_200_steps": true,
+    "E_event_delayed": true
+  },
+  "E_event_delay_ms": 0.03750000000000053,
+  "qualification": "Four-control diagnostic, dt .0025 ms, inferred contacts and explicit I source closing-time restoration. Both cells externally driven. I event precedes E input: no E recruitment of I or sustained recurrent activity established. Human and full spatial validation remain open.",
+  "sha256": {
+    "disconnected": {
+      ".json": "73dc89527b305e8158ba2a1df644140b0b0d5a7600b26d54e394cfc612c693bc",
+      ".npz": "00c736f409d87f913eda7ab154d470a3c8fc04be02c7588975381f957b834e1a"
+    },
+    "i-only": {
+      ".json": "3557bf2d678a6e479888a4185d10152c6d09a7f82105e97a821937bd3069f29a",
+      ".npz": "57d63373a21ec11a38c474e67fb0aa9ad7c3757d9f4beec2b6645563a4cf8ffa"
+    },
+    "e-only": {
+      ".json": "d8213205630a6ea9469834532535b3994c6fbaf2d71efde0886dade42d1d0e04",
+      ".npz": "45f3087f6892c1201b8bcd1a0ef63fca6f57d5bec90d668e6c09aa9783f70970"
+    },
+    "reciprocal": {
+      ".json": "77b3b0eb77b05abe86d89c7ad8120365f832cfddd7d18698d4aae98bcf05fa40",
+      ".npz": "9445ac62273905a2389cbea8b1ac7ce53b09900be70f6864ea2c27e7b88f7794"
+    }
+  }
+}

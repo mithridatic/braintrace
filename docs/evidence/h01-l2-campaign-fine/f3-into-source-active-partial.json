@@ -1,0 +1,104 @@
+{
+  "responses": {
+    "s0-source-fine": [
+      {
+        "rise_crossing_ms": 1075.5315468446106,
+        "fall_crossing_ms": 1076.4458252156105,
+        "time_above_threshold_ms": 0.9142783709999094,
+        "peak_sample_time_ms": 1075.64818782222,
+        "peak_sample_voltage_mv": 37.20819225638986
+      },
+      {
+        "rise_crossing_ms": 1102.7968604520518,
+        "fall_crossing_ms": 1103.7060329699325,
+        "time_above_threshold_ms": 0.9091725178807337,
+        "peak_sample_time_ms": 1102.9139588823198,
+        "peak_sample_voltage_mv": 36.859277460819236
+      },
+      {
+        "rise_crossing_ms": 1226.504400305246,
+        "fall_crossing_ms": 1227.4042038658383,
+        "time_above_threshold_ms": 0.8998035605923178,
+        "peak_sample_time_ms": 1226.6232303865454,
+        "peak_sample_voltage_mv": 35.98067910164877
+      },
+      {
+        "rise_crossing_ms": 1436.6356021767094,
+        "fall_crossing_ms": 1437.5350908752814,
+        "time_above_threshold_ms": 0.8994886985719859,
+        "peak_sample_time_ms": 1436.7541998813958,
+        "peak_sample_voltage_mv": 36.014642140313775
+      },
+      {
+        "rise_crossing_ms": 1632.675639760002,
+        "fall_crossing_ms": 1633.5746011828767,
+        "time_above_threshold_ms": 0.8989614228746632,
+        "peak_sample_time_ms": 1632.7941963083806,
+        "peak_sample_voltage_mv": 36.00175960652792
+      },
+      {
+        "rise_crossing_ms": 1822.459551121432,
+        "fall_crossing_ms": 1823.3581426583016,
+        "time_above_threshold_ms": 0.8985915368696169,
+        "peak_sample_time_ms": 1822.5782860253591,
+        "peak_sample_voltage_mv": 35.991241651760184
+      },
+      {
+        "rise_crossing_ms": 2008.0861384795553,
+        "fall_crossing_ms": 2008.9844564779644,
+        "time_above_threshold_ms": 0.8983179984090839,
+        "peak_sample_time_ms": 2008.2047342130675,
+        "peak_sample_voltage_mv": 35.98201827888162
+      }
+    ],
+    "a-into-F3": [
+      {
+        "rise_crossing_ms": 1075.5316932736657,
+        "fall_crossing_ms": 1076.4459712125672,
+        "time_above_threshold_ms": 0.9142779389014777,
+        "peak_sample_time_ms": 1075.6486820889331,
+        "peak_sample_voltage_mv": 37.208230313442186
+      },
+      {
+        "rise_crossing_ms": 1102.9101018747072,
+        "fall_crossing_ms": 1103.8191110190305,
+        "time_above_threshold_ms": 0.9090091443233632,
+        "peak_sample_time_ms": 1103.0272825994975,
+        "peak_sample_voltage_mv": 36.84346252484454
+      },
+      {
+        "rise_crossing_ms": 1256.501667994517,
+        "fall_crossing_ms": 1257.4005844913354,
+        "time_above_threshold_ms": 0.8989164968184014,
+        "peak_sample_time_ms": 1256.6204520683534,
+        "peak_sample_voltage_mv": 35.897958688948925
+      },
+      {
+        "rise_crossing_ms": 1524.1299643108894,
+        "fall_crossing_ms": 1525.02833368484,
+        "time_above_threshold_ms": 0.8983693739505725,
+        "peak_sample_time_ms": 1524.2488622045546,
+        "peak_sample_voltage_mv": 35.91209048521285
+      },
+      {
+        "rise_crossing_ms": 1775.031212625688,
+        "fall_crossing_ms": 1775.9290822784158,
+        "time_above_threshold_ms": 0.8978696527276497,
+        "peak_sample_time_ms": 1775.1497809025016,
+        "peak_sample_voltage_mv": 35.90038628691928
+      },
+      {
+        "rise_crossing_ms": 2018.1189746648297,
+        "fall_crossing_ms": 2019.0165133149565,
+        "time_above_threshold_ms": 0.8975386501267621,
+        "peak_sample_time_ms": 2018.237739510178,
+        "peak_sample_voltage_mv": 35.890408115422254
+      }
+    ]
+  },
+  "input_sha256": {
+    "s0-source-fine-sweep50.npz": "aeeeabbb2b5f2bc5dfb154935c87de44b0554caa5871a2f91774ac482db2a339",
+    "a-into-F3-sweep50.npz": "c84699442e7ceb87b7b750a93f5a28e544843fee3489173962e43ac2a355c49f"
+  },
+  "qualification": "Forward calcium-handling intervention, active input only. No family ranking or human acceptance."
+}

@@ -1,0 +1,9 @@
+{
+  "time_refinement_max_waveform_difference_mv": 1.1527331551814939,
+  "space_refinement_max_waveform_difference_mv": 28.446399510846703,
+  "coarse_peak_time_ms": 3.525,
+  "time_refined_peak_time_ms": 3.52,
+  "space_refined_peak_time_ms": 3.585,
+  "qualification": "Spatial convergence not established; further refinement required",
+  "tests": "92 passed; 99.85 percent datasets coverage"
+}

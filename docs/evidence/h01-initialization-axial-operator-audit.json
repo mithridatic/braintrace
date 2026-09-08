@@ -1,0 +1,13 @@
+{
+  "observed_utc": "2026-09-05T21:31:32.384292+00:00",
+  "session_id": 51585,
+  "pid": 52656,
+  "observation": "py-spy captured build_cv_axial_operator at _staggered.py line 384, called by Cell.init_state line 513, through Network.init_state and Network.run.",
+  "source_inspection": "Cell.init_state unconditionally builds axial_operator_np. When algebraic rows exist, build_cv_axial_operator computes a dense Schur complement using numpy.linalg.solve.",
+  "distinction": "This initialization calculation is separate from the DHS per-step tree solve. A linear solve is used; no explicit numpy.linalg.inv call is asserted.",
+  "limits": "One stack sample proves this path is executing, not its fraction of total runtime. No dependency code changed.",
+  "module_sha256": {
+    "_staggered.py": "33babf429cf0b1cebddf57b5e39969cbcd8cba6d64cc267b09c1bba333421d08",
+    "cell.py": "14addaf83687abc75c114ecf4a16b7c6b4ea7c9c228fb05eed41342d98d1e87b"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "stage": "R",
+  "decision": "open X",
+  "closure_residual_pc": {
+    "r-source": "<1e-14",
+    "r-candidate": "<1e-14"
+  },
+  "spikes": {
+    "r-source": {
+      "019": 11,
+      "027": 32
+    },
+    "r-candidate": {
+      "019": 15,
+      "027": 43
+    }
+  },
+  "prediction_check": {
+    "loop": "confirmed: source peak +44 mV; candidate loop on the human's, minimum -73.3 mV",
+    "falling_phase_charge": "confirmed in sign: falling-phase Kv3 charge 3.8 pC (source) vs 0.53 pC (candidate); NaTg inflow during the fall 3.5 pC vs 0.18 pC",
+    "capacitive_deficit_reading": "rejected as stated: C dV for 5.5 mV is 0.009 pC, two orders below the boundary charges; the minimum is not a stored-charge deficit but a balance point where dV/dt = 0"
+  },
+  "trough_balance_na": {
+    "r-source-019-spike1": {
+      "Kv3_1": -0.197,
+      "Ca_LVA": 0.135,
+      "applied": 0.19,
+      "axial": -0.118,
+      "leak": -0.007,
+      "V": -77.4
+    },
+    "r-candidate-019-spike1": {
+      "Kv3_1": -0.039,
+      "Ca_LVA": 0.012,
+      "applied": 0.19,
+      "axial": -0.158,
+      "leak": -0.008,
+      "V": -73.3
+    },
+    "slope_conductance_at_trough": "0.158 nA of Kv3 for 4.1 mV between source and candidate: 26 MOhm (38 nS) soma-local load"
+  },
+  "mechanism_statement": "At the post-spike minimum the membrane current sums to zero; the depth is the voltage at which the residual outward potassium current balances the applied current minus the passive (axial plus leak) return. The candidate's faster somatic Kv3 closing leaves 0.04 nA of Kv3 at the trough instead of 0.20 nA, so the trough sits 4 mV higher; the human's -79 mV needs about 0.22 nA of outward current at the trough, 0.06 nA more than the source has.",
+  "stage_x_prediction": "Removing somatic Kv3 raises the candidate minimum by about 1 mV (0.039 nA x 26 MOhm) and broadens the spike; removing somatic Ca_LVA lowers it by about 0.3 mV and lengthens the first cycles; removing SK (soma or all) moves the early minimum by less than 0.3 mV and shortens the late cycles at 0.27 nA. No removal reaches -79 mV: the Steep boundary is potassium current at the trough, which removal can only reduce. Stage D then restores the source's Kv3 closing in the candidate and predicts the minimum moving toward -77 mV.",
+  "steep_boundary_hypothesis": "somatic Kv3 current at the trough"
+}

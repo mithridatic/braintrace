@@ -1,0 +1,40 @@
+{
+  "stage": "X",
+  "decision": "neither arm reverses the rise-rate row; open Y, the initiation-site split, from the reserve",
+  "arms": {
+    "x-sodium-half": {
+      "spikes": 3,
+      "peak_mv": 17.2,
+      "max_rise_v_s": 379,
+      "threshold": "none (rises from the pulse onset)",
+      "minimum_mv": -56.5,
+      "reading": "the spike collapses: somatic sodium at the candidate's density is necessary for the peak; halving it removes the loop rather than slowing it. Prediction (peak down >5 mV, rise down <1/3) FAILED: peak down 19 mV, rise down 41 percent, then block."
+    },
+    "x-load-double": {
+      "spikes": 5,
+      "peak_mv": 29.7,
+      "max_rise_v_s": 480,
+      "threshold_mv": -50.7,
+      "minimum_mv": -61.0,
+      "cycles_ms": [
+        123.2,
+        9.5,
+        122.0,
+        492.2,
+        126.4
+      ],
+      "reading": "rise 641 to 480 V/s against the predicted 496: CONFIRMED. Peak 36.0 to 29.7 mV (predicted <3 mV change): FAILED. Trough 8.5 mV shallower, threshold 1.3 mV higher, cycles reorganised. The load sets the rise rate but the human keeps a +36 mV peak, a -56 mV threshold and a -70 mV trough at 351 V/s, so a bigger passive load is not how the human does it."
+    },
+    "human": {
+      "max_rise_v_s": 351,
+      "peak_mv": 36.0,
+      "threshold_mv": -55.8,
+      "minimum_mv": -69.6,
+      "shoulder": "dV/dt 100 to 250 V/s between -50 and -45 mV before the main upstroke"
+    }
+  },
+  "reading": "Both arms confirm that dV/dt at the soma is (I_Na - I_axial)/C with the axial term at 85 to 90 percent, and both show that the soma's own sodium sets the peak. The human's upstroke has two stages: a shoulder at 100 to 250 V/s near -45 mV, then the main rise to +36 mV. A shoulder is what a soma shows when the spike is initiated elsewhere and arrives through the axial path, whose rate is bounded by the axial resistance and the soma's load; the somatic sodium then activates from a higher voltage and carries the peak. The model's soma initiates its own spike (no shoulder, threshold -52 mV, 640 to 1000 V/s) on a 60 um axon stub with the published axonal densities. The lever is therefore where the spike is initiated, an interdependency between the axon's sodium and the soma's, not the soma's sodium or load alone.",
+  "stage_y_prediction": "Axonal sodium density tripled (y-axon-na3): initiation moves to the axon; the soma shows a shoulder (a local dV/dt maximum of 100 to 300 V/s between -55 and -45 mV before the main rise), threshold falls toward -55 mV, the main rise rate stays within 10 percent of 641 V/s, peak within 2 mV of 36. Axonal sodium tripled with somatic sodium at 0.65 (y-axon-na3-soma065): shoulder present, main rise 350 to 500 V/s, peak 28 to 36 mV, threshold near -55 mV, five spikes. If the second arm brings the rise within 5 times the 5.7 V/s limit of 351 with the peak inside 2.07 mV of 36, the explanation is sufficient. Rejection: no shoulder appears in either arm, or the rise rate does not fall below 550 V/s in the second arm: initiation on this stub cannot reproduce the human's two-stage upstroke and the axon geometry (structural) is returned to the user.",
+  "evaluations_used": 4,
+  "cap": 8
+}

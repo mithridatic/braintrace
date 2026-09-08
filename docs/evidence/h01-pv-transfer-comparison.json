@@ -1,0 +1,35 @@
+{
+  "reference": "NEURON original HL5BN1, CVode atol 1e-10",
+  "transfer": "BrainCell original geometry and fitted parameters",
+  "comparison": "same physical clock; no voltage or spike-time alignment",
+  "windows": {
+    "initial": {
+      "start_ms": 0.0,
+      "stop_ms": 20.0,
+      "max_error_mv": 0.0008356434530867318,
+      "rms_error_mv": 0.0006357391204439321,
+      "mean_signed_error_mv": 0.0005651874161508614
+    },
+    "baseline": {
+      "start_ms": 200.0,
+      "stop_ms": 270.0,
+      "max_error_mv": 0.0003080788657712219,
+      "rms_error_mv": 0.0002998662937798584,
+      "mean_signed_error_mv": 0.00029983405310690105
+    },
+    "stimulus": {
+      "start_ms": 270.0,
+      "stop_ms": 1270.0,
+      "max_error_mv": 122.92284415236037,
+      "rms_error_mv": 11.908808576220673,
+      "mean_signed_error_mv": -0.2059828215773979
+    },
+    "recovery": {
+      "start_ms": 1270.0,
+      "stop_ms": 1500.0,
+      "max_error_mv": 3.2840317634500167,
+      "rms_error_mv": 0.3431912325134663,
+      "mean_signed_error_mv": -0.06002924930384183
+    }
+  }
+}

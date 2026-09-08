@@ -1,0 +1,45 @@
+{
+  "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
+  "solver": "staggered",
+  "active_channels": true,
+  "dt_ms": 0.0025,
+  "max_cv_length_um": 2.5,
+  "current_na": 0.19,
+  "temperature_c": 34.0,
+  "initial_voltage_mv": -80.0,
+  "stimulus_on_ms": 270.0,
+  "stimulus_off_ms": 1270.0,
+  "sample_convention": "end of step; first sample at dt",
+  "spike_times_ms": [
+    302.6,
+    311.615,
+    322.915,
+    388.24,
+    472.2225,
+    578.23,
+    692.875,
+    811.455,
+    932.57,
+    1055.77,
+    1180.8600000000001
+  ],
+  "spike_peaks_mv": [
+    44.146993487940854,
+    44.01571750077855,
+    43.83999471310553,
+    44.105375899757576,
+    44.10377251992604,
+    44.105210385603506,
+    44.10607040869377,
+    44.108043102530445,
+    44.10927370993607,
+    44.11380313830376,
+    44.11274932963507
+  ],
+  "baseline_mean_mv": -86.92922992868222,
+  "calcium_range_mm": [
+    0.00010000000101594727,
+    0.0003879707196281613
+  ],
+  "qualification": "first transfer response; numerical and human waveform validation incomplete"
+}

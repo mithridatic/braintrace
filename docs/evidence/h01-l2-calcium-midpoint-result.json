@@ -1,0 +1,186 @@
+{
+  "decision": "supported",
+  "checks": {
+    "third_interval_error_smaller_than_both_endpoints": true,
+    "first_interval_error_not_worse_than_source": true,
+    "first_minimum_not_deepened_over_0_1_mv": true,
+    "first_peak_change_within_0_1_mv": true
+  },
+  "factors": [
+    1.0,
+    2.0,
+    1.5
+  ],
+  "records": [
+    {
+      "events": [
+        {
+          "rise_crossing_ms": 1073.2764946367367,
+          "fall_crossing_ms": 1074.1913185682743,
+          "time_above_threshold_ms": 0.9148239315375122,
+          "peak_sample_time_ms": 1073.3937499378314,
+          "peak_sample_voltage_mv": 37.268487154047165
+        },
+        {
+          "rise_crossing_ms": 1099.640717748794,
+          "fall_crossing_ms": 1100.5505114234163,
+          "time_above_threshold_ms": 0.9097936746222786,
+          "peak_sample_time_ms": 1099.7581249432026,
+          "peak_sample_voltage_mv": 36.92946997312882
+        },
+        {
+          "rise_crossing_ms": 1216.70823507948,
+          "fall_crossing_ms": 1217.6079866361256,
+          "time_above_threshold_ms": 0.8997515566456968,
+          "peak_sample_time_ms": 1216.8274999670527,
+          "peak_sample_voltage_mv": 35.980522737337004
+        },
+        {
+          "rise_crossing_ms": 1424.1417397740759,
+          "fall_crossing_ms": 1425.0412374726081,
+          "time_above_threshold_ms": 0.8994976985322864,
+          "peak_sample_time_ms": 1424.2606250093124,
+          "peak_sample_voltage_mv": 36.020308786490844
+        },
+        {
+          "rise_crossing_ms": 1617.4118511586526,
+          "fall_crossing_ms": 1618.3108227695284,
+          "time_above_threshold_ms": 0.898971610875833,
+          "peak_sample_time_ms": 1617.5306250486867,
+          "peak_sample_voltage_mv": 36.00735969158293
+        },
+        {
+          "rise_crossing_ms": 1804.5239624432722,
+          "fall_crossing_ms": 1805.4225655224955,
+          "time_above_threshold_ms": 0.8986030792232214,
+          "peak_sample_time_ms": 1804.6431250868065,
+          "peak_sample_voltage_mv": 35.99695184910509
+        },
+        {
+          "rise_crossing_ms": 1987.5158430781812,
+          "fall_crossing_ms": 1988.4141729154223,
+          "time_above_threshold_ms": 0.8983298372411355,
+          "peak_sample_time_ms": 1987.635000124087,
+          "peak_sample_voltage_mv": 35.9877646546364
+        }
+      ],
+      "first_three_intervals_ms": [
+        26.36422311205729,
+        117.06751733068586,
+        207.43350469459597
+      ],
+      "first_interspike_minimum_mv": -71.07152697199255,
+      "first_peak_mv": 37.268487154047165
+    },
+    {
+      "events": [
+        {
+          "rise_crossing_ms": 1073.2768496436784,
+          "fall_crossing_ms": 1074.1916721014522,
+          "time_above_threshold_ms": 0.9148224577738802,
+          "peak_sample_time_ms": 1073.3937499378314,
+          "peak_sample_voltage_mv": 37.268377966338484
+        },
+        {
+          "rise_crossing_ms": 1099.8510309159935,
+          "fall_crossing_ms": 1100.7604918202096,
+          "time_above_threshold_ms": 0.9094609042160755,
+          "peak_sample_time_ms": 1099.9687499432455,
+          "peak_sample_voltage_mv": 36.897351579416615
+        },
+        {
+          "rise_crossing_ms": 1297.5908406787194,
+          "fall_crossing_ms": 1298.4884712217713,
+          "time_above_threshold_ms": 0.897630543051946,
+          "peak_sample_time_ms": 1297.7099999835307,
+          "peak_sample_voltage_mv": 35.783577864215125
+        },
+        {
+          "rise_crossing_ms": 1675.03726288931,
+          "fall_crossing_ms": 1675.9341365111925,
+          "time_above_threshold_ms": 0.8968736218823778,
+          "peak_sample_time_ms": 1675.1568750604267,
+          "peak_sample_voltage_mv": 35.77977045692373
+        }
+      ],
+      "first_three_intervals_ms": [
+        26.574181272315172,
+        197.73980976272583,
+        377.44642221059075
+      ],
+      "first_interspike_minimum_mv": -71.07175956176542,
+      "first_peak_mv": 37.268377966338484
+    },
+    {
+      "events": [
+        {
+          "rise_crossing_ms": 1073.2767070381174,
+          "fall_crossing_ms": 1074.191530486134,
+          "time_above_threshold_ms": 0.9148234480167048,
+          "peak_sample_time_ms": 1073.3937499378314,
+          "peak_sample_voltage_mv": 37.26845233959505
+        },
+        {
+          "rise_crossing_ms": 1099.778864992234,
+          "fall_crossing_ms": 1100.6884395564523,
+          "time_above_threshold_ms": 0.9095745642182465,
+          "peak_sample_time_ms": 1099.8968749432308,
+          "peak_sample_voltage_mv": 36.908285891216245
+        },
+        {
+          "rise_crossing_ms": 1258.6316681440524,
+          "fall_crossing_ms": 1259.5301562583759,
+          "time_above_threshold_ms": 0.898488114323527,
+          "peak_sample_time_ms": 1258.7506249755936,
+          "peak_sample_voltage_mv": 35.861875926887784
+        },
+        {
+          "rise_crossing_ms": 1551.835322543759,
+          "fall_crossing_ms": 1552.733220317085,
+          "time_above_threshold_ms": 0.8978977733258944,
+          "peak_sample_time_ms": 1551.954375035327,
+          "peak_sample_voltage_mv": 35.872907158113954
+        },
+        {
+          "rise_crossing_ms": 1826.754339710162,
+          "fall_crossing_ms": 1827.6517494029904,
+          "time_above_threshold_ms": 0.8974096928284325,
+          "peak_sample_time_ms": 1826.8737500913355,
+          "peak_sample_voltage_mv": 35.86131960312257
+        }
+      ],
+      "first_three_intervals_ms": [
+        26.502157954116683,
+        158.8528031518183,
+        293.2036543997067
+      ],
+      "first_interspike_minimum_mv": -71.07167943120871,
+      "first_peak_mv": 37.26845233959505
+    }
+  ],
+  "human_first_three_intervals_ms": [
+    33.85173856301026,
+    220.40349600520494,
+    307.4062817735173
+  ],
+  "interval_errors_ms": [
+    [
+      -7.487515450952969,
+      -103.33597867451908,
+      -99.97277707892135
+    ],
+    [
+      -7.277557290695086,
+      -22.663686242479116,
+      70.04014043707343
+    ],
+    [
+      -7.349580608893575,
+      -61.550692853386636,
+      -14.202627373810628
+    ]
+  ],
+  "first_minimum_change_mv": -0.0001524592161530336,
+  "first_peak_change_mv": -3.481445211406253e-05,
+  "qualification": "Midpoint bracket prediction only; no complete physiological qualification and no reserved-input use."
+}

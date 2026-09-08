@@ -1,0 +1,56 @@
+{
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pv/kv3-phase-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "output_dir": "h01-i-energetic",
+  "max_concurrent": 2,
+  "abort_seconds": 900,
+  "purpose": "Stage 4 holdout prediction for the I finalist at 0.23 nA; prediction written first in h01-prediction-i.json.",
+  "cap": 2,
+  "prior_evaluations": 0,
+  "inputs": {
+    "023": [
+      "--current-na",
+      "0.23",
+      "--duration-ms",
+      "1500"
+    ]
+  },
+  "holdout": "this manifest opens it once",
+  "stages": {
+    "P": {
+      "title": "Holdout prediction",
+      "prediction": "see h01-prediction-i.json",
+      "rejection": "any claimed row outside its limit",
+      "unchanged": "as the energetic manifest",
+      "decision_file": "stage-p-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "p-close2",
+      "stage": "P",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "doi": "10.34894/L5J0SD",
+  "version": "3.0",
+  "license": "CC0-1.0",
+  "files": [
+    {
+      "id": 318555,
+      "path": "Figures5_6/Current_clamp/AP1comparison.csv",
+      "sha256": "2833ee551241917767e912db569833629009bf5cda157824747847be89432d97"
+    },
+    {
+      "id": 318557,
+      "path": "Figures5_6/Current_clamp/cc_tools.py",
+      "sha256": "3215473c16162dc81f73cb60da161014f370f3acc052b7cae3c1c416d321f241"
+    },
+    {
+      "id": 318553,
+      "path": "Figures5_6/Current_clamp/currentclamp.py",
+      "sha256": "56a83d012040bb8dd8114edbe658ea347c7cb3a7451f7b711c9be7b496b73321"
+    },
+    {
+      "id": 318552,
+      "path": "Figures5_6/Current_clamp/gbar_k.csv",
+      "sha256": "6682854d3c2e72a5a29c5115a193d5db00adf1eda177bae24204c04e3d3531d0"
+    },
+    {
+      "id": 318551,
+      "path": "Figures5_6/Current_clamp/gbar_na.csv",
+      "sha256": "b488e45ad87b03cc876f287e7a598d218899f63a85d9de6d8a108b01b05b9991"
+    },
+    {
+      "id": 318647,
+      "path": "Figures5_6/MOD/k_human.mod",
+      "sha256": "899aa0dfa697b7f735258e10b002c8876c108902afc0c13b82fc619decb66063"
+    },
+    {
+      "id": 318566,
+      "path": "Figures5_6/Current_clamp/mod/k_human.mod",
+      "sha256": "96095b416f9984eb98f17df17e5b5d066c02709fb498834bfc89310a096700ba"
+    },
+    {
+      "id": 318629,
+      "path": "Figures5_6/MOD/na_human.mod",
+      "sha256": "e23ed354aa683639bfd2ffdeae4b2544adf8c5cce6f8a4adbada42549310f2fd"
+    },
+    {
+      "id": 318563,
+      "path": "Figures5_6/Current_clamp/mod/na_human.mod",
+      "sha256": "4dd6995c3fd0614fe7cb92a6940a393d8f92d494b4810d0f3c2ed7dbf424592b"
+    },
+    {
+      "id": 318665,
+      "path": "Figure1/data_fig1.xlsx",
+      "sha256": "c7a6f3f26fa78dadfdb9835916cc3a91303833c50dcffec318c8754a61e64972"
+    }
+  ]
+}

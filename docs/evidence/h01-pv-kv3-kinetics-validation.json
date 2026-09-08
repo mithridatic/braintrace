@@ -1,0 +1,8 @@
+{
+  "image": "braintrace-h01-neuron:9.0.2",
+  "compiled_library_sha256": "8ed9805f93778621701fb5ba7a3bb834589a3b2ae77e62547e6c2fa3681df60f",
+  "fixed_voltage_cases": 8,
+  "maximum_gate_error": 3.41820460825204e-11,
+  "unchanged_speed_time_and_voltage_identical": true,
+  "limit": "Diagnostic build and intervention verified; no physiological qualification"
+}

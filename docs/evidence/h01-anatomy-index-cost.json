@@ -1,0 +1,37 @@
+{
+  "scope": "Same in-memory real components; legacy checkpoint signature versus new signature. Timings on a shared host are diagnostic.",
+  "records": [
+    {
+      "cell": "5584343344",
+      "source_sha256": "53de2bec08c12096f742ecc01fca1293f24f3a09637558f9bf86ac4edb6a4f92",
+      "branches": 6272,
+      "fingerprint": "7b3584f9389c4afb4a4b7063d434e0dadaa69da5b6598ac8a5a819618a246806",
+      "signature_equal": true,
+      "measured_contact_location_unchanged": true,
+      "location": [
+        974,
+        0.5754461212601991
+      ],
+      "load_seconds": 4.98823130002711,
+      "legacy_signature_seconds": 9.598935600020923,
+      "new_signature_seconds": 0.21362589998170733,
+      "new_anatomy_and_projection_seconds": 1.4913671999820508
+    },
+    {
+      "cell": "4157825456",
+      "source_sha256": "d49c452524cf7c35ded56a1ef55ebf205e00573ea11b2a9204060362777d40ce",
+      "branches": 8367,
+      "fingerprint": "bdce95e532a769bbe62575c4932b6bf840e4510860dbfec0252a3093351f5a47",
+      "signature_equal": true,
+      "measured_contact_location_unchanged": true,
+      "location": [
+        2805,
+        0.9324765948060457
+      ],
+      "load_seconds": 6.2634748999844305,
+      "legacy_signature_seconds": 17.732723699999042,
+      "new_signature_seconds": 0.30352250003488734,
+      "new_anatomy_and_projection_seconds": 2.105879199982155
+    }
+  ]
+}

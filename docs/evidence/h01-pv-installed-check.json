@@ -1,0 +1,29 @@
+{
+  "import_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\pv-wheel-install\\braintrace\\__init__.py",
+  "isolated_python": true,
+  "module_sha256": {
+    "h01.py": "925cb21984285a274be342e29d0f7b45313ef39c4152e7b2ad072747e6c7817c",
+    "h01_active.py": "ef251e647f3b6dd20cd0c8146f7eb4fe85a811fa26356aa74442587b4b53abe2",
+    "h01_anatomy.py": "e7638a80be4ed8d464d6c5e111057a8a52d04c487646b3cb5dce5616e9065fef",
+    "h01_annotated_demo.py": "f0316a45c606ac0cdef4b2169b87f3f08d647ca3e13169ea8286320b3d7d7791",
+    "h01_annotations.py": "4b91aa96e0841b10ae93ca8533696844aad00f6f6c94602feb1c4281fda78c20",
+    "h01_channels.py": "e36da20928ce173deefb54d7e39b36b3871b988cc17447b0f74fd48218fa327f",
+    "h01_demo.py": "badd19e18f2bda585f7518f2031c80d0d461cfead9aa15f91039e06f0b2e7f0f",
+    "h01_discretization.py": "7b71aee75b38c735d4516cab1fc88839b99ce7d66fb1f364d6e2f3d922eec79f",
+    "h01_pv_calcium.py": "f836566196fe8b4eb366ede8f5637a12c10b2e05988524a1deb0dc7cfa8d6188",
+    "h01_pv_cell.py": "0fd79a524b06b5c9337a236273fc5896b324a57d166258854b4ccf256c591d70",
+    "h01_pv_channels.py": "846ea518e0f18d83cc61d524b134788b897e47ae956b66d92a289bf35d8df135",
+    "h01_pv_morphology.py": "f0e43458d93fc905b29e9b69bce77a24ef4bebbfeae568006cabeba7e7e2ac68",
+    "h01_pv_rates.py": "1a08275025e5e69b6315f08f7f4947ab80a082a31c6b65ae07402b9b77400509",
+    "h01_reference.py": "d4194ed9ed14614004074c48fee70e81c96e2ab6ad68c9d90c864e0296d39801",
+    "h01_wilbers.py": "5dcacfe9ef67340311af4539bf02c1a89de0d0c9dada446651c48aaf8c0bf500"
+  },
+  "module_count": 15,
+  "duration_ms": 2.0,
+  "dt_ms": 0.005,
+  "voltage_range_mv": [
+    -81.7549533280205,
+    -80.00484055323942
+  ],
+  "qualification": "installed source parity and active initialization; not physiological validation"
+}

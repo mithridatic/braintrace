@@ -1,0 +1,150 @@
+{
+  "necessary_event_prediction": "supported",
+  "invalid_reasons": [],
+  "event_counts": [
+    5,
+    5
+  ],
+  "model_events": [
+    {
+      "rise_crossing_ms": 1082.7923323370794,
+      "fall_crossing_ms": 1083.7020546918757,
+      "time_above_threshold_ms": 0.9097223547962585,
+      "peak_sample_time_ms": 1082.9096891811514,
+      "peak_sample_voltage_mv": 36.80179719019323
+    },
+    {
+      "rise_crossing_ms": 1119.9984567124507,
+      "fall_crossing_ms": 1120.9026750482349,
+      "time_above_threshold_ms": 0.9042183357842077,
+      "peak_sample_time_ms": 1120.1163870830324,
+      "peak_sample_voltage_mv": 36.379970582141496
+    },
+    {
+      "rise_crossing_ms": 1362.10437171004,
+      "fall_crossing_ms": 1363.0023890843397,
+      "time_above_threshold_ms": 0.8980173742997977,
+      "peak_sample_time_ms": 1362.2234320910932,
+      "peak_sample_voltage_mv": 35.845325574458315
+    },
+    {
+      "rise_crossing_ms": 1693.3505199731403,
+      "fall_crossing_ms": 1694.2477741805906,
+      "time_above_threshold_ms": 0.8972542074502599,
+      "peak_sample_time_ms": 1693.4692456406397,
+      "peak_sample_voltage_mv": 35.83229587100965
+    },
+    {
+      "rise_crossing_ms": 2008.440148780104,
+      "fall_crossing_ms": 2009.336961587027,
+      "time_above_threshold_ms": 0.8968128069229806,
+      "peak_sample_time_ms": 2008.5588436474302,
+      "peak_sample_voltage_mv": 35.82012400356283
+    }
+  ],
+  "human_events": [
+    {
+      "rise_crossing_ms": 1077.8115555559984,
+      "fall_crossing_ms": 1078.7474193511216,
+      "time_above_threshold_ms": 0.9358637951231685,
+      "peak_sample_time_ms": 1078.1,
+      "peak_sample_voltage_mv": 36.03125220537186
+    },
+    {
+      "rise_crossing_ms": 1111.6632941190087,
+      "fall_crossing_ms": 1112.7979591792684,
+      "time_above_threshold_ms": 1.1346650602597492,
+      "peak_sample_time_ms": 1111.98,
+      "peak_sample_voltage_mv": 35.31250214576721
+    },
+    {
+      "rise_crossing_ms": 1332.0667901242136,
+      "fall_crossing_ms": 1333.0415624977322,
+      "time_above_threshold_ms": 0.97477237351859,
+      "peak_sample_time_ms": 1332.38,
+      "peak_sample_voltage_mv": 34.875004053115845
+    },
+    {
+      "rise_crossing_ms": 1639.473071897731,
+      "fall_crossing_ms": 1640.4441935462983,
+      "time_above_threshold_ms": 0.9711216485673049,
+      "peak_sample_time_ms": 1639.78,
+      "peak_sample_voltage_mv": 34.78125339746475
+    },
+    {
+      "rise_crossing_ms": 1912.8256250018965,
+      "fall_crossing_ms": 1913.7887096744,
+      "time_above_threshold_ms": 0.9630846725035553,
+      "peak_sample_time_ms": 1913.14,
+      "peak_sample_voltage_mv": 34.56250062584877
+    }
+  ],
+  "ordinal_residuals": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 4.980776781080976,
+      "peak_sample_voltage_mv": 0.7705449848213703,
+      "time_above_threshold_ms": -0.026141440326910015
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 8.335162593441964,
+      "peak_sample_voltage_mv": 1.0674684363742841,
+      "time_above_threshold_ms": -0.2304467244755415
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 30.037581585826274,
+      "peak_sample_voltage_mv": 0.9703215213424699,
+      "time_above_threshold_ms": -0.07675499921879236
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 53.87744807540935,
+      "peak_sample_voltage_mv": 1.0510424735448964,
+      "time_above_threshold_ms": -0.07386744111704502
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 95.61452377820751,
+      "peak_sample_voltage_mv": 1.2576233777140615,
+      "time_above_threshold_ms": -0.06627186558057474
+    }
+  ],
+  "model_intervals_ms": [
+    37.206124375371246,
+    242.10591499758925,
+    331.2461482631004,
+    315.0896288069637
+  ],
+  "human_intervals_ms": [
+    33.85173856301026,
+    220.40349600520494,
+    307.4062817735173,
+    273.3525531041655
+  ],
+  "matched_interval_errors_ms": [
+    3.354385812360988,
+    21.70241899238431,
+    23.839866489583073,
+    41.737075702798165
+  ],
+  "unmatched_model_events": [],
+  "unmatched_human_events": [],
+  "setup_differences": [
+    "integration_seconds",
+    "samples",
+    "sweep",
+    "waveform_sha256"
+  ],
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "integration_seconds": 643.8211926129879,
+  "qualification": "Necessary event-count condition only; timing and waveform residuals remain. Candidate numerical, reserved-input, and full physiological validation remain open.",
+  "sources": {
+    "h01-l2-sweep50-ih75-epasminus4.json": "321f1c7d32df91068367912dbb9b95df12fad531d2b3a7f8251c3c869d415cca",
+    "h01-l2-sweep50-ih75-epasminus4.npz": "54086752ba948c5a558cb8c23e353e6ed3521ee3cbbc1afe2e19d8eec900f1fe",
+    "h01-l2-sweep50-ih75-epasminus4-raw.npz": "44d274bbaa56909436df42ac6182240a408cca52bc21d3e5f21fc78a02a100a2",
+    "h01-l2-sweep43-ih75-epasminus4.json": "0afe39ccd219919efb3f4e186bc93b6cc7e8dc26767e82006004db3ae1333ebc"
+  }
+}

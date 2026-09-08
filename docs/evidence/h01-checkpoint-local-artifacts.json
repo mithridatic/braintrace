@@ -1,0 +1,1187 @@
+{
+  "created_utc": "2026-09-05T21:11:41.821116+00:00",
+  "scope": "Local raw simulation artifacts excluded from Git; source, reports, and tests committed. This inventory is not an archive.",
+  "total_bytes": 7535734493,
+  "files": [
+    {
+      "path": "docs/evidence/h01-e-candidate-transfer-first-two.npz",
+      "bytes": 9018153
+    },
+    {
+      "path": "docs/evidence/h01-ei-circuit-disconnected.npz",
+      "bytes": 58494
+    },
+    {
+      "path": "docs/evidence/h01-ei-circuit-e-only.npz",
+      "bytes": 69407
+    },
+    {
+      "path": "docs/evidence/h01-ei-circuit-reciprocal.npz",
+      "bytes": 69407
+    },
+    {
+      "path": "docs/evidence/h01-ei-defaults-response.npz",
+      "bytes": 35109
+    },
+    {
+      "path": "docs/evidence/h01-ei-defaults-smoke.npz",
+      "bytes": 1048
+    },
+    {
+      "path": "docs/evidence/h01-ei-defaults-spike-probe.npz",
+      "bytes": 37921
+    },
+    {
+      "path": "docs/evidence/h01-ei-transfer-check.npz",
+      "bytes": 104416
+    },
+    {
+      "path": "docs/evidence/h01-i-axon025-smoke.npz",
+      "bytes": 28401
+    },
+    {
+      "path": "docs/evidence/h01-i-axon025-transfer-full.npz",
+      "bytes": 45023052
+    },
+    {
+      "path": "docs/evidence/h01-i-axon025-transfer.npz",
+      "bytes": 8412619
+    },
+    {
+      "path": "docs/evidence/h01-i-current-balance-axon.npz",
+      "bytes": 159746
+    },
+    {
+      "path": "docs/evidence/h01-i-current-balance-discrete.npz",
+      "bytes": 158270
+    },
+    {
+      "path": "docs/evidence/h01-i-current-balance-fine.npz",
+      "bytes": 883261
+    },
+    {
+      "path": "docs/evidence/h01-i-current-balance-soma.npz",
+      "bytes": 158283
+    },
+    {
+      "path": "docs/evidence/h01-i-current-balance.npz",
+      "bytes": 118944
+    },
+    {
+      "path": "docs/evidence/h01-i-defaults-spike-probe-fine.npz",
+      "bytes": 141127
+    },
+    {
+      "path": "docs/evidence/h01-i-defaults-spike-probe-space.npz",
+      "bytes": 141089
+    },
+    {
+      "path": "docs/evidence/h01-i-defaults-two-na.npz",
+      "bytes": 142891
+    },
+    {
+      "path": "docs/evidence/h01-i-inactivation-axon-halfdt.npz",
+      "bytes": 96659
+    },
+    {
+      "path": "docs/evidence/h01-i-inactivation-axon.npz",
+      "bytes": 49335
+    },
+    {
+      "path": "docs/evidence/h01-i-inactivation-block-halfdt.npz",
+      "bytes": 84144
+    },
+    {
+      "path": "docs/evidence/h01-i-inactivation-block.npz",
+      "bytes": 43084
+    },
+    {
+      "path": "docs/evidence/h01-i-inactivation-soma-halfdt.npz",
+      "bytes": 84323
+    },
+    {
+      "path": "docs/evidence/h01-i-inactivation-soma.npz",
+      "bytes": 43175
+    },
+    {
+      "path": "docs/evidence/h01-i-local-currents.npz",
+      "bytes": 216924
+    },
+    {
+      "path": "docs/evidence/h01-i-prepulse270.npz",
+      "bytes": 409982
+    },
+    {
+      "path": "docs/evidence/h01-i-restored-circuit-disconnected-halfdt.npz",
+      "bytes": 120447
+    },
+    {
+      "path": "docs/evidence/h01-i-restored-circuit-disconnected.npz",
+      "bytes": 62762
+    },
+    {
+      "path": "docs/evidence/h01-i-restored-circuit-e-only-halfdt.npz",
+      "bytes": 138056
+    },
+    {
+      "path": "docs/evidence/h01-i-restored-circuit-i-only-halfdt.npz",
+      "bytes": 139026
+    },
+    {
+      "path": "docs/evidence/h01-i-restored-circuit-i-only.npz",
+      "bytes": 72082
+    },
+    {
+      "path": "docs/evidence/h01-i-restored-circuit-reciprocal-halfdt.npz",
+      "bytes": 156522
+    },
+    {
+      "path": "docs/evidence/h01-i-runtime-loop-sync.npz",
+      "bytes": 276561
+    },
+    {
+      "path": "docs/evidence/h01-i-runtime-short.npz",
+      "bytes": 28385
+    },
+    {
+      "path": "docs/evidence/h01-i-runtime-short.prof",
+      "bytes": 2451701
+    },
+    {
+      "path": "docs/evidence/h01-i-runtime-sync.npz",
+      "bytes": 276561
+    },
+    {
+      "path": "docs/evidence/h01-i-runtime-ten-ms.npz",
+      "bytes": 276561
+    },
+    {
+      "path": "docs/evidence/h01-i-runtime-ten-ms.prof",
+      "bytes": 2451947
+    },
+    {
+      "path": "docs/evidence/h01-i-source-closing-only-fine.npz",
+      "bytes": 249716
+    },
+    {
+      "path": "docs/evidence/h01-i-source-closing-only.npz",
+      "bytes": 33954
+    },
+    {
+      "path": "docs/evidence/h01-i-source-spike-probe-fine.npz",
+      "bytes": 140207
+    },
+    {
+      "path": "docs/evidence/h01-i-source-spike-probe.npz",
+      "bytes": 18864
+    },
+    {
+      "path": "docs/evidence/h01-l2-calcium-removal-double-cvode-raw.npz",
+      "bytes": 9126365
+    },
+    {
+      "path": "docs/evidence/h01-l2-calcium-removal-double-cvode.npz",
+      "bytes": 10284767
+    },
+    {
+      "path": "docs/evidence/h01-l2-calcium-removal-double.npz",
+      "bytes": 26798736
+    },
+    {
+      "path": "docs/evidence/h01-l2-calcium-removal-midpoint.npz",
+      "bytes": 26845122
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-coarse-sweep43-raw.npz",
+      "bytes": 4253636
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-coarse-sweep43.npz",
+      "bytes": 4794603
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-coarse-sweep50-raw.npz",
+      "bytes": 8768418
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-coarse-sweep50.npz",
+      "bytes": 9870792
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-fine-sweep43-raw.npz",
+      "bytes": 4980708
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-fine-sweep43.npz",
+      "bytes": 5626804
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-fine-sweep50-raw.npz",
+      "bytes": 9160029
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-candidate-fine-sweep50.npz",
+      "bytes": 10320611
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-coarse-sweep43-raw.npz",
+      "bytes": 4563857
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-coarse-sweep43.npz",
+      "bytes": 5146626
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-coarse-sweep50-raw.npz",
+      "bytes": 9681104
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-coarse-sweep50.npz",
+      "bytes": 10911661
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-fine-sweep43-raw.npz",
+      "bytes": 5267090
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-fine-sweep43.npz",
+      "bytes": 5952843
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-fine-sweep50-raw.npz",
+      "bytes": 10042915
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-corner-fine-sweep50.npz",
+      "bytes": 11327493
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-coarse-sweep43-raw.npz",
+      "bytes": 4556699
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-coarse-sweep43.npz",
+      "bytes": 5139154
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-coarse-sweep50-raw.npz",
+      "bytes": 9832129
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-coarse-sweep50.npz",
+      "bytes": 11081839
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-fine-sweep43-raw.npz",
+      "bytes": 5261585
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-fine-sweep43.npz",
+      "bytes": 5946798
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-fine-sweep50-raw.npz",
+      "bytes": 10193320
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign/s0-source-fine-sweep50.npz",
+      "bytes": 11496952
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43-raw.npz",
+      "bytes": 5182980
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43.npz",
+      "bytes": 5856093
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43-raw.npz",
+      "bytes": 5489753
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43.npz",
+      "bytes": 6204533
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43-raw.npz",
+      "bytes": 5484186
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43.npz",
+      "bytes": 6198279
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep43-raw.npz",
+      "bytes": 5483702
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep43.npz",
+      "bytes": 6197703
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep50-raw.npz",
+      "bytes": 10341000
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep50.npz",
+      "bytes": 11664749
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep43-raw.npz",
+      "bytes": 5484508
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep43.npz",
+      "bytes": 6198953
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep50-raw.npz",
+      "bytes": 10271132
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep50.npz",
+      "bytes": 11586460
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep43-raw.npz",
+      "bytes": 5491075
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep43.npz",
+      "bytes": 6205128
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep50-raw.npz",
+      "bytes": 10010027
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep50.npz",
+      "bytes": 11286640
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep43-raw.npz",
+      "bytes": 5488840
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep43.npz",
+      "bytes": 6203590
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep50-raw.npz",
+      "bytes": 10230763
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep50.npz",
+      "bytes": 11539491
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep43-raw.npz",
+      "bytes": 5170752
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep43.npz",
+      "bytes": 5843147
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep50-raw.npz",
+      "bytes": 9780772
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep50.npz",
+      "bytes": 11024873
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep43-raw.npz",
+      "bytes": 5180718
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep43.npz",
+      "bytes": 5853774
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep50-raw.npz",
+      "bytes": 9326947
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep50.npz",
+      "bytes": 10509707
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep43-raw.npz",
+      "bytes": 5181844
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep43.npz",
+      "bytes": 5854740
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep50-raw.npz",
+      "bytes": 9394986
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep50.npz",
+      "bytes": 10588264
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep43-raw.npz",
+      "bytes": 5172763
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep43.npz",
+      "bytes": 5845168
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep50-raw.npz",
+      "bytes": 9757316
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep50.npz",
+      "bytes": 10996359
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep43-raw.npz",
+      "bytes": 5180823
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep43.npz",
+      "bytes": 5855434
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep50-raw.npz",
+      "bytes": 9405662
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep50.npz",
+      "bytes": 10598410
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep43-raw.npz",
+      "bytes": 5497313
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep43.npz",
+      "bytes": 6212150
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep50-raw.npz",
+      "bytes": 9873435
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep50.npz",
+      "bytes": 11134441
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep43-raw.npz",
+      "bytes": 5179559
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz",
+      "bytes": 5852761
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep50-raw.npz",
+      "bytes": 9386350
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep50.npz",
+      "bytes": 10579204
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep43-raw.npz",
+      "bytes": 5489322
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep43.npz",
+      "bytes": 6204106
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep50-raw.npz",
+      "bytes": 10265835
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep50.npz",
+      "bytes": 11580684
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep43-raw.npz",
+      "bytes": 7309303
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep43.npz",
+      "bytes": 8302153
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep50-raw.npz",
+      "bytes": 12746083
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep50.npz",
+      "bytes": 14438725
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-candidate-fine-sweep43.npz",
+      "bytes": 5856093
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-candidate-fine-sweep50.npz",
+      "bytes": 10320611
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-corner-fine-sweep43.npz",
+      "bytes": 6204533
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-corner-fine-sweep50.npz",
+      "bytes": 11327493
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-source-fine-sweep43.npz",
+      "bytes": 6198279
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-source-fine-sweep50.npz",
+      "bytes": 11496952
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-clamp.npz",
+      "bytes": 6232972
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-control-raw.npz",
+      "bytes": 82052349
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-control.npz",
+      "bytes": 82402150
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-half-atol11-raw.npz",
+      "bytes": 62372926
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-half-atol11.npz",
+      "bytes": 62506735
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-half-raw.npz",
+      "bytes": 44008221
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-half.npz",
+      "bytes": 43959365
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-ninety-raw.npz",
+      "bytes": 81589441
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-closing-ninety.npz",
+      "bytes": 81934367
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-atol11-raw.npz",
+      "bytes": 102354732
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-atol11.npz",
+      "bytes": 102961084
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-ca133-atol11-raw.npz",
+      "bytes": 103073317
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-ca133-atol11.npz",
+      "bytes": 103689028
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-ca133-raw.npz",
+      "bytes": 82251977
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-ca133-space3-raw.npz",
+      "bytes": 79427147
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-ca133-space3.npz",
+      "bytes": 79783844
+    },
+    {
+      "path": "docs/evidence/h01-l2-kv3-ninety-ca133.npz",
+      "bytes": 82606118
+    },
+    {
+      "path": "docs/evidence/h01-l2-midpoint-sweep43-bias-cvode-raw.npz",
+      "bytes": 5272202
+    },
+    {
+      "path": "docs/evidence/h01-l2-midpoint-sweep43-bias-cvode.npz",
+      "bytes": 5957634
+    },
+    {
+      "path": "docs/evidence/h01-l2-midpoint-sweep43-currents-raw.npz",
+      "bytes": 46661873
+    },
+    {
+      "path": "docs/evidence/h01-l2-midpoint-sweep43-currents.npz",
+      "bytes": 46630678
+    },
+    {
+      "path": "docs/evidence/h01-l2-midpoint-sweep43-cvode-raw.npz",
+      "bytes": 5256185
+    },
+    {
+      "path": "docs/evidence/h01-l2-midpoint-sweep43-cvode.npz",
+      "bytes": 5938974
+    },
+    {
+      "path": "docs/evidence/h01-l2-repeatability200.npz",
+      "bytes": 2992866
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-activation-clamp.npz",
+      "bytes": 13988928
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-density090.npz",
+      "bytes": 26891253
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-control-raw.npz",
+      "bytes": 82106973
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-control.npz",
+      "bytes": 82461421
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-density130-atol11-raw.npz",
+      "bytes": 103056188
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-density130-atol11.npz",
+      "bytes": 103671280
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-density130-space3-raw.npz",
+      "bytes": 79185318
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-density130-space3.npz",
+      "bytes": 79538099
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-density130-sweep43-raw.npz",
+      "bytes": 43624043
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-density130-sweep43.npz",
+      "bytes": 43551483
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-double-atol11-raw.npz",
+      "bytes": 103295430
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-double-atol11.npz",
+      "bytes": 103915346
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-double-density130-raw.npz",
+      "bytes": 82052349
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-double-density130.npz",
+      "bytes": 82402150
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-double-raw.npz",
+      "bytes": 82503396
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-opening-double.npz",
+      "bytes": 82864514
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-recovery-clamp.npz",
+      "bytes": 9121239
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-recovery-control.npz",
+      "bytes": 26845122
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-recovery-double-cvode-raw.npz",
+      "bytes": 9525838
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-recovery-double-cvode.npz",
+      "bytes": 10738367
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-recovery-double-space3.npz",
+      "bytes": 26856317
+    },
+    {
+      "path": "docs/evidence/h01-l2-sodium-recovery-double.npz",
+      "bytes": 26857224
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-cvode-derived.npz",
+      "bytes": 10674677
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-cvode-endpoint-raw.npz",
+      "bytes": 9472365
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-cvode-endpoint.npz",
+      "bytes": 10674701
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-cvode-raw.npz",
+      "bytes": 9472345
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-cvode-space9-raw.npz",
+      "bytes": 10191488
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-cvode-space9.npz",
+      "bytes": 11495116
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-prefix2100.npz",
+      "bytes": 3274870
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-sweep50-dt000625.npz",
+      "bytes": 89264418
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-sweep50-dt00125.npz",
+      "bytes": 47430583
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-sweep50-dt0025.npz",
+      "bytes": 24474906
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-sweep50-recorded-bias.npz",
+      "bytes": 89353334
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-sweep50-space3.npz",
+      "bytes": 89273143
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-sweep50-space9.npz",
+      "bytes": 89271934
+    },
+    {
+      "path": "docs/evidence/h01-l2-source-sweep50.npz",
+      "bytes": 12320773
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-control-atol11-raw.npz",
+      "bytes": 61618255
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-control-atol11.npz",
+      "bytes": 61729509
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-control-space3-raw.npz",
+      "bytes": 41086930
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-control-space3.npz",
+      "bytes": 41064979
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-distributed-ih75-raw.npz",
+      "bytes": 44250069
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-distributed-ih75.npz",
+      "bytes": 44175241
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih-distributed-raw.npz",
+      "bytes": 45144577
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih-distributed.npz",
+      "bytes": 45089139
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih-double-raw.npz",
+      "bytes": 46529627
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih-double.npz",
+      "bytes": 46498298
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih75-epasminus4-atol11-raw.npz",
+      "bytes": 56067866
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih75-epasminus4-atol11.npz",
+      "bytes": 56155139
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih75-epasminus4-raw.npz",
+      "bytes": 43613917
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih75-epasminus4-space3-raw.npz",
+      "bytes": 38033671
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih75-epasminus4-space3.npz",
+      "bytes": 37964714
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-ih75-epasminus4.npz",
+      "bytes": 43540630
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-leak150-raw.npz",
+      "bytes": 42029162
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep43-leak150.npz",
+      "bytes": 41952670
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-atol11-raw.npz",
+      "bytes": 101510626
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-atol11.npz",
+      "bytes": 102105789
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-ca125-raw.npz",
+      "bytes": 82612119
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-ca125.npz",
+      "bytes": 82973236
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-ca1375-raw.npz",
+      "bytes": 82106973
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-ca1375.npz",
+      "bytes": 82461421
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-raw.npz",
+      "bytes": 80694424
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-space3-raw.npz",
+      "bytes": 77809337
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4-space3.npz",
+      "bytes": 78148024
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-ih75-epasminus4.npz",
+      "bytes": 81027018
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-leak150-raw.npz",
+      "bytes": 65561712
+    },
+    {
+      "path": "docs/evidence/h01-l2-sweep50-leak150.npz",
+      "bytes": 65732568
+    },
+    {
+      "path": "docs/evidence/h01-pv-burst-adaptation-019.npz",
+      "bytes": 6979121
+    },
+    {
+      "path": "docs/evidence/h01-pv-burst-adaptation-027.npz",
+      "bytes": 18664489
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-entry-019.npz",
+      "bytes": 6869697
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-entry-027.npz",
+      "bytes": 19117747
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-response-004-300-027-space27-atol8.npz",
+      "bytes": 10067270
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-response-004-300-027-space27.npz",
+      "bytes": 23353272
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-response-004-300-027-space81.npz",
+      "bytes": 24450855
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-response-004-300-027.npz",
+      "bytes": 20964377
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-response-004-300.npz",
+      "bytes": 7873206
+    },
+    {
+      "path": "docs/evidence/h01-pv-calcium-response-008-150.npz",
+      "bytes": 7464906
+    },
+    {
+      "path": "docs/evidence/h01-pv-calva-half-019.npz",
+      "bytes": 15239535
+    },
+    {
+      "path": "docs/evidence/h01-pv-calva-half-027.npz",
+      "bytes": 36584035
+    },
+    {
+      "path": "docs/evidence/h01-pv-candidate-transfer-burst-halfdt.npz",
+      "bytes": 7440299
+    },
+    {
+      "path": "docs/evidence/h01-pv-candidate-transfer-burst.npz",
+      "bytes": 3835169
+    },
+    {
+      "path": "docs/evidence/h01-pv-candidate-transfer-drift-halfdt.npz",
+      "bytes": 16534859
+    },
+    {
+      "path": "docs/evidence/h01-pv-candidate-transfer-full.npz",
+      "bytes": 45047600
+    },
+    {
+      "path": "docs/evidence/h01-pv-combined-015-019.npz",
+      "bytes": 17568632
+    },
+    {
+      "path": "docs/evidence/h01-pv-combined-015-027-space27.npz",
+      "bytes": 110159691
+    },
+    {
+      "path": "docs/evidence/h01-pv-combined-015-027.npz",
+      "bytes": 90799307
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-double-019.npz",
+      "bytes": 11087531
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-double-027.npz",
+      "bytes": 31705855
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-fast-019.npz",
+      "bytes": 20034501
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-fast-027.npz",
+      "bytes": 52432485
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-fast-control-019.npz",
+      "bytes": 15239535
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-phase-both.npz",
+      "bytes": 20023421
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-phase-closing.npz",
+      "bytes": 24511340
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-phase-control.npz",
+      "bytes": 20023421
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-phase-opening.npz",
+      "bytes": 14549987
+    },
+    {
+      "path": "docs/evidence/h01-pv-kv3-phase-source.npz",
+      "bytes": 15253854
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-calcium-019-slow.npz",
+      "bytes": 11629909
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-calcium-019.npz",
+      "bytes": 13706942
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-calcium-027-slow.npz",
+      "bytes": 31606359
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-sk2-axon-019.npz",
+      "bytes": 9474423
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-sk2-soma-019.npz",
+      "bytes": 12168326
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-010.npz",
+      "bytes": 23424232
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-018-019-human-residual.npz",
+      "bytes": 467768
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-018-019.npz",
+      "bytes": 12171520
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-018-027-human-residual.npz",
+      "bytes": 481230
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-018-027.npz",
+      "bytes": 33076619
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-018-sk2-019.npz",
+      "bytes": 9473640
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-018-sk2-027.npz",
+      "bytes": 30362480
+    },
+    {
+      "path": "docs/evidence/h01-pv-neuron-waveform-025.npz",
+      "bytes": 11013234
+    },
+    {
+      "path": "docs/evidence/h01-pv-onset-balance-019.npz",
+      "bytes": 19985587
+    },
+    {
+      "path": "docs/evidence/h01-pv-onset-balance-027.npz",
+      "bytes": 54676428
+    },
+    {
+      "path": "docs/evidence/h01-pv-onset-na110-all.npz",
+      "bytes": 16177936
+    },
+    {
+      "path": "docs/evidence/h01-pv-onset-na110-axon.npz",
+      "bytes": 14353649
+    },
+    {
+      "path": "docs/evidence/h01-pv-onset-na110-soma.npz",
+      "bytes": 15916893
+    },
+    {
+      "path": "docs/evidence/h01-pv-opening-adaptation-control-027.npz",
+      "bytes": 34310421
+    },
+    {
+      "path": "docs/evidence/h01-pv-opening-adaptation-slow-019.npz",
+      "bytes": 13451313
+    },
+    {
+      "path": "docs/evidence/h01-pv-opening-adaptation-slow-027.npz",
+      "bytes": 33887150
+    },
+    {
+      "path": "docs/evidence/h01-pv-recovery-rescue-019.npz",
+      "bytes": 30321377
+    },
+    {
+      "path": "docs/evidence/h01-pv-recovery-rescue-027.npz",
+      "bytes": 31635781
+    },
+    {
+      "path": "docs/evidence/h01-pv-recovery-slow-019.npz",
+      "bytes": 17256780
+    },
+    {
+      "path": "docs/evidence/h01-pv-recovery-slow-027.npz",
+      "bytes": 91516479
+    },
+    {
+      "path": "docs/evidence/h01-pv-regional-mesh-axon.npz",
+      "bytes": 24526961
+    },
+    {
+      "path": "docs/evidence/h01-pv-regional-mesh-axon2187.npz",
+      "bytes": 30317736
+    },
+    {
+      "path": "docs/evidence/h01-pv-regional-mesh-axon243.npz",
+      "bytes": 30850718
+    },
+    {
+      "path": "docs/evidence/h01-pv-regional-mesh-axon729.npz",
+      "bytes": 28631295
+    },
+    {
+      "path": "docs/evidence/h01-pv-regional-mesh-axon81.npz",
+      "bytes": 27252913
+    },
+    {
+      "path": "docs/evidence/h01-pv-regional-mesh-dendrites.npz",
+      "bytes": 20120154
+    },
+    {
+      "path": "docs/evidence/h01-pv-regional-mesh-soma.npz",
+      "bytes": 20926819
+    },
+    {
+      "path": "docs/evidence/h01-pv-slope5-019.npz",
+      "bytes": 17945875
+    },
+    {
+      "path": "docs/evidence/h01-pv-slope5-027-space27.npz",
+      "bytes": 44562241
+    },
+    {
+      "path": "docs/evidence/h01-pv-slope5-027.npz",
+      "bytes": 40706108
+    },
+    {
+      "path": "docs/evidence/h01-pv-transfer-isolation-braincell-matched-halfdt.npz",
+      "bytes": 16532848
+    },
+    {
+      "path": "docs/evidence/h01-pv-transfer-isolation-braincell-matched.npz",
+      "bytes": 8414179
+    },
+    {
+      "path": "docs/evidence/h01-pv-transfer-isolation-braincell-maxcv.npz",
+      "bytes": 8413220
+    },
+    {
+      "path": "docs/evidence/h01-pv-transfer-isolation-neuron-cvode.npz",
+      "bytes": 940158
+    },
+    {
+      "path": "docs/evidence/h01-pv-transfer-isolation-neuron-fixed-halfdt.npz",
+      "bytes": 33463721
+    },
+    {
+      "path": "docs/evidence/h01-pv-transfer-isolation-neuron-fixed.npz",
+      "bytes": 16813617
+    }
+  ]
+}

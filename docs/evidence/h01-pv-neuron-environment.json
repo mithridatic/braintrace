@@ -1,0 +1,18 @@
+{
+  "image_tag": "braintrace-h01-neuron:9.0.2",
+  "image_used_sha256": "2016f3634fe467bd9569f928e4afa009879ecc4c9a8e8332c2b298b6eea4a3f0",
+  "base_image": "python:3.12-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36",
+  "neuron_version": "9.0.2",
+  "numpy_version": "2.2.6",
+  "scipy_version": "1.15.3",
+  "compile_command": "nrnivmodl mod",
+  "mechanism_count": 11,
+  "source_mechanisms_modified": false,
+  "source_license": "ModelDBRepository/267587 GPL-3.0; downloaded source remains in cache",
+  "runtime_network": "none",
+  "runtime_cpu_limit": 2,
+  "runtime_memory_limit": "2g",
+  "source_input_mount": ".cache/human-pv/neuron-reference -> /work",
+  "evidence_mount": "docs/evidence -> /evidence",
+  "driver": "h01_pv_neuron_reference.py"
+}

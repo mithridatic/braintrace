@@ -1,0 +1,109 @@
+{
+  "specimen_id": 562381210,
+  "ephys_result_id": 562381187,
+  "sweep": 52,
+  "source_recording_name": "H16.06.013.11.18.02",
+  "brain_area": "middle temporal gyrus",
+  "source_type": "Allen human recording; candidate pyramidal reference based on published morphology use",
+  "sample_rate_hz": 50000.0,
+  "time_convention": "Milliseconds from sweep sample zero; source absolute start retained separately",
+  "source_start_seconds": 1954.083999633789,
+  "pulse_start_ms": 1020.0,
+  "pulse_end_ms": 2020.0,
+  "command_current_na": 0.10999999940395355,
+  "bias_current_na": 0.00943336467967848,
+  "voltage_conversion_to_v": 1.0,
+  "current_conversion_to_a": 1.0,
+  "voltage_datum": "As stored in Allen file, converted V to mV. No additional liquid-junction correction applied; correction provenance pending.",
+  "events_above_minus20_mv": [
+    {
+      "rise_crossing_ms": 1058.1896226530255,
+      "fall_crossing_ms": 1059.254385958901,
+      "time_above_threshold_ms": 1.0647633058754309,
+      "peak_sample_time_ms": 1058.54,
+      "peak_sample_voltage_mv": 35.625003814697266
+    },
+    {
+      "rise_crossing_ms": 1120.5187878795352,
+      "fall_crossing_ms": 1121.698113186688,
+      "time_above_threshold_ms": 1.1793253071527943,
+      "peak_sample_time_ms": 1120.9,
+      "peak_sample_voltage_mv": 38.250003814697266
+    },
+    {
+      "rise_crossing_ms": 1197.8490721649484,
+      "fall_crossing_ms": 1198.9896428458544,
+      "time_above_threshold_ms": 1.1405706809059666,
+      "peak_sample_time_ms": 1198.24,
+      "peak_sample_voltage_mv": 37.65625
+    },
+    {
+      "rise_crossing_ms": 1281.065918371033,
+      "fall_crossing_ms": 1282.2139285714286,
+      "time_above_threshold_ms": 1.1480102003956745,
+      "peak_sample_time_ms": 1281.46,
+      "peak_sample_voltage_mv": 37.5
+    },
+    {
+      "rise_crossing_ms": 1362.145773208461,
+      "fall_crossing_ms": 1363.304150938616,
+      "time_above_threshold_ms": 1.1583777301550526,
+      "peak_sample_time_ms": 1362.54,
+      "peak_sample_voltage_mv": 37.5
+    },
+    {
+      "rise_crossing_ms": 1448.614193557702,
+      "fall_crossing_ms": 1449.7784905447438,
+      "time_above_threshold_ms": 1.16429698704178,
+      "peak_sample_time_ms": 1449.0,
+      "peak_sample_voltage_mv": 37.281253814697266
+    },
+    {
+      "rise_crossing_ms": 1541.6404347826087,
+      "fall_crossing_ms": 1542.8449999823936,
+      "time_above_threshold_ms": 1.2045651997848381,
+      "peak_sample_time_ms": 1542.04,
+      "peak_sample_voltage_mv": 37.8125
+    },
+    {
+      "rise_crossing_ms": 1637.246595744681,
+      "fall_crossing_ms": 1638.4228571392982,
+      "time_above_threshold_ms": 1.1762613946173133,
+      "peak_sample_time_ms": 1637.66,
+      "peak_sample_voltage_mv": 37.5625
+    },
+    {
+      "rise_crossing_ms": 1735.2777011618437,
+      "fall_crossing_ms": 1736.454901936849,
+      "time_above_threshold_ms": 1.1772007750053035,
+      "peak_sample_time_ms": 1735.68,
+      "peak_sample_voltage_mv": 37.437503814697266
+    },
+    {
+      "rise_crossing_ms": 1851.0910588378906,
+      "fall_crossing_ms": 1852.3221738865063,
+      "time_above_threshold_ms": 1.2311150486157203,
+      "peak_sample_time_ms": 1851.52,
+      "peak_sample_voltage_mv": 38.125
+    },
+    {
+      "rise_crossing_ms": 1982.1537500047684,
+      "fall_crossing_ms": 1983.4048979530828,
+      "time_above_threshold_ms": 1.251147948314383,
+      "peak_sample_time_ms": 1982.58,
+      "peak_sample_voltage_mv": 38.250003814697266
+    }
+  ],
+  "qualification": "Source-linked paired input/output from an annotated layer-5 spiny human cell. Candidate excitatory identity is inferred from morphology, not a direct transmitter assay. Layer differs from H01 layer-2 example. Stimulus/bias convention, junction correction, and model alignment still require qualification.",
+  "source_annotations": {
+    "specimen__id": 562381210,
+    "specimen__name": "H16.06.013.11.18.02",
+    "structure__layer": "5",
+    "tag__dendrite_type": "spiny",
+    "tag__apical": "intact",
+    "nr__reconstruction_type": "full",
+    "nrwkf__id": 696537237,
+    "donor__age": "34 yrs"
+  },
+  "reconstruction_id": 696537235
+}

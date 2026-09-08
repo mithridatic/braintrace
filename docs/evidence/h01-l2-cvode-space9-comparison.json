@@ -1,0 +1,74 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    7,
+    7
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.0817209870433544,
+    "peak_sample_voltage_mv": 0.002615833331617523,
+    "time_above_threshold_ms": 3.7378775459728786e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -0.0015733902964711888,
+      "peak_sample_voltage_mv": -0.002557388635871405,
+      "time_above_threshold_ms": 3.7350967886595754e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": -0.0026339368469052715,
+      "peak_sample_voltage_mv": -0.0026124474107689366,
+      "time_above_threshold_ms": 3.638971884356579e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.03891256041674751,
+      "peak_sample_voltage_mv": -0.002595219435491458,
+      "time_above_threshold_ms": 3.6393177879290306e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.04723163408311848,
+      "peak_sample_voltage_mv": -0.0025578593336987865,
+      "time_above_threshold_ms": 3.6062525168745196e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.05867184804719727,
+      "peak_sample_voltage_mv": -0.00250575767068284,
+      "time_above_threshold_ms": 3.7378775459728786e-05
+    },
+    {
+      "ordinal": 6,
+      "rise_crossing_ms": 0.07013026937056566,
+      "peak_sample_voltage_mv": -0.002615833331617523,
+      "time_above_threshold_ms": 3.60711981102213e-05
+    },
+    {
+      "ordinal": 7,
+      "rise_crossing_ms": 0.0817209870433544,
+      "peak_sample_voltage_mv": -0.002583660034957802,
+      "time_above_threshold_ms": 3.60642982286663e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-source-sweep50-space9": [],
+    "h01-l2-source-cvode-space9": []
+  },
+  "qualification": "Factor-nine source-model solver agreement. No intervention-specific solver qualification and no human physiological validation.",
+  "setup_invariants_passed": true,
+  "input_plateau_error_na": 0.0,
+  "input_transition_max_shift_ms": 1.547050487715751e-09,
+  "observed_endpoint_ms": 2100.0,
+  "raw_index_mapping_exact": true,
+  "integration_seconds": 220.767072423012
+}

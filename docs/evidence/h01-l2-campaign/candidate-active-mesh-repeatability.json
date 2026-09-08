@@ -1,0 +1,252 @@
+{
+  "coarse_fine": {
+    "reference_events": [
+      {
+        "rise_crossing_ms": 1078.7131279149305,
+        "fall_crossing_ms": 1079.6764773960467,
+        "time_above_threshold_ms": 0.9633494811162109,
+        "peak_sample_time_ms": 1078.8799284726106,
+        "peak_sample_voltage_mv": 35.959759064987914
+      },
+      {
+        "rise_crossing_ms": 1104.2407517858978,
+        "fall_crossing_ms": 1105.198507720385,
+        "time_above_threshold_ms": 0.9577559344870679,
+        "peak_sample_time_ms": 1104.4079825545505,
+        "peak_sample_voltage_mv": 35.50639183851313
+      },
+      {
+        "rise_crossing_ms": 1376.21083386494,
+        "fall_crossing_ms": 1377.1626987193033,
+        "time_above_threshold_ms": 0.9518648543632935,
+        "peak_sample_time_ms": 1376.3792053088491,
+        "peak_sample_voltage_mv": 34.983589729700185
+      },
+      {
+        "rise_crossing_ms": 1683.3935675096432,
+        "fall_crossing_ms": 1684.3447503888488,
+        "time_above_threshold_ms": 0.9511828792055894,
+        "peak_sample_time_ms": 1683.5618766492455,
+        "peak_sample_voltage_mv": 34.97104832774644
+      },
+      {
+        "rise_crossing_ms": 1977.300763126844,
+        "fall_crossing_ms": 1978.2515453860508,
+        "time_above_threshold_ms": 0.9507822592067896,
+        "peak_sample_time_ms": 1977.4692300865893,
+        "peak_sample_voltage_mv": 34.96062768562209
+      }
+    ],
+    "actual_events": [
+      {
+        "rise_crossing_ms": 1078.7059520143082,
+        "fall_crossing_ms": 1079.6693779489449,
+        "time_above_threshold_ms": 0.9634259346366889,
+        "peak_sample_time_ms": 1078.8728537545126,
+        "peak_sample_voltage_mv": 35.97002634887271
+      },
+      {
+        "rise_crossing_ms": 1104.2274468696612,
+        "fall_crossing_ms": 1105.1852788203798,
+        "time_above_threshold_ms": 0.9578319507186279,
+        "peak_sample_time_ms": 1104.3948509607028,
+        "peak_sample_voltage_mv": 35.51662172416662
+      },
+      {
+        "rise_crossing_ms": 1376.1998205172129,
+        "fall_crossing_ms": 1377.1517592306627,
+        "time_above_threshold_ms": 0.9519387134498629,
+        "peak_sample_time_ms": 1376.3680576308057,
+        "peak_sample_voltage_mv": 34.99353383472982
+      },
+      {
+        "rise_crossing_ms": 1683.3731522052851,
+        "fall_crossing_ms": 1684.3244087214443,
+        "time_above_threshold_ms": 0.9512565161592192,
+        "peak_sample_time_ms": 1683.5413679146588,
+        "peak_sample_voltage_mv": 34.98098811508016
+      },
+      {
+        "rise_crossing_ms": 1977.2714716264684,
+        "fall_crossing_ms": 1978.2223281981903,
+        "time_above_threshold_ms": 0.9508565717219426,
+        "peak_sample_time_ms": 1977.4399999984917,
+        "peak_sample_voltage_mv": 34.97052652371737
+      }
+    ],
+    "signed_errors": [
+      {
+        "rise_crossing_ms": -0.007175900622314657,
+        "peak_sample_voltage_mv": 0.010267283884793699,
+        "time_above_threshold_ms": 7.64535204780259e-05
+      },
+      {
+        "rise_crossing_ms": -0.013304916236620556,
+        "peak_sample_voltage_mv": 0.010229885653487258,
+        "time_above_threshold_ms": 7.601623156006099e-05
+      },
+      {
+        "rise_crossing_ms": -0.011013347727157452,
+        "peak_sample_voltage_mv": 0.009944105029632055,
+        "time_above_threshold_ms": 7.385908656942775e-05
+      },
+      {
+        "rise_crossing_ms": -0.020415304358039066,
+        "peak_sample_voltage_mv": 0.009939787333721029,
+        "time_above_threshold_ms": 7.36369536298298e-05
+      },
+      {
+        "rise_crossing_ms": -0.02929150037562067,
+        "peak_sample_voltage_mv": 0.009898838095274698,
+        "time_above_threshold_ms": 7.431251515299664e-05
+      }
+    ],
+    "same_nonzero_event_count": true,
+    "limits": {
+      "rise_crossing_ms": 0.1,
+      "peak_sample_voltage_mv": 0.1,
+      "time_above_threshold_ms": 0.01
+    },
+    "gates": {
+      "rise_crossing_ms": true,
+      "peak_sample_voltage_mv": true,
+      "time_above_threshold_ms": true
+    },
+    "passed": true,
+    "window_ms": [
+      1020.0,
+      2020.0
+    ],
+    "qualification": "Numerical spike transfer only; human and circuit validation remain separate."
+  },
+  "frozen_comparison": {
+    "reference_events": [
+      {
+        "rise_crossing_ms": 1078.7131279149305,
+        "fall_crossing_ms": 1079.6764773960467,
+        "time_above_threshold_ms": 0.9633494811162109,
+        "peak_sample_time_ms": 1078.8799284726106,
+        "peak_sample_voltage_mv": 35.959759064987914
+      },
+      {
+        "rise_crossing_ms": 1104.2407517858978,
+        "fall_crossing_ms": 1105.198507720385,
+        "time_above_threshold_ms": 0.9577559344870679,
+        "peak_sample_time_ms": 1104.4079825545505,
+        "peak_sample_voltage_mv": 35.50639183851313
+      },
+      {
+        "rise_crossing_ms": 1376.21083386494,
+        "fall_crossing_ms": 1377.1626987193033,
+        "time_above_threshold_ms": 0.9518648543632935,
+        "peak_sample_time_ms": 1376.3792053088491,
+        "peak_sample_voltage_mv": 34.983589729700185
+      },
+      {
+        "rise_crossing_ms": 1683.3935675096432,
+        "fall_crossing_ms": 1684.3447503888488,
+        "time_above_threshold_ms": 0.9511828792055894,
+        "peak_sample_time_ms": 1683.5618766492455,
+        "peak_sample_voltage_mv": 34.97104832774644
+      },
+      {
+        "rise_crossing_ms": 1977.300763126844,
+        "fall_crossing_ms": 1978.2515453860508,
+        "time_above_threshold_ms": 0.9507822592067896,
+        "peak_sample_time_ms": 1977.4692300865893,
+        "peak_sample_voltage_mv": 34.96062768562209
+      }
+    ],
+    "actual_events": [
+      {
+        "rise_crossing_ms": 1078.7131279149305,
+        "fall_crossing_ms": 1079.6764773960467,
+        "time_above_threshold_ms": 0.9633494811162109,
+        "peak_sample_time_ms": 1078.8799284726106,
+        "peak_sample_voltage_mv": 35.959759064987914
+      },
+      {
+        "rise_crossing_ms": 1104.2407517858978,
+        "fall_crossing_ms": 1105.198507720385,
+        "time_above_threshold_ms": 0.9577559344870679,
+        "peak_sample_time_ms": 1104.4079825545505,
+        "peak_sample_voltage_mv": 35.50639183851313
+      },
+      {
+        "rise_crossing_ms": 1376.21083386494,
+        "fall_crossing_ms": 1377.1626987193033,
+        "time_above_threshold_ms": 0.9518648543632935,
+        "peak_sample_time_ms": 1376.3792053088491,
+        "peak_sample_voltage_mv": 34.983589729700185
+      },
+      {
+        "rise_crossing_ms": 1683.3935675096432,
+        "fall_crossing_ms": 1684.3447503888488,
+        "time_above_threshold_ms": 0.9511828792055894,
+        "peak_sample_time_ms": 1683.5618766492455,
+        "peak_sample_voltage_mv": 34.97104832774644
+      },
+      {
+        "rise_crossing_ms": 1977.300763126844,
+        "fall_crossing_ms": 1978.2515453860508,
+        "time_above_threshold_ms": 0.9507822592067896,
+        "peak_sample_time_ms": 1977.4692300865893,
+        "peak_sample_voltage_mv": 34.96062768562209
+      }
+    ],
+    "signed_errors": [
+      {
+        "rise_crossing_ms": 0.0,
+        "peak_sample_voltage_mv": 0.0,
+        "time_above_threshold_ms": 0.0
+      },
+      {
+        "rise_crossing_ms": 0.0,
+        "peak_sample_voltage_mv": 0.0,
+        "time_above_threshold_ms": 0.0
+      },
+      {
+        "rise_crossing_ms": 0.0,
+        "peak_sample_voltage_mv": 0.0,
+        "time_above_threshold_ms": 0.0
+      },
+      {
+        "rise_crossing_ms": 0.0,
+        "peak_sample_voltage_mv": 0.0,
+        "time_above_threshold_ms": 0.0
+      },
+      {
+        "rise_crossing_ms": 0.0,
+        "peak_sample_voltage_mv": 0.0,
+        "time_above_threshold_ms": 0.0
+      }
+    ],
+    "same_nonzero_event_count": true,
+    "limits": {
+      "rise_crossing_ms": 0.1,
+      "peak_sample_voltage_mv": 0.1,
+      "time_above_threshold_ms": 0.01
+    },
+    "gates": {
+      "rise_crossing_ms": true,
+      "peak_sample_voltage_mv": true,
+      "time_above_threshold_ms": true
+    },
+    "passed": true,
+    "window_ms": [
+      1020.0,
+      2020.0
+    ],
+    "qualification": "Numerical spike transfer only; human and circuit validation remain separate."
+  },
+  "exact_arrays": {
+    "time_ms": true,
+    "voltage_mv": true
+  },
+  "input_sha256": {
+    "docs\\evidence\\h01-l2-campaign\\s0-candidate-fine-sweep50.npz": "92ec32f73519f57256c90acbea7d80e948cdf41e29897268cde55b03d644dcaf",
+    "docs\\evidence\\h01-l2-campaign\\s0-candidate-coarse-sweep50.npz": "a7e688228b58b4ca7395890d69ac1db161662ab59fd62c412cb392e4e95f16c8",
+    "docs\\evidence\\h01-l2-kv3-ninety-ca133.npz": "2a86e92301a9828f09f03d400e2fdfc851c24baf3b9c61149c297540bf3d1ce7"
+  },
+  "qualification": "Active input only. Exact array repeatability and event agreement are separate; no full campaign preservation or human acceptance."
+}

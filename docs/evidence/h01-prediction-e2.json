@@ -1,0 +1,78 @@
+{
+ "cell": "E",
+ "written_utc": "2026-09-07T12:45:45.354118+00:00",
+ "authorization": "User requested autonomous H01 continuation on 2026-09-07; bounded continuation spec.",
+ "candidate_file": "h01-e-usable/b3-sk035-ca-decay.candidate.json",
+ "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+ "candidate": {
+  "calcium_decay_factor": 1.0,
+  "cvode_atol": 1e-10,
+  "distribute_ih": true,
+  "ih_density_factor": 75.0,
+  "insert_density": [
+   "NaTs:axon:3.814"
+  ],
+  "kv3_closing_factor": 0.9,
+  "leak_reversal_shift_mv": -4.0,
+  "nseg_factor": 9,
+  "record_soma_currents": false,
+  "regional_density": [
+   "SK:soma:0.35"
+  ],
+  "sodium_density_factor": 0.9,
+  "sodium_opening_factor": 2.0,
+  "sodium_recovery_factor": 1.0,
+  "stop_ms": 2100.0
+ },
+ "holdout": {
+  "sweep": 55,
+  "command_pa": 350,
+  "status": "waveform, timing, peaks and per-cycle rows sealed at registration; count metadata previously seen in prior session and not claimed blind"
+ },
+ "basis": "Extrapolation from B3 sweep53: count10, rate10.045 Hz, late mean122.587 ms, first crossing34.466 ms after pulse. No sweep55 waveform exported or inspected.",
+ "predicted": {
+  "count": [
+   11,
+   14
+  ],
+  "rate_hz": [
+   10,
+   14
+  ],
+  "adaptation_ratio": [
+   7,
+   11
+  ],
+  "first_crossing_after_pulse_ms": [
+   25,
+   40
+  ],
+  "late_cycles_ms_cycles4_onward": [
+   80,
+   125
+  ],
+  "first_threshold_mv": [
+   -58,
+   -56
+  ],
+  "first_peak_mv": [
+   38,
+   41
+  ],
+  "first_ahp_mv": [
+   -71,
+   -68
+  ],
+  "first_width_ms": [
+   0.9,
+   1.12
+  ],
+  "axon_leads_ms": [
+   0.15,
+   0.25
+  ]
+ },
+ "prediction_gate": "Wait for sweep50 calibration decision before export. Freeze exact B3 flags; no fitting after opening. Usable or contract failures do not justify additional optimization. Stop if calibration blocks or loses axon-first crossing.",
+ "acceptance": "Existing usable tier and original event contract scored separately; predicted bands are not acceptance limits.",
+ "qualification": "Donor NEURON prediction only; BrainCell transfer, mesh/tolerance qualification, and H01 physiology remain unqualified."
+}

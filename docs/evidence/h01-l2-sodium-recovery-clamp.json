@@ -1,0 +1,271 @@
+{
+  "cases": [
+    {
+      "voltage_mv": -80.0,
+      "factor": 1.0,
+      "phase": "recovery",
+      "h_equilibrium": 0.9116003227929416,
+      "h_time_ms": 1.5681434485884242,
+      "max_h_error": 4.093392291792952e-13,
+      "max_m_error": 1.4654943925052066e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -80.0,
+      "factor": 1.0,
+      "phase": "closing",
+      "h_equilibrium": 0.9116003227929416,
+      "h_time_ms": 1.5681434485884242,
+      "max_h_error": 3.7969627442180354e-14,
+      "max_m_error": 1.4654943925052066e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -80.0,
+      "factor": 1.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 0.9116003227929416,
+      "h_time_ms": 1.5681434485884242,
+      "max_h_error": 0.0,
+      "max_m_error": 1.4654943925052066e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -80.0,
+      "factor": 2.0,
+      "phase": "recovery",
+      "h_equilibrium": 0.9116003227929416,
+      "h_time_ms": 3.1362868971768485,
+      "max_h_error": 6.729616863765386e-13,
+      "max_m_error": 1.4654943925052066e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -80.0,
+      "factor": 2.0,
+      "phase": "closing",
+      "h_equilibrium": 0.9116003227929416,
+      "h_time_ms": 1.5681434485884242,
+      "max_h_error": 3.7969627442180354e-14,
+      "max_m_error": 1.4654943925052066e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -80.0,
+      "factor": 2.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 0.9116003227929416,
+      "h_time_ms": 1.5681434485884242,
+      "max_h_error": 0.0,
+      "max_m_error": 1.4654943925052066e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -60.0,
+      "factor": 1.0,
+      "phase": "recovery",
+      "h_equilibrium": 0.2689414213699951,
+      "h_time_ms": 2.054040318385502,
+      "max_h_error": 2.0219936835985663e-13,
+      "max_m_error": 1.6153745008296028e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -60.0,
+      "factor": 1.0,
+      "phase": "closing",
+      "h_equilibrium": 0.2689414213699951,
+      "h_time_ms": 2.054040318385502,
+      "max_h_error": 5.463407504180395e-13,
+      "max_m_error": 1.6153745008296028e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -60.0,
+      "factor": 1.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 0.2689414213699951,
+      "h_time_ms": 2.054040318385502,
+      "max_h_error": 0.0,
+      "max_m_error": 1.6153745008296028e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -60.0,
+      "factor": 2.0,
+      "phase": "recovery",
+      "h_equilibrium": 0.2689414213699951,
+      "h_time_ms": 4.108080636771004,
+      "max_h_error": 1.5922679841295917e-13,
+      "max_m_error": 1.6153745008296028e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -60.0,
+      "factor": 2.0,
+      "phase": "closing",
+      "h_equilibrium": 0.2689414213699951,
+      "h_time_ms": 2.054040318385502,
+      "max_h_error": 5.463407504180395e-13,
+      "max_m_error": 1.6153745008296028e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -60.0,
+      "factor": 2.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 0.2689414213699951,
+      "h_time_ms": 2.054040318385502,
+      "max_h_error": 0.0,
+      "max_m_error": 1.6153745008296028e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -40.0,
+      "factor": 1.0,
+      "phase": "recovery",
+      "h_equilibrium": 0.01295372753069587,
+      "h_time_ms": 0.999159893201422,
+      "max_h_error": 7.702172233337023e-15,
+      "max_m_error": 9.547918011776346e-15,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -40.0,
+      "factor": 1.0,
+      "phase": "closing",
+      "h_equilibrium": 0.01295372753069587,
+      "h_time_ms": 0.999159893201422,
+      "max_h_error": 5.839217998016011e-13,
+      "max_m_error": 9.547918011776346e-15,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -40.0,
+      "factor": 1.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 0.01295372753069587,
+      "h_time_ms": 0.999159893201422,
+      "max_h_error": 0.0,
+      "max_m_error": 9.547918011776346e-15,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -40.0,
+      "factor": 2.0,
+      "phase": "recovery",
+      "h_equilibrium": 0.01295372753069587,
+      "h_time_ms": 1.998319786402844,
+      "max_h_error": 7.525230438787389e-15,
+      "max_m_error": 9.547918011776346e-15,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -40.0,
+      "factor": 2.0,
+      "phase": "closing",
+      "h_equilibrium": 0.01295372753069587,
+      "h_time_ms": 0.999159893201422,
+      "max_h_error": 5.839217998016011e-13,
+      "max_m_error": 9.547918011776346e-15,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": -40.0,
+      "factor": 2.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 0.01295372753069587,
+      "h_time_ms": 0.999159893201422,
+      "max_h_error": 0.0,
+      "max_m_error": 9.547918011776346e-15,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": 0.0,
+      "factor": 1.0,
+      "phase": "recovery",
+      "h_equilibrium": 1.670142184809518e-05,
+      "h_time_ms": 0.4040635534889884,
+      "max_h_error": 2.6461309272224343e-18,
+      "max_m_error": 6.061817714453355e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": 0.0,
+      "factor": 1.0,
+      "phase": "closing",
+      "h_equilibrium": 1.670142184809518e-05,
+      "h_time_ms": 0.4040635534889884,
+      "max_h_error": 1.574296248918472e-13,
+      "max_m_error": 6.061817714453355e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": 0.0,
+      "factor": 1.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 1.670142184809518e-05,
+      "h_time_ms": 0.4040635534889884,
+      "max_h_error": 0.0,
+      "max_m_error": 6.061817714453355e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": 0.0,
+      "factor": 2.0,
+      "phase": "recovery",
+      "h_equilibrium": 1.670142184809518e-05,
+      "h_time_ms": 0.8081271069779769,
+      "max_h_error": 4.340196821731035e-18,
+      "max_m_error": 6.061817714453355e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": 0.0,
+      "factor": 2.0,
+      "phase": "closing",
+      "h_equilibrium": 1.670142184809518e-05,
+      "h_time_ms": 0.4040635534889884,
+      "max_h_error": 1.574296248918472e-13,
+      "max_m_error": 6.061817714453355e-14,
+      "voltage_fixed": true,
+      "passed": true
+    },
+    {
+      "voltage_mv": 0.0,
+      "factor": 2.0,
+      "phase": "equilibrium",
+      "h_equilibrium": 1.670142184809518e-05,
+      "h_time_ms": 0.4040635534889884,
+      "max_h_error": 0.0,
+      "max_m_error": 6.061817714453355e-14,
+      "voltage_fixed": true,
+      "passed": true
+    }
+  ],
+  "gate_error_limit": 1e-08,
+  "decision": "supported",
+  "qualification": "Fixed-voltage gate law only; full-cell source equivalence remains required."
+}

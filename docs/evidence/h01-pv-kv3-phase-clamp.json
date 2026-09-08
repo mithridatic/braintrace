@@ -1,0 +1,146 @@
+[
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 0.0,
+    "base_factor": 1.0,
+    "closing_factor": 1.0,
+    "expected_m": 1.2346435137748235e-05,
+    "observed_m": 1.2346435137654816e-05,
+    "absolute_error": 9.341926375267678e-17
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 0.0,
+    "base_factor": 1.0,
+    "closing_factor": 0.5,
+    "expected_m": 1.2346435137748235e-05,
+    "observed_m": 1.2346435137654816e-05,
+    "absolute_error": 9.341926375267678e-17
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 0.0,
+    "base_factor": 0.5,
+    "closing_factor": 1.0,
+    "expected_m": 2.0691967570448325e-05,
+    "observed_m": 2.0691967568183288e-05,
+    "absolute_error": 2.2650372517255685e-15
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 0.0,
+    "base_factor": 0.5,
+    "closing_factor": 0.5,
+    "expected_m": 2.0691967570448325e-05,
+    "observed_m": 2.0691967568183288e-05,
+    "absolute_error": 2.2650372517255685e-15
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 1.0,
+    "base_factor": 1.0,
+    "closing_factor": 1.0,
+    "expected_m": 0.6759590743440138,
+    "observed_m": 0.6759590743464651,
+    "absolute_error": 2.451261416069883e-12
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 1.0,
+    "base_factor": 1.0,
+    "closing_factor": 0.5,
+    "expected_m": 0.4569246709382865,
+    "observed_m": 0.45692467099773365,
+    "absolute_error": 5.944716940931016e-11
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 1.0,
+    "base_factor": 0.5,
+    "closing_factor": 1.0,
+    "expected_m": 0.6759590743440138,
+    "observed_m": 0.6759590743464651,
+    "absolute_error": 2.451261416069883e-12
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 1.0,
+    "base_factor": 0.5,
+    "closing_factor": 0.5,
+    "expected_m": 0.4569246709382865,
+    "observed_m": 0.45692467099773365,
+    "absolute_error": 5.944716940931016e-11
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 0.0,
+    "base_factor": 1.0,
+    "closing_factor": 1.0,
+    "expected_m": 0.07553078381974337,
+    "observed_m": 0.07553078381970423,
+    "absolute_error": 3.914923940584458e-14
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 0.0,
+    "base_factor": 1.0,
+    "closing_factor": 0.5,
+    "expected_m": 0.07553078381974337,
+    "observed_m": 0.07553078381970423,
+    "absolute_error": 3.914923940584458e-14
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 0.0,
+    "base_factor": 0.5,
+    "closing_factor": 1.0,
+    "expected_m": 0.1403673229580107,
+    "observed_m": 0.1403673229575483,
+    "absolute_error": 4.623801341807621e-13
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 0.0,
+    "base_factor": 0.5,
+    "closing_factor": 0.5,
+    "expected_m": 0.1403673229580107,
+    "observed_m": 0.1403673229575483,
+    "absolute_error": 4.623801341807621e-13
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 1.0,
+    "base_factor": 1.0,
+    "closing_factor": 1.0,
+    "expected_m": 0.9339428889158818,
+    "observed_m": 0.9339428889159164,
+    "absolute_error": 3.452793606584237e-14
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 1.0,
+    "base_factor": 1.0,
+    "closing_factor": 0.5,
+    "expected_m": 0.8772386651335946,
+    "observed_m": 0.8772386651339993,
+    "absolute_error": 4.0467629247586956e-13
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 1.0,
+    "base_factor": 0.5,
+    "closing_factor": 1.0,
+    "expected_m": 0.9339428889158818,
+    "observed_m": 0.9339428889159164,
+    "absolute_error": 3.452793606584237e-14
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 1.0,
+    "base_factor": 0.5,
+    "closing_factor": 0.5,
+    "expected_m": 0.8772386651335946,
+    "observed_m": 0.8772386651339993,
+    "absolute_error": 4.0467629247586956e-13
+  }
+]

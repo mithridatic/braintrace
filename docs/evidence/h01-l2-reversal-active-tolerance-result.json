@@ -1,0 +1,260 @@
+{
+  "decision": "supported",
+  "checks": {
+    "same_count_and_peak_signs": true,
+    "rise_crossing_ms": true,
+    "peak_sample_voltage_mv": true,
+    "time_above_threshold_ms": true
+  },
+  "phase_decision": "supported",
+  "phase_checks": {
+    "all_five_events_compared": true,
+    "each_phase_difference_within_0_01_ms": true,
+    "all_error_signs_preserved": true
+  },
+  "invalid_reasons": [],
+  "metadata_differences": [
+    "cvode_atol",
+    "integration_seconds",
+    "samples"
+  ],
+  "events_by_run": [
+    [
+      {
+        "rise_crossing_ms": 1082.7923323370794,
+        "fall_crossing_ms": 1083.7020546918757,
+        "time_above_threshold_ms": 0.9097223547962585,
+        "peak_sample_time_ms": 1082.9096891811514,
+        "peak_sample_voltage_mv": 36.80179719019323
+      },
+      {
+        "rise_crossing_ms": 1119.9984567124507,
+        "fall_crossing_ms": 1120.9026750482349,
+        "time_above_threshold_ms": 0.9042183357842077,
+        "peak_sample_time_ms": 1120.1163870830324,
+        "peak_sample_voltage_mv": 36.379970582141496
+      },
+      {
+        "rise_crossing_ms": 1362.10437171004,
+        "fall_crossing_ms": 1363.0023890843397,
+        "time_above_threshold_ms": 0.8980173742997977,
+        "peak_sample_time_ms": 1362.2234320910932,
+        "peak_sample_voltage_mv": 35.845325574458315
+      },
+      {
+        "rise_crossing_ms": 1693.3505199731403,
+        "fall_crossing_ms": 1694.2477741805906,
+        "time_above_threshold_ms": 0.8972542074502599,
+        "peak_sample_time_ms": 1693.4692456406397,
+        "peak_sample_voltage_mv": 35.83229587100965
+      },
+      {
+        "rise_crossing_ms": 2008.440148780104,
+        "fall_crossing_ms": 2009.336961587027,
+        "time_above_threshold_ms": 0.8968128069229806,
+        "peak_sample_time_ms": 2008.5588436474302,
+        "peak_sample_voltage_mv": 35.82012400356283
+      }
+    ],
+    [
+      {
+        "rise_crossing_ms": 1082.7923320896357,
+        "fall_crossing_ms": 1083.7020544981094,
+        "time_above_threshold_ms": 0.9097224084737263,
+        "peak_sample_time_ms": 1082.909788790725,
+        "peak_sample_voltage_mv": 36.80181679854906
+      },
+      {
+        "rise_crossing_ms": 1119.998457706807,
+        "fall_crossing_ms": 1120.9026757642134,
+        "time_above_threshold_ms": 0.9042180574065242,
+        "peak_sample_time_ms": 1120.11659240772,
+        "peak_sample_voltage_mv": 36.380003841061736
+      },
+      {
+        "rise_crossing_ms": 1362.1043785637014,
+        "fall_crossing_ms": 1363.002395730617,
+        "time_above_threshold_ms": 0.8980171669156789,
+        "peak_sample_time_ms": 1362.2232822295198,
+        "peak_sample_voltage_mv": 35.84535452865986
+      },
+      {
+        "rise_crossing_ms": 1693.3505047229419,
+        "fall_crossing_ms": 1694.2477582519239,
+        "time_above_threshold_ms": 0.8972535289819916,
+        "peak_sample_time_ms": 1693.4691757120238,
+        "peak_sample_voltage_mv": 35.83227207576495
+      },
+      {
+        "rise_crossing_ms": 2008.4401223049372,
+        "fall_crossing_ms": 2009.3369351981462,
+        "time_above_threshold_ms": 0.8968128932090167,
+        "peak_sample_time_ms": 2008.5588369534548,
+        "peak_sample_voltage_mv": 35.82013301716597
+      }
+    ]
+  ],
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -2.474437224009307e-07,
+      "peak_sample_voltage_mv": 1.96083558350324e-05,
+      "time_above_threshold_ms": 5.367746780393645e-08
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 9.943562417902285e-07,
+      "peak_sample_voltage_mv": 3.325892024008681e-05,
+      "time_above_threshold_ms": -2.78377683571307e-07
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 6.853661489003571e-06,
+      "peak_sample_voltage_mv": 2.895420154658268e-05,
+      "time_above_threshold_ms": -2.073841187666403e-07
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": -1.5250198430294404e-05,
+      "peak_sample_voltage_mv": -2.3795244700863805e-05,
+      "time_above_threshold_ms": -6.784682682337007e-07
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": -2.647516680553963e-05,
+      "peak_sample_voltage_mv": 9.013603140317628e-06,
+      "time_above_threshold_ms": 8.628603609395213e-08
+    }
+  ],
+  "maximum_absolute_differences": {
+    "rise_crossing_ms": 2.647516680553963e-05,
+    "peak_sample_voltage_mv": 3.325892024008681e-05,
+    "time_above_threshold_ms": 6.784682682337007e-07
+  },
+  "phase_observations": [
+    {
+      "ordinal": 1,
+      "coarse_ms": [
+        0.11735684407199187,
+        0.7923655107242666
+      ],
+      "fine_ms": [
+        0.11745670108939521,
+        0.7922657073843311
+      ],
+      "fine_minus_coarse_ms": [
+        9.985701740333752e-05,
+        -9.980333993553359e-05
+      ],
+      "human_ms": [
+        0.2884444440014704,
+        0.6474193511216981
+      ],
+      "error_signs_preserved": true
+    },
+    {
+      "ordinal": 2,
+      "coarse_ms": [
+        0.1179303705816892,
+        0.7862879652025185
+      ],
+      "fine_ms": [
+        0.11813470091306044,
+        0.7860833564934637
+      ],
+      "fine_minus_coarse_ms": [
+        0.00020433033137123857,
+        -0.00020460870905480988
+      ],
+      "human_ms": [
+        0.31670588099132146,
+        0.8179591792684278
+      ],
+      "error_signs_preserved": true
+    },
+    {
+      "ordinal": 3,
+      "coarse_ms": [
+        0.11906038105325933,
+        0.7789569932465383
+      ],
+      "fine_ms": [
+        0.11890366581837952,
+        0.7791135010972994
+      ],
+      "fine_minus_coarse_ms": [
+        -0.00015671523487981176,
+        0.00015650785076104512
+      ],
+      "human_ms": [
+        0.31320987578646964,
+        0.6615624977321204
+      ],
+      "error_signs_preserved": true
+    },
+    {
+      "ordinal": 4,
+      "coarse_ms": [
+        0.11872566749934776,
+        0.7785285399509121
+      ],
+      "fine_ms": [
+        0.1186709890819202,
+        0.7785825399000714
+      ],
+      "fine_minus_coarse_ms": [
+        -5.467841742756718e-05,
+        5.399994915933348e-05
+      ],
+      "human_ms": [
+        0.306928102269012,
+        0.6641935462982929
+      ],
+      "error_signs_preserved": true
+    },
+    {
+      "ordinal": 5,
+      "coarse_ms": [
+        0.11869486732621226,
+        0.7781179395967683
+      ],
+      "fine_ms": [
+        0.11871464851765268,
+        0.778098244691364
+      ],
+      "fine_minus_coarse_ms": [
+        1.978119144041557e-05,
+        -1.9694905404321617e-05
+      ],
+      "human_ms": [
+        0.3143749981036308,
+        0.6487096743999246
+      ],
+      "error_signs_preserved": true
+    }
+  ],
+  "maximum_phase_difference_ms": 0.00020460870905480988,
+  "input_plateau_errors_na": [
+    0.0,
+    0.0
+  ],
+  "raw_mapping_exact_both": true,
+  "integration_seconds": [
+    643.8211926129879,
+    750.4661548739532
+  ],
+  "qualification": "Tolerance numerical comparison at one active input only; no human physiological qualification.",
+  "sources": {
+    "h01-l2-sweep50-ih75-epasminus4.json": "321f1c7d32df91068367912dbb9b95df12fad531d2b3a7f8251c3c869d415cca",
+    "h01-l2-sweep50-ih75-epasminus4.npz": "54086752ba948c5a558cb8c23e353e6ed3521ee3cbbc1afe2e19d8eec900f1fe",
+    "h01-l2-sweep50-ih75-epasminus4-raw.npz": "44d274bbaa56909436df42ac6182240a408cca52bc21d3e5f21fc78a02a100a2",
+    "h01-l2-sweep50-ih75-epasminus4-atol11.json": "61f806e2df9674d3630a88107b03876b5fbdd20992940e44f564a2d0dfaa964b",
+    "h01-l2-sweep50-ih75-epasminus4-atol11.npz": "98743a1fda57ec65f46c91adceeac0b71f70ce7935c25e57b60262f197951c53",
+    "h01-l2-sweep50-ih75-epasminus4-atol11-raw.npz": "5f6a70e40dcc8daa4257f5f3ec7a7ac769ea76a8995da21888473ae38222a656"
+  }
+}

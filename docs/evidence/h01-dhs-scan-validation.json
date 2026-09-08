@@ -1,0 +1,52 @@
+{
+  "qualification": "Kernel, synthetic active-cell/circuit, and full measured-pair saved-trace equivalence pass. Numerical convergence and human physiology remain open.",
+  "tests_passed": 17,
+  "coverage": {
+    "statements": 67,
+    "missed": 4
+  },
+  "trace_counts": [
+    {
+      "depth": 8,
+      "original_top_level_equations": 248,
+      "scan_top_level_equations": 1
+    },
+    {
+      "depth": 32,
+      "original_top_level_equations": 992,
+      "scan_top_level_equations": 1
+    },
+    {
+      "depth": 64,
+      "original_top_level_equations": 1984,
+      "scan_top_level_equations": 1
+    }
+  ],
+  "physical_changes": "None. Voltage assembly, time step, channel order and parameters preserved.",
+  "risks": [
+    "Private BrainCell helpers require version revalidation.",
+    "Padded levels can increase per-step arithmetic and memory. Full-run speed is not established.",
+    "No validation of human physiology is implied."
+  ],
+  "edge_cases_checked": [
+    "Single-node tree with no elimination edges",
+    "Chains",
+    "Branching with multiple children per parent",
+    "One and three solve batches",
+    "Plain arrays and dimensional voltage quantities",
+    "Sentinel preserved with uneven level padding",
+    "Dense linear solve oracle",
+    "Active E and I traces",
+    "Circuit spike events and synaptic conductance"
+  ],
+  "existing_cell_and_circuit_regression_tests": {
+    "passed": 35,
+    "seconds": 68.17
+  },
+  "dependency": {
+    "braincell_version": "0.1.0",
+    "staggered_module_sha256": "33babf429cf0b1cebddf57b5e39969cbcd8cba6d64cc267b09c1bba333421d08"
+  },
+  "full_h01_session": 24680,
+  "full_h01_status": "Completed with exit 0; see h01-measured-ie-scan-equivalence.json."
+}

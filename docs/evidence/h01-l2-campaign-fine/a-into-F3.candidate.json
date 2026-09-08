@@ -1,0 +1,6 @@
+{
+  "calcium_decay_factor": 1.33,
+  "cvode_atol": 1e-10,
+  "nseg_factor": 9,
+  "stop_ms": 2140.0
+}

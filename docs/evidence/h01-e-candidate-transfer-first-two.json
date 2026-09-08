@@ -1,0 +1,119 @@
+{
+  "profile": {
+    "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+    "polarity": "E",
+    "mode": "candidate",
+    "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3",
+    "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+    "initial_mv": -83.97993469238281,
+    "reversal_mv": -87.97993469238281,
+    "axial_ohm_cm": 94.62299222737664,
+    "regions": [
+      [
+        "soma",
+        1.0,
+        0.0004214870638616726,
+        [
+          [
+            "Im",
+            0.0003009224287506406
+          ],
+          [
+            "Ih",
+            9.994138594205759e-05
+          ],
+          [
+            "NaTs",
+            3.8142926608978067
+          ],
+          [
+            "Nap",
+            0.00027834876277937903
+          ],
+          [
+            "K_P",
+            0.0002294964697530516
+          ],
+          [
+            "K_T",
+            1.1414657313560486e-08
+          ],
+          [
+            "SK",
+            0.0029986173243412404
+          ],
+          [
+            "Kv3_1",
+            0.3687667632247488
+          ],
+          [
+            "Ca_HVA",
+            0.0009983602924910323
+          ],
+          [
+            "Ca_LVA",
+            0.00824261450980065
+          ]
+        ],
+        [
+          657.0460049891833,
+          0.0008762096311710155
+        ]
+      ],
+      [
+        "axon",
+        1.0,
+        0.00028089935810004884,
+        [],
+        null
+      ],
+      [
+        "dend",
+        2.3031548608821226,
+        3.626643561453563e-05,
+        [
+          [
+            "Ih",
+            9.994138594205759e-05
+          ]
+        ],
+        null
+      ],
+      [
+        "apic",
+        2.3031548608821226,
+        4.119170292066434e-05,
+        [
+          [
+            "Ih",
+            9.994138594205759e-05
+          ]
+        ],
+        null
+      ]
+    ],
+    "limitations": [
+      "Borrowed donor and mechanisms; not measured H01 physiology.",
+      "Candidate selection is not physiological qualification.",
+      "E onset and rising-phase errors remain; I early intervals remain too short."
+    ]
+  },
+  "dt_ms": 0.00125,
+  "max_cv_length_um": 2.5,
+  "duration_ms": 1120.0,
+  "bias_na": -0.003711858945210089,
+  "pulses_ms_na": [
+    [
+      5.0,
+      15.02,
+      0.0500000006675716
+    ],
+    [
+      1020.0,
+      2020.0,
+      0.24999999292951713
+    ]
+  ],
+  "input_sha256": "6b47857fca79b0f2aafbce255822311d05462c982aa9f449b3c6624561c66d61",
+  "qualification": "First two-event donor transfer only; not full-sweep or human validation."
+}

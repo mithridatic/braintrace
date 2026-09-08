@@ -1,0 +1,192 @@
+{
+  "purpose": "Stage 3 Z-dissection of the excitatory cell: which boundary carries the upstroke charge that makes the maximum rise rate two to three times the human's at the same peak voltage. Specification: docs/specs/2026-09-06-h01-energetic-isolation-plan.md.",
+  "cap": 8,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 2100,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-energetic",
+  "inputs": {
+    "sweep50": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "50",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 53 is not on disk and not an input of any stage.",
+  "evaluation": "One parameter set at sweep 50 with soma current, capacitive and axial probes; sweep 43 has no spike and is not rerun.",
+  "common_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "stop_ms": 2100.0,
+    "record_soma_currents": true
+  },
+  "source_flags": {},
+  "candidate_flags": {
+    "calcium_decay_factor": 1.33,
+    "distribute_ih": true,
+    "ih_density_factor": 75.0,
+    "kv3_closing_factor": 0.9,
+    "leak_reversal_shift_mv": -4.0,
+    "sodium_density_factor": 1.3,
+    "sodium_opening_factor": 2.0,
+    "sodium_recovery_factor": 1.0
+  },
+  "subsystems": {
+    "sodium boundary": "sodium_density_factor halved (1.3 to 0.65)",
+    "dendritic load": "capacitance_factor dend:2 and apic:2 (spine-scale membrane capacitance)"
+  },
+  "stages": {
+    "R": {
+      "title": "Reference charge budgets at sweep 50, source and candidate",
+      "prediction": "Candidate 5 spikes, source 7; maximum rise 641 and 1019 V/s against the human 351. During the upstroke (threshold to peak) the capacitive charge equals the sodium charge minus the axial charge to the dendrites; the axial fraction of the sodium charge is the load share. Closure residual per cycle below 1e-3 pC.",
+      "rejection": "If closure fails the probes are re-checked. If the axial fraction is already above 0.6 of the sodium charge, the load cannot be the lever and Stage X tests the sodium boundary alone.",
+      "unchanged": "Allen 541563728 geometry and mechanisms, recorded command and bias, nseg x9, CVode 1e-10, stop 2100 ms, library kv3-closing-source.",
+      "decision_file": "stage-r-decision.json"
+    },
+    "X": {
+      "title": "Two-arm split of the upstroke: sodium boundary against dendritic load",
+      "gate": "stage-r-decision.json",
+      "prediction": "Halving the somatic sodium density lowers the peak by more than 5 mV and the rise rate by less than a third; doubling dendritic capacitance halves the rise-rate contrast (toward 350 V/s) and moves the peak by less than 3 mV. If the load arm reverses the rise-rate row and the sodium arm does not, the load is the Steep boundary.",
+      "rejection": "If neither arm moves the rise rate by more than the Stage 1 limit (5.7 V/s combined) times five, the upstroke is set by sodium kinetics, not by density or load; report and stop.",
+      "unchanged": "As Stage R; one boundary changed per arm.",
+      "decision_file": "stage-x-decision.json"
+    },
+    "Y": {
+      "title": "Initiation-site split: axonal sodium tripled, with and without somatic sodium reduced",
+      "gate": "stage-x-decision.json",
+      "prediction": "Axonal sodium density tripled (y-axon-na3): initiation moves to the axon; the soma shows a shoulder (a local dV/dt maximum of 100 to 300 V/s between -55 and -45 mV before the main rise), threshold falls toward -55 mV, the main rise rate stays within 10 percent of 641 V/s, peak within 2 mV of 36. Axonal sodium tripled with somatic sodium at 0.65 (y-axon-na3-soma065): shoulder present, main rise 350 to 500 V/s, peak 28 to 36 mV, threshold near -55 mV, five spikes. If the second arm brings the rise within 5 times the 5.7 V/s limit of 351 with the peak inside 2.07 mV of 36, the explanation is sufficient. Rejection: no shoulder appears in either arm, or the rise rate does not fall below 550 V/s in the second arm: initiation on this stub cannot reproduce the human's two-stage upstroke and the axon geometry (structural) is returned to the user.",
+      "rejection": "see prediction",
+      "unchanged": "As Stage R.",
+      "decision_file": "stage-y-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "r-source",
+      "stage": "R",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "r-candidate",
+      "stage": "R",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 1.3,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "x-sodium-half",
+      "stage": "X",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.65,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "x-load-double",
+      "stage": "X",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 1.3,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "capacitance_factor": [
+          "dend:2",
+          "apic:2"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "y-axon-na3",
+      "stage": "Y",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 1.3,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "regional_density": [
+          "NaTs:axon:3"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "y-axon-na3-soma065",
+      "stage": "Y",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.65,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "regional_density": [
+          "NaTs:axon:3"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": true
+      }
+    }
+  ]
+}

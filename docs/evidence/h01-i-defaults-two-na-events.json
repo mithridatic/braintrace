@@ -1,0 +1,15 @@
+{
+  "input_na": 2.0,
+  "events": [
+    {
+      "rise_crossing_ms": 2.6992680342616584,
+      "fall_crossing_ms": 5.042371887389839,
+      "time_above_threshold_ms": 2.3431038531281807,
+      "peak_sample_time_ms": 2.95125,
+      "peak_sample_voltage_mv": -1.3555381943543243
+    }
+  ],
+  "peak_mv": -1.3555381943543243,
+  "final_mv": -78.43437624328678,
+  "crossings_0mv_ms": []
+}

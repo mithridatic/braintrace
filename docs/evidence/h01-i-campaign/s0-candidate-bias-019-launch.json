@@ -1,0 +1,9 @@
+{
+  "started_utc": "2026-09-06T07:14:40Z",
+  "wall_seconds": 21,
+  "exit_code": 0,
+  "purpose": "Phase 0 step 3: frozen I candidate with the recorded 31.445 pA bias at 0.19 nA; first bias-on candidate evaluation; charged to the I campaign cap",
+  "library": ".cache/human-pv/kv3-phase-reference",
+  "image": "braintrace-h01-neuron:9.0.2",
+  "flags": "--current-na 0.19 --bias-na 0.031445374082395006 --nseg-factor 9 --cvode-atol 1e-10 --scale-conductance NaTg --conductance-factor 1.1 --conductance-region soma --sodium-h-tau-factor 0.15 --sodium-h-recovery-factor 1 --sodium-h-slope-mv 5 --somatic-calva-factor 0.5 --somatic-kv3-tau-factor 0.5 --somatic-kv3-close-factor 0.5 --axon-calcium-decay-ms 300 --axon-calcium-gamma 0.004 --duration-ms 1500"
+}

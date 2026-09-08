@@ -1,0 +1,107 @@
+{
+  "scope": "Connected E5 waveform comparison, dt 0.005 versus 0.0025 ms.",
+  "source_sha256": {
+    ".cache\\h01\\measured-E5-overlap-ei.npz": "065893b2866537be6ce22994cef3ee57660f1cc369fffadb7d8619ec42760ba2",
+    ".cache\\h01\\measured-E5-overlap-ei-halfdt.npz": "3ba357be92ec84b213287c26e4f74f9bc695510f0054ed09af82f088d6843afc"
+  },
+  "physical_metadata_equal_except_dt_and_observed_event_times": true,
+  "limits": {
+    "rise_ms": 0.1,
+    "peak_mv": 0.1,
+    "width_ms": 0.01
+  },
+  "observations": {
+    "E_voltage": {
+      "coarse": [
+        {
+          "rise_ms": 9.473954764513106,
+          "peak_mv": 50.299621698719044,
+          "width_ms": 1.2127984213967444
+        },
+        {
+          "rise_ms": 14.73649041147011,
+          "peak_mv": 42.51969511697,
+          "width_ms": 1.0403662865073198
+        }
+      ],
+      "fine": [
+        {
+          "rise_ms": 9.473038133981827,
+          "peak_mv": 50.325692592553025,
+          "width_ms": 1.2127279805392064
+        },
+        {
+          "rise_ms": 14.732985642423536,
+          "peak_mv": 42.57764682322723,
+          "width_ms": 1.040018842943418
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.0009166305312788836,
+          "peak_mv": 0.026070893833981756,
+          "width_ms": -7.044085753804552e-05
+        },
+        {
+          "rise_ms": -0.003504769046573486,
+          "peak_mv": 0.0579517062572279,
+          "width_ms": -0.00034744356390170594
+        }
+      ],
+      "within_limits": true
+    },
+    "I_voltage": {
+      "coarse": [
+        {
+          "rise_ms": 4.722360340083677,
+          "peak_mv": 34.06822818681818,
+          "width_ms": 0.766283316400421
+        }
+      ],
+      "fine": [
+        {
+          "rise_ms": 4.720440910573929,
+          "peak_mv": 34.17939330729351,
+          "width_ms": 0.7659898554834887
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.001919429509747772,
+          "peak_mv": 0.11116512047532723,
+          "width_ms": -0.0002934609169322755
+        }
+      ],
+      "within_limits": false
+    },
+    "I_output_voltage": {
+      "coarse": [
+        {
+          "rise_ms": 8.311198946243502,
+          "peak_mv": 28.251463732529277,
+          "width_ms": 0.6279587387720831
+        }
+      ],
+      "fine": [
+        {
+          "rise_ms": 8.295581993963411,
+          "peak_mv": 28.185460280987346,
+          "width_ms": 0.6281678737596632
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.015616952280090857,
+          "peak_mv": -0.06600345154193121,
+          "width_ms": 0.0002091349875801285
+        }
+      ],
+      "within_limits": true
+    }
+  },
+  "all_limits_pass": false,
+  "qualification": "Connected E soma and I contact checks pass. I soma peak fails, as in the disconnected control. No full numerical qualification."
+}

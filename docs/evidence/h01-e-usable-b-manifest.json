@@ -1,0 +1,112 @@
+{
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-usable",
+  "max_concurrent": 2,
+  "abort_seconds": 1500,
+  "common_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "stop_ms": 2100.0,
+    "record_soma_currents": false
+  },
+  "purpose": "Stage B at 310 pA on the Stage A survivor: one boundary per arm toward the human's late cycles (115 ms against the survivor's 242). Evaluations 5 to 7 of the h01-e-usable cap of 8.",
+  "cap": 3,
+  "prior_evaluations": 0,
+  "inputs": {
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "sweep 53 is open (spent 2026-09-06); sweep 55 stays sealed",
+  "stages": {
+    "B": {
+      "title": "Count and gain at 310 pA, one boundary per arm",
+      "gate": "stage-b0-decision.json",
+      "prediction": "Human late cycles 110 to 124 ms; survivor 242 to 253. b-sk-half (SK soma x0.5): late cycles shorten by a third or more (to 160 ms or less), count 7 to 9, AHP within 1 mV of -70, width within 0.1 ms. b-ca-decay (calcium decay 1.0 against 1.33, faster removal): late cycles shorten 10 to 20 percent (195 to 220 ms), count 6. b-leak-rev (leak reversal -2 against -4): first cycle shortens 3 to 6 ms, count 6, AHP 1 mV shallower. A change of width above 0.2 ms or of the trough above 2 mV is a regression.",
+      "rejection": "No arm moves the mean late cycle by more than the human cyclical spread at 310 pA (range 14 ms times 1.47, about 21 ms): the late rate is not set by the somatic Modulate boundary or the leak; report and return the question (axonal or dendritic slow conductances) with one evaluation in reserve.",
+      "unchanged": "As Stage A; the survivor's flags (somatic sodium 0.9, axonal NaTs 3.814) in every arm.",
+      "decision_file": "stage-b-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "b-sk-half",
+      "stage": "B",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "regional_density": [
+          "SK:soma:0.5"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    },
+    {
+      "name": "b-ca-decay",
+      "stage": "B",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    },
+    {
+      "name": "b-leak-rev",
+      "stage": "B",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -2.0,
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    7,
+    7
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.07988964235391904,
+    "peak_sample_voltage_mv": 0.0031979826156103286,
+    "time_above_threshold_ms": 4.035319943795912e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -0.0016067131409727153,
+      "peak_sample_voltage_mv": -0.0031835615936373074,
+      "time_above_threshold_ms": 4.035319943795912e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": -0.0023561201962820633,
+      "peak_sample_voltage_mv": -0.0031979826156103286,
+      "time_above_threshold_ms": 3.881050588461221e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.03798739846479293,
+      "peak_sample_voltage_mv": -0.003163532748587272,
+      "time_above_threshold_ms": 3.878257552969444e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.045989451318973806,
+      "peak_sample_voltage_mv": -0.0031973581465933876,
+      "time_above_threshold_ms": 3.838021257251967e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.057222532160494666,
+      "peak_sample_voltage_mv": -0.0030851618457887753,
+      "time_above_threshold_ms": 3.889951062774344e-05
+    },
+    {
+      "ordinal": 6,
+      "rise_crossing_ms": 0.06848481215297397,
+      "peak_sample_voltage_mv": -0.0031820614915574197,
+      "time_above_threshold_ms": 3.840786234832194e-05
+    },
+    {
+      "ordinal": 7,
+      "rise_crossing_ms": 0.07988964235391904,
+      "peak_sample_voltage_mv": -0.003183687307760863,
+      "time_above_threshold_ms": 3.816443495452404e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-source-sweep50-dt000625": [],
+    "h01-l2-source-cvode-derived": []
+  },
+  "qualification": "Direct event comparison of derived raw recording. Executable adaptive endpoint and complete setup record remain unqualified; no physiological validation.",
+  "input_plateau_error_na": 0.0,
+  "source_input_transition_times_ms": [
+    5.0,
+    15.02,
+    1020.0,
+    2020.0
+  ],
+  "observed_input_transition_times_ms": [
+    4.999999999999981,
+    15.019999999999769,
+    1019.9999999993623,
+    2019.999999998453
+  ],
+  "raw_samples": 960661,
+  "derived_samples": 855662,
+  "derived_endpoint_ms": 2099.993687921267,
+  "setup_evidence": "Command invocation and pre-integration driver checks; failed run did not emit complete final setup metadata."
+}

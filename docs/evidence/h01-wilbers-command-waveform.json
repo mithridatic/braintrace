@@ -1,0 +1,77 @@
+{
+  "doi": "10.34894/L5J0SD",
+  "version": 3,
+  "files": [
+    {
+      "id": 318541,
+      "path": "Figures5_6/APclamp/H_wide.csv",
+      "sha256": "10ccb67d0e6bb0d51032a4ebd7c727b473c0a9e356e772fda205f7f54795d719",
+      "release_checksum_verified": {
+        "type": "SHA-1",
+        "value": "e209550ce746483de580459f7d8e40de91ec3667"
+      }
+    },
+    {
+      "id": 318544,
+      "path": "Figures5_6/APclamp/apclamp_na.py",
+      "sha256": "9eaad9f75df6feb71979fce2f10edf91b6a8e7325a20889603b8f35dc14e7db1",
+      "release_checksum_verified": {
+        "type": "SHA-1",
+        "value": "912469a0c3a0da144657ce2c055cf326e0d5fd7e"
+      }
+    },
+    {
+      "id": 318538,
+      "path": "Figures5_6/APclamp/apclamp_tools.py",
+      "sha256": "30a73fc7caf9835cb9c0f72c1d2027756db12da060ac5ab47a3a1faa6329fe1f",
+      "release_checksum_verified": {
+        "type": "SHA-1",
+        "value": "be15b4567ada212035e33281ed097031c1a3cece"
+      }
+    }
+  ],
+  "waveform_samples": 800752,
+  "source_sample_interval_ms": 0.008,
+  "sample_clock_source": "apclamp_na.py samplefreq=125 per ms; apclamp_tools.py samplefreq=125000 per second",
+  "first_events_unshifted": [
+    {
+      "rise_crossing_ms": 201.87224992523588,
+      "fall_crossing_ms": 203.12350928799785,
+      "time_above_threshold_ms": 1.2512593627619708,
+      "peak_sample_time_ms": 202.216,
+      "peak_sample_voltage_mv": 45.6240234375
+    },
+    {
+      "rise_crossing_ms": 226.2274700251551,
+      "fall_crossing_ms": 227.5783137874423,
+      "time_above_threshold_ms": 1.3508437622872123,
+      "peak_sample_time_ms": 226.584,
+      "peak_sample_voltage_mv": 45.6351928710938
+    },
+    {
+      "rise_crossing_ms": 251.40851748532424,
+      "fall_crossing_ms": 252.7673101991513,
+      "time_above_threshold_ms": 1.3587927138270572,
+      "peak_sample_time_ms": 251.768,
+      "peak_sample_voltage_mv": 45.0822334289551
+    },
+    {
+      "rise_crossing_ms": 276.60780342817003,
+      "fall_crossing_ms": 277.96600672188936,
+      "time_above_threshold_ms": 1.3582032937193276,
+      "peak_sample_time_ms": 276.968,
+      "peak_sample_voltage_mv": 44.6588134765625
+    },
+    {
+      "rise_crossing_ms": 301.75509732829613,
+      "fall_crossing_ms": 303.111156038083,
+      "time_above_threshold_ms": 1.3560587097868506,
+      "peak_sample_time_ms": 302.12,
+      "peak_sample_voltage_mv": 44.4789428710938
+    }
+  ],
+  "complete_events": 240,
+  "source_voltage_shift_mv": -10,
+  "source_use": "imposed voltage command in VClamp, not a free-running model output",
+  "qualification": "Acquisition identity, generating current stimulus, and original preprocessing not verified; not accepted as a raw human current-clamp target"
+}

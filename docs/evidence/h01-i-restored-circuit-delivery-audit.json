@@ -1,0 +1,35 @@
+{
+  "checks": {
+    "pre_delivery_E_voltage_exact": true,
+    "I_voltage_exact": true,
+    "I_events_exact": true,
+    "disconnected_conductance_zero": true,
+    "single_I_event": true,
+    "delay_100_steps": true,
+    "E_initial_voltage_reduced": true,
+    "E_event_delayed": true
+  },
+  "I_event_ms": [
+    3.25
+  ],
+  "arrival_ms": 3.75,
+  "E_event_connected_ms": [
+    4.01
+  ],
+  "E_event_disconnected_ms": [
+    3.975
+  ],
+  "E_delay_ms": 0.0349999999999997,
+  "E_first_voltage_change_mv": -0.20621179313469185,
+  "qualification": "Direct inhibition delays E firing in this inferred circuit with an explicit I closing-time override. It does not abolish firing. Human and numerical circuit qualification remain open.",
+  "sha256": {
+    "h01-i-restored-circuit-i-only": {
+      ".json": "3ee8888d9aad77001c09dfa71266725f466e671eb7def452c0261ca7f1eab7c9",
+      ".npz": "dd485afd700cc0d7b77a7f6c0a24bf1929daacd3018a264b7369c07ab170f9a7"
+    },
+    "h01-i-restored-circuit-disconnected": {
+      ".json": "586e46b10457fc65bba61507cabcc44e6c4d5f7a98e60d233e7d8e1391af6a92",
+      ".npz": "7ed1cff47b1f771aa83d925e026f6f2ff59878e5d92c290528d39f15595cccb3"
+    }
+  }
+}

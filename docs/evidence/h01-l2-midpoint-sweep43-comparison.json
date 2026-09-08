@@ -1,0 +1,122 @@
+{
+  "sweep": 43,
+  "model_events": [],
+  "no_spikes_check_pass": true,
+  "samples": [
+    {
+      "time_ms": 1019,
+      "corrected_voltage_mv": -84.5,
+      "change_from_1019_ms_mv": 0.0,
+      "model_voltage_mv": -84.07772914143432,
+      "absolute_error_mv": 0.4222708585656818,
+      "model_change_from_1019_ms_mv": 0.0,
+      "deflection_error_mv": 0.0
+    },
+    {
+      "time_ms": 1025,
+      "corrected_voltage_mv": -82.09375762939453,
+      "change_from_1019_ms_mv": 2.4062423706054688,
+      "model_voltage_mv": -81.38656144276796,
+      "absolute_error_mv": 0.7071961866265752,
+      "model_change_from_1019_ms_mv": 2.691167698666362,
+      "deflection_error_mv": 0.28492532806089343
+    },
+    {
+      "time_ms": 1030,
+      "corrected_voltage_mv": -80.6875,
+      "change_from_1019_ms_mv": 3.8125,
+      "model_voltage_mv": -79.96090966620598,
+      "absolute_error_mv": 0.7265903337940216,
+      "model_change_from_1019_ms_mv": 4.11681947522834,
+      "deflection_error_mv": 0.3043194752283398
+    },
+    {
+      "time_ms": 1040,
+      "corrected_voltage_mv": -78.53125,
+      "change_from_1019_ms_mv": 5.96875,
+      "model_voltage_mv": -77.83322415825837,
+      "absolute_error_mv": 0.6980258417416252,
+      "model_change_from_1019_ms_mv": 6.244504983175943,
+      "deflection_error_mv": 0.2757549831759434
+    },
+    {
+      "time_ms": 1070,
+      "corrected_voltage_mv": -75.5625,
+      "change_from_1019_ms_mv": 8.9375,
+      "model_voltage_mv": -74.19597977467495,
+      "absolute_error_mv": 1.366520225325047,
+      "model_change_from_1019_ms_mv": 9.881749366759365,
+      "deflection_error_mv": 0.9442493667593652
+    },
+    {
+      "time_ms": 1120,
+      "corrected_voltage_mv": -74.1875,
+      "change_from_1019_ms_mv": 10.3125,
+      "model_voltage_mv": -71.98701519531934,
+      "absolute_error_mv": 2.2004848046806558,
+      "model_change_from_1019_ms_mv": 12.090713946114974,
+      "deflection_error_mv": 1.778213946114974
+    },
+    {
+      "time_ms": 1520,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.12888655906518,
+      "absolute_error_mv": 4.5586134409348205,
+      "model_change_from_1019_ms_mv": 12.948842582369139,
+      "deflection_error_mv": 4.136342582369139
+    },
+    {
+      "time_ms": 2019,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.13465157636335,
+      "absolute_error_mv": 4.552848423636647,
+      "model_change_from_1019_ms_mv": 12.943077565070965,
+      "deflection_error_mv": 4.130577565070965
+    },
+    {
+      "time_ms": 2025,
+      "corrected_voltage_mv": -78.125,
+      "change_from_1019_ms_mv": 6.375,
+      "model_voltage_mv": -73.83776725432413,
+      "absolute_error_mv": 4.287232745675865,
+      "model_change_from_1019_ms_mv": 10.239961887110184,
+      "deflection_error_mv": 3.8649618871101836
+    },
+    {
+      "time_ms": 2030,
+      "corrected_voltage_mv": -79.65625,
+      "change_from_1019_ms_mv": 4.84375,
+      "model_voltage_mv": -75.26626282743062,
+      "absolute_error_mv": 4.389987172569377,
+      "model_change_from_1019_ms_mv": 8.811466314003695,
+      "deflection_error_mv": 3.9677163140036953
+    },
+    {
+      "time_ms": 2050,
+      "corrected_voltage_mv": -83.28125,
+      "change_from_1019_ms_mv": 1.21875,
+      "model_voltage_mv": -78.95472017488943,
+      "absolute_error_mv": 4.326529825110569,
+      "model_change_from_1019_ms_mv": 5.123008966544887,
+      "deflection_error_mv": 3.9042589665448872
+    },
+    {
+      "time_ms": 2099,
+      "corrected_voltage_mv": -85.8125,
+      "change_from_1019_ms_mv": -1.3125,
+      "model_voltage_mv": -82.64444535084034,
+      "absolute_error_mv": 3.1680546491596573,
+      "model_change_from_1019_ms_mv": 1.4332837905939755,
+      "deflection_error_mv": 2.7457837905939755
+    }
+  ],
+  "raw_mapping_exact": true,
+  "model_bias_current_na": 0.0,
+  "human_recorded_bias_current_na": -0.003711858945210089,
+  "model_sampling": "Linear interpolation of adaptive voltage at prospectively selected human sample times",
+  "qualification": "Direct fixed-parameter comparison; no waveform acceptance tolerance or physiological qualification.",
+  "input_plateau_error_na": 0.0,
+  "endpoint_2100_ms": true
+}

@@ -1,0 +1,79 @@
+{
+  "scope": "Complete saved measured-pair response after branch-index optimization, at dt 0.005 ms for 8 ms. Not a human physiology or numerical-convergence qualification.",
+  "all_saved_arrays_exactly_equal": true,
+  "all_metadata_exactly_equal": true,
+  "arrays": {
+    "time_ms": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "E_voltage": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "E_output_voltage": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "E_synaptic_conductance": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "E_events": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "I_voltage": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "I_output_voltage": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "I_synaptic_conductance": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "I_events": {
+      "shape": [
+        1600
+      ],
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    }
+  },
+  "files": {
+    ".cache\\h01\\measured-ie-first.npz": "a2609429bd7a4c741392e07cbb6d279737dddff1636d909ec56f9f77a9e24d6b",
+    ".cache\\h01\\measured-ie-index-fixed.npz": "a2609429bd7a4c741392e07cbb6d279737dddff1636d909ec56f9f77a9e24d6b",
+    ".cache\\h01\\measured-ie-first.json": "f67a6c9668677cff747a7842b96ede4dc80f080446a651e715f3b55781785ae9",
+    ".cache\\h01\\measured-ie-index-fixed.json": "f67a6c9668677cff747a7842b96ede4dc80f080446a651e715f3b55781785ae9"
+  },
+  "source_compilation_seconds_reported_by_xla": 344.4856659,
+  "optimized_compilation_seconds_reported_by_xla": 347.2250629,
+  "timing_limit": "Concurrent runs on a shared host; compilation times do not measure isolated anatomy-setup speed."
+}

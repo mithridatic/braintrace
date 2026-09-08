@@ -1,0 +1,65 @@
+{
+  "cases": [
+    {
+      "region": "soma",
+      "cases": [
+        {
+          "file": "h01-i-inactivation-soma",
+          "sha256": "a47cff27c1d395f71c3f59b96d2ab745a313720534efe6dcd1efe0c2e14445a7",
+          "dt_ms": 0.005,
+          "peak_mv": 41.340134065504245,
+          "peak_ms": 3.345,
+          "positive_crossings_ms": [
+            3.2172953707201595
+          ],
+          "soma_h_min_during_pulse": 0.9934008505625255,
+          "preintervention_voltage_exact": true,
+          "response_change_RSS_mv": 1449.7785942705912
+        },
+        {
+          "file": "h01-i-inactivation-soma-halfdt",
+          "sha256": "c45da6d086cbd0693da1c0f0ce746e76dedb8571843768be79e0c94afd920feb",
+          "dt_ms": 0.0025,
+          "peak_mv": 41.38439691136893,
+          "peak_ms": 3.34,
+          "positive_crossings_ms": [
+            3.2158558912818975
+          ],
+          "soma_h_min_during_pulse": 0.9933989919652536
+        }
+      ]
+    },
+    {
+      "region": "axon",
+      "cases": [
+        {
+          "file": "h01-i-inactivation-axon",
+          "sha256": "70a26f541e17efa46c0f52a6aa0550f248b056df62beca4cb09922e247772c74",
+          "dt_ms": 0.005,
+          "peak_mv": 2.0010477985433024,
+          "peak_ms": 3.785,
+          "positive_crossings_ms": [
+            3.640135002250574
+          ],
+          "soma_h_min_during_pulse": 1.7822070776115193e-05,
+          "preintervention_voltage_exact": true,
+          "response_change_RSS_mv": 996.523758926084
+        },
+        {
+          "file": "h01-i-inactivation-axon-halfdt",
+          "sha256": "12b94d3ec5984b8f1a337d3bcde1d21bf18a78852267cf0b5f9407a91897d70a",
+          "dt_ms": 0.0025,
+          "peak_mv": 1.9989924825745105,
+          "peak_ms": 3.7800000000000002,
+          "positive_crossings_ms": [
+            3.6379766329494645
+          ],
+          "soma_h_min_during_pulse": 1.789840186391186e-05
+        }
+      ]
+    }
+  ],
+  "RSS_grid": "1600 samples after 2 ms through 10 ms, dt .005 ms; paired direct voltage differences",
+  "decision": "Either region-specific intervention permits a positive soma excursion at both time steps. Soma block has larger tested response RSS.",
+  "limit": "Nonphysical intervention, inferred region map, no spatial-convergence or human-spike qualification. Axial mediation is not isolated."
+}

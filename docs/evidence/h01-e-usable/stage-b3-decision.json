@@ -1,0 +1,17 @@
+{
+ "stage": "B3",
+ "completed_utc": "2026-09-07T12:56:12.219600+00:00",
+ "evaluations_used_total": 10,
+ "new_runs": 2,
+ "decision": "Stable axon-first firing at both inputs permits the registered frozen P2 prediction. Usable calibration FAILS: sweep50 overfires 8 vs5; sweep53 width cycle2 fails. No promotion and no further fitting after P2.",
+ "prediction_scored": {
+  "sweep53_count10": "held",
+  "sweep53_late_cycles115_130": "missed: cycle5 134.700 ms; mean cycles4+ 122.587 ms",
+  "sweep50_count5_7": "missed:8",
+  "sweep50_late_cycles180_300": "missed: cycles5+ 157.385-171.507 ms",
+  "initiation_bands": "held at both inputs; axon leads 0.213009 and 0.206796 ms"
+ },
+ "usable_scores": "b3-calibration-usable.json",
+ "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+ "qualification": "Donor NEURON candidate only; no physiology, convergence or BrainCell transfer pass."
+}

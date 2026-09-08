@@ -1,0 +1,12 @@
+{
+  "observation": "40th complete excursion upward -20 mV crossing",
+  "predicted_onset_ms": 1245.927473867055,
+  "observed_onset_ms": 1245.9274627168472,
+  "observed_minus_predicted_ms": -1.1150207683385815e-05,
+  "absolute_error_limit_ms": 0.005,
+  "prediction_decision": "supported",
+  "all_event_gate_decision": "supported",
+  "max_onset_difference_ms": 0.012573609993751234,
+  "late_interval_difference_ms": 0.0003382691739943766,
+  "qualification": "Conditional spatial prediction and successive-mesh agreement for one input and candidate; no physiological qualification."
+}

@@ -1,0 +1,25 @@
+{
+  "cases": [
+    {
+      "dt_ms": 0.005,
+      "baseline_error_mv": 0.0,
+      "residual_max_na": 0.0011288602757100197,
+      "residual_limit_na": 1e-05,
+      "file": "h01-i-current-balance",
+      "sha256": "5ee99adf14b69092fe0cd0e28e00d815f8e148a6b789ddbe5234987528f0cd55",
+      "passed": false
+    },
+    {
+      "dt_ms": 0.000625,
+      "baseline_error_mv": 0.0,
+      "residual_max_na": 0.00014171313135302732,
+      "residual_limit_na": 1e-05,
+      "file": "h01-i-current-balance-fine",
+      "sha256": "f2cde4eb792c31df8994c691038fbd10e62bd234f318a8f75cb5b52b3eea69f0",
+      "passed": false
+    }
+  ],
+  "residual_reduction_ratio": 7.965812800352778,
+  "decision": "Both current-balance residual gates fail. Smaller dt reduces residual about eightfold.",
+  "next": "Check discrete voltage/current evaluation timing before further refinement or mechanism attribution."
+}

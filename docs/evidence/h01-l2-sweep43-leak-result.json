@@ -1,0 +1,128 @@
+{
+  "amplitude_decision": "supported",
+  "shape_decision": "rejected",
+  "amplitude_checks": {
+    "1120": true,
+    "2019": true
+  },
+  "shape_checks": {
+    "late_voltage_below_1120_ms": false,
+    "postpulse_voltage_below_start": false,
+    "no_complete_pulse_spikes": true
+  },
+  "invalid_reasons": [],
+  "samples": [
+    {
+      "time_ms": 1019,
+      "corrected_voltage_mv": -84.5,
+      "change_from_1019_ms_mv": 0.0,
+      "model_voltage_mv": -84.34961828007177,
+      "absolute_error_mv": 0.1503817199282338,
+      "model_change_from_1019_ms_mv": 0.0,
+      "deflection_error_mv": 0.0
+    },
+    {
+      "time_ms": 1025,
+      "corrected_voltage_mv": -82.09375762939453,
+      "change_from_1019_ms_mv": 2.4062423706054688,
+      "model_voltage_mv": -81.76531371710954,
+      "absolute_error_mv": 0.32844391228499603,
+      "model_change_from_1019_ms_mv": 2.584304562962231,
+      "deflection_error_mv": 0.17806219235676224
+    },
+    {
+      "time_ms": 1030,
+      "corrected_voltage_mv": -80.6875,
+      "change_from_1019_ms_mv": 3.8125,
+      "model_voltage_mv": -80.50597526914385,
+      "absolute_error_mv": 0.18152473085615384,
+      "model_change_from_1019_ms_mv": 3.84364301092792,
+      "deflection_error_mv": 0.031143010927920045
+    },
+    {
+      "time_ms": 1040,
+      "corrected_voltage_mv": -78.53125,
+      "change_from_1019_ms_mv": 5.96875,
+      "model_voltage_mv": -78.79874847191505,
+      "absolute_error_mv": -0.2674984719150473,
+      "model_change_from_1019_ms_mv": 5.550869808156719,
+      "deflection_error_mv": -0.41788019184328107
+    },
+    {
+      "time_ms": 1070,
+      "corrected_voltage_mv": -75.5625,
+      "change_from_1019_ms_mv": 8.9375,
+      "model_voltage_mv": -76.47061508061188,
+      "absolute_error_mv": -0.9081150806118785,
+      "model_change_from_1019_ms_mv": 7.879003199459888,
+      "deflection_error_mv": -1.0584968005401123
+    },
+    {
+      "time_ms": 1120,
+      "corrected_voltage_mv": -74.1875,
+      "change_from_1019_ms_mv": 10.3125,
+      "model_voltage_mv": -75.57264393818816,
+      "absolute_error_mv": -1.3851439381881647,
+      "model_change_from_1019_ms_mv": 8.776974341883601,
+      "deflection_error_mv": -1.5355256581163985
+    },
+    {
+      "time_ms": 1520,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -75.42128344994057,
+      "absolute_error_mv": 0.26621655005942557,
+      "model_change_from_1019_ms_mv": 8.928334830131192,
+      "deflection_error_mv": 0.11583483013119178
+    },
+    {
+      "time_ms": 2019,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -75.42223407118529,
+      "absolute_error_mv": 0.26526592881471345,
+      "model_change_from_1019_ms_mv": 8.92738420888648,
+      "deflection_error_mv": 0.11488420888647966
+    },
+    {
+      "time_ms": 2025,
+      "corrected_voltage_mv": -78.125,
+      "change_from_1019_ms_mv": 6.375,
+      "model_voltage_mv": -78.00592633681883,
+      "absolute_error_mv": 0.11907366318116885,
+      "model_change_from_1019_ms_mv": 6.343691943252935,
+      "deflection_error_mv": -0.03130805674706494
+    },
+    {
+      "time_ms": 2030,
+      "corrected_voltage_mv": -79.65625,
+      "change_from_1019_ms_mv": 4.84375,
+      "model_voltage_mv": -79.26200488218802,
+      "absolute_error_mv": 0.3942451178119768,
+      "model_change_from_1019_ms_mv": 5.087613397883743,
+      "deflection_error_mv": 0.243863397883743
+    },
+    {
+      "time_ms": 2050,
+      "corrected_voltage_mv": -83.28125,
+      "change_from_1019_ms_mv": 1.21875,
+      "model_voltage_mv": -82.06337763471002,
+      "absolute_error_mv": 1.2178723652899777,
+      "model_change_from_1019_ms_mv": 2.286240645361744,
+      "deflection_error_mv": 1.0674906453617439
+    },
+    {
+      "time_ms": 2099,
+      "corrected_voltage_mv": -85.8125,
+      "change_from_1019_ms_mv": -1.3125,
+      "model_voltage_mv": -84.0059614628682,
+      "absolute_error_mv": 1.8065385371318001,
+      "model_change_from_1019_ms_mv": 0.34365681720356633,
+      "deflection_error_mv": 1.6561568172035663
+    }
+  ],
+  "model_events": [],
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "qualification": "Separate leak amplitude and shape predictions; no candidate numerical or human waveform qualification."
+}

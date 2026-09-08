@@ -1,0 +1,55 @@
+{'nodes': 104, 'excitatory': 79, 'inhibitory': 25, 'verified_contacts': 3, 'construction_ready': 2}
+[0.1s] Loading cell 4188575291, component 0
+[5.0s] Checking pre cable location for contact 124698307
+[6.5s] Loading cell 3955003482, component 0
+[18.8s] Checking post cable location for contact 124698307
+[22.4s] Loading cell 5584343344, component 0
+[25.1s] Checking pre cable location for contact 8105899
+[26.2s] Loading cell 4157825456, component 0
+[29.7s] Checking post cable location for contact 8105899
+[30.9s] Building electrical cell 3955003482
+[62.1s] Building electrical cell 4157825456
+[72.3s] Building electrical cell 4188575291
+[85.8s] Building electrical cell 5584343344
+[94.2s] Discretizing cell 3955003482 and selecting its output site
+[153.5s] Registered cell 3955003482: 33965 compartments
+[153.5s] Discretizing cell 4157825456 and selecting its output site
+[173.1s] Registered cell 4157825456: 12966 compartments
+[173.1s] Discretizing cell 4188575291 and selecting its output site
+[194.6s] Registered cell 4188575291: 13989 compartments
+[194.6s] Discretizing cell 5584343344 and selecting its output site
+[211.1s] Registered cell 5584343344: 14685 compartments
+[211.1s] Construction complete: 4 cells, 2 projections
+Built 4 cells and 2 projections
+[211.4s] Initializing and running 0.005 ms
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.worktrees\h01-braincell\examples\h01_verified_network.py", line 96, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.worktrees\h01-braincell\examples\h01_verified_network.py", line 78, in main
+    result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.venv\Lib\site-packages\braincell\network\engine.py", line 293, in run
+    self.init_state()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.venv\Lib\site-packages\braincell\network\engine.py", line 246, in init_state
+    population.cell.init_state(batch_size=batch_size)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.venv\Lib\site-packages\braincell\_multi_compartment\cell.py", line 513, in init_state
+    build_cv_axial_operator(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+        node_tree=self.node_tree,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        scheduling=self._node_scheduling_unchecked(algorithm="dhs"),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.venv\Lib\site-packages\braincell\quad\_staggered.py", line 384, in build_cv_axial_operator
+    reduced = dynamic_dynamic - dynamic_algebraic @ np.linalg.solve(algebraic_algebraic, algebraic_dynamic)
+                                                    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.venv\Lib\site-packages\numpy\linalg\_linalg.py", line 463, in solve
+    r = gufunc(a, b, signature=signature)
+MemoryError

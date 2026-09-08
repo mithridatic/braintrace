@@ -1,0 +1,40 @@
+{
+  "stage": "R",
+  "decision": "open X",
+  "closure_residual_pc": {
+    "r-source": "9.9e-15",
+    "r-candidate": "1.4e-14"
+  },
+  "spikes": {
+    "r-source": 7,
+    "r-candidate": 5
+  },
+  "at_max_rise_na": {
+    "r-source": {
+      "NaTs": 3.107,
+      "axial": -2.632,
+      "capacitive": -0.67,
+      "Kv3_1": -0.035,
+      "applied": 0.246,
+      "V": 4.0,
+      "dVdt": 1019
+    },
+    "r-candidate": {
+      "NaTs": 2.472,
+      "axial": -2.231,
+      "capacitive": -0.422,
+      "Kv3_1": -0.048,
+      "applied": 0.246,
+      "V": 3.9,
+      "dVdt": 641
+    }
+  },
+  "axial_fraction_of_sodium": {
+    "r-source": 0.85,
+    "r-candidate": 0.9
+  },
+  "prediction_check": "Spike counts and rise rates as predicted (7 and 5; 1019 and 641 V/s). Closure passes. The axial fraction is 0.85 to 0.90, above the 0.6 named in the rejection clause.",
+  "clause_correction": "The Stage R rejection clause was mis-stated: a high axial fraction means the soma segment's rise is set by how fast its neighbours can be charged, which makes the load more able to be the lever, not less. The clause's logic is inverted and is withdrawn before Stage X runs; both registered arms run as written. Recorded as a planning mistake per the fail-fast rule.",
+  "mechanism_reading": "At the fastest rise the soma segment receives 2.5 to 3.1 nA of sodium current, passes 2.2 to 2.6 nA on to its neighbours, and keeps 0.4 to 0.7 nA to charge its own capacitance. dV/dt = (I_Na - I_axial - I_K - I_leak + I_applied) / C_segment. The candidate's slower sodium opening (factor 2) cuts the sodium current by 20 percent and the retained capacitive current by 37 percent; the human's 351 V/s needs the retained current cut by another 45 percent, by less sodium, more load, or slower opening still.",
+  "stage_x_prediction": "as registered in the manifest"
+}

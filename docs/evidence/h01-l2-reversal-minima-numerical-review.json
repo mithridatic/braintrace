@@ -1,0 +1,165 @@
+{
+  "records": [
+    {
+      "source": "h01-l2-sweep50-ih75-epasminus4.npz",
+      "source_sha256": "54086752ba948c5a558cb8c23e353e6ed3521ee3cbbc1afe2e19d8eec900f1fe",
+      "minima": [
+        {
+          "ordinal": 1,
+          "minimum_time_ms": 1086.1022046075668,
+          "minimum_voltage_mv": -71.12026288444673,
+          "delay_after_fall_ms": 2.400149915691145
+        },
+        {
+          "ordinal": 2,
+          "minimum_time_ms": 1123.3854103573585,
+          "minimum_voltage_mv": -71.45009975586335,
+          "delay_after_fall_ms": 2.4827353091236546
+        },
+        {
+          "ordinal": 3,
+          "minimum_time_ms": 1365.5228364804761,
+          "minimum_voltage_mv": -71.50980754146676,
+          "delay_after_fall_ms": 2.520447396136433
+        },
+        {
+          "ordinal": 4,
+          "minimum_time_ms": 1696.7414380028226,
+          "minimum_voltage_mv": -71.53353516003297,
+          "delay_after_fall_ms": 2.4936638222320653
+        }
+      ]
+    },
+    {
+      "source": "h01-l2-sweep50-ih75-epasminus4-atol11.npz",
+      "source_sha256": "98743a1fda57ec65f46c91adceeac0b71f70ce7935c25e57b60262f197951c53",
+      "minima": [
+        {
+          "ordinal": 1,
+          "minimum_time_ms": 1086.101899033454,
+          "minimum_voltage_mv": -71.12026291770674,
+          "delay_after_fall_ms": 2.3998445353445277
+        },
+        {
+          "ordinal": 2,
+          "minimum_time_ms": 1123.3856382094834,
+          "minimum_voltage_mv": -71.45009961345974,
+          "delay_after_fall_ms": 2.4829624452700045
+        },
+        {
+          "ordinal": 3,
+          "minimum_time_ms": 1365.523041340745,
+          "minimum_voltage_mv": -71.5098074811074,
+          "delay_after_fall_ms": 2.5206456101279855
+        },
+        {
+          "ordinal": 4,
+          "minimum_time_ms": 1696.741675161423,
+          "minimum_voltage_mv": -71.53353513734692,
+          "delay_after_fall_ms": 2.4939169094991485
+        }
+      ]
+    },
+    {
+      "source": "h01-l2-sweep50-ih75-epasminus4-space3.npz",
+      "source_sha256": "d459951fa2462ea6af3e27c4489618a54df09bc400c27bf13fea444f6b4643e3",
+      "minima": [
+        {
+          "ordinal": 1,
+          "minimum_time_ms": 1086.0931005500252,
+          "minimum_voltage_mv": -71.12120800705672,
+          "delay_after_fall_ms": 2.3989378948201647
+        },
+        {
+          "ordinal": 2,
+          "minimum_time_ms": 1123.3695521678176,
+          "minimum_voltage_mv": -71.45097154325173,
+          "delay_after_fall_ms": 2.48294221720721
+        },
+        {
+          "ordinal": 3,
+          "minimum_time_ms": 1365.5117583973126,
+          "minimum_voltage_mv": -71.51057155597391,
+          "delay_after_fall_ms": 2.520021649266937
+        },
+        {
+          "ordinal": 4,
+          "minimum_time_ms": 1696.721868594198,
+          "minimum_voltage_mv": -71.53428683360947,
+          "delay_after_fall_ms": 2.4932243656755873
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "comparison": "h01-l2-sweep50-ih75-epasminus4-atol11.npz",
+      "difference_from_nominal": [
+        {
+          "ordinal": 1,
+          "minimum_time_ms": -0.00030557411287190916,
+          "minimum_voltage_mv": -3.326000808101526e-08,
+          "delay_after_fall_ms": -0.00030538034661731217
+        },
+        {
+          "ordinal": 2,
+          "minimum_time_ms": 0.00022785212490816775,
+          "minimum_voltage_mv": 1.4240360712847178e-07,
+          "delay_after_fall_ms": 0.00022713614634994883
+        },
+        {
+          "ordinal": 3,
+          "minimum_time_ms": 0.00020486026892285736,
+          "minimum_voltage_mv": 6.035935484760557e-08,
+          "delay_after_fall_ms": 0.00019821399155262043
+        },
+        {
+          "ordinal": 4,
+          "minimum_time_ms": 0.00023715860038464598,
+          "minimum_voltage_mv": 2.268605214794661e-08,
+          "delay_after_fall_ms": 0.0002530872670831741
+        }
+      ],
+      "maximum_absolute_differences": {
+        "minimum_time_ms": 0.00030557411287190916,
+        "minimum_voltage_mv": 1.4240360712847178e-07,
+        "delay_after_fall_ms": 0.00030538034661731217
+      }
+    },
+    {
+      "comparison": "h01-l2-sweep50-ih75-epasminus4-space3.npz",
+      "difference_from_nominal": [
+        {
+          "ordinal": 1,
+          "minimum_time_ms": -0.009104057541662769,
+          "minimum_voltage_mv": -0.0009451226099912446,
+          "delay_after_fall_ms": -0.0012120208709802682
+        },
+        {
+          "ordinal": 2,
+          "minimum_time_ms": -0.015858189540949752,
+          "minimum_voltage_mv": -0.0008717873883767879,
+          "delay_after_fall_ms": 0.00020690808355539048
+        },
+        {
+          "ordinal": 3,
+          "minimum_time_ms": -0.01107808316351111,
+          "minimum_voltage_mv": -0.0007640145071547977,
+          "delay_after_fall_ms": -0.00042574686949592433
+        },
+        {
+          "ordinal": 4,
+          "minimum_time_ms": -0.019569408624647622,
+          "minimum_voltage_mv": -0.0007516735765022986,
+          "delay_after_fall_ms": -0.00043945655647803505
+        }
+      ],
+      "maximum_absolute_differences": {
+        "minimum_time_ms": 0.019569408624647622,
+        "minimum_voltage_mv": 0.0009451226099912446,
+        "delay_after_fall_ms": 0.0012120208709802682
+      }
+    }
+  ],
+  "scope": "Retrospective numerical sensitivity of sampled interspike minima. No prospective extrema-specific pass threshold. Existing event and setup audits apply to these exact traces; no whole-trace convergence or physiological qualification."
+}

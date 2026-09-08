@@ -1,0 +1,65 @@
+{
+ "checkpoint": "docs\\evidence\\h01-resolved-edge-list-3000.cells.json",
+ "cells_total": 104,
+ "cells_scanned": 104,
+ "statement": "104 of 104 cells scanned",
+ "status": "complete",
+ "stall_seconds": 600.0,
+ "max_relaunches": 3,
+ "launches": [
+  {
+   "started": "2026-09-07T15:28:12-07:00",
+   "command": [
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01-inspect\\Scripts\\python.exe",
+    "-u",
+    "docs\\evidence\\h01_c3_edge_list.py",
+    "--limit",
+    "3000",
+    "--cache",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+    "--archive",
+    "proofread104.zip",
+    "--output",
+    "docs\\evidence\\h01-resolved-edge-list-3000.json"
+   ],
+   "log": "docs\\evidence\\h01-resolved-edge-list-3000.launch1.log",
+   "pid": 38508,
+   "outcome": "killed_stall",
+   "exit_code": null,
+   "seconds_without_progress": 600.7,
+   "ended": "2026-09-07T17:29:21-07:00",
+   "wall_seconds": 7268.3,
+   "progress_lines": 52,
+   "launch": 1,
+   "cells_before": 26,
+   "cells_after": 78
+  },
+  {
+   "started": "2026-09-07T17:29:21-07:00",
+   "command": [
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01-inspect\\Scripts\\python.exe",
+    "-u",
+    "docs\\evidence\\h01_c3_edge_list.py",
+    "--limit",
+    "3000",
+    "--cache",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+    "--archive",
+    "proofread104.zip",
+    "--output",
+    "docs\\evidence\\h01-resolved-edge-list-3000.json"
+   ],
+   "log": "docs\\evidence\\h01-resolved-edge-list-3000.launch2.log",
+   "pid": 36472,
+   "outcome": "exit",
+   "exit_code": 0,
+   "ended": "2026-09-07T18:28:53-07:00",
+   "wall_seconds": 3571.9,
+   "progress_lines": 29,
+   "launch": 2,
+   "cells_before": 78,
+   "cells_after": 104
+  }
+ ],
+ "kills": 1
+}

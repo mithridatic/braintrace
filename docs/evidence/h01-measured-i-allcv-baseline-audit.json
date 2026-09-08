@@ -1,0 +1,54 @@
+{
+  "scope": "Unchanged measured I baseline, all CVs recorded. Standalone trace compared with the same I in the measured circuit.",
+  "circuit_trace_equivalence": {
+    "voltage": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    },
+    "output_voltage": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    },
+    "synaptic_conductance": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    },
+    "events": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    }
+  },
+  "cv_count": 14685,
+  "all_recorded_cv_samples_finite": true,
+  "output_trace_exactly_matches_cv_column": true,
+  "first_positive_recorded_sample": null,
+  "largest_recorded_sample": {
+    "time_ms": 5.25,
+    "voltage_mv": -29.413254403712003,
+    "cv": {
+      "id": 7333,
+      "branch_id": 2944,
+      "prox": 0.3553291931863168,
+      "dist": 0.46528851202276633
+    }
+  },
+  "soma_gates": {
+    "NaTg_m": {
+      "initial_recorded": 0.01361353992601187,
+      "min": 0.011280027435484967,
+      "max": 0.770998843609495,
+      "final": 0.3715391433596067
+    },
+    "NaTg_h": {
+      "initial_recorded": 0.9918374722152927,
+      "min": 0.009566831298488848,
+      "max": 0.9934050837999899,
+      "final": 0.07551783944999504
+    }
+  },
+  "files": {
+    ".cache/h01/measured-i-allcv-baseline.npz": "facbc13916d9d027c913727ced22d2bee8fc968eff86248b3cd6f5193983fdac",
+    ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf"
+  },
+  "limitations": "Positive samples and maxima describe this finite discrete record. They do not classify unsampled times or establish human physiological validity."
+}

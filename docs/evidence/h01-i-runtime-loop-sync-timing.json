@@ -1,0 +1,17 @@
+{
+  "records": [
+    {
+      "stage": "loop",
+      "dispatch_seconds": 5.315146700013429,
+      "wait_seconds": 6.853258099989034
+    }
+  ],
+  "qualification": "Process-only wait after compiled loop output; no equation or timestep changes. Dispatch includes tracing and compilation. Formatting records exceed 0.1 seconds.",
+  "exact_array_matches": {
+    "time_ms": true,
+    "voltage_mv": true,
+    "calcium_mm": true,
+    "sk_gate": true
+  },
+  "interpretation": "Explicit loop-output synchronization accounts for 6.85 seconds of pending execution. No subsequent formatting call exceeds 0.1 seconds. This identifies a waiting location, not a costly kernel or a speedup."
+}

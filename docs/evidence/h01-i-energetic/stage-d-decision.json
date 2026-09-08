@@ -1,0 +1,59 @@
+{
+  "stage": "D",
+  "decision": "no reversal under the single swap; open E, the interdependency split within the Kv3 boundary",
+  "arms": {
+    "d-kv3-into-candidate": {
+      "minimum_mv": {
+        "019": [
+          -74.7,
+          -76.2
+        ],
+        "027": [
+          -72.7,
+          -75.4
+        ]
+      },
+      "delta_vs_candidate_mv": {
+        "019": [
+          -1.4,
+          -1.8
+        ],
+        "027": [
+          -0.8,
+          -1.8
+        ]
+      },
+      "trough_kv3_na": {
+        "019": [
+          -0.034,
+          -0.024
+        ]
+      },
+      "peak_mv": 20.3,
+      "reading": "beyond the 1.24 mV limit but 3 to 4 mV short of -79; the trough Kv3 current did not rise (0.039 to 0.034 nA), so the depth moved through the longer fall (peak +2.7 mV), not through more potassium at the trough. Prediction (trough Kv3 toward 0.2 nA, minimum toward -77) FAILED."
+    },
+    "d-kv3-into-source": {
+      "minimum_mv": {
+        "019": [
+          -76.4,
+          -79.2
+        ],
+        "027": [
+          -72.9,
+          -78.8
+        ]
+      },
+      "delta_vs_source_mv": {
+        "019": [
+          1.0,
+          1.2
+        ]
+      },
+      "reading": "inside the limit early; no reversal. Count rises 11 to 14 and 32 to 37."
+    }
+  },
+  "reading": "The source keeps 0.2 nA of Kv3 at the trough because sodium keeps flowing 3.5 pC through the fall (slow h closing) and holds the membrane where Kv3 stays activated; the candidate's fast h closing (the loop lever, G1a) ends the spike before Kv3 activates far, whatever its closing rate. The trough depth is therefore an interdependency of the sodium closing (spike duration) and the potassium activation reached in that duration, not a property of either boundary alone (Hartshorne p036: the interdependency is the item on the list).",
+  "stage_e_prediction": "With the sodium closing fixed by the loop, the potassium boundary must activate within the short spike and stay open into the trough: opening tau halved (tau factor 0.5) with closing slowed (close factor 2 and 4, i.e. closing tau 1x and 2x the source's). Predicted trough Kv3 0.07 and 0.12 nA, minimum about -76.5 and -79 mV at 0.19 nA (117 MOhm trough slope from the Ca_LVA arm); the maximum fall rate slows and may leave the human limit (-336 +/- 20 V/s) in the close-4 arm. If the trough reaches -79 within 1.24 mV while the fall stays inside its limit, the explanation is sufficient; if the fall breaks first, the human's repolarising conductance is not a single Kv3 kinetics and the row returns to the user.",
+  "evaluations_used": 8,
+  "cap": 16
+}

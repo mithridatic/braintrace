@@ -1,0 +1,30 @@
+[
+  {
+    "run": "short",
+    "numpy_array_callers": [
+      {
+        "caller": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\saiunit\\_base_quantity.py:1208:_format_value",
+        "timing": [
+          2392,
+          2392,
+          0.8445332000000001,
+          0.897679
+        ]
+      }
+    ]
+  },
+  {
+    "run": "ten-ms",
+    "numpy_array_callers": [
+      {
+        "caller": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\saiunit\\_base_quantity.py:1208:_format_value",
+        "timing": [
+          2392,
+          2392,
+          11.523689000000001,
+          11.595071500000001
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "control_result": "h01-l2-reversal-calcium1375-result.json",
+  "control_result_sha256": "9c907551572cbcfbe000ec463a21ad50e24f9fe853cbe0c9d06c6834cdb36487",
+  "control_trace": "h01-l2-sweep50-ih75-epasminus4-ca1375.npz",
+  "control_trace_sha256": "695a30605a8f3e640b235c09f67a024e4c95bc29fba0a94eb1bd77b746361b2a",
+  "gate": "Default-factor exact whole-cell equivalence must pass before intervention.",
+  "intervention": {
+    "sodium_opening_factor": [
+      1,
+      2
+    ],
+    "calcium_decay_factor": 1.375
+  },
+  "required_positive_peak_event_count": 5,
+  "minimum_each_absolute_rise_phase_error_reduction_ms": 0.01,
+  "control_rise_phase_errors_ms": [
+    -0.17101518288427542,
+    -0.19879879636323494,
+    -0.19418028092968598,
+    -0.1882888878681115,
+    -0.19526017016255537
+  ],
+  "meaning": "Prospective diagnostic phase prediction, not a human physiological tolerance.",
+  "other_required_observations": [
+    "onset",
+    "peak",
+    "falling phase",
+    "interval",
+    "recovery minimum",
+    "unmatched events"
+  ]
+}

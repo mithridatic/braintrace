@@ -1,0 +1,184 @@
+{
+  "scope": "Connected half-to-quarter-step waveform gate and measured E5 quarter-step edge comparison.",
+  "source_sha256": {
+    "disconnected": "396b6e3cebba214622c347212252075e04ee9e6a0de33b97965e5e0b27cfad73",
+    "connected": "2e504d351ff769de7724f6adf92370f00d0444d917cbf5ef1b4328ea6d11de48",
+    "connected_half": "3ba357be92ec84b213287c26e4f74f9bc695510f0054ed09af82f088d6843afc"
+  },
+  "limits": {
+    "rise_ms": 0.1,
+    "peak_mv": 0.1,
+    "width_ms": 0.01
+  },
+  "connected_waveforms": {
+    "E_voltage": {
+      "half_step": [
+        {
+          "rise_ms": 9.473038133981827,
+          "peak_mv": 50.325692592553025,
+          "width_ms": 1.2127279805392064
+        },
+        {
+          "rise_ms": 14.732985642423536,
+          "peak_mv": 42.57764682322723,
+          "width_ms": 1.040018842943418
+        }
+      ],
+      "quarter_step": [
+        {
+          "rise_ms": 9.472589131120417,
+          "peak_mv": 50.33804773525635,
+          "width_ms": 1.2126968662852455
+        },
+        {
+          "rise_ms": 14.73124678852664,
+          "peak_mv": 42.606827867542,
+          "width_ms": 1.0398518285136173
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.0004490028614103636,
+          "peak_mv": 0.012355142703327715,
+          "width_ms": -3.11142539608511e-05
+        },
+        {
+          "rise_ms": -0.0017388538968958756,
+          "peak_mv": 0.029181044314775306,
+          "width_ms": -0.0001670144298007159
+        }
+      ],
+      "within_limits": true
+    },
+    "I_voltage": {
+      "half_step": [
+        {
+          "rise_ms": 4.720440910573929,
+          "peak_mv": 34.17939330729351,
+          "width_ms": 0.7659898554834887
+        }
+      ],
+      "quarter_step": [
+        {
+          "rise_ms": 4.719492450597875,
+          "peak_mv": 34.235392830950836,
+          "width_ms": 0.765862973193113
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.0009484599760538615,
+          "peak_mv": 0.05599952365732719,
+          "width_ms": -0.0001268822903757183
+        }
+      ],
+      "within_limits": true
+    },
+    "I_output_voltage": {
+      "half_step": [
+        {
+          "rise_ms": 8.295581993963411,
+          "peak_mv": 28.185460280987346,
+          "width_ms": 0.6281678737596632
+        }
+      ],
+      "quarter_step": [
+        {
+          "rise_ms": 8.287845173554118,
+          "peak_mv": 28.15239711922203,
+          "width_ms": 0.6282797689104864
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.007736820409293799,
+          "peak_mv": -0.033063161765316096,
+          "width_ms": 0.00011189515082321577
+        }
+      ],
+      "within_limits": true
+    }
+  },
+  "all_connected_waveform_limits_pass": true,
+  "step_metadata_equal_except_dt_and_event_times": true,
+  "all_arrays_finite": true,
+  "I_paired_arrays_exact": true,
+  "pre_delivery_E_exact": {
+    "E_voltage": true,
+    "E_output_voltage": true,
+    "E_incoming_voltage": true
+  },
+  "disconnected_conductance_zero": true,
+  "delivery_ms": 8.828750000000001,
+  "I_event_ms": [
+    8.328750000000001
+  ],
+  "E_event_times_ms": {
+    "disconnected": [
+      9.506250000000001,
+      14.7825
+    ],
+    "connected": [
+      9.506250000000001,
+      14.783750000000001
+    ],
+    "connected_half": [
+      9.5075,
+      14.785
+    ]
+  },
+  "E_disconnected_excursions": [
+    {
+      "rise_ms": 9.472589268652216,
+      "peak_mv": 50.33803780665,
+      "width_ms": 1.2126888847954174
+    },
+    {
+      "rise_ms": 14.730110145573525,
+      "peak_mv": 42.60844354845607,
+      "width_ms": 1.039920362780009
+    }
+  ],
+  "E_connected_excursions": [
+    {
+      "rise_ms": 9.472589131120417,
+      "peak_mv": 50.33804773525635,
+      "width_ms": 1.2126968662852455
+    },
+    {
+      "rise_ms": 14.73124678852664,
+      "peak_mv": 42.606827867542,
+      "width_ms": 1.0398518285136173
+    }
+  ],
+  "E_connected_minus_disconnected": [
+    {
+      "rise_ms": -1.3753179928244208e-07,
+      "peak_mv": 9.928606353071245e-06,
+      "width_ms": 7.981489828168264e-06
+    },
+    {
+      "rise_ms": 0.001136642953115441,
+      "peak_mv": -0.0016156809140710493,
+      "width_ms": -6.853426639175098e-05
+    }
+  ],
+  "edge_effect_quarter_minus_half": [
+    {
+      "rise_ms": -6.654083506418829e-09,
+      "peak_mv": 1.6755238618770818e-07,
+      "width_ms": 6.683267272933335e-08
+    },
+    {
+      "rise_ms": -3.7571030038208164e-06,
+      "peak_mv": 0.00022038131380952564,
+      "width_ms": 4.1729566291337505e-07
+    }
+  ],
+  "first_inward_positive_current_na": 0.06494174007779613,
+  "qualification": "Both controls pass declared waveform limits across 0.0025 and 0.00125 ms. Small second E onset delay persists; no E spike removed. Spatial robustness, human qualification and diagnostic-profile promotion remain open.",
+  "paired_physical_metadata_equal_except_edge_and_observed_event_times": true
+}

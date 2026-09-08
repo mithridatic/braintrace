@@ -1,0 +1,14 @@
+{
+  "conductance_factor": 1.1,
+  "conductance_region": "soma",
+  "cvode_atol": 1e-10,
+  "nseg_factor": 9,
+  "refine_region": "all",
+  "scale_conductance": "NaTg",
+  "sodium_h_recovery_factor": 1.0,
+  "sodium_h_slope_mv": 5.0,
+  "sodium_h_tau_factor": 0.15,
+  "somatic_calva_factor": 0.5,
+  "somatic_kv3_close_factor": 0.5,
+  "somatic_kv3_tau_factor": 0.5
+}

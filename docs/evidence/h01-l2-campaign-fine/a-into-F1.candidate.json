@@ -1,0 +1,7 @@
+{
+  "cvode_atol": 1e-10,
+  "nseg_factor": 9,
+  "sodium_opening_factor": 2.0,
+  "sodium_recovery_factor": 1.0,
+  "stop_ms": 2140.0
+}

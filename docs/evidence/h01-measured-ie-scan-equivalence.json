@@ -1,0 +1,75 @@
+{
+  "passed": true,
+  "scope": "All saved samples of the measured pair, 8 ms at dt 0.005 ms, unchanged physical settings. Not timestep convergence or human validation.",
+  "metadata_equal_except_solver": true,
+  "arrays": {
+    "time_ms": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true,
+      "passed": true,
+      "atol": 0.0,
+      "rtol": 0.0
+    },
+    "E_voltage": {
+      "max_abs_difference": 4.389733021525899e-11,
+      "exactly_equal": false,
+      "passed": true,
+      "atol": 1e-09,
+      "rtol": 1e-10
+    },
+    "E_output_voltage": {
+      "max_abs_difference": 4.389733021525899e-11,
+      "exactly_equal": false,
+      "passed": true,
+      "atol": 1e-09,
+      "rtol": 1e-10
+    },
+    "E_synaptic_conductance": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true,
+      "passed": true,
+      "atol": 1e-12,
+      "rtol": 1e-10
+    },
+    "E_events": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true,
+      "passed": true,
+      "atol": 0.0,
+      "rtol": 0.0
+    },
+    "I_voltage": {
+      "max_abs_difference": 2.1316282072803006e-14,
+      "exactly_equal": false,
+      "passed": true,
+      "atol": 1e-09,
+      "rtol": 1e-10
+    },
+    "I_output_voltage": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true,
+      "passed": true,
+      "atol": 1e-09,
+      "rtol": 1e-10
+    },
+    "I_synaptic_conductance": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true,
+      "passed": true,
+      "atol": 1e-12,
+      "rtol": 1e-10
+    },
+    "I_events": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true,
+      "passed": true,
+      "atol": 0.0,
+      "rtol": 0.0
+    }
+  },
+  "files": {
+    ".cache/h01/measured-ie-index-fixed.npz": "a2609429bd7a4c741392e07cbb6d279737dddff1636d909ec56f9f77a9e24d6b",
+    ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf"
+  },
+  "runtime": "Run finished with exit 0. No XLA slow-compilation warning was emitted; compilation duration was not separately instrumented. Do not infer an exact compilation speedup."
+}

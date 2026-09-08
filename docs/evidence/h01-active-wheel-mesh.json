@@ -1,0 +1,9 @@
+{
+  "package_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\active-wheel-mesh\\braintrace\\__init__.py",
+  "source_byte_parity_modules": 12,
+  "new_api_imports_verified": true,
+  "reference_peak_mv": 51.59914730815219,
+  "reference_final_mv": -69.61769588415912,
+  "scope": "installed package imports and reference-cylinder smoke; pulse-train behavior tested in source suite",
+  "wheel_sha256": "ba7b7a114c3613c38680068d10a709661e5e5d9d7125d9706ca32f4410e19b3d"
+}

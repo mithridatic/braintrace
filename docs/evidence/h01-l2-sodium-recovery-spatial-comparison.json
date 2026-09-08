@@ -1,0 +1,66 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    5,
+    5
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.011144722923290828,
+    "peak_sample_voltage_mv": 0.0113818848345133,
+    "time_above_threshold_ms": 8.009245175344404e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 0.005909899910193417,
+      "peak_sample_voltage_mv": -0.0113818848345133,
+      "time_above_threshold_ms": -8.009245175344404e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 0.01106338535123541,
+      "peak_sample_voltage_mv": -0.011270355157058987,
+      "time_above_threshold_ms": -7.822304337423702e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": -0.011144722923290828,
+      "peak_sample_voltage_mv": -0.01080766776255615,
+      "time_above_threshold_ms": -7.792174847054412e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": -0.005445311307994416,
+      "peak_sample_voltage_mv": -0.0108246612463887,
+      "time_above_threshold_ms": -7.651240025552397e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": -0.0019672377302413224,
+      "peak_sample_voltage_mv": -0.010888806531241357,
+      "time_above_threshold_ms": -7.717445964772196e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-sodium-recovery-double-space3": [],
+    "h01-l2-sodium-recovery-double": []
+  },
+  "qualification": "Spatial comparison at one source input; no physiological qualification.",
+  "baseline_parent_evidence": "setup replay for legacy metadata; not original-run parent recording",
+  "sections_using_replayed_parent": [],
+  "segment_counts": [
+    1239,
+    3717
+  ],
+  "exact_input_and_time": {
+    "time_ms": true,
+    "applied_current_na": true
+  }
+}

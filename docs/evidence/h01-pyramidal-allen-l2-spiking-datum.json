@@ -1,0 +1,73 @@
+{
+  "specimen_id": 541563728,
+  "sweep": 50,
+  "selection_rule": "lowest long-square amplitude >= reported rheobase + 40 pA; ties by sweep number",
+  "source_sha256_local": "cc180b297d762cb82833eb044566e21f77708c562295f86827ff3ed9ebcf3e0f",
+  "pipeline_version": "1.0; stored SI, obsolete conversion attributes ignored",
+  "sample_rate_hz": 50000.0,
+  "voltage_shift_mv": -14,
+  "pulse_start_ms": 1020.0,
+  "pulse_end_ms": 2020.0,
+  "command_current_na": 0.24999999292951713,
+  "bias_current_na": -0.003711858945210089,
+  "total_pulse_current_na": 0.24628813398430704,
+  "baseline_window_ms": [
+    520.0,
+    1020.0
+  ],
+  "baseline_mean_corrected_mv": -84.23229679733515,
+  "baseline_sd_mv": 0.21249927836394938,
+  "baseline_drift_mv": 0.04496804028748613,
+  "checks": {
+    "baseline_sd_below_0_5_mv": true,
+    "absolute_baseline_drift_below_1_mv": true,
+    "absolute_bias_below_100_pa": true,
+    "complete_spikes_present": true,
+    "pulse_boundary_below_threshold": true
+  },
+  "partial_quality_screen": "supported",
+  "spikes": [
+    {
+      "rise_crossing_ms": 1077.8115555559984,
+      "fall_crossing_ms": 1078.7474193511216,
+      "time_above_threshold_ms": 0.9358637951231685,
+      "peak_sample_time_ms": 1078.1,
+      "peak_sample_voltage_mv": 36.03125220537186
+    },
+    {
+      "rise_crossing_ms": 1111.6632941190087,
+      "fall_crossing_ms": 1112.7979591792684,
+      "time_above_threshold_ms": 1.1346650602597492,
+      "peak_sample_time_ms": 1111.98,
+      "peak_sample_voltage_mv": 35.31250214576721
+    },
+    {
+      "rise_crossing_ms": 1332.0667901242136,
+      "fall_crossing_ms": 1333.0415624977322,
+      "time_above_threshold_ms": 0.97477237351859,
+      "peak_sample_time_ms": 1332.38,
+      "peak_sample_voltage_mv": 34.875004053115845
+    },
+    {
+      "rise_crossing_ms": 1639.473071897731,
+      "fall_crossing_ms": 1640.4441935462983,
+      "time_above_threshold_ms": 0.9711216485673049,
+      "peak_sample_time_ms": 1639.78,
+      "peak_sample_voltage_mv": 34.78125339746475
+    },
+    {
+      "rise_crossing_ms": 1912.8256250018965,
+      "fall_crossing_ms": 1913.7887096744,
+      "time_above_threshold_ms": 0.9630846725035553,
+      "peak_sample_time_ms": 1913.14,
+      "peak_sample_voltage_mv": 34.56250062584877
+    }
+  ],
+  "intervals_ms": [
+    33.85173856301026,
+    220.40349600520494,
+    307.4062817735173,
+    273.3525531041655
+  ],
+  "qualification": "Direct reference extraction only; full source QC and physiological model validation not established."
+}

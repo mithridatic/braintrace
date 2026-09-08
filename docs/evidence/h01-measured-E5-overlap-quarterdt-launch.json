@@ -1,0 +1,13 @@
+{
+  "started_utc": "2026-09-05T22:53:12.645431+00:00",
+  "session_id": 24822,
+  "command": ".cache/validation/Scripts/python.exe -m docs.evidence.h01_i_source_closing_circuit --connectivity measured --control disconnected --e-current-na 5 --e-delay-ms 8 --e-pulse-ms 10 --i-current-na 1 --duration-ms 25 --dt-ms 0.00125 --solver h01_staggered_scan --output .cache/h01/measured-E5-overlap-disconnected-quarterdt",
+  "status": "Completed successfully; all declared excursion limits pass against dt 0.0025.",
+  "purpose": "Compare against dt 0.0025 with unchanged physical parameters and fixed numerical limits after I soma peak failed the previous step pair.",
+  "source_sha256": {
+    "braintrace/datasets/h01_ei_circuit.py": "8d37caea91713e00efdc4a9952f2dc4b972daa3630f27ed8de315d65cd889107",
+    "examples/h01_ei_circuit.py": "d1d7739bb086984233da94a6c002e3975d4fb52f95300fe76a72f91ef0a62801",
+    "docs/evidence/h01_i_source_closing_circuit.py": "eb91d5d1c1e9783a433433847fd71465b8637dbe025d0353c0d1ff3d360cf18d"
+  },
+  "exit_code": 0
+}

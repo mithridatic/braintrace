@@ -1,0 +1,103 @@
+{
+  "scope": "Source-code composition along the existing soma-to-contact path. The final partial contact edge is excluded from these totals, as in the input path audit.",
+  "source_path_sha256": "0ff145966ceaed9ec725e9d8cf5a0490ce355e66fa0b70531b7f176f48376ecb",
+  "cell": "5584343344",
+  "contact_annotation_id": "8105899",
+  "source_swc_sha256": "53de2bec08c12096f742ecc01fca1293f24f3a09637558f9bf86ac4edb6a4f92",
+  "composition": {
+    "3": {
+      "importer_label": "soma",
+      "length_um": 4.54299145123419,
+      "distinct_source_samples": 10
+    },
+    "-1": {
+      "importer_label": "unclassified",
+      "length_um": 345.3381916232912,
+      "distinct_source_samples": 1086
+    },
+    "2": {
+      "importer_label": "astrocyte",
+      "length_um": 0.6533044812505543,
+      "distinct_source_samples": 2
+    },
+    "1": {
+      "importer_label": "dendrite",
+      "length_um": 2.543115271183287,
+      "distinct_source_samples": 6
+    },
+    "0": {
+      "importer_label": "axon",
+      "length_um": 70.07194082459782,
+      "distinct_source_samples": 224
+    },
+    "5": {
+      "importer_label": "axon_initial_segment",
+      "length_um": 9.20170439739067,
+      "distinct_source_samples": 29
+    },
+    "1000": {
+      "importer_label": "myelinated_axon",
+      "length_um": 0.16852960238057732,
+      "distinct_source_samples": 1
+    }
+  },
+  "conflicting_source_samples": [
+    {
+      "source_node": 10907,
+      "source_code": 2,
+      "importer_label": "astrocyte",
+      "coverage_start_um": 9.060342475003337,
+      "coverage_end_um": 9.377593389095312
+    },
+    {
+      "source_node": 10902,
+      "source_code": 2,
+      "importer_label": "astrocyte",
+      "coverage_start_um": 10.66917989483694,
+      "coverage_end_um": 11.00523346199552
+    },
+    {
+      "source_node": 10858,
+      "source_code": 1,
+      "importer_label": "dendrite",
+      "coverage_start_um": 24.95068157337926,
+      "coverage_end_um": 25.281446988710186
+    },
+    {
+      "source_node": 10855,
+      "source_code": 1,
+      "importer_label": "dendrite",
+      "coverage_start_um": 26.23184539319888,
+      "coverage_end_um": 26.87611240936805
+    },
+    {
+      "source_node": 10852,
+      "source_code": 1,
+      "importer_label": "dendrite",
+      "coverage_start_um": 27.845120654360116,
+      "coverage_end_um": 28.473590865549507
+    },
+    {
+      "source_node": 10717,
+      "source_code": 1,
+      "importer_label": "dendrite",
+      "coverage_start_um": 71.54204229582365,
+      "coverage_end_um": 71.86643835002279
+    },
+    {
+      "source_node": 10712,
+      "source_code": 1,
+      "importer_label": "dendrite",
+      "coverage_start_um": 72.97273911839147,
+      "coverage_end_um": 73.25838265836244
+    },
+    {
+      "source_node": 9927,
+      "source_code": 1,
+      "importer_label": "dendrite",
+      "coverage_start_um": 95.85494905459935,
+      "coverage_end_um": 96.18452208892305
+    }
+  ],
+  "interpretation": "Source labels are sparse and mixed on this path. An uninterrupted electrical axon would be an inferred override, not direct recovery of measured axon labels. Source codes alone do not establish individual manual review or the cause of an absent output event."
+}

@@ -1,0 +1,259 @@
+{
+ "cells": {
+  "111": {
+   "name": "s0-candidate",
+   "counts": {
+    "019": 26,
+    "027": 59
+   },
+   "ratio": 2.27,
+   "e1_peak_width": {
+    "019": [
+     -1.8,
+     -0.05
+    ],
+    "027": [
+     -1.4,
+     -0.05
+    ]
+   },
+   "mean_minima": {
+    "019": 5.75,
+    "027": 6.67
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  },
+  "011": {
+   "name": "a-out-G1a",
+   "counts": {
+    "019": 5,
+    "027": 9
+   },
+   "ratio": 1.8,
+   "e1_peak_width": {
+    "019": [
+     23.6,
+     0.47
+    ],
+    "027": [
+     23.9,
+     0.48
+    ]
+   },
+   "mean_minima": {
+    "019": -0.02,
+    "027": 0.26
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  },
+  "101": {
+   "name": "a-out-G3",
+   "counts": {
+    "019": 84,
+    "027": 143
+   },
+   "ratio": 1.7,
+   "e1_peak_width": {
+    "019": [
+     -1.8,
+     -0.05
+    ],
+    "027": [
+     -1.4,
+     -0.05
+    ]
+   },
+   "mean_minima": {
+    "019": 5.86,
+    "027": 6.79
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  },
+  "110": {
+   "name": "a-out-G4",
+   "counts": {
+    "019": 24,
+    "027": 4
+   },
+   "ratio": 0.17,
+   "e1_peak_width": {
+    "019": [
+     -4.4,
+     -0.05
+    ],
+    "027": [
+     -4.0,
+     -0.04
+    ]
+   },
+   "mean_minima": {
+    "019": 9.88,
+    "027": 20.59
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  },
+  "001": {
+   "name": "b-out-G1aG3",
+   "counts": {
+    "019": 24,
+    "027": 43
+   },
+   "ratio": 1.79,
+   "e1_peak_width": {
+    "019": [
+     23.6,
+     0.47
+    ],
+    "027": [
+     23.9,
+     0.48
+    ]
+   },
+   "mean_minima": {
+    "019": 0.01,
+    "027": 0.17
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  },
+  "100": {
+   "name": "c-m100",
+   "counts": {
+    "019": 99,
+    "027": 4
+   },
+   "ratio": 0.04,
+   "e1_peak_width": {
+    "019": [
+     -4.4,
+     -0.05
+    ],
+    "027": [
+     -4.0,
+     -0.04
+    ]
+   },
+   "mean_minima": {
+    "019": 11.37,
+    "027": 20.71
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  },
+  "010": {
+   "name": "c-m010",
+   "counts": {
+    "019": 7,
+    "027": 11
+   },
+   "ratio": 1.57,
+   "e1_peak_width": {
+    "019": [
+     22.9,
+     0.46
+    ],
+    "027": [
+     23.2,
+     0.47
+    ]
+   },
+   "mean_minima": {
+    "019": 2.13,
+    "027": 3.18
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  },
+  "000": {
+   "name": "c-m000",
+   "counts": {
+    "019": 26,
+    "027": 45
+   },
+   "ratio": 1.73,
+   "e1_peak_width": {
+    "019": [
+     22.9,
+     0.46
+    ],
+    "027": [
+     23.2,
+     0.47
+    ]
+   },
+   "mean_minima": {
+    "019": 2.19,
+    "027": 1.39
+   },
+   "groups": {
+    "count": "fail",
+    "onsets": "fail",
+    "peaks": "fail",
+    "phases": "fail",
+    "intervals": "fail",
+    "minima": "fail",
+    "subthreshold": "fail"
+   }
+  }
+ },
+ "human": {
+  "counts": {
+   "019": 12,
+   "027": 43
+  },
+  "ratio": 3.58
+ }
+}

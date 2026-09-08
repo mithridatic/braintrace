@@ -1,0 +1,31 @@
+{
+  "records": [
+    {
+      "wait_seconds": 1.8199963960796595e-05,
+      "format_seconds": 0.022624700039159507,
+      "shape": [
+        1223
+      ]
+    },
+    {
+      "wait_seconds": 6.699992809444666e-06,
+      "format_seconds": 0.02365839999401942,
+      "shape": [
+        1223
+      ]
+    },
+    {
+      "wait_seconds": 6.299989763647318e-06,
+      "format_seconds": 0.01637900003697723,
+      "shape": [
+        16000
+      ]
+    },
+    {
+      "wait_seconds": 1.700012944638729e-06,
+      "format_seconds": 5.8789020999684,
+      "shape": []
+    }
+  ],
+  "qualification": "Process-only timing probe. Wait before existing formatting; tracers excluded; equations unchanged. Records retain waits or formatting over 0.01 seconds."
+}

@@ -1,0 +1,116 @@
+{
+ "purpose": "Input datum for every I calibration input: command, recorded acquisition bias, and role. The bias is part of the input; a model run without it is not a comparison against this recording.",
+ "source": {
+  "nwb_sha256": "b6412208aaeee590bfe73cbbc3f3e3d4da0622252d0a7b09961d3dc3595f27a4",
+  "specimen_id": 528687520,
+  "audit": "h01-pv-acquisition-audit.json"
+ },
+ "inputs": [
+  {
+   "command_na": 0.19,
+   "sweep": 35,
+   "export": "active-0.npz",
+   "bias_na": 0.031445374082395006,
+   "stimulus_levels_pa": [
+    0.0,
+    50.0000006675716,
+    190.00000184288268
+   ],
+   "role": "calibration",
+   "export_sha256": "abf25bcfc8ec9e8b21f8c9599a1d0a7844d5dcba46a7269fc7ef6c0356244182",
+   "model_input_bias_na": 0.0,
+   "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
+  },
+  {
+   "command_na": 0.27,
+   "sweep": 39,
+   "export": "active-2.npz",
+   "bias_na": 0.031445374082395006,
+   "stimulus_levels_pa": [
+    0.0,
+    50.0000006675716,
+    269.99999458432455
+   ],
+   "role": "calibration",
+   "export_sha256": "faeac03e076c7aa344e4c32b66a400ddf46da6c8de8f19421b08db76324e3b91",
+   "model_input_bias_na": 0.0,
+   "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
+  },
+  {
+   "command_na": -0.11,
+   "sweep": 20,
+   "export": "passive-0.npz",
+   "bias_na": 0.025626740313144936,
+   "stimulus_levels_pa": [
+    -110.0000021625469,
+    0.0,
+    50.0000006675716
+   ],
+   "role": "subthreshold calibration",
+   "export_sha256": "9fc9a8dfc24bdb7e1dc385d2625f3d6d5e235d80d771ea9ba0c88c0f18dc6108",
+   "model_input_bias_na": 0.0,
+   "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
+  },
+  {
+   "command_na": -0.05,
+   "sweep": 23,
+   "export": "passive-1.npz",
+   "bias_na": 0.028783657748943092,
+   "stimulus_levels_pa": [
+    -50.0000006675716,
+    0.0,
+    50.0000006675716
+   ],
+   "role": "subthreshold calibration",
+   "export_sha256": "b774abaca3230f9b902527da083556ae69e3e9d44edeec5369fdad09648617f0",
+   "model_input_bias_na": 0.0,
+   "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
+  },
+  {
+   "command_na": 0.23,
+   "sweep": null,
+   "export": "active-1.npz",
+   "bias_na": null,
+   "role": "prospective fitting holdout, opened once 2026-09-06 for the energetic-search prediction (h01-prediction-i.md); spent"
+  }
+ ],
+ "decision": {
+  "prior_residuals": "Every I model residual before 2026-09-06 used bias 0 nA.",
+  "evidence": "Source model at 0.19 nA, nseg x9, CVode 1e-10: bias 0 gives 11 events and first onset +11.71 ms; measured bias gives 22 events and first onset -3.24 ms (h01-pv-neuron-bias-control / -bias-measured). Both changes exceed every decision limit and every allowance.",
+  "rule": "Zero-bias I residuals are retired as contract comparisons. Every I candidate evaluation applies the recorded bias of its input from t=0. The candidate's own bias-on response is the first Stage 0 evaluation of the I campaign.",
+  "candidate_with_bias": "Frozen candidate at nseg x9, CVode 1e-10, recorded bias from t=0: 26 events vs 12 at 0.19 nA (zero bias: 15) and 59 vs 43 at 0.27 nA (zero bias: 43 at x9, 40 at axon x2187). Recovery minima stay +5 to +8 mV at both inputs. Records h01-i-campaign/s0-candidate-bias-019 and -027; wall 21 s and 45 s.",
+  "consequence": "The count failure changes sign under the correct input. The candidate families were fitted against a zero-bias input. Stage 0 of the I campaign establishes the source-to-candidate contrast under the recorded input before any family is ranked.",
+  "reassessment_question": "With the recorded bias the published source template also over-fires (22 vs 12 at 0.19 nA) with a +24.8 mV first peak. Whether the published fit applied this bias must be established from the source protocol before the model family is judged."
+ },
+ "limit": "Bias applied from t=0 does not reproduce the acquisition history before the 750 ms crop; slow-state equilibration remains an assumption.",
+ "forensics_2026_09_06": {
+  "question": "Is the recorded bias a membrane current the model must carry, or a holding current whose effect the published fit already absorbed?",
+  "evidence": "h01-pv-bias-forensics.json: human held baseline -86.95 mV (sweeps 35, 39; repeat limit 1.33 mV from sweeps 40-42); model at bias 0 rests at -87.02 mV (error -0.07 mV), model with the recorded 31.4 pA rests at -84.53 mV (error +2.42 mV, 1.8x the limit, equal to the predicted R_in x bias shift of 2.35 mV at 74.7 MOhm; model R_in 79.1 MOhm). Across all held sweeps the baseline moves only 13.9 MOhm per pA of holding current against 74.7 MOhm input resistance, so the holding current tracked the cell's state; the held baseline, not the current, is the datum.",
+  "verdict": "held state: the published fit absorbed the holding current; the model input is the command current only, with the resting state checked against the held baseline.",
+  "consequence": "The 2026-09-06 decision above is reversed. Bias-on residuals (source 22/39, candidate 26/59) are retired; zero-bias residuals return (source 11/43 vs human 12/43; candidate 15/43). The +2 to +4 mV passive offset in every I campaign cell was this double-counted bias. The reassessment question is answered: the published fit did not carry the bias as current.",
+  "limit": "The rest-voltage contrast is 1.8x its decision limit, a real but not unmistakable contrast on its own; the verdict rests on it together with the input-resistance agreement (human 74.7, model 79.1 MOhm) and the exact match of the zero-bias rest to the held baseline."
+ },
+ "sealed_2026_09_07": {
+  "sweep": 48,
+  "stimulus": "Noise 1",
+  "amplitude_pa": 278.12,
+  "duration_s": 28.0,
+  "siblings_closed": {
+   "Noise 1": [
+    44,
+    50
+   ],
+   "Noise 2": [
+    45,
+    47,
+    49,
+    51
+   ]
+  },
+  "nwb_sha256": "b6412208aaeee590bfe73cbbc3f3e3d4da0622252d0a7b09961d3dc3595f27a4",
+  "not_read_by": "any script: h01_pv_bias_forensics.held_sweeps reads Long Square and 0.5 ms Subthreshold only; no export of a Noise sweep exists",
+  "count_status": "The Allen analysis spike counts of every sweep are on disk and were read by the sweep inventory of 2026-09-06; count is therefore NOT closed for this seal. Waveform, timing, peaks and the per-cycle table are closed.",
+  "replay_requirement": "the PV driver has no recorded-waveform path (--current-na square pulse only); a Vector.play command path must exist before this sweep is opened; about 20x a long-square run",
+  "opening_rule": "write h01-prediction-i2.json first; one run; opening spends it"
+ }
+}

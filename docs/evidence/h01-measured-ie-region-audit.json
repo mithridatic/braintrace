@@ -1,0 +1,35 @@
+{
+  "scope": "Static electrical region assignment at measured contact endpoints; does not establish spike propagation or its cause.",
+  "records": [
+    {
+      "role": "I",
+      "side": "pre",
+      "cell": "5584343344",
+      "component": 0,
+      "source_sha256": "53de2bec08c12096f742ecc01fca1293f24f3a09637558f9bf86ac4edb6a4f92",
+      "contact_location": [
+        974,
+        0.5754461212601991
+      ],
+      "electrical_regions_at_contact": [
+        "dend"
+      ],
+      "region_basis": "Soma, axon, and AIS source samples extend halfway along adjoining edges. All remaining cable receives basal-dendrite parameters, including unclassified and astrocyte-labelled samples; this electrical assignment is inferred. No apical identity or myelin insulation is inferred. Source labels remain intact."
+    },
+    {
+      "role": "E",
+      "side": "post",
+      "cell": "4157825456",
+      "component": 0,
+      "source_sha256": "d49c452524cf7c35ded56a1ef55ebf205e00573ea11b2a9204060362777d40ce",
+      "contact_location": [
+        2805,
+        0.9324765948060457
+      ],
+      "electrical_regions_at_contact": [
+        "dend"
+      ],
+      "region_basis": "Soma, axon, and AIS source samples extend halfway along adjoining edges. All remaining cable receives basal-dendrite parameters, including unclassified and astrocyte-labelled samples; this electrical assignment is inferred. No apical identity or myelin insulation is inferred. Source labels remain intact."
+    }
+  ]
+}

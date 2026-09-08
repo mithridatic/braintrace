@@ -1,0 +1,46 @@
+{
+  "decision": "supported",
+  "samples": 835322,
+  "arrays_exact": {
+    "time_ms": true,
+    "voltage_mv": true,
+    "applied_current_na": true,
+    "raw_sample_index": true,
+    "soma_NaTs_ma_cm2": true,
+    "soma_Nap_ma_cm2": true,
+    "soma_K_P_ma_cm2": true,
+    "soma_K_T_ma_cm2": true,
+    "soma_Kv3_1_ma_cm2": true,
+    "soma_Im_ma_cm2": true,
+    "soma_SK_ma_cm2": true,
+    "soma_Ca_HVA_ma_cm2": true,
+    "soma_Ca_LVA_ma_cm2": true,
+    "soma_Ih_ma_cm2": true,
+    "soma_pas_ma_cm2": true,
+    "soma_icap_ma_cm2": true,
+    "soma_cai_mm": true,
+    "soma_Ih_m": true,
+    "soma_Im_m": true
+  },
+  "metadata_differences": [
+    "integration_seconds",
+    "mechanism_library_sha256",
+    "mechanism_source_sha256",
+    "sodium_opening_factor"
+  ],
+  "changed_mechanism_sources": [
+    "NaTs.mod"
+  ],
+  "preparation_hashes_match": true,
+  "compiled_library_matches_clamp": true,
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "baseline_opening_factor_provenance": "Earlier control mechanism has the original opening law and no factor field; isolated default-one addition is source-tested and gives exactly equal recorded arrays.",
+  "qualification": "Whole-cell default-source equivalence at this input only. No factor-two intervention or physiological qualification.",
+  "sources": {
+    "h01-l2-sweep50-ih75-epasminus4-ca1375.json": "a0a59723b5bc71f0f1c07e4c96047cef5bd81859c884337d67189cda1fb4be1a",
+    "h01-l2-sweep50-ih75-epasminus4-ca1375.npz": "695a30605a8f3e640b235c09f67a024e4c95bc29fba0a94eb1bd77b746361b2a",
+    "h01-l2-sodium-opening-control.json": "b588afbfabf74fddeb36a5769dc46042cc8c3b55a7d3ffbe1989cdbdbb81be87",
+    "h01-l2-sodium-opening-control.npz": "695a30605a8f3e640b235c09f67a024e4c95bc29fba0a94eb1bd77b746361b2a"
+  }
+}

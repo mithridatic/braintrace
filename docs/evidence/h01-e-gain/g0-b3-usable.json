@@ -1,0 +1,1594 @@
+{
+ "cell": "E-gain",
+ "model": "SP3 gain-split candidate g0-b3 (docs/specs/2026-09-07-h01-e-gain-split.md)",
+ "counts": {
+  "110 pA": {
+   "human": 0,
+   "model": 0
+  },
+  "200 pA": {
+   "human": 1,
+   "model": 4
+  },
+  "250 pA": {
+   "human": 5,
+   "model": 8
+  },
+  "310 pA": {
+   "human": 10,
+   "model": 10
+  },
+  "350 pA (retained B3 trace sweep 55, not this evaluation)": {
+   "human": 13,
+   "model": 12
+  }
+ },
+ "repeats": [
+  {
+   "input": "repeat 56",
+   "cycle": 1,
+   "cycle_ms": 207.76,
+   "ahp_mv": -70.0000017285347,
+   "width_ms": 0.966530565644689,
+   "peak_mv": 36.21875351667404,
+   "threshold_mv": -54.71875289082527,
+   "peak_ms": 1225.76,
+   "repeat_count": 1,
+   "first_spike_ms": 205.76
+  },
+  {
+   "input": "repeat 59",
+   "cycle": 1,
+   "cycle_ms": 210.66000000000008,
+   "ahp_mv": -69.53125217556953,
+   "width_ms": 0.9610438201962097,
+   "peak_mv": 36.187502056360245,
+   "threshold_mv": -55.15625098347664,
+   "peak_ms": 1228.72,
+   "repeat_count": 1,
+   "first_spike_ms": 208.72000000000003
+  },
+  {
+   "input": "repeat 60",
+   "cycle": 1,
+   "cycle_ms": 154.53999999999996,
+   "ahp_mv": -69.62500283122063,
+   "width_ms": 0.9649580794864505,
+   "peak_mv": 35.84375089406967,
+   "threshold_mv": -54.75000062584877,
+   "peak_ms": 1172.54,
+   "repeat_count": 1,
+   "first_spike_ms": 152.53999999999996
+  },
+  {
+   "input": "repeat 61",
+   "cycle": 1,
+   "cycle_ms": 201.07999999999993,
+   "ahp_mv": -69.87500333786011,
+   "width_ms": 0.966311928865025,
+   "peak_mv": 36.12500286102295,
+   "threshold_mv": -54.50000011920929,
+   "peak_ms": 1219.04,
+   "repeat_count": 1,
+   "first_spike_ms": 199.03999999999996
+  },
+  {
+   "input": "repeat 62",
+   "cycle": 1,
+   "cycle_ms": 205.79999999999995,
+   "ahp_mv": -70.21875450015068,
+   "width_ms": 0.9584751158563449,
+   "peak_mv": 35.87500235438347,
+   "threshold_mv": -54.96875339746475,
+   "peak_ms": 1223.86,
+   "repeat_count": 1,
+   "first_spike_ms": 203.8599999999999
+  }
+ ],
+ "rows": [
+  {
+   "input": "110 pA",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 0.0,
+   "model": 0.0,
+   "limit": null,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  },
+  {
+   "input": "110 pA",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": null,
+   "model": null,
+   "limit": null,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  },
+  {
+   "input": "200 pA",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 0.0,
+   "model": 4.803271666002805,
+   "limit": null,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  },
+  {
+   "input": "200 pA",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": null,
+   "model": 4.278616277933354,
+   "limit": null,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  },
+  {
+   "input": "200 pA",
+   "row": "width_ms",
+   "cycle": 1,
+   "human": 0.966530565644689,
+   "model": 0.9883133081900723,
+   "limit": 0.1933061131289378,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "200 pA",
+   "row": "ahp_mv",
+   "cycle": 1,
+   "human": -70.0000017285347,
+   "model": -70.72194041558718,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "200 pA",
+   "row": "count",
+   "cycle": null,
+   "human": 1,
+   "model": 4,
+   "limit": 0.0,
+   "spread": null,
+   "basis": "human repeat range x DLF over 5 repeats at this command",
+   "verdict": "fail",
+   "contract": "fail"
+  },
+  {
+   "input": "200 pA",
+   "row": "first_spike_ms",
+   "cycle": null,
+   "human": 205.76,
+   "model": 127.35008740186527,
+   "limit": 82.5846000000001,
+   "spread": null,
+   "basis": "human repeat range x DLF over 5 repeats at this command",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "250 pA",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 4.789960243329981,
+   "model": 7.727641200341114,
+   "limit": 0.7184940364994971,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "fail",
+   "contract": "no contract row"
+  },
+  {
+   "input": "250 pA",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": 7.976649153531817,
+   "model": 7.516766299086803,
+   "limit": 1.9941622883829542,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "250 pA",
+   "row": "width_ms",
+   "cycle": 1,
+   "human": 0.9358637951231685,
+   "model": 0.9968874000194319,
+   "limit": 0.1871727590246337,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "250 pA",
+   "row": "width_ms",
+   "cycle": 2,
+   "human": 1.1346650602597492,
+   "model": 0.9956417140499525,
+   "limit": 0.22693301205194985,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "250 pA",
+   "row": "width_ms",
+   "cycle": 3,
+   "human": 0.97477237351859,
+   "model": 0.9872826127805183,
+   "limit": 0.19495447470371802,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "250 pA",
+   "row": "width_ms",
+   "cycle": 4,
+   "human": 0.9711216485673049,
+   "model": 0.9864152436814493,
+   "limit": 0.19422432971346099,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "250 pA",
+   "row": "width_ms",
+   "cycle": 5,
+   "human": 0.9630846725035553,
+   "model": 0.9858787393118291,
+   "limit": 0.19261693450071107,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "250 pA",
+   "row": "ahp_mv",
+   "cycle": 1,
+   "human": -69.56250363588333,
+   "model": -70.35576998532694,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "250 pA",
+   "row": "ahp_mv",
+   "cycle": 2,
+   "human": -67.09375375509262,
+   "model": -70.85357890771333,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "250 pA",
+   "row": "ahp_mv",
+   "cycle": 3,
+   "human": -70.21875450015068,
+   "model": -70.96802015716118,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "250 pA",
+   "row": "ahp_mv",
+   "cycle": 4,
+   "human": -70.28125369548798,
+   "model": -71.05594270076924,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "250 pA",
+   "row": "ahp_mv",
+   "cycle": 5,
+   "human": -70.59375339746475,
+   "model": -71.10794308542104,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 10.001555797568509,
+   "model": 10.045347252900331,
+   "limit": 1.5002333696352763,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "310 pA",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": 9.947281713344251,
+   "model": 8.60232197396003,
+   "limit": 2.486820428336063,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 1,
+   "human": 0.9128560164754163,
+   "model": 1.0065537026275706,
+   "limit": 0.18257120329508325,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 2,
+   "human": 1.2690307278455748,
+   "model": 1.0114597823549047,
+   "limit": 0.25380614556911496,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "fail",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 3,
+   "human": 1.0937104341232953,
+   "model": 0.9913035517377011,
+   "limit": 0.21874208682465907,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 4,
+   "human": 0.9860242798531544,
+   "model": 0.9863118405728528,
+   "limit": 0.1972048559706309,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 5,
+   "human": 0.9882447920297182,
+   "model": 0.9859952084113957,
+   "limit": 0.19764895840594365,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 6,
+   "human": 0.9767491645955033,
+   "model": 0.9855612472567827,
+   "limit": 0.19534983291910069,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 7,
+   "human": 0.9841531460481292,
+   "model": 0.9852467561599951,
+   "limit": 0.19683062920962585,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 8,
+   "human": 0.9794904440964274,
+   "model": 0.985000023228622,
+   "limit": 0.1958980888192855,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 9,
+   "human": 0.9670550450932751,
+   "model": 0.9848053861478547,
+   "limit": 0.19341100901865504,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "width_ms",
+   "cycle": 10,
+   "human": 0.9645281811692712,
+   "model": 0.9846498231481746,
+   "limit": 0.19290563623385426,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 1,
+   "human": -69.56250363588333,
+   "model": -69.98017923488018,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 2,
+   "human": -64.96875131130219,
+   "model": -70.96061974078326,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 3,
+   "human": -67.62500250339508,
+   "model": -70.85586753884054,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 4,
+   "human": -69.15625327825546,
+   "model": -70.93190683720567,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 5,
+   "human": -69.50000444054604,
+   "model": -70.98981849914473,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 6,
+   "human": -69.56250363588333,
+   "model": -71.02850863135656,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 7,
+   "human": -69.43750151991844,
+   "model": -71.05703617543608,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 8,
+   "human": -69.62500283122063,
+   "model": -71.07823224321028,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 9,
+   "human": -69.84375187754631,
+   "model": -71.09415734387746,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "310 pA",
+   "row": "ahp_mv",
+   "cycle": 10,
+   "human": -69.9062510728836,
+   "model": -71.10620095173853,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 13.269052147374937,
+   "model": 11.633885421834524,
+   "limit": 1.9903578221062406,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": 7.861252115059119,
+   "model": 8.38859120707936,
+   "limit": 1.9653130287647798,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "pass",
+   "contract": "no contract row"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 1,
+   "human": 0.9042990124514745,
+   "model": 1.01284135377864,
+   "limit": 0.1808598024902949,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 2,
+   "human": 1.2681100580998645,
+   "model": 1.0196711543680976,
+   "limit": 0.25362201161997294,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 3,
+   "human": 1.4296078373365617,
+   "model": 0.9962902351596767,
+   "limit": 0.28592156746731234,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "fail",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 4,
+   "human": 1.061775433548064,
+   "model": 0.9852910681888716,
+   "limit": 0.2123550867096128,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 5,
+   "human": 1.0365862513860975,
+   "model": 0.9853739319701162,
+   "limit": 0.2073172502772195,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 6,
+   "human": 1.0317777745367493,
+   "model": 0.9848912096895219,
+   "limit": 0.2063555549073499,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 7,
+   "human": 1.018250449893003,
+   "model": 0.9845662555551371,
+   "limit": 0.2036500899786006,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 8,
+   "human": 1.0203249778812733,
+   "model": 0.9843022898644449,
+   "limit": 0.20406499557625468,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 9,
+   "human": 1.0311970392688181,
+   "model": 0.9840911831138328,
+   "limit": 0.20623940785376363,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 10,
+   "human": 1.0265490573842726,
+   "model": 0.9839204050097123,
+   "limit": 0.20530981147685454,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 11,
+   "human": 1.0264134579947495,
+   "model": 0.9837802176330115,
+   "limit": 0.2052826915989499,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "width_ms",
+   "cycle": 12,
+   "human": 1.024859403715027,
+   "model": 0.9836635310516613,
+   "limit": 0.2049718807430054,
+   "spread": 0.011841511188865752,
+   "basis": "20 percent of this human cycle's width; spread from human repeats",
+   "fraction": 0.2,
+   "verdict": "pass",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 1,
+   "human": -70.062500923872,
+   "model": -69.80530477494031,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "pass"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 2,
+   "human": -65.00000277161598,
+   "model": -70.88310159329882,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 3,
+   "human": -64.87500065565109,
+   "model": -70.83468062898638,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 4,
+   "human": -68.03125286102295,
+   "model": -70.77797314489436,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 5,
+   "human": -68.50000241398811,
+   "model": -70.85610518939379,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 6,
+   "human": -68.93750423192978,
+   "model": -70.89796266193363,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 7,
+   "human": -69.15625327825546,
+   "model": -70.93061842193356,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 8,
+   "human": -68.7187514603138,
+   "model": -70.95560805843212,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 9,
+   "human": -68.81250211596489,
+   "model": -70.97503784723197,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 10,
+   "human": -68.90625277161598,
+   "model": -70.9902534113526,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 11,
+   "human": -68.53125387430191,
+   "model": -71.00224086310901,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  },
+  {
+   "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+   "row": "ahp_mv",
+   "cycle": 12,
+   "human": -69.31250312924385,
+   "model": -71.01171940276623,
+   "limit": 2.0,
+   "spread": 1.010628417134285,
+   "basis": "2 mV of trough depth; spread from human repeats",
+   "verdict": "unresolvable",
+   "contract": "fail"
+  }
+ ],
+ "tables": {
+  "110 pA": {
+   "human": [],
+   "model": []
+  },
+  "200 pA": {
+   "human": [
+    {
+     "input": "200 pA",
+     "cycle": 1,
+     "cycle_ms": 207.76,
+     "ahp_mv": -70.0000017285347,
+     "width_ms": 0.966530565644689,
+     "peak_mv": 36.21875351667404,
+     "threshold_mv": -54.71875289082527,
+     "peak_ms": 1225.76
+    }
+   ],
+   "model": [
+    {
+     "input": "200 pA",
+     "cycle": 1,
+     "cycle_ms": 130.59208689809861,
+     "ahp_mv": -70.72194041558718,
+     "width_ms": 0.9883133081900723,
+     "peak_mv": 37.17599811240434,
+     "threshold_mv": -57.207500475756135,
+     "peak_ms": 1147.3500874018653
+    },
+    {
+     "input": "200 pA",
+     "cycle": 2,
+     "cycle_ms": 69.10038594500816,
+     "ahp_mv": -70.90211394478341,
+     "width_ms": 0.9864507385693742,
+     "peak_mv": 37.09141099603476,
+     "threshold_mv": -57.206897501440956,
+     "peak_ms": 1216.4557610455072
+    },
+    {
+     "input": "200 pA",
+     "cycle": 3,
+     "cycle_ms": 259.8198699230966,
+     "ahp_mv": -71.04154136664275,
+     "width_ms": 0.9849305593450026,
+     "peak_mv": 37.04178270026855,
+     "threshold_mv": -57.20741906112464,
+     "peak_ms": 1476.301570480375
+    },
+    {
+     "input": "200 pA",
+     "cycle": 4,
+     "cycle_ms": 295.65403611578904,
+     "ahp_mv": -71.10500004080166,
+     "width_ms": 0.984352267030772,
+     "peak_mv": 37.03747657117405,
+     "threshold_mv": -57.20810886681702,
+     "peak_ms": 1771.9736238050052
+    }
+   ]
+  },
+  "250 pA": {
+   "human": [
+    {
+     "input": "250 pA",
+     "cycle": 1,
+     "cycle_ms": 59.98000000000002,
+     "ahp_mv": -69.56250363588333,
+     "width_ms": 0.9358637951231685,
+     "peak_mv": 36.03125220537186,
+     "threshold_mv": -55.843753308057785,
+     "peak_ms": 1078.1
+    },
+    {
+     "input": "250 pA",
+     "cycle": 2,
+     "cycle_ms": 34.25999999999999,
+     "ahp_mv": -67.09375375509262,
+     "width_ms": 1.1346650602597492,
+     "peak_mv": 35.31250214576721,
+     "threshold_mv": -54.62500223517418,
+     "peak_ms": 1111.98
+    },
+    {
+     "input": "250 pA",
+     "cycle": 3,
+     "cycle_ms": 220.1199999999999,
+     "ahp_mv": -70.21875450015068,
+     "width_ms": 0.97477237351859,
+     "peak_mv": 34.875004053115845,
+     "threshold_mv": -54.437500923871994,
+     "peak_ms": 1332.38
+    },
+    {
+     "input": "250 pA",
+     "cycle": 4,
+     "cycle_ms": 307.4200000000001,
+     "ahp_mv": -70.28125369548798,
+     "width_ms": 0.9711216485673049,
+     "peak_mv": 34.78125339746475,
+     "threshold_mv": -54.06250202655792,
+     "peak_ms": 1639.78
+    },
+    {
+     "input": "250 pA",
+     "cycle": 5,
+     "cycle_ms": 273.28,
+     "ahp_mv": -70.59375339746475,
+     "width_ms": 0.9630846725035553,
+     "peak_mv": 34.56250062584877,
+     "threshold_mv": -54.3125025331974,
+     "peak_ms": 1913.14
+    }
+   ],
+   "model": [
+    {
+     "input": "250 pA",
+     "cycle": 1,
+     "cycle_ms": 58.5837307428294,
+     "ahp_mv": -70.35576998532694,
+     "width_ms": 0.9968874000194319,
+     "peak_mv": 37.806037266482356,
+     "threshold_mv": -57.21906854557051,
+     "peak_ms": 1075.3880572240037
+    },
+    {
+     "input": "250 pA",
+     "cycle": 2,
+     "cycle_ms": 20.937886315820606,
+     "ahp_mv": -70.85357890771333,
+     "width_ms": 0.9956417140499525,
+     "peak_mv": 37.82711724791272,
+     "threshold_mv": -57.24380124119388,
+     "peak_ms": 1096.3344812607083
+    },
+    {
+     "input": "250 pA",
+     "cycle": 3,
+     "cycle_ms": 46.29375697799355,
+     "ahp_mv": -70.96802015716118,
+     "width_ms": 0.9872826127805183,
+     "peak_mv": 37.15461808197417,
+     "threshold_mv": -57.213410355043095,
+     "peak_ms": 1142.5725733474565
+    },
+    {
+     "input": "250 pA",
+     "cycle": 4,
+     "cycle_ms": 184.31981043396127,
+     "ahp_mv": -71.05594270076924,
+     "width_ms": 0.9864152436814493,
+     "peak_mv": 37.14197645104908,
+     "threshold_mv": -57.2084733653607,
+     "peak_ms": 1326.9199999990833
+    },
+    {
+     "input": "250 pA",
+     "cycle": 5,
+     "cycle_ms": 171.5068310755628,
+     "ahp_mv": -71.10794308542104,
+     "width_ms": 0.9858787393118291,
+     "peak_mv": 37.13530846442573,
+     "threshold_mv": -57.210268239978525,
+     "peak_ms": 1498.4439927122176
+    },
+    {
+     "input": "250 pA",
+     "cycle": 6,
+     "cycle_ms": 164.93297658936262,
+     "ahp_mv": -71.14247778393127,
+     "width_ms": 0.9855034631625585,
+     "peak_mv": 37.13009777219098,
+     "threshold_mv": -57.212635450478686,
+     "peak_ms": 1663.3873961284905
+    },
+    {
+     "input": "250 pA",
+     "cycle": 7,
+     "cycle_ms": 160.4626986017804,
+     "ahp_mv": -71.16591350779323,
+     "width_ms": 0.985230194083897,
+     "peak_mv": 37.12577665269971,
+     "threshold_mv": -57.212309609854614,
+     "peak_ms": 1823.8576954094128
+    },
+    {
+     "input": "250 pA",
+     "cycle": 8,
+     "cycle_ms": 157.38519823287106,
+     "ahp_mv": -71.18201077463536,
+     "width_ms": 0.9850283072144066,
+     "peak_mv": 37.12231858015084,
+     "threshold_mv": -57.213994053868745,
+     "peak_ms": 1981.2494433183303
+    }
+   ]
+  },
+  "310 pA": {
+   "human": [
+    {
+     "input": "310 pA",
+     "cycle": 1,
+     "cycle_ms": 38.01999999999998,
+     "ahp_mv": -69.56250363588333,
+     "width_ms": 0.9128560164754163,
+     "peak_mv": 35.34375360608101,
+     "threshold_mv": -56.40625351667404,
+     "peak_ms": 1056.26
+    },
+    {
+     "input": "310 pA",
+     "cycle": 2,
+     "cycle_ms": 12.1400000000001,
+     "ahp_mv": -64.96875131130219,
+     "width_ms": 1.2690307278455748,
+     "peak_mv": 33.562502324581146,
+     "threshold_mv": -55.03125259280205,
+     "peak_ms": 1067.66
+    },
+    {
+     "input": "310 pA",
+     "cycle": 3,
+     "cycle_ms": 60.8599999999999,
+     "ahp_mv": -67.62500250339508,
+     "width_ms": 1.0937104341232953,
+     "peak_mv": 34.625003546476364,
+     "threshold_mv": -53.87500071525574,
+     "peak_ms": 1128.8
+    },
+    {
+     "input": "310 pA",
+     "cycle": 4,
+     "cycle_ms": 109.75999999999999,
+     "ahp_mv": -69.15625327825546,
+     "width_ms": 0.9860242798531544,
+     "peak_mv": 33.90625348687172,
+     "threshold_mv": -53.250001311302185,
+     "peak_ms": 1238.8
+    },
+    {
+     "input": "310 pA",
+     "cycle": 5,
+     "cycle_ms": 115.29999999999995,
+     "ahp_mv": -69.50000444054604,
+     "width_ms": 0.9882447920297182,
+     "peak_mv": 33.65625298023224,
+     "threshold_mv": -52.78125175833702,
+     "peak_ms": 1353.98
+    },
+    {
+     "input": "310 pA",
+     "cycle": 6,
+     "cycle_ms": 119.20000000000005,
+     "ahp_mv": -69.56250363588333,
+     "width_ms": 0.9767491645955033,
+     "peak_mv": 33.34375327825546,
+     "threshold_mv": -52.93750160932541,
+     "peak_ms": 1473.24
+    },
+    {
+     "input": "310 pA",
+     "cycle": 7,
+     "cycle_ms": 122.1400000000001,
+     "ahp_mv": -69.43750151991844,
+     "width_ms": 0.9841531460481292,
+     "peak_mv": 33.34375327825546,
+     "threshold_mv": -53.43750262260437,
+     "peak_ms": 1595.3
+    },
+    {
+     "input": "310 pA",
+     "cycle": 8,
+     "cycle_ms": 116.15999999999985,
+     "ahp_mv": -69.62500283122063,
+     "width_ms": 0.9794904440964274,
+     "peak_mv": 33.00000211596489,
+     "threshold_mv": -52.87500241398811,
+     "peak_ms": 1711.54
+    },
+    {
+     "input": "310 pA",
+     "cycle": 9,
+     "cycle_ms": 123.53999999999996,
+     "ahp_mv": -69.84375187754631,
+     "width_ms": 0.9670550450932751,
+     "peak_mv": 32.75000160932541,
+     "threshold_mv": -53.18750211596489,
+     "peak_ms": 1835.12
+    },
+    {
+     "input": "310 pA",
+     "cycle": 10,
+     "cycle_ms": 120.76000000000022,
+     "ahp_mv": -69.9062510728836,
+     "width_ms": 0.9645281811692712,
+     "peak_mv": 32.68750241398811,
+     "threshold_mv": -54.281251072883606,
+     "peak_ms": 1955.9
+    }
+   ],
+   "model": [
+    {
+     "input": "310 pA",
+     "cycle": 1,
+     "cycle_ms": 37.78029323770602,
+     "ahp_mv": -69.98017923488018,
+     "width_ms": 1.0065537026275706,
+     "peak_mv": 38.50941913499283,
+     "threshold_mv": -57.23686338880592,
+     "peak_ms": 1054.6344256334103
+    },
+    {
+     "input": "310 pA",
+     "cycle": 2,
+     "cycle_ms": 13.476864019608684,
+     "ahp_mv": -70.96061974078326,
+     "width_ms": 1.0114597823549047,
+     "peak_mv": 39.08220189761449,
+     "threshold_mv": -57.35277424100331,
+     "peak_ms": 1068.1614156274984
+    },
+    {
+     "input": "310 pA",
+     "cycle": 3,
+     "cycle_ms": 24.351598241218426,
+     "ahp_mv": -70.85586753884054,
+     "width_ms": 0.9913035517377011,
+     "peak_mv": 37.458964468913216,
+     "threshold_mv": -57.24008746212192,
+     "peak_ms": 1092.4000476372332
+    },
+    {
+     "input": "310 pA",
+     "cycle": 4,
+     "cycle_ms": 120.67372843935527,
+     "ahp_mv": -70.93190683720567,
+     "width_ms": 0.9863118405728528,
+     "peak_mv": 37.085506331359056,
+     "threshold_mv": -57.217923218567094,
+     "peak_ms": 1213.0688009012842
+    },
+    {
+     "input": "310 pA",
+     "cycle": 5,
+     "cycle_ms": 134.70043027893394,
+     "ahp_mv": -70.98981849914473,
+     "width_ms": 0.9859952084113957,
+     "peak_mv": 37.0997489542394,
+     "threshold_mv": -57.221208272624466,
+     "peak_ms": 1347.7881086331067
+    },
+    {
+     "input": "310 pA",
+     "cycle": 6,
+     "cycle_ms": 126.54927012940357,
+     "ahp_mv": -71.02850863135656,
+     "width_ms": 0.9855612472567827,
+     "peak_mv": 37.09190530976627,
+     "threshold_mv": -57.21790050474816,
+     "peak_ms": 1474.3487629336867
+    },
+    {
+     "input": "310 pA",
+     "cycle": 7,
+     "cycle_ms": 122.79645131690359,
+     "ahp_mv": -71.05703617543608,
+     "width_ms": 0.9852467561599951,
+     "peak_mv": 37.08695070791354,
+     "threshold_mv": -57.22314172444443,
+     "peak_ms": 1597.155782120767
+    },
+    {
+     "input": "310 pA",
+     "cycle": 8,
+     "cycle_ms": 119.83536338366162,
+     "ahp_mv": -71.07823224321028,
+     "width_ms": 0.985000023228622,
+     "peak_mv": 37.082935314257995,
+     "threshold_mv": -57.22390335882436,
+     "peak_ms": 1716.9977486968844
+    },
+    {
+     "input": "310 pA",
+     "cycle": 9,
+     "cycle_ms": 117.62114174711292,
+     "ahp_mv": -71.09415734387746,
+     "width_ms": 0.9848053861478547,
+     "peak_mv": 37.07945583886189,
+     "threshold_mv": -57.22322494595037,
+     "peak_ms": 1834.6239942623693
+    },
+    {
+     "input": "310 pA",
+     "cycle": 10,
+     "cycle_ms": 115.9323234959511,
+     "ahp_mv": -71.10620095173853,
+     "width_ms": 0.9846498231481746,
+     "peak_mv": 37.07656445112917,
+     "threshold_mv": -57.22367705401746,
+     "peak_ms": 1950.56069424187
+    }
+   ]
+  },
+  "350 pA (retained B3 trace sweep 55, not this evaluation)": {
+   "human": [
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 1,
+     "cycle_ms": 30.579999999999927,
+     "ahp_mv": -70.062500923872,
+     "width_ms": 0.9042990124514745,
+     "peak_mv": 35.5000034570694,
+     "threshold_mv": -57.156251311302185,
+     "peak_ms": 1048.7
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 2,
+     "cycle_ms": 11.820000000000164,
+     "ahp_mv": -65.00000277161598,
+     "width_ms": 1.2681100580998645,
+     "peak_mv": 33.25000262260437,
+     "threshold_mv": -54.937501937150955,
+     "peak_ms": 1060.04
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 3,
+     "cycle_ms": 23.019999999999982,
+     "ahp_mv": -64.87500065565109,
+     "width_ms": 1.4296078373365617,
+     "peak_mv": 33.09375277161598,
+     "threshold_mv": -52.593750447034836,
+     "peak_ms": 1082.3
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 4,
+     "cycle_ms": 77.19999999999982,
+     "ahp_mv": -68.03125286102295,
+     "width_ms": 1.061775433548064,
+     "peak_mv": 33.843750566244125,
+     "threshold_mv": -53.656251668930054,
+     "peak_ms": 1160.6
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 5,
+     "cycle_ms": 80.38000000000011,
+     "ahp_mv": -68.50000241398811,
+     "width_ms": 1.0365862513860975,
+     "peak_mv": 33.37500101327896,
+     "threshold_mv": -53.46875035762787,
+     "peak_ms": 1240.9
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 6,
+     "cycle_ms": 86.01999999999998,
+     "ahp_mv": -68.93750423192978,
+     "width_ms": 1.0317777745367493,
+     "peak_mv": 33.21875116229057,
+     "threshold_mv": -53.53125327825546,
+     "peak_ms": 1326.9
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 7,
+     "cycle_ms": 86.68000000000006,
+     "ahp_mv": -69.15625327825546,
+     "width_ms": 1.018250449893003,
+     "peak_mv": 33.00000211596489,
+     "threshold_mv": -53.46875035762787,
+     "peak_ms": 1413.6
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 8,
+     "cycle_ms": 87.11999999999989,
+     "ahp_mv": -68.7187514603138,
+     "width_ms": 1.0203249778812733,
+     "peak_mv": 32.937502920627594,
+     "threshold_mv": -53.375003427267075,
+     "peak_ms": 1500.78
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 9,
+     "cycle_ms": 85.58000000000015,
+     "ahp_mv": -68.81250211596489,
+     "width_ms": 1.0311970392688181,
+     "peak_mv": 32.656250953674316,
+     "threshold_mv": -53.28125277161598,
+     "peak_ms": 1586.24
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 10,
+     "cycle_ms": 93.41999999999985,
+     "ahp_mv": -68.90625277161598,
+     "width_ms": 1.0265490573842726,
+     "peak_mv": 32.43750190734863,
+     "threshold_mv": -52.56250271201134,
+     "peak_ms": 1679.66
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 11,
+     "cycle_ms": 89.46000000000004,
+     "ahp_mv": -68.53125387430191,
+     "width_ms": 1.0264134579947495,
+     "peak_mv": 32.281252056360245,
+     "threshold_mv": -52.87500241398811,
+     "peak_ms": 1769.18
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 12,
+     "cycle_ms": 90.74000000000001,
+     "ahp_mv": -69.31250312924385,
+     "width_ms": 1.024859403715027,
+     "peak_mv": 32.406250447034836,
+     "threshold_mv": -53.43750262260437,
+     "peak_ms": 1859.96
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 13,
+     "cycle_ms": 92.92000000000007,
+     "ahp_mv": -69.03125116229057,
+     "width_ms": 1.030690474240373,
+     "peak_mv": 32.12500220537186,
+     "threshold_mv": -52.90625014901161,
+     "peak_ms": 1952.9
+    }
+   ],
+   "model": [
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 1,
+     "cycle_ms": 30.77122707969056,
+     "ahp_mv": -69.80530477494031,
+     "width_ms": 1.01284135377864,
+     "peak_mv": 38.964269311936796,
+     "threshold_mv": -57.26177268596253,
+     "peak_ms": 1047.6553377554671
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 2,
+     "cycle_ms": 11.560393069967631,
+     "ahp_mv": -70.88310159329882,
+     "width_ms": 1.0196711543680976,
+     "peak_mv": 39.67091473261726,
+     "threshold_mv": -57.33397601171152,
+     "peak_ms": 1059.2747734481088
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 3,
+     "cycle_ms": 18.610786124782408,
+     "ahp_mv": -70.83468062898638,
+     "width_ms": 0.9962902351596767,
+     "peak_mv": 37.865743660197,
+     "threshold_mv": -57.28768614958394,
+     "peak_ms": 1077.774432990346
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 4,
+     "cycle_ms": 80.15681848361055,
+     "ahp_mv": -70.77797314489436,
+     "width_ms": 0.9852910681888716,
+     "peak_mv": 36.958059172145944,
+     "threshold_mv": -57.22818202876994,
+     "peak_ms": 1157.8860375762688
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 5,
+     "cycle_ms": 121.5283175858267,
+     "ahp_mv": -70.85610518939379,
+     "width_ms": 0.9853739319701162,
+     "peak_mv": 37.0114804716293,
+     "threshold_mv": -57.22806186277623,
+     "peak_ms": 1279.4367345628123
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 6,
+     "cycle_ms": 109.02286436982399,
+     "ahp_mv": -70.89796266193363,
+     "width_ms": 0.9848912096895219,
+     "peak_mv": 37.0003334274488,
+     "threshold_mv": -57.229677961350866,
+     "peak_ms": 1388.4719383998763
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 7,
+     "cycle_ms": 106.01358768041268,
+     "ahp_mv": -70.93061842193356,
+     "width_ms": 0.9845662555551371,
+     "peak_mv": 36.996189997307894,
+     "threshold_mv": -57.23001877614745,
+     "peak_ms": 1494.4957752835508
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 8,
+     "cycle_ms": 103.18962377482308,
+     "ahp_mv": -70.95560805843212,
+     "width_ms": 0.9843022898644449,
+     "peak_mv": 36.992227200911124,
+     "threshold_mv": -57.229476894378884,
+     "peak_ms": 1597.6936934133155
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 9,
+     "cycle_ms": 101.05265281828315,
+     "ahp_mv": -70.97503784723197,
+     "width_ms": 0.9840911831138328,
+     "peak_mv": 36.98898437678266,
+     "threshold_mv": -57.230681864123696,
+     "peak_ms": 1698.7519384729524
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 10,
+     "cycle_ms": 99.36727916906034,
+     "ahp_mv": -70.9902534113526,
+     "width_ms": 0.9839204050097123,
+     "peak_mv": 36.98633575461435,
+     "threshold_mv": -57.22546847210301,
+     "peak_ms": 1798.1239930696984
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 11,
+     "cycle_ms": 98.03613283071059,
+     "ahp_mv": -71.00224086310901,
+     "width_ms": 0.9837802176330115,
+     "peak_mv": 36.98404602564569,
+     "threshold_mv": -57.226859605323924,
+     "peak_ms": 1896.163317340141
+    },
+    {
+     "input": "350 pA (retained B3 trace sweep 55, not this evaluation)",
+     "cycle": 12,
+     "cycle_ms": 96.97541165711164,
+     "ahp_mv": -71.01171940276623,
+     "width_ms": 0.9836635310516613,
+     "peak_mv": 36.98206649970878,
+     "threshold_mv": -57.228469667787955,
+     "peak_ms": 1993.1413099322117
+    }
+   ]
+  }
+ }
+}

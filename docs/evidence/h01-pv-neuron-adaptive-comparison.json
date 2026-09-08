@@ -1,0 +1,13 @@
+{
+  "comparison": "CVode absolute tolerance 1e-8 versus 1e-10; same physical model and 0.19nA input",
+  "sample_grid_ms": 0.005,
+  "window_ms": [
+    0,
+    1500
+  ],
+  "max_voltage_difference_mv": 0.03324295378291531,
+  "rms_voltage_difference_mv": 0.0003816438417407728,
+  "max_sampled_peak_time_difference_ms": 0.0002919937362548808,
+  "spike_count_both": 13,
+  "qualification": "temporal solver comparison only; spatial and human waveform qualification not established"
+}

@@ -1,0 +1,74 @@
+{
+  "scope": "Only I soma pulse changed from 1 to 2 nA during 2-5 ms. Identical measured anatomy, electrical map, channels, solver, dt, E drive and synapse.",
+  "input_metadata_equal_except_I_amplitude": true,
+  "finite_saved_traces": true,
+  "observations": {
+    "E": {
+      "voltage": {
+        "baseline_max": -71.64405181345613,
+        "test_max": -71.64405181345613,
+        "test_max_time_ms": 5.0,
+        "test_min": -84.02880084756187,
+        "test_final": -76.91526940964523,
+        "preinput_exactly_equal": true,
+        "max_abs_change": 0.0
+      },
+      "output_voltage": {
+        "baseline_max": -71.64405181345613,
+        "test_max": -71.64405181345613,
+        "test_max_time_ms": 5.0,
+        "test_min": -84.02880084756187,
+        "test_final": -76.91526940964523,
+        "preinput_exactly_equal": true,
+        "max_abs_change": 0.0
+      },
+      "synaptic_conductance": {
+        "baseline_max": 0.0,
+        "test_max": 0.0,
+        "test_max_time_ms": 0.005,
+        "test_min": 0.0,
+        "test_final": 0.0,
+        "preinput_exactly_equal": true,
+        "max_abs_change": 0.0
+      },
+      "events_ms": [],
+      "positive_soma_excursion": false
+    },
+    "I": {
+      "voltage": {
+        "baseline_max": -29.53142121570529,
+        "test_max": -13.920791589863347,
+        "test_max_time_ms": 3.635,
+        "test_min": -81.75950137166537,
+        "test_final": -39.11075766112287,
+        "preinput_exactly_equal": true,
+        "max_abs_change": 48.69934202743182
+      },
+      "output_voltage": {
+        "baseline_max": -80.00605911618779,
+        "test_max": -80.00605911618779,
+        "test_max_time_ms": 0.005,
+        "test_min": -85.07297927268785,
+        "test_final": -85.07297927268785,
+        "preinput_exactly_equal": true,
+        "max_abs_change": 0.03941668964094447
+      },
+      "synaptic_conductance": {
+        "baseline_max": 0.0,
+        "test_max": 0.0,
+        "test_max_time_ms": 0.005,
+        "test_min": 0.0,
+        "test_final": 0.0,
+        "preinput_exactly_equal": true,
+        "max_abs_change": 0.0
+      },
+      "events_ms": [],
+      "positive_soma_excursion": false
+    }
+  },
+  "files": {
+    ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf",
+    ".cache/h01/measured-ie-i2na-scan.npz": "5acf66ec3f7a2a29aab0448fefce66494a8802e86e30cf60d57931acf644b73f"
+  },
+  "interpretation": "No declared output events in either cell. The observed soma/contact responses do not alone classify activity in unrecorded compartments. This is not human physiology qualification."
+}

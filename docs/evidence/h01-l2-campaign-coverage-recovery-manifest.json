@@ -1,0 +1,75 @@
+{
+  "cap": 24,
+  "max_concurrent": 1,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "output_dir": "h01-l2-campaign-coverage-recovery",
+  "sweeps": {
+    "43": [
+      "--include-recorded-bias"
+    ]
+  },
+  "families": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5"
+  ],
+  "candidates": [
+    {
+      "name": "s0-source-fine",
+      "stage": "0",
+      "family": "control",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {}
+    },
+    {
+      "name": "s0-candidate-fine",
+      "stage": "0",
+      "family": "control",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "kv3_closing_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "s0-corner-fine",
+      "stage": "0",
+      "family": "F1+F4",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3
+      }
+    }
+  ],
+  "notes": [
+    "Fine-mesh coverage correction only: source, candidate, corner; sweep 43 through 2140 ms.",
+    "Coarse mesh rejected by stage0-active-preservation.json; no coarse replays are needed to decide that gate.",
+    "Preserve original raw outputs and sweep 50. Verify coverage and shared interval before combining corrected sweep 43 with original fine sweep 50.",
+    "Three correction evaluations consume the original 24 cap. Stage B remains omitted; planned total is 6 original controls + 3 correction replays + 10 fine family evaluations + 2 finalists = 21, leaving 3 spare.",
+    "Run after the original Stage 0 controller finishes. No physiological parameters are changed."
+  ]
+}

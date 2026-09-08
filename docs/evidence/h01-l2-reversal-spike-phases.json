@@ -1,0 +1,83 @@
+{
+  "source": "h01-l2-reversal-active-result.json",
+  "source_sha256": "6431a3970fd47a455b15a66e136559b837771bc5d5be7b510a39defbce15dbe4",
+  "definition": "Time from interpolated -20 mV rise to sampled peak, then sampled peak to interpolated -20 mV fall. No time alignment or fitting.",
+  "records": [
+    {
+      "ordinal": 1,
+      "model": {
+        "rise_to_sampled_peak_ms": 0.11735684407199187,
+        "sampled_peak_to_fall_ms": 0.7923655107242666
+      },
+      "human": {
+        "rise_to_sampled_peak_ms": 0.2884444440014704,
+        "sampled_peak_to_fall_ms": 0.6474193511216981
+      },
+      "model_minus_human": {
+        "rise_to_sampled_peak_ms": -0.17108759992947853,
+        "sampled_peak_to_fall_ms": 0.14494615960256851
+      }
+    },
+    {
+      "ordinal": 2,
+      "model": {
+        "rise_to_sampled_peak_ms": 0.1179303705816892,
+        "sampled_peak_to_fall_ms": 0.7862879652025185
+      },
+      "human": {
+        "rise_to_sampled_peak_ms": 0.31670588099132146,
+        "sampled_peak_to_fall_ms": 0.8179591792684278
+      },
+      "model_minus_human": {
+        "rise_to_sampled_peak_ms": -0.19877551040963226,
+        "sampled_peak_to_fall_ms": -0.031671214065909226
+      }
+    },
+    {
+      "ordinal": 3,
+      "model": {
+        "rise_to_sampled_peak_ms": 0.11906038105325933,
+        "sampled_peak_to_fall_ms": 0.7789569932465383
+      },
+      "human": {
+        "rise_to_sampled_peak_ms": 0.31320987578646964,
+        "sampled_peak_to_fall_ms": 0.6615624977321204
+      },
+      "model_minus_human": {
+        "rise_to_sampled_peak_ms": -0.1941494947332103,
+        "sampled_peak_to_fall_ms": 0.11739449551441794
+      }
+    },
+    {
+      "ordinal": 4,
+      "model": {
+        "rise_to_sampled_peak_ms": 0.11872566749934776,
+        "sampled_peak_to_fall_ms": 0.7785285399509121
+      },
+      "human": {
+        "rise_to_sampled_peak_ms": 0.306928102269012,
+        "sampled_peak_to_fall_ms": 0.6641935462982929
+      },
+      "model_minus_human": {
+        "rise_to_sampled_peak_ms": -0.18820243476966425,
+        "sampled_peak_to_fall_ms": 0.11433499365261923
+      }
+    },
+    {
+      "ordinal": 5,
+      "model": {
+        "rise_to_sampled_peak_ms": 0.11869486732621226,
+        "sampled_peak_to_fall_ms": 0.7781179395967683
+      },
+      "human": {
+        "rise_to_sampled_peak_ms": 0.3143749981036308,
+        "sampled_peak_to_fall_ms": 0.6487096743999246
+      },
+      "model_minus_human": {
+        "rise_to_sampled_peak_ms": -0.19568013077741853,
+        "sampled_peak_to_fall_ms": 0.12940826519684379
+      }
+    }
+  ],
+  "qualification": "Descriptive phase localization, not a causal intervention. Adaptive model and 0.02 ms human peak sampling differ. Candidate spike numerical checks remain open."
+}

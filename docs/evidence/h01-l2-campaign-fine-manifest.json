@@ -1,0 +1,302 @@
+{
+  "cap": 24,
+  "max_concurrent": 2,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "output_dir": "h01-l2-campaign-fine",
+  "sweeps": {
+    "50": [
+      "--include-recorded-bias"
+    ],
+    "43": [
+      "--include-recorded-bias"
+    ]
+  },
+  "families": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5"
+  ],
+  "family_members": {
+    "F1": [
+      "sodium_opening_factor",
+      "sodium_recovery_factor"
+    ],
+    "F2": [
+      "kv3_closing_factor"
+    ],
+    "F3": [
+      "calcium_decay_factor"
+    ],
+    "F4": [
+      "sodium_density_factor"
+    ],
+    "F5": [
+      "distribute_ih",
+      "ih_density_factor",
+      "leak_reversal_shift_mv"
+    ]
+  },
+  "candidate_flags": {
+    "calcium_decay_factor": 1.33,
+    "kv3_closing_factor": 0.9,
+    "sodium_opening_factor": 2.0,
+    "sodium_recovery_factor": 1.0,
+    "sodium_density_factor": 1.3,
+    "distribute_ih": true,
+    "ih_density_factor": 75.0,
+    "leak_reversal_shift_mv": -4.0
+  },
+  "stage0": {
+    "coarse": {
+      "source": "s0-source-coarse",
+      "candidate": "s0-candidate-coarse",
+      "corner": "s0-corner-coarse"
+    },
+    "fine": {
+      "source": "s0-source-fine",
+      "candidate": "s0-candidate-fine",
+      "corner": "s0-corner-fine"
+    }
+  },
+  "notes": [
+    "Fine fallback after failure of the active coarse-preservation rule.",
+    "Nine prior evaluations include the three coverage corrections, reserved while running. Ten family evaluations bring the total to 19; two finalists bring it to 21; three spare remain under cap 24.",
+    "Controls must combine original fine sweep 50 with verified coverage-recovery fine sweep 43. Do not launch Stage A until the explicit fine gate records verified coverage.",
+    "Stage B holds the paired F3+F5 swap only (two evaluations); total 9 prior + 10 + 2 = 21 of 24.",
+    "Stage C rechecks the two Stage B runs at CVode 1e-11 (two evaluations); total 9 prior + 10 + 2 + 2 = 23 of 24."
+  ],
+  "candidates": [
+    {
+      "name": "a-into-F1",
+      "stage": "A",
+      "family": "F1",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0
+      }
+    },
+    {
+      "name": "a-out-F1",
+      "stage": "A",
+      "family": "F1",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "kv3_closing_factor": 0.9,
+        "sodium_density_factor": 1.3,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "a-into-F2",
+      "stage": "A",
+      "family": "F2",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "kv3_closing_factor": 0.9
+      }
+    },
+    {
+      "name": "a-out-F2",
+      "stage": "A",
+      "family": "F2",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "a-into-F3",
+      "stage": "A",
+      "family": "F3",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33
+      }
+    },
+    {
+      "name": "a-out-F3",
+      "stage": "A",
+      "family": "F3",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "kv3_closing_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "a-into-F4",
+      "stage": "A",
+      "family": "F4",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "sodium_density_factor": 1.3
+      }
+    },
+    {
+      "name": "a-out-F4",
+      "stage": "A",
+      "family": "F4",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "kv3_closing_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "a-into-F5",
+      "stage": "A",
+      "family": "F5",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "a-out-F5",
+      "stage": "A",
+      "family": "F5",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "kv3_closing_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3
+      }
+    },
+    {
+      "name": "ab-into-F3F5",
+      "stage": "B",
+      "family": "F3+F5",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "ab-out-F3F5",
+      "stage": "B",
+      "family": "F3+F5",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "kv3_closing_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3
+      }
+    },
+    {
+      "name": "c-into-F3F5-atol11",
+      "stage": "C",
+      "family": "F3+F5",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-11,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0
+      }
+    },
+    {
+      "name": "c-out-F3F5-atol11",
+      "stage": "C",
+      "family": "F3+F5",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-11,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "kv3_closing_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3
+      }
+    }
+  ],
+  "analysis_mesh": "fine",
+  "prior_evaluations": 9,
+  "stage_b_prediction": "Stated before running: no single family reverses the source-to-candidate change (pooled steep_x null; per group: F3 carries event count and intervals, F5 carries every subthreshold sample, F4 carries phases). Prediction: ab-into-F3F5 shows 5 events, positive interval-2 and interval-4 errors like the candidate, and subthreshold residual near 0.39 mV at 1120 ms; ab-out-F3F5 shows 6 or 7 events, large negative late-interval errors like the source, and subthreshold residual near 1.76 mV. If both hold, F3 and F5 jointly reverse the change and the causal page records an interdependency of two families acting on separate observation groups, not one Steep X.",
+  "stage_c_prediction": "Stated before running: at CVode 1e-11 every ranked residual of the two paired-swap runs changes by less than its numerical decision limit, the event counts are unchanged, and the per-group family ordering is unchanged. Failure means the Stage B contrast is within solver noise and no family claim is made."
+}

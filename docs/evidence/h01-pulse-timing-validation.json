@@ -1,0 +1,20 @@
+{
+  "scope": "Independent E/I current-pulse timing controls. No channel, connection, or default input change.",
+  "tests_passed": 28,
+  "test_seconds": 91.78,
+  "coverage": {
+    "module": "braintrace/datasets/h01_ei_circuit.py",
+    "statements": 68,
+    "missed": 1
+  },
+  "verified": [
+    "Explicit original timing produces exactly equal fixture traces to omitted timing.",
+    "Delayed E input preserves every pre-pulse sample and changes E only after baseline input onset.",
+    "I trace remains exactly unchanged under E timing change with disconnected wiring.",
+    "Invalid timing maps fail before network construction.",
+    "CLI help exposes all four timing controls.",
+    "Shortening E pulse preserves every sample through its new end and changes E afterward; I remains exactly unchanged."
+  ],
+  "next_physical_test": "Disconnected E 5 nA from 8 to 18 ms with I 1 nA from 2 to 5 ms and explicit diagnostic closing restoration, after the pending delivery comparison. Not launched by this audit.",
+  "followup_test": "The existing timing test was extended to check pulse termination and passed individually in 14.99 s; no production change followed the full 28-test pass."
+}

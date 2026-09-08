@@ -1,0 +1,66 @@
+{
+ "image": "braintrace-h01-neuron:9.0.2",
+ "cache_dir": ".cache/human-pyramidal-l2",
+ "library": "kv3-closing-source",
+ "driver": "h01_l2_neuron_reference.py",
+ "output_dir": "h01-e-usable",
+ "max_concurrent": 1,
+ "abort_seconds": 1500,
+ "common_settings": {
+  "nseg_factor": 9,
+  "cvode_atol": 1e-10,
+  "stop_ms": 2100.0,
+  "record_soma_currents": false
+ },
+ "purpose": "P2 frozen prediction at sweep55; third and final run of bounded continuation.",
+ "cap": 1,
+ "prior_evaluations": 0,
+ "inputs": {
+  "sweep55": [
+   "--cache",
+   "/work",
+   "--sweep",
+   "55",
+   "--include-recorded-bias"
+  ]
+ },
+ "holdout": "Sweep55 opened once only after preregistered h01-prediction-e2.json and B3 calibration decision; no fitting after opening.",
+ "stages": {
+  "P2": {
+   "title": "Frozen sweep55 prediction",
+   "gate": "stage-b3-decision.json",
+   "prediction": "h01-prediction-e2.json committed at 306459e before export; count11-14, rate10-14 Hz, first crossing25-40 ms after pulse, late cycles80-125 ms, axon lead0.15-0.25 ms.",
+   "rejection": "Any prediction band missed is recorded as a miss; usable or contract failure prevents promotion.",
+   "unchanged": "Exact B3 candidate flags and solver settings at both calibration sweeps; only input changes.",
+   "decision_file": "stage-p2-decision.json"
+  }
+ },
+ "candidates": [
+  {
+   "name": "b3-sk035-ca-decay",
+   "stage": "P2",
+   "flags": {
+    "calcium_decay_factor": 1.0,
+    "distribute_ih": true,
+    "ih_density_factor": 75.0,
+    "kv3_closing_factor": 0.9,
+    "leak_reversal_shift_mv": -4.0,
+    "sodium_density_factor": 0.9,
+    "sodium_opening_factor": 2.0,
+    "sodium_recovery_factor": 1.0,
+    "insert_density": [
+     "NaTs:axon:3.814"
+    ],
+    "regional_density": [
+     "SK:soma:0.35"
+    ]
+   },
+   "settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "stop_ms": 2100.0,
+    "record_soma_currents": false
+   }
+  }
+ ]
+}

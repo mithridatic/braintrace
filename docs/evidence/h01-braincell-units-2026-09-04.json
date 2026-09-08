@@ -1,0 +1,8 @@
+{
+  "neuron_id": "546925828",
+  "source": "https://storage.googleapis.com/h01-release/data/20210601/proofread_104/skeletons",
+  "swc_component": 0,
+  "vertices_compared": 795,
+  "max_coordinate_error_nm": 0.0,
+  "max_radius_error_nm": 4.980468872872734e-07
+}

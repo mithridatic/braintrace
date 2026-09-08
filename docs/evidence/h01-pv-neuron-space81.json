@@ -1,0 +1,341 @@
+{
+  "neuron_version": "9.0.2",
+  "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
+  "active_channels": true,
+  "nseg_factor": 81,
+  "model": "ModelDB267587 released HL5BN1 circuit cell, original template and mechanisms",
+  "current_na": 0.19,
+  "dt_ms": 0.025,
+  "temperature_c": 34.0,
+  "integration": {
+    "method": "CVode",
+    "cvode_atol": 1e-10
+  },
+  "initial_voltage_mv": -80.0,
+  "stimulus_on_ms": 270.0,
+  "stimulus_off_ms": 1270.0,
+  "duration_ms": 1500.0,
+  "synaptic_background": "none",
+  "sample_convention": "NEURON recorded time, includes initial state at t=0",
+  "spike_times_ms": [
+    302.5914737636817,
+    311.6078126075454,
+    322.9286846186375,
+    388.71583363254433,
+    473.3268424584605,
+    579.8296647675709,
+    694.8158992596362,
+    813.6707037150182,
+    935.0379684015148,
+    1058.4751004200778,
+    1183.795107284713
+  ],
+  "spike_peaks_mv": [
+    44.244968492380735,
+    44.11077285703666,
+    43.938954236458436,
+    44.20409032306385,
+    44.20189118965448,
+    44.20378861800323,
+    44.20624645993525,
+    44.20848303271284,
+    44.21041672966027,
+    44.21204328641843,
+    44.213361498990956
+  ],
+  "baseline_mean_mv": -86.92922442093439,
+  "baseline_mean_convention": "time integral of piecewise-linear voltage over 200-270 ms, divided by 70 ms",
+  "geometry": [
+    {
+      "name": "NeuronTemplate[0].soma[0]",
+      "length_um": 21.049591064453125,
+      "diameter_um": 21.04960060119629,
+      "nseg": 81,
+      "area_um2": 1391.9941037251133,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": null
+    },
+    {
+      "name": "NeuronTemplate[0].dend[0]",
+      "length_um": 11.488476864017759,
+      "diameter_um": 0.6498036363185545,
+      "nseg": 81,
+      "area_um2": 23.524066910702103,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].soma[0](0.5)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[1]",
+      "length_um": 9.919504855907121,
+      "diameter_um": 0.560217083943476,
+      "nseg": 81,
+      "area_um2": 17.453131251744683,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[0](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[2]",
+      "length_um": 376.44802000753515,
+      "diameter_um": 0.4635095963284174,
+      "nseg": 1539,
+      "area_um2": 548.0515142544602,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[1](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[3]",
+      "length_um": 398.7593010522228,
+      "diameter_um": 0.46214544696816995,
+      "nseg": 1539,
+      "area_um2": 578.9519582715005,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[1](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[4]",
+      "length_um": 4.720480975154788,
+      "diameter_um": 0.6177999973297112,
+      "nseg": 81,
+      "area_um2": 8.67165365997109,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[0](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[5]",
+      "length_um": 51.61694856495185,
+      "diameter_um": 0.454725177500502,
+      "nseg": 243,
+      "area_um2": 73.63835220322883,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[4](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[6]",
+      "length_um": 9.071634506056721,
+      "diameter_um": 0.4650014516895791,
+      "nseg": 81,
+      "area_um2": 13.242557177297607,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[4](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[7]",
+      "length_um": 172.92058352477883,
+      "diameter_um": 0.4429999887943223,
+      "nseg": 729,
+      "area_um2": 240.5934443977365,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[6](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[8]",
+      "length_um": 31.917576279652774,
+      "diameter_um": 0.4436711810098943,
+      "nseg": 81,
+      "area_um2": 44.492870206900434,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[6](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[9]",
+      "length_um": 1.1583540200590605,
+      "diameter_um": 0.597100019454956,
+      "nseg": 81,
+      "area_um2": 2.1783700860036896,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].soma[0](0.5)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[10]",
+      "length_um": 201.66045550240753,
+      "diameter_um": 0.4729656919682616,
+      "nseg": 891,
+      "area_um2": 299.7465288626,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[9](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[11]",
+      "length_um": 180.00675296109318,
+      "diameter_um": 0.48564183294823526,
+      "nseg": 729,
+      "area_um2": 274.44707159120344,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[9](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[12]",
+      "length_um": 63.63440272688272,
+      "diameter_um": 0.4575999975204468,
+      "nseg": 243,
+      "area_um2": 102.4625650970617,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].soma[0](0.5)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[13]",
+      "length_um": 13.279287020254198,
+      "diameter_um": 0.6050615789078645,
+      "nseg": 81,
+      "area_um2": 26.39336836554115,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].soma[0](0.5)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[14]",
+      "length_um": 135.4100970859479,
+      "diameter_um": 0.5152414327689913,
+      "nseg": 567,
+      "area_um2": 219.27432577170777,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[13](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[15]",
+      "length_um": 171.03034472374767,
+      "diameter_um": 0.5062650263002977,
+      "nseg": 729,
+      "area_um2": 271.9293035756024,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[13](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[16]",
+      "length_um": 11.59645531399604,
+      "diameter_um": 0.52317247182774,
+      "nseg": 81,
+      "area_um2": 19.747260956521117,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].soma[0](0.5)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[17]",
+      "length_um": 205.14079525912902,
+      "diameter_um": 0.45307853225580785,
+      "nseg": 891,
+      "area_um2": 292.00545883468044,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[16](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[18]",
+      "length_um": 265.19957729414205,
+      "diameter_um": 0.45299953812967225,
+      "nseg": 1053,
+      "area_um2": 377.5221439502177,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[16](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[19]",
+      "length_um": 6.114935701950961,
+      "diameter_um": 0.5252640821930801,
+      "nseg": 81,
+      "area_um2": 10.155463702358643,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].soma[0](0.5)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[20]",
+      "length_um": 167.47539022557544,
+      "diameter_um": 0.49667530057685694,
+      "nseg": 729,
+      "area_um2": 261.31462812651944,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[19](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[21]",
+      "length_um": 53.865651147473464,
+      "diameter_um": 0.44496677006488045,
+      "nseg": 243,
+      "area_um2": 75.30461855123747,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[20](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[22]",
+      "length_um": 28.62323076852514,
+      "diameter_um": 0.22879999876022364,
+      "nseg": 81,
+      "area_um2": 21.72074514338898,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[20](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[23]",
+      "length_um": 7.255967871908609,
+      "diameter_um": 0.5063318847391423,
+      "nseg": 81,
+      "area_um2": 11.53419873970354,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[19](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[24]",
+      "length_um": 201.504723347626,
+      "diameter_um": 0.45277071039811334,
+      "nseg": 891,
+      "area_um2": 286.5919643465212,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[23](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].dend[25]",
+      "length_um": 137.27751950841687,
+      "diameter_um": 0.4530551002537832,
+      "nseg": 567,
+      "area_um2": 195.4580525826891,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].dend[23](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].axon[0]",
+      "length_um": 30.0,
+      "diameter_um": 0.383756235449691,
+      "nseg": 81,
+      "area_um2": 36.16817310174073,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].soma[0](1)"
+    },
+    {
+      "name": "NeuronTemplate[0].axon[1]",
+      "length_um": 30.0,
+      "diameter_um": 0.22879999876022333,
+      "nseg": 81,
+      "area_um2": 21.563891857394143,
+      "ra_ohm_cm": 100.0,
+      "cm_uf_cm2": 2.0,
+      "parent": "NeuronTemplate[0].axon[0](1)"
+    }
+  ],
+  "qualification": "independent reference response; comparison with human data and BrainCell transfer pending"
+}

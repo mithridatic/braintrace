@@ -1,0 +1,185 @@
+{
+  "sections": [
+    {
+      "section": "soma[0]",
+      "length_um": 21.049591064453125,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 2.3388434516059027
+    },
+    {
+      "section": "dend[0]",
+      "length_um": 11.488476864017759,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 1.2764974293353066
+    },
+    {
+      "section": "dend[1]",
+      "length_um": 9.919504855907121,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 1.1021672062119023
+    },
+    {
+      "section": "dend[2]",
+      "length_um": 376.44802000753515,
+      "reference_nseg": 171,
+      "reference_mean_segment_um": 2.2014504094007905
+    },
+    {
+      "section": "dend[3]",
+      "length_um": 398.7593010522228,
+      "reference_nseg": 171,
+      "reference_mean_segment_um": 2.3319257371475017
+    },
+    {
+      "section": "dend[4]",
+      "length_um": 4.720480975154788,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 0.5244978861283098
+    },
+    {
+      "section": "dend[5]",
+      "length_um": 51.61694856495185,
+      "reference_nseg": 27,
+      "reference_mean_segment_um": 1.9117388357389573
+    },
+    {
+      "section": "dend[6]",
+      "length_um": 9.071634506056721,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 1.007959389561858
+    },
+    {
+      "section": "dend[7]",
+      "length_um": 172.92058352477883,
+      "reference_nseg": 81,
+      "reference_mean_segment_um": 2.1348220188244302
+    },
+    {
+      "section": "dend[8]",
+      "length_um": 31.917576279652774,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 3.546397364405864
+    },
+    {
+      "section": "dend[9]",
+      "length_um": 1.1583540200590605,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 0.1287060022287845
+    },
+    {
+      "section": "dend[10]",
+      "length_um": 201.66045550240753,
+      "reference_nseg": 99,
+      "reference_mean_segment_um": 2.0369742980041163
+    },
+    {
+      "section": "dend[11]",
+      "length_um": 180.00675296109318,
+      "reference_nseg": 81,
+      "reference_mean_segment_um": 2.2223055921122614
+    },
+    {
+      "section": "dend[12]",
+      "length_um": 63.63440272688272,
+      "reference_nseg": 27,
+      "reference_mean_segment_um": 2.356829730625286
+    },
+    {
+      "section": "dend[13]",
+      "length_um": 13.279287020254198,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 1.4754763355837999
+    },
+    {
+      "section": "dend[14]",
+      "length_um": 135.4100970859479,
+      "reference_nseg": 63,
+      "reference_mean_segment_um": 2.1493666204118718
+    },
+    {
+      "section": "dend[15]",
+      "length_um": 171.03034472374767,
+      "reference_nseg": 81,
+      "reference_mean_segment_um": 2.1114857373302183
+    },
+    {
+      "section": "dend[16]",
+      "length_um": 11.59645531399604,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 1.288495034888449
+    },
+    {
+      "section": "dend[17]",
+      "length_um": 205.14079525912902,
+      "reference_nseg": 99,
+      "reference_mean_segment_um": 2.0721292450417073
+    },
+    {
+      "section": "dend[18]",
+      "length_um": 265.19957729414205,
+      "reference_nseg": 117,
+      "reference_mean_segment_um": 2.2666630537960857
+    },
+    {
+      "section": "dend[19]",
+      "length_um": 6.114935701950961,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 0.6794373002167735
+    },
+    {
+      "section": "dend[20]",
+      "length_um": 167.47539022557544,
+      "reference_nseg": 81,
+      "reference_mean_segment_um": 2.067597410192289
+    },
+    {
+      "section": "dend[21]",
+      "length_um": 53.865651147473464,
+      "reference_nseg": 27,
+      "reference_mean_segment_um": 1.9950241165730913
+    },
+    {
+      "section": "dend[22]",
+      "length_um": 28.62323076852514,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 3.180358974280571
+    },
+    {
+      "section": "dend[23]",
+      "length_um": 7.255967871908609,
+      "reference_nseg": 9,
+      "reference_mean_segment_um": 0.8062186524342899
+    },
+    {
+      "section": "dend[24]",
+      "length_um": 201.504723347626,
+      "reference_nseg": 99,
+      "reference_mean_segment_um": 2.035401245935616
+    },
+    {
+      "section": "dend[25]",
+      "length_um": 137.27751950841687,
+      "reference_nseg": 63,
+      "reference_mean_segment_um": 2.1790082461653473
+    },
+    {
+      "section": "axon[0]",
+      "length_um": 30.0,
+      "reference_nseg": 2187,
+      "reference_mean_segment_um": 0.013717421124828532
+    },
+    {
+      "section": "axon[1]",
+      "length_um": 30.0,
+      "reference_nseg": 2187,
+      "reference_mean_segment_um": 0.013717421124828532
+    }
+  ],
+  "braincell_max_cv_length_um": 2.5,
+  "geometry_tests": "7 passed; lengths, areas and attachments tested against geometry export",
+  "qualification": "Discretization difference identified; no causal sufficiency claim. Maximum CV length is not an actual per-section CV count.",
+  "sha256": {
+    "h01-pv-regional-mesh-axon2187.json": "d8d4d022457eb139a033ead73780f2eb12a0d58852503267912d961b1eb9d546",
+    "h01-pv-geometry-reference.json": "968377dfd49fc40c737081f4849d35ed0bd1cc65614c86bc51b634bcb292eb9d"
+  }
+}

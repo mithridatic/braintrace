@@ -1,0 +1,8 @@
+{
+  "package_file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\active-wheel-install\\braintrace\\__init__.py",
+  "finite": true,
+  "peak_mv": 51.59914730815219,
+  "final_mv": -69.61769588415912,
+  "steps": 2000,
+  "qualification": "installed reference-cell run only; no biological or circuit qualification"
+}

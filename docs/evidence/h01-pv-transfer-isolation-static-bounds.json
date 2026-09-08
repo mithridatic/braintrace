@@ -1,0 +1,184 @@
+{
+  "scope": "Static policy interval check against uniform per-section nseg partition; no simulation and no cable-coefficient or state-update equivalence claim.",
+  "branches": [
+    {
+      "branch": "soma_0",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_0",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_9",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_12",
+      "count": 27,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_13",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_16",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_19",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "axon_0",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_1",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_4",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_10",
+      "count": 99,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_11",
+      "count": 81,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_14",
+      "count": 63,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_15",
+      "count": 81,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_17",
+      "count": 99,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_18",
+      "count": 117,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_20",
+      "count": 81,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_23",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "axon_1",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_2",
+      "count": 171,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_3",
+      "count": 171,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_5",
+      "count": 27,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_6",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_21",
+      "count": 27,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_22",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_24",
+      "count": 99,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_25",
+      "count": 63,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_7",
+      "count": 81,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    },
+    {
+      "branch": "dend_8",
+      "count": 9,
+      "maximum_normalized_boundary_error": 0.0,
+      "uniform_partition_pass": true
+    }
+  ],
+  "all_uniform_partitions_match": true,
+  "sha256": {
+    "h01-pv-geometry-reference.json": "968377dfd49fc40c737081f4849d35ed0bd1cc65614c86bc51b634bcb292eb9d",
+    "h01-pv-transfer-isolation-neuron-cvode.json": "731ea4c5abd0b5c54d0606f07a9d1185a894d17abf92671b24436ee79013132c"
+  }
+}

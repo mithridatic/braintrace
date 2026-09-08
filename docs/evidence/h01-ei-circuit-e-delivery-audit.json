@@ -1,0 +1,29 @@
+{
+  "scope": "Real H01 E-to-I delivery; illustrative edge. Not inhibitory feedback or human qualification.",
+  "inputs": {
+    "h01-ei-circuit-e-only": {
+      ".json": "9d3efc454e07a165500d9d8bcb7a1ae38493cccabcb1d4ccbf43bc18d8947116",
+      ".npz": "90918cc8aac77d3448a956e490b9c4243d6b60438dce8db50271a3bc8b6e869e"
+    },
+    "h01-ei-circuit-disconnected": {
+      ".json": "d3cd4b90e29a9093929770014dccc5fabdce74716067a428ecbbfb600a5b07cf",
+      ".npz": "af971e83f8c24e14593134593e50094c00d716335347925e31cb744cae2f7441"
+    }
+  },
+  "checks": {
+    "identical_cell_records": true,
+    "identical_time_grid": true,
+    "identical_E_events": true,
+    "identical_I_voltage_before_delivery": true,
+    "delay_is_100_steps": true,
+    "I_voltage_increases_at_delivery": true,
+    "disconnected_conductance_zero": true,
+    "E_incoming_conductance_zero": true
+  },
+  "E_event_ms": 3.975,
+  "first_I_delivery_ms": 4.475,
+  "first_I_conductance_us": 0.009975031223974602,
+  "first_I_voltage_change_mv": 0.2735138747797521,
+  "I_peak_mv": -61.770359433094995,
+  "I_event_count": 0
+}

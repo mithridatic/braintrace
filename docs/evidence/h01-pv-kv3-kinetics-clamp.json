@@ -1,0 +1,66 @@
+[
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 0.0,
+    "tau_factor": 1.0,
+    "expected_m": 1.2346435137748235e-05,
+    "observed_m": 1.234643513762689e-05,
+    "absolute_error": 1.2134424595775656e-16
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 0.0,
+    "tau_factor": 0.5,
+    "expected_m": 2.0691967570448325e-05,
+    "observed_m": 2.0691967569145938e-05,
+    "absolute_error": 1.3023876953028451e-15
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 1.0,
+    "tau_factor": 1.0,
+    "expected_m": 0.6759590743440138,
+    "observed_m": 0.675959074347198,
+    "absolute_error": 3.1842306569274115e-12
+  },
+  {
+    "voltage_mv": -80.0,
+    "initial_m": 1.0,
+    "tau_factor": 0.5,
+    "expected_m": 0.4569246709382865,
+    "observed_m": 0.4569246709724685,
+    "absolute_error": 3.41820460825204e-11
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 0.0,
+    "tau_factor": 1.0,
+    "expected_m": 0.07553078381974337,
+    "observed_m": 0.07553078381966578,
+    "absolute_error": 7.759071163349063e-14
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 0.0,
+    "tau_factor": 0.5,
+    "expected_m": 0.1403673229580107,
+    "observed_m": 0.1403673229572726,
+    "absolute_error": 7.380762667708041e-13
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 1.0,
+    "tau_factor": 1.0,
+    "expected_m": 0.9339428889158818,
+    "observed_m": 0.9339428889159512,
+    "absolute_error": 6.938893903907228e-14
+  },
+  {
+    "voltage_mv": 20.0,
+    "initial_m": 1.0,
+    "tau_factor": 0.5,
+    "expected_m": 0.8772386651335946,
+    "observed_m": 0.8772386651342402,
+    "absolute_error": 6.455946888195285e-13
+  }
+]

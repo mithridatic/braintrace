@@ -1,0 +1,14 @@
+{
+  "areas_um2": {
+    "soma": 592.0593838294642,
+    "dend": 5496.430398784291,
+    "apic": 9349.985570578809
+  },
+  "source_maximum_conductance_s": 2.0572568315071494e-10,
+  "distributed_maximum_conductance_s": 2.0572568315071496e-10,
+  "uniform_density_s_cm2": 1.332551812560768e-06,
+  "source_total_ns": 0.20572568315071493,
+  "published_densities_on_current_areas_total_ns": 15.501834236678018,
+  "published_to_current_total_ratio": 75.35196383487691,
+  "qualification": "Geometry and maximum-conductance accounting only. Applying other-cell densities to this geometry is hypothetical and was not simulated."
+}

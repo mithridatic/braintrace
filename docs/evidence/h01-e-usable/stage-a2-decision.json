@@ -1,0 +1,126 @@
+{
+ "stage": "A2",
+ "manifest": "h01-e-usable-manifest.json",
+ "evaluations_used": 3,
+ "cap": 8,
+ "run": "a-axon-na-soma09 sweep50, 661 s, rc 0",
+ "score": "h01-e-usable/a-axon-na-soma09-sweep50-initiation.json",
+ "observed": {
+  "axon_first": "0.21 ms lead",
+  "threshold_mv": -57.2,
+  "peak_mv": 37.8,
+  "max_rise_v_s": 659,
+  "max_fall_v_s": -95,
+  "first_minimum_mv": -70.4,
+  "spikes_and_cycles_ms": "5; 58.8, 27.4, 292.3, 312.0, 299.3 (human 5; 60, 34, 220, 307, 273)",
+  "slope_profile_v_s_at_-52_-50_-47.5_-45_-42_-35": [
+   142,
+   154,
+   164,
+   170,
+   175,
+   196
+  ],
+  "human_profile": [
+   110,
+   136,
+   153,
+   165,
+   179,
+   199
+  ],
+  "block": "none; soma between -71 and 37 mV to the pulse end"
+ },
+ "prediction_scored": {
+  "axon first": "held",
+  "threshold -57 +/- 1": "held (-57.2)",
+  "profile within 30 V/s of the human at -52 to -42": "held at five of six levels; -52 mV misses by 2 V/s (142 vs 110)",
+  "main rise 600 to 750": "held (659)",
+  "peak 37 to 40": "held (37.8)",
+  "first minimum -70 to -73": "held (-70.4)",
+  "no block, at least 4 spikes, late cycles 250 to 350": "held (5 spikes; 292, 312, 299)",
+  "time above -20 mV 0.9 to 1.1 ms": "see usable_tier_250pA"
+ },
+ "usable_tier_250pA": {
+  "rate_hz": {
+   "human": 4.79,
+   "model": 4.296,
+   "limit": 0.718,
+   "verdict": "pass"
+  },
+  "adaptation_ratio": {
+   "human": 7.977,
+   "model": 10.941,
+   "limit": 1.994,
+   "verdict": "fail"
+  },
+  "width_ms": {
+   "human": [
+    0.936,
+    1.135,
+    0.975,
+    0.971,
+    0.963
+   ],
+   "model": [
+    0.997,
+    0.991,
+    0.986,
+    0.985,
+    0.985
+   ],
+   "limit": 0.199,
+   "verdicts": [
+    "pass",
+    "pass",
+    "pass",
+    "pass",
+    "pass"
+   ],
+   "contract": [
+    "fail",
+    "fail",
+    "pass",
+    "pass",
+    "pass"
+   ]
+  },
+  "ahp_mv": {
+   "human": [
+    -69.563,
+    -67.094,
+    -70.219,
+    -70.281,
+    -70.594
+   ],
+   "model": [
+    -70.399,
+    -71.031,
+    -71.223,
+    -71.264,
+    -71.284
+   ],
+   "limit": 2.0,
+   "verdicts": [
+    "unresolvable",
+    "unresolvable",
+    "unresolvable",
+    "unresolvable",
+    "unresolvable"
+   ],
+   "contract": [
+    "pass",
+    "fail",
+    "fail",
+    "pass",
+    "pass"
+   ]
+  },
+  "count": {
+   "human": 5,
+   "model": 5
+  }
+ },
+ "decision": "Somatic sodium is a monotone lever between the arms; 0.9 with axonal NaTs 3.814 is the Stage A survivor. At 250 pA it matches the human count exactly and lands threshold, peak, trough and late cycles inside the usable limits; adaptation fails because the second cycle is short (27 vs 34 ms) and the late cycles long (292 to 312 vs 220 to 307). Stage B opens on this survivor with one evaluation first: the survivor at sweep 53 (310 pA), where the candidate fired 6 against 10, to locate the count and gain question before any lever is moved.",
+ "returned_question": "none"
+}

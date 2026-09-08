@@ -1,0 +1,66 @@
+{
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-usable",
+  "max_concurrent": 2,
+  "abort_seconds": 1500,
+  "common_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "stop_ms": 2100.0,
+    "record_soma_currents": false
+  },
+  "purpose": "Stage B2: the two Modulate levers together (SK half, calcium decay 1.0) on the Stage A survivor at 310 pA; evaluation 8 of 8.",
+  "cap": 1,
+  "prior_evaluations": 0,
+  "inputs": {
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "sweep 53 is open (spent 2026-09-06); sweep 55 stays sealed",
+  "stages": {
+    "B2": {
+      "title": "SK half with calcium decay 1.0 together",
+      "gate": "stage-b-decision.json",
+      "prediction": "Late cycles 135 to 165 ms; count 8; rate 7.5 to 8.5 Hz; threshold -57 +/- 1, peak 37 to 40, trough -70 +/- 1, width within 0.1 ms of 1.006.",
+      "rejection": "Late cycles above 175 ms (the levers are not additive), or any Stage A row moved outside its band.",
+      "unchanged": "As Stage B.",
+      "decision_file": "stage-b2-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "b2-sk-half-ca-decay",
+      "stage": "B2",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "regional_density": [
+          "SK:soma:0.5"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    }
+  ]
+}

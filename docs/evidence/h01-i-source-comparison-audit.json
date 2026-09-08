@@ -1,0 +1,43 @@
+{
+  "cases": [
+    {
+      "file": "h01-ei-defaults-spike-probe",
+      "sha256": "3b81fb09a3dce0346cad1c9d8d04f6ab5f900fdd030dc32f57c7c2cfb3ed0bd0",
+      "peak_mv": -14.100263682145606,
+      "peak_ms": 3.63,
+      "positive_crossings_ms": [],
+      "final_mv": -47.83407700326463
+    },
+    {
+      "file": "h01-i-source-spike-probe",
+      "sha256": "1c840fa4dddeb5bd88d2671f6460ad18aeacef1feebcbc13afc9f9e0928b0506",
+      "peak_mv": 36.01760772125541,
+      "peak_ms": 3.42,
+      "positive_crossings_ms": [
+        3.273042980266196
+      ],
+      "final_mv": -75.58736523732973
+    },
+    {
+      "file": "h01-i-source-closing-only",
+      "sha256": "c83e0c24c768c96c4d85905bdde293189fc8a1c8c8d3faa8e7fba4e24082e0af",
+      "peak_mv": 35.036700161273494,
+      "peak_ms": 3.365,
+      "positive_crossings_ms": [
+        3.2454118032417743
+      ],
+      "final_mv": -81.18620373217482
+    },
+    {
+      "file": "h01-i-source-spike-probe-fine",
+      "sha256": "d9e6b6405384f40cb395adbf07e7272a59cdc4cabf76f9b7c915db17e1eae3ed",
+      "dt_ms": 0.000625,
+      "max_cv_length_um": 2.5,
+      "peak_mv": 36.16899334592521,
+      "peak_ms": 3.414375,
+      "final_mv": -75.59285750035554,
+      "positive_crossing_present": true
+    }
+  ],
+  "qualification": "Source restoration diagnostic; unchanged geometry and input. Neither positive voltage nor source status establishes human validity. Single closing-factor restoration remains numerically unqualified."
+}

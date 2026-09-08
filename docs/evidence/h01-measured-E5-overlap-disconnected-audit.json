@@ -1,0 +1,36 @@
+{
+  "scope": "Disconnected measured H01 pair; E 5 nA 8-18 ms, I 1 nA 2-5 ms; diagnostic I closing factor 1; dt 0.005 ms, duration 25 ms. No physiological promotion.",
+  "source_npz": ".cache\\h01\\measured-E5-overlap-disconnected.npz",
+  "sha256": "841c2657d3ea490ea08c240588faac09ffd6ec2c24148a5a720c2163ec41016e",
+  "all_saved_arrays_finite": true,
+  "E_complete_excursions": [
+    {
+      "first_sample_above_minus20_ms": 9.475000000000001,
+      "first_sample_below_minus20_ms": 10.690000000000001,
+      "peak_ms": 9.64,
+      "peak_mv": 50.29961251912033
+    },
+    {
+      "first_sample_above_minus20_ms": 14.74,
+      "first_sample_below_minus20_ms": 15.780000000000001,
+      "peak_ms": 14.950000000000001,
+      "peak_mv": 42.52257657766402
+    }
+  ],
+  "E_emitted_events_ms": [
+    9.510000000000002,
+    14.790000000000001
+  ],
+  "I_emitted_events_ms": [
+    8.355
+  ],
+  "I_exact_first20ms_against_prior_control": {
+    "I_voltage": true,
+    "I_output_voltage": true,
+    "I_incoming_voltage": true,
+    "I_synaptic_conductance": true,
+    "I_events": true
+  },
+  "E_synaptic_conductance_zero": true,
+  "qualification": "E diagnostic excitability gate passes; measured-edge effect, time-step refinement, spatial robustness and human qualification remain open."
+}

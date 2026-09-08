@@ -1,0 +1,58 @@
+{
+  "RSS_definition": "sqrt(sum((changed V - paired control V)^2)); units mV; response effect, not target error or biological uncertainty",
+  "grid": "1600 samples, 0.005 to 8 ms after each pulse onset, spacing 0.005 ms; linear interpolation of finer traces",
+  "qualification": "Different intervention magnitudes. Rankings apply only to these interventions. No measured H01 voltage target exists. Positive sample is only a diagnostic criterion, not spike qualification. Numerical pairs retain their own controls.",
+  "cases": [
+    {
+      "factor": "Sodium inactivation block",
+      "kind": "physical",
+      "control": "h01-ei-defaults-spike-probe",
+      "changed": "h01-i-inactivation-block",
+      "response_change_RSS_mv": 1475.3937009524177,
+      "largest_sample_change_mv": 70.63029801769319,
+      "control_peak_mv": -14.100263682145606,
+      "changed_peak_mv": 41.94866567099061,
+      "changed_positive_sample": true
+    },
+    {
+      "factor": "Longer pre-pulse wait",
+      "kind": "physical",
+      "control": "h01-ei-defaults-spike-probe",
+      "changed": "h01-i-prepulse270",
+      "response_change_RSS_mv": 192.5554744983114,
+      "largest_sample_change_mv": 18.353946328602074,
+      "control_peak_mv": -14.100263682145606,
+      "changed_peak_mv": -14.327053934732811,
+      "changed_positive_sample": false
+    },
+    {
+      "factor": "Time step / 8",
+      "kind": "numerical",
+      "control": "h01-ei-defaults-spike-probe",
+      "changed": "h01-i-defaults-spike-probe-fine",
+      "response_change_RSS_mv": 1.9898473078434624,
+      "largest_sample_change_mv": 0.18985457669272776,
+      "control_peak_mv": -14.100263682145606,
+      "changed_peak_mv": -14.072191349116911,
+      "changed_positive_sample": false
+    },
+    {
+      "factor": "CV length / 4",
+      "kind": "numerical",
+      "control": "h01-i-defaults-spike-probe-fine",
+      "changed": "h01-i-defaults-spike-probe-space",
+      "response_change_RSS_mv": 0.8589043626952422,
+      "largest_sample_change_mv": 0.0474803473287011,
+      "control_peak_mv": -14.072191349116911,
+      "changed_peak_mv": -14.060857074733798,
+      "changed_positive_sample": false
+    }
+  ],
+  "sha256": {
+    "h01-ei-defaults-spike-probe": "3b81fb09a3dce0346cad1c9d8d04f6ab5f900fdd030dc32f57c7c2cfb3ed0bd0",
+    "h01-i-inactivation-block": "fe784b62459bd3a9f2e99dacd2958aaf1b6115eaad6b32a329e4de2fed9a9200",
+    "h01-i-defaults-spike-probe-space": "cc6deb633db3c2fe32d4046bc1f740c1215ea605ebbf16a0a2c94e3519608707",
+    "h01-i-defaults-spike-probe-fine": "c196ed0cd2a6809bdbc5cabeb534cc455c5ac59d09728baeddb52aaf92ed036a",
+    "h01-i-prepulse270": "dff9c1c2542d58ec93d34048c35514c48eb827d12e3b1cbcdafc00fcd40a5c5e"
+  }
+}

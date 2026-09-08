@@ -1,0 +1,44 @@
+{
+  "E": {
+    "events": [
+      {
+        "rise_crossing_ms": 3.9371395977145234,
+        "fall_crossing_ms": 5.108520398820885,
+        "time_above_threshold_ms": 1.1713808011063618,
+        "peak_sample_time_ms": 4.12,
+        "peak_sample_voltage_mv": 48.25793432443168
+      }
+    ],
+    "last_soma_mv": -79.03854053694866,
+    "maximum_sample": {
+      "time_ms": 4.12,
+      "voltage_mv": 48.25793432443168
+    },
+    "finite": true,
+    "event_window_ms": [
+      0.005,
+      10.0
+    ]
+  },
+  "I": {
+    "events": [
+      {
+        "rise_crossing_ms": 3.413972064439219,
+        "fall_crossing_ms": 4.713369957297526,
+        "time_above_threshold_ms": 1.2993978928583068,
+        "peak_sample_time_ms": 3.63,
+        "peak_sample_voltage_mv": -14.100263682145606
+      }
+    ],
+    "last_soma_mv": -47.83407700326463,
+    "maximum_sample": {
+      "time_ms": 3.63,
+      "voltage_mv": -14.100263682145606
+    },
+    "finite": true,
+    "event_window_ms": [
+      0.005,
+      10.0
+    ]
+  }
+}

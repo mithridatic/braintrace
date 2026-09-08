@@ -1,0 +1,507 @@
+{
+  "records": [
+    {
+      "current_na": 0.19,
+      "probe_voltage_and_time_identical": true,
+      "maximum_balance_residual_na": 3.552713678800501e-15,
+      "location": "NeuronTemplate[0].soma[0](0.5)",
+      "crossings": [
+        {
+          "voltage_mv": -80.0,
+          "first_crossing_ms": 272.90138418856947,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.00023810271715826825,
+            "Nap_current_na": -4.412825394878641e-10,
+            "K_P_current_na": 5.67099240628299e-07,
+            "K_T_current_na": 3.951317290447547e-09,
+            "Kv3_1_current_na": 0.00010368725770930772,
+            "Im_current_na": 1.9011614948138861e-07,
+            "SK_current_na": 2.5108256312689875e-07,
+            "Ca_HVA_current_na": -5.947118657973972e-14,
+            "Ca_LVA_current_na": -9.217631319271491e-07,
+            "capacitive_current_na": 0.004270732143036603,
+            "leak_current_na": 0.005849497248748236,
+            "Ih_current_na": -0.0028802704944309535,
+            "ionic_outward_na": 0.002834901339664911,
+            "axial_inward_na": -0.18289436651729846,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -75.0,
+          "first_crossing_ms": 278.4518292189257,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.0011668254222340746,
+            "Nap_current_na": -1.3039799939953881e-08,
+            "K_P_current_na": 2.2931723070441515e-06,
+            "K_T_current_na": 2.1977640627644473e-08,
+            "Kv3_1_current_na": 0.0003847511565306731,
+            "Im_current_na": 1.1094741120235594e-06,
+            "SK_current_na": 5.021969609874229e-07,
+            "Ca_HVA_current_na": -1.5159481128630129e-12,
+            "Ca_LVA_current_na": -4.69958652273264e-06,
+            "capacitive_current_na": 0.0018605452587067675,
+            "leak_current_na": 0.00757246092183909,
+            "Ih_current_na": -0.0024669237199038585,
+            "ionic_outward_na": 0.004322677129413892,
+            "axial_inward_na": -0.18381677761187926,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -70.0,
+          "first_crossing_ms": 292.1043115873432,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.005386167840482186,
+            "Nap_current_na": -3.3938316930059227e-07,
+            "K_P_current_na": 1.1320748025137659e-05,
+            "K_T_current_na": 7.12241044250945e-08,
+            "Kv3_1_current_na": 0.0010186110368022253,
+            "Im_current_na": 4.81848787747077e-06,
+            "SK_current_na": 7.544961829750306e-07,
+            "Ca_HVA_current_na": -3.4446697811661025e-11,
+            "Ca_LVA_current_na": -3.305710576789397e-05,
+            "capacitive_current_na": 0.0008870847354875827,
+            "leak_current_na": 0.00929542459492995,
+            "Ih_current_na": -0.002048894191757769,
+            "ionic_outward_na": 0.0028625420322983377,
+            "axial_inward_na": -0.18625037323221408,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -65.0,
+          "first_crossing_ms": 301.2533144841973,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.02180982878225761,
+            "Nap_current_na": -5.170344832591151e-06,
+            "K_P_current_na": 2.636239089094957e-05,
+            "K_T_current_na": 1.8987141778774223e-07,
+            "Kv3_1_current_na": 0.0020283214572719057,
+            "Im_current_na": 1.2131293819028372e-05,
+            "SK_current_na": 1.009135129680536e-06,
+            "Ca_HVA_current_na": -3.280974517364886e-10,
+            "Ca_LVA_current_na": -7.370528242437634e-05,
+            "capacitive_current_na": 0.005645464475710999,
+            "leak_current_na": 0.011018388268020807,
+            "Ih_current_na": -0.0016343218499077774,
+            "ionic_outward_na": -0.010436624170969647,
+            "axial_inward_na": -0.1947911596952586,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -60.0,
+          "first_crossing_ms": 302.48141124474216,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.0691599086180257,
+            "Nap_current_na": -3.035697343864258e-05,
+            "K_P_current_na": 3.7448966199980976e-05,
+            "K_T_current_na": 4.416701431863808e-07,
+            "Kv3_1_current_na": 0.003156151323168125,
+            "Im_current_na": 1.918624926509703e-05,
+            "SK_current_na": 1.2622699186506987e-06,
+            "Ca_HVA_current_na": -1.1355297136189674e-09,
+            "Ca_LVA_current_na": -0.00010220316819884622,
+            "capacitive_current_na": 0.0318508210745091,
+            "leak_current_na": 0.012741351941111746,
+            "Ih_current_na": -0.0012251258581394554,
+            "ionic_outward_na": -0.05456175333352559,
+            "axial_inward_na": -0.21271093225901647,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -55.0,
+          "first_crossing_ms": 302.76094752358404,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.1664578296877219,
+            "Nap_current_na": -8.914599078554008e-05,
+            "K_P_current_na": 4.765239950180797e-05,
+            "K_T_current_na": 8.461718874832194e-07,
+            "Kv3_1_current_na": 0.004330835544153751,
+            "Im_current_na": 2.5775706295909464e-05,
+            "SK_current_na": 1.5149979692584582e-06,
+            "Ca_HVA_current_na": -2.6633151234244045e-09,
+            "Ca_LVA_current_na": -0.00012560588773012044,
+            "capacitive_current_na": 0.09939671220412612,
+            "leak_current_na": 0.014464315614202366,
+            "Ih_current_na": -0.0008166377796524167,
+            "ionic_outward_na": -0.14861828157519452,
+            "axial_inward_na": -0.23922156937106837,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -50.0,
+          "first_crossing_ms": 302.8660925729778,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.32192857331445435,
+            "Nap_current_na": -0.00017031025039762992,
+            "K_P_current_na": 5.812489765607067e-05,
+            "K_T_current_na": 1.4362078546962855e-06,
+            "Kv3_1_current_na": 0.005584075337333395,
+            "Im_current_na": 3.2384433941063645e-05,
+            "SK_current_na": 1.7676273236890807e-06,
+            "Ca_HVA_current_na": -5.750498807786654e-09,
+            "Ca_LVA_current_na": -0.00014978590787278437,
+            "capacitive_current_na": 0.21969860948863654,
+            "leak_current_na": 0.016187279287292765,
+            "Ih_current_na": -0.00040829434015792447,
+            "ionic_outward_na": -0.3007919017719798,
+            "axial_inward_na": -0.2710932922833433,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -45.0,
+          "first_crossing_ms": 302.91865846437014,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.5331539713803592,
+            "Nap_current_na": -0.00024551527662414625,
+            "K_P_current_na": 6.923163675304492e-05,
+            "K_T_current_na": 2.274413279936599e-06,
+            "Kv3_1_current_na": 0.006959640069674546,
+            "Im_current_na": 3.931920215193962e-05,
+            "SK_current_na": 2.0202231648426338e-06,
+            "Ca_HVA_current_na": -1.2971762272148958e-08,
+            "Ca_LVA_current_na": -0.0001790672522195861,
+            "capacitive_current_na": 0.39444223548043306,
+            "leak_current_na": 0.01791024296038406,
+            "Ih_current_na": -2.5187438508101766e-13,
+            "ionic_outward_na": -0.5085958383758087,
+            "axial_inward_na": -0.30415360289537574,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -40.0,
+          "first_crossing_ms": 302.95001181354485,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.7915469357701893,
+            "Nap_current_na": -0.0003006193483452044,
+            "K_P_current_na": 8.134710021550361e-05,
+            "K_T_current_na": 3.467028137943488e-06,
+            "Kv3_1_current_na": 0.00851324312139063,
+            "Im_current_na": 4.6850745335891476e-05,
+            "SK_current_na": 2.2728050570884418e-06,
+            "Ca_HVA_current_na": -3.216623092472304e-08,
+            "Ca_LVA_current_na": -0.0002178188515700158,
+            "capacitive_current_na": 0.6145557262634318,
+            "leak_current_na": 0.01963320663347446,
+            "Ih_current_na": 0.00040827133287353807,
+            "ionic_outward_na": -0.7633767473698504,
+            "axial_inward_na": -0.3388210211064185,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -30.0,
+          "first_crossing_ms": 302.98686431672326,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -1.4035980347558346,
+            "Nap_current_na": -0.00036984402181469895,
+            "K_P_current_na": 0.00011099100984521932,
+            "K_T_current_na": 7.757744031770538e-06,
+            "Kv3_1_current_na": 0.01253163335813346,
+            "Im_current_na": 6.528307288351082e-05,
+            "SK_current_na": 2.7779539697478675e-06,
+            "Ca_HVA_current_na": -2.4897770217072497e-07,
+            "Ca_LVA_current_na": -0.0003554494870454374,
+            "capacitive_current_na": 1.1245253672520248,
+            "leak_current_na": 0.023079133979659553,
+            "Ih_current_na": 0.0012247771887457465,
+            "ionic_outward_na": -1.3673012229351278,
+            "axial_inward_na": -0.4327758556831029,
+            "applied_inward_na": 0.19
+          }
+        },
+        {
+          "voltage_mv": -20.0,
+          "first_crossing_ms": 303.0095033716964,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -2.0315458362920045,
+            "Nap_current_na": -0.0004210290151589463,
+            "K_P_current_na": 0.00015520948020396636,
+            "K_T_current_na": 1.767944362136591e-05,
+            "Kv3_1_current_na": 0.018995555895898495,
+            "Im_current_na": 9.332481788952549e-05,
+            "SK_current_na": 3.2830996457022126e-06,
+            "Ca_HVA_current_na": -1.7328140562565683e-06,
+            "Ca_LVA_current_na": -0.0006433928770535116,
+            "capacitive_current_na": 1.6272815925805484,
+            "leak_current_na": 0.026525061325839365,
+            "Ih_current_na": 0.0020412509205809132,
+            "ionic_outward_na": -1.984780626014594,
+            "axial_inward_na": -0.5474990334340458,
+            "applied_inward_na": 0.19
+          }
+        }
+      ]
+    },
+    {
+      "current_na": 0.27,
+      "probe_voltage_and_time_identical": true,
+      "maximum_balance_residual_na": 3.9968028886505635e-15,
+      "location": "NeuronTemplate[0].soma[0](0.5)",
+      "crossings": [
+        {
+          "voltage_mv": -80.0,
+          "first_crossing_ms": 271.63576249809995,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.00023157284152378708,
+            "Nap_current_na": -3.1996376797469913e-10,
+            "K_P_current_na": 5.167356926470418e-07,
+            "K_T_current_na": 3.479672152265377e-09,
+            "Kv3_1_current_na": 9.175251829045036e-05,
+            "Im_current_na": 1.5727754329172442e-07,
+            "SK_current_na": 2.5108196943600004e-07,
+            "Ca_HVA_current_na": -3.8038754428126026e-14,
+            "Ca_LVA_current_na": -7.456165413227348e-07,
+            "capacitive_current_na": 0.008446937171458509,
+            "leak_current_na": 0.005849497248748239,
+            "Ih_current_na": -0.002880267908419411,
+            "ionic_outward_na": 0.0028295916554298894,
+            "axial_inward_na": -0.2587234711731117,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -75.0,
+          "first_crossing_ms": 274.04906758980843,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.0011406140010064801,
+            "Nap_current_na": -9.858264595178627e-09,
+            "K_P_current_na": 1.5434557652907884e-06,
+            "K_T_current_na": 2.1003723281694867e-08,
+            "Kv3_1_current_na": 0.00033222657708287115,
+            "Im_current_na": 8.564241904914655e-07,
+            "SK_current_na": 5.02169159440857e-07,
+            "Ca_HVA_current_na": -9.20792616390941e-13,
+            "Ca_LVA_current_na": -2.280470462986793e-06,
+            "capacitive_current_na": 0.0050905505731555474,
+            "leak_current_na": 0.007572460921839096,
+            "Ih_current_na": -0.0024680009451077457,
+            "ionic_outward_na": 0.004296705275997873,
+            "axial_inward_na": -0.26061274415084656,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -70.0,
+          "first_crossing_ms": 277.5866702269206,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.00526289982774216,
+            "Nap_current_na": -2.497064645898466e-07,
+            "K_P_current_na": 4.538112109027323e-06,
+            "K_T_current_na": 8.265976077732964e-08,
+            "Kv3_1_current_na": 0.0008807511303916081,
+            "Im_current_na": 3.291068476833276e-06,
+            "SK_current_na": 7.533322554972334e-07,
+            "Ca_HVA_current_na": -1.8266732389430586e-11,
+            "Ca_LVA_current_na": -1.2278571353883869e-05,
+            "capacitive_current_na": 0.004164883641490177,
+            "leak_current_na": 0.009295424594929942,
+            "Ih_current_na": -0.002054908584433321,
+            "ionic_outward_na": 0.0028545041896629987,
+            "axial_inward_na": -0.26298061216884683,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -65.0,
+          "first_crossing_ms": 280.3904884198749,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.02130986231652091,
+            "Nap_current_na": -3.872110719842809e-06,
+            "K_P_current_na": 1.0428744307532633e-05,
+            "K_T_current_na": 2.484663867897181e-07,
+            "Kv3_1_current_na": 0.0018013743112228644,
+            "Im_current_na": 8.496113357782414e-06,
+            "SK_current_na": 1.004808439936958e-06,
+            "Ca_HVA_current_na": -1.8982848717829689e-10,
+            "Ca_LVA_current_na": -4.319579999113594e-05,
+            "capacitive_current_na": 0.009397688091105836,
+            "leak_current_na": 0.011018388268020802,
+            "Ih_current_na": -0.0016424024731230594,
+            "ionic_outward_na": -0.01015939217844773,
+            "axial_inward_na": -0.27076170408734196,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -60.0,
+          "first_crossing_ms": 281.29459605518156,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.06798511755937343,
+            "Nap_current_na": -2.473160209047085e-05,
+            "K_P_current_na": 1.6203736415992114e-05,
+            "K_T_current_na": 5.887909949283264e-07,
+            "Kv3_1_current_na": 0.0028850764365886683,
+            "Im_current_na": 1.4379603189216749e-05,
+            "SK_current_na": 1.2563433636357344e-06,
+            "Ca_HVA_current_na": -7.898875416683559e-10,
+            "Ca_LVA_current_na": -7.903282128735836e-05,
+            "capacitive_current_na": 0.03553305526801608,
+            "leak_current_na": 0.01274135194111172,
+            "Ih_current_na": -0.001231339926172358,
+            "ionic_outward_na": -0.05366136584714701,
+            "axial_inward_na": -0.2881283105791309,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -55.0,
+          "first_crossing_ms": 281.5558646763308,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.16486899988011403,
+            "Nap_current_na": -7.703649889901073e-05,
+            "K_P_current_na": 2.150117945064921e-05,
+            "K_T_current_na": 1.1414931998005922e-06,
+            "Kv3_1_current_na": 0.0040207196167254015,
+            "Im_current_na": 1.998843736450991e-05,
+            "SK_current_na": 1.5077750946977244e-06,
+            "Ca_HVA_current_na": -2.0822614359890215e-09,
+            "Ca_LVA_current_na": -0.0001118563839290679,
+            "capacitive_current_na": 0.1024354375326712,
+            "leak_current_na": 0.014464315614202266,
+            "Ih_current_na": -0.0008207866746731711,
+            "ionic_outward_na": -0.14734950740383937,
+            "axial_inward_na": -0.3149140698711682,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -50.0,
+          "first_crossing_ms": 281.6590878903582,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.3209202272958405,
+            "Nap_current_na": -0.0001521512252568987,
+            "K_P_current_na": 2.6968345904394968e-05,
+            "K_T_current_na": 1.953800392539445e-06,
+            "Kv3_1_current_na": 0.005233057291504898,
+            "Im_current_na": 2.563471731440791e-05,
+            "SK_current_na": 1.7591589593171794e-06,
+            "Ca_HVA_current_na": -4.870001985140225e-09,
+            "Ca_LVA_current_na": -0.00014715261761078758,
+            "capacitive_current_na": 0.22132370126738699,
+            "leak_current_na": 0.016187279287293754,
+            "Ih_current_na": -0.00041036902369738813,
+            "ionic_outward_na": -0.30015325243103824,
+            "axial_inward_na": -0.34882955116365133,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -45.0,
+          "first_crossing_ms": 281.7115564008263,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.5345603087101805,
+            "Nap_current_na": -0.00022359301922890426,
+            "K_P_current_na": 3.288033519880451e-05,
+            "K_T_current_na": 3.1158992393118275e-06,
+            "Kv3_1_current_na": 0.006568281000893311,
+            "Im_current_na": 3.1617472864990056e-05,
+            "SK_current_na": 2.0105236156979736e-06,
+            "Ca_HVA_current_na": -1.1685210137817934e-08,
+            "Ca_LVA_current_na": -0.00019129582657907983,
+            "capacitive_current_na": 0.3930049713329581,
+            "leak_current_na": 0.017910242960383543,
+            "Ih_current_na": -7.660475088332652e-13,
+            "ionic_outward_na": -0.5104270610497689,
+            "axial_inward_na": -0.387422089716811,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -40.0,
+          "first_crossing_ms": 281.7430893820553,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -0.7972677970811898,
+            "Nap_current_na": -0.000276990123532032,
+            "K_P_current_na": 3.9520217700435134e-05,
+            "K_T_current_na": 4.7793213906440195e-06,
+            "Kv3_1_current_na": 0.008083521603731584,
+            "Im_current_na": 3.820856205930168e-05,
+            "SK_current_na": 2.26187989071256e-06,
+            "Ca_HVA_current_na": -3.037868046319244e-08,
+            "Ca_LVA_current_na": -0.00025151962220071593,
+            "capacitive_current_na": 0.6107480335410292,
+            "leak_current_na": 0.019633206633473465,
+            "Ih_current_na": 0.0004103458214054053,
+            "ionic_outward_na": -0.7695844931659516,
+            "axial_inward_na": -0.4288364596249226,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -30.0,
+          "first_crossing_ms": 281.7800004714886,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -1.415490725900778,
+            "Nap_current_na": -0.00034474422478748845,
+            "K_P_current_na": 5.670736139380212e-05,
+            "K_T_current_na": 1.0757249627424172e-05,
+            "Kv3_1_current_na": 0.012016180541797835,
+            "Im_current_na": 5.473298887056545e-05,
+            "SK_current_na": 2.7645836369745217e-06,
+            "Ca_HVA_current_na": -2.45196572044376e-07,
+            "Ca_LVA_current_na": -0.00047313725167712515,
+            "capacitive_current_na": 1.1297139979537107,
+            "leak_current_na": 0.02307913397965483,
+            "Ih_current_na": 0.0012310003753746904,
+            "ionic_outward_na": -1.3798575754934586,
+            "axial_inward_na": -0.5201435775397479,
+            "applied_inward_na": 0.27
+          }
+        },
+        {
+          "voltage_mv": -20.0,
+          "first_crossing_ms": 281.8024712590475,
+          "crossing_count": 1,
+          "currents": {
+            "NaTg_current_na": -2.043579507855438,
+            "Nap_current_na": -0.00039487055707245015,
+            "K_P_current_na": 8.46509737594482e-05,
+            "K_T_current_na": 2.4500763676224576e-05,
+            "Kv3_1_current_na": 0.018359658593314582,
+            "Im_current_na": 8.073997631700704e-05,
+            "SK_current_na": 3.2672876165406065e-06,
+            "Ca_HVA_current_na": -1.7137632030718992e-06,
+            "Ca_LVA_current_na": -0.0009572952951862339,
+            "capacitive_current_na": 1.6426681476453673,
+            "leak_current_na": 0.02652506132583844,
+            "Ih_current_na": 0.0020516229794310683,
+            "ionic_outward_na": -1.9978038855709463,
+            "axial_inward_na": -0.6251357379255784,
+            "applied_inward_na": 0.27
+          }
+        }
+      ]
+    }
+  ],
+  "reserved_trace_used": false,
+  "convention": "Channel and capacitive currents outward positive; axial and applied inward positive",
+  "limit": "Local current accounting, not a causal intervention or identification of human channel currents"
+}

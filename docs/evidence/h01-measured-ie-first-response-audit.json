@@ -1,0 +1,96 @@
+{
+  "dt_ms": 0.005,
+  "duration_ms": 8.0,
+  "cells": {
+    "E": {
+      "voltage": {
+        "min": -84.028800847559,
+        "max": -71.64405181347665,
+        "time_of_max_ms": 5.0,
+        "final": -76.91526940966934,
+        "finite": true
+      },
+      "output_voltage": {
+        "min": -84.028800847559,
+        "max": -71.64405181347665,
+        "time_of_max_ms": 5.0,
+        "final": -76.91526940966934,
+        "finite": true
+      },
+      "synaptic_conductance": {
+        "min": 0.0,
+        "max": 0.0,
+        "time_of_max_ms": 0.005,
+        "final": 0.0,
+        "finite": true
+      },
+      "events_ms": [],
+      "output_site": {
+        "source_point": [
+          5438,
+          0.27272727272732095
+        ],
+        "output_cv_id": 6107,
+        "output_midpoint": [
+          5438,
+          0.3409090909091248
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      }
+    },
+    "I": {
+      "voltage": {
+        "min": -81.75950137166537,
+        "max": -29.531421215705286,
+        "time_of_max_ms": 5.25,
+        "final": -46.08740010890251,
+        "finite": true
+      },
+      "output_voltage": {
+        "min": -85.11239596232879,
+        "max": -80.00605911618779,
+        "time_of_max_ms": 0.005,
+        "final": -85.11239596232879,
+        "finite": true
+      },
+      "synaptic_conductance": {
+        "min": 0.0,
+        "max": 0.0,
+        "time_of_max_ms": 0.005,
+        "final": 0.0,
+        "finite": true
+      },
+      "events_ms": [],
+      "output_site": {
+        "source_point": [
+          974,
+          0.57544612126
+        ],
+        "output_cv_id": 4430,
+        "output_midpoint": [
+          974,
+          0.5549094088595619
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      }
+    }
+  },
+  "compile_seconds_reported_by_xla": 347.2250629,
+  "input": {
+    "E_current_na": 1.0,
+    "I_current_na": 1.0,
+    "delay_ms": 2.0,
+    "duration_ms": 3.0
+  },
+  "interpretation": "Finite execution. No recorded soma crossed 0 mV and no declared output site emitted an event. No synaptic delivery was exercised. Other unrecorded CVs are not classified by this audit.",
+  "sources": [
+    {
+      "path": ".cache/h01/measured-ie-index-fixed.npz",
+      "sha256": "a2609429bd7a4c741392e07cbb6d279737dddff1636d909ec56f9f77a9e24d6b"
+    },
+    {
+      "path": ".cache/h01/measured-ie-index-fixed.json",
+      "sha256": "f67a6c9668677cff747a7842b96ede4dc80f080446a651e715f3b55781785ae9"
+    }
+  ]
+}

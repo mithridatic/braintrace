@@ -1,0 +1,27 @@
+{
+  "started_utc": "2026-09-05T21:56:30.802121+00:00",
+  "purpose": "Measured I-to-E connected vs disconnected controls through 20 ms with diagnostic I closing restoration; both soma pulses remain 1 nA. New local receptor voltage is recorded.",
+  "commands": {
+    "ei": ".cache/validation/Scripts/python.exe -m docs.evidence.h01_i_source_closing_circuit --connectivity measured --control ei --i-current-na 1 --duration-ms 20 --solver h01_staggered_scan --output .cache/h01/measured-delivery20-ei",
+    "disconnected": ".cache/validation/Scripts/python.exe -m docs.evidence.h01_i_source_closing_circuit --connectivity measured --control disconnected --i-current-na 1 --duration-ms 20 --solver h01_staggered_scan --output .cache/h01/measured-delivery20-disconnected"
+  },
+  "source_sha256": {
+    "braintrace/datasets/h01_ei_circuit.py": "1b1a93af90aa7f901cdd56b97f9b934b8003d1445ddb9374d28969b59732c113",
+    "examples/h01_ei_circuit.py": "0f45a0923e6cc03f26dc317c21afc4f5e88e31516bba9f34c9ac907224562c19",
+    "docs/evidence/h01_i_source_closing_circuit.py": "eb91d5d1c1e9783a433433847fd71465b8637dbe025d0353c0d1ff3d360cf18d",
+    ".cache/h01/measured-i-allcv-source-closing20.npz": "f2977d490309063ea451d866cad2e1e1e7dfdeb1b21b02be15cbd7a7a9361297"
+  },
+  "tests_passed": 29,
+  "status": "Connected retry session 1581 completed with exit 0. Paired event delivery verified; see h01-measured-delivery20-paired-audit.json. Parallel initialization failed; sequential execution succeeded with unchanged physical settings.",
+  "sessions": {
+    "ei": 88116,
+    "disconnected": 79776
+  },
+  "failure_observed_utc": "2026-09-05T22:02:10.559469+00:00",
+  "scheduling_correction": "Avoid overlapping full measured-pair initialization. Memory exhaustion is not a voltage-stability result.",
+  "connected_retry": {
+    "session_id": 1581,
+    "launched_utc": "2026-09-05T22:06:52.469324+00:00",
+    "physical_change": "None; same command and source as failed connected attempt. Scheduling changed to sequential."
+  }
+}

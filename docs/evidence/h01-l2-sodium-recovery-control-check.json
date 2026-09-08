@@ -1,0 +1,23 @@
+{
+  "decision": "passed",
+  "arrays_exactly_equal": {
+    "time_ms": true,
+    "voltage_mv": true,
+    "applied_current_na": true
+  },
+  "sample_counts": [
+    3360001,
+    3360001
+  ],
+  "sources": {
+    "h01-l2-calcium-removal-midpoint": {
+      ".json": "f5057dbcc708a2966fb9b2d69a44395f6d5fa45609ec019a063e2c3fdbd69d8b",
+      ".npz": "288823e7e42f5a56be3d243aed19bd87628f260f27f3df6ea5f61954352ad089"
+    },
+    "h01-l2-sodium-recovery-control": {
+      ".json": "292dd4677654d87a7e0a5d6e53c440ea28a193e8563b0d682615300f0dca6e33",
+      ".npz": "288823e7e42f5a56be3d243aed19bd87628f260f27f3df6ea5f61954352ad089"
+    }
+  },
+  "scope": "Default-one sodium source equivalence only; not physiological qualification."
+}

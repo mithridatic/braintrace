@@ -1,0 +1,321 @@
+{
+  "ordinal_interval_pairs": [
+    {
+      "from_event": 1,
+      "to_event": 2,
+      "factor27_interval_ms": 4.989792756342865,
+      "factor81_interval_ms": 4.99003974411545,
+      "change_ms": 0.00024698777258436166,
+      "next_onset_change_ms": 0.00029181890135987487
+    },
+    {
+      "from_event": 2,
+      "to_event": 3,
+      "factor27_interval_ms": 4.2592195419680365,
+      "factor81_interval_ms": 4.259627301216426,
+      "change_ms": 0.0004077592483895387,
+      "next_onset_change_ms": 0.0006995781497494136
+    },
+    {
+      "from_event": 3,
+      "to_event": 4,
+      "factor27_interval_ms": 4.126403937564078,
+      "factor81_interval_ms": 4.127229900182783,
+      "change_ms": 0.0008259626187054891,
+      "next_onset_change_ms": 0.0015255407684549027
+    },
+    {
+      "from_event": 4,
+      "to_event": 5,
+      "factor27_interval_ms": 4.361564623063941,
+      "factor81_interval_ms": 4.363609643823963,
+      "change_ms": 0.0020450207600219983,
+      "next_onset_change_ms": 0.003570561528476901
+    },
+    {
+      "from_event": 5,
+      "to_event": 6,
+      "factor27_interval_ms": 5.053905002748991,
+      "factor81_interval_ms": 5.06019112055202,
+      "change_ms": 0.006286117803028901,
+      "next_onset_change_ms": 0.009856679331505802
+    },
+    {
+      "from_event": 6,
+      "to_event": 7,
+      "factor27_interval_ms": 6.735898031656973,
+      "factor81_interval_ms": 6.763708741368362,
+      "change_ms": 0.02781070971138888,
+      "next_onset_change_ms": 0.03766738904289468
+    },
+    {
+      "from_event": 7,
+      "to_event": 8,
+      "factor27_interval_ms": 13.654193688298335,
+      "factor81_interval_ms": 14.040874608937486,
+      "change_ms": 0.3866809206391508,
+      "next_onset_change_ms": 0.4243483096820455
+    },
+    {
+      "from_event": 8,
+      "to_event": 9,
+      "factor27_interval_ms": 35.32105708462018,
+      "factor81_interval_ms": 36.032447428279795,
+      "change_ms": 0.7113903436596161,
+      "next_onset_change_ms": 1.1357386533416616
+    },
+    {
+      "from_event": 9,
+      "to_event": 10,
+      "factor27_interval_ms": 28.705739727820173,
+      "factor81_interval_ms": 28.914675712578628,
+      "change_ms": 0.20893598475845465,
+      "next_onset_change_ms": 1.3446746381001162
+    },
+    {
+      "from_event": 10,
+      "to_event": 11,
+      "factor27_interval_ms": 29.11350280982265,
+      "factor81_interval_ms": 29.402552833556058,
+      "change_ms": 0.2890500237334095,
+      "next_onset_change_ms": 1.6337246618335257
+    },
+    {
+      "from_event": 11,
+      "to_event": 12,
+      "factor27_interval_ms": 29.0232394138402,
+      "factor81_interval_ms": 29.29950897082051,
+      "change_ms": 0.27626955698030997,
+      "next_onset_change_ms": 1.9099942188138357
+    },
+    {
+      "from_event": 12,
+      "to_event": 13,
+      "factor27_interval_ms": 28.92055555063189,
+      "factor81_interval_ms": 29.195534003089335,
+      "change_ms": 0.27497845245744656,
+      "next_onset_change_ms": 2.1849726712712823
+    },
+    {
+      "from_event": 13,
+      "to_event": 14,
+      "factor27_interval_ms": 28.83759434336764,
+      "factor81_interval_ms": 29.111710569963634,
+      "change_ms": 0.2741162265959929,
+      "next_onset_change_ms": 2.459088897867275
+    },
+    {
+      "from_event": 14,
+      "to_event": 15,
+      "factor27_interval_ms": 28.761544090869222,
+      "factor81_interval_ms": 29.034205551413493,
+      "change_ms": 0.27266146054427054,
+      "next_onset_change_ms": 2.7317503584115457
+    },
+    {
+      "from_event": 15,
+      "to_event": 16,
+      "factor27_interval_ms": 28.68876782391942,
+      "factor81_interval_ms": 28.959643221124225,
+      "change_ms": 0.27087539720480436,
+      "next_onset_change_ms": 3.00262575561635
+    },
+    {
+      "from_event": 16,
+      "to_event": 17,
+      "factor27_interval_ms": 28.61846930058948,
+      "factor81_interval_ms": 28.887376015292375,
+      "change_ms": 0.2689067147028936,
+      "next_onset_change_ms": 3.2715324703192437
+    },
+    {
+      "from_event": 17,
+      "to_event": 18,
+      "factor27_interval_ms": 28.5507141337024,
+      "factor81_interval_ms": 28.817556948148308,
+      "change_ms": 0.2668428144459085,
+      "next_onset_change_ms": 3.538375284765152
+    },
+    {
+      "from_event": 18,
+      "to_event": 19,
+      "factor27_interval_ms": 28.485756547604637,
+      "factor81_interval_ms": 28.75049467303029,
+      "change_ms": 0.26473812542565156,
+      "next_onset_change_ms": 3.8031134101908037
+    },
+    {
+      "from_event": 19,
+      "to_event": 20,
+      "factor27_interval_ms": 28.42382402826331,
+      "factor81_interval_ms": 28.68645298202341,
+      "change_ms": 0.26262895376009965,
+      "next_onset_change_ms": 4.065742363950903
+    },
+    {
+      "from_event": 20,
+      "to_event": 21,
+      "factor27_interval_ms": 28.365067014845863,
+      "factor81_interval_ms": 28.625607368342116,
+      "change_ms": 0.2605403534962534,
+      "next_onset_change_ms": 4.326282717447157
+    },
+    {
+      "from_event": 21,
+      "to_event": 22,
+      "factor27_interval_ms": 28.309566497178707,
+      "factor81_interval_ms": 28.568053023789048,
+      "change_ms": 0.25848652661034066,
+      "next_onset_change_ms": 4.584769244057497
+    },
+    {
+      "from_event": 22,
+      "to_event": 23,
+      "factor27_interval_ms": 28.257338012053083,
+      "factor81_interval_ms": 28.513819843216197,
+      "change_ms": 0.2564818311631143,
+      "next_onset_change_ms": 4.841251075220612
+    },
+    {
+      "from_event": 23,
+      "to_event": 24,
+      "factor27_interval_ms": 28.208358017303908,
+      "factor81_interval_ms": 28.462895470542435,
+      "change_ms": 0.2545374532385267,
+      "next_onset_change_ms": 5.095788528459138
+    },
+    {
+      "from_event": 24,
+      "to_event": 25,
+      "factor27_interval_ms": 28.16256622056028,
+      "factor81_interval_ms": 28.41522030463443,
+      "change_ms": 0.2526540840741518,
+      "next_onset_change_ms": 5.34844261253329
+    },
+    {
+      "from_event": 25,
+      "to_event": 26,
+      "factor27_interval_ms": 28.1198784355895,
+      "factor81_interval_ms": 28.370717997659085,
+      "change_ms": 0.25083956206958646,
+      "next_onset_change_ms": 5.599282174602877
+    },
+    {
+      "from_event": 26,
+      "to_event": 27,
+      "factor27_interval_ms": 28.08019358689421,
+      "factor81_interval_ms": 28.329288176597174,
+      "change_ms": 0.24909458970296328,
+      "next_onset_change_ms": 5.84837676430584
+    },
+    {
+      "from_event": 27,
+      "to_event": 28,
+      "factor27_interval_ms": 28.043397315552966,
+      "factor81_interval_ms": 28.29081842063863,
+      "change_ms": 0.24742110508566384,
+      "next_onset_change_ms": 6.095797869391504
+    },
+    {
+      "from_event": 28,
+      "to_event": 29,
+      "factor27_interval_ms": 28.00937012350812,
+      "factor81_interval_ms": 28.2551854925581,
+      "change_ms": 0.24581536904997847,
+      "next_onset_change_ms": 6.341613238441482
+    },
+    {
+      "from_event": 29,
+      "to_event": 30,
+      "factor27_interval_ms": 27.97798534351773,
+      "factor81_interval_ms": 28.22226672802401,
+      "change_ms": 0.24428138450628012,
+      "next_onset_change_ms": 6.585894622947762
+    },
+    {
+      "from_event": 30,
+      "to_event": 31,
+      "factor27_interval_ms": 27.94911352799363,
+      "factor81_interval_ms": 28.191928641085383,
+      "change_ms": 0.2428151130917513,
+      "next_onset_change_ms": 6.828709736039514
+    },
+    {
+      "from_event": 31,
+      "to_event": 32,
+      "factor27_interval_ms": 27.922629219990426,
+      "factor81_interval_ms": 28.164042166822583,
+      "change_ms": 0.2414129468321562,
+      "next_onset_change_ms": 7.07012268287167
+    },
+    {
+      "from_event": 32,
+      "to_event": 33,
+      "factor27_interval_ms": 27.898400381078545,
+      "factor81_interval_ms": 28.13847759205305,
+      "change_ms": 0.24007721097450485,
+      "next_onset_change_ms": 7.310199893846175
+    },
+    {
+      "from_event": 33,
+      "to_event": 34,
+      "factor27_interval_ms": 27.876304741648937,
+      "factor81_interval_ms": 28.11510603371289,
+      "change_ms": 0.23880129206395395,
+      "next_onset_change_ms": 7.549001185910129
+    },
+    {
+      "from_event": 34,
+      "to_event": 35,
+      "factor27_interval_ms": 27.856220324410515,
+      "factor81_interval_ms": 28.093806381172953,
+      "change_ms": 0.2375860567624386,
+      "next_onset_change_ms": 7.786587242672567
+    },
+    {
+      "from_event": 35,
+      "to_event": 36,
+      "factor27_interval_ms": 27.83802502610547,
+      "factor81_interval_ms": 28.07445238596779,
+      "change_ms": 0.23642735986231855,
+      "next_onset_change_ms": 8.023014602534886
+    },
+    {
+      "from_event": 36,
+      "to_event": 37,
+      "factor27_interval_ms": 27.82160817717613,
+      "factor81_interval_ms": 28.05692858719999,
+      "change_ms": 0.23532041002385995,
+      "next_onset_change_ms": 8.258335012558746
+    },
+    {
+      "from_event": 37,
+      "to_event": 38,
+      "factor27_interval_ms": 27.80685405262875,
+      "factor81_interval_ms": 28.041122238923663,
+      "change_ms": 0.23426818629491208,
+      "next_onset_change_ms": 8.492603198853658
+    },
+    {
+      "from_event": 38,
+      "to_event": 39,
+      "factor27_interval_ms": 27.793661873731708,
+      "factor81_interval_ms": 28.026922991463834,
+      "change_ms": 0.23326111773212688,
+      "next_onset_change_ms": 8.725864316585785
+    },
+    {
+      "from_event": 39,
+      "to_event": 40,
+      "factor27_interval_ms": 27.781927043202586,
+      "factor81_interval_ms": 28.014227333248982,
+      "change_ms": 0.23230029004639619,
+      "next_onset_change_ms": 8.958164606632181
+    }
+  ],
+  "first_onset_change_ms": 4.483112877551321e-05,
+  "cumulative_interval_identity_verified": true,
+  "late_interval_factor81_ms": 28.13847759205305,
+  "late_human_error_factor81_ms": 2.878490074640922,
+  "limit": "Ordinal differences show accumulation; they do not identify a unique channel cause or establish event identity after divergence"
+}

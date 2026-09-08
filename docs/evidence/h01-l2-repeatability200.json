@@ -1,0 +1,179 @@
+{
+  "specimen_id": 541563728,
+  "source_sha256": "cc180b297d762cb82833eb044566e21f77708c562295f86827ff3ed9ebcf3e0f",
+  "sweep_selection": "all repeated long-square 200 pA trials selected from stimulus metadata",
+  "sample_rate_hz": 50000,
+  "source_convention": "Allen pipeline 1.0 stored SI; conversion attributes not reapplied",
+  "voltage_shift_mv": -14,
+  "command_waveforms_exactly_equal": true,
+  "bias_values_equal": true,
+  "records": [
+    {
+      "sweep": 56,
+      "command_current_na": 0.20000000298023224,
+      "bias_current_na": -0.003711858945210089,
+      "baseline_mean_corrected_mv": -83.79290008544922,
+      "baseline_sd_mv": 0.11236407607793808,
+      "baseline_drift_mv": 0.021942138671875,
+      "checks": {
+        "baseline_sd_below_0_5_mv": true,
+        "absolute_drift_below_1_mv": true,
+        "absolute_bias_below_100_pa": true,
+        "pulse_boundary_below_threshold": true
+      },
+      "events": [
+        {
+          "rise_crossing_ms": 1225.4593710691825,
+          "fall_crossing_ms": 1226.4259016393444,
+          "time_above_threshold_ms": 0.9665305701619218,
+          "peak_sample_time_ms": 1225.76,
+          "peak_sample_voltage_mv": 36.218753814697266
+        }
+      ],
+      "intervals_ms": [],
+      "no_complete_events": false,
+      "pulse_maximum_corrected_mv": 36.218753814697266
+    },
+    {
+      "sweep": 57,
+      "command_current_na": 0.20000000298023224,
+      "bias_current_na": -0.003711858945210089,
+      "baseline_mean_corrected_mv": -83.89482116699219,
+      "baseline_sd_mv": 0.059315938502550125,
+      "baseline_drift_mv": -0.075469970703125,
+      "checks": {
+        "baseline_sd_below_0_5_mv": true,
+        "absolute_drift_below_1_mv": true,
+        "absolute_bias_below_100_pa": true,
+        "pulse_boundary_below_threshold": true
+      },
+      "events": [],
+      "intervals_ms": [],
+      "no_complete_events": true,
+      "pulse_maximum_corrected_mv": -61.718753814697266
+    },
+    {
+      "sweep": 58,
+      "command_current_na": 0.20000000298023224,
+      "bias_current_na": -0.003711858945210089,
+      "baseline_mean_corrected_mv": -83.90721893310547,
+      "baseline_sd_mv": 0.06563587486743927,
+      "baseline_drift_mv": 0.1054534912109375,
+      "checks": {
+        "baseline_sd_below_0_5_mv": true,
+        "absolute_drift_below_1_mv": true,
+        "absolute_bias_below_100_pa": true,
+        "pulse_boundary_below_threshold": true
+      },
+      "events": [],
+      "intervals_ms": [],
+      "no_complete_events": true,
+      "pulse_maximum_corrected_mv": -61.812503814697266
+    },
+    {
+      "sweep": 59,
+      "command_current_na": 0.20000000298023224,
+      "bias_current_na": -0.003711858945210089,
+      "baseline_mean_corrected_mv": -83.96690368652344,
+      "baseline_sd_mv": 0.05322350934147835,
+      "baseline_drift_mv": -0.01427459716796875,
+      "checks": {
+        "baseline_sd_below_0_5_mv": true,
+        "absolute_drift_below_1_mv": true,
+        "absolute_bias_below_100_pa": true,
+        "pulse_boundary_below_threshold": true
+      },
+      "events": [
+        {
+          "rise_crossing_ms": 1228.400543478261,
+          "fall_crossing_ms": 1229.3615873015872,
+          "time_above_threshold_ms": 0.9610438233262357,
+          "peak_sample_time_ms": 1228.72,
+          "peak_sample_voltage_mv": 36.187503814697266
+        }
+      ],
+      "intervals_ms": [],
+      "no_complete_events": false,
+      "pulse_maximum_corrected_mv": 36.187503814697266
+    },
+    {
+      "sweep": 60,
+      "command_current_na": 0.20000000298023224,
+      "bias_current_na": -0.003711858945210089,
+      "baseline_mean_corrected_mv": -83.69754791259766,
+      "baseline_sd_mv": 0.06374017149209976,
+      "baseline_drift_mv": -0.08663177490234375,
+      "checks": {
+        "baseline_sd_below_0_5_mv": true,
+        "absolute_drift_below_1_mv": true,
+        "absolute_bias_below_100_pa": true,
+        "pulse_boundary_below_threshold": true
+      },
+      "events": [
+        {
+          "rise_crossing_ms": 1172.2390419161677,
+          "fall_crossing_ms": 1173.204,
+          "time_above_threshold_ms": 0.9649580838322436,
+          "peak_sample_time_ms": 1172.54,
+          "peak_sample_voltage_mv": 35.84375
+        }
+      ],
+      "intervals_ms": [],
+      "no_complete_events": false,
+      "pulse_maximum_corrected_mv": 35.84375
+    },
+    {
+      "sweep": 61,
+      "command_current_na": 0.20000000298023224,
+      "bias_current_na": -0.003711858945210089,
+      "baseline_mean_corrected_mv": -83.64775848388672,
+      "baseline_sd_mv": 0.0714995265007019,
+      "baseline_drift_mv": 0.049530029296875,
+      "checks": {
+        "baseline_sd_below_0_5_mv": true,
+        "absolute_drift_below_1_mv": true,
+        "absolute_bias_below_100_pa": true,
+        "pulse_boundary_below_threshold": true
+      },
+      "events": [
+        {
+          "rise_crossing_ms": 1218.7412290502793,
+          "fall_crossing_ms": 1219.7075409836066,
+          "time_above_threshold_ms": 0.9663119333272334,
+          "peak_sample_time_ms": 1219.04,
+          "peak_sample_voltage_mv": 36.125003814697266
+        }
+      ],
+      "intervals_ms": [],
+      "no_complete_events": false,
+      "pulse_maximum_corrected_mv": 36.125003814697266
+    },
+    {
+      "sweep": 62,
+      "command_current_na": 0.20000000298023224,
+      "bias_current_na": -0.003711858945210089,
+      "baseline_mean_corrected_mv": -83.76941680908203,
+      "baseline_sd_mv": 0.062815360724926,
+      "baseline_drift_mv": 0.0565032958984375,
+      "checks": {
+        "baseline_sd_below_0_5_mv": true,
+        "absolute_drift_below_1_mv": true,
+        "absolute_bias_below_100_pa": true,
+        "pulse_boundary_below_threshold": true
+      },
+      "events": [
+        {
+          "rise_crossing_ms": 1223.5643820224718,
+          "fall_crossing_ms": 1224.5228571428572,
+          "time_above_threshold_ms": 0.9584751203854012,
+          "peak_sample_time_ms": 1223.86,
+          "peak_sample_voltage_mv": 35.875003814697266
+        }
+      ],
+      "intervals_ms": [],
+      "no_complete_events": false,
+      "pulse_maximum_corrected_mv": 35.875003814697266
+    }
+  ],
+  "qualification": "Direct same-input observations at 200 pA only; no 250 pA or population tolerance established."
+}

@@ -1,0 +1,34 @@
+{
+ "stage": "B0",
+ "manifest": "h01-e-usable-b0-manifest.json",
+ "evaluations_used": 4,
+ "cap": 8,
+ "run": "b0-survivor sweep53, 661 s, rc 0",
+ "score": "h01-e-usable/b0-survivor-sweep53-initiation.json",
+ "observed": {
+  "spikes": "5 (human 10)",
+  "cycles_ms": "38, 16, 242, 253, 242 (human 38, 12, 61, 110, 115, 119, 122, 116, 124, 121)",
+  "axon_first": "0.21 ms lead",
+  "threshold_mv": -57.2,
+  "peak_mv": 38.5,
+  "max_rise_v_s": 681,
+  "first_minimum_mv": -70.0,
+  "usable_310pA": {
+   "rate_hz": "5.31 vs 10.0, limit 1.5: fail",
+   "adaptation_ratio": "14.9 vs 9.95, limit 2.49: fail",
+   "width_ms": "4 of 5 cycles pass at 0.2 ms; 1.01 vs 0.91 first",
+   "ahp_mv": "within 0.4 mV, unresolvable at 2 mV"
+  }
+ },
+ "prediction_scored": {
+  "8 to 10 spikes": "FAILED (5)",
+  "first cycle 30 to 45": "held (38)",
+  "late cycles 120 to 200": "failed (242 to 253)",
+  "threshold -57 +/- 1": "held",
+  "peak 36 to 40": "held (38.5)",
+  "trough -70 to -73": "held (-70.0)",
+  "axon first": "held"
+ },
+ "decision": "Rejection clause met: the count at 310 pA is not set by the initiation site. The first two cycles now match the human (38, 16 against 38, 12 ms), so the supply reaching threshold and the early adaptation are right; the late train runs at half the human's rate (242 against 115 ms). That is the Modulate boundary of the E map (SK resistance growing with the calcium displacement) or a slow supply term. Stage B runs its three registered arms on the survivor at 310 pA, one boundary each, in a separate manifest with the sweep 53 input.",
+ "returned_question": "none"
+}

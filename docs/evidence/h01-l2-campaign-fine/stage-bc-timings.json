@@ -1,0 +1,33 @@
+[
+  {
+    "name": "ab-into-F3F5",
+    "sweep": "43",
+    "seconds": 494,
+    "returncode": 0,
+    "note": "run by monitor after the runner was stopped; sweep 50 and both ab-out sweeps completed inside the stopped runner and were not timed"
+  },
+  {
+    "name": "c-out-F3F5-atol11",
+    "sweep": "50",
+    "seconds": 340,
+    "returncode": 0
+  },
+  {
+    "name": "c-out-F3F5-atol11",
+    "sweep": "43",
+    "seconds": 210,
+    "returncode": 0
+  },
+  {
+    "name": "c-into-F3F5-atol11",
+    "sweep": "50",
+    "seconds": 882,
+    "returncode": 0
+  },
+  {
+    "name": "c-into-F3F5-atol11",
+    "sweep": "43",
+    "seconds": 605,
+    "returncode": 0
+  }
+]

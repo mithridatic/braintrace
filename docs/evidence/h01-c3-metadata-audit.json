@@ -1,0 +1,448 @@
+{
+  "export_listing": {
+    "url": "https://storage.googleapis.com/storage/v1/b/h01-release/o?prefix=data%2F20210729%2Fc3%2Fsynapses%2Fexported%2F&maxResults=3",
+    "sha256": "f3f5425e23bb47c11b33cb7c305d0315f5079d9c6fac044f6064d8a206cbb6ca",
+    "data": {
+      "kind": "storage#objects",
+      "nextPageToken": "CjpkYXRhLzIwMjEwNzI5L2MzL3N5bmFwc2VzL2V4cG9ydGVkL2V4cG9ydDAwMDAwMDAwMDAwMC5qc29u",
+      "items": [
+        {
+          "kind": "storage#object",
+          "id": "h01-release/data/20210729/c3/synapses/exported//1691593250248608",
+          "selfLink": "https://www.googleapis.com/storage/v1/b/h01-release/o/data%2F20210729%2Fc3%2Fsynapses%2Fexported%2F",
+          "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/h01-release/o/data%2F20210729%2Fc3%2Fsynapses%2Fexported%2F?generation=1691593250248608&alt=media",
+          "name": "data/20210729/c3/synapses/exported/",
+          "bucket": "h01-release",
+          "generation": "1691593250248608",
+          "metageneration": "1",
+          "contentType": "text/plain",
+          "storageClass": "NEARLINE",
+          "size": "0",
+          "md5Hash": "1B2M2Y8AsgTpgAmY7PhCfg==",
+          "crc32c": "AAAAAA==",
+          "etag": "CKCvpPbrz4ADEAE=",
+          "timeCreated": "2023-08-09T15:00:50.256Z",
+          "updated": "2023-08-09T15:00:50.256Z",
+          "timeStorageClassUpdated": "2023-08-09T15:00:50.256Z",
+          "timeFinalized": "2023-08-09T15:00:50.256Z"
+        },
+        {
+          "kind": "storage#object",
+          "id": "h01-release/data/20210729/c3/synapses/exported/export000000000000/1691593249270082",
+          "selfLink": "https://www.googleapis.com/storage/v1/b/h01-release/o/data%2F20210729%2Fc3%2Fsynapses%2Fexported%2Fexport000000000000",
+          "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/h01-release/o/data%2F20210729%2Fc3%2Fsynapses%2Fexported%2Fexport000000000000?generation=1691593249270082&alt=media",
+          "name": "data/20210729/c3/synapses/exported/export000000000000",
+          "bucket": "h01-release",
+          "generation": "1691593249270082",
+          "metageneration": "1",
+          "contentType": "application/octet-stream",
+          "storageClass": "NEARLINE",
+          "size": "197344616",
+          "md5Hash": "FfGidI+1e1Kmfw5+7Ei5Kw==",
+          "crc32c": "dAe5tA==",
+          "etag": "CMLS6PXrz4ADEAE=",
+          "timeCreated": "2023-08-09T15:00:49.273Z",
+          "updated": "2023-08-09T15:00:49.273Z",
+          "timeStorageClassUpdated": "2023-08-09T15:00:49.273Z",
+          "timeFinalized": "2023-08-09T15:00:49.273Z"
+        },
+        {
+          "kind": "storage#object",
+          "id": "h01-release/data/20210729/c3/synapses/exported/export000000000000.json/1691593310671152",
+          "selfLink": "https://www.googleapis.com/storage/v1/b/h01-release/o/data%2F20210729%2Fc3%2Fsynapses%2Fexported%2Fexport000000000000.json",
+          "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/h01-release/o/data%2F20210729%2Fc3%2Fsynapses%2Fexported%2Fexport000000000000.json?generation=1691593310671152&alt=media",
+          "name": "data/20210729/c3/synapses/exported/export000000000000.json",
+          "bucket": "h01-release",
+          "generation": "1691593310671152",
+          "metageneration": "1",
+          "contentType": "application/octet-stream",
+          "storageClass": "NEARLINE",
+          "size": "757111597",
+          "md5Hash": "SE20falHMO2zaYat366Nsg==",
+          "crc32c": "NQxqAA==",
+          "etag": "CLCijJPsz4ADEAE=",
+          "timeCreated": "2023-08-09T15:01:50.676Z",
+          "updated": "2023-08-09T15:01:50.676Z",
+          "timeStorageClassUpdated": "2023-08-09T15:01:50.676Z",
+          "timeFinalized": "2023-08-09T15:01:50.676Z"
+        }
+      ]
+    }
+  },
+  "annotations": {
+    "url": "https://storage.googleapis.com/h01-release/data/20210729/c3/synapses/precomputed/info",
+    "sha256": "3b81ffe96235db87df8c906cce615a386342fa28a8bc4d9b8ab18068d30cdd35",
+    "data": {
+      "@type": "neuroglancer_annotations_v1",
+      "annotation_type": "LINE",
+      "dimensions": {
+        "x": [
+          8e-09,
+          "m"
+        ],
+        "y": [
+          8e-09,
+          "m"
+        ],
+        "z": [
+          3.3e-08,
+          "m"
+        ]
+      },
+      "lower_bound": [
+        64667.0,
+        39426.0,
+        63.0
+      ],
+      "upper_bound": [
+        483997.0,
+        296180.0,
+        5231.0
+      ],
+      "by_id": {
+        "key": "by_id",
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "murmurhash3_x86_128",
+          "minishard_bits": 14,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 10,
+          "shard_bits": 4
+        }
+      },
+      "relationships": [
+        {
+          "key": "pre_synaptic_cell",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "murmurhash3_x86_128",
+            "minishard_bits": 13,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 4
+          },
+          "id": "pre_synaptic_cell"
+        },
+        {
+          "key": "post_synaptic_cell",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "murmurhash3_x86_128",
+            "minishard_bits": 12,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 4
+          },
+          "id": "post_synaptic_cell"
+        }
+      ],
+      "properties": [
+        {
+          "id": "type",
+          "type": "uint32"
+        }
+      ],
+      "spatial": [
+        {
+          "chunk_size": [
+            419330.0,
+            256754.0,
+            5168.0
+          ],
+          "grid_shape": [
+            1,
+            1,
+            1
+          ],
+          "key": "spatial0",
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            209665.0,
+            256754.0,
+            5168.0
+          ],
+          "grid_shape": [
+            2,
+            1,
+            1
+          ],
+          "key": "spatial1",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 0,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 0
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            104832.5,
+            128377.0,
+            5168.0
+          ],
+          "grid_shape": [
+            4,
+            2,
+            1
+          ],
+          "key": "spatial2",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 0,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 0
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            52416.25,
+            64188.5,
+            5168.0
+          ],
+          "grid_shape": [
+            8,
+            4,
+            1
+          ],
+          "key": "spatial3",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 0,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 0
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            26208.125,
+            32094.25,
+            5168.0
+          ],
+          "grid_shape": [
+            16,
+            8,
+            1
+          ],
+          "key": "spatial4",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 0,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 0
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            13104.0625,
+            16047.125,
+            5168.0
+          ],
+          "grid_shape": [
+            32,
+            16,
+            1
+          ],
+          "key": "spatial5",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 0,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 0
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            13104.0625,
+            8023.5625,
+            2584.0
+          ],
+          "grid_shape": [
+            32,
+            32,
+            2
+          ],
+          "key": "spatial6",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 1,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 1
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            6552.03125,
+            8023.5625,
+            1292.0
+          ],
+          "grid_shape": [
+            64,
+            32,
+            4
+          ],
+          "key": "spatial7",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 1,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 3
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            3276.015625,
+            4011.78125,
+            1292.0
+          ],
+          "grid_shape": [
+            128,
+            64,
+            4
+          ],
+          "key": "spatial8",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 2,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 4
+          },
+          "limit": 10000
+        },
+        {
+          "chunk_size": [
+            3276.015625,
+            2005.890625,
+            646.0
+          ],
+          "grid_shape": [
+            128,
+            128,
+            8
+          ],
+          "key": "spatial9",
+          "sharding": {
+            "@type": "neuroglancer_uint64_sharded_v1",
+            "data_encoding": "gzip",
+            "hash": "identity",
+            "minishard_bits": 4,
+            "minishard_index_encoding": "gzip",
+            "preshift_bits": 10,
+            "shard_bits": 4
+          },
+          "limit": 1332
+        }
+      ]
+    }
+  },
+  "record_sample": {
+    "url": "https://storage.googleapis.com/h01-release/data/20210729/c3/synapses/exported/export000000000000.json",
+    "content_range": "bytes 0-16383/757111597",
+    "range_sha256": "82d358c983aeef08d8cc58a35c458cf067c6692038feeaa4a5f90dca3cdfca1f",
+    "complete_records_in_range": 21,
+    "first_record": {
+      "pre_synaptic_site": {
+        "neuron_id": "5472528459",
+        "id": "19685462211",
+        "centroid": {
+          "x": "461512",
+          "y": "196505",
+          "z": "256"
+        },
+        "type": "1",
+        "bounding_box": {
+          "start": {
+            "x": "461472",
+            "y": "196487",
+            "z": "240"
+          },
+          "size": {
+            "x": "81",
+            "y": "37",
+            "z": "32"
+          }
+        },
+        "class_label": "AXON",
+        "base_neuron_id": "5472528459"
+      },
+      "post_synaptic_partner": {
+        "neuron_id": "5414315245",
+        "id": "19685462210",
+        "centroid": {
+          "x": "461511",
+          "y": "196494",
+          "z": "256"
+        },
+        "type": "2",
+        "bounding_box": {
+          "start": {
+            "x": "461472",
+            "y": "196474",
+            "z": "240"
+          },
+          "size": {
+            "x": "79",
+            "y": "40",
+            "z": "33"
+          }
+        },
+        "class_label": "DENDRITE",
+        "base_neuron_id": "5472528717"
+      },
+      "location": {
+        "x": "461512",
+        "y": "196499",
+        "z": "256"
+      },
+      "type": "2",
+      "confidence": 0.9575211405754089,
+      "bounding_box": {
+        "start": {
+          "x": "461472",
+          "y": "196474",
+          "z": "240"
+        },
+        "size": {
+          "x": "81",
+          "y": "50",
+          "z": "33"
+        }
+      }
+    }
+  }
+}

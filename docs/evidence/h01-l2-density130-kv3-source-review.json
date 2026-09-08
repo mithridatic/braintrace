@@ -1,0 +1,36 @@
+{
+  "source_sha256": "e636c3437a9d9ccb69a0a7efc09fcfe1f16ad97f0468615b70fdbc352fe0855c",
+  "soma_gbar_s_cm2": 0.3687667632247488,
+  "potassium_reversal_mv": -107,
+  "observations": [
+    {
+      "ordinal": 1,
+      "voltage_mv": -71.65684112129954,
+      "inferred_gate_from_current": 0.02102179951421513,
+      "source_equilibrium_gate": 9.004254235144568e-05,
+      "source_tau_ms": 1.4462640466749033
+    },
+    {
+      "ordinal": 2,
+      "voltage_mv": -72.06024208288069,
+      "inferred_gate_from_current": 0.019306574148005125,
+      "source_equilibrium_gate": 8.63749921595603e-05,
+      "source_tau_ms": 1.4378362109122391
+    },
+    {
+      "ordinal": 3,
+      "voltage_mv": -72.13284743774575,
+      "inferred_gate_from_current": 0.01860680217434078,
+      "source_equilibrium_gate": 8.573093657155964e-05,
+      "source_tau_ms": 1.4363216311336604
+    },
+    {
+      "ordinal": 4,
+      "voltage_mv": -72.15358360354428,
+      "inferred_gate_from_current": 0.01887174695912643,
+      "source_equilibrium_gate": 8.554787675937783e-05,
+      "source_tau_ms": 1.4358891943598786
+    }
+  ],
+  "qualification": "Source-law reconstruction from local recorded current, not an independent gate measurement or causal intervention."
+}

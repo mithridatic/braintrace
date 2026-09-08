@@ -1,0 +1,67 @@
+{
+  "reference": "h01-pv-neuron-observed",
+  "transfer": "h01-pv-braincell-019-fine",
+  "comparison": "same physical clock; no voltage or spike-time alignment",
+  "windows": {
+    "initial": {
+      "start_ms": 0.0,
+      "stop_ms": 20.0,
+      "max_error_mv": 0.0004853666843729343,
+      "rms_error_mv": 0.000318373079656668,
+      "mean_signed_error_mv": 0.0002127473616737669,
+      "calcium_mm": {
+        "max_error": 4.7326603898854847e-14,
+        "rms_error": 2.0780499537572324e-14
+      },
+      "sk_gate": {
+        "max_error": 1.9445650601898623e-11,
+        "rms_error": 1.3499806622483388e-11
+      }
+    },
+    "baseline": {
+      "start_ms": 200.0,
+      "stop_ms": 270.0,
+      "max_error_mv": 0.0003112462045891107,
+      "rms_error_mv": 0.0003028087710334101,
+      "mean_signed_error_mv": 0.00030277488677042593,
+      "calcium_mm": {
+        "max_error": 1.079789266355581e-12,
+        "rms_error": 9.911464171489893e-13
+      },
+      "sk_gate": {
+        "max_error": 4.8355443455806724e-11,
+        "rms_error": 4.4627875355419695e-11
+      }
+    },
+    "stimulus": {
+      "start_ms": 270.0,
+      "stop_ms": 1270.0,
+      "max_error_mv": 119.10807589678586,
+      "rms_error_mv": 11.872731819927965,
+      "mean_signed_error_mv": -0.2074732326733721,
+      "calcium_mm": {
+        "max_error": 4.419836477255359e-05,
+        "rms_error": 1.8613042529648344e-05
+      },
+      "sk_gate": {
+        "max_error": 0.12120854650554805,
+        "rms_error": 0.02671135122451198
+      }
+    },
+    "recovery": {
+      "start_ms": 1270.0,
+      "stop_ms": 1500.0,
+      "max_error_mv": 4.094834816003541,
+      "rms_error_mv": 0.455797088149938,
+      "mean_signed_error_mv": -0.09059966895360017,
+      "calcium_mm": {
+        "max_error": 9.879429142314856e-06,
+        "rms_error": 6.77516060888595e-06
+      },
+      "sk_gate": {
+        "max_error": 0.005805961907033599,
+        "rms_error": 0.002826556449455182
+      }
+    }
+  }
+}

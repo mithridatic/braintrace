@@ -1,0 +1,100 @@
+{
+  "definition": "Lowest recorded voltage strictly after one -20 mV fall and before the next -20 mV rise. Earliest sample is selected on an exact tie. No temporal alignment.",
+  "event_source": "h01-l2-reversal-active-result.json",
+  "event_source_sha256": "6431a3970fd47a455b15a66e136559b837771bc5d5be7b510a39defbce15dbe4",
+  "records": [
+    {
+      "label": "control",
+      "source": "docs\\evidence\\h01-l2-sweep50-ih75-epasminus4.npz",
+      "source_sha256": "54086752ba948c5a558cb8c23e353e6ed3521ee3cbbc1afe2e19d8eec900f1fe",
+      "minima": [
+        {
+          "interval_ordinal": 1,
+          "left_fall_ms": 1083.7020546918757,
+          "right_rise_ms": 1119.9984567124507,
+          "minimum_sample_index": 262826,
+          "minimum_time_ms": 1086.1022046075668,
+          "minimum_voltage_mv": -71.12026288444673,
+          "time_since_preceding_fall_ms": 2.400149915691145
+        },
+        {
+          "interval_ordinal": 2,
+          "left_fall_ms": 1120.9026750482349,
+          "right_rise_ms": 1362.10437171004,
+          "minimum_sample_index": 297900,
+          "minimum_time_ms": 1123.3854103573585,
+          "minimum_voltage_mv": -71.45009975586335,
+          "time_since_preceding_fall_ms": 2.4827353091236546
+        },
+        {
+          "interval_ordinal": 3,
+          "left_fall_ms": 1363.0023890843397,
+          "right_rise_ms": 1693.3505199731403,
+          "minimum_sample_index": 433274,
+          "minimum_time_ms": 1365.5228364804761,
+          "minimum_voltage_mv": -71.50980754146676,
+          "time_since_preceding_fall_ms": 2.520447396136433
+        },
+        {
+          "interval_ordinal": 4,
+          "left_fall_ms": 1694.2477741805906,
+          "right_rise_ms": 2008.440148780104,
+          "minimum_sample_index": 599801,
+          "minimum_time_ms": 1696.7414380028226,
+          "minimum_voltage_mv": -71.53353516003297,
+          "time_since_preceding_fall_ms": 2.4936638222320653
+        }
+      ]
+    },
+    {
+      "label": "human",
+      "source": ".cache\\human-pyramidal-l2\\sweep-50.npz",
+      "source_sha256": "6b47857fca79b0f2aafbce255822311d05462c982aa9f449b3c6624561c66d61",
+      "minima": [
+        {
+          "interval_ordinal": 1,
+          "left_fall_ms": 1078.7474193511216,
+          "right_rise_ms": 1111.6632941190087,
+          "minimum_sample_index": 53999,
+          "minimum_time_ms": 1079.98,
+          "minimum_voltage_mv": -69.56250363588333,
+          "time_since_preceding_fall_ms": 1.232580648878411
+        },
+        {
+          "interval_ordinal": 2,
+          "left_fall_ms": 1112.7979591792684,
+          "right_rise_ms": 1332.0667901242136,
+          "minimum_sample_index": 55712,
+          "minimum_time_ms": 1114.24,
+          "minimum_voltage_mv": -67.09375375509262,
+          "time_since_preceding_fall_ms": 1.4420408207315631
+        },
+        {
+          "interval_ordinal": 3,
+          "left_fall_ms": 1333.0415624977322,
+          "right_rise_ms": 1639.473071897731,
+          "minimum_sample_index": 66718,
+          "minimum_time_ms": 1334.36,
+          "minimum_voltage_mv": -70.21875450015068,
+          "time_since_preceding_fall_ms": 1.3184375022676704
+        },
+        {
+          "interval_ordinal": 4,
+          "left_fall_ms": 1640.4441935462983,
+          "right_rise_ms": 1912.8256250018965,
+          "minimum_sample_index": 82089,
+          "minimum_time_ms": 1641.78,
+          "minimum_voltage_mv": -70.28125369548798,
+          "time_since_preceding_fall_ms": 1.3358064537017071
+        }
+      ]
+    }
+  ],
+  "matched_minimum_voltage_errors_mv": [
+    -1.5577592485634,
+    -4.356346000770728,
+    -1.2910530413160757,
+    -1.2522814645449927
+  ],
+  "qualification": "Direct descriptive recovery observations; minima are sampled at different physical times and are not an isolated calcium or SK measurement."
+}

@@ -1,0 +1,93 @@
+{
+  "qualification": "Retrospective local current observations at each own minimum, not same-time contrasts, whole-cell currents, or causal mediation.",
+  "units": "mA/cm2; ionic current outward positive; soma(0.5)",
+  "observations": [
+    {
+      "ordinal": 1,
+      "time_ms": 1082.0557169333094,
+      "voltage_mv": -71.65684112129954,
+      "delay_after_fall_ms": 2.3819285178979044,
+      "local_soma_current_densities_ma_cm2": {
+        "soma_NaTs_ma_cm2": -6.731825895201088e-05,
+        "soma_Nap_ma_cm2": -0.0005238831099108801,
+        "soma_K_P_ma_cm2": 0.0002786061101663167,
+        "soma_K_T_ma_cm2": 1.0199214833935402e-09,
+        "soma_Kv3_1_ma_cm2": 0.27398514974132476,
+        "soma_Im_ma_cm2": 0.00613335057417552,
+        "soma_SK_ma_cm2": 0.0015146754509235405,
+        "soma_Ca_HVA_ma_cm2": -0.011247724905934623,
+        "soma_Ca_LVA_ma_cm2": -0.008904007007298355,
+        "soma_Ih_ma_cm2": -4.803963292536814e-05,
+        "soma_pas_ma_cm2": 0.006879972782415234,
+        "soma_icap_ma_cm2": -3.790461857611227e-06
+      },
+      "soma_cai_mm": 0.00019355547101746465
+    },
+    {
+      "ordinal": 2,
+      "time_ms": 1116.423211895171,
+      "voltage_mv": -72.06024208288069,
+      "delay_after_fall_ms": 2.477030455801696,
+      "local_soma_current_densities_ma_cm2": {
+        "soma_NaTs_ma_cm2": -5.8967255874067505e-05,
+        "soma_Nap_ma_cm2": -0.00047984977993237744,
+        "soma_K_P_ma_cm2": 0.0002810030176705021,
+        "soma_K_T_ma_cm2": 8.352090516712862e-10,
+        "soma_Kv3_1_ma_cm2": 0.24875789910288426,
+        "soma_Im_ma_cm2": 0.005711185961743494,
+        "soma_SK_ma_cm2": 0.010927861883909611,
+        "soma_Ca_HVA_ma_cm2": -0.008837965193557323,
+        "soma_Ca_LVA_ma_cm2": -0.004134096075297346,
+        "soma_Ih_ma_cm2": -2.439261533850456e-05,
+        "soma_pas_ma_cm2": 0.006709944495559418,
+        "soma_icap_ma_cm2": -8.173103567543638e-08
+      },
+      "soma_cai_mm": 0.0002888851658152382
+    },
+    {
+      "ordinal": 3,
+      "time_ms": 1368.1734532580022,
+      "voltage_mv": -72.13284743774575,
+      "delay_after_fall_ms": 2.506563288536654,
+      "local_soma_current_densities_ma_cm2": {
+        "soma_NaTs_ma_cm2": -5.7811065672917604e-05,
+        "soma_Nap_ma_cm2": -0.00046527780669404945,
+        "soma_K_P_ma_cm2": 0.00023387103997967893,
+        "soma_K_T_ma_cm2": 8.281474446760227e-10,
+        "soma_Kv3_1_ma_cm2": 0.23924341539127084,
+        "soma_Im_ma_cm2": 0.005559915930745489,
+        "soma_SK_ma_cm2": 0.015094089147731322,
+        "soma_Ca_HVA_ma_cm2": -0.0075079640720089455,
+        "soma_Ca_LVA_ma_cm2": -0.002854725350683124,
+        "soma_Ih_ma_cm2": -1.711352426216416e-05,
+        "soma_pas_ma_cm2": 0.006679342277716708,
+        "soma_icap_ma_cm2": -2.3916354490588487e-06
+      },
+      "soma_cai_mm": 0.0003092552140019751
+    },
+    {
+      "ordinal": 4,
+      "time_ms": 1679.0052893877073,
+      "voltage_mv": -72.15358360354428,
+      "delay_after_fall_ms": 2.4830798065411273,
+      "local_soma_current_densities_ma_cm2": {
+        "soma_NaTs_ma_cm2": -5.684759508132016e-05,
+        "soma_Nap_ma_cm2": -0.00045623818583715754,
+        "soma_K_P_ma_cm2": 0.00022366569056103585,
+        "soma_K_T_ma_cm2": 8.287240602520494e-10,
+        "soma_Kv3_1_ma_cm2": 0.24250572625605643,
+        "soma_Im_ma_cm2": 0.0055856548683508025,
+        "soma_SK_ma_cm2": 0.01427103100288065,
+        "soma_Ca_HVA_ma_cm2": -0.007239214758243314,
+        "soma_Ca_LVA_ma_cm2": -0.002862950220697462,
+        "soma_Ih_ma_cm2": -1.7158313915985597e-05,
+        "soma_pas_ma_cm2": 0.006670602252078539,
+        "soma_icap_ma_cm2": -4.958535442939338e-07
+      },
+      "soma_cai_mm": 0.000304774122539947
+    }
+  ],
+  "sha256": {
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.npz": "bf8b02f6c20691765f1f09700a658de0ae6f0968368529bb9eb71b1d1016773d"
+  }
+}

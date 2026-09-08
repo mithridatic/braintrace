@@ -1,0 +1,18 @@
+{
+  "check": "command identity outside main-pulse edge windows",
+  "status": "rejected",
+  "maximum_error_na": 0.0500000006675716,
+  "bad_count": 2,
+  "first_bad": [
+    {
+      "time_ms": 5.0,
+      "command_na": 0.0500000006675716,
+      "recorded_na": 0.0
+    },
+    {
+      "time_ms": 15.02,
+      "command_na": 0.0,
+      "recorded_na": 0.05000000065911614
+    }
+  ]
+}

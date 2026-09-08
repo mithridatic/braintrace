@@ -1,0 +1,19 @@
+{
+  "scope": "Completed disconnected control. I matches standalone restored-closing record exactly. First 8 ms of E match the prior circuit within declared limits.",
+  "checks": {
+    "I_voltage": "exact equality with standalone 20 ms record",
+    "I_output_voltage": "exact equality with standalone 20 ms record",
+    "I_synaptic_conductance": "exact equality with standalone 20 ms record",
+    "I_events": "exact equality with standalone 20 ms record"
+  },
+  "E_conductance_zero": true,
+  "I_events_ms": [
+    8.355
+  ],
+  "expected_first_delivery_time_ms": 8.855,
+  "local_E_at_expected_delivery_mv": -80.48233683226692,
+  "soma_E_at_expected_delivery_mv": -77.49383952107158,
+  "borrowed_reversal_mv": -80.0,
+  "source_sha256": "1b0ba42cde294aab7147e0b782f0ebc354c8d4d6c08a5c42c3a3fe876444d07d",
+  "status": "Both controls completed. See h01-measured-delivery20-paired-audit.json for the edge-removal comparison."
+}

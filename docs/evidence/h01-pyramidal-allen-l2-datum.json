@@ -1,0 +1,23 @@
+{
+  "specimen_id": 541563728,
+  "recording": "H16.03.007.01.01.08.07",
+  "sweep": 43,
+  "layer": "2",
+  "dendrite_type": "spiny",
+  "reconstruction": "full",
+  "species": "Homo sapiens",
+  "sample_rate_hz": 50000.0,
+  "pipeline_version": "1.0",
+  "unit_handling": "SI stored values, per AllenSDK pre-1.1 handling; obsolete data conversion attributes not reapplied",
+  "declared_voltage_conversion": 0.001,
+  "declared_current_conversion": 1e-12,
+  "voltage_shift_mv": -14.0,
+  "pulse_start_ms": 1020.0,
+  "pulse_end_ms": 2020.0,
+  "command_current_na": 0.10999999940395355,
+  "bias_current_na": -0.003711858945210089,
+  "total_pulse_current_na": 0.10628814250230789,
+  "current_interpretation": "Command plus separately reported bias, based on acquisition protocol; both components retained",
+  "events_corrected_above_minus20_mv": [],
+  "qualification": "Layer-matched human reference candidate, not H01 donor physiology. Source conventions established; model response and sweep-quality checks remain required."
+}

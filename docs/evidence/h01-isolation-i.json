@@ -1,0 +1,1801 @@
+{
+ "cell": "I",
+ "human_limits": {
+  "latency_ms": 24.960600000000028,
+  "minimum_mv": 1.2403102219104767,
+  "return_mv": 0.9346711339652496,
+  "peak_mv": 2.067185528576374,
+  "threshold_mv": 1.2862498685717583,
+  "max_rise_v_s": 19.52342572368213,
+  "max_fall_v_s": 19.523427862640535,
+  "plateau_mv": 1.1189273218635936
+ },
+ "human_repeat_sets": {
+  "short square 750 pA": {
+   "repeats": 4,
+   "factor": 1.47,
+   "limits": {
+    "latency_ms": 0.11760000000006016,
+    "minimum_mv": 1.2403102219104767,
+    "return_mv": 0.8445339504629373,
+    "peak_mv": 2.067185528576374,
+    "threshold_mv": 1.0565625876188278,
+    "max_rise_v_s": 19.52342572368213,
+    "max_fall_v_s": 18.374985898809385,
+    "plateau_mv": 1.1189273218635936
+   }
+  },
+  "long square 120 pA": {
+   "repeats": 4,
+   "factor": 1.47,
+   "limits": {
+    "latency_ms": 24.960600000000028,
+    "minimum_mv": 0.5512538552284241,
+    "return_mv": 0.9346711339652496,
+    "peak_mv": 1.6078109666705132,
+    "threshold_mv": 1.2862498685717583,
+    "max_rise_v_s": 16.078123362201346,
+    "max_fall_v_s": 19.523427862640535,
+    "plateau_mv": 0.604537429466852
+   }
+  }
+ },
+ "model_limits": {
+  "cycle_ms": 12.812820082265311,
+  "minimum_mv": 0.01769160101838381,
+  "return_mv": 0.08645321921743318,
+  "peak_mv": 0.008351829372810116,
+  "threshold_mv": 0.033001463690863986,
+  "max_rise_v_s": 245.48312730201914,
+  "max_fall_v_s": 0.13693398230198,
+  "plateau_mv": 3.935323012221562
+ },
+ "model_repeat_sets": {
+  "source 0.19 nA, nseg x9 and x27": {
+   "repeats": 2,
+   "factor": 2.95,
+   "limits": {
+    "cycle_ms": 2.3690674097350097,
+    "minimum_mv": 0.01769160101838381,
+    "return_mv": 0.0012130664435368033,
+    "peak_mv": 0.008351829372810116,
+    "threshold_mv": 0.033001463690863986,
+    "max_rise_v_s": 0.1649991474409035,
+    "max_fall_v_s": 0.13693398230198,
+    "plateau_mv": 3.0530167985437773
+   }
+  },
+  "candidate 0.27 nA, nseg x9, x27, x81": {
+   "repeats": 3,
+   "factor": 1.81,
+   "limits": {
+    "cycle_ms": 12.812820082265311,
+    "minimum_mv": 0.005239654726826615,
+    "return_mv": 0.08645321921743318,
+    "peak_mv": 0.0020692117712036405,
+    "max_rise_v_s": 245.48312730201914,
+    "max_fall_v_s": 0.017313887327294993,
+    "plateau_mv": 3.935323012221562
+   }
+  }
+ },
+ "inputs": {
+  "0.19 nA": {
+   "human_spikes": 12,
+   "models": {
+    "source": {
+     "trace": "h01-pv-neuron-space9",
+     "model_spikes": 11,
+     "rows": [
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "threshold_mv",
+       "human": -60.5,
+       "model": -60.528906857953025,
+       "contrast": -0.028906857953025167,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 0.022466356529918956,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "peak_mv",
+       "human": 19.5625,
+       "model": 44.24820384374686,
+       "contrast": 24.685703843746857,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 11.94159983735538,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_rise_v_s",
+       "human": 596.8750119205615,
+       "model": 1388.2906694072408,
+       "contrast": 791.4156574866793,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 3.2137629084985972,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_fall_v_s",
+       "human": -335.93749999935073,
+       "model": -140.69459530327185,
+       "contrast": 195.24290469607888,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 10.000195860947207,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "minimum_mv",
+       "human": -78.84375,
+       "model": -77.40704738064906,
+       "contrast": 1.436702619350939,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 1.1582235333839417,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "cycle_ms",
+       "human": 21.680000000000064,
+       "model": 34.37189285629114,
+       "contrast": 12.691892856291076,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.9905620132650099,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "threshold_mv",
+       "human": -59.875,
+       "model": -60.51276229945805,
+       "contrast": -0.6377622994580534,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 0.49566767942228357,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "peak_mv",
+       "human": 18.593753814697266,
+       "model": 44.11550116195243,
+       "contrast": 25.521747347255165,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 12.346032177170791,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_rise_v_s",
+       "human": 575.7812738407451,
+       "model": 1388.2653507081304,
+       "contrast": 812.4840768673853,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 3.2993170722378276,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_fall_v_s",
+       "human": -316.4062738421457,
+       "model": -143.98210565386034,
+       "contrast": 172.42416818828536,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 8.831437207553416,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "minimum_mv",
+       "human": -78.71875,
+       "model": -77.55339940467621,
+       "contrast": 1.1653505953237868,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 0.9394682420477305,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "cycle_ms",
+       "human": 7.619999999999948,
+       "model": 8.980599172094117,
+       "contrast": 1.3605991720941688,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.10619045326152854,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "threshold_mv",
+       "human": -58.531253814697266,
+       "model": -60.04976163287943,
+       "contrast": -1.5185078181821652,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 1.1801814673939555,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "peak_mv",
+       "human": 18.625,
+       "model": 43.94435566820599,
+       "contrast": 25.319355668205993,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 12.248126099348834,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_rise_v_s",
+       "human": 567.1874999997675,
+       "model": 1369.6822201878458,
+       "contrast": 802.4947201880783,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 3.258752517225521,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_fall_v_s",
+       "human": -321.8750119207821,
+       "model": -148.82232065310382,
+       "contrast": 173.05269126767826,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 8.863629690588015,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "minimum_mv",
+       "human": -78.90625762939453,
+       "model": -78.76206638551261,
+       "contrast": 0.14419124388192017,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 0.11624235226033877,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "cycle_ms",
+       "human": 10.180000000000007,
+       "model": 11.295291770393362,
+       "contrast": 1.1152917703933554,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.0870449880067442,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "threshold_mv",
+       "human": -51.71875,
+       "model": -60.30107457173988,
+       "contrast": -8.582324571739882,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 6.670166781790058,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "peak_mv",
+       "human": 14.218751907348633,
+       "model": 44.21396769445233,
+       "contrast": 29.995215787103696,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 14.51005271034435,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "max_rise_v_s",
+       "human": 445.31252384095285,
+       "model": 1380.4555726554718,
+       "contrast": 935.1430488145189,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 3.797407867775194,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "max_fall_v_s",
+       "human": -274.21875000022277,
+       "model": -153.44229448260376,
+       "contrast": 120.77645551761901,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 6.186079911314823,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "minimum_mv",
+       "human": -79.125,
+       "model": -80.4249978146813,
+       "contrast": -1.299997814681305,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 1.0480165081008974,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "cycle_ms",
+       "human": 197.0,
+       "model": 120.43744808591498,
+       "contrast": -76.56255191408502,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 5.975464528691699,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "threshold_mv",
+       "human": -53.031253814697266,
+       "model": -60.30464573891163,
+       "contrast": -7.273391924214366,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 5.652866749363618,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "peak_mv",
+       "human": 14.968751907348633,
+       "model": 44.215591956208925,
+       "contrast": 29.246840048860292,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 14.14802926346775,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "max_rise_v_s",
+       "human": 452.34374999767147,
+       "model": 1380.73943470031,
+       "contrast": 928.3956847026386,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 3.770008323290872,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "max_fall_v_s",
+       "human": -282.03127384209665,
+       "model": -153.42757007600449,
+       "contrast": 128.60370376609217,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 6.586985724813302,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "minimum_mv",
+       "human": -79.40625762939453,
+       "model": -80.42379020830303,
+       "contrast": -1.0175325789085008,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 0.8203021021908518,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "cycle_ms",
+       "human": 117.13999999999987,
+       "model": 122.52249804075109,
+       "contrast": 5.382498040751216,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.4200869134345628,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "threshold_mv",
+       "human": -52.03125,
+       "model": -60.32993208051128,
+       "contrast": -8.298682080511277,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 6.449720362281867,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "peak_mv",
+       "human": 14.781251907348633,
+       "model": 44.216873102994825,
+       "contrast": 29.435621195646192,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 14.239351306623725,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "max_rise_v_s",
+       "human": 452.3437499978312,
+       "model": 1380.9965547554166,
+       "contrast": 928.6528047575854,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 3.7710524306291613,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "max_fall_v_s",
+       "human": -275.00001192117907,
+       "model": -153.4249675259307,
+       "contrast": 121.57504439524837,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 6.226983037608191,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "minimum_mv",
+       "human": -79.25,
+       "model": -80.42360826941699,
+       "contrast": -1.173608269416988,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 0.9461253138292809,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "cycle_ms",
+       "human": 98.84000000000015,
+       "model": 124.4218920727817,
+       "contrast": 25.581892072781557,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 1.9965856000889595,
+       "tier": "real"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -86.87375945587158,
+       "model": -87.50151118904115,
+       "contrast": -0.6277517331695748,
+       "limit": 0.9386609013807612,
+       "limit_source": "human and model",
+       "ratio": 0.6687737097030013,
+       "tier": "parked"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "threshold_mv": {
+        "search": 3,
+        "real": 1,
+        "parked": 2,
+        "unlimited": 0
+       },
+       "peak_mv": {
+        "search": 6,
+        "real": 0,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "max_rise_v_s": {
+        "search": 0,
+        "real": 6,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "max_fall_v_s": {
+        "search": 6,
+        "real": 0,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "minimum_mv": {
+        "search": 0,
+        "real": 2,
+        "parked": 4,
+        "unlimited": 0
+       },
+       "cycle_ms": {
+        "search": 1,
+        "real": 1,
+        "parked": 4,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [
+       "cycle_ms",
+       "max_fall_v_s",
+       "peak_mv",
+       "threshold_mv"
+      ],
+      "parked_landmarks": [
+       "max_rise_v_s",
+       "minimum_mv",
+       "return_mv"
+      ]
+     }
+    },
+    "candidate": {
+     "trace": "h01-pv-calcium-response-004-300",
+     "model_spikes": 15,
+     "rows": [
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "threshold_mv",
+       "human": -60.5,
+       "model": -60.68175090730181,
+       "contrast": -0.18175090730181154,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 0.1412564689567523,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "peak_mv",
+       "human": 19.5625,
+       "model": 17.61634575475009,
+       "contrast": -1.946154245249911,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.9414434915710049,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_rise_v_s",
+       "human": 596.8750119205615,
+       "model": 639.1266571367432,
+       "contrast": 42.251645216181714,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.17157453094879221,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_fall_v_s",
+       "human": -335.93749999935073,
+       "model": -343.4044726193465,
+       "contrast": -7.466972619995772,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 0.38245276469597356,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "minimum_mv",
+       "human": -78.84375,
+       "model": -73.33345833561008,
+       "contrast": 5.510291664389925,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 4.442220258767992,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "cycle_ms",
+       "human": 21.680000000000064,
+       "model": 30.038242223962754,
+       "contrast": 8.35824222396269,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.6523343159662124,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "threshold_mv",
+       "human": -59.875,
+       "model": -60.6005135646284,
+       "contrast": -0.7255135646284003,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 0.563867800392614,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "peak_mv",
+       "human": 18.593753814697266,
+       "model": 17.433661179526993,
+       "contrast": -1.1600926351702725,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.5611896712021723,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_rise_v_s",
+       "human": 575.7812738407451,
+       "model": 631.1269304747111,
+       "contrast": 55.34565663396597,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.22474639812105685,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_fall_v_s",
+       "human": -316.4062738421457,
+       "model": -341.7743224172593,
+       "contrast": -25.36804857511362,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 1.2993325148284056,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "minimum_mv",
+       "human": -78.71875,
+       "model": -73.26077864298779,
+       "contrast": 5.457971357012212,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 4.400041306448601,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "cycle_ms",
+       "human": 7.619999999999948,
+       "model": 9.226495685254065,
+       "contrast": 1.6064956852541172,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.1253818967986389,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "threshold_mv",
+       "human": -58.531253814697266,
+       "model": -60.47687548695669,
+       "contrast": -1.9456216722594277,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 1.5121335647184366,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "peak_mv",
+       "human": 18.625,
+       "model": 17.2446219321608,
+       "contrast": -1.3803780678391995,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.667751773039806,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_rise_v_s",
+       "human": 567.1874999997675,
+       "model": 626.382177879841,
+       "contrast": 59.19467788007353,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.24037641705958374,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_fall_v_s",
+       "human": -321.8750119207821,
+       "model": -339.51585260756445,
+       "contrast": -17.640840686782383,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 0.9035506939122752,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "minimum_mv",
+       "human": -78.90625762939453,
+       "model": -73.61156657530125,
+       "contrast": 5.294691054093278,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 4.268409967553843,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "cycle_ms",
+       "human": 10.180000000000007,
+       "model": 10.019326775706475,
+       "contrast": -0.16067322429353226,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.012540035937593933,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "threshold_mv",
+       "human": -51.71875,
+       "model": -60.444828094720975,
+       "contrast": -8.726078094720975,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 6.781891753939345,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "peak_mv",
+       "human": 14.218751907348633,
+       "model": 17.284130314604745,
+       "contrast": 3.0653784072561123,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 1.4828632199926046,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "max_rise_v_s",
+       "human": 445.31252384095285,
+       "model": 626.5966215232575,
+       "contrast": 181.2840976823046,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.7361543880521889,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "max_fall_v_s",
+       "human": -274.21875000022277,
+       "model": -339.6974994962219,
+       "contrast": -65.47874949599912,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 3.353772679776363,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "minimum_mv",
+       "human": -79.125,
+       "model": -74.43417656241996,
+       "contrast": 4.690823437580036,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 3.7815912793481514,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 10,
+       "key": "cycle_ms",
+       "human": 197.0,
+       "model": 87.75958366008126,
+       "contrast": -109.24041633991874,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 8.525868281809588,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "threshold_mv",
+       "human": -53.031253814697266,
+       "model": -60.423759884603314,
+       "contrast": -7.392506069906048,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 5.745442043060869,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "peak_mv",
+       "human": 14.968751907348633,
+       "model": 17.289969990672365,
+       "contrast": 2.321218083323732,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 1.1228789611079517,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "max_rise_v_s",
+       "human": 452.34374999767147,
+       "model": 626.7552730562138,
+       "contrast": 174.41152305854234,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.7082463915363282,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "max_fall_v_s",
+       "human": -282.03127384209665,
+       "model": -339.7914541110202,
+       "contrast": -57.760180268923534,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 2.9584333246423684,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "minimum_mv",
+       "human": -79.40625762939453,
+       "model": -74.43903065272951,
+       "contrast": 4.9672269766650174,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 4.0044189399697085,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 11,
+       "key": "cycle_ms",
+       "human": 117.13999999999987,
+       "model": 88.27368745487365,
+       "contrast": -28.86631254512622,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 2.252924208705711,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "threshold_mv",
+       "human": -52.03125,
+       "model": -60.45509953175854,
+       "contrast": -8.423849531758542,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 6.547000273859667,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "peak_mv",
+       "human": 14.781251907348633,
+       "model": 17.295849795930174,
+       "contrast": 2.514597888581541,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 1.2164255849203178,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "max_rise_v_s",
+       "human": 452.3437499978312,
+       "model": 626.8886489064234,
+       "contrast": 174.54489890859224,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.7087880011895173,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "max_fall_v_s",
+       "human": -275.00001192117907,
+       "model": -339.8739322515904,
+       "contrast": -64.87392033041135,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 3.3227937813231456,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "minimum_mv",
+       "human": -79.25,
+       "model": -74.4435206746881,
+       "contrast": 4.806479325311898,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 3.8748293434688743,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 12,
+       "key": "cycle_ms",
+       "human": 98.84000000000015,
+       "model": 88.76586818634314,
+       "contrast": -10.074131813657004,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.7862540603064407,
+       "tier": "parked"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -86.87375945587158,
+       "model": -87.44559083299337,
+       "contrast": -0.5718313771217964,
+       "limit": 0.9386609013807612,
+       "limit_source": "human and model",
+       "ratio": 0.6091991008474285,
+       "tier": "parked"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "threshold_mv": {
+        "search": 3,
+        "real": 1,
+        "parked": 2,
+        "unlimited": 0
+       },
+       "peak_mv": {
+        "search": 0,
+        "real": 3,
+        "parked": 3,
+        "unlimited": 0
+       },
+       "max_rise_v_s": {
+        "search": 0,
+        "real": 0,
+        "parked": 6,
+        "unlimited": 0
+       },
+       "max_fall_v_s": {
+        "search": 0,
+        "real": 4,
+        "parked": 2,
+        "unlimited": 0
+       },
+       "minimum_mv": {
+        "search": 0,
+        "real": 6,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "cycle_ms": {
+        "search": 1,
+        "real": 1,
+        "parked": 4,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [
+       "cycle_ms",
+       "threshold_mv"
+      ],
+      "parked_landmarks": [
+       "max_fall_v_s",
+       "max_rise_v_s",
+       "minimum_mv",
+       "peak_mv",
+       "return_mv"
+      ]
+     }
+    }
+   }
+  },
+  "0.27 nA": {
+   "human_spikes": 43,
+   "models": {
+    "source": {
+     "status": "no zero-bias trace on record; Stage 3 reference run"
+    },
+    "candidate": {
+     "trace": "h01-pv-calcium-response-004-300-027",
+     "model_spikes": 43,
+     "rows": [
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "threshold_mv",
+       "human": -61.656253814697266,
+       "model": -61.10973020734009,
+       "contrast": 0.5465236073571731,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 0.4247571366924965,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "peak_mv",
+       "human": 19.4375,
+       "model": 17.940114088371335,
+       "contrast": -1.4973859116286654,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.7243537989415114,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_rise_v_s",
+       "human": 602.3437499997563,
+       "model": 646.5972075438258,
+       "contrast": 44.25345754406953,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.17970344544306907,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_fall_v_s",
+       "human": -336.71874999934926,
+       "model": -346.5713586119001,
+       "contrast": -9.852608612550853,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 0.5046432597391213,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "minimum_mv",
+       "human": -78.90625762939453,
+       "model": -71.8971475078481,
+       "contrast": 7.009110121546428,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 5.650519586664487,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "cycle_ms",
+       "human": 12.680000000000064,
+       "model": 12.647696791264764,
+       "contrast": -0.032303208735299904,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.0025211630638606987,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "threshold_mv",
+       "human": -60.000003814697266,
+       "model": -61.372656607913484,
+       "contrast": -1.3726527932162185,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 1.0668232117893452,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "peak_mv",
+       "human": 17.312503814697266,
+       "model": 17.693433958926057,
+       "contrast": 0.3809301442287918,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.18427326914231731,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_rise_v_s",
+       "human": 570.3124999988978,
+       "model": 637.0819613262584,
+       "contrast": 66.76946132736055,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.27113592737823056,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_fall_v_s",
+       "human": -314.84374999984107,
+       "model": -342.3927984911319,
+       "contrast": -27.54904849129082,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 1.411041702767564,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "minimum_mv",
+       "human": -78.125,
+       "model": -70.59016039811576,
+       "contrast": 7.534839601884244,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 6.074345817729658,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "cycle_ms",
+       "human": 6.279999999999973,
+       "model": 4.9189574053797855,
+       "contrast": -1.3610425946201872,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.10622506098435391,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "threshold_mv",
+       "human": -59.656253814697266,
+       "model": -61.4174805970073,
+       "contrast": -1.7612267823100325,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 1.3688221973387542,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "peak_mv",
+       "human": 16.937501907348633,
+       "model": 17.046042905867065,
+       "contrast": 0.10854099851843202,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.052506227023477285,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_rise_v_s",
+       "human": 550.000023842216,
+       "model": 622.1541826311104,
+       "contrast": 72.15415878889439,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.2930019857657035,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_fall_v_s",
+       "human": -304.687523842135,
+       "model": -334.0901303877516,
+       "contrast": -29.402606545616607,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 1.505979562925646,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "minimum_mv",
+       "human": -78.03125,
+       "model": -69.96645640605608,
+       "contrast": 8.064793593943918,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 6.501577714537629,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "cycle_ms",
+       "human": 5.939999999999998,
+       "model": 4.2503210772458715,
+       "contrast": -1.6896789227541262,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.13187408485450225,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 41,
+       "key": "threshold_mv",
+       "human": -57.031253814697266,
+       "model": -60.19625078641936,
+       "contrast": -3.164996971722097,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 2.459829791891341,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 41,
+       "key": "peak_mv",
+       "human": 17.5,
+       "model": 16.633453436967248,
+       "contrast": -0.8665465630327525,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.4191880596831361,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 41,
+       "key": "max_rise_v_s",
+       "human": 542.1875000004931,
+       "model": 612.9594619174686,
+       "contrast": 70.77196191697556,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.2873891917841916,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 41,
+       "key": "max_fall_v_s",
+       "human": -310.15625000019327,
+       "model": -329.0427246550971,
+       "contrast": -18.88647465490385,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 0.9673511360930235,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 41,
+       "key": "minimum_mv",
+       "human": -79.65625,
+       "model": -73.61890935086339,
+       "contrast": 6.03734064913661,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 4.867110231931335,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 41,
+       "key": "cycle_ms",
+       "human": 26.080000000000155,
+       "model": 26.008919408680867,
+       "contrast": -0.07108059131928712,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.005547614878138525,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 42,
+       "key": "threshold_mv",
+       "human": -57.71875,
+       "model": -60.18541849524277,
+       "contrast": -2.4666684952427715,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 1.917090191721902,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 42,
+       "key": "peak_mv",
+       "human": 17.781251907348633,
+       "model": 16.634759303987668,
+       "contrast": -1.146492603360965,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.5546107160842613,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 42,
+       "key": "max_rise_v_s",
+       "human": 532.8125238423424,
+       "model": 613.0064049276498,
+       "contrast": 80.19388108530734,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.325649509309646,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 42,
+       "key": "max_fall_v_s",
+       "human": -307.03126192120817,
+       "model": -329.0561891077709,
+       "contrast": -22.024927186562707,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 1.1281003324119845,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 42,
+       "key": "minimum_mv",
+       "human": -79.78125,
+       "model": -73.61982912061174,
+       "contrast": 6.16142087938826,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 4.967139730569045,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 42,
+       "key": "cycle_ms",
+       "human": 25.0,
+       "model": 26.011355097640035,
+       "contrast": 1.0113550976400347,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.07893306010281749,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 43,
+       "key": "threshold_mv",
+       "human": -56.90625,
+       "model": -60.19245795137525,
+       "contrast": -3.2862079513752533,
+       "limit": 1.286673160132986,
+       "limit_source": "human and model",
+       "ratio": 2.5540347410647803,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 43,
+       "key": "peak_mv",
+       "human": 17.5,
+       "model": 16.636439379201143,
+       "contrast": -0.8635606207988573,
+       "limit": 2.0672024000105687,
+       "limit_source": "human and model",
+       "ratio": 0.4177436233599779,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 43,
+       "key": "max_rise_v_s",
+       "human": 529.6875238428726,
+       "model": 613.0277445157399,
+       "contrast": 83.3402206728673,
+       "limit": 246.25825862692903,
+       "limit_source": "human and model",
+       "ratio": 0.33842609436755683,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 43,
+       "key": "max_fall_v_s",
+       "human": -308.59376192129844,
+       "model": -329.0724582352892,
+       "contrast": -20.47869631399078,
+       "limit": 19.52390807249506,
+       "limit_source": "human and model",
+       "ratio": 1.0489035411327718,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 43,
+       "key": "minimum_mv",
+       "human": -79.75,
+       "model": -73.62074784457128,
+       "contrast": 6.129252155428716,
+       "limit": 1.2404363906795906,
+       "limit_source": "human and model",
+       "ratio": 4.941206337932991,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 43,
+       "key": "cycle_ms",
+       "human": 26.680000000000064,
+       "model": 26.01342119212245,
+       "contrast": -0.6665788078776131,
+       "limit": 12.812820082265311,
+       "limit_source": "model",
+       "ratio": 0.052024363379631705,
+       "tier": "parked"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -87.48345283050537,
+       "model": -87.27751528474131,
+       "contrast": 0.20593754576405843,
+       "limit": 0.9386609013807612,
+       "limit_source": "human and model",
+       "ratio": 0.21939503974345398,
+       "tier": "parked"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "threshold_mv": {
+        "search": 0,
+        "real": 5,
+        "parked": 1,
+        "unlimited": 0
+       },
+       "peak_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 6,
+        "unlimited": 0
+       },
+       "max_rise_v_s": {
+        "search": 0,
+        "real": 0,
+        "parked": 6,
+        "unlimited": 0
+       },
+       "max_fall_v_s": {
+        "search": 0,
+        "real": 4,
+        "parked": 2,
+        "unlimited": 0
+       },
+       "minimum_mv": {
+        "search": 3,
+        "real": 3,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "cycle_ms": {
+        "search": 0,
+        "real": 0,
+        "parked": 6,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [
+       "minimum_mv"
+      ],
+      "parked_landmarks": [
+       "cycle_ms",
+       "max_fall_v_s",
+       "max_rise_v_s",
+       "peak_mv",
+       "return_mv",
+       "threshold_mv"
+      ]
+     }
+    }
+   }
+  },
+  "-0.11 nA": {
+   "human_spikes": 0,
+   "models": {
+    "source": {
+     "trace": "h01-pv-neuron-hyper011",
+     "model_spikes": 0,
+     "rows": [
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "plateau_mv",
+       "human": -95.17494717407227,
+       "model": -94.50863787860803,
+       "contrast": 0.6663092954642451,
+       "limit": 4.091303650688057,
+       "limit_source": "human and model",
+       "ratio": 0.16285989805527834,
+       "tier": "parked"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -86.4672157043457,
+       "model": -85.91516183725535,
+       "contrast": 0.5520538670903505,
+       "limit": 0.9386609013807612,
+       "limit_source": "human and model",
+       "ratio": 0.588129180919632,
+       "tier": "parked"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "plateau_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [],
+      "parked_landmarks": [
+       "plateau_mv",
+       "return_mv"
+      ]
+     }
+    },
+    "candidate": {
+     "status": "no zero-bias trace on record; Stage 3 reference run"
+    }
+   }
+  },
+  "-0.05 nA": {
+   "human_spikes": 0,
+   "models": {
+    "source": {
+     "trace": "h01-pv-neuron-hyper005",
+     "model_spikes": 0,
+     "rows": [
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "plateau_mv",
+       "human": -91.68775474700928,
+       "model": -90.13071446972934,
+       "contrast": 1.5570402772799383,
+       "limit": 4.091303650688057,
+       "limit_source": "human and model",
+       "ratio": 0.38057314005966836,
+       "tier": "parked"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -87.82355330505371,
+       "model": -86.18804763348194,
+       "contrast": 1.6355056715717637,
+       "limit": 0.9386609013807612,
+       "limit_source": "human and model",
+       "ratio": 1.7423818006757825,
+       "tier": "real"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "plateau_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 1,
+        "parked": 0,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [],
+      "parked_landmarks": [
+       "plateau_mv",
+       "return_mv"
+      ]
+     }
+    },
+    "candidate": {
+     "status": "no zero-bias trace on record; Stage 3 reference run"
+    }
+   }
+  }
+ },
+ "summary": {
+  "per_landmark": {
+   "threshold_mv": {
+    "search": 6,
+    "real": 7,
+    "parked": 5,
+    "unlimited": 0
+   },
+   "peak_mv": {
+    "search": 6,
+    "real": 3,
+    "parked": 9,
+    "unlimited": 0
+   },
+   "max_rise_v_s": {
+    "search": 0,
+    "real": 6,
+    "parked": 12,
+    "unlimited": 0
+   },
+   "max_fall_v_s": {
+    "search": 6,
+    "real": 8,
+    "parked": 4,
+    "unlimited": 0
+   },
+   "minimum_mv": {
+    "search": 3,
+    "real": 11,
+    "parked": 4,
+    "unlimited": 0
+   },
+   "cycle_ms": {
+    "search": 2,
+    "real": 2,
+    "parked": 14,
+    "unlimited": 0
+   },
+   "return_mv": {
+    "search": 0,
+    "real": 1,
+    "parked": 4,
+    "unlimited": 0
+   },
+   "plateau_mv": {
+    "search": 0,
+    "real": 0,
+    "parked": 2,
+    "unlimited": 0
+   }
+  },
+  "search_landmarks": [
+   "cycle_ms",
+   "max_fall_v_s",
+   "minimum_mv",
+   "peak_mv",
+   "threshold_mv"
+  ],
+  "parked_landmarks": [
+   "max_rise_v_s",
+   "plateau_mv",
+   "return_mv"
+  ]
+ },
+ "tree": "flowchart TD\n    R[I: human-model contrast] --> IN[Inputs: recording and datum]\n    R --> FN[Function: model]\n    R --> ID[Interdependency]\n    FN --> cycle_ms[cycle_ms: search]\n    FN --> max_fall_v_s[max_fall_v_s: search]\n    FN --> minimum_mv[minimum_mv: search]\n    FN --> peak_mv[peak_mv: search]\n    FN --> threshold_mv[threshold_mv: search]\n    FN -.-> max_rise_v_s[max_rise_v_s: parked, inside repeatability]\n    FN -.-> plateau_mv[plateau_mv: parked, inside repeatability]\n    FN -.-> return_mv[return_mv: parked, inside repeatability]"
+}

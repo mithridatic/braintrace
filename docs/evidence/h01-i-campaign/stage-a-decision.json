@@ -1,0 +1,79 @@
+{
+  "decision": "no group reversed by a single swap; count is an interdependency of G1a (sodium inactivation law) and G3 (axonal calcium/SK); Stage B pair G1a+G3",
+  "count_changes": {
+    "G1a": {
+      "019:event_count": {
+        "into_source": 43,
+        "out_of_candidate": -21
+      },
+      "027:event_count": {
+        "into_source": -36,
+        "out_of_candidate": -50
+      }
+    },
+    "G1b": {
+      "019:event_count": {
+        "into_source": 0,
+        "out_of_candidate": -2
+      },
+      "027:event_count": {
+        "into_source": 0,
+        "out_of_candidate": -1
+      }
+    },
+    "G2": {
+      "019:event_count": {
+        "into_source": 2,
+        "out_of_candidate": -6
+      },
+      "027:event_count": {
+        "into_source": 6,
+        "out_of_candidate": -18
+      }
+    },
+    "G3": {
+      "019:event_count": {
+        "into_source": -17,
+        "out_of_candidate": 58
+      },
+      "027:event_count": {
+        "into_source": -31,
+        "out_of_candidate": 84
+      }
+    },
+    "G4": {
+      "019:event_count": {
+        "into_source": 0,
+        "out_of_candidate": -2
+      },
+      "027:event_count": {
+        "into_source": -1,
+        "out_of_candidate": -55
+      }
+    }
+  },
+  "steep_x_by_group": {
+    "subthreshold": "G4"
+  },
+  "prediction_check": {
+    "G1a carries first-spike peak and duration": "not decidable by RSS: into-G1a gives 65/3 events and out-G1a 5/9, so most event rows are unavailable; G1a is a count mover, not a shape-only lever",
+    "G1b carries the count increase": "REFUTED: into-G1b changes no count (22/39 -> 22/39); out-G1b changes counts by -2/-1, inside the limits",
+    "G2 and G4 share the minima shift": "partly: G2 is the largest complete RSS on minima (6693 vs G1b 1064); G4 and G1a are incomplete because they remove events",
+    "G3 carries intervals 3-7": "stronger than predicted: G3 into source drops counts to 5/8 and out of candidate raises them to 84/143; G3 is the brake on both counts",
+    "no single sub-system reverses": "held"
+  },
+  "stage_b": {
+    "pair": [
+      "G1a",
+      "G3"
+    ],
+    "candidates": [
+      "b-into-G1aG3",
+      "b-out-G1aG3"
+    ],
+    "prediction": "b-into-G1aG3 (source + fast inactivation + strong axonal SK) fires between the source (22/39) and the candidate (26/59), within 6 events of the candidate at 0.19 nA; b-out-G1aG3 (candidate without both) fires within 6 events of the source at 0.19 nA and does not block at 0.27 nA (more than 20 events). If both hold, the candidate's count is the interdependency of G1a and G3 and neither is a Steep X; G2 and G4 then carry the minima and the high-input block respectively.",
+    "rejection": "If b-into-G1aG3 blocks at 0.27 nA (fewer than 10 events) or b-out-G1aG3 exceeds 40 events at 0.19 nA, the pair does not reproduce the count and a third player (G4 at 0.27 nA) is required.",
+    "unchanged": "nseg x9, CVode 1e-10, recorded bias, all four inputs, library kv3-phase-reference"
+  },
+  "elemental_note": "Every swap leaves the passive samples +2.0 to +4.1 mV above the human values (the subthreshold group is unchanged by G1a, G1b, G2, G3 and moved 0.05 mV by G4). The passive family is outside this partition."
+}

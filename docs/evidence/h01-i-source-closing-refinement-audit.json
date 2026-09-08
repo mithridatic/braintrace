@@ -1,0 +1,37 @@
+{
+  "cases": [
+    {
+      "file": "h01-i-source-closing-only",
+      "sha256": "c83e0c24c768c96c4d85905bdde293189fc8a1c8c8d3faa8e7fba4e24082e0af",
+      "positive_crossing_ms": 3.2454118032417743,
+      "peak_mv": 35.036700161273494,
+      "peak_ms": 3.365,
+      "voltage_10ms_mv": -81.18620373217482,
+      "availability_at_peak": 0.45603083572812886
+    },
+    {
+      "file": "h01-i-source-closing-only-fine",
+      "sha256": "8819e6344e6feb85f10fb3d5ab22899a14a68dc5f6b6497dff748311ce7c1693",
+      "positive_crossing_ms": 3.243416346352888,
+      "peak_mv": 35.21335589739913,
+      "peak_ms": 3.3625000000000003,
+      "voltage_10ms_mv": -81.19276402088411,
+      "availability_at_peak": 0.4611080004624303
+    }
+  ],
+  "peak_change_mv": 0.1766557361256389,
+  "crossing_change_ms": -0.001995456888886249,
+  "qualification": "Positive output and recovery persist under joint time/space refinement. Not a 0.1 mV precision pass or human waveform qualification.",
+  "control_profile_and_geometry_match": [
+    "borrowed_dynamics",
+    "electrical_intervals",
+    "inferred_region_basis",
+    "solver",
+    "max_cv_length_um",
+    "dt_ms",
+    "current_na"
+  ],
+  "coarse_response_change_RSS_mv": 1167.7389191364323,
+  "RSS_grid": "1600 samples 0.005 through 8 ms after pulse onset; root sum squared paired voltage changes",
+  "control_sha256": "3b81fb09a3dce0346cad1c9d8d04f6ab5f900fdd030dc32f57c7c2cfb3ed0bd0"
+}

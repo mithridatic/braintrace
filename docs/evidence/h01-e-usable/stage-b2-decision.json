@@ -1,0 +1,51 @@
+{
+ "stage": "B2",
+ "manifest": "h01-e-usable-b2-manifest.json",
+ "evaluations_used": 8,
+ "cap": 8,
+ "run": "b2-sk-half-ca-decay sweep53, 592 s, rc 0",
+ "score": "h01-e-usable/b2-sk-half-ca-decay-sweep53-initiation.json",
+ "observed": "9 spikes (human 10); cycles 38, 14, 49, 175, 151, 146, 142, 139, 137 (human 38, 12, 61, 110, 115, 119, 122, 116, 124, 121); late mean 134; rate 8.39 Hz; adaptation 9.8 (human 9.95, pass); threshold -57.2, peak 38.5, rise 681, trough -70.0, width 1.007: unchanged from the survivor",
+ "prediction_scored": {
+  "late cycles 135 to 165": "held on the mean (134); individual cycles 137 to 175",
+  "count 8": "9 (one better)",
+  "rate 7.5 to 8.5": "held (8.39)",
+  "threshold, peak, trough, width unchanged": "held",
+  "rejection (late above 175 or a Stage A row moved)": "not met"
+ },
+ "usable_310pA": {
+  "rate_hz": "8.39 vs 10, limit 1.5: fail by 0.1",
+  "adaptation_ratio": "9.81 vs 9.95: pass",
+  "width": "8 of 9 cycles pass",
+  "ahp": "within 0.5 mV, unresolvable at 2 mV"
+ },
+ "decision": "The two levers are one boundary and act additively; the finalist reaches 9 of 10 spikes and passes every usable row but rate, by 0.1 Hz. The cap is spent. The last step (a dose of SK 0.35 with calcium decay 1.0) and the sweep 55 prediction are returned to the user as a two-evaluation extension.",
+ "finalist_flags": {
+  "calcium_decay_factor": 1.0,
+  "distribute_ih": true,
+  "ih_density_factor": 75.0,
+  "kv3_closing_factor": 0.9,
+  "leak_reversal_shift_mv": -4.0,
+  "sodium_density_factor": 0.9,
+  "sodium_opening_factor": 2.0,
+  "sodium_recovery_factor": 1.0,
+  "insert_density": [
+   "NaTs:axon:3.814"
+  ],
+  "regional_density": [
+   "SK:soma:0.5"
+  ]
+ },
+ "returned_question": "extend the cap by two (dose step, then sweep 55 prediction)?",
+ "audit_2026_09_07": {
+  "source": "b2-audit.json",
+  "corrections": [
+   "Usable rate AND cycle-2 width fail; AHP is unresolvable, with cycle-2 absolute error 6.037 mV.",
+   "No sweep50 evaluation exists for these exact B2 flags.",
+   "The original 135-165 ms individual late-cycle prediction was missed; cycle 4 is 174.936 ms. Changing to a mean after observation does not rescue that prediction."
+  ],
+  "late_cycles_definition": "cycles 4 onward",
+  "late_cycles_mean_ms": 148.4245197746169,
+  "status": "Original decision retained as history; audited rows supersede its all-but-rate and AHP-within-0.5 claims."
+ }
+}

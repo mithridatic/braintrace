@@ -1,0 +1,62 @@
+{
+  "stage": "0",
+  "audit": "h01-i-trough-audit.json",
+  "decision": "soma h 0.983 >= 0.7 at trough + 6 ms: availability is not the limit; the reserve tests post-trough drive",
+  "arm": "drive",
+  "reading": "available",
+  "h_used": 0.9833496701696178,
+  "h_by_input": {
+    "019": 0.9879105603739406,
+    "027": 0.9833496701696178
+  },
+  "rule": {
+    "available_at_least": 0.7,
+    "limited_below": 0.5,
+    "offset_ms": 6.0,
+    "statistic": "median over unflagged cycles, smaller of the two inputs"
+  },
+  "arm_flags": {
+    "scale": [
+      "NaTg:axon:1.5"
+    ]
+  },
+  "finalist_flags": {
+    "axon_calcium_decay_ms": 300.0,
+    "axon_calcium_gamma": 0.004,
+    "conductance_factor": 1.1,
+    "conductance_region": "soma",
+    "cvode_atol": 1e-10,
+    "nseg_factor": 9,
+    "observe_charge_balance": true,
+    "observe_spike_currents": true,
+    "refine_region": "all",
+    "scale_conductance": "NaTg",
+    "sodium_h_recovery_factor": 1.0,
+    "sodium_h_slope_mv": 5.0,
+    "sodium_h_tau_factor": 0.15,
+    "somatic_calva_factor": 0.5,
+    "somatic_kv3_close_factor": 2.0,
+    "somatic_kv3_tau_factor": 0.5
+  },
+  "candidate_flags": {
+    "axon_calcium_decay_ms": 300.0,
+    "axon_calcium_gamma": 0.004,
+    "conductance_factor": 1.1,
+    "conductance_region": "soma",
+    "cvode_atol": 1e-10,
+    "nseg_factor": 9,
+    "observe_charge_balance": true,
+    "observe_spike_currents": true,
+    "refine_region": "all",
+    "scale_conductance": "NaTg",
+    "sodium_h_recovery_factor": 1.0,
+    "sodium_h_slope_mv": 5.0,
+    "sodium_h_tau_factor": 0.15,
+    "somatic_calva_factor": 0.5,
+    "somatic_kv3_close_factor": 2.0,
+    "somatic_kv3_tau_factor": 0.5,
+    "scale": [
+      "NaTg:axon:1.5"
+    ]
+  }
+}

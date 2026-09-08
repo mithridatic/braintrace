@@ -1,0 +1,123 @@
+{
+  "decision": "rejected",
+  "checks": {
+    "late_voltage_below_1120_ms": false,
+    "postpulse_voltage_below_start": false,
+    "no_complete_pulse_spikes": true
+  },
+  "invalid_reasons": [],
+  "samples": [
+    {
+      "time_ms": 1019,
+      "corrected_voltage_mv": -84.5,
+      "change_from_1019_ms_mv": 0.0,
+      "model_voltage_mv": -84.44341265005028,
+      "absolute_error_mv": 0.05658734994972292,
+      "model_change_from_1019_ms_mv": 0.0,
+      "deflection_error_mv": 0.0
+    },
+    {
+      "time_ms": 1025,
+      "corrected_voltage_mv": -82.09375762939453,
+      "change_from_1019_ms_mv": 2.4062423706054688,
+      "model_voltage_mv": -81.75297463023087,
+      "absolute_error_mv": 0.3407829991636646,
+      "model_change_from_1019_ms_mv": 2.6904380198194104,
+      "deflection_error_mv": 0.2841956492139417
+    },
+    {
+      "time_ms": 1030,
+      "corrected_voltage_mv": -80.6875,
+      "change_from_1019_ms_mv": 3.8125,
+      "model_voltage_mv": -80.32833181899849,
+      "absolute_error_mv": 0.3591681810015075,
+      "model_change_from_1019_ms_mv": 4.115080831051785,
+      "deflection_error_mv": 0.30258083105178457
+    },
+    {
+      "time_ms": 1040,
+      "corrected_voltage_mv": -78.53125,
+      "change_from_1019_ms_mv": 5.96875,
+      "model_voltage_mv": -78.20348299558964,
+      "absolute_error_mv": 0.32776700441036155,
+      "model_change_from_1019_ms_mv": 6.239929654460639,
+      "deflection_error_mv": 0.27117965446063863
+    },
+    {
+      "time_ms": 1070,
+      "corrected_voltage_mv": -75.5625,
+      "change_from_1019_ms_mv": 8.9375,
+      "model_voltage_mv": -74.57884340598426,
+      "absolute_error_mv": 0.9836565940157413,
+      "model_change_from_1019_ms_mv": 9.864569244066018,
+      "deflection_error_mv": 0.9270692440660184
+    },
+    {
+      "time_ms": 1120,
+      "corrected_voltage_mv": -74.1875,
+      "change_from_1019_ms_mv": 10.3125,
+      "model_voltage_mv": -72.39300704648743,
+      "absolute_error_mv": 1.7944929535125738,
+      "model_change_from_1019_ms_mv": 12.05040560356285,
+      "deflection_error_mv": 1.7379056035628508
+    },
+    {
+      "time_ms": 1520,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.56354406098801,
+      "absolute_error_mv": 4.123955939011992,
+      "model_change_from_1019_ms_mv": 12.87986858906227,
+      "deflection_error_mv": 4.067368589062269
+    },
+    {
+      "time_ms": 2019,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.5685643237418,
+      "absolute_error_mv": 4.118935676258204,
+      "model_change_from_1019_ms_mv": 12.87484832630848,
+      "deflection_error_mv": 4.062348326308481
+    },
+    {
+      "time_ms": 2025,
+      "corrected_voltage_mv": -78.125,
+      "change_from_1019_ms_mv": 6.375,
+      "model_voltage_mv": -74.26885115269428,
+      "absolute_error_mv": 3.856148847305718,
+      "model_change_from_1019_ms_mv": 10.174561497355995,
+      "deflection_error_mv": 3.7995614973559952
+    },
+    {
+      "time_ms": 2030,
+      "corrected_voltage_mv": -79.65625,
+      "change_from_1019_ms_mv": 4.84375,
+      "model_voltage_mv": -75.69525044552465,
+      "absolute_error_mv": 3.9609995544753502,
+      "model_change_from_1019_ms_mv": 8.748162204525627,
+      "deflection_error_mv": 3.9044122045256273
+    },
+    {
+      "time_ms": 2050,
+      "corrected_voltage_mv": -83.28125,
+      "change_from_1019_ms_mv": 1.21875,
+      "model_voltage_mv": -79.37696183489302,
+      "absolute_error_mv": 3.9042881651069763,
+      "model_change_from_1019_ms_mv": 5.066450815157253,
+      "deflection_error_mv": 3.8477008151572534
+    },
+    {
+      "time_ms": 2099,
+      "corrected_voltage_mv": -85.8125,
+      "change_from_1019_ms_mv": -1.3125,
+      "model_voltage_mv": -83.05095703839996,
+      "absolute_error_mv": 2.7615429616000426,
+      "model_change_from_1019_ms_mv": 1.3924556116503197,
+      "deflection_error_mv": 2.7049556116503197
+    }
+  ],
+  "model_events": [],
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "qualification": "One-factor Ih sufficiency prediction; candidate numerical and human waveform validation not established."
+}

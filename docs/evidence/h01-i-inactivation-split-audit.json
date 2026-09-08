@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "file": "h01-i-inactivation-block",
+      "sha256": "fe784b62459bd3a9f2e99dacd2958aaf1b6115eaad6b32a329e4de2fed9a9200",
+      "peak_mv": 41.94866567099061,
+      "positive_crossings_ms": [
+        3.2150001660346783
+      ],
+      "h_nondecreasing_during_block": true
+    },
+    {
+      "file": "h01-i-inactivation-block-halfdt",
+      "sha256": "61e8157dd62219d7b360d8557d28bf687a4a15cfd2d44be036d191a8ff856cf8",
+      "peak_mv": 41.99163034083407,
+      "positive_crossings_ms": [
+        3.213556212303009
+      ],
+      "h_nondecreasing_during_block": true
+    }
+  ],
+  "decision": "Preventing NaTg h decline during the pulse permits a positive excursion at both time steps.",
+  "limit": "Nonphysical intervention in all NaTg regions. Does not localize the effect, establish human waveform validity, or qualify full spatial convergence."
+}

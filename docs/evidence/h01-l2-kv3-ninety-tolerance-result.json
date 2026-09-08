@@ -1,0 +1,231 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    5,
+    5
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 2.847638506864314e-05,
+    "peak_sample_voltage_mv": 0.000287688579909684,
+    "time_above_threshold_ms": 5.395843345468165e-07
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 2.931260496552568e-07,
+      "peak_sample_voltage_mv": -3.0107122981348766e-06,
+      "time_above_threshold_ms": -5.395843345468165e-07
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 5.852575668541249e-07,
+      "peak_sample_voltage_mv": 6.232398632732838e-07,
+      "time_above_threshold_ms": -3.387344804650638e-08
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": -6.089783255447401e-07,
+      "peak_sample_voltage_mv": 0.000287688579909684,
+      "time_above_threshold_ms": 7.957441994221881e-08
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": -1.699510130492854e-05,
+      "peak_sample_voltage_mv": 3.932463378930606e-06,
+      "time_above_threshold_ms": -3.2375965020037256e-08
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": -2.847638506864314e-05,
+      "peak_sample_voltage_mv": 1.054021034718744e-05,
+      "time_above_threshold_ms": -1.1269185051787645e-07
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-kv3-closing-ninety": [],
+    "h01-l2-kv3-ninety-atol11": []
+  },
+  "qualification": "Tolerance stability at Kv3 factor 0.9 and calcium factor 1.375 only; no spatial or physiological acceptance.",
+  "checks": [
+    {
+      "stem": "h01-l2-kv3-closing-ninety",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    },
+    {
+      "stem": "h01-l2-kv3-ninety-atol11",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    }
+  ],
+  "changed_metadata": [
+    "integration_seconds",
+    "samples",
+    "cvode_atol"
+  ],
+  "phases_ms": [
+    [
+      [
+        0.166776423571946,
+        0.79657307525531
+      ],
+      [
+        0.1674807908918865,
+        0.7902597276229244
+      ],
+      [
+        0.16897968672242314,
+        0.7827923171328166
+      ],
+      [
+        0.16843926091496542,
+        0.7826484805987093
+      ],
+      [
+        0.16848971280660408,
+        0.78220255270503
+      ]
+    ],
+    [
+      [
+        0.1667941722400883,
+        0.7965547870028331
+      ],
+      [
+        0.16742856961468533,
+        0.7903119150266775
+      ],
+      [
+        0.16835275905987146,
+        0.7834193243697882
+      ],
+      [
+        0.16832473885642685,
+        0.7827629702812828
+      ],
+      [
+        0.16836626553390488,
+        0.7823258872858787
+      ]
+    ]
+  ],
+  "phase_differences_ms": [
+    [
+      1.774866814230336e-05,
+      -1.8288252476850175e-05
+    ],
+    [
+      -5.222127720116987e-05,
+      5.218740375312336e-05
+    ],
+    [
+      -0.0006269276625516795,
+      0.0006270072369716218
+    ],
+    [
+      -0.00011452205853856867,
+      0.00011448968257354863
+    ],
+    [
+      -0.0001234472726991953,
+      0.00012333458084867743
+    ]
+  ],
+  "max_phase_difference_ms": 0.0006270072369716218,
+  "phase_limit_ms": 0.01,
+  "minima": [
+    [
+      {
+        "ordinal": 1,
+        "time_ms": 1081.954852926193,
+        "voltage_mv": -69.50383165232753,
+        "delay_after_fall_ms": 2.2783543232301326
+      },
+      {
+        "ordinal": 2,
+        "time_ms": 1107.5888006015934,
+        "voltage_mv": -69.95702861606944,
+        "delay_after_fall_ms": 2.37743755663746
+      },
+      {
+        "ordinal": 3,
+        "time_ms": 1386.882611735655,
+        "voltage_mv": -70.06270747460658,
+        "delay_after_fall_ms": 2.4036543506781527
+      },
+      {
+        "ordinal": 4,
+        "time_ms": 1703.0621141954916,
+        "voltage_mv": -70.09849282554725,
+        "delay_after_fall_ms": 2.378516595658539
+      }
+    ],
+    [
+      {
+        "ordinal": 1,
+        "time_ms": 1081.9535364230023,
+        "voltage_mv": -69.50383353261715,
+        "delay_after_fall_ms": 2.277038066497653
+      },
+      {
+        "ordinal": 2,
+        "time_ms": 1107.5883715880423,
+        "voltage_mv": -69.95702775701899,
+        "delay_after_fall_ms": 2.3770079917021576
+      },
+      {
+        "ordinal": 3,
+        "time_ms": 1386.8821639209223,
+        "voltage_mv": -70.06270749295308,
+        "delay_after_fall_ms": 2.4032070653493065
+      },
+      {
+        "ordinal": 4,
+        "time_ms": 1703.06184988027,
+        "voltage_mv": -70.09849310160321,
+        "delay_after_fall_ms": 2.378269307914252
+      }
+    ]
+  ],
+  "minimum_differences": [
+    {
+      "voltage_mv": -1.8802896164515914e-06,
+      "time_ms": -0.0013165031907647062,
+      "delay_after_fall_ms": -0.0013162567324798147
+    },
+    {
+      "voltage_mv": 8.590504450012304e-07,
+      "time_ms": -0.0004290135511837434,
+      "delay_after_fall_ms": -0.000429564935302551
+    },
+    {
+      "voltage_mv": -1.834649765442009e-08,
+      "time_ms": -0.0004478147327517945,
+      "delay_after_fall_ms": -0.000447285328846192
+    },
+    {
+      "voltage_mv": -2.7605595676050143e-07,
+      "time_ms": -0.0002643152215568989,
+      "delay_after_fall_ms": -0.00024728774428695033
+    }
+  ],
+  "minimum_scope": "Descriptive sensitivity only; no declared extrema threshold.",
+  "sha256": {
+    "docs\\evidence\\h01-l2-kv3-closing-ninety.json": "96d4c12d5e3e3da8febf9c1b932eb3e3ca85a28191ae62428e8f066bb3adbbfb",
+    "docs\\evidence\\h01-l2-kv3-closing-ninety.npz": "393ee9373c42740648b58ae5db37db4e5cd3604e9cfdc4dc65a348e032522740",
+    "docs\\evidence\\h01-l2-kv3-ninety-atol11.json": "8088f4b197f0e53e5e66da2da5ee04b87dfb718f60a0330454c297159d9ccb2c",
+    "docs\\evidence\\h01-l2-kv3-ninety-atol11.npz": "cabe51a9ec7dc863e28de2cce4c7284577429b9e2cb22e4c21a5a3f39c898679",
+    "docs\\specs\\2026-09-05-human-l2-kv3-calcium-split.md": "fd53462666ec874aff171f41cc8fdea7a8a700bf874e4611a52e4fc75b6126bc"
+  }
+}

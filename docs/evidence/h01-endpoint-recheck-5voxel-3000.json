@@ -1,0 +1,195 @@
+{
+ "results": [
+  {
+   "annotation_id": "101412196",
+   "pre_cell": "5584343344",
+   "post_cell": "4188575291",
+   "type": 1,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "post_nearest_offset": null,
+   "both_within_box": false,
+   "seconds": 18.0
+  },
+  {
+   "annotation_id": "127313472",
+   "pre_cell": "4157825456",
+   "post_cell": "5654281423",
+   "type": 2,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "post_nearest_offset": null,
+   "both_within_box": false,
+   "seconds": 18.1
+  },
+  {
+   "annotation_id": "143320914",
+   "pre_cell": "1684504313",
+   "post_cell": "883843993",
+   "type": 1,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": null,
+   "post_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "both_within_box": false,
+   "seconds": 18.1
+  },
+  {
+   "annotation_id": "108171241",
+   "pre_cell": "4641147055",
+   "post_cell": "6126390733",
+   "type": 2,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    1,
+    0,
+    0
+   ],
+   "post_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "both_within_box": true,
+   "seconds": 20.8
+  },
+  {
+   "annotation_id": "124698307",
+   "pre_cell": "4188575291",
+   "post_cell": "3955003482",
+   "type": 2,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "post_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "both_within_box": true,
+   "seconds": 30.1
+  },
+  {
+   "annotation_id": "125872198",
+   "pre_cell": "4522237537",
+   "post_cell": "3954491075",
+   "type": 2,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "post_nearest_offset": [
+    -2,
+    0,
+    0
+   ],
+   "both_within_box": true,
+   "seconds": 18.3
+  },
+  {
+   "annotation_id": "65017731",
+   "pre_cell": "3519995546",
+   "post_cell": "3680152874",
+   "type": 2,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "post_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "both_within_box": true,
+   "seconds": 18.6
+  },
+  {
+   "annotation_id": "8105899",
+   "pre_cell": "5584343344",
+   "post_cell": "4157825456",
+   "type": 1,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "post_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "both_within_box": true,
+   "seconds": 17.7
+  },
+  {
+   "annotation_id": "95566965",
+   "pre_cell": "1900905433",
+   "post_cell": "2103991145",
+   "type": 2,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    1
+   ],
+   "post_nearest_offset": [
+    0,
+    0,
+    -1
+   ],
+   "both_within_box": true,
+   "seconds": 18.2
+  },
+  {
+   "annotation_id": "95907584",
+   "pre_cell": "3680152874",
+   "post_cell": "3519995546",
+   "type": 1,
+   "radius_xy": 5,
+   "radius_z": 2,
+   "pre_nearest_offset": [
+    0,
+    0,
+    0
+   ],
+   "post_nearest_offset": [
+    1,
+    0,
+    0
+   ],
+   "both_within_box": true,
+   "seconds": 18.0
+  }
+ ],
+ "budget_exceeded": [],
+ "requested": 10,
+ "completed": 10
+}

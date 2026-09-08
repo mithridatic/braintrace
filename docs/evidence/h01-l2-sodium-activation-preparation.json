@@ -1,0 +1,73 @@
+{
+  "destination": ".cache\\human-pyramidal-l2\\sodium-activation-source",
+  "files": [
+    {
+      "file": "SK.mod",
+      "source_sha256": "079f1e3cac7444696d480b8e02853b215cd93e0c7b9986dbb54925fc49eddbeb",
+      "prepared_sha256": "079f1e3cac7444696d480b8e02853b215cd93e0c7b9986dbb54925fc49eddbeb",
+      "changed": false
+    },
+    {
+      "file": "NaTs.mod",
+      "source_sha256": "d75ed63d6367fe27c6e5671704594a510e8d83b57db835f30fc36e2f24bef6cf",
+      "prepared_sha256": "6ba797bada310a6b880f4ab2a86e915894cc205d411474c0ce78f806af532a1f",
+      "changed": true
+    },
+    {
+      "file": "Im.mod",
+      "source_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+      "prepared_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+      "changed": false
+    },
+    {
+      "file": "Ca_HVA.mod",
+      "source_sha256": "021d34cf9ef3e76b0f2afee1a1eeab40eed56d0d3b1362b7e1019f4433273c71",
+      "prepared_sha256": "021d34cf9ef3e76b0f2afee1a1eeab40eed56d0d3b1362b7e1019f4433273c71",
+      "changed": false
+    },
+    {
+      "file": "K_T.mod",
+      "source_sha256": "1cb9d72f985ef028922cafafed079df5c47b87a893001304181ec48881367ba7",
+      "prepared_sha256": "1cb9d72f985ef028922cafafed079df5c47b87a893001304181ec48881367ba7",
+      "changed": false
+    },
+    {
+      "file": "CaDynamics.mod",
+      "source_sha256": "f012def9758f7d0244b81c54291edea6597c15fad99b9f7b5725b121a3567f16",
+      "prepared_sha256": "f012def9758f7d0244b81c54291edea6597c15fad99b9f7b5725b121a3567f16",
+      "changed": false
+    },
+    {
+      "file": "K_P.mod",
+      "source_sha256": "2254697617c8da162ff8e5495e4d512fce53f77b44b86754855f11cee4ab3b3e",
+      "prepared_sha256": "2254697617c8da162ff8e5495e4d512fce53f77b44b86754855f11cee4ab3b3e",
+      "changed": false
+    },
+    {
+      "file": "Ih.mod",
+      "source_sha256": "8616325d83add9a1a6546972352b4a62e57095ba25f3c6b5a57ab8b397e2d662",
+      "prepared_sha256": "8616325d83add9a1a6546972352b4a62e57095ba25f3c6b5a57ab8b397e2d662",
+      "changed": false
+    },
+    {
+      "file": "Nap.mod",
+      "source_sha256": "979d21508f5b089e7b782835ea7f60311223bdc3a8e5242056c594305d2fb220",
+      "prepared_sha256": "979d21508f5b089e7b782835ea7f60311223bdc3a8e5242056c594305d2fb220",
+      "changed": false
+    },
+    {
+      "file": "Ca_LVA.mod",
+      "source_sha256": "a7a9ef262541dc96f5d19afd97778f9320808d01ce397350f1f2be3db30f920f",
+      "prepared_sha256": "a7a9ef262541dc96f5d19afd97778f9320808d01ce397350f1f2be3db30f920f",
+      "changed": false
+    },
+    {
+      "file": "Kv3_1.mod",
+      "source_sha256": "e636c3437a9d9ccb69a0a7efc09fcfe1f16ad97f0468615b70fdbc352fe0855c",
+      "prepared_sha256": "e636c3437a9d9ccb69a0a7efc09fcfe1f16ad97f0468615b70fdbc352fe0855c",
+      "changed": false
+    }
+  ],
+  "change": "NaTs has default-one selective opening and recovery time factors; opening factor applies only when mInf > m.",
+  "qualification": "Source preparation and helper tests only. Build, clamp, default equivalence, driver integration, and full-cell validation remain open."
+}

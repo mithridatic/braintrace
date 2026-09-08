@@ -1,0 +1,63 @@
+{
+  "counts": [
+    7,
+    7
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.33087842887471197,
+    "peak_sample_voltage_mv": 0.011807240457642365,
+    "time_above_threshold_ms": 0.00018291929245606298
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -0.006535702848168512,
+      "peak_sample_voltage_mv": -0.007639883464129582,
+      "time_above_threshold_ms": 0.00016061901283137558
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": -0.009360690617995715,
+      "peak_sample_voltage_mv": -0.011807240457642365,
+      "time_above_threshold_ms": 0.00016188707786568557
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.15803939127090416,
+      "peak_sample_voltage_mv": -0.006585088334276179,
+      "time_above_threshold_ms": 0.00012959254422639788
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.1908493646142233,
+      "peak_sample_voltage_mv": -0.010552608281642506,
+      "time_above_threshold_ms": 0.00018291929245606298
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.23723503502765197,
+      "peak_sample_voltage_mv": -0.010839090060514422,
+      "time_above_threshold_ms": 0.0001535363544462598
+    },
+    {
+      "ordinal": 6,
+      "rise_crossing_ms": 0.28376936792369634,
+      "peak_sample_voltage_mv": -0.0082109179001435,
+      "time_above_threshold_ms": 0.00012176309655842488
+    },
+    {
+      "ordinal": 7,
+      "rise_crossing_ms": 0.33087842887471197,
+      "peak_sample_voltage_mv": -0.007882393028914692,
+      "time_above_threshold_ms": 0.00013184022350287705
+    }
+  ],
+  "decision": "rejected",
+  "qualification": "Temporal comparison only; no spatial or physiological qualification."
+}

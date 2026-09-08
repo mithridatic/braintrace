@@ -1,0 +1,22 @@
+{
+  "scope": "Abstract tracing of the installed forward-elimination kernel on synthetic chains. No physical simulation or native compilation.",
+  "kernel": "braincell.quad._staggered.comp_triang_raw",
+  "findings": "The Python level loop expands into the JAX graph. This is a candidate source of deep-tree compilation cost, not an isolated timing proof for the complete H01 run.",
+  "records": [
+    {
+      "tree_depth": 8,
+      "top_level_jaxpr_equations": 248,
+      "trace_seconds": 0.029629799944814295
+    },
+    {
+      "tree_depth": 32,
+      "top_level_jaxpr_equations": 992,
+      "trace_seconds": 0.10244790004799142
+    },
+    {
+      "tree_depth": 64,
+      "top_level_jaxpr_equations": 1984,
+      "trace_seconds": 0.21777849999489263
+    }
+  ]
+}

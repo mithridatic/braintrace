@@ -1,0 +1,137 @@
+{
+ "donor_key": "l3-sst-interneuron-hl5mn1",
+ "specification": "docs/specs/2026-09-07-h01-donor-hl5mn1-import.md",
+ "manifest": "h01-sst-reproduction-manifest.json",
+ "decision_json": "h01-donors/stage-hl5mn1-decision.json",
+ "detector": "-20 mV rise crossing inside the pulse",
+ "pair_factor": 2.95,
+ "inputs": [
+  {
+   "label": "100 pA",
+   "input": "100",
+   "sweep": 44,
+   "pulse_ms": [
+    270.0,
+    1270.0
+   ],
+   "registered": {
+    "count": 14,
+    "repeat_counts": [
+     14,
+     14,
+     13,
+     12
+    ],
+    "first_spike_ms": 24.16
+   },
+   "human_reread": {
+    "count": 14,
+    "first_spike_ms": 24.15761194095586,
+    "finite": true,
+    "end_ms": 5269.98
+   },
+   "source": {
+    "count": 16,
+    "first_spike_ms": 26.96972519880677,
+    "finite": true,
+    "end_ms": 1500.0000000032655
+   },
+   "source_dt_half": {
+    "count": 16,
+    "first_spike_ms": 26.924400484529826,
+    "finite": true,
+    "end_ms": 1499.9999999957029
+   },
+   "first_spike_pair_limit_ms": 0.13370790711698533,
+   "verdicts": {
+    "count": {
+     "exact": "rejected",
+     "repeat_band": "missed"
+    },
+    "dt_pair_count": "agrees",
+    "first_spike": "missed"
+   }
+  },
+  {
+   "label": "150 pA",
+   "input": "150",
+   "sweep": 35,
+   "pulse_ms": [
+    270.0,
+    1270.0
+   ],
+   "registered": {
+    "count": 34,
+    "repeat_counts": null,
+    "first_spike_ms": 13.0
+   },
+   "human_reread": {
+    "count": 34,
+    "first_spike_ms": 12.995100865278175,
+    "finite": true,
+    "end_ms": 7269.98
+   },
+   "source": {
+    "count": 30,
+    "first_spike_ms": 16.04214367294105,
+    "finite": true,
+    "end_ms": 1500.0000000032655
+   },
+   "source_dt_half": {
+    "count": 30,
+    "first_spike_ms": 16.003908243759895,
+    "finite": true,
+    "end_ms": 1499.9999999957029
+   },
+   "first_spike_pair_limit_ms": 0.11279451608441207,
+   "verdicts": {
+    "count": {
+     "exact": "rejected",
+     "repeat_band": null
+    },
+    "dt_pair_count": "agrees",
+    "first_spike": "missed"
+   }
+  }
+ ],
+ "wall_clocks": {
+  "runs": [
+   {
+    "name": "source",
+    "input": "100",
+    "seconds": 7.348658400005661,
+    "returncode": 0,
+    "aborted": false
+   },
+   {
+    "name": "source",
+    "input": "150",
+    "seconds": 14.168072900007246,
+    "returncode": 0,
+    "aborted": false
+   },
+   {
+    "name": "source-dt-half",
+    "input": "100",
+    "seconds": 11.932297700026538,
+    "returncode": 0,
+    "aborted": false
+   },
+   {
+    "name": "source-dt-half",
+    "input": "150",
+    "seconds": 25.952730200020596,
+    "returncode": 0,
+    "aborted": false
+   }
+  ],
+  "total_seconds": 59.40175920006004,
+  "stderr_files": {
+   "source-100.stderr.txt": "",
+   "source-150.stderr.txt": "",
+   "source-dt-half-100.stderr.txt": "",
+   "source-dt-half-150.stderr.txt": ""
+  }
+ },
+ "reproduction_verdict": "rejected"
+}

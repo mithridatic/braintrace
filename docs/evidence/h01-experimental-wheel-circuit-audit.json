@@ -1,0 +1,14 @@
+{
+  "installed_package": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01-handoff-install\\braintrace\\__init__.py",
+  "finite_voltage": {
+    "E": true,
+    "I": true
+  },
+  "duration_ms": 0.015,
+  "dt_ms": 0.005,
+  "cells": {
+    "E": "810151953",
+    "I": "678539249"
+  },
+  "qualification": "Installed-wheel real H01 construction and three compiled steps only. Not spiking or physiological qualification. Existing dependencies and local dataset cache required."
+}

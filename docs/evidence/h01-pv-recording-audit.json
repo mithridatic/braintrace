@@ -1,0 +1,48 @@
+{
+  "source": "ModelDB 267587, human putative PV recordings used in optimization",
+  "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
+  "active_pickle_sha256": "542d8b627263f403c8b6f67f0df16f9f7ec3bf22ee01ea44d10e422100e830c3",
+  "protocol_source": "init_active.py; 270 to 1270 ms; detection height 0 mV, prominence 40 mV",
+  "records": [
+    {
+      "step_na": 0.19,
+      "n_spikes_1s": 12,
+      "baseline_mv": -86.68505859375,
+      "median_peak_mv": 16.671875,
+      "first_isi_ms": 7.599999999999966,
+      "last_isi_ms": 98.75999999999999,
+      "time_bounds_ms": [
+        0.0,
+        7269.96
+      ],
+      "sample_dt_ms": 0.01999999999998181
+    },
+    {
+      "step_na": 0.23,
+      "n_spikes_1s": 31,
+      "baseline_mv": -87.16288757324219,
+      "median_peak_mv": 17.375001907348633,
+      "first_isi_ms": 6.359999999999957,
+      "last_isi_ms": 40.7199999999998,
+      "time_bounds_ms": [
+        0.0,
+        7269.96
+      ],
+      "sample_dt_ms": 0.01999999999998181
+    },
+    {
+      "step_na": 0.27,
+      "n_spikes_1s": 43,
+      "baseline_mv": -86.90396881103516,
+      "median_peak_mv": 17.718753814697266,
+      "first_isi_ms": 6.240000000000009,
+      "last_isi_ms": 26.680000000000064,
+      "time_bounds_ms": [
+        0.0,
+        7269.96
+      ],
+      "sample_dt_ms": 0.01999999999998181
+    }
+  ],
+  "qualification": "Descriptive audit only. No inhibitory model implemented or validated yet."
+}

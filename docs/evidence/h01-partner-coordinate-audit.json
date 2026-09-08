@@ -1,0 +1,19 @@
+{
+  "source_sha256": "640ccb12c75b930f96373c7273bbf9688aa111b97b425ee22d8ef6db19f496be",
+  "matching_rule": "exact six endpoint coordinates, matching center, one cell ID per role",
+  "status": "coordinate-derived candidates; not explicit source partner IDs or manual synapse verification",
+  "coordinate_um_per_voxel": [
+    0.008,
+    0.008,
+    0.033
+  ],
+  "statistics": {
+    "one_role_only": 264084,
+    "source_rows": 264090,
+    "role_post": 251636,
+    "role_pre": 12454,
+    "unique_endpoint_pairs": 264084,
+    "candidate_cell_pairs": 0
+  },
+  "candidates": []
+}

@@ -1,0 +1,36 @@
+{
+  "claim": "Extending pre-pulse time from 2 to 270 ms alone restores a positive somatic spike.",
+  "decision": "contradicted for this input and numerical setting",
+  "unchanged": [
+    "profile",
+    "electrical map",
+    "initial voltage",
+    "current amplitude and pulse width",
+    "dt",
+    "mesh",
+    "solver"
+  ],
+  "changed": "pulse onset 2 to 270 ms; recording end follows onset by 10 ms",
+  "cases": [
+    {
+      "file": "h01-ei-defaults-spike-probe",
+      "sha256": "3b81fb09a3dce0346cad1c9d8d04f6ab5f900fdd030dc32f57c7c2cfb3ed0bd0",
+      "pulse_onset_ms": 2.0,
+      "last_sample_before_pulse_mv": -81.75846217849136,
+      "peak_mv": -14.100263682145606,
+      "peak_delay_ms": 1.63,
+      "positive_crossing_count": 0,
+      "voltage_8ms_after_onset_mv": -47.83407700326463
+    },
+    {
+      "file": "h01-i-prepulse270",
+      "sha256": "dff9c1c2542d58ec93d34048c35514c48eb827d12e3b1cbcdafc00fcd40a5c5e",
+      "pulse_onset_ms": 270.0,
+      "last_sample_before_pulse_mv": -86.92502623682182,
+      "peak_mv": -14.327053934732811,
+      "peak_delay_ms": 1.8400000000000318,
+      "positive_crossing_count": 0,
+      "voltage_8ms_after_onset_mv": -49.41839782382375
+    }
+  ]
+}

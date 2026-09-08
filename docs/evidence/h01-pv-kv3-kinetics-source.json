@@ -1,0 +1,52 @@
+{
+  "parent_cache": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\human-pv\\closure-recovery-reference",
+  "diagnostic_cache": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\human-pv\\kv3-kinetics-reference",
+  "changes": "Kv3 mTau multiplied by positive factor; default 1; equilibrium unchanged",
+  "mechanism_hashes": {
+    "Ca_HVA.mod": {
+      "parent_sha256": "48a6ba64fc1650140403941b130ec8eb5ce221e9982956b2da81956d249e070d",
+      "diagnostic_sha256": "48a6ba64fc1650140403941b130ec8eb5ce221e9982956b2da81956d249e070d"
+    },
+    "Ca_LVA.mod": {
+      "parent_sha256": "1ffc6be5cd95a0acf116f621be51675152672c2c8898bef06a752dab68fba683",
+      "diagnostic_sha256": "1ffc6be5cd95a0acf116f621be51675152672c2c8898bef06a752dab68fba683"
+    },
+    "CaDynamics.mod": {
+      "parent_sha256": "0d73101cf3b8266e335ca9178ca2f4bc4f83444a0d37d3ff217a844644da84ee",
+      "diagnostic_sha256": "0d73101cf3b8266e335ca9178ca2f4bc4f83444a0d37d3ff217a844644da84ee"
+    },
+    "Ih.mod": {
+      "parent_sha256": "c9847e478a6a45d5c8e7d7d0ecac4498679fb221a2622185d973002c1312c43e",
+      "diagnostic_sha256": "c9847e478a6a45d5c8e7d7d0ecac4498679fb221a2622185d973002c1312c43e"
+    },
+    "Im.mod": {
+      "parent_sha256": "19b28d129d9575b89d8f0272f793d2e775ac2579697bc079fafacc58955feba6",
+      "diagnostic_sha256": "19b28d129d9575b89d8f0272f793d2e775ac2579697bc079fafacc58955feba6"
+    },
+    "K_P.mod": {
+      "parent_sha256": "80091c19ba67bc0eeec989558387d8b96e409642f8ca97c6dc0143e905d4ebb2",
+      "diagnostic_sha256": "80091c19ba67bc0eeec989558387d8b96e409642f8ca97c6dc0143e905d4ebb2"
+    },
+    "K_T.mod": {
+      "parent_sha256": "2f3de2b4c09a2e93e5a4638fadabd6eafe37fecab8b8f5f01d37b33b168be0c9",
+      "diagnostic_sha256": "2f3de2b4c09a2e93e5a4638fadabd6eafe37fecab8b8f5f01d37b33b168be0c9"
+    },
+    "Kv3_1.mod": {
+      "parent_sha256": "89611e80e59a3b92c58d84897ce2c725d59eeb168aed3827a80c935a3ff1c525",
+      "diagnostic_sha256": "2c915c6fe45dd3385a89796865c89350dadc9d89f87dddac4fbc0a685c70acce"
+    },
+    "Nap.mod": {
+      "parent_sha256": "65e8e31b202143d69b741a70afdd34f6b5439b24243bf79e751bcb76fdef901e",
+      "diagnostic_sha256": "65e8e31b202143d69b741a70afdd34f6b5439b24243bf79e751bcb76fdef901e"
+    },
+    "NaTg.mod": {
+      "parent_sha256": "fef2809e8f3edbeec5a1433e426925d5a9fe3ef82e8ebd2ee328d810a9a10dfe",
+      "diagnostic_sha256": "fef2809e8f3edbeec5a1433e426925d5a9fe3ef82e8ebd2ee328d810a9a10dfe"
+    },
+    "SK.mod": {
+      "parent_sha256": "c56e313729efec19040995b4ea9ffbb5eaba3d51c5468b9b6ab15934d18e4fd4",
+      "diagnostic_sha256": "c56e313729efec19040995b4ea9ffbb5eaba3d51c5468b9b6ab15934d18e4fd4"
+    }
+  },
+  "qualification": "Uncompiled diagnostic sources; fixed-voltage verification required"
+}

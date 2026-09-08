@@ -1,0 +1,1506 @@
+{
+ "url": "https://storage.googleapis.com/storage/v1/b/h01-release/o?prefix=data%2F20210729%2Fc3%2Fsynapses%2Fexported%2F&maxResults=1000&fields=items(name,size),nextPageToken",
+ "fetched": "2026-09-07T14:40:17-0700",
+ "items": [
+  {
+   "name": "data/20210729/c3/synapses/exported/",
+   "size": "0"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000000",
+   "size": "197344616"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000000.json",
+   "size": "757111597"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000001",
+   "size": "197434059"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000001.json",
+   "size": "757457938"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000002",
+   "size": "197615584"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000002.json",
+   "size": "758157092"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000003",
+   "size": "197572341"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000003.json",
+   "size": "757988051"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000004",
+   "size": "197453479"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000004.json",
+   "size": "757519932"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000005",
+   "size": "197468963"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000005.json",
+   "size": "757587361"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000006",
+   "size": "197543486"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000006.json",
+   "size": "757869883"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000007",
+   "size": "197567224"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000007.json",
+   "size": "757967887"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000008",
+   "size": "197601675"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000008.json",
+   "size": "758094540"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000009",
+   "size": "197625536"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000009.json",
+   "size": "758185812"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000010",
+   "size": "197672557"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000010.json",
+   "size": "758359599"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000011",
+   "size": "197655588"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000011.json",
+   "size": "758298719"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000012",
+   "size": "197628022"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000012.json",
+   "size": "758198184"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000013",
+   "size": "197686883"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000013.json",
+   "size": "758426537"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000014",
+   "size": "197664969"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000014.json",
+   "size": "758333435"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000015",
+   "size": "197659603"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000015.json",
+   "size": "758311289"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000016",
+   "size": "197701091"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000016.json",
+   "size": "758483572"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000017",
+   "size": "197681667"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000017.json",
+   "size": "758397443"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000018",
+   "size": "197666864"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000018.json",
+   "size": "758340619"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000019",
+   "size": "197656054"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000019.json",
+   "size": "758311613"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000020",
+   "size": "197719846"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000020.json",
+   "size": "758533141"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000021",
+   "size": "197720092"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000021.json",
+   "size": "758542365"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000022",
+   "size": "197719232"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000022.json",
+   "size": "758548443"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000023",
+   "size": "197735503"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000023.json",
+   "size": "758617170"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000024",
+   "size": "197725136"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000024.json",
+   "size": "758571039"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000025",
+   "size": "197774248"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000025.json",
+   "size": "758754344"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000026",
+   "size": "197771634"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000026.json",
+   "size": "758752084"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000027",
+   "size": "197759867"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000027.json",
+   "size": "758705210"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000028",
+   "size": "197717596"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000028.json",
+   "size": "758534750"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000029",
+   "size": "197776928"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000029.json",
+   "size": "758751355"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000030",
+   "size": "197753774"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000030.json",
+   "size": "758677390"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000031",
+   "size": "197774715"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000031.json",
+   "size": "758772750"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000032",
+   "size": "197761910"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000032.json",
+   "size": "758709004"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000033",
+   "size": "197803491"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000033.json",
+   "size": "758870042"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000034",
+   "size": "197814749"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000034.json",
+   "size": "758916058"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000035",
+   "size": "197838970"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000035.json",
+   "size": "759018273"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000036",
+   "size": "197772588"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000036.json",
+   "size": "758749040"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000037",
+   "size": "197771582"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000037.json",
+   "size": "758739909"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000038",
+   "size": "197786546"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000038.json",
+   "size": "758795521"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000039",
+   "size": "197872271"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000039.json",
+   "size": "759133223"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000040",
+   "size": "197824417"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000040.json",
+   "size": "758958904"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000041",
+   "size": "197796506"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000041.json",
+   "size": "758832599"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000042",
+   "size": "197788590"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000042.json",
+   "size": "758810767"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000043",
+   "size": "197886712"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000043.json",
+   "size": "759202353"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000044",
+   "size": "197818345"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000044.json",
+   "size": "758912232"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000045",
+   "size": "197833985"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000045.json",
+   "size": "759009555"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000046",
+   "size": "197840386"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000046.json",
+   "size": "758976286"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000047",
+   "size": "197819303"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000047.json",
+   "size": "758938293"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000048",
+   "size": "197869845"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000048.json",
+   "size": "758929757"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000049",
+   "size": "197815725"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000049.json",
+   "size": "759132767"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000050",
+   "size": "197832221"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000050.json",
+   "size": "758998385"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000051",
+   "size": "197813866"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000051.json",
+   "size": "758918131"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000052",
+   "size": "197823726"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000052.json",
+   "size": "758946738"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000053",
+   "size": "197791201"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000053.json",
+   "size": "758824868"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000054",
+   "size": "197835569"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000054.json",
+   "size": "758989657"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000055",
+   "size": "197823448"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000055.json",
+   "size": "758944114"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000056",
+   "size": "197829769"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000056.json",
+   "size": "758967357"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000057",
+   "size": "197869881"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000057.json",
+   "size": "759114059"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000058",
+   "size": "197883956"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000058.json",
+   "size": "759174860"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000059",
+   "size": "197872640"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000059.json",
+   "size": "759132512"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000060",
+   "size": "197877017"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000060.json",
+   "size": "759138746"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000061",
+   "size": "197851979"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000061.json",
+   "size": "759046311"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000062",
+   "size": "197874120"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000062.json",
+   "size": "759135045"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000063",
+   "size": "197849421"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000063.json",
+   "size": "759046846"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000064",
+   "size": "197860323"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000064.json",
+   "size": "759092750"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000065",
+   "size": "197888714"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000065.json",
+   "size": "759207038"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000066",
+   "size": "197891727"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000066.json",
+   "size": "759204235"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000067",
+   "size": "197890461"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000067.json",
+   "size": "759197188"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000068",
+   "size": "197939230"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000068.json",
+   "size": "759394866"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000069",
+   "size": "197930060"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000069.json",
+   "size": "759366987"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000070",
+   "size": "197921703"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000070.json",
+   "size": "759322580"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000071",
+   "size": "197927251"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000071.json",
+   "size": "759353486"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000072",
+   "size": "197948541"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000072.json",
+   "size": "759434562"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000073",
+   "size": "197902379"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000073.json",
+   "size": "759260510"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000074",
+   "size": "197925633"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000074.json",
+   "size": "759335486"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000075",
+   "size": "197931397"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000075.json",
+   "size": "759356028"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000076",
+   "size": "197925849"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000076.json",
+   "size": "759331867"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000077",
+   "size": "197957443"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000077.json",
+   "size": "759453190"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000078",
+   "size": "197939656"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000078.json",
+   "size": "759395162"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000079",
+   "size": "197887413"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000079.json",
+   "size": "759187062"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000080",
+   "size": "197944909"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000080.json",
+   "size": "759412687"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000081",
+   "size": "197935967"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000081.json",
+   "size": "759391333"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000082",
+   "size": "197955173"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000082.json",
+   "size": "759459780"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000083",
+   "size": "197983026"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000083.json",
+   "size": "759558964"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000084",
+   "size": "197942653"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000084.json",
+   "size": "759412966"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000085",
+   "size": "197941753"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000085.json",
+   "size": "759404188"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000086",
+   "size": "197958538"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000086.json",
+   "size": "759462987"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000087",
+   "size": "197948393"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000087.json",
+   "size": "759431678"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000088",
+   "size": "197983142"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000088.json",
+   "size": "759560489"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000089",
+   "size": "197938996"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000089.json",
+   "size": "759378980"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000090",
+   "size": "197933418"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000090.json",
+   "size": "759375682"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000091",
+   "size": "197945808"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000091.json",
+   "size": "759410302"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000092",
+   "size": "197957711"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000092.json",
+   "size": "759456366"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000093",
+   "size": "197942568"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000093.json",
+   "size": "759420229"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000094",
+   "size": "197949390"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000094.json",
+   "size": "759437439"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000095",
+   "size": "198015511"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000095.json",
+   "size": "759683315"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000096",
+   "size": "197997372"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000096.json",
+   "size": "759604619"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000097",
+   "size": "198039035"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000097.json",
+   "size": "759768432"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000098",
+   "size": "198008061"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000098.json",
+   "size": "759656580"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000099",
+   "size": "198043771"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000099.json",
+   "size": "759788990"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000100",
+   "size": "197980582"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000100.json",
+   "size": "759549348"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000101",
+   "size": "197937171"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000101.json",
+   "size": "759375586"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000102",
+   "size": "198045526"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000102.json",
+   "size": "759794709"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000103",
+   "size": "198021814"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000103.json",
+   "size": "759711607"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000104",
+   "size": "198040364"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000104.json",
+   "size": "759781515"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000105",
+   "size": "198031830"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000105.json",
+   "size": "759757694"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000106",
+   "size": "198021812"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000106.json",
+   "size": "759701105"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000107",
+   "size": "198032894"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000107.json",
+   "size": "759740066"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000108",
+   "size": "198051699"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000108.json",
+   "size": "759821028"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000109",
+   "size": "198049847"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000109.json",
+   "size": "759811339"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000110",
+   "size": "198049220"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000110.json",
+   "size": "759821725"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000111",
+   "size": "198058258"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000111.json",
+   "size": "759831012"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000112",
+   "size": "198043416"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000112.json",
+   "size": "759790955"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000113",
+   "size": "198061589"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000113.json",
+   "size": "759851325"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000114",
+   "size": "198049669"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000114.json",
+   "size": "759821365"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000115",
+   "size": "198048614"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000115.json",
+   "size": "759803401"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000116",
+   "size": "198028455"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000116.json",
+   "size": "759740561"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000117",
+   "size": "198046127"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000117.json",
+   "size": "759791436"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000118",
+   "size": "198085987"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000118.json",
+   "size": "759949267"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000119",
+   "size": "198081830"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000119.json",
+   "size": "759943897"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000120",
+   "size": "198043380"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000120.json",
+   "size": "759782673"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000121",
+   "size": "198058018"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000121.json",
+   "size": "759840759"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000122",
+   "size": "198072057"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000122.json",
+   "size": "759901687"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000123",
+   "size": "198084908"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000123.json",
+   "size": "759953730"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000124",
+   "size": "198078646"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000124.json",
+   "size": "759918914"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000125",
+   "size": "198105265"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000125.json",
+   "size": "760018879"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000126",
+   "size": "198088295"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000126.json",
+   "size": "759967706"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000127",
+   "size": "198098630"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000127.json",
+   "size": "760003621"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000128",
+   "size": "198123245"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000128.json",
+   "size": "760096560"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000129",
+   "size": "198100748"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000129.json",
+   "size": "760019063"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000130",
+   "size": "198115568"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000130.json",
+   "size": "760061800"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000131",
+   "size": "198102757"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000131.json",
+   "size": "760016424"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000132",
+   "size": "198131635"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000132.json",
+   "size": "760137689"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000133",
+   "size": "198122681"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000133.json",
+   "size": "760105179"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000134",
+   "size": "198138482"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000134.json",
+   "size": "760147846"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000135",
+   "size": "198122484"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000135.json",
+   "size": "760094163"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000136",
+   "size": "198127271"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000136.json",
+   "size": "760105859"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000137",
+   "size": "198149233"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000137.json",
+   "size": "760194268"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000138",
+   "size": "198119111"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000138.json",
+   "size": "760074953"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000139",
+   "size": "198163827"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000139.json",
+   "size": "760252320"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000140",
+   "size": "198157380"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000140.json",
+   "size": "760230302"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000141",
+   "size": "198199922"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000141.json",
+   "size": "760380801"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000142",
+   "size": "198161266"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000142.json",
+   "size": "760230032"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000143",
+   "size": "198141269"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000143.json",
+   "size": "760167969"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000144",
+   "size": "198223415"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000144.json",
+   "size": "760477596"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000145",
+   "size": "198280848"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000145.json",
+   "size": "760700800"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000146",
+   "size": "198218259"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000146.json",
+   "size": "760453930"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000147",
+   "size": "198195274"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000147.json",
+   "size": "760375980"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000148",
+   "size": "198210886"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000148.json",
+   "size": "760423472"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000149",
+   "size": "198241111"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000149.json",
+   "size": "760553020"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000150",
+   "size": "198224176"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000150.json",
+   "size": "760482453"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000151",
+   "size": "198322444"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000151.json",
+   "size": "760859224"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000152",
+   "size": "198277884"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000152.json",
+   "size": "760686882"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000153",
+   "size": "198307969"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000153.json",
+   "size": "760799657"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000154",
+   "size": "198316318"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000154.json",
+   "size": "760826881"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000155",
+   "size": "198273753"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000155.json",
+   "size": "760664635"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000156",
+   "size": "198317903"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000156.json",
+   "size": "760832649"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000157",
+   "size": "198330629"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000157.json",
+   "size": "760885135"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000158",
+   "size": "198343742"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000158.json",
+   "size": "760933477"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000159",
+   "size": "198344469"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000159.json",
+   "size": "760947121"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000160",
+   "size": "198384006"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000160.json",
+   "size": "761105546"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000161",
+   "size": "198372618"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000161.json",
+   "size": "761050933"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000162",
+   "size": "198402887"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000162.json",
+   "size": "761166520"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000163",
+   "size": "198428649"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000163.json",
+   "size": "761265848"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000164",
+   "size": "198403028"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000164.json",
+   "size": "761159613"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000165",
+   "size": "198456495"
+  },
+  {
+   "name": "data/20210729/c3/synapses/exported/export000000000165.json",
+   "size": "761367560"
+  }
+ ],
+ "shards": {
+  "export000000000000": 197344616,
+  "export000000000001": 197434059,
+  "export000000000002": 197615584,
+  "export000000000003": 197572341,
+  "export000000000004": 197453479,
+  "export000000000005": 197468963,
+  "export000000000006": 197543486,
+  "export000000000007": 197567224,
+  "export000000000008": 197601675,
+  "export000000000009": 197625536,
+  "export000000000010": 197672557,
+  "export000000000011": 197655588,
+  "export000000000012": 197628022,
+  "export000000000013": 197686883,
+  "export000000000014": 197664969,
+  "export000000000015": 197659603,
+  "export000000000016": 197701091,
+  "export000000000017": 197681667,
+  "export000000000018": 197666864,
+  "export000000000019": 197656054,
+  "export000000000020": 197719846,
+  "export000000000021": 197720092,
+  "export000000000022": 197719232,
+  "export000000000023": 197735503,
+  "export000000000024": 197725136,
+  "export000000000025": 197774248,
+  "export000000000026": 197771634,
+  "export000000000027": 197759867,
+  "export000000000028": 197717596,
+  "export000000000029": 197776928,
+  "export000000000030": 197753774,
+  "export000000000031": 197774715,
+  "export000000000032": 197761910,
+  "export000000000033": 197803491,
+  "export000000000034": 197814749,
+  "export000000000035": 197838970,
+  "export000000000036": 197772588,
+  "export000000000037": 197771582,
+  "export000000000038": 197786546,
+  "export000000000039": 197872271,
+  "export000000000040": 197824417,
+  "export000000000041": 197796506,
+  "export000000000042": 197788590,
+  "export000000000043": 197886712,
+  "export000000000044": 197818345,
+  "export000000000045": 197833985,
+  "export000000000046": 197840386,
+  "export000000000047": 197819303,
+  "export000000000048": 197869845,
+  "export000000000049": 197815725,
+  "export000000000050": 197832221,
+  "export000000000051": 197813866,
+  "export000000000052": 197823726,
+  "export000000000053": 197791201,
+  "export000000000054": 197835569,
+  "export000000000055": 197823448,
+  "export000000000056": 197829769,
+  "export000000000057": 197869881,
+  "export000000000058": 197883956,
+  "export000000000059": 197872640,
+  "export000000000060": 197877017,
+  "export000000000061": 197851979,
+  "export000000000062": 197874120,
+  "export000000000063": 197849421,
+  "export000000000064": 197860323,
+  "export000000000065": 197888714,
+  "export000000000066": 197891727,
+  "export000000000067": 197890461,
+  "export000000000068": 197939230,
+  "export000000000069": 197930060,
+  "export000000000070": 197921703,
+  "export000000000071": 197927251,
+  "export000000000072": 197948541,
+  "export000000000073": 197902379,
+  "export000000000074": 197925633,
+  "export000000000075": 197931397,
+  "export000000000076": 197925849,
+  "export000000000077": 197957443,
+  "export000000000078": 197939656,
+  "export000000000079": 197887413,
+  "export000000000080": 197944909,
+  "export000000000081": 197935967,
+  "export000000000082": 197955173,
+  "export000000000083": 197983026,
+  "export000000000084": 197942653,
+  "export000000000085": 197941753,
+  "export000000000086": 197958538,
+  "export000000000087": 197948393,
+  "export000000000088": 197983142,
+  "export000000000089": 197938996,
+  "export000000000090": 197933418,
+  "export000000000091": 197945808,
+  "export000000000092": 197957711,
+  "export000000000093": 197942568,
+  "export000000000094": 197949390,
+  "export000000000095": 198015511,
+  "export000000000096": 197997372,
+  "export000000000097": 198039035,
+  "export000000000098": 198008061,
+  "export000000000099": 198043771,
+  "export000000000100": 197980582,
+  "export000000000101": 197937171,
+  "export000000000102": 198045526,
+  "export000000000103": 198021814,
+  "export000000000104": 198040364,
+  "export000000000105": 198031830,
+  "export000000000106": 198021812,
+  "export000000000107": 198032894,
+  "export000000000108": 198051699,
+  "export000000000109": 198049847,
+  "export000000000110": 198049220,
+  "export000000000111": 198058258,
+  "export000000000112": 198043416,
+  "export000000000113": 198061589,
+  "export000000000114": 198049669,
+  "export000000000115": 198048614,
+  "export000000000116": 198028455,
+  "export000000000117": 198046127,
+  "export000000000118": 198085987,
+  "export000000000119": 198081830,
+  "export000000000120": 198043380,
+  "export000000000121": 198058018,
+  "export000000000122": 198072057,
+  "export000000000123": 198084908,
+  "export000000000124": 198078646,
+  "export000000000125": 198105265,
+  "export000000000126": 198088295,
+  "export000000000127": 198098630,
+  "export000000000128": 198123245,
+  "export000000000129": 198100748,
+  "export000000000130": 198115568,
+  "export000000000131": 198102757,
+  "export000000000132": 198131635,
+  "export000000000133": 198122681,
+  "export000000000134": 198138482,
+  "export000000000135": 198122484,
+  "export000000000136": 198127271,
+  "export000000000137": 198149233,
+  "export000000000138": 198119111,
+  "export000000000139": 198163827,
+  "export000000000140": 198157380,
+  "export000000000141": 198199922,
+  "export000000000142": 198161266,
+  "export000000000143": 198141269,
+  "export000000000144": 198223415,
+  "export000000000145": 198280848,
+  "export000000000146": 198218259,
+  "export000000000147": 198195274,
+  "export000000000148": 198210886,
+  "export000000000149": 198241111,
+  "export000000000150": 198224176,
+  "export000000000151": 198322444,
+  "export000000000152": 198277884,
+  "export000000000153": 198307969,
+  "export000000000154": 198316318,
+  "export000000000155": 198273753,
+  "export000000000156": 198317903,
+  "export000000000157": 198330629,
+  "export000000000158": 198343742,
+  "export000000000159": 198344469,
+  "export000000000160": 198384006,
+  "export000000000161": 198372618,
+  "export000000000162": 198402887,
+  "export000000000163": 198428649,
+  "export000000000164": 198403028,
+  "export000000000165": 198456495
+ }
+}

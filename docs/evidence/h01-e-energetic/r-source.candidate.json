@@ -1,0 +1,6 @@
+{
+  "cvode_atol": 1e-10,
+  "nseg_factor": 9,
+  "record_soma_currents": true,
+  "stop_ms": 2100.0
+}

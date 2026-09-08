@@ -1,0 +1,86 @@
+[
+  {
+    "current_na": -0.11,
+    "windows": {
+      "baseline": {
+        "start_ms": 200.0,
+        "stop_ms": 270.0,
+        "human_mean_mv": -87.44588470458984,
+        "model_mean_mv": -86.92924184048083,
+        "residual_rms_mv": 0.5569892627280055,
+        "residual_rss_mv": 32.95192916628714
+      },
+      "stimulus": {
+        "start_ms": 270.0,
+        "stop_ms": 1270.0,
+        "human_mean_mv": -95.38723754882812,
+        "model_mean_mv": -94.84570758994062,
+        "residual_rms_mv": 0.5795607005882216,
+        "residual_rss_mv": 129.59371236026658
+      },
+      "late_stimulus": {
+        "start_ms": 1170.0,
+        "stop_ms": 1270.0,
+        "human_mean_mv": -95.17494201660156,
+        "model_mean_mv": -94.5098871870161,
+        "residual_rms_mv": 0.6873735438965713,
+        "residual_rss_mv": 48.60464940974946
+      },
+      "recovery": {
+        "start_ms": 1270.0,
+        "stop_ms": 1500.0,
+        "human_mean_mv": -86.71770477294922,
+        "model_mean_mv": -86.10177970559903,
+        "residual_rms_mv": 0.7067063905810967,
+        "residual_rss_mv": 75.78581733156844
+      }
+    },
+    "human_sha256": "9fc9a8dfc24bdb7e1dc385d2625f3d6d5e235d80d771ea9ba0c88c0f18dc6108",
+    "model_sha256": "e2c0d048ef622304b821562ffb786de11e2ff3e5a4293772863881c303291426",
+    "voltage_offset_applied": false,
+    "time_alignment_applied": false,
+    "model": "all active mechanisms retained; NEURON nseg factor 9, CVode atol 1e-10"
+  },
+  {
+    "current_na": -0.05,
+    "windows": {
+      "baseline": {
+        "start_ms": 200.0,
+        "stop_ms": 270.0,
+        "human_mean_mv": -87.97174072265625,
+        "model_mean_mv": -86.92924184048083,
+        "residual_rms_mv": 1.0448238430264183,
+        "residual_rss_mv": 61.8126121462904
+      },
+      "stimulus": {
+        "start_ms": 270.0,
+        "stop_ms": 1270.0,
+        "human_mean_mv": -91.79644012451172,
+        "model_mean_mv": -90.363689516677,
+        "residual_rms_mv": 1.446065817175507,
+        "residual_rss_mv": 323.3501467143217
+      },
+      "late_stimulus": {
+        "start_ms": 1170.0,
+        "stop_ms": 1270.0,
+        "human_mean_mv": -91.68775177001953,
+        "model_mean_mv": -90.13079813009759,
+        "residual_rms_mv": 1.558220944879547,
+        "residual_rss_mv": 110.18285967112372
+      },
+      "recovery": {
+        "start_ms": 1270.0,
+        "stop_ms": 1500.0,
+        "human_mean_mv": -87.89069366455078,
+        "model_mean_mv": -86.27454456046512,
+        "residual_rms_mv": 1.6255921164210947,
+        "residual_rss_mv": 174.32533345202515
+      }
+    },
+    "human_sha256": "b774abaca3230f9b902527da083556ae69e3e9d44edeec5369fdad09648617f0",
+    "model_sha256": "c3ce8b0f379539d407efa7aa761afca52f0c7a0bb0576959cf67d01407cbc1ad",
+    "voltage_offset_applied": false,
+    "time_alignment_applied": false,
+    "model": "all active mechanisms retained; NEURON nseg factor 9, CVode atol 1e-10"
+  }
+]

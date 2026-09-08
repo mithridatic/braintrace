@@ -1,0 +1,93 @@
+{
+  "scope": "I NaTg closing-time factor restored from 0.15 to 1; otherwise identical circuit and I=1 nA stimulus.",
+  "metadata_equal_except_diagnostic_override_and_outcomes": true,
+  "override": {
+    "NaTg_h_closing_factor": 1.0,
+    "candidate_value": 0.15,
+    "scope": "all I NaTg regions; all times; E unchanged"
+  },
+  "observations": {
+    "E": {
+      "voltage": {
+        "baseline_max": -71.64405181345613,
+        "test_max": -71.64405181345613,
+        "test_max_time_ms": 5.0,
+        "test_min": -84.02880084756187,
+        "test_final": -76.91526940964523,
+        "max_abs_change": 0.0,
+        "preinput_max_abs_change": 0.0,
+        "preinput_exactly_equal": true
+      },
+      "output_voltage": {
+        "baseline_max": -71.64405181345613,
+        "test_max": -71.64405181345613,
+        "test_max_time_ms": 5.0,
+        "test_min": -84.02880084756187,
+        "test_final": -76.91526940964523,
+        "max_abs_change": 0.0,
+        "preinput_max_abs_change": 0.0,
+        "preinput_exactly_equal": true
+      },
+      "synaptic_conductance": {
+        "baseline_max": 0.0,
+        "test_max": 0.0,
+        "test_max_time_ms": 0.005,
+        "test_min": 0.0,
+        "test_final": 0.0,
+        "max_abs_change": 0.0,
+        "preinput_max_abs_change": 0.0,
+        "preinput_exactly_equal": true
+      },
+      "events_ms": [],
+      "positive_soma_excursion": false
+    },
+    "I": {
+      "voltage": {
+        "baseline_max": -29.53142121570529,
+        "test_max": 34.06822818681818,
+        "test_max_time_ms": 4.885,
+        "test_min": -81.75950137166537,
+        "test_final": -74.94856057242308,
+        "max_abs_change": 75.31695729270533,
+        "preinput_max_abs_change": 0.0,
+        "preinput_exactly_equal": true
+      },
+      "output_voltage": {
+        "baseline_max": -80.00605911618779,
+        "test_max": -77.59445185817961,
+        "test_max_time_ms": 8.0,
+        "test_min": -84.85370484127726,
+        "test_final": -77.59445185817961,
+        "max_abs_change": 7.51794410414918,
+        "preinput_max_abs_change": 0.0,
+        "preinput_exactly_equal": true
+      },
+      "synaptic_conductance": {
+        "baseline_max": 0.0,
+        "test_max": 0.0,
+        "test_max_time_ms": 0.005,
+        "test_min": 0.0,
+        "test_final": 0.0,
+        "max_abs_change": 0.0,
+        "preinput_max_abs_change": 0.0,
+        "preinput_exactly_equal": true
+      },
+      "events_ms": [],
+      "positive_soma_excursion": true,
+      "soma_minus20mv_events": [
+        {
+          "rise_crossing_ms": 4.722360340083677,
+          "fall_crossing_ms": 5.488643656484098,
+          "time_above_threshold_ms": 0.766283316400421,
+          "peak_sample_time_ms": 4.885,
+          "peak_sample_voltage_mv": 34.06822818681818
+        }
+      ]
+    }
+  },
+  "files": {
+    ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf",
+    ".cache/h01/measured-ie-source-closing-scan.npz": "b21e2097aa2a060226d16117c5862b2457f4f240a79781d3e8bf5aca73d76678"
+  },
+  "limits": "No declared contact output event through 8 ms. Contact voltage is still rising at the end; delayed arrival is not excluded. A positive soma excursion and complete threshold crossings do not establish human spike qualification."
+}
