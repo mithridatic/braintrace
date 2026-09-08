@@ -1305,6 +1305,29 @@ as "9 of 166 shards scanned", a measured denominator that was previously unknown
 ([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
 kill. Absence of a contact is not established by either scan.
 
+#### Y5 edge list, 2026-09-07: 3,000-sample rescan complete and the SP7d diff (SP7a/SP7d)
+
+Observed ([watchdog record](evidence/h01-c3-scan-3000.watchdog.json),
+[edge list](evidence/h01-resolved-edge-list-3000.json),
+[recheck](evidence/h01-endpoint-recheck-5voxel-3000.json)): the resumed rescan reached
+**104 of 104 cells** in two launches (launch 1 killed after 600.7 s without a progress line at
+78 cells, launch 2 exit 0; one kill, one relaunch; median 118.5 s per cell, range 61.2 to
+168.8 s). Doubling the samples raised the attributed C3 ids from 10,458 to 14,145 and the
+candidates from 123 to 126 on 33 directed pairs, with the 123 common records unchanged. The
+three new candidates (101412196 I `5584343344` to E `4188575291`; 127313472 E `4157825456` to
+`5654281423`, the 72nd on the suspected-merge pair; 143320914 I `1684504313` to E `883843993`)
+each read the expected cell exactly at one endpoint and background throughout the 5-voxel box
+at the other, so none is endpoint-verified at either tolerance. The three exact contacts
+(8105899, 124698307, 65017731) and the seven in-box edges are byte-identical and recheck with
+the same offsets. The SP8 topology ([network](evidence/h01-verified-network.json)) is
+therefore unchanged: 3 verified, 2 construction-ready, 6 incident cells; no
+`h01-verified-network-3000.json` was produced because the selection input is identical. Y5
+gains no new measured pair; the two new I-to-E candidates are one-endpoint contacts and stay
+candidates only.
+
+Coverage: 104 of 104 cells at 3,000 samples; 9 of 166 export shards; `full_export_scanned`
+false. Absence of a contact is not established by either scan.
+
 #### Y5 population, 2026-09-07: builder and the 12-cell construction check (SP8)
 
 Builder ([spec](specs/2026-09-07-h01-population-builder.md)): `make_h01_network` gains
