@@ -2135,3 +2135,9 @@ outgoing partners in eight cached export shards. Evidence:
 h01-cached-connectivity-inventory.json. This is partial sampled-membership
 connectivity, not proof that unmapped partners lie outside the selected cells.
 The enabled simulation graph remains two contacts; Y5 completeness stays open.
+
+The r2 retry completed all104 initialization in 853.693 seconds after
+1230.686 seconds construction, retaining 808495 compartments. Its immutable
+checkpoint and exact construction comparison are recorded in
+h01-ready-104-implicit-r2-init-decision.json. The worker is now in the combined
+compile/run stage; no runtime or physiology pass follows from initialization.

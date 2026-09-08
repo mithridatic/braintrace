@@ -128,3 +128,9 @@ failed replacement with intact old JSON, recovery after release, and cleanup.
 The first helper test exposed PowerShell converting a null backup path to an
 empty string; explicit NullString fixes that interop issue. Future monitoring
 changes must exercise real file handles before an expensive run.
+
+The r2 retry completed all104 initialization in 853.693 seconds after
+1230.686 seconds construction, retaining 808495 compartments. Its immutable
+checkpoint and exact construction comparison are recorded in
+h01-ready-104-implicit-r2-init-decision.json. The worker is now in the combined
+compile/run stage; no runtime or physiology pass follows from initialization.
