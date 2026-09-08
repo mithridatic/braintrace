@@ -106,6 +106,12 @@ does (the runner's gate rule). G1 and G2 run concurrently (two containers).
 
 ## 5. PASS/FAIL rule and reassessment
 
+Source-audit amendment, 2026-09-08: the historical reassessment below is not
+evidence that the model lacks an M current. Frozen B3 applies nonzero somatic
+Im; see `docs/evidence/h01-e-gain-source-audit.json`. A new kinetics hypothesis
+must distinguish changes to that existing mechanism from adding a missing
+one. The recorded campaign rules and outcomes remain unchanged.
+
 PASS: one profile whose rate and adaptation rows pass at 250/310/350 pA (350 from the
 retained sweep-55 B3 trace for `g0-b3`; a G arm at 350 would need a fifth input and is
 outside this cap, so a G-arm PASS is provisional on 250/310 plus 200 where resolvable) and

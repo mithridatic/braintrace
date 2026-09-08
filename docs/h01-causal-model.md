@@ -2006,6 +2006,27 @@ is excluded rather than promoted. See the [result](evidence/h01-ready-104-result
 Full-population initialization/stepping, controls and physiological qualification
 remain open.
 
+### Y4 source-audit correction, 2026-09-08
+
+The [hash-linked source audit](evidence/h01-e-gain-source-audit.json) verifies
+that the frozen B3 opening runs at sweeps 43/50/53/56 all applied somatic
+`gbar_Im = 0.0003009224287506406 S/cm2` with the pinned Im source. This
+supersedes earlier wording on this page suggesting that an M current is absent
+from the Allen genome. Source Im has voltage-dependent gating; alternative
+human-specific kinetics or distributions remain untested hypotheses, not an
+identified missing mechanism or a demonstrated cause of the gain defect.
+
+Likewise, the measured failures of the tested Ih/leak doses and the registered
+additive prediction do not prove that every passive parameterization fails.
+Earlier statements that the unresolved cause is necessarily outside the
+passive family are stronger than those measurements support. The narrowed
+claim is failure of the registered tested interventions under their stated
+conditions. The current that would correct low-drive responses while retaining
+the protected responses remains unresolved. This audit launches no evaluation
+and closes no physiological gate. B3 remains unpromoted. Details and the
+source-check requirement for future hypotheses are in the
+[amendment](evidence/h01-e-gain-source-audit.md).
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).
