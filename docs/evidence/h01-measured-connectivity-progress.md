@@ -171,5 +171,51 @@ Spec: [connectivity completion](../specs/2026-09-07-h01-connectivity-completion.
   sampled `c3_ids`.
 - **Recheck (SP7d).** Not triggered: no new endpoint-verified edge exists until the rescan runs.
 
-Coverage state: 26 of 104 cells at 3,000 samples; 9 of 166 export shards. Absence of a
-contact is not established.
+Coverage state at the time of this entry: 26 of 104 cells at 3,000 samples; 9 of 166 export
+shards. Superseded by the completed rescan below.
+
+## 3,000-sample rescan completed (2026-09-07, SP7a/SP7d)
+
+The rescan was resumed from the 26-cell checkpoint under the watchdog
+([record](h01-c3-scan-3000.watchdog.json), [launch logs](h01-c3-scan-3000.launch-logs.json),
+[result](h01-resolved-edge-list-3000.json), [checkpoint](h01-resolved-edge-list-3000.cells.json)).
+Coverage: **104 of 104 cells scanned at 3,000 samples** (status `complete`).
+
+| Quantity | Value |
+| --- | --- |
+| Launches | 2 (launch 1: 15:28:12 to 17:29:21, 7,268 s, pid 38508, 26 to 78 cells, **killed after 600.7 s without a progress line**; launch 2: 17:29:21 to 18:28:53, 3,572 s, pid 36472, 78 to 104 cells, exit 0) |
+| Kills / relaunches | 1 stall kill, 1 relaunch; the cell in flight at the kill was rescanned by launch 2, so nothing was lost |
+| Wall clock per cell (all 104, checkpoint `seconds`) | median 118.5 s, range 61.2 to 168.8 s |
+| Wall clock per cell (78 cells under the watchdog) | median 125.1 s, range 73.3 to 168.8 s |
+| Index query and endpoint pass (launch 2 after cell 104) | included in the child's 3,564.2 s wall |
+| Cells identity-consistent | 104 of 104; no C3 label shared by two cells |
+| C3 segment ids attributed | 14,145 (1,500 samples: 10,458) |
+| Candidate directed contacts | 126 (1,500 samples: 123) |
+| Directed cell pairs | 33 (1,500 samples: 31) |
+| Endpoint-verified contacts | 3, the same three: 8105899, 124698307, 65017731, records byte-identical |
+| Contacts within the 2-voxel box | 7, the same seven |
+| Common candidates whose record changed | 0 of 123 |
+
+**New candidates (SP7d diff against `h01-resolved-edge-list.json`)** and their 5-voxel
+recheck ([json](h01-endpoint-recheck-5voxel-3000.json), one edge at a time, 300 s budget,
+17.7 to 30.1 s per edge, no budget exceeded):
+
+| Annotation | Pre cell | Post cell | Type | 2-voxel box | 5-voxel recheck | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| 101412196 | `5584343344` (I) | `4188575291` (E) | 1 | pre exact, post background | pre `[0,0,0]`, post none in the box | not verified; new I-to-E pair |
+| 127313472 | `4157825456` (E) | `5654281423` | 2 | pre exact, post background | pre `[0,0,0]`, post none in the box | not verified; 72nd candidate on the suspected-merge pair |
+| 143320914 | `1684504313` (I) | `883843993` (E) | 1 | pre background, post exact | pre none in the box, post `[0,0,0]` | not verified; new I-to-E pair |
+
+No new candidate becomes endpoint-verified or within-box at either tolerance, so the
+`prepare_connectivity` trigger did not fire: the topology SP8 builds from
+([h01-verified-network.json](h01-verified-network.json)) is unchanged, with 3 verified contacts,
+2 construction-ready, 6 incident cells. `h01-verified-network-3000.json` was not produced
+because the verified edge records and every cell's `identity_consistent` flag are identical in
+the two lists, so the selection input is the same. The 7 previously in-box edges rechecked
+with the same offsets as on 2026-09-07 (the 3 exact contacts exact; 95907584 post offset 1 in
+x; 108171241 pre offset 1 in x; 125872198 post offset -2 in x; 95566965 pre +1, post -1 in z).
+
+Doubling the sample count raised the attributed C3 ids by 35 % and added three candidates
+but no verified contact. Coverage state: 104 of 104 cells at 3,000 samples; 9 of 166 export
+shards. Absence of a contact is still not established: 3,000 samples per cell do not cover
+every C3 segment, and `full_export_scanned` stays false.
