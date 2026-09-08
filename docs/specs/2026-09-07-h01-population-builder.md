@@ -155,3 +155,51 @@ construction abort is set, before launch, to 1,350 s (1.5x the measured 883 s po
 silence kill and a 2,700 s total wall cap stay. Predictions for the run phase are unchanged
 (finite traces; disconnected conductance probes zero; init + compile + 200 steps ~276 s scaled
 from SP1, expected higher under load; RSS ~1.5 GB, reject over 6 GB).
+
+### Addendum 2026-09-07, 17:05 (init_state instrumentation; registered before the quiet-machine 12-cell runs)
+
+Instrument change (no model or numerical change). `braincell.network.Network.init_state` exposes
+no hook: it loops over `network.populations` and calls `Cell.init_state` once per uninitialized
+cell, and both `Network.init_state` and `Network.run` skip initialized cells. So
+`braintrace/datasets/h01_network_init.py` performs that same loop itself:
+
+- `init_h01_network_states(network, progress, heartbeat_seconds=60)` emits
+  `Initializing cell_<id> (i/n, k compartments)` and `Initialized cell_<id> in s s` per
+  population, then calls `network.init_state()` (a no-op afterwards). It returns
+  `init_state_seconds`, `init_seconds_by_population`, `initialized_populations`, `peak_rss_mb`.
+- `heartbeat(label, emit, seconds)` runs a daemon thread that emits
+  `heartbeat: <label> elapsed <t> s, RSS <m> MB` every `seconds` while the wrapped call is
+  silent (a heartbeat is a progress line for the 10-minute silence rule). The example wraps
+  each `Cell.init_state` and the whole `network.run` (jaxpr tracing, XLA compile, stepping) in it.
+- `examples/h01_verified_network.py` gains `--init-only` (construct, initialize cell by cell,
+  record `init_state_seconds`, `init_seconds_by_cell`, `init_peak_rss_mb`, write the build JSON
+  with `execution = "constructed and initialized; not compiled or simulated"`, exit before
+  compile and stepping; excludes `--duration-ms`) and `--heartbeat-s` (default 60). Run mode
+  records the same init fields plus `run_peak_rss_mb` (`psutil` `peak_wset` where reported).
+
+Tests: `h01_network_init_test.py` (heartbeat cadence, stop, psutil-less path, per-cell lines,
+skip of initialized cells, network `init_state` call; 100 % line coverage) and
+`h01_network_test.py::test_per_cell_init_progress_then_run_is_idempotent` on the fixture network
+(real `Cell.init_state`, second call initializes nothing, `run` still finite).
+
+Predictions for the quiet-machine 12-cell runs (`--include-isolated --cells 12`, first
+`--init-only --control ei`, then 1 ms at dt 0.005 ms for `ei` and `disconnected`), written
+before launch; "quiet" means `docker ps` shows only `synapse` and no python process other than
+the C3 rescan worker uses more than 300 MB:
+
+1. Construction near the SP1 rate scaled by 1.11x compartments (84,097 / 75,605): SP1 alone
+   measured 240-280 s, so **270-310 s (derived)**. The under-load 883 s point is not the
+   reference.
+2. `init_state` is unmeasured; expected **between 1x and 3x the 4-cell a = 245 s**, i.e.
+   245-735 s, with the 33,965-compartment cell `3955003482` the largest single term. Per-cell
+   seconds are recorded so a superlinear-in-compartments cost is visible directly.
+3. All traces finite in both 1 ms runs; the `disconnected` run's `*_g` conductance probes are
+   identically zero and the `ei` run's are not.
+4. Peak RSS near 1.5 GB (derived); the process peak is read from inside the real interpreter and
+   the tree sum from the watcher.
+
+Rejection: a nonfinite trace, RSS over 6 GB, or `init_state_seconds` over 1,500 s. Kill rules for
+these launches: 10 minutes without a progress or heartbeat line, or the 1,500 s init_state abort;
+no separate construction abort is applied on the quiet machine (the heartbeat and per-stage
+lines cover it). The "inside 2x the SP1 linear prediction" test of the earlier addendum
+applies to construction (275 s), init + compile + 200 steps (276 s) and RSS (1.48 GB).
