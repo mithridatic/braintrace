@@ -1,0 +1,1152 @@
+{
+  "scope": "archive membership comparison; no model promotion",
+  "rows": [
+    {
+      "cell": "751294744",
+      "agglo_count": 619,
+      "base_count": 3723,
+      "sampled_count": 141,
+      "agglo_sampled_overlap": 112,
+      "agglo_base_overlap": 473,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1072605926",
+      "agglo_count": 352,
+      "base_count": 2073,
+      "sampled_count": 131,
+      "agglo_sampled_overlap": 70,
+      "agglo_base_overlap": 326,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2451406889",
+      "agglo_count": 48,
+      "base_count": 930,
+      "sampled_count": 49,
+      "agglo_sampled_overlap": 33,
+      "agglo_base_overlap": 44,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "620880207",
+      "agglo_count": 1602,
+      "base_count": 8005,
+      "sampled_count": 271,
+      "agglo_sampled_overlap": 189,
+      "agglo_base_overlap": 1496,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2306214824",
+      "agglo_count": 233,
+      "base_count": 2654,
+      "sampled_count": 127,
+      "agglo_sampled_overlap": 73,
+      "agglo_base_overlap": 225,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3178243558",
+      "agglo_count": 119,
+      "base_count": 2073,
+      "sampled_count": 94,
+      "agglo_sampled_overlap": 55,
+      "agglo_base_overlap": 72,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1304599410",
+      "agglo_count": 265,
+      "base_count": 5078,
+      "sampled_count": 183,
+      "agglo_sampled_overlap": 78,
+      "agglo_base_overlap": 203,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4476359994",
+      "agglo_count": 67,
+      "base_count": 1459,
+      "sampled_count": 83,
+      "agglo_sampled_overlap": 41,
+      "agglo_base_overlap": 65,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5805562981",
+      "agglo_count": 139,
+      "base_count": 1539,
+      "sampled_count": 81,
+      "agglo_sampled_overlap": 33,
+      "agglo_base_overlap": 134,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "810151953",
+      "agglo_count": 65,
+      "base_count": 1169,
+      "sampled_count": 79,
+      "agglo_sampled_overlap": 33,
+      "agglo_base_overlap": 47,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "883843993",
+      "agglo_count": 709,
+      "base_count": 3910,
+      "sampled_count": 204,
+      "agglo_sampled_overlap": 104,
+      "agglo_base_overlap": 366,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1465400601",
+      "agglo_count": 446,
+      "base_count": 3025,
+      "sampled_count": 204,
+      "agglo_sampled_overlap": 89,
+      "agglo_base_overlap": 374,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "810970127",
+      "agglo_count": 242,
+      "base_count": 4252,
+      "sampled_count": 173,
+      "agglo_sampled_overlap": 63,
+      "agglo_base_overlap": 171,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1787105373",
+      "agglo_count": 87,
+      "base_count": 677,
+      "sampled_count": 79,
+      "agglo_sampled_overlap": 67,
+      "agglo_base_overlap": 83,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1684504313",
+      "agglo_count": 1055,
+      "base_count": 4362,
+      "sampled_count": 177,
+      "agglo_sampled_overlap": 109,
+      "agglo_base_overlap": 1008,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2047644309",
+      "agglo_count": 438,
+      "base_count": 2459,
+      "sampled_count": 143,
+      "agglo_sampled_overlap": 76,
+      "agglo_base_overlap": 414,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1830470325",
+      "agglo_count": 188,
+      "base_count": 1167,
+      "sampled_count": 122,
+      "agglo_sampled_overlap": 118,
+      "agglo_base_overlap": 179,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2104047922",
+      "agglo_count": 231,
+      "base_count": 1671,
+      "sampled_count": 113,
+      "agglo_sampled_overlap": 69,
+      "agglo_base_overlap": 220,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1930502394",
+      "agglo_count": 168,
+      "base_count": 6675,
+      "sampled_count": 87,
+      "agglo_sampled_overlap": 78,
+      "agglo_base_overlap": 164,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2325998949",
+      "agglo_count": 219,
+      "base_count": 692,
+      "sampled_count": 144,
+      "agglo_sampled_overlap": 141,
+      "agglo_base_overlap": 215,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1900905433",
+      "agglo_count": 600,
+      "base_count": 3119,
+      "sampled_count": 316,
+      "agglo_sampled_overlap": 208,
+      "agglo_base_overlap": 577,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2103991145",
+      "agglo_count": 223,
+      "base_count": 6265,
+      "sampled_count": 151,
+      "agglo_sampled_overlap": 61,
+      "agglo_base_overlap": 141,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2530864375",
+      "agglo_count": 29,
+      "base_count": 142,
+      "sampled_count": 33,
+      "agglo_sampled_overlap": 22,
+      "agglo_base_overlap": 24,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1669770671",
+      "agglo_count": 482,
+      "base_count": 3967,
+      "sampled_count": 220,
+      "agglo_sampled_overlap": 91,
+      "agglo_base_overlap": 459,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "1874244336",
+      "agglo_count": 752,
+      "base_count": 7312,
+      "sampled_count": 245,
+      "agglo_sampled_overlap": 86,
+      "agglo_base_overlap": 718,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2001418787",
+      "agglo_count": 231,
+      "base_count": 2026,
+      "sampled_count": 77,
+      "agglo_sampled_overlap": 37,
+      "agglo_base_overlap": 201,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2074305737",
+      "agglo_count": 345,
+      "base_count": 2299,
+      "sampled_count": 124,
+      "agglo_sampled_overlap": 66,
+      "agglo_base_overlap": 332,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2848552900",
+      "agglo_count": 104,
+      "base_count": 2413,
+      "sampled_count": 58,
+      "agglo_sampled_overlap": 57,
+      "agglo_base_overlap": 102,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2252715458",
+      "agglo_count": 593,
+      "base_count": 2786,
+      "sampled_count": 193,
+      "agglo_sampled_overlap": 114,
+      "agglo_base_overlap": 523,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2195261734",
+      "agglo_count": 676,
+      "base_count": 4154,
+      "sampled_count": 169,
+      "agglo_sampled_overlap": 167,
+      "agglo_base_overlap": 628,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2888180252",
+      "agglo_count": 278,
+      "base_count": 3203,
+      "sampled_count": 100,
+      "agglo_sampled_overlap": 53,
+      "agglo_base_overlap": 268,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2820958695",
+      "agglo_count": 97,
+      "base_count": 500,
+      "sampled_count": 82,
+      "agglo_sampled_overlap": 81,
+      "agglo_base_overlap": 94,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2903686765",
+      "agglo_count": 234,
+      "base_count": 2558,
+      "sampled_count": 112,
+      "agglo_sampled_overlap": 65,
+      "agglo_base_overlap": 227,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3111823553",
+      "agglo_count": 283,
+      "base_count": 3122,
+      "sampled_count": 268,
+      "agglo_sampled_overlap": 160,
+      "agglo_base_overlap": 252,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3432315514",
+      "agglo_count": 307,
+      "base_count": 2490,
+      "sampled_count": 217,
+      "agglo_sampled_overlap": 136,
+      "agglo_base_overlap": 284,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3383650350",
+      "agglo_count": 240,
+      "base_count": 4603,
+      "sampled_count": 77,
+      "agglo_sampled_overlap": 35,
+      "agglo_base_overlap": 107,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3519995546",
+      "agglo_count": 916,
+      "base_count": 4016,
+      "sampled_count": 176,
+      "agglo_sampled_overlap": 122,
+      "agglo_base_overlap": 880,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3751392341",
+      "agglo_count": 98,
+      "base_count": 411,
+      "sampled_count": 28,
+      "agglo_sampled_overlap": 21,
+      "agglo_base_overlap": 94,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3761379470",
+      "agglo_count": 42,
+      "base_count": 2106,
+      "sampled_count": 45,
+      "agglo_sampled_overlap": 14,
+      "agglo_base_overlap": 34,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3571083397",
+      "agglo_count": 119,
+      "base_count": 3010,
+      "sampled_count": 81,
+      "agglo_sampled_overlap": 77,
+      "agglo_base_overlap": 119,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3093748739",
+      "agglo_count": 369,
+      "base_count": 2826,
+      "sampled_count": 84,
+      "agglo_sampled_overlap": 39,
+      "agglo_base_overlap": 350,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3680152874",
+      "agglo_count": 139,
+      "base_count": 738,
+      "sampled_count": 131,
+      "agglo_sampled_overlap": 93,
+      "agglo_base_overlap": 129,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4039221194",
+      "agglo_count": 125,
+      "base_count": 5376,
+      "sampled_count": 154,
+      "agglo_sampled_overlap": 54,
+      "agglo_base_overlap": 121,
+      "lookup_keys": []
+    },
+    {
+      "cell": "3329117097",
+      "agglo_count": 868,
+      "base_count": 4645,
+      "sampled_count": 140,
+      "agglo_sampled_overlap": 75,
+      "agglo_base_overlap": 789,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3139317430",
+      "agglo_count": 137,
+      "base_count": 1508,
+      "sampled_count": 80,
+      "agglo_sampled_overlap": 74,
+      "agglo_base_overlap": 132,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4010150634",
+      "agglo_count": 127,
+      "base_count": 1775,
+      "sampled_count": 98,
+      "agglo_sampled_overlap": 68,
+      "agglo_base_overlap": 112,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3470629528",
+      "agglo_count": 65,
+      "base_count": 5742,
+      "sampled_count": 38,
+      "agglo_sampled_overlap": 24,
+      "agglo_base_overlap": 59,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4125702786",
+      "agglo_count": 89,
+      "base_count": 2340,
+      "sampled_count": 119,
+      "agglo_sampled_overlap": 53,
+      "agglo_base_overlap": 83,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4188575291",
+      "agglo_count": 250,
+      "base_count": 4339,
+      "sampled_count": 134,
+      "agglo_sampled_overlap": 57,
+      "agglo_base_overlap": 239,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4260528559",
+      "agglo_count": 72,
+      "base_count": 378,
+      "sampled_count": 69,
+      "agglo_sampled_overlap": 68,
+      "agglo_base_overlap": 67,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "2889815798",
+      "agglo_count": 534,
+      "base_count": 2633,
+      "sampled_count": 93,
+      "agglo_sampled_overlap": 90,
+      "agglo_base_overlap": 506,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4420044370",
+      "agglo_count": 31,
+      "base_count": 361,
+      "sampled_count": 36,
+      "agglo_sampled_overlap": 17,
+      "agglo_base_overlap": 29,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3812058320",
+      "agglo_count": 374,
+      "base_count": 3649,
+      "sampled_count": 182,
+      "agglo_sampled_overlap": 175,
+      "agglo_base_overlap": 360,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4197933517",
+      "agglo_count": 122,
+      "base_count": 5204,
+      "sampled_count": 88,
+      "agglo_sampled_overlap": 77,
+      "agglo_base_overlap": 117,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4554213569",
+      "agglo_count": 482,
+      "base_count": 3423,
+      "sampled_count": 216,
+      "agglo_sampled_overlap": 124,
+      "agglo_base_overlap": 415,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4467761196",
+      "agglo_count": 281,
+      "base_count": 867,
+      "sampled_count": 203,
+      "agglo_sampled_overlap": 195,
+      "agglo_base_overlap": 275,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4535129012",
+      "agglo_count": 129,
+      "base_count": 3218,
+      "sampled_count": 121,
+      "agglo_sampled_overlap": 33,
+      "agglo_base_overlap": 112,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4138580687",
+      "agglo_count": 299,
+      "base_count": 2768,
+      "sampled_count": 79,
+      "agglo_sampled_overlap": 20,
+      "agglo_base_overlap": 286,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3836078296",
+      "agglo_count": 39,
+      "base_count": 2680,
+      "sampled_count": 87,
+      "agglo_sampled_overlap": 21,
+      "agglo_base_overlap": 34,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4711641825",
+      "agglo_count": 44,
+      "base_count": 635,
+      "sampled_count": 35,
+      "agglo_sampled_overlap": 22,
+      "agglo_base_overlap": 38,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3955003482",
+      "agglo_count": 1576,
+      "base_count": 12401,
+      "sampled_count": 170,
+      "agglo_sampled_overlap": 61,
+      "agglo_base_overlap": 1479,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4365276903",
+      "agglo_count": 219,
+      "base_count": 1918,
+      "sampled_count": 138,
+      "agglo_sampled_overlap": 132,
+      "agglo_base_overlap": 179,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4437316933",
+      "agglo_count": 506,
+      "base_count": 3285,
+      "sampled_count": 235,
+      "agglo_sampled_overlap": 151,
+      "agglo_base_overlap": 485,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4873639924",
+      "agglo_count": 409,
+      "base_count": 6621,
+      "sampled_count": 139,
+      "agglo_sampled_overlap": 134,
+      "agglo_base_overlap": 393,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4522237537",
+      "agglo_count": 171,
+      "base_count": 1768,
+      "sampled_count": 118,
+      "agglo_sampled_overlap": 115,
+      "agglo_base_overlap": 169,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4830551047",
+      "agglo_count": 167,
+      "base_count": 828,
+      "sampled_count": 136,
+      "agglo_sampled_overlap": 135,
+      "agglo_base_overlap": 161,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4853956860",
+      "agglo_count": 63,
+      "base_count": 2634,
+      "sampled_count": 34,
+      "agglo_sampled_overlap": 16,
+      "agglo_base_overlap": 56,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5013648003",
+      "agglo_count": 104,
+      "base_count": 2618,
+      "sampled_count": 119,
+      "agglo_sampled_overlap": 48,
+      "agglo_base_overlap": 84,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4582188328",
+      "agglo_count": 242,
+      "base_count": 6124,
+      "sampled_count": 172,
+      "agglo_sampled_overlap": 65,
+      "agglo_base_overlap": 232,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3503540481",
+      "agglo_count": 709,
+      "base_count": 8477,
+      "sampled_count": 140,
+      "agglo_sampled_overlap": 55,
+      "agglo_base_overlap": 663,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "3954491075",
+      "agglo_count": 375,
+      "base_count": 1982,
+      "sampled_count": 74,
+      "agglo_sampled_overlap": 31,
+      "agglo_base_overlap": 351,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4157825456",
+      "agglo_count": 1176,
+      "base_count": 9898,
+      "sampled_count": 152,
+      "agglo_sampled_overlap": 61,
+      "agglo_base_overlap": 1110,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4607885827",
+      "agglo_count": 298,
+      "base_count": 1700,
+      "sampled_count": 54,
+      "agglo_sampled_overlap": 50,
+      "agglo_base_overlap": 272,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4932057570",
+      "agglo_count": 293,
+      "base_count": 2127,
+      "sampled_count": 180,
+      "agglo_sampled_overlap": 177,
+      "agglo_base_overlap": 284,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5175880292",
+      "agglo_count": 533,
+      "base_count": 4892,
+      "sampled_count": 175,
+      "agglo_sampled_overlap": 89,
+      "agglo_base_overlap": 502,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5136107765",
+      "agglo_count": 1266,
+      "base_count": 9224,
+      "sampled_count": 237,
+      "agglo_sampled_overlap": 104,
+      "agglo_base_overlap": 1010,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5060444657",
+      "agglo_count": 284,
+      "base_count": 814,
+      "sampled_count": 200,
+      "agglo_sampled_overlap": 198,
+      "agglo_base_overlap": 280,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5173982155",
+      "agglo_count": 186,
+      "base_count": 2459,
+      "sampled_count": 100,
+      "agglo_sampled_overlap": 36,
+      "agglo_base_overlap": 176,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5216806368",
+      "agglo_count": 296,
+      "base_count": 9392,
+      "sampled_count": 171,
+      "agglo_sampled_overlap": 56,
+      "agglo_base_overlap": 279,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4668874666",
+      "agglo_count": 146,
+      "base_count": 1975,
+      "sampled_count": 104,
+      "agglo_sampled_overlap": 100,
+      "agglo_base_overlap": 144,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5355296383",
+      "agglo_count": 820,
+      "base_count": 4059,
+      "sampled_count": 279,
+      "agglo_sampled_overlap": 150,
+      "agglo_base_overlap": 683,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4711567524",
+      "agglo_count": 1217,
+      "base_count": 7188,
+      "sampled_count": 171,
+      "agglo_sampled_overlap": 88,
+      "agglo_base_overlap": 1160,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5536146025",
+      "agglo_count": 400,
+      "base_count": 4501,
+      "sampled_count": 153,
+      "agglo_sampled_overlap": 62,
+      "agglo_base_overlap": 349,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "4641147055",
+      "agglo_count": 2020,
+      "base_count": 7273,
+      "sampled_count": 269,
+      "agglo_sampled_overlap": 174,
+      "agglo_base_overlap": 1679,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5439194879",
+      "agglo_count": 136,
+      "base_count": 1955,
+      "sampled_count": 122,
+      "agglo_sampled_overlap": 49,
+      "agglo_base_overlap": 100,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5352961465",
+      "agglo_count": 938,
+      "base_count": 5367,
+      "sampled_count": 192,
+      "agglo_sampled_overlap": 94,
+      "agglo_base_overlap": 866,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "546925828",
+      "agglo_count": 85,
+      "base_count": 1597,
+      "sampled_count": 125,
+      "agglo_sampled_overlap": 63,
+      "agglo_base_overlap": 84,
+      "lookup_keys": []
+    },
+    {
+      "cell": "5061320552",
+      "agglo_count": 120,
+      "base_count": 1031,
+      "sampled_count": 86,
+      "agglo_sampled_overlap": 82,
+      "agglo_base_overlap": 115,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5215113731",
+      "agglo_count": 531,
+      "base_count": 3982,
+      "sampled_count": 92,
+      "agglo_sampled_overlap": 23,
+      "agglo_base_overlap": 446,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5015035926",
+      "agglo_count": 1258,
+      "base_count": 10756,
+      "sampled_count": 206,
+      "agglo_sampled_overlap": 78,
+      "agglo_base_overlap": 932,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5584343344",
+      "agglo_count": 481,
+      "base_count": 4192,
+      "sampled_count": 238,
+      "agglo_sampled_overlap": 157,
+      "agglo_base_overlap": 459,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5965472721",
+      "agglo_count": 148,
+      "base_count": 971,
+      "sampled_count": 154,
+      "agglo_sampled_overlap": 84,
+      "agglo_base_overlap": 124,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5319188363",
+      "agglo_count": 1257,
+      "base_count": 7622,
+      "sampled_count": 120,
+      "agglo_sampled_overlap": 48,
+      "agglo_base_overlap": 974,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "6126390733",
+      "agglo_count": 143,
+      "base_count": 826,
+      "sampled_count": 128,
+      "agglo_sampled_overlap": 74,
+      "agglo_base_overlap": 139,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5654281423",
+      "agglo_count": 212,
+      "base_count": 7109,
+      "sampled_count": 90,
+      "agglo_sampled_overlap": 79,
+      "agglo_base_overlap": 202,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "547114083",
+      "agglo_count": 610,
+      "base_count": 1836,
+      "sampled_count": 82,
+      "agglo_sampled_overlap": 82,
+      "agglo_base_overlap": 520,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5832764277",
+      "agglo_count": 1059,
+      "base_count": 9990,
+      "sampled_count": 287,
+      "agglo_sampled_overlap": 139,
+      "agglo_base_overlap": 939,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "5687162964",
+      "agglo_count": 618,
+      "base_count": 2948,
+      "sampled_count": 132,
+      "agglo_sampled_overlap": 58,
+      "agglo_base_overlap": 593,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "6833911543",
+      "agglo_count": 149,
+      "base_count": 2291,
+      "sampled_count": 112,
+      "agglo_sampled_overlap": 37,
+      "agglo_base_overlap": 61,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "678539249",
+      "agglo_count": 104,
+      "base_count": 638,
+      "sampled_count": 119,
+      "agglo_sampled_overlap": 75,
+      "agglo_base_overlap": 99,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "7196644737",
+      "agglo_count": 640,
+      "base_count": 3623,
+      "sampled_count": 155,
+      "agglo_sampled_overlap": 59,
+      "agglo_base_overlap": 337,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "7052969349",
+      "agglo_count": 798,
+      "base_count": 4803,
+      "sampled_count": 92,
+      "agglo_sampled_overlap": 89,
+      "agglo_base_overlap": 501,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "7893125555",
+      "agglo_count": 1156,
+      "base_count": 5398,
+      "sampled_count": 140,
+      "agglo_sampled_overlap": 60,
+      "agglo_base_overlap": 970,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    },
+    {
+      "cell": "955432427",
+      "agglo_count": 287,
+      "base_count": 1111,
+      "sampled_count": 109,
+      "agglo_sampled_overlap": 73,
+      "agglo_base_overlap": 254,
+      "lookup_keys": [
+        "goog14r0seg1.agg20200916_resolved"
+      ]
+    }
+  ],
+  "totals": {
+    "agglo_count": 42723,
+    "base_count": 365404,
+    "sampled_count": 14145,
+    "agglo_sampled_overlap": 8474,
+    "agglo_base_overlap": 37491
+  }
+}

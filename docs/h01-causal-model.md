@@ -2118,3 +2118,12 @@ failed replacement with intact old JSON, recovery after release, and cleanup.
 The first helper test exposed PowerShell converting a null backup path to an
 empty string; explicit NullString fixes that interop issue. Future monitoring
 changes must exercise real file handles before an expensive run.
+
+The cached connectivity pass completed all eight registered shards (1-8),
+scanning 7993484 records and retaining 27058 relevant records. The saved
+h01-cached-join-summary.json lists 13 internal candidates across 11 directed
+pairs, three with explicit presynaptic axon-base support. These are partial
+export candidates with sampled partner membership, not accepted circuit edges
+or a complete graph. Raw retained records are cached and hash-bound by the
+summary so subsequent identity checks need not repeat the scan. No new network
+request or simulation was used for this pass.

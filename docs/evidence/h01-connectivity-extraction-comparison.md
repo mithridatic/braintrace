@@ -105,3 +105,12 @@ lookup to postsynaptic IDs gives {0: 17} by owner count;
 internal different-cell row indices: [].
 This check used no further scan or network request. Sampled membership remains
 incomplete and does not prove absence for an unmapped postsynaptic ID.
+
+The cached connectivity pass completed all eight registered shards (1-8),
+scanning 7993484 records and retaining 27058 relevant records. The saved
+h01-cached-join-summary.json lists 13 internal candidates across 11 directed
+pairs, three with explicit presynaptic axon-base support. These are partial
+export candidates with sampled partner membership, not accepted circuit edges
+or a complete graph. Raw retained records are cached and hash-bound by the
+summary so subsequent identity checks need not repeat the scan. No new network
+request or simulation was used for this pass.
