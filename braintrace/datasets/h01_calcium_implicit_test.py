@@ -20,7 +20,7 @@ def test_observed_negative_update_has_positive_implicit_solution():
     frozen = c*np.exp(-.005/tau)+(1e-4+K*current*tau)*(-np.expm1(-.005/tau))
     assert frozen == pytest.approx(-2.959552815885944e-7, abs=1e-20)
     with brainstate.environ.context(precision=64):
-        result = float(solve(c, 378.11889242275646, .0013121678452798395))
+        result = float(solve(c, 378.11889242275646, 1.3121678452798395))
     assert result > 0
     assert result == pytest.approx(1.0563536991597979e-10, rel=1e-10)
 
@@ -31,7 +31,7 @@ def test_matches_independent_scalar_root(voltage, conductance):
     c, dt, tau = .0001, .005, 657.0460049891833
     def residual(y):
         value = np.exp(y)
-        return value-c-dt*(K*conductance*(R*(np.log(2.)-y)-voltage)+(1e-4-value)/tau)
+        return value-c-dt*(K*(conductance*1e-3)*(R*(np.log(2.)-y)-voltage)+(1e-4-value)/tau)
     expected = np.exp(brentq(residual, -700., 10., xtol=1e-13))
     with brainstate.environ.context(precision=64):
         result = float(solve(c, voltage, conductance, dt))
@@ -60,7 +60,7 @@ def test_refines_toward_continuous_signed_flux_ode():
     c0, v, g, tau, duration = .0001, 180., .01, 657.0460049891833, .4
     def rhs(t, y):
         c = np.exp(y[0])
-        return [(K*g*(R*(np.log(2.)-y[0])-v)+(1e-4-c)/tau)/c]
+        return [(K*(g*1e-3)*(R*(np.log(2.)-y[0])-v)+(1e-4-c)/tau)/c]
     oracle = np.exp(solve_ivp(rhs, (0,duration), [np.log(c0)], method='Radau',
                              rtol=1e-11, atol=1e-12).y[0,-1])
     errors = []
@@ -81,3 +81,16 @@ def test_broadcasts_step_sizes_and_decay_with_scalar_state():
                             np.array([100.,200.]), K, R))
     np.testing.assert_allclose(result, (.001+np.array([.005,.01])*1e-4/np.array([100.,200.])) /
                               (1+np.array([.005,.01])/np.array([100.,200.])), rtol=1e-12)
+
+
+def test_current_conversion_matches_unit_aware_source_derivative():
+    import brainunit as u
+    from .h01_pv_calcium import PVCalcium
+    with brainstate.environ.context(precision=64):
+        ion = PVCalcium(1, decay=657.0460049891833*u.ms, gamma=.0008762096311710155)
+        ion.init_state(np.array([-40.])*u.mV)
+        current = (1.*u.mS/u.cm**2)*(ion.E-(-40.*u.mV))
+        derivative = float(ion.derivative(ion.Ci.value,-40.*u.mV,current).to_decimal(u.mM/u.ms)[0])
+        dt = 1e-7
+        result = float(solve(1e-4,-40.,1.,dt))
+    assert (result-1e-4)/dt == pytest.approx(derivative,rel=1e-6)

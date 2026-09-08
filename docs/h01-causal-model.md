@@ -2072,3 +2072,9 @@ update predicts that crossing to 1.06e-22 mM; dynamic Nernst reversal then becom
 invalid. See [state diagnosis](evidence/h01-ready-cell7196644737-result.md).
 The full104 driven runtime remains failed; this is a numerical diagnosis, not
 physiological qualification or a completed repair.
+
+An opt-in implicit calcium solver now completes the isolated failing cell at
+both registered timesteps with finite traces and positive calcium. The paired
+voltage difference is 6.364916 mV, so refinement is still unqualified, and the
+extreme ~383.8 mV response remains. Full104 readiness is not established. See
+[experimental repair evidence](evidence/h01-ready-cell7196644737-implicit-decision.json).

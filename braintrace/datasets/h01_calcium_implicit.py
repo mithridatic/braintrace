@@ -46,7 +46,7 @@ def calcium_backward_euler(c_old, voltage, conductance, dt, decay, flux_factor,
     lower = jnp.minimum(jnp.minimum(old_log, rest_log), equilibrium_log)
     upper = jnp.maximum(jnp.maximum(old_log, rest_log), equilibrium_log)
     a = 1.+dt/decay
-    b = dt*flux_factor*conductance*nernst_factor
+    b = dt*flux_factor*(conductance*1e-3)*nernst_factor
     d = c_old+dt*c_rest/decay+b*equilibrium_log
 
     def bisect(bounds, unused):

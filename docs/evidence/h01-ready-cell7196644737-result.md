@@ -53,3 +53,26 @@ live metadata was compared directly with JSON lists. Two regression cases now
 accept only representation equivalence and reject changed geometry. The rerun
 uses a fresh label and retains both launch/provenance records. No production
 model equation or parameter changed in this observation.
+
+## Experimental numerical repair
+
+The [implicit-solver decision](h01-ready-cell7196644737-implicit-decision.json)
+records finite 10 ms traces at both .005 and .0025 ms, with positive calcium
+throughout and one event in each. Only solver identity changed; all other cell
+metadata and compartment geometry match. Both use the source worktree; they are
+not installed-wheel or full-population qualification. Maximum voltage remains
+about 383.8 mV, so numerical finiteness is not physiological plausibility.
+
+Matched end-step voltages differ by 6.364916 mV between the two timesteps. This
+exceeds the 1 mV criterion; numerical refinement remains unqualified. Next inspect
+the maximum-error location and convergence under smaller steps before choosing
+the full-population timestep or changing the splitting order.
+
+The first assembled-cell test exposed a unit error missed by the initial scalar
+arithmetic oracle: mS/cm2 times mV gives uA/cm2, requiring a 1e-3 conversion to
+mA/cm2. The corrected kernel and independent roots now include that factor, and
+a new BrainUnit derivative oracle independently verifies the conversion. The
+historical scalar decision predates this correction and is superseded by these
+33 passing checks (kernel 100%, solver 96% line coverage). Unsupported non-ohmic
+currents and non-family ordering are rejected. No-calcium traces match the
+existing scan exactly; ordinary-regime differences shrink with timestep.
