@@ -215,3 +215,21 @@ def test_plan_matches_builder_without_loading(arguments):
     assert plan["incident_cell_ids"] == ["12", "13"] and plan["cell_order"] == ["12", "13", "14"]
     assert plan["simulated_cell_ids"] == ["12", "13", "14"] and set(plan["isolated_cells"]) == {"14"}
     assert plan_h01_cells(arguments["topology"])["simulated_cell_ids"] == ["12", "13"]
+
+
+def test_per_cell_init_progress_then_run_is_idempotent(arguments):
+    from .h01_network_init import init_h01_network_states
+    messages = []
+    with brainstate.environ.context(precision=64):
+        network, _ = make_h01_network(**arguments)
+        init = init_h01_network_states(network, progress=messages.append, heartbeat_seconds=60.)
+        assert init["initialized_populations"] == ["cell_12", "cell_13", "cell_14"]
+        assert [m for m in messages if m.startswith("Initializing cell_")] == [
+            f"Initializing cell_{c} ({i}/3, {network.populations['cell_'+c].cell.n_cv} compartments)"
+            for i, c in enumerate(("12", "13", "14"), start=1)]
+        assert init["init_state_seconds"] > 0. and init["peak_rss_mb"] > 0.
+        again = init_h01_network_states(network, progress=messages.append)
+        assert again["initialized_populations"] == []
+        result = network.run(dt=.001*u.ms, duration=.003*u.ms)
+        for traces in result.traces.values():
+            assert np.isfinite(traces["voltage"].to_decimal(u.mV)).all()
