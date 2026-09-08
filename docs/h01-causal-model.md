@@ -1958,6 +1958,14 @@ coordinates and graph are compared independently in the per-cell
 and passing checks. This closes the reader blocker in Y5, not its population
 runtime or physiology gates. No fragments are joined and no cable is invented.
 
+The subsequent [40-cell build](evidence/h01-ready-40-build-summary.json) completed
+with 165,084 compartments and two projections in 240.850 seconds, exit 0
+([launch record](evidence/h01-ready-40-build-launch.json)). This directly
+extends verified construction from 12 to 40 cells and includes both previously
+blocked components in the prefix. Initialization and simulation of this larger
+population remain untested at this checkpoint; see the
+[continuation result](evidence/h01-ready-40-result.md).
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).
