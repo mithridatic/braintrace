@@ -384,6 +384,45 @@ reference against a fixed step at 0.005 ms, or a fixed-step reference at a small
 unrun full BrainCell train. Y2 does not close. JSON: `evidence/h01-i-transfer/sp2-i-decision.json`;
 page: [result](evidence/h01-i-transfer-result.md).
 
+### Y2 observation, SP2 close (2026-09-07): identity closed, dt qualification, confirming full train
+
+Amendment registered first (spec, same date, user decision): (a) the transfer gate closes on the measured
+simulator identity; (b) a NEURON dt-halving series names the fixed step that meets the human 1 ms crossing
+tolerance against the CVode finalist; (c) one confirming BrainCell full train, scored for identity against
+NEURON fixed step and for its CVode failures. Predictions: first-order halving of the late-event rise error
+(7.42 -> 3.7, 1.9, 0.9 ms at 0.27 nA), 1 ms met at dt 0.000625 or finer at 0.27 nA; A1 identical to B1 within
+1e-6 mV / 1e-8 ms at every event; A1 fails CVode at B1's events.
+
+**Conditions.** Copied x9 mesh (`--mesh-from e-kv3-close2-027.json`), finalist profile (aligned), 34 C, -80 mV,
+0.27 / 0.19 nA, 1500 ms, window 270-1270 ms; CVode atol 1e-10 finalist traces on the sibling branch (hashes in
+the JSON); NEURON fixed step from the B1 candidate file at dt 0.0025, 0.00125, 0.000625 (six runs, cap six, 900 s
+abort, none killed, none not launched); BrainCell `a1-matched-027` at dt 0.005 with a 1500 s abort and no silence
+kill. Host shared with another agent's container for the first five NEURON runs (listed per arm). Wall clocks
+(measured): NEURON 274.5 / 194.7 s (dt 0.0025), 428.4 / 421.5 s (0.00125), 666.6 / 351.1 s (0.000625) at 0.27 /
+0.19 nA; BrainCell 616.7 s.
+
+**Observation.** (i) Identity basis reproduced exactly (rise 1.2e-9 ms, interpolated peak 5.4e-6 mV, width
+1.9e-11 ms over 270-329.5 ms); identity gate **closed**. (ii) The confirming BrainCell full train holds 36 events
+like NEURON fixed step and agrees with it over 270-1270 ms to 1.4e-7 ms rise, 2.7e-6 mV sampled peak, 3.2e-9 ms
+width and 8.3e-5 mV raw voltage, the difference growing smoothly along the train (4e-10 ms at event 1, 1.4e-7 ms
+at event 36). The (c) literal is refuted as written: the interpolated peak is 5.4e-6 mV at event 1 already (above
+the 1e-6 mV literal), the rise difference passes 1e-8 ms at event 13, and the interpolated-peak column reaches
+4.1e-4 mV (the parabola vertex amplifies 1e-6 mV sample differences on a flat peak); the identity is at
+floating-point level, not at the quoted level. (iii) Against CVode, `a1-matched-027`
+fails at exactly B1's events (36 vs 37, first failure at event 6, max rise 7.4203056 vs 7.4203057 ms): prediction
+held. (iv) dt series: the late-event rise error halves with every halving at both inputs (event-matched ratios
+1.97 / 1.98 / 1.99 at 0.27 nA, 1.99 / 1.99 / 2.00 at 0.19 nA); at 0.27 nA 1 ms is met at dt 0.000625 (37/37,
+0.981 ms at event 37); at 0.19 nA the error is 1.864 ms at dt 0.000625 (14/14), so the both-inputs rule is
+"not reached within cap". First order projects about 0.93 ms at dt 0.0003125 for 0.19 nA: one more halving,
+not a measurement. The rejection (ratio outside 1.5-2.5) did not fire; the CVode reference is not questioned.
+
+**Reading.** Y2 **closes** on identity: with the per-branch counts copied, BrainCell is the NEURON model at equal
+dt and mesh over the full train, and the earlier "later spikes drift after transfer" behaviour was the mesh
+(closed 2026-09-05) plus the fixed step against an adaptive reference (this entry). The residual is a numerical
+requirement on dt, recorded under Measurement function qualification. Open, not as Y2: the 0.19 nA dt (cap
+spent) and the unrun 0.19 nA BrainCell train (`decide()` literal remains `untested`). JSON:
+`evidence/h01-i-transfer/sp2-close-decision.json`; page: [result](evidence/h01-i-transfer-result.md).
+
 ## Y3. The PV candidate's spike train differs from the human recording
 
 **Behavior.** Against the human recording, the candidate's first spike lasts
@@ -1503,6 +1542,7 @@ leaves a residual without a failure of the discrete charge balance.
 | L2 sodium-recovery candidate | Independent solver; successive spatial refinement | Direct events pass at this input | [layer-2 sodium split](evidence/h01-l2-sodium-recovery-result.md) |
 | PV transfer, matched mesh, events 1-8 | Halve dt in NEURON and in BrainCell | Event 8 moves 0.002 ms in each; all gates pass | [isolation split](evidence/h01-pv-transfer-isolation.md) |
 | PV transfer, matched mesh | NEURON CVode 1e-10 vs fixed dt 0.000625 | Largest rise change 0.044 ms; gates pass | [isolation audit](evidence/h01-pv-transfer-isolation-audit.json) |
+| PV transfer, copied x9 mesh, full 270-1270 ms train (SP2 close, 2026-09-07) | NEURON fixed step at dt 0.005, 0.0025, 0.00125, 0.000625 vs CVode 1e-10 at 0.27 and 0.19 nA; BrainCell dt 0.005 vs NEURON dt 0.005 | Late-event rise error first order in dt (ratios 1.97-2.00); 1 ms crossing tolerance met at dt 0.000625 at 0.27 nA (0.981 ms, 37/37), not at 0.19 nA (1.864 ms, 14/14; one more halving projected, unmeasured). BrainCell = NEURON fixed step to 1.4e-7 ms, 8.3e-5 mV over the train. Requirement: dt <= 0.000625 ms at 0.27 nA for any fixed-step comparison with a CVode reference; the 0.19 nA step is open | [close](evidence/h01-i-transfer/sp2-close-decision.json), [page](evidence/h01-i-transfer-result.md) |
 | L2 campaign controls | nseg 3 vs nseg 9 at CVode 1e-10, active input | Five phase changes exceed one fifth of the smallest source-candidate-corner contrast; coarse setting rejected | [Stage 0 preservation](evidence/h01-l2-campaign/stage0-active-preservation.json) |
 | L2 paired-swap runs | CVode 1e-10 vs 1e-11 at nseg 9 | Added pair: every ranked residual within its limit (max 0.0002 ms); removed pair: two event-3 phase residuals at 0.00044 ms vs 0.00042 ms limit, counts and all other contrasts unchanged | [prediction check](evidence/h01-l2-campaign-fine/stage-b-prediction-check.json) |
 | Verified 4-cell network, solver cost (SP1) | dt 0.005 ms; 0.05, 1, 1 (repeat), 10 ms as detached idle-machine jobs | Init + run fits a + b*steps with a = 245.4 s, b = 0.0576 s/step, 200*b = 11.5 s per simulated ms; two-repeat decision limit on b 0.971 s/step (184.5 s at 1 ms), max residual 44.5 s: the four points are linear within the limit and b is below its own limit (resolved only through the 10 ms point). Construction 243.6-280.2 s; peak RSS 1,330-1,350 MB. The 0.05 ms point (270.0 s) sits within the 157 s anchor + limit; the run-to-run spread, not the step count, dominates under 1 ms. The `staggered` control at 1 ms was killed after 600 s of silence (untested) at 8,100 MB peak RSS. Numerical limit only; leaves every Y-section open | [throughput](evidence/h01-network-throughput.json), [page](evidence/h01-network-throughput.md) |
@@ -1516,13 +1556,9 @@ biological uncertainty.
 
 - Y1: which upstream axonal segment reduces the outflow in the axon-only case;
   whether the electrical region map is correct.
-- Y2: transfer of the full 1270 ms train at the copied mesh. Narrowed 2026-09-07 (amended
-  gate): BrainCell equals NEURON fixed step at dt 0.005 and the copied mesh to 1e-9 ms over
-  270-329.5 ms, both halving pairs valid; NEURON fixed step at dt 0.005 fails the CVode finalist
-  on rise from event 6 (0.27 nA) and event 3 (0.19 nA), so the reference time level, not the
-  mesh or the simulator, is what stands between the full train and a verdict. The BrainCell full
-  train was killed at the 600 s watchdog (no trace); a scored A1 arm needs a reference and step
-  that agree and a measured, approved run length. Literal `untested`.
+- Y2: closed 2026-09-07 on simulator identity (BrainCell = NEURON fixed step over the full train at the copied
+  mesh, 1.4e-7 ms / 8.3e-5 mV). Not a Y2 item any more but open under Measurement function qualification: the
+  fixed-step dt at 0.19 nA (1.864 ms at 0.000625, cap spent) and the unrun 0.19 nA BrainCell train.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
   of a −79 mV trough (not somatic Ca_LVA, not somatic sodium availability, not
   axonal NaTg density: the reserve evaluation of 2026-09-07 failed at cap), and the
