@@ -1,0 +1,79 @@
+{
+ "date": "2026-09-07",
+ "spec": "docs/specs/2026-09-07-h01-functional-inhibition.md (addendum 2026-09-07: 1800 s / 3000 s aborts, drive contingency)",
+ "manifest": "docs/evidence/h01-ie-inhibition-manifest.json",
+ "stage": 1,
+ "status": "stopped by the user before completion; untested",
+ "code_commit": "e2d1291",
+ "arms": {
+  "disconnected": {
+   "status": "stopped by the user before completion; untested",
+   "duration_ms": 300.0,
+   "e_drive_na": 0.6,
+   "dt_ms": 0.005,
+   "i_pulse_onsets_ms": [
+    20.0,
+    45.0,
+    70.0,
+    95.0,
+    120.0,
+    145.0,
+    170.0,
+    195.0,
+    220.0,
+    245.0,
+    270.0,
+    295.0
+   ],
+   "launched": "2026-09-07T21:58:08.8492449-07:00",
+   "driver_pid": 4460,
+   "wrapper_pid": 26548,
+   "cpu_percent_at_launch": 51,
+   "wait_condition": "held at 21:57:58: stage-g-decision.json present in h01-e-split; docker ps only synapse; no python over 300 MB; CPU 32 percent",
+   "circuit_constructed": "2026-09-07T21:59:57-07:00 (109 s after launch; the only line the wrapper printed)",
+   "killed": "by the coordinator on the user's stop, after 21:59:57 and before 22:11:07 (both PIDs absent at 22:11:07); the exact kill instant was not recorded by this task",
+   "abort_seconds": 1800,
+   "reached_abort": false,
+   "trace": null,
+   "run_log_entry": null,
+   "e_spike_count": null,
+   "drive_rule": "not evaluated (no trace); the 0.8 nA contingency was not applied",
+   "cap_spent": false
+  },
+  "measured": {
+   "status": "not launched (user stop); untested"
+  },
+  "soma": {
+   "status": "not launched (user stop); untested"
+  },
+  "measured-halved": {
+   "status": "not launched (user stop); untested"
+  }
+ },
+ "schedule": null,
+ "limits": {
+  "resolved": null,
+  "reason": "halving pair not run"
+ },
+ "cycles": null,
+ "registered_predictions": {
+  "status": "registered, untested (no arm completed)",
+  "disconnected": ">= 3 E spikes in 300 ms; first spike between 20 and 60 ms; I fires once per pulse",
+  "measured": "soma IPSP magnitude < 0.05 mV; no E spike or cycle beyond the halving limit; site response 0.5 to 2 mV",
+  "soma": "soma IPSP magnitude >= 0.3 mV and at least one E spike delayed beyond the shift limit",
+  "measured-halved": "E spike count equal to measured; per-cycle ranges below 0.1 ms"
+ },
+ "gate_verdict": "not discriminable: no 300 ms arm completed",
+ "placement_hypothesis": "undetermined",
+ "cap_accounting": {
+  "cap": 6,
+  "halving_cap": 2,
+  "prior_evaluations": 1,
+  "note": "the stopped arm is untested and does not spend the cap (programme rule); prior_evaluations stays 1 (benchmark)"
+ },
+ "human_tiers": {
+  "contract_1mv": "not applicable: no human recording of this pair",
+  "usable": "not applicable"
+ },
+ "qualification": "Nothing measured at 300 ms. The 100 ms benchmark (benchmark.json) remains the only completed SP5 run."
+}
