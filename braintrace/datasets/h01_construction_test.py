@@ -119,3 +119,20 @@ def test_deferred_axial_operator_computed_on_demand(imported):
     # Second call hits cached operator
     op2 = cell._get_axial_operator()
     assert op2 is cell._axial_jax
+
+
+def test_fast_runtime_ion_instantiation_and_geometry_parity(imported):
+    from braincell.ion import SodiumFixed, PotassiumFixed
+    from .h01_pv_calcium import PVCalcium
+    from .h01_construction import _fast_instantiate_runtime_ion_instance, _fast_attach_runtime_ion_geometry
+    from braincell._compute.runtime import _instantiate_runtime_ion_instance
+    from braincell._multi_compartment.bridge import attach_runtime_ion_geometry
+
+    cell = H01Cell(imported.morphology, cv_policy=braincell.MaxCVLen(2.*u.um), pop_size=(1,))
+    cell.init_state()
+    ions = cell._runtime.ions
+    for ion_name, ion in ions.items():
+        assert hasattr(ion, "length") and hasattr(ion, "area")
+        assert getattr(ion, "length").shape == (1, len(cell.node_tree.nodes))
+        assert np.isfinite(getattr(ion, "length").mantissa).all()
+        assert np.isfinite(getattr(ion, "area").mantissa).all()

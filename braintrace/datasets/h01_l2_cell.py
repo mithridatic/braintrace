@@ -4,6 +4,7 @@ import brainunit as u
 import numpy as np
 from braincell.filter import BranchInFilter, RootLocation
 from braincell.mech import StateProbe, MechanismProbe
+from .h01_construction import H01Cell
 from .h01_pv_morphology import make_pv_morphology
 from .h01_ei_profiles import get_ei_profile
 from .h01_ei_cell import _paint_profile
@@ -52,7 +53,7 @@ def make_l2_cell(reference, *, mode="candidate", current_na=0., delay_ms=2.,
     amplitudes, durations = _stimulus_segments(current_na, duration_ms)
     profile = get_ei_profile("E", mode=mode)
     policy = braincell.MaxCVLen(max_cv_length_um*u.um) if cv_policy is None else cv_policy
-    cell = braincell.Cell(make_pv_morphology(reference), cv_policy=policy,
+    cell = H01Cell(make_pv_morphology(reference), cv_policy=policy,
         V_init=profile.initial_mv*u.mV, solver="staggered")
     regions = {family: BranchInFilter("type", (kind,)) for family, kind in
         (("soma", "soma"), ("axon", "axon"), ("dend", "basal_dendrite"), ("apic", "apical_dendrite"))}
