@@ -2204,3 +2204,10 @@ All four corrected components initialize successfully with exact construction
 metadata, in 22.805 seconds and 507.934 MiB peak interpreter RSS. Evidence:
 h01-four-soma-initialization-decision.json. This closes their initialization
 check only; their runtime and the full corrected population remain unverified.
+
+Corrected soma components pass finite driven 10 ms execution at .000625 ms dt,
+with unchanged donor/input/solver settings. Three emit one event and one remains
+subthreshold; h01-four-soma-runtime-decision.json retains peaks and source hashes.
+The formerly problematic 7196644737 now peaks at 48.182 mV on component 6;
+this supports the practical importance of source-supported component choice.
+It is not matched-recording physiology or full104 runtime qualification.

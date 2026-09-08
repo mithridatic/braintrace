@@ -185,3 +185,12 @@ The four corrected components also pass initialization: 22.805 seconds,
 metadata matches their construction reference (apart from execution/timing).
 Evidence: h01-four-soma-initialization-decision.json. No compilation or stepping
 was performed; the corrected population still needs runtime evidence.
+
+The four corrected components pass the bounded 10 ms runtime at dt .000625 ms:
+all saved arrays finite over 16000 steps and model metadata exactly matches the
+construction reference. Cells 7196644737, 4138580687 and 4668874666 each emit one
+event (soma maxima 48.182, 48.713 and 46.923 mV); 3470629528 emits none and peaks
+at -59.093 mV. Evidence: h01-four-soma-runtime-decision.json. The subprocess
+completed in 365.704 seconds, below its 600-second cap. These results do not
+establish human recording accuracy, dt refinement, or all104 runtime. They
+support the corrected components' basic driven execution before a population run.
