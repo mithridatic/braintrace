@@ -182,7 +182,7 @@ def test_main_modes_dispatch(tmp_path, monkeypatch):
 def test_manifest_commands_parse_and_match_the_driver():
     from examples.h01_ei_circuit import build_parser
     manifest = json.loads((Path(inh.EVIDENCE)/"h01-ie-inhibition-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["cap"] == 6 and manifest["halving_cap"] == 2 and manifest["prior_evaluations"] == 0
+    assert manifest["cap"] == 6 and manifest["halving_cap"] == 2 and manifest["prior_evaluations"] == 1  # the completed 100 ms benchmark spent run 1 of 6
     assert manifest["registered_stimulus"]["e_drive_na"] == inh.E_DRIVE_NA == .6
     placeholder = "<i_pulse_onsets_ms from docs/evidence/h01-ie-inhibition/schedule.json>"
     for name, arm, onsets, ms in (("benchmark", "disconnected", inh.provisional_onsets(100.), 100.),

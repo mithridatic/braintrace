@@ -1,6 +1,10 @@
 """Regression check for equilibrium observations through exposed gate states."""
 
 import runpy
+
+import pytest
+
+pytest.importorskip("neuron", reason="runs only inside the NEURON image")
 import unittest
 from pathlib import Path
 
