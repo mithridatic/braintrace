@@ -2106,3 +2106,15 @@ resident memory through that stage. The
 [initialization decision](evidence/h01-ready-104-implicit-init-decision.json)
 narrows Y5 to the still-running compiled driven test and later qualification;
 it does not close runtime, delivery, refinement or physiology.
+
+
+The first implicit full104 driven attempt terminated at 5639.421 seconds
+with a supervisor status-file sharing violation, which killed the worker.
+Worker PIDs were checked absent; no runtime verdict was produced. Prior
+construction and initialization checkpoints remain valid. A fresh r2 attempt
+uses identical numerical inputs and caps, with atomic status publication that
+tolerates a locked reader. A real Windows file-lock regression passes creation,
+failed replacement with intact old JSON, recovery after release, and cleanup.
+The first helper test exposed PowerShell converting a null backup path to an
+empty string; explicit NullString fixes that interop issue. Future monitoring
+changes must exercise real file handles before an expensive run.

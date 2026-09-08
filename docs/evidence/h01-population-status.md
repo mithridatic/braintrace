@@ -102,3 +102,15 @@ constructible and steps 1 ms with matched controls at a measured cost (Y5 narrow
 defect and to unmeasured scale). Open: functional inhibition at the pair, the I cell's slow state,
 the E cell's low-drive current, 92 unsimulated cells, 157 export shards, the 0.19 nA step, and
 every human-qualification claim, none of which this evidence supports.
+
+
+The first implicit full104 driven attempt terminated at 5639.421 seconds
+with a supervisor status-file sharing violation, which killed the worker.
+Worker PIDs were checked absent; no runtime verdict was produced. Prior
+construction and initialization checkpoints remain valid. A fresh r2 attempt
+uses identical numerical inputs and caps, with atomic status publication that
+tolerates a locked reader. A real Windows file-lock regression passes creation,
+failed replacement with intact old JSON, recovery after release, and cleanup.
+The first helper test exposed PowerShell converting a null backup path to an
+empty string; explicit NullString fixes that interop issue. Future monitoring
+changes must exercise real file handles before an expensive run.

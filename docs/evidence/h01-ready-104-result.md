@@ -116,3 +116,15 @@ now verifies all104 population identities and exact construction metadata, with
 memory through initialization was 8722.531 MiB (8.52 GiB). The checkpoint was
 preserved before compilation. The same process has entered compilation and
 stepping; no driven runtime verdict is available yet.
+
+
+The first implicit full104 driven attempt terminated at 5639.421 seconds
+with a supervisor status-file sharing violation, which killed the worker.
+Worker PIDs were checked absent; no runtime verdict was produced. Prior
+construction and initialization checkpoints remain valid. A fresh r2 attempt
+uses identical numerical inputs and caps, with atomic status publication that
+tolerates a locked reader. A real Windows file-lock regression passes creation,
+failed replacement with intact old JSON, recovery after release, and cleanup.
+The first helper test exposed PowerShell converting a null backup path to an
+empty string; explicit NullString fixes that interop issue. Future monitoring
+changes must exercise real file handles before an expensive run.

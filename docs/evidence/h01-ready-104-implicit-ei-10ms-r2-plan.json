@@ -1,0 +1,36 @@
+{
+  "status": "registered before launch; untested",
+  "source_commit": "526d57f6629e956c82fc2b6b13978187b25858d3",
+  "cells": 104,
+  "control": "ei",
+  "dt_ms": 0.000625,
+  "duration_ms": 10.0,
+  "current_na": 1.0,
+  "pulse_window_ms": [
+    2.0,
+    5.0
+  ],
+  "max_cv_um": 10.0,
+  "measured_anchor": {
+    "path": ".cache\\h01\\readiness\\104-ei-1ms-build.json",
+    "sha256": "1a0d4801228c85e27808639445eb34948e655440ae88ec4049f9cbc0fa89facc"
+  },
+  "projection_rule": "previous full104 construction/init plus 8x 2000-step runtime allowance; 20GiB provisional memory allowance",
+  "projected_total_seconds": 9000,
+  "projected_peak_bytes": 21474836480,
+  "available_bytes_at_registration": 38017638400,
+  "wall_cap_seconds": 12000,
+  "silence_cap_seconds": 600,
+  "reserve_memory_bytes": 4294967296,
+  "qualification": "full104 driven finiteness only; control/refinement/physiology/installed-wheel gates remain",
+  "solver": "h01_staggered_calcium_implicit",
+  "source_hashes": {
+    "braintrace\\datasets\\h01_calcium_solver.py": "7835cfac7053d271349ce969fff0e82552b3df233b58870bc6ed33875840dca0",
+    "braintrace\\datasets\\h01_calcium_implicit.py": "2038c672110a5d02ce5bdb734101559ab4afd757f136b81a40ead2687dad7f82",
+    "braintrace\\datasets\\h01_ei_cell.py": "baf51cbe24cd8cf4be298b72f284680bcbcf18b1b2e05a3c9b796967e3161b47",
+    "examples\\h01_verified_network.py": "8cb96a37d81dada43f76933ab827da4c3e10b28aa880800bd016442ed778e418"
+  },
+  "retry_reason": "Original supervisor killed worker after status-file sharing violation; numerical settings unchanged",
+  "previous_attempt": "h01-ready-104-implicit-ei-10ms-launch.json",
+  "supervisor": "h01_launch_implicit_r2.ps1"
+}
