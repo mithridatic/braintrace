@@ -188,6 +188,12 @@ class H01Anatomy:
         self._endpoints = np.asarray(endpoints)
         self._vectors = self._ends - self._starts
         self._length2 = np.sum(self._vectors**2, axis=1)
+        self._lengths = np.sqrt(self._length2)
+        self._row_id_to_index = {int(row[0]): i for i, row in enumerate(rows)}
+        self._adjacency = [[] for _ in rows]
+        for (a, b), length in zip(self._endpoints, self._lengths):
+            self._adjacency[a].append((b, length))
+            self._adjacency[b].append((a, length))
 
     @property
     def label_counts(self):
@@ -288,31 +294,26 @@ class H01Anatomy:
         """
         if not np.isfinite(radius_um) or radius_um <= 0:
             raise ValueError("radius_um must be positive and finite.")
-        rows = self.imported.source_rows
-        ids = {int(row[0]): i for i, row in enumerate(rows)}
-        anchor = ids[node_id]
-        adjacency = [[] for _ in rows]
-        lengths = np.sqrt(self._length2)
-        for (a, b), length in zip(self._endpoints, lengths):
-            adjacency[a].append((b, length))
-            adjacency[b].append((a, length))
-        distance = np.full(len(rows), np.inf)
+        anchor = self._row_id_to_index[node_id]
+        distance = np.full(len(self._row_id_to_index), np.inf)
         distance[anchor] = 0.
         stack = [anchor]
+        adj = self._adjacency
         while stack:
             a = stack.pop()
-            for b, length in adjacency[a]:
+            d_a = distance[a]
+            for b, length in adj[a]:
                 if np.isinf(distance[b]):
-                    distance[b] = distance[a] + length
+                    distance[b] = d_a + length
                     stack.append(b)
         intervals = []
-        for (a, b), length, branch, (lo, hi) in zip(self._endpoints, lengths, self._branches, self._fractions):
+        for (a, b), length, branch, (lo, hi) in zip(self._endpoints, self._lengths, self._branches, self._fractions):
             if distance[a] < distance[b]:
-                left, right = 0., np.clip((radius_um-distance[a])/length, 0., 1.)
+                left, right = 0., np.clip((radius_um - distance[a]) / length, 0., 1.)
             else:
-                left, right = 1-np.clip((radius_um-distance[b])/length, 0., 1.), 1.
+                left, right = 1. - np.clip((radius_um - distance[b]) / length, 0., 1.), 1.
             if right > left:
-                intervals.append((int(branch), float(lo+left*(hi-lo)), float(lo+right*(hi-lo))))
+                intervals.append((int(branch), float(lo + left * (hi - lo)), float(lo + right * (hi - lo))))
         return _Region(self._signature, tuple(intervals),
                        f"inferred_geodesic_neighborhood:node={node_id},radius_um={radius_um}")
 
@@ -390,10 +391,12 @@ class H01Anatomy:
             diff = self._starts + t[:, None] * self._vectors - point
             dist2 = np.sum(diff**2, axis=1)
             best = int(np.argmin(dist2))
-            distance = float(np.sqrt(dist2[best]))
+            min_dist2 = dist2[best]
+            distance = float(np.sqrt(min_dist2))
             location, status = None, "too_far"
             if distance <= max_distance_um:
-                candidates = np.flatnonzero(np.abs(np.sqrt(dist2) - distance) <= 1e-9)
+                tol2 = 2.0 * distance * 1e-9 + 1e-18
+                candidates = np.flatnonzero(dist2 - min_dist2 <= tol2)
                 sites = set()
                 for candidate in candidates:
                     fraction = t[candidate]

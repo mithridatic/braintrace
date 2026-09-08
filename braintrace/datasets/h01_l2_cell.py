@@ -4,6 +4,7 @@ import brainunit as u
 import numpy as np
 from braincell.filter import BranchInFilter, RootLocation
 from braincell.mech import StateProbe, MechanismProbe
+from .h01_construction import H01Cell
 from .h01_pv_morphology import make_pv_morphology
 from .h01_ei_profiles import get_ei_profile
 from .h01_ei_cell import _paint_profile
@@ -33,7 +34,7 @@ def make_l2_cell(reference, *, mode="candidate", current_na=0., delay_ms=2.,
             or min(duration_ms, max_cv_length_um) <= 0 or delay_ms < 0):
         raise ValueError("Finite current and positive finite durations and CV length required.")
     profile = get_ei_profile("E", mode=mode)
-    cell = braincell.Cell(make_pv_morphology(reference),
+    cell = H01Cell(make_pv_morphology(reference),
         cv_policy=braincell.MaxCVLen(max_cv_length_um*u.um),
         V_init=profile.initial_mv*u.mV, solver="staggered")
     regions = {family: BranchInFilter("type", (kind,)) for family, kind in

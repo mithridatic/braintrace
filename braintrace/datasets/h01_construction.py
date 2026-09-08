@@ -1,5 +1,6 @@
 """Bound branch-index work and eliminate dense axial solver overhead during H01 construction."""
 
+import sys
 from contextlib import contextmanager
 
 import braincell
@@ -8,6 +9,7 @@ import braintools
 import brainunit as u
 import jax.numpy as jnp
 import numpy as np
+import saiunit._backend
 
 from braincell._base import IonChannel
 from braincell._compute import runtime as _runtime_module
@@ -23,6 +25,16 @@ from braincell.quad import _staggered as _st
 from braincell.quad._staggered import build_cv_axial_operator
 from braincell.quad.protocol import DiffEqState
 
+
+# Avoid dynamic import of unimported heavy backends (like PyTorch) during scalar checks
+_orig_try_import = saiunit._backend._try_import
+def _fast_try_import(module_name: str):
+    root_mod = module_name.split(".")[0]
+    if root_mod in ("torch", "cupy", "dask", "ndonnx") and root_mod not in sys.modules:
+        return None
+    return _orig_try_import(module_name)
+
+saiunit._backend._try_import = _fast_try_import
 
 _cached_baseline_ions = {}
 
@@ -68,7 +80,11 @@ def _fast_attach_runtime_ion_geometry(*, ions, cvs, point_ids, n_point):
         first_val = getattr(cvs[0], attr)
         unit = first_val.unit if isinstance(first_val, u.Quantity) else u.UNITLESS
         if unit != u.UNITLESS:
-            floats = np.asarray([float(getattr(cv, attr).to_decimal(unit)) for cv in cvs], dtype=np.float64)
+            floats = np.asarray([
+                getattr(cv, attr).mantissa if isinstance(getattr(cv, attr), u.Quantity)
+                else float(getattr(cv, attr).to_decimal(unit))
+                for cv in cvs
+            ], dtype=np.float64)
             point_floats = np.zeros(n_point, dtype=np.float64)
             point_floats[point_ids] = floats
             point_geom[attr] = u.Quantity(point_floats, unit)
@@ -87,6 +103,7 @@ def _fast_attach_runtime_ion_geometry(*, ions, cvs, point_ids, n_point):
 
 
 _runtime_module._instantiate_runtime_ion_instance = _fast_instantiate_runtime_ion_instance
+_runtime_module.attach_runtime_ion_geometry = _fast_attach_runtime_ion_geometry
 bridge.attach_runtime_ion_geometry = _fast_attach_runtime_ion_geometry
 
 
@@ -153,9 +170,20 @@ def build_dhs_static_source_1d(target, *, node_tree, scheduling) -> _st.DHSStati
     cv_row_by_cv = point_id_to_row[node_tree.cv_to_mid_node_id]
     dynamic_rows = np.asarray([int(cv_row_by_cv[cv_id]) for cv_id in range(len(target.cvs))], dtype=np.int32)
 
-    cv_r_prox = np.asarray([float(np.asarray(cv.r_axial_prox.to_decimal(u.ohm), dtype=float)) for cv in target.cvs], dtype=np.float64)
-    cv_r_dist = np.asarray([float(np.asarray(cv.r_axial_dist.to_decimal(u.ohm), dtype=float)) for cv in target.cvs], dtype=np.float64)
-    cv_cap = np.asarray([float(np.asarray((cv.area * cv.cm).to_decimal(u.uF), dtype=float)) for cv in target.cvs], dtype=np.float64)
+    cv_r_prox = np.asarray([
+        cv.r_axial_prox.mantissa if isinstance(cv.r_axial_prox, u.Quantity)
+        else float(cv.r_axial_prox.to_decimal(u.ohm))
+        for cv in target.cvs
+    ], dtype=np.float64)
+    cv_r_dist = np.asarray([
+        cv.r_axial_dist.mantissa if isinstance(cv.r_axial_dist, u.Quantity)
+        else float(cv.r_axial_dist.to_decimal(u.ohm))
+        for cv in target.cvs
+    ], dtype=np.float64)
+    cv_cap = np.asarray([
+        float(np.asarray((cv.area * cv.cm).to_decimal(u.uF), dtype=float))
+        for cv in target.cvs
+    ], dtype=np.float64)
     cv_branches = np.asarray([int(cv.branch_id) for cv in target.cvs], dtype=np.int32)
 
     row_capacitance_uF = np.ones(n_point, dtype=np.float64)
@@ -248,10 +276,20 @@ class H01Cell(braincell.Cell):
         """
         self._raise_if_initialized("init_state()")
 
+        cached_disc = self.__dict__.get("_discretization_cache")
+        sig = getattr(self._morpho, "_h01_geom_sig", None)
         morpho = clone_morpho(self._morpho)
+        if sig is not None:
+            try:
+                morpho._h01_geom_sig = sig
+            except (AttributeError, TypeError):
+                pass
         self._morpho = morpho
-        self._invalidate_discretization_cache()
-        _ = self._discretization
+        if cached_disc is not None:
+            self._discretization_cache = cached_disc
+        else:
+            self._invalidate_discretization_cache()
+            _ = self._discretization
 
         self._runtime = CellRuntimeState.from_cell(self)
         self._V_th_declaration = self._V_th
