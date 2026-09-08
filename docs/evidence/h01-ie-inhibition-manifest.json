@@ -378,6 +378,12 @@
  "benchmark_record": "docs/evidence/h01-ie-inhibition/benchmark.json (rerun record); historical: docs/evidence/h01-ie-inhibition/benchmark-2026-09-07-killed.json (2026-09-07 15:54: killed at 900 s under load, untested, does not spend the cap)",
  "cap_notes": [
   "2026-09-07: prior_evaluations reverted from 1 to 0; the 15:54 benchmark was killed at 900 s and by the programme rule a killed run is untested and does not spend the cap. Rerun registered with a 1500 s abort (spec addendum 2026-09-07).",
-  "2026-09-07 19:34: benchmark rerun completed in 347 s on c56616a (run 1 of 6 spent); record docs/evidence/h01-ie-inhibition/benchmark.json"
- ]
+  "2026-09-07 19:34: benchmark rerun completed in 347 s on c56616a (run 1 of 6 spent); record docs/evidence/h01-ie-inhibition/benchmark.json",
+  "2026-09-07: stage-1 arms approved (serial, after SP3 Stage G); aborts 1800 s per 300 ms arm and 3000 s for the halving partner registered in the spec addendum; drive contingency: < 3 E spikes in the control -> 0.8 nA control only, then stop"
+ ],
+ "abort_seconds": {
+  "arm_300ms": 1800,
+  "measured_halved": 3000,
+  "basis": "spec addendum 2026-09-07 (stage-1 arm aborts): measured 3.47 s per simulated ms, linear 1041 s and 2082 s, construction share unmeasured"
+ }
 }
