@@ -1,0 +1,119 @@
+{
+  "status": "failure reproduced; tested dt halving does not resolve it",
+  "cell_id": "7196644737",
+  "scope": "isolated-cell numerical diagnosis; full104 goal unchanged",
+  "results": [
+    {
+      "label": "dt005",
+      "dt_ms": 0.005,
+      "status": "failed",
+      "exit_code": 1,
+      "wall_seconds": 15.9280232,
+      "exact_full_cell_metadata_match": true,
+      "n_compartments": 1647,
+      "nonfinite_arrays": {
+        "cell_7196644737_output_voltage": {
+          "count": 1347,
+          "first_index": [
+            653,
+            0
+          ],
+          "first_time_ms": 3.27
+        },
+        "cell_7196644737_voltage": {
+          "count": 1347,
+          "first_index": [
+            653,
+            0
+          ],
+          "first_time_ms": 3.27
+        }
+      },
+      "finite_min_mv": -83.98832750307938,
+      "finite_max_mv": 383.8104592515106,
+      "event_count_before_failure": 1,
+      "construction_seconds": 2.6715380999958143,
+      "init_state_seconds": 2.718111599999247,
+      "compile_and_run_seconds": 3.184108899993589,
+      "peak_rss_mib": 470.36328125
+    },
+    {
+      "label": "dt0025",
+      "dt_ms": 0.0025,
+      "status": "failed",
+      "exit_code": 1,
+      "wall_seconds": 15.7180129,
+      "exact_full_cell_metadata_match": true,
+      "n_compartments": 1647,
+      "nonfinite_arrays": {
+        "cell_7196644737_output_voltage": {
+          "count": 2694,
+          "first_index": [
+            1306,
+            0
+          ],
+          "first_time_ms": 3.2675
+        },
+        "cell_7196644737_voltage": {
+          "count": 2694,
+          "first_index": [
+            1306,
+            0
+          ],
+          "first_time_ms": 3.2675
+        }
+      },
+      "finite_min_mv": -83.98834349305525,
+      "finite_max_mv": 383.79213569348235,
+      "event_count_before_failure": 1,
+      "construction_seconds": 2.4795922999910545,
+      "init_state_seconds": 2.3872103999892715,
+      "compile_and_run_seconds": 5.1261366000107955,
+      "peak_rss_mib": 466.47265625
+    }
+  ],
+  "inputs": {
+    "reference": {
+      "path": ".cache\\h01\\readiness\\104-build-r2-build.json",
+      "sha256": "9a32737637666ea8ce6c235798ea78ef984d335f47f688db8f640c26550b9001"
+    },
+    "dt005_build": {
+      "path": ".cache\\h01\\readiness\\cell7196644737-dt005-build.json",
+      "sha256": "cffcb5e30065cab9853018a6a9000e06dc0ed1f1082ed22508a429452ba694d8"
+    },
+    "dt005_traces": {
+      "path": ".cache\\h01\\readiness\\cell7196644737-dt005-traces.npz",
+      "sha256": "711dc24f83c8fc2891d0771dea4ed67841361f03526e3b264dbba23b277c8723"
+    },
+    "dt005_launch": {
+      "path": "docs\\evidence\\h01-ready-cell7196644737-dt005-launch.json",
+      "sha256": "dc407c8f347032d6f186b2681eb69017aa97e3c46278bd6195f5ccc9254f11c1"
+    },
+    "dt005_provenance": {
+      "path": "docs\\evidence\\h01-ready-cell7196644737-dt005-provenance.json",
+      "sha256": "ca108cfeba7ca6e5186f36b10e7d7cc26c5c790e94e7203a390d390fedfb388b"
+    },
+    "dt0025_build": {
+      "path": ".cache\\h01\\readiness\\cell7196644737-dt0025-build.json",
+      "sha256": "c802c576bac696cda91843ac13e6cbcc640d97a44f9137f3448f1b1a825ff750"
+    },
+    "dt0025_traces": {
+      "path": ".cache\\h01\\readiness\\cell7196644737-dt0025-traces.npz",
+      "sha256": "3ee6655dbecc3946483ca6e4bf05adbbfcbda0f68e936c772a4bf4de5b72b346"
+    },
+    "dt0025_launch": {
+      "path": "docs\\evidence\\h01-ready-cell7196644737-dt0025-launch.json",
+      "sha256": "b89445e3c753a3a1b388f09cdc0239171a65cf25e0b6681f730f9410dd3a9f94"
+    },
+    "dt0025_provenance": {
+      "path": "docs\\evidence\\h01-ready-cell7196644737-dt0025-provenance.json",
+      "sha256": "3476fa8e45b1b4863ed15b7736a63662798c30ce71519ca787715cbd97e863de"
+    }
+  },
+  "conclusions": [
+    "Failure reproduces without any modeled synapse or other cell, with exactly matching cell metadata.",
+    "The tested timestep halving changes first nonfinite time by 0.0025 ms but leaves the failure.",
+    "No mechanism cause or physiological qualification is established."
+  ],
+  "next_action": "Inspect first divergent state, membrane area/current placement and mechanism equations before another numerical or input intervention."
+}

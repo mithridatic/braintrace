@@ -2026,6 +2026,15 @@ retains failed arrays without changing dynamics; numerical diagnosis and a new
 full-population pass remain required. This narrows Y5's runtime boundary,
 and closes no physiological or delivery gate.
 
+The [isolated-cell timestep pair](evidence/h01-ready-cell7196644737-dt-decision.json)
+reproduces the same nonfinite soma/output failure with exactly matching cell
+metadata and no projections: first nonfinite sample at 3.2700 ms with dt
+0.005 ms and 3.2675 ms with dt 0.0025 ms. Peak finite voltages are 383.810459
+and 383.792136 mV. This establishes that interactions with other modeled cells
+are not required for this failure and that the tested timestep halving is not
+sufficient to remove it. It does not identify the mechanism; inspect current
+placement, membrane area and the first divergent internal state next.
+
 ### Y4 source-audit correction, 2026-09-08
 
 The [hash-linked source audit](evidence/h01-e-gain-source-audit.json) verifies

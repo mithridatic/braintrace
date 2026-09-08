@@ -65,10 +65,13 @@ the status of the remaining arrays are unknown. See the
 The runner now retains all returned arrays, records every nonfinite array and
 its first affected sample, and exits nonzero. Initialization metadata is
 persisted before compilation. Twelve regression/CLI tests pass with 100%
-coverage. Next is an exact isolated-cell reproduction and one dt-halving
-comparison, each capped at 600 seconds. The failed identity stays in the full
-population; a corrected full-104 run remains required. The completed 1 ms
-result above remains the verified runtime scope.
+coverage. The [exact isolated-cell reproduction and dt-halving comparison](h01-ready-cell7196644737-result.md)
+both fail: first nonfinite voltage at 3.2700/3.2675 ms for dt 0.005/0.0025 ms,
+with peak finite voltage about 383.8 mV. Complete cell metadata matches the
+full construction reference in both runs. The next diagnosis is the first
+divergent state and its mechanism; the tested timestep reduction is insufficient.
+The failed identity stays in the full population, and a corrected full-104 run
+remains required. The completed 1 ms result remains the verified runtime scope.
 
 The [installed-wheel preparation](h01-ready-104-wheel-audit.md) passes source,
 installation and isolated-import checks (106 packaged files, 31 H01 modules).

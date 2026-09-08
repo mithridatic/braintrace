@@ -102,6 +102,10 @@ def test_main_restores_paths_and_records_failures(prepared, tmp_path, monkeypatc
     if scenario not in ('not_isolated', 'exists'):
         record = json.loads(provenance.read_text())
         assert record['status'] == ('completed' if scenario in ('success', 'zero_exit') else 'failed')
+        if scenario in ('exception', 'nonzero_exit'):
+            assert record['production_origins']['braintrace'] == str(target/'braintrace/__init__.py')
+        if scenario == 'contamination':
+            assert 'outside installed wheel' in record['origin_error']
 
 
 @pytest.mark.parametrize('scenario', ['success', 'zero_exit', 'exception', 'nonzero_exit', 'contamination', 'not_isolated', 'exists'])
@@ -132,3 +136,7 @@ def test_launcher_records_real_subprocess_outcome(prepared, tmp_path, scenario):
     assert record['arguments'] == ['--cells', '104']
     assert record['finished_utc'] >= record['started_utc']
     assert record['qualification'].startswith('launcher provenance only')
+    if scenario in ('exception', 'nonzero_exit'):
+        assert Path(record['production_origins']['braintrace']).is_relative_to(prepared[0])
+    if scenario == 'contamination':
+        assert 'outside installed wheel' in record['origin_error']

@@ -122,6 +122,10 @@ def main():
         record['status'] = 'completed'
     except BaseException as error:
         record.update(status='failed', error_type=type(error).__name__, error=str(error))
+        try:
+            record['production_origins'] = production_origins(target)
+        except ValueError as origin_error:
+            record['origin_error'] = str(origin_error)
         raise
     finally:
         record['finished_utc'] = datetime.now(timezone.utc).isoformat()
