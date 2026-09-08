@@ -1,0 +1,10 @@
+{
+  "verdict": "PASS",
+  "scope": "Package payload and installed component-selection smoke only; no installed population runtime",
+  "source_commit": "afbd6c5",
+  "wheel_sha256": "78a8319fa7131a711b1c885227980d136b1a0ac2c3e806cd01bef54518a8fe41",
+  "source_archive_sha256": "f181061f251b1376ec46070a73d435a33fc52ef37b00a32adfe2bb6b749b0bce",
+  "package_files": 108,
+  "installed_module": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-afbd6c5\\braintrace\\datasets\\h01_network.py",
+  "installed_target": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-afbd6c5"
+}

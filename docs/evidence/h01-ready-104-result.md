@@ -194,3 +194,11 @@ at -59.093 mV. Evidence: h01-four-soma-runtime-decision.json. The subprocess
 completed in 365.704 seconds, below its 600-second cap. These results do not
 establish human recording accuracy, dt refinement, or all104 runtime. They
 support the corrected components' basic driven execution before a population run.
+
+The corrected package wheel from Git snapshot afbd6c5 passes byte-for-byte
+comparison of all108 package files against the source snapshot and a fresh
+offline target installation. An isolated-mode installed import also honors an
+explicit component selection (h01-corrected-wheel-audit.json). This is package
+preparation, not installed all104 runtime. Packaging uses a package-only Git
+archive: a full-repository archive unnecessarily included gigabytes of evidence
+and was stopped and removed. Await archive completion before extraction.
