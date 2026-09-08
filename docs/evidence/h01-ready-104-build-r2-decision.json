@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "scope": "104-cell construction only",
+  "expected_cells": 104,
+  "simulated_cells": 104,
+  "n_compartments": 808495,
+  "failures": [],
+  "runtime_qualified": false,
+  "physiology_qualified": false,
+  "inputs": {
+    "build": {
+      "path": ".cache\\h01\\readiness\\104-build-r2-build.json",
+      "sha256": "9a32737637666ea8ce6c235798ea78ef984d335f47f688db8f640c26550b9001"
+    },
+    "imports": {
+      "path": "docs\\evidence\\h01-ready-104-soma-audit.json",
+      "sha256": "daac10717a3ddc19e764833f7e11312baa8d87071ce60b6e88093da4ee915c9f"
+    },
+    "topology": {
+      "path": "docs\\evidence\\h01-verified-network.json",
+      "sha256": "48e1057da70891574565151c727e897e6ed67ac34d8c90b4818c4de8d7400e65"
+    }
+  }
+}

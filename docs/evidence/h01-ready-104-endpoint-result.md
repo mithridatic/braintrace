@@ -30,8 +30,8 @@ Evidence: [all-cell audit](h01-ready-104-soma-audit.json) and
 [launch/completion](h01-ready-104-soma-launch.json), exit 0. Its 1,800-second
 wall cap and 600-second silence cap were not reached.
 
-The full build retry is running with the same anatomy, donor mapping, CV policy,
-solver and input settings under source commit `b46ee7d`. The retry is recorded
-in `h01-ready-104-build-r2-launch.json`; raw output stays in
-`.cache/h01/readiness/104-build-r2-build.json`. Full-104 construction, runtime,
-matched controls and physiological qualification remain open until measured.
+The full build retry passed with the same anatomy, donor mapping, CV policy,
+solver and input settings under source commit `b46ee7d`: 104 cells and 808,495
+compartments. See the [construction gate](h01-ready-104-build-r2-decision.json)
+and [current all-104 result](h01-ready-104-result.md). Full-population runtime,
+matched controls and physiological qualification remain open.

@@ -1997,6 +1997,15 @@ membership for every expected cell. This closes that membership boundary across
 the full population; it permits the build retry but does not establish full
 electrical construction or simulation.
 
+The corrected [full-104 construction gate](evidence/h01-ready-104-build-r2-decision.json)
+passes: 808,495 compartments and two supported projections, exact source-component
+provenance and all expected identities. Construction took 1,034.034 seconds.
+This closes the full-population construction boundary in Y5. Its supervisor's
+peak-memory field is invalid due to an Int32 accumulator overflow; that metric
+is excluded rather than promoted. See the [result](evidence/h01-ready-104-result.md).
+Full-population initialization/stepping, controls and physiological qualification
+remain open.
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).

@@ -1,10 +1,11 @@
 # H01 verified connection network
 
 Current continuation (2026-09-08): all 104 largest soma-bearing components
-import with source segments preserved, and a 40-cell network builds,
-initializes and runs 1 ms with finite traces. See the
+import with source segments preserved; all 104 electrical cells now construct
+with 808,495 compartments and two projections. A 40-cell network also initializes
+and runs 1 ms with finite traces. See the
 [current readiness evidence](evidence/h01-population-status.md) and
-[40-cell result](evidence/h01-ready-40-result.md). This supersedes the earlier
+[104-cell result](evidence/h01-ready-104-result.md). This supersedes the earlier
 reader failure and 12-cell runtime limit described below; full-104 execution,
 driven response and physiological qualification remain open.
 

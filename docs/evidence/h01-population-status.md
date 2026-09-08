@@ -16,8 +16,10 @@ The first full-104 build exposed an endpoint rounding inconsistency, repaired
 without moving the measured soma. The corrected mapping passes geometry and
 strict soma-region membership checks on all 104 cells
 ([audit](h01-ready-104-soma-audit.json),
-[diagnosis and result](h01-ready-104-endpoint-result.md)); full construction is
-being retried.
+[diagnosis and result](h01-ready-104-endpoint-result.md)). Full construction now
+passes for all 104 cells: 808,495 compartments and two supported projections
+([construction gate](h01-ready-104-build-r2-decision.json),
+[current all-104 result](h01-ready-104-result.md)).
 
 Full-104 runtime, driven activity, final-population controls and physiological
 qualification remain open. The table below preserves the earlier programme's
