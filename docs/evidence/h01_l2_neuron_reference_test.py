@@ -68,12 +68,12 @@ def test_candidate_json_sets_defaults_and_rejects_unknown_names(monkeypatch, tmp
     assert error.value.code == 2 and "not_a_flag" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("sweep", [43, 50, 53, 54, 55])
+@pytest.mark.parametrize("sweep", [43, 50, 53, 54, 55, 56, 52])
 @pytest.mark.parametrize("registered", [False, True])
 @pytest.mark.parametrize("from_candidate", [False, True])
 def test_driver_respects_holdout_release(monkeypatch, tmp_path, capsys,
                                        sweep, registered, from_candidate):
-    """Registered inputs reach source loading; sealed 55 stops before it."""
+    """Calibration inputs reach source loading; sealed 54/55 stop before it; 52 is unknown."""
     import json
 
     folder = Path(__file__).parent
@@ -82,7 +82,8 @@ def test_driver_respects_holdout_release(monkeypatch, tmp_path, capsys,
 
     monkeypatch.setattr(exporter, "EVIDENCE", tmp_path)
     if registered:
-        (tmp_path / "h01-prediction-e2.json").write_text("{}")
+        for prediction in exporter.SEALED.values():
+            (tmp_path / prediction).write_text("{}")
     fake_neuron = types.ModuleType("neuron")
     fake_neuron.h = object()
     monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
@@ -95,15 +96,15 @@ def test_driver_respects_holdout_release(monkeypatch, tmp_path, capsys,
     else:
         argv += ["--sweep", str(sweep)]
     monkeypatch.setattr(sys, "argv", argv)
-    if sweep == 54:
+    if sweep == 52:
         with pytest.raises(SystemExit) as error:
             runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
         assert error.value.code == 2
-    elif sweep == 55 and not registered:
+    elif sweep in exporter.SEALED and not registered:
         with pytest.raises(SystemExit) as error:
             runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
         assert error.value.code == 2
-        assert "sealed until h01-prediction-e2.json" in capsys.readouterr().err
+        assert f"sealed until {exporter.SEALED[sweep]}" in capsys.readouterr().err
     else:
         with pytest.raises(FileNotFoundError, match="541563728_fit.json"):
             runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
@@ -122,4 +123,99 @@ def test_driver_help_does_not_require_nwb_export_dependency(monkeypatch, capsys)
     with pytest.raises(SystemExit) as error:
         runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
     assert error.value.code == 0
-    assert "55" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "55" in out and "56" in out and "54" in out
+
+
+def _fake_neuron(monkeypatch):
+    fake_neuron = types.ModuleType("neuron")
+    fake_neuron.h = object()
+    monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
+
+
+def _run(monkeypatch, argv):
+    folder = Path(__file__).parent
+    monkeypatch.syspath_prepend(str(folder))
+    monkeypatch.setattr(sys, "argv", ["reference", *argv])
+    runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
+
+
+MINIMAL_FIT = {
+    "passive": [{"ra": 15., "e_pas": -80., "cm": [{"section": s, "cm": 1.} for s in ("soma", "axon", "dend", "apic")]}],
+    "fitting": [{"junction_potential": -14., "sweeps": [69]}],
+    "conditions": [{"celsius": 34., "v_init": -80., "erev": [{"section": "soma", "ena": 53., "ek": -107.}]}],
+    "genome": [{"section": "soma", "name": "gbar_NaTs", "value": 2., "mechanism": "NaTs"},
+               {"section": "soma", "name": "gbar_Ih", "value": 1e-3, "mechanism": "Ih"},
+               {"section": "soma", "name": "decay_CaDynamics", "value": 175., "mechanism": "CaDynamics"},
+               {"section": "soma", "name": "g_pas", "value": 4e-4, "mechanism": ""},
+               {"section": "axon", "name": "g_pas", "value": 2e-4, "mechanism": ""},
+               {"section": "dend", "name": "g_pas", "value": 1e-5, "mechanism": ""},
+               {"section": "apic", "name": "g_pas", "value": 1e-7, "mechanism": ""}],
+}
+
+
+def _donor(tmp_path, sweeps=(69, 39), fit_text=None, fit_sha256=None):
+    import hashlib
+    import json
+
+    fit = tmp_path / "527952884_fit.json"
+    fit.write_text(json.dumps(MINIMAL_FIT) if fit_text is None else fit_text)
+    donor = {"donor_key": "l4-pyramidal-allen-527952884", "model_id": 626170709, "specimen_id": 527952884,
+             "fit": fit.name, "fit_sha256": fit_sha256 or hashlib.sha256(fit.read_bytes()).hexdigest(),
+             "morphology": "morphology.swc", "sweeps": list(sweeps)}
+    path = tmp_path / "donor.json"
+    path.write_text(json.dumps(donor))
+    return path
+
+
+def test_donor_json_restricts_sweeps_to_the_donor_registration(monkeypatch, tmp_path, capsys):
+    """A sweep outside the donor's list stops before any file is read; the L2 seal does not apply."""
+    _fake_neuron(monkeypatch)
+    donor = _donor(tmp_path)
+    with pytest.raises(SystemExit) as error:
+        _run(monkeypatch, ["--cache", str(tmp_path / "absent"), "--output", str(tmp_path / "out"),
+                           "--donor-json", str(donor), "--sweep", "50"])
+    assert error.value.code == 2 and "not among the donor's registered sweeps" in capsys.readouterr().err
+    # Sweep 54 is sealed for the L2 donor; a donor that registers it is not sealed.
+    donor = _donor(tmp_path, sweeps=(54,))
+    with pytest.raises(FileNotFoundError, match="sweep-54.npz"):
+        _run(monkeypatch, ["--cache", str(tmp_path / "absent"), "--output", str(tmp_path / "out"),
+                           "--donor-json", str(donor), "--sweep", "54"])
+
+
+def test_donor_json_rejects_missing_file_and_wrong_fit_hash(monkeypatch, tmp_path, capsys):
+    _fake_neuron(monkeypatch)
+    with pytest.raises(SystemExit) as error:
+        _run(monkeypatch, ["--cache", str(tmp_path), "--output", str(tmp_path / "out"),
+                           "--donor-json", str(tmp_path / "absent.json"), "--sweep", "69"])
+    assert error.value.code == 2 and "does not exist" in capsys.readouterr().err
+    donor = _donor(tmp_path, fit_sha256="0"*64)
+    with pytest.raises(SystemExit) as error:
+        _run(monkeypatch, ["--cache", str(tmp_path), "--output", str(tmp_path / "out"),
+                           "--donor-json", str(donor), "--sweep", "69"])
+    assert error.value.code == 2 and "registered sha256" in capsys.readouterr().err
+
+
+def test_donor_json_reads_fit_and_waveform_from_its_own_directory(monkeypatch, tmp_path):
+    """With a matching hash the donor's waveform is the next file the driver opens."""
+    _fake_neuron(monkeypatch)
+    donor = _donor(tmp_path)
+    with pytest.raises(FileNotFoundError) as error:
+        _run(monkeypatch, ["--cache", str(tmp_path / "absent"), "--output", str(tmp_path / "out"),
+                           "--donor-json", str(donor), "--sweep", "69"])
+    assert Path(error.value.filename) == tmp_path / "sweep-69.npz"
+
+
+def test_default_l2_path_rejects_a_changed_fit_hash(monkeypatch, tmp_path, capsys):
+    _fake_neuron(monkeypatch)
+    (tmp_path / "541563728_fit.json").write_text("{}")
+    with pytest.raises(SystemExit) as error:
+        _run(monkeypatch, ["--cache", str(tmp_path), "--output", str(tmp_path / "out"), "--sweep", "50"])
+    assert error.value.code == 2 and "2ceca2317ccbd586" in capsys.readouterr().err
+
+
+def test_help_lists_the_donor_option(monkeypatch, capsys):
+    _fake_neuron(monkeypatch)
+    with pytest.raises(SystemExit) as error:
+        _run(monkeypatch, ["--help"])
+    assert error.value.code == 0 and "--donor-json" in capsys.readouterr().out

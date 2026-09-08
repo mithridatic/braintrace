@@ -36,6 +36,26 @@ E_SOURCE = (('soma',
  ('dend', 2.3031548608821226, 3.626643561453563e-05, (), None),
  ('apic', 2.3031548608821226, 4.119170292066434e-05, (), None))
 
+# Experimental E mode "b3": verbatim copy of docs/evidence/h01-e-b3-experimental-profile.py
+# (generated from b3-sk035-ca-decay-sweep53.json, sha256 52f85ac9...92e1). Not promoted.
+E_B3_EXPERIMENTAL = (('soma',
+  1.0,
+  0.0004214870638616726,
+  (('Im', 0.0003009224287506406),
+   ('Ih', 9.994138594205759e-05),
+   ('NaTs', 2.6406641498523276),
+   ('Nap', 0.00027834876277937903),
+   ('K_P', 0.0002294964697530516),
+   ('K_T', 1.1414657313560486e-08),
+   ('SK', 0.001049516063519434),
+   ('Kv3_1', 0.3687667632247488),
+   ('Ca_HVA', 0.0009983602924910323),
+   ('Ca_LVA', 0.00824261450980065)),
+  (494.01955262344603, 0.0008762096311710155)),
+ ('axon', 1.0, 0.00028089935810004884, (('NaTs', 3.814),), None),
+ ('dend', 2.3031548608821226, 3.626643561453563e-05, (('Ih', 9.994138594205759e-05),), None),
+ ('apic', 2.3031548608821226, 4.119170292066434e-05, (('Ih', 9.994138594205759e-05),), None))
+
 I_CANDIDATE = (('soma',
   2.0,
   0.00022279797042703468,
@@ -66,6 +86,10 @@ I_CANDIDATE = (('soma',
   (300.0, 0.004)),
  ('dend', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None),
  ('apic', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None))
+
+# Experimental I mode "finalist" (energetic finalist e-kv3-close2): the same densities as the
+# candidate; the finalist differs by the somatic Kv3 closing factor only (see channel_controls).
+I_FINALIST = I_CANDIDATE
 
 I_SOURCE = (('soma',
   2.0,
@@ -98,3 +122,67 @@ I_SOURCE = (('soma',
  ('dend', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None),
  ('apic', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None))
 
+
+# HL5MN1 (Yao 2022 HL23SST) published fit, parsed from biophys_HL5MN1.hoc by
+# docs/evidence/h01_sst_parameters.py; no candidate exists, so both modes are the source.
+SST_L3_HL5MN1_SOURCE = (('soma',
+  1.0,
+  2.32e-05,
+  (('NaTg', 0.127),
+   ('K_P', 0.0111),
+   ('K_T', 0.0),
+   ('Kv3_1', 0.871),
+   ('Im', 0.000158),
+   ('SK', 0.0),
+   ('Ca_HVA', 0.00355),
+   ('Ca_LVA', 0.00314),
+   ('Ih', 4.31e-05)),
+  (465.0, 0.0005)),
+ ('axon',
+  1.0,
+  2.32e-05,
+  (('NaTg', 0.343),
+   ('Nap', 0.000444),
+   ('K_P', 0.0295),
+   ('K_T', 0.023),
+   ('Kv3_1', 0.984),
+   ('Im', 0.000317),
+   ('SK', 0.00113),
+   ('Ca_HVA', 0.00145),
+   ('Ca_LVA', 0.0627),
+   ('Ih', 1e-05)),
+  (469.0, 0.0005)),
+ ('dend', 1.0, 2.32e-05, (('Ih', 9.49e-05),), None),
+ ('apic', 1.0, 2.32e-05, (('Ih', 1e-05),), None))
+
+
+# Allen perisomatic model 626170709 (human specimen 527952884, MTG layer 4 pyramidal), generated
+# from fit_parameters.json (sha256 1aa0e2c5...) by docs/evidence/h01_l4_parameters.py; the same
+# generator reproduces E_SOURCE from the L2 fit. No candidate exists, so both modes are the source.
+L4_ALLEN_527952884_SOURCE = (('soma',
+  1.0,
+  0.0004325404210761702,
+  (('Im', 0.0003408221448736093),
+   ('Ih', 0.005766004813494249),
+   ('NaTs', 2.053808334514681),
+   ('Nap', 0.0019835830648151534),
+   ('K_P', 8.370143738944957e-05),
+   ('K_T', 0.0005156799865624617),
+   ('SK', 0.48416836488227766),
+   ('Kv3_1', 0.44920028925755756),
+   ('Ca_HVA', 0.0009610538621567574),
+   ('Ca_LVA', 0.009648645320742421)),
+  (175.16982466877238, 7.4272125002753e-05)),
+ ('axon', 1.0, 0.0002680384185644075, (), None),
+ ('dend', 1.5826204667213606, 1.6307512951158188e-05, (), None),
+ ('apic', 1.5826204667213606, 1.037799308786824e-07, (), None))
+
+
+# Density tables by donor key (see h01_cell_types.DONORS) and mode. The keys of the inner
+# mapping are the valid modes of the donor; "candidate" is the default, the rest are opt-in.
+DONOR_REGIONS = {
+    "l2-pyramidal-allen-541563728": {"candidate": E_CANDIDATE, "source": E_SOURCE, "b3": E_B3_EXPERIMENTAL},
+    "l5-pv-basket-hl5bn1": {"candidate": I_CANDIDATE, "source": I_SOURCE, "finalist": I_FINALIST},
+    "l3-sst-interneuron-hl5mn1": {"candidate": SST_L3_HL5MN1_SOURCE, "source": SST_L3_HL5MN1_SOURCE},
+    "l4-pyramidal-allen-527952884": {"candidate": L4_ALLEN_527952884_SOURCE, "source": L4_ALLEN_527952884_SOURCE},
+}

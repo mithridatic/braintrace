@@ -32,3 +32,12 @@ def test_inhibitory_receptor_flags_default_to_the_assumed_values():
     assert (args.inhibitory_weight_us, args.inhibitory_reversal_mv, args.inhibitory_tau_ms) == (.02, -80., 5.)
     args = build_parser().parse_args(["--output", "x", "--inhibitory-weight-us", "0.0031", "--inhibitory-reversal-mv", "-75"])
     assert args.inhibitory_weight_us == .0031 and args.inhibitory_reversal_mv == -75.
+
+
+def test_receptor_site_and_pulse_train_flags():
+    args = build_parser().parse_args(["--output", "x"])
+    assert args.receptor_site == "measured" and args.i_pulse_onsets_ms is None
+    args = build_parser().parse_args(["--output", "x", "--receptor-site", "soma", "--i-pulse-onsets-ms", "20", "45.5"])
+    assert args.receptor_site == "soma" and args.i_pulse_onsets_ms == [20., 45.5]
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["--output", "x", "--receptor-site", "dendrite"])

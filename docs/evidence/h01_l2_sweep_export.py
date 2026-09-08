@@ -2,8 +2,13 @@
 
 The released ``sweep-43.npz`` and ``sweep-50.npz`` carry reported and corrected
 voltage, command current, the recorded bias and their sum. This exporter rebuilds
-that format from ``recording.nwb`` for any long-square sweep, so that the closed
-holdout (sweep 53) can be opened once for the Stage 4 prediction.
+that format from ``recording.nwb`` for any long-square sweep, so that a sealed
+holdout can be opened once for its registered prediction.
+
+``SEALED`` maps a holdout sweep to the prediction file that must exist before the
+export (and the simulation driver) accept it. ``CALIBRATION`` lists the sweeps the
+driver accepts without a seal; sweep 56 (200 pA) is calibration because its repeats
+56/59/60/61/62 already feed the usable-tier AHP spread.
 """
 
 import argparse
@@ -13,7 +18,9 @@ from pathlib import Path
 import numpy as np
 
 JUNCTION_MV = -14.
-SEALED = {55: "h01-prediction-e2.json"}
+SEALED = {55: "h01-prediction-e2.json", 54: "h01-prediction-e3.json"}
+CALIBRATION = (43, 50, 53, 56)
+DRIVER_SWEEPS = tuple(sorted(CALIBRATION+tuple(SEALED)))
 EVIDENCE = Path(__file__).resolve().parent
 
 

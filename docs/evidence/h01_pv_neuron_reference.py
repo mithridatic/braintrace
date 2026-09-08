@@ -21,6 +21,52 @@ def _time_average(times, values, start, stop):
     return float(np.trapezoid(np.interp(grid, times, values), grid)/(stop-start))
 
 
+DEFAULT_TEMPLATE = "/work/source/NeuronTemplate.hoc"
+DEFAULT_BIOPHYS = "/work/source/biophys_HL5BN1.hoc"
+DEFAULT_MORPHOLOGY = "/work/source/HL5BN1.swc"
+
+
+def _biophys_procedure(path):
+    """Name of the hoc procedure defined by a ``biophys_<CELL>.hoc`` file (its stem)."""
+    stem = Path(str(path)).name
+    if not stem.startswith("biophys_") or not stem.endswith(".hoc"):
+        raise ValueError("Biophysics file must be named biophys_<CELL>.hoc.")
+    return stem[:-len(".hoc")]
+
+
+def _existing_sections(cell, name):
+    """Live sections of a template section array such as ``cell.myelin``.
+
+    The template's ``init`` deletes every declared section and recreates only some of
+    them (HL5BN1 takes ``delete_axon_BPO`` and keeps no myelin). Reading a deleted
+    section from Python raises a hoc error that is not converted and aborts the
+    process (exit 139), so each index is checked with ``section_exists`` first.
+    """
+    sections = []
+    while h.section_exists(name, len(sections), cell):
+        sections.append(getattr(cell, name)[len(sections)])
+    return sections
+
+
+SCALE_MECHANISMS = ("NaTg", "Kv3_1", "SK")
+SCALE_REGIONS = ("soma", "axon", "dend", "apic", "all")
+
+
+def _parse_scale(text):
+    """Parse ``MECHANISM:REGION:FACTOR`` (mirrors ``h01_l2_regional_density.parse_regional_density``)."""
+    parts = str(text).split(":")
+    if len(parts) != 3:
+        raise ValueError("Scale must be MECHANISM:REGION:FACTOR.")
+    if parts[0] not in SCALE_MECHANISMS:
+        raise ValueError("Scale mechanism must be one of "+", ".join(SCALE_MECHANISMS)+".")
+    if parts[1] not in SCALE_REGIONS:
+        raise ValueError("Scale region must be one of "+", ".join(SCALE_REGIONS)+".")
+    factor = float(parts[2])
+    if not np.isfinite(factor) or factor < 0:
+        raise ValueError("Scale factor must be nonnegative and finite.")
+    return {"mechanism": parts[0], "region": parts[1], "factor": factor}
+
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--current-na", type=float, required=True)
 parser.add_argument("--bias-na", type=float, default=0.)
@@ -40,6 +86,9 @@ parser.add_argument("--initial-mv", type=float, default=-80.)
 parser.add_argument("--scale-conductance", choices=("NaTg", "Kv3_1", "SK"))
 parser.add_argument("--conductance-factor", type=float, default=1.)
 parser.add_argument("--conductance-region", choices=("all", "soma", "axon"), default="all")
+parser.add_argument("--scale", action="append", default=[], metavar="MECH:REGION:FACTOR",
+                    help="repeatable regional density scale applied after the single --scale-conductance slot; "
+                         "mechanism NaTg, Kv3_1 or SK; region soma, axon, dend, apic or all")
 parser.add_argument("--cvode-atol", type=float)
 parser.add_argument("--passive", action="store_true")
 parser.add_argument("--nseg-factor", type=int, default=1)
@@ -47,6 +96,11 @@ parser.add_argument("--unselected-nseg-factor", type=int, default=1)
 parser.add_argument("--refine-region", choices=("all", "soma", "axon", "dendrites"), default="all")
 parser.add_argument("--duration-ms", type=float, default=1500.)
 parser.add_argument("--output", required=True)
+parser.add_argument("--template", default=DEFAULT_TEMPLATE, help="in-container NeuronTemplate.hoc path")
+parser.add_argument("--biophys", default=DEFAULT_BIOPHYS,
+                    help="in-container biophys_<CELL>.hoc path; the procedure name is the file stem")
+parser.add_argument("--morphology", default=DEFAULT_MORPHOLOGY,
+                    help="in-container SWC path; the template reads the cell name after 'morphologies/'")
 parser.add_argument("--candidate-json", type=Path,
                     help="JSON object of flag names to values used as defaults; explicit flags override")
 preliminary, _ = parser.parse_known_args()
@@ -93,13 +147,21 @@ if not np.isfinite(args.duration_ms) or args.duration_ms <= 0:
     parser.error("Duration must be positive and finite.")
 if args.cvode_atol is not None and (not np.isfinite(args.cvode_atol) or args.cvode_atol <= 0):
     parser.error("CVode absolute tolerance must be positive and finite.")
+try:
+    regional_scales = [_parse_scale(text) for text in args.scale]
+    biophys_procedure = _biophys_procedure(args.biophys)
+except ValueError as error:
+    parser.error(str(error))
 
 h.load_file("stdrun.hoc")
 h.load_file("import3d.hoc")
-h.load_file("/work/source/NeuronTemplate.hoc")
-h.load_file("/work/source/biophys_HL5BN1.hoc")
-cell = h.NeuronTemplate("/work/source/HL5BN1.swc")
-h.biophys_HL5BN1(cell)
+for required in (args.template, args.biophys, args.morphology):
+    if not Path(required).is_file():
+        raise SystemExit(f"Donor file not found: {required}")
+h.load_file(args.template)
+h.load_file(args.biophys)
+cell = h.NeuronTemplate(args.morphology)
+getattr(h, biophys_procedure)(cell)
 if args.axon_calcium_gamma is not None:
     for section in cell.axonal:
         section.gamma_CaDynamics = args.axon_calcium_gamma
@@ -145,6 +207,17 @@ if args.scale_conductance is not None:
         if selected and args.scale_conductance in section.psection()["density_mechs"]:
             parameter = "gbar_"+args.scale_conductance
             setattr(section, parameter, getattr(section, parameter)*args.conductance_factor)
+for scale in regional_scales:
+    touched = 0
+    for section in cell.all:
+        family = section.name().split(".", 1)[1].split("[", 1)[0]
+        selected = scale["region"] == "all" or family == scale["region"]
+        if selected and scale["mechanism"] in section.psection()["density_mechs"]:
+            parameter = "gbar_"+scale["mechanism"]
+            setattr(section, parameter, getattr(section, parameter)*scale["factor"])
+            touched += 1
+    if not touched:
+        raise RuntimeError(f"Scale {scale} matched no section carrying the mechanism.")
 for section in cell.all:
     family = section.name().split(".", 1)[1].split("[", 1)[0]
     selected = (args.refine_region == "all" or family == args.refine_region
@@ -182,7 +255,8 @@ axon_v = h.Vector().record(cell.axon[0](.5)._ref_v)
 calcium = h.Vector().record(cell.soma[0](.5)._ref_cai) if not args.passive else []
 sk = h.Vector().record(cell.soma[0](.5).SK._ref_z) if not args.passive else []
 ih = h.Vector().record(cell.soma[0](.5).Ih._ref_m) if not args.passive else []
-nap_h = h.Vector().record(cell.soma[0](.5).Nap._ref_h) if not args.passive else []
+nap_h = (h.Vector().record(cell.soma[0](.5).Nap._ref_h)
+         if not args.passive and "Nap" in cell.soma[0].psection()["density_mechs"] else [])
 spike_probes = {}
 balance_geometry = None
 if (args.observe_spike_currents or args.observe_charge_balance) and not args.passive:
@@ -233,7 +307,7 @@ geometry = [{"name": sec.name(), "length_um": sec.L, "diameter_um": sec.diam,
              "nseg": sec.nseg, "area_um2": sum(seg.area() for seg in sec),
              "ra_ohm_cm": sec.Ra, "cm_uf_cm2": sec.cm,
              "parent": None if sec.parentseg() is None else str(sec.parentseg())}
-            for sec in cell.all]
+            for sec in list(cell.all)+[m for m in _existing_sections(cell, "myelin") if m.parentseg() is not None]]
 h.finitialize(args.initial_mv)
 h.continuerun(args.duration_ms)
 times, voltage, applied, axon = map(np.asarray, (t, v, current, axon_v))
@@ -253,10 +327,18 @@ report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942
           "active_channels": not args.passive,
           "conductance_intervention": {"mechanism": args.scale_conductance, "factor": args.conductance_factor,
                                        "region": args.conductance_region},
+          "regional_scales": regional_scales,
           "nseg_factor": args.nseg_factor,
           "unselected_nseg_factor": args.unselected_nseg_factor,
           "refine_region": args.refine_region,
-          "model": "ModelDB267587 released HL5BN1 circuit cell, original template and mechanisms",
+          "model": ("ModelDB267587 released HL5BN1 circuit cell, original template and mechanisms"
+                    if args.biophys == DEFAULT_BIOPHYS and args.morphology == DEFAULT_MORPHOLOGY
+                    else f"ModelDB267587 released {biophys_procedure} circuit cell, original template and mechanisms"),
+          "donor": {"template": args.template, "biophys": args.biophys, "morphology": args.morphology,
+                    "procedure": biophys_procedure,
+                    "sha256": {name: hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                               for name, path in (("template", args.template), ("biophys", args.biophys),
+                                                  ("morphology", args.morphology))}},
           "current_na": args.current_na, "dt_ms": args.dt_ms, "temperature_c": 34.,
           "bias_na": args.bias_na, "bias_on_ms": 0.,
           "axon_calcium_decay_ms": args.axon_calcium_decay_ms,
