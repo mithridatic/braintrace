@@ -417,6 +417,7 @@ def main(argv=None):
     parser.add_argument("--stage", required=True)
     parser.add_argument("--dry-run", action="store_true", help="print skip/resume/run per (candidate, input); launch nothing, write nothing")
     parser.add_argument("--only-input", action="append", help="run this manifest input only (repeatable)")
+    parser.add_argument("--only-candidate", action="append", help="launch this candidate of the stage only (repeatable); other candidates of the stage are neither planned nor counted")
     parser.add_argument("--abort-seconds", type=float, help="override the manifest abort; above the manifest's value it needs --abort-override-reason")
     parser.add_argument("--abort-override-reason", help="registered reason for an abort above the manifest's value; written to the log")
     args = parser.parse_args(argv)
@@ -431,8 +432,13 @@ def main(argv=None):
         raise SystemExit(f"Stage {args.stage} is gated by {manifest['stages'][str(args.stage)]['gate']}; no decision is recorded.")
     log_path = root/"docs/evidence"/manifest["output_dir"]/"campaign-log.json"
     log = load_log(log_path, manifest)
-    plans = [(c, plan_inputs(root, manifest, c, log, args.only_input))
-             for c in manifest["candidates"] if str(c["stage"]) == str(args.stage)]
+    chosen = [c for c in manifest["candidates"] if str(c["stage"]) == str(args.stage)]
+    if args.only_candidate:
+        unknown = [n for n in args.only_candidate if n not in {c["name"] for c in chosen}]
+        if unknown:
+            raise SystemExit(f"{unknown} is not a candidate of stage {args.stage}; candidates are {[c['name'] for c in chosen]}.")
+        chosen = [c for c in chosen if c["name"] in args.only_candidate]
+    plans = [(c, plan_inputs(root, manifest, c, log, args.only_input)) for c in chosen]
     print_plan(log, manifest, plans)
     if args.dry_run:
         return

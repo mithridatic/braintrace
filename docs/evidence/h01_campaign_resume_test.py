@@ -171,3 +171,20 @@ def test_flag_hash_equals_the_sha_the_driver_records_for_the_written_file(tmp_pa
     report = json.loads((evidence/"h01-e-gain/g0-b3-sweep43.json").read_text())
     assert campaign.flag_hash(real["candidates"][0]) == report["candidate_json"]["sha256"]
     assert campaign.input_finished(evidence.parents[1], real, real["candidates"][0], "sweep43")
+
+
+def test_main_only_candidate_plans_one_candidate_and_counts_one_evaluation(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(campaign.subprocess, "run",
+                        lambda command, **kwargs: subprocess.CompletedProcess(command, 0, stdout="", stderr=""))
+    manifest = _ungated(_manifest())
+    (tmp_path/"manifest.json").write_text(json.dumps(manifest))
+    monkeypatch.setattr(campaign, "repo_root", lambda: tmp_path)
+    with pytest.raises(SystemExit, match="not a candidate"):
+        campaign.main(["--manifest", str(tmp_path/"manifest.json"), "--stage", "0", "--only-candidate", "c9"])
+    campaign.main(["--manifest", str(tmp_path/"manifest.json"), "--stage", "0", "--only-candidate", "c1",
+                   "--only-input", "019"])
+    out = capsys.readouterr().out
+    assert "c1 019 run evaluation 1" in out and "c0" not in out
+    log = json.loads((tmp_path/"docs/evidence"/manifest["output_dir"]/"campaign-log.json").read_text())
+    assert [e["name"] for e in log] == ["c1"] and log[0]["evaluation_index"] == 1
+    assert log[0]["inputs"] == {"019": "completed", "027": "untested"}
