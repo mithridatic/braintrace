@@ -147,3 +147,42 @@ initiation checked with `h01_initiation_score.py` on every active run.
 No observation exists yet, so no Y4 entry. The Stage 0 and Stage G predictions are entered in
 `docs/h01-causal-model.md` Y4 as dated registered predictions; a miss is recorded against the
 prediction when the decision JSON lands.
+
+## Addendum 2026-09-08: per-input resume, evaluation 1 stays 1 of 4
+
+Stage 0 was launched once (2026-09-07 22:36 UTC). Sweep 43 completed (820 s, rc 0); sweeps
+50, 53 and 56 were killed by the runner at the 1500 s abort on a shared host and are
+**untested**, not failed. Under the old runner, completing them would have re-run sweep 43 and
+the log had no per-input state. The runner (`h01_campaign.py`, tested in
+`h01_campaign_test.py` and `h01_campaign_resume_test.py`) now applies these rules; the cap,
+stage-gate and flag-hash semantics are unchanged.
+
+- **Per-input skip.** A (candidate, input) pair is skipped when
+  `h01-e-gain/<candidate>-<input>.json` exists and its `candidate_json.sha256` equals the
+  candidate's flag hash. Skipping is per input, not per candidate.
+- **Untested inputs resume.** A killed or aborted input is recorded in `campaign-log.json`
+  with status `untested` and is re-run by the next invocation of the same stage.
+- **An evaluation counts once, at first launch.** `campaign-log.json` holds one entry per
+  evaluation: `name`, `candidate_sha256`, `evaluation_index`, `abort_seconds`,
+  optional `abort_override_reason`, `inputs {input: untested|completed|failed}`, `runs`.
+  Completing a candidate's untested inputs later reuses its entry and does not increment the
+  count; `prior_evaluations` in the manifest is untouched. A changed flag hash is a new
+  candidate and a new evaluation. **Evaluation 1 (`g0-b3`) stays 1 of 4**; the
+  50/53/56 completion is the rest of evaluation 1, and Stage G remains evaluations 2-4.
+- **Runner options.** `--only-input NAME` (repeatable) runs a subset of inputs;
+  `--abort-seconds N` overrides the manifest abort and is recorded on the log entry; when it
+  exceeds the manifest's 1500 s an `--abort-override-reason` string must be registered before
+  the run and is written to the entry. `--dry-run` prints, per (candidate, input), `skip`,
+  `resume evaluation k` or `run evaluation k`, and the evaluations used after the invocation,
+  writing nothing.
+- **Flag hash identity.** The runner's `flag_hash` now hashes the exact bytes it writes to
+  `<candidate>.candidate.json` (CRLF fixed on every platform), which is what the driver records
+  as `candidate_json.sha256`. Before this the two hashes differed on Windows (LF text vs CRLF
+  file), so the skip rule never matched and every input would have re-run. `g0-b3` hashes to
+  `e4825c83...`, equal to the sweep-43 report and to B3; a test pins this equality.
+- **Run-duration rule unchanged.** Each launch still needs a measured estimate and per-job
+  approval; sweeps 50/53/56 have no completed duration (anchor 649-665 s per 250/310 pA run on
+  an unshared host).
+
+Dry run on 2026-09-08 (`--stage 0 --dry-run`): `g0-b3 sweep43 skip`, `g0-b3 sweep50/53/56
+resume evaluation 1`, `evaluations used 1 of 4 after this invocation`.

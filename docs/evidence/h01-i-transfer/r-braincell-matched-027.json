@@ -1,0 +1,245 @@
+{
+  "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
+  "profile": {
+    "name": "h01-pv-regional-mesh-axon2187:finalist:v1",
+    "polarity": "I",
+    "mode": "finalist",
+    "source": "ModelDB 267587 HL5BN1; commit 82cdd91bc93942ba19315371330a2412e064baf5",
+    "metadata_sha256": "d8d4d022457eb139a033ead73780f2eb12a0d58852503267912d961b1eb9d546",
+    "initial_mv": -80.0,
+    "reversal_mv": -96.97510324827309,
+    "axial_ohm_cm": 100.0,
+    "regions": [
+      [
+        "soma",
+        2.0,
+        0.00022279797042703468,
+        [
+          [
+            "NaTg",
+            0.5408169213181742
+          ],
+          [
+            "Nap",
+            0.00018896712739398385
+          ],
+          [
+            "K_P",
+            0.0213706236672448
+          ],
+          [
+            "K_T",
+            0.0021990309048621
+          ],
+          [
+            "Kv3_1",
+            0.428848473819995
+          ],
+          [
+            "Im",
+            0.0002662914244435036
+          ],
+          [
+            "SK",
+            3.566097771013125e-05
+          ],
+          [
+            "Ca_HVA",
+            0.0001056598397436326
+          ],
+          [
+            "Ca_LVA",
+            0.0132721359122651
+          ],
+          [
+            "Ih",
+            7.50253747155162e-05
+          ]
+        ],
+        [
+          206.4043474695734,
+          0.0005
+        ]
+      ],
+      [
+        "axon",
+        2.0,
+        0.00022279797042703468,
+        [
+          [
+            "NaTg",
+            0.6332420031983784
+          ],
+          [
+            "Nap",
+            0.008718100124522113
+          ],
+          [
+            "K_P",
+            0.613436651152536
+          ],
+          [
+            "K_T",
+            0.04420481156230963
+          ],
+          [
+            "Kv3_1",
+            1.5655472280036258
+          ],
+          [
+            "Im",
+            0.04335940360677642
+          ],
+          [
+            "SK",
+            0.39879086425875565
+          ],
+          [
+            "Ca_HVA",
+            0.0009562001984392927
+          ],
+          [
+            "Ca_LVA",
+            0.00034438125387452307
+          ],
+          [
+            "Ih",
+            7.50253747155162e-05
+          ]
+        ],
+        [
+          300.0,
+          0.004
+        ]
+      ],
+      [
+        "dend",
+        2.0,
+        0.00022279797042703468,
+        [
+          [
+            "Ih",
+            7.50253747155162e-05
+          ]
+        ],
+        null
+      ],
+      [
+        "apic",
+        2.0,
+        0.00022279797042703468,
+        [
+          [
+            "Ih",
+            7.50253747155162e-05
+          ]
+        ],
+        null
+      ]
+    ],
+    "limitations": [
+      "Borrowed donor and mechanisms; not measured H01 physiology.",
+      "Candidate selection is not physiological qualification.",
+      "E onset and rising-phase errors remain; I early intervals remain too short.",
+      "Experimental mode 'finalist': registered so the SP2 held-equal transfer arms can run against the NEURON finalist; not promoted, not a candidate; the default mode stays candidate."
+    ],
+    "channel_prefix": "H01PV",
+    "sodium_reversal_mv": 50.0,
+    "potassium_reversal_mv": -85.0
+  },
+  "duration_ms": 330.0,
+  "solver": "staggered",
+  "active_channels": true,
+  "dt_ms": 0.005,
+  "max_cv_length_um": null,
+  "mesh": {
+    "policy": "CVPerBranchList",
+    "max_cv_length_um": null,
+    "source": "e-kv3-close2-027.json",
+    "source_sha256": "9ca3b3df00d1bc37f70511f7e5ffe39a2f57a5c490d3e628ea522001ab474ca6",
+    "branches": [
+      "soma_0",
+      "dend_0",
+      "dend_9",
+      "dend_12",
+      "dend_13",
+      "dend_16",
+      "dend_19",
+      "axon_0",
+      "dend_1",
+      "dend_4",
+      "dend_10",
+      "dend_11",
+      "dend_14",
+      "dend_15",
+      "dend_17",
+      "dend_18",
+      "dend_20",
+      "dend_23",
+      "axon_1",
+      "dend_2",
+      "dend_3",
+      "dend_5",
+      "dend_6",
+      "dend_21",
+      "dend_22",
+      "dend_24",
+      "dend_25",
+      "dend_7",
+      "dend_8"
+    ],
+    "cv_per_branch": [
+      9,
+      9,
+      9,
+      27,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      99,
+      81,
+      63,
+      81,
+      99,
+      117,
+      81,
+      9,
+      9,
+      171,
+      171,
+      27,
+      9,
+      27,
+      9,
+      99,
+      63,
+      81,
+      9
+    ]
+  },
+  "current_na": 0.27,
+  "temperature_c": 34.0,
+  "initial_voltage_mv": -80.0,
+  "stimulus_on_ms": 270.0,
+  "stimulus_off_ms": 1270.0,
+  "sample_convention": "end of step; first sample at dt",
+  "spike_times_ms": [
+    281.295,
+    297.63,
+    314.665
+  ],
+  "spike_peaks_mv": [
+    17.48644158804955,
+    17.373909578646106,
+    17.26292192935789
+  ],
+  "baseline_mean_mv": -86.9274977184105,
+  "calcium_range_mm": [
+    0.00010000000101594116,
+    0.00014021286714016736
+  ],
+  "qualification": "first transfer response; numerical and human waveform validation incomplete"
+}

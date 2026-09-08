@@ -1,0 +1,204 @@
+{
+  "contract": "docs/specs/2026-09-05-h01-recorded-response-acceptance-proposal.md",
+  "contract_sha256": "7965377e5a5be53eb6ac1d3df0610473a5ec71635da51b5b0e4c14ad45ded0c9",
+  "allowances": {
+    "rise_crossing_ms": 1.0,
+    "fall_crossing_ms": 1.0,
+    "peak_sample_time_ms": 1.0,
+    "peak_sample_voltage_mv": 1.0,
+    "time_above_threshold_ms": 0.05,
+    "rise_to_peak_ms": 0.05,
+    "peak_to_fall_ms": 0.05,
+    "minimum_voltage_mv": 1.0,
+    "minimum_delay_ms": 1.0,
+    "subthreshold_voltage_mv": 1.0
+  },
+  "derived_allowances": {
+    "interval_ms": 2.0
+  },
+  "numerical_limit_sets": {
+    "E 0.11 tolerance F3F5": {
+      "repeats": 2,
+      "factor": 2.95,
+      "limits": {
+        "sub_1019_mv": 2.521232289609543e-09,
+        "sub_1021_mv": 1.2247057412650975e-08,
+        "sub_1025_mv": 2.3324155051795973e-09,
+        "sub_1040_mv": 3.2087043919659666e-07,
+        "sub_1120_mv": 7.415351603867748e-07,
+        "sub_1520_mv": 4.174171479576217e-08,
+        "sub_2019_mv": 7.090376286100764e-08,
+        "sub_2021_mv": 8.506980080369432e-08,
+        "sub_2040_mv": 3.7388364404478125e-07,
+        "sub_2120_mv": 7.511087247280557e-07
+      },
+      "traces": [
+        "../../../h01-braincell/docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz",
+        "../../../h01-braincell/docs/evidence/h01-l2-campaign-fine/c-into-F3F5-atol11-sweep43.npz"
+      ],
+      "caveat": "ab-into-F3F5 at CVode 1e-10 vs 1e-11; proxy limit for every sweep-43 E record (traces read from the sibling h01-braincell worktree; this sparse checkout excludes .npz)"
+    }
+  },
+  "records": [
+    {
+      "cell": "E",
+      "name": "g0-b3",
+      "role": "candidate",
+      "input": "E 0.11",
+      "limits": "E 0.11 tolerance F3F5",
+      "settings": "nseg x9, CVode 1e-10, recorded bias, B3 flags (sha256 e4825c83)",
+      "trace": "h01-e-gain/g0-b3-sweep43.npz",
+      "rows": [
+        {
+          "key": "sub_1019_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -84.5,
+          "model": -83.96942181251588,
+          "residual": 0.5305781874841244,
+          "allowance": 1.0,
+          "ratio": 0.5305781874841244,
+          "tier": "parked",
+          "verdict": "pass",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 2.521232289609543e-09
+        },
+        {
+          "key": "sub_1021_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -83.78125,
+          "model": -82.87309880906065,
+          "residual": 0.9081511909393498,
+          "allowance": 1.0,
+          "ratio": 0.9081511909393498,
+          "tier": "parked",
+          "verdict": "pass",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 1.2247057412650975e-08
+        },
+        {
+          "key": "sub_1025_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -82.09375762939453,
+          "model": -81.29451143131892,
+          "residual": 0.7992461980756076,
+          "allowance": 1.0,
+          "ratio": 0.7992461980756076,
+          "tier": "parked",
+          "verdict": "pass",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 2.3324155051795973e-09
+        },
+        {
+          "key": "sub_1040_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -78.53125,
+          "model": -77.91335780286335,
+          "residual": 0.6178921971366549,
+          "allowance": 1.0,
+          "ratio": 0.6178921971366549,
+          "tier": "parked",
+          "verdict": "pass",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 3.2087043919659666e-07
+        },
+        {
+          "key": "sub_1120_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -74.1875,
+          "model": -73.76138932164993,
+          "residual": 0.42611067835007077,
+          "allowance": 1.0,
+          "ratio": 0.42611067835007077,
+          "tier": "parked",
+          "verdict": "pass",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 7.415351603867748e-07
+        },
+        {
+          "key": "sub_1520_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -75.6875,
+          "model": -73.97187822174021,
+          "residual": 1.7156217782597878,
+          "allowance": 1.0,
+          "ratio": 1.7156217782597878,
+          "tier": "parked",
+          "verdict": "fail",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 4.174171479576217e-08
+        },
+        {
+          "key": "sub_2019_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -75.6875,
+          "model": -73.97348188150774,
+          "residual": 1.7140181184922625,
+          "allowance": 1.0,
+          "ratio": 1.7140181184922625,
+          "tier": "parked",
+          "verdict": "fail",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 7.090376286100764e-08
+        },
+        {
+          "key": "sub_2021_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -76.46875,
+          "model": -75.07227283949251,
+          "residual": 1.3964771605074873,
+          "allowance": 1.0,
+          "ratio": 1.3964771605074873,
+          "tier": "parked",
+          "verdict": "fail",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 8.506980080369432e-08
+        },
+        {
+          "key": "sub_2040_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -81.8125,
+          "model": -80.12682352216432,
+          "residual": 1.6856764778356848,
+          "allowance": 1.0,
+          "ratio": 1.6856764778356848,
+          "tier": "parked",
+          "verdict": "fail",
+          "derived": false,
+          "note": null,
+          "numerical_limit": 3.7388364404478125e-07
+        },
+        {
+          "key": "sub_2120_mv",
+          "kind": "subthreshold_voltage_mv",
+          "human": -85.75,
+          "model": null,
+          "residual": null,
+          "allowance": 1.0,
+          "ratio": null,
+          "tier": null,
+          "verdict": "unavailable",
+          "derived": false,
+          "note": "requested time outside the saved trace",
+          "numerical_limit": 7.511087247280557e-07
+        }
+      ],
+      "summary": {
+        "pass": 5,
+        "fail": 4,
+        "unavailable": 1
+      },
+      "trace_sha256": "5a71cf486b491ec23522765401c1c9212c942f4cd42d914e0dbad353d0cea3f1"
+    }
+  ],
+  "targets": {
+    "E": []
+  }
+}
