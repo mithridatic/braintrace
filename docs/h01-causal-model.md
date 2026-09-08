@@ -1946,6 +1946,18 @@ carries each verdict (the dated entries below are kept as written):
 
 ## Evidence index
 
+### Y5 continuation: all-104 anatomical import, 2026-09-08
+
+The attachment-coordinate tolerance controlled the seven-component import
+failure. Retaining physically distinct attachment points in the H01-local
+reader is sufficient to load all 104 largest soma-bearing components with
+all 2,804,445 directed source segments present and no extras. The source
+coordinates and graph are compared independently in the per-cell
+[import decision](evidence/h01-population-import-104.json); the
+[result](evidence/h01-population-import-104.md) records the failing regressions
+and passing checks. This closes the reader blocker in Y5, not its population
+runtime or physiology gates. No fragments are joined and no cable is invented.
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).
