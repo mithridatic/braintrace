@@ -1,0 +1,116 @@
+{
+  "scope": "Exact proofreading region-base ownership across nine cached export shards only; no placement or full export completeness claim",
+  "input_hashes": {
+    "docs\\evidence\\h01-cellmatrix-mapping-audit.json": "360d8c334f8f1b280dd860c69a633cdee6bcb7b6de09a369f4225433e80a899e",
+    ".cache\\h01\\proofread-base-membership.json": "3201df49269d31b8e788a91607f5b07ed14c3f0d7cd2dfbae7d51fef3c287a9f"
+  },
+  "shards": [
+    {
+      "path": ".cache\\h01\\export000000000000.avro",
+      "sha256": "e6176e0c282a408faa4c804bd63ab50998143f7203d0937cde13746b427123cd",
+      "complete": true,
+      "counts": {
+        "records": 998235,
+        "pre_matched": 54,
+        "post_matched": 1603,
+        "same_cell": 6
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000001.avro",
+      "sha256": "76c9edfbd4e34ed6fad206173ee2238586ebc404fedea68a5967b30ed44d716d",
+      "complete": true,
+      "counts": {
+        "records": 998694,
+        "pre_matched": 45,
+        "post_matched": 1655,
+        "same_cell": 2
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000002.avro",
+      "sha256": "55e1148cb8e11e359d58d3f290e2b93d7f167f14df0853d6cd2388c637a5550c",
+      "complete": true,
+      "counts": {
+        "records": 999623,
+        "pre_matched": 46,
+        "post_matched": 1635,
+        "same_cell": 6
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000003.avro",
+      "sha256": "5a2bc4329511897c1cafe277046c14151308a23b6a718514c3baa4c02a136740",
+      "complete": true,
+      "counts": {
+        "records": 999391,
+        "pre_matched": 51,
+        "post_matched": 1634,
+        "same_cell": 3
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000004.avro",
+      "sha256": "60d7318ce18427afa43139036f865e818654c9f22b40796603245689326791d7",
+      "complete": true,
+      "counts": {
+        "records": 998795,
+        "pre_matched": 57,
+        "post_matched": 1640,
+        "same_cell": 4
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000005.avro",
+      "sha256": "a8faffd3374ab6fda1388387e7357f66d146bdaf3caae1d4b587a146b6002450",
+      "complete": true,
+      "counts": {
+        "records": 998857,
+        "pre_matched": 56,
+        "post_matched": 1601,
+        "same_cell": 5
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000006.avro",
+      "sha256": "2d4c57b4dc0bb67877e7fe69e36d1b8ee47b8de070bac9649ad9e056405c7f46",
+      "complete": true,
+      "counts": {
+        "records": 999223,
+        "pre_matched": 66,
+        "post_matched": 1580,
+        "same_cell": 5
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000007.avro",
+      "sha256": "bf4b33ef8fa7852b54cb78507e2ba2d354064cb501391aa0dcd15a0fac7504a0",
+      "complete": true,
+      "counts": {
+        "records": 999368,
+        "pre_matched": 46,
+        "post_matched": 1622,
+        "same_cell": 5
+      }
+    },
+    {
+      "path": ".cache\\h01\\export000000000008.avro",
+      "sha256": "4d5cf3131b11edd038af3ee76d76bbbbfb88c8d2fc26f628274d70d0d775bb83",
+      "complete": true,
+      "counts": {
+        "records": 999533,
+        "pre_matched": 49,
+        "post_matched": 1621,
+        "same_cell": 3
+      }
+    }
+  ],
+  "rows": [],
+  "elapsed_seconds": 412.720616400009,
+  "total_counts": {
+    "records": 8991719,
+    "pre_matched": 470,
+    "post_matched": 14591,
+    "same_cell": 39
+  }
+}

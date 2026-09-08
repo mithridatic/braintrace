@@ -153,3 +153,13 @@ Evidence: h01-cached-exact-base-partners.json binds the membership inputs and
 eight retained shard files by hash. This is not an all-export absence result:
 records omitted by the earlier sampled-C3/axon-base retention rule were not
 revisited. Unmatched base IDs remain unresolved rather than external.
+
+The direct exact-base scan of all nine cached shards (0-8) completed in
+412.728 seconds: 8991719 records, 470 matched presynaptic endpoints, 14591
+matched postsynaptic endpoints, 39 same-cell pairs, zero internal between-cell
+pairs and zero ambiguous ownership matches. Unlike the retained-subset check,
+this revisited every row of these nine shards. Thus the old retention filter
+hid no exact-base-supported internal pairs in this cached sample. The remaining
+157 shards were not scanned; this is not a full-connectome absence result.
+Evidence: h01-cached-full-base-join.json, with per-shard completeness, counts,
+source hashes, and membership hashes. No candidate was promoted.

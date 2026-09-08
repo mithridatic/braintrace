@@ -2157,3 +2157,11 @@ matched at both ends have same-cell ownership. No between-cell contact in this
 retained subset gains exact ownership at both endpoints. The evidence is
 h01-cached-exact-base-partners.json. The original retention filter can omit
 other contacts, so neither completeness nor absence follows from this result.
+
+A direct scan removes the retained-subset ambiguity for the nine cached shards:
+all 8991719 records were checked using exact region-base ownership at both
+endpoints, with 39 same-cell pairs and no between-cell pairs. Evidence:
+h01-cached-full-base-join.json. The old retention filter did not hide any
+exact-base-supported internal pair within these files. This does not resolve
+release mapping or the unscanned 157 shards, and does not invalidate separately
+verified contacts from the annotation source. No model change follows.
