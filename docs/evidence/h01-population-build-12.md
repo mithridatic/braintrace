@@ -1,6 +1,6 @@
 # H01 population: 12-cell staged build (SP8 stage 2)
 
-Generated 2026-09-07T16:55:13 from [h01-population-build-12.json](h01-population-build-12.json). Evidence topology (2 construction-ready contacts, 4 incident cells) plus the 8 smallest isolated cells by largest-component node count, `--include-isolated --cells 12`. **Every number is measured under load** (other jobs ran on the machine throughout). Cost and construction qualification only; no physiology claim. Predictions were registered in the builder spec addenda (2026-09-07) before each launch.
+Generated 2026-09-07T16:55:13 from [h01-population-build-12.json](h01-population-build-12.json). Evidence topology (2 construction-ready contacts, 4 incident cells) plus the 8 smallest isolated cells by largest-component node count, `--include-isolated --cells 12`. **Every number is measured under load** (other jobs ran on the machine throughout). Cost and construction qualification only; no physiology claim. Predictions were registered in the builder spec addenda (2026-09-07) before each launch. **Attempt 3 (below, 18:26, machine quiet by the stated definition) supersedes the verdict of the under-load sections: the 40-cell stage is approved by that check.**
 
 ## Measured
 
@@ -45,3 +45,40 @@ Under-load 12-cell numbers scale to under-load projections; alone-machine costs 
 Status **failed** at 332.6 s wall, peak RSS 649 MB before discretization. 12-cell construction did not complete: ValueError('Invalid electrical region interval.') from h01_ei_cell._validate_regions while building isolated cell 2451406889 (8th of 12 in cell_order) at 324.2 s; the network and build JSON were never written, so compartments are unrecorded (untested, not measured).
 
 Root cause: Floating-point rounding: on branch 162 of 2451406889 component 0 the soma region evaluates to (0.9902931374228255, 1.0000000000000002); the validator demanded hi <= 1 exactly while its own coverage check already tolerates 1e-9. Diagnosed by a read-only region evaluation of that component after the failure; fixed in the same commit by snapping endpoints within 1e-9 of 0/1 (no physiology change). Not re-run: this task allows one construction check.
+
+## Attempt 3 (2026-09-07T18:26, **measured, machine quiet except the C3 rescan**): instrumented init_state and the run phase
+
+Predictions registered in the builder-spec addendum of 2026-09-07 17:05 before launch. docker ps shows only synapse; no python process other than the C3 rescan worker (h01_c3_edge_list.py) above 300 MB; checked twice 60 s apart before launch and re-checked before each stage. Instrumentation: per-cell init_state progress lines and a 60 s heartbeat (elapsed s, RSS) from braintrace/datasets/h01_network_init.py; --init-only mode. Kill rules: 600 s without a progress or heartbeat line, 1,500 s init_state abort, 3,600 s wall cap (no-hour-plus policy); no construction abort.
+
+| Run | Status | Construction s | Compartments | init_state s | compile+run s | Wall s | Peak RSS MB (interpreter peak_wset / tree) | Traces finite | Conductance probes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| init-only, control ei | completed  | 744.2 | 84,097 | 635.4 | untested | 1,393.5 | 1,290 / 1,303 | untested | untested |
+| 1 ms, dt 0.005, control ei | completed  | 338.5 | 84,097 | 265.0 | 29.8 | 643.6 | 2,000 / 1,997 | True | all zero |
+| 1 ms, dt 0.005, control disconnected | completed  | 270.5 | 84,097 | 201.6 | 29.3 | 508.5 | 1,988 / 1,986 | True | all zero |
+
+- Construction: 744.2, 338.5, 270.5 s against the registered 270-310 s (SP1 alone 240-280 s x 1.11). Under load the same build took 883 s.
+- init_state: init_only_ei 635.4, run_1ms_ei 265.0, run_1ms_disconnected 201.6 s against the registered 245-735 s (1x-3x the 4-cell a = 245 s); heaviest cells: `3955003482` 275.8 s, `5584343344` 98.4 s, `4188575291` 92.2 s. Under load it exceeded 600 s (killed).
+- compile + 200 steps: ei 29.8 s, disconnected 29.3 s; init + compile + run (ei) 294.8 s against 276 s derived.
+- Peak RSS of the real interpreter (psutil peak_wset, read inside the process): 1,290, 2,000, 1,988 MB; watcher tree sums 1,303, 1,997, 1,986 MB. 6 GB rejection: not triggered.
+- Finiteness: ei True, disconnected True. Disconnected conductance probes identically zero: True; ei probes nonzero: False.
+- Untested: ei conductance probes nonzero (not discriminable: 1 ms at zero input, soma pulses start at 2 ms, no presynaptic spike).
+- Load: Quiet by the stated definition throughout (docker: only synapse; no python above 300 MB besides the C3 rescan worker, which was not observed running). CPU was not idle: during the init-only stage comsolbatch.exe (~2.6 cores), bdservicehost.exe (~1.9 cores), SearchIndexer (~1 core) and two Codex sandbox setups were active (87 % of 20 logical cores at 17:56); by the ei run (18:07-18:17) only this interpreter and bdservicehost (~1 core) were active (25 % CPU). The init-only numbers are therefore CPU-confounded by COMSOL; the two 1 ms runs are the clean points.
+
+### Against the SP1 linear prediction (quiet machine)
+
+| Quantity | SP1-derived | Measured | Inside [0.5x, 2x] |
+| --- | ---: | ---: | --- |
+| Construction s | 275 | 744.2, 338.5, 270.5 (test uses the two 1 ms runs) | True |
+| Init + compile + 200 steps s | 276 | 294.8 | True |
+| Peak RSS GB | 1.48 | 1.95 | True |
+
+The quiet-machine 12-cell point is **inside 2x the SP1 linear prediction**.
+
+### Derived projections from the quiet-machine 12-cell point (proportional rule; derived, not measured)
+
+| Stage | Nodes | Ratio to 4 | Construction s | init_state s | compile+run (1 ms) s | Peak RSS GB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 40 (derived) | 537,152 | 2.186 | 593 | 454 | 58 | 3.80 |
+| 104 (derived) | 2,804,549 | 11.411 | 3,094 | 2,370 | 302 | 19.84 |
+
+**40-cell stage: approved by this check.**

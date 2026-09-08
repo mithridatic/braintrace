@@ -1125,6 +1125,47 @@ untested. Instrument change required first: the example emits no progress line i
 hang; add a per-cell progress callback (or a build-only `init_state` timing mode) and re-run the
 12-cell `ei` and `disconnected` arms under it.
 
+#### Y5 population, 2026-09-07 (18:26): the 12-cell run phase measured on a quiet machine (SP8 staged build, instrumented)
+
+Instrument ([spec addendum 17:05](specs/2026-09-07-h01-population-builder.md)): `Network.init_state`
+has no hook, so `h01_network_init.py` runs the same per-population `Cell.init_state` loop with
+one line per cell and a 60 s heartbeat (elapsed s, RSS) around each silent call, and the example
+gains `--init-only`. The heartbeat answered the open question of the 16:55 entry: the 600 s of
+silence was live work, not a hang.
+
+Observed ([12-cell build, attempt 3](evidence/h01-population-build-12.json),
+[page](evidence/h01-population-build-12.md); **measured, machine quiet except the C3 rescan** by
+the stated definition, docker only `synapse`, no heavy python; CPU was still shared with a
+COMSOL batch during the init-only stage, and only with the antivirus during the two 1 ms runs):
+
+| Stage | Construction s | init_state s | compile + 200 steps s | Peak RSS MB (interpreter) | Finite | Conductance probes |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| init-only, ei (COMSOL active) | 744.2 | 635.4 | - | 1,290 | - | - |
+| 1 ms, dt 0.005, ei | 338.5 | 265.0 | 29.8 | 2,000 | yes (41 arrays) | zero (see below) |
+| 1 ms, dt 0.005, disconnected | 270.5 | 201.6 | 29.3 | 1,988 | yes | identically zero |
+
+84,097 compartments in all three. Per-cell `init_state` is dominated by the 33,965-compartment
+cell `3955003482` (275.8 s under COMSOL, 97.5 s clean); the eight isolated cells take 5-13 s
+each. All traces finite; RSS never approached 6 GB; `init_state` never approached the 1,500 s
+abort; no kill fired. The disconnected arm's `*_g` probes are identically zero as predicted, but
+the `ei` arm's are also zero: at zero input (soma pulses start at 2 ms) no presynaptic spike
+occurs within 1 ms, so the ei-nonzero half of prediction 3 is **not discriminable** in this
+protocol (untested, not failed).
+
+Against the SP1 linear prediction (2x rule of the earlier addendum, using the two clean 1 ms
+runs): construction 270-339 s vs 275 s derived (1.0-1.2x), init + compile + 200 steps 294.8 s vs
+276 s (1.07x), peak RSS 1.95 GB vs 1.48 GB (1.32x). The quiet-machine 12-cell point is **inside
+2x on all three**. The earlier 883 s / >600 s point is thereby attributed to load, not to cell
+count; the same build ran 2.2-2.8x slower with COMSOL sharing the CPU inside this very attempt.
+
+Derived (proportional in largest-component nodes from the two clean runs; not measured): 40 cells
+~590 s construction, ~450 s `init_state`, ~60 s compile + 1 ms, ~3.8 GB RSS; 104 cells ~3,100 s
+construction, ~2,370 s `init_state`, ~300 s compile + 1 ms, **~19.8 GB RSS**. The 40-cell stage
+is **approved by this check** (all rejection rules untriggered, inside 2x, finite, disconnected
+probes zero). The 104-cell RSS projection is near or past this machine's memory and its
+construction and init each approach an hour; the 40-cell measurement must re-derive it before 104
+is considered, and the spec's "reduce N" clause is live for that stage.
+
 ## Y6. Per-type donors
 
 Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and
