@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "passed_tests": 33,
+  "scope": "installed calcium kernel, cell solver and source ownership regressions; not full104 runtime",
+  "kernel_coverage_percent": 100,
+  "solver_coverage_percent": 95.83333333333333,
+  "test_copy_transformation": "only relative imports rewritten to absolute braintrace.datasets imports",
+  "inputs": {
+    "docs\\evidence\\h01-ready-104-implicit-wheel-tests-provenance.json": "a4257be1d82c4e275f1fee1a077c645ccdaf9fc687b21d981656d99405b7376a",
+    "docs\\evidence\\h01-ready-104-implicit-wheel-audit.json": "194f518e0f5708c5339efe3be74f7462df68263f0fa3a06f40648e8c87b10a49",
+    ".cache\\h01\\readiness\\wheel-tests-526d57f-coverage.json": "f59af5ce760825503fcc9e24671fb6aea876fc25ff223f6c275f65970fb17237",
+    ".cache\\h01\\readiness\\run-wheel-tests-526d57f.py": "35c5c0b3348e6525edf2c415e0515e924475c65333f6772c8569b6bd7b0ec397",
+    "braintrace\\datasets\\h01_calcium_implicit_test.py": "d7acf2652588b9c71b4f83279760821fd55871b585f71a48d90661d1455572a2",
+    ".cache\\h01\\readiness\\wheel-tests-526d57f\\h01_calcium_implicit_test.py": "a7d2c84f6bd12ad332edf2c55667932f6db6c716d00a3b79160b76345092ee98",
+    "braintrace\\datasets\\h01_calcium_solver_test.py": "718f97d91b90aea820da9afea78fa5968ce43b6b2c94c88d5a2c9b3b12712e9b",
+    ".cache\\h01\\readiness\\wheel-tests-526d57f\\h01_calcium_solver_test.py": "2e1af669200bff18bbc1040cf1e59b7be9aa5c81a59ac01095d89aaa4e13debd",
+    "braintrace\\datasets\\h01_pv_calcium_test.py": "12f0d03a9ced19c26ca92afc52f176a58a9efbf8e45bfca7e5d392b7c973539b",
+    ".cache\\h01\\readiness\\wheel-tests-526d57f\\h01_pv_calcium_test.py": "f795864aeb03f4ace5f12ac0b97fba0d8efc6ab9564932937eac38510867f087"
+  }
+}

@@ -92,3 +92,8 @@ new solver-transition comparison and the existing source-construction gate.
 The preceding installed wheel predates the numerical repair. Final packaging
 requires a fresh wheel and full-population execution of its actual installed
 code after the remaining runtime, control, refinement and physiological gates.
+
+A fresh [implicit-solver wheel](h01-ready-104-implicit-wheel-audit.md) from
+526d57f now passes payload/origin checks and 33 installed regression tests.
+This is package preparation only; the full104 source process is still running
+and a full104 installed run remains required.
