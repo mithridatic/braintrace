@@ -179,3 +179,9 @@ selected members and source hashes, unchanged donor parameters, implicit solver,
 No initialization or simulation was performed. This removes the corrected
 components' electrical-construction uncertainty; it is not all104 construction
 or runtime qualification and does not restore their omitted source branches.
+
+The four corrected components also pass initialization: 22.805 seconds,
+507.934 MiB peak interpreter RSS, all four identities present. Exact model
+metadata matches their construction reference (apart from execution/timing).
+Evidence: h01-four-soma-initialization-decision.json. No compilation or stepping
+was performed; the corrected population still needs runtime evidence.

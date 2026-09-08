@@ -2199,3 +2199,8 @@ The result totals 12563 compartments in 23.932 seconds; identities, source
 hashes and output registrations are checked in
 h01-four-soma-construction-decision.json. Initialization and runtime for these
 components remain open; existing r2 uses the historical selections.
+
+All four corrected components initialize successfully with exact construction
+metadata, in 22.805 seconds and 507.934 MiB peak interpreter RSS. Evidence:
+h01-four-soma-initialization-decision.json. This closes their initialization
+check only; their runtime and the full corrected population remain unverified.
