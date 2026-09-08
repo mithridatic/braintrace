@@ -57,6 +57,31 @@ def audit_geometry(component):
                 missing_segments=missing, extra_segments=extra, passed=missing == extra == 0)
 
 
+def audit_soma(component, polarity):
+    """Check the measured soma against the electrical partition.
+
+    Parameters
+    ----------
+    component : H01Component
+        Imported source component.
+    polarity : str
+        E or I from the prepared topology's Dale sign.
+
+    Returns
+    -------
+    dict
+        Selected soma location and strict electrical-region membership.
+    """
+    from braintrace.datasets.h01_network import _regions
+    from braintrace.datasets.h01_ei_cell import _validate_regions
+
+    intervals = _validate_regions(component.morphology, _regions(component), polarity)
+    points = component.anatomy().soma_location().evaluate(component.morphology).points
+    inside = all(any(branch == b and lo <= x <= hi for b, lo, hi in intervals['soma'])
+                 for branch, x in points)
+    return dict(soma_location=points, electrical_regions_valid=True, soma_inside_region=inside)
+
+
 def main():
     """Write a checkpointed import audit.
 
@@ -69,9 +94,16 @@ def main():
     parser.add_argument('--archive', type=Path, required=True)
     parser.add_argument('--components', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--topology', type=Path, help='Also check soma/region membership using these cell polarities.')
     args = parser.parse_args()
     archive = H01Archive(args.archive)
     inventory = json.loads(args.components.read_text())
+    polarities = None
+    if args.topology:
+        polarities = {n['cell_id']: {1:'E', -1:'I'}[n['dale_sign']]
+                      for n in json.loads(args.topology.read_text())['nodes']}
+        if set(polarities) != {c['cell_id'] for c in inventory['cells']}:
+            raise ValueError('Topology and component inventory populations differ.')
     result = dict(status='running', archive_sha256=hashlib.sha256(args.archive.read_bytes()).hexdigest(),
                   cells=[], scope='largest soma-bearing component of each anatomical identity')
     started = time.perf_counter()
@@ -82,6 +114,9 @@ def main():
             with heartbeat('import '+row['cell_id'], lambda message: print(message, flush=True), seconds=30):
                 component = archive.load(row['cell_id'], component=row['largest_component'])
             record.update(audit_geometry(component), source_sha256=component.source_sha256)
+            if polarities is not None:
+                record.update(audit_soma(component, polarities[row['cell_id']]))
+                record['passed'] = record['passed'] and record['soma_inside_region']
         except Exception as exc:
             record.update(passed=False, error=f'{type(exc).__name__}: {exc}')
         record['seconds'] = time.perf_counter()-tick

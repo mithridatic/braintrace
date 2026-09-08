@@ -1980,6 +1980,17 @@ stepping took 121.588 seconds, peak resident memory 4,336.469 MiB. There were
 zero spikes before the pulse onset; this establishes finite short-window
 execution at 40 cells, not driven activity, delivery or full-104 readiness.
 
+The first full-104 construction attempt failed on cell 3812058320: the soma
+endpoint was represented as x=1.0000000000000002 while the soma interval ended
+at 1.0. Canonicalizing the anatomy index's final fraction to 1.0, without moving
+source geometry or relaxing membership, suffices for this real cell to construct
+and discretize to 9,918 compartments. The source-coordinate regression fails
+before and passes after the change. See the
+[endpoint decision](evidence/h01-ready-104-endpoint-decision.json) and
+[result](evidence/h01-ready-104-endpoint-result.md). This identifies and repairs
+one full-population construction boundary; the all-104 membership audit and build
+retry remain pending.
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).

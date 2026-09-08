@@ -145,6 +145,9 @@ class H01Anatomy:
             bounds = np.empty(len(lengths) + 1, dtype=float)
             bounds[0] = 0.0
             bounds[1:] = np.cumsum(lengths) / l_sum
+            # Pairwise sum and cumulative sum can round differently. A source
+            # endpoint is exactly x=1 regardless of that reduction roundoff.
+            bounds[-1] = 1.0
 
             if (isinstance(branch.points_proximal, u.Quantity) and branch.points_proximal.unit == u.um
                     and isinstance(branch.points_proximal.mantissa, np.ndarray)):
