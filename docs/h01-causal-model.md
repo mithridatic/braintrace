@@ -1145,6 +1145,64 @@ not transfer to this host state.
 **Status.** Y4 stays open. Stage G does not open: the gate field `decision` is null in
 `stage-g0-decision.json` until a second approval records one. Evaluations spent: 1 of 4.
 
+### Y4 observed under the completed Stage 0 evaluation of the gain split (2026-09-08, evaluation 1 of 4 complete; supersedes the incomplete entry above)
+
+**Observation.** The three inputs killed on 2026-09-07 were completed on 2026-09-08 with
+`g0-b3` (B3 flags, sha256 `e4825c83...`, image `braintrace-h01-neuron:9.0.2`) one container at
+a time on an unshared host (docker: synapse only; no python process above 300 MB) after SP8's
+quiet-machine record landed: sweep 50 01:38:40-01:52:45Z (845 s wall, 813 s integration; the
+runner process died 3.5 min in, the container completed and its report records the g0-b3
+hash), sweep 53 01:53:17-02:07:09Z (828 s, 823 s), sweep 56 02:08:25-02:21:43Z (781 s,
+777 s); every run rc 0 inside the 1500 s abort. With sweep 43 (820 s) the evaluation cost
+3274 s wall (54.6 min). Decision file `evidence/h01-e-gain/stage-g0-decision.json`
+(`decision` = `stage-g-opens-as-registered`), page `evidence/h01-e-gain-stage0.md`, tables
+`evidence/h01-e-gain/g0-b3-usable.md`.
+
+**Input-response relation, human vs model, four inputs measured (spikes per pA).**
+
+| Segment | Human counts | Model counts | Human | Model | Ratio | Source |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| 200 -> 250 pA | 1 -> 5 | 4 -> 8 | 0.080 | 0.080 | 1.00 | this evaluation (sweeps 56, 50) |
+| 250 -> 310 pA | 5 -> 10 | 8 -> 10 | 0.083 | 0.033 | 0.40 | this evaluation (sweeps 50, 53) |
+| 310 -> 350 pA | 10 -> 13 | 10 -> 12 | 0.075 | 0.050 | 0.67 | 310 this evaluation; 350 retained B3 sweep-55 trace (same sha256) |
+
+Mean-full-cycle rate slope 250-310 pA: human 0.0869, model 0.0386 Hz/pA. Sweeps 50 and 53
+reproduce the retained B3 tables cycle for cycle (8 and 10 spikes, width and AHP rows
+identical), so the campaign-stop clause is not triggered and the 2026-09-07 Matryoshka
+reading built on those tables stands. Axon-first initiation held at 50/53/56 (axon leads
+0.213/0.207/0.219 ms).
+
+**Bands.** Five of seven held. Sweep-43 onset rows within 1 mV (held); sweep-43 late-return
+rows +1.40 to +1.72 mV (missed; registered rejection clause met, unchanged from the
+2026-09-07 entry); 250 and 310 counts exact (held); 200 pA first-spike latency 127.4 vs
+205.8 ms, residual -78.4 ms against the 82.6 ms repeat limit (held, 3.6 ms inside); 200 pA
+count **4 against the exact repeat band of 1** (missed: five human repeats 56/59/60/61/62
+each fire once; the model's cycles are 130.6, 69.1, 259.8, 295.7 ms, mean full-cycle rate
+4.8 Hz, three spikes the donor never fires).
+
+**What it narrows.** (1) The model's f-I error is not a uniformly compressed slope: between
+200 and 250 pA the model slope equals the human's (0.080 vs 0.080) while the curve sits three
+spikes too high at both inputs; the compression appears only between 250 and 310 pA, where
+the 310 pA pin absorbs the offset. The controlling error is therefore an excess of firing at
+low drive (200-250 pA), consistent with the registered controlling property (a current
+present between spikes at low input and small at high input: distributed Ih or the linear
+leak) and inconsistent with a lever that only rotates the curve about 310 pA. (2) The 200 pA
+row separates the Stage G arms more strongly than registered: both G1 (count 1) and G2 (count
+0-1) now require a drop of three spikes at 200 pA while 310 pA holds at 9-10; a lever that
+removes the low-drive excess without moving the 310 pA count is the pattern to look for.
+(3) The 200 pA first spike is 78 ms early and the second cycle (69 ms) is shorter than the
+first (131 ms): the excess is present from pulse onset, not accumulated, so it is a steady
+current, again as registered. (4) F5 remains as the 2026-09-07 entry left it: onset rows
+match, the post-pulse return is 1.4-1.7 mV depolarised, and every G arm is judged on the
+change of those rows. (5) Cost: one four-input evaluation costs 3274 s wall serially on an
+unshared host; the 1500 s abort held every run with at least 655 s to spare, so the
+2026-09-07 kills were host load, not run length.
+
+**Status.** Y4 stays open. Stage G opens as registered (`g1-ih-half`, `g2-leak-150` at sweeps
+43/50/53/56) but is not launched by this entry; each launch needs per-job approval on the
+measured 3274 s per evaluation, and the concurrent-pair duration is unmeasured. Evaluations
+spent: 1 of 4.
+
 ### Y5 under the population edge list
 
 The C3 relationship-index scan of all 104 proofread cells returns 123
