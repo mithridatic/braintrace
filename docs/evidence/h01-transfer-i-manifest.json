@@ -24,12 +24,18 @@
   "half_dt_ms": 0.0025,
   "fallback_dt_ms": 0.000625,
   "windows_ms": {
-    "full": [270.0, 1270.0],
-    "halving": [270.0, 329.5]
+    "full": [
+      270.0,
+      1270.0
+    ],
+    "halving": [
+      270.0,
+      329.5
+    ]
   },
   "gate": {
     "rise_crossing_ms": 0.1,
-    "peak_sample_voltage_mv": 0.1,
+    "peak_sample_voltage_mv": 0.5,
     "time_above_threshold_ms": 0.01
   },
   "halving_fraction": 0.5,
@@ -49,7 +55,7 @@
     "b1-fixed-019",
     "a1-matched-023"
   ],
-  "prediction": "A1 passes every event at 0.19 and 0.27 nA against the CVode reference with max |rise error| <= 0.044 ms and equal counts; A0 fails on rise from event 7 as before; the 0.23 control behaves as 0.19/0.27.",
+  "prediction": "A1 passes count, both timing gates and the 0.5 mV interpolated peak row at every event over 270-1270 ms at 0.19 and 0.27 nA against the CVode finalist; A0 (MaxCVLen 2.5) fails at least one late-event rise crossing; B1 (NEURON fixed step, dt 0.005) matches CVode inside the timing gate at every event; the 0.23 control is scored, never used to decide.",
   "rejection": "Any A1 event beyond its gate while the halving pair at the same mesh and dt is under half the gate on every event.",
   "unchanged": "Morphology, conductance tables, gate laws, stimulus 270 ms on for 1000 ms, initial -80 mV, 34 C, reversals, Ra, cm, no alignment.",
   "cost_anchors": {
@@ -166,11 +172,146 @@
     }
   ],
   "decision_arms": {
-    "a1": ["a1-matched-019", "a1-matched-027"],
-    "b1": ["b1-fixed-019", "b1-fixed-027"],
-    "a0": ["a0-maxcv-027"],
-    "braincell_halving": ["r-braincell-matched-027", "r-braincell-matched-027-halfdt"],
-    "neuron_halving": ["b1-fixed-027", "r-neuron-fixed-027-halfdt"]
+    "a1": [
+      "a1-matched-019",
+      "a1-matched-027"
+    ],
+    "b1": [
+      "b1-fixed-019",
+      "b1-fixed-027"
+    ],
+    "a0": [
+      "a0-maxcv-027"
+    ],
+    "braincell_halving": [
+      "r-braincell-matched-027",
+      "r-braincell-matched-027-halfdt"
+    ],
+    "neuron_halving": [
+      "b1-fixed-027",
+      "r-neuron-fixed-027-halfdt"
+    ]
   },
-  "qualification": "Numerical transfer only on donor anatomy; identifies no channel cause and no human waveform validity."
+  "qualification": "Numerical transfer only on donor anatomy; identifies no channel cause and no human waveform validity.",
+  "gate_amendment": "2026-09-07 user decision: full-train peak row is the dt-0.005 interpolated peak error under 0.5 mV (half the human contract's 1 mV); rise 0.1 ms and width 0.01 ms unchanged; the half-gate rule for the halving pairs applies to the same amended gate. The first-order Richardson peak (2 x dt 0.0025 - dt 0.005) is a derived column, never gated.",
+  "richardson_pairs": {
+    "r-braincell-matched-027": "r-braincell-matched-027-halfdt",
+    "a1-matched-027": "r-braincell-matched-027-halfdt",
+    "b1-fixed-027": "r-neuron-fixed-027-halfdt"
+  },
+  "run_order_amended": [
+    "a1-matched-027",
+    "a1-matched-019",
+    "a1-matched-023",
+    "a0-maxcv-027",
+    "b1-fixed-027",
+    "b1-fixed-019",
+    "r-neuron-fixed-027-halfdt"
+  ],
+  "dt_series": {
+    "purpose": "Registered numerical qualification (spec amendment 2026-09-07, user decision): the fixed-step dt at which the NEURON full train meets the human contract's 1 ms crossing tolerance at every event against the CVode finalist, by dt halving; NEURON only, x9 mesh, B1 candidate file, 1500 ms.",
+    "cap": 6,
+    "abort_s": 900,
+    "window": "full",
+    "gate": {
+      "rise_crossing_ms": 1.0
+    },
+    "met_rule": "equal nonzero event count over 270-1270 ms and |rise crossing error| <= 1 ms at every paired event, at both inputs",
+    "prediction": "The late-event rise error scales first order with dt: 7.42 ms at dt 0.005 at 0.27 nA -> about 3.7, 1.9, 0.9 ms at 0.0025, 0.00125, 0.000625 (14.75 ms at 0.19 nA -> about 7.4, 3.7, 1.8 ms); 1 ms is met at dt 0.000625 or finer at 0.27 nA. Adjacent-dt pairs give ratios near 2.",
+    "rejection": "The error does not halve with dt (adjacent-pair ratio outside 1.5-2.5); then the CVode reference (atol 1e-10) must be questioned before any dt is named. A run whose derived cost (twice the measured adjacent-dt wall clock) exceeds the 900 s abort is not launched and recorded as such; a killed run is untested.",
+    "measured_anchors_s": {
+      "b1-fixed-027": 232.4,
+      "b1-fixed-019": 152.8
+    },
+    "rungs": [
+      {
+        "name": "b1-fixed-027",
+        "current_na": 0.27,
+        "dt_ms": 0.005,
+        "reference": "027"
+      },
+      {
+        "name": "b1-fixed-019",
+        "current_na": 0.19,
+        "dt_ms": 0.005,
+        "reference": "019"
+      },
+      {
+        "name": "q-neuron-fixed-027-dt0025",
+        "current_na": 0.27,
+        "dt_ms": 0.0025,
+        "reference": "027",
+        "candidate_json": "b1-fixed.candidate.json",
+        "duration_ms": 1500.0,
+        "mesh": "x9"
+      },
+      {
+        "name": "q-neuron-fixed-019-dt0025",
+        "current_na": 0.19,
+        "dt_ms": 0.0025,
+        "reference": "019",
+        "candidate_json": "b1-fixed.candidate.json",
+        "duration_ms": 1500.0,
+        "mesh": "x9"
+      },
+      {
+        "name": "q-neuron-fixed-027-dt00125",
+        "current_na": 0.27,
+        "dt_ms": 0.00125,
+        "reference": "027",
+        "candidate_json": "b1-fixed.candidate.json",
+        "duration_ms": 1500.0,
+        "mesh": "x9"
+      },
+      {
+        "name": "q-neuron-fixed-019-dt00125",
+        "current_na": 0.19,
+        "dt_ms": 0.00125,
+        "reference": "019",
+        "candidate_json": "b1-fixed.candidate.json",
+        "duration_ms": 1500.0,
+        "mesh": "x9"
+      },
+      {
+        "name": "q-neuron-fixed-027-dt000625",
+        "current_na": 0.27,
+        "dt_ms": 0.000625,
+        "reference": "027",
+        "candidate_json": "b1-fixed.candidate.json",
+        "duration_ms": 1500.0,
+        "mesh": "x9"
+      },
+      {
+        "name": "q-neuron-fixed-019-dt000625",
+        "current_na": 0.19,
+        "dt_ms": 0.000625,
+        "reference": "019",
+        "candidate_json": "b1-fixed.candidate.json",
+        "duration_ms": 1500.0,
+        "mesh": "x9"
+      }
+    ]
+  },
+  "identity_pairs": {
+    "r-braincell-matched-027": "b1-fixed-027",
+    "a1-matched-027": "b1-fixed-027"
+  },
+  "identity_gate": {
+    "rise_crossing_ms": 1e-08,
+    "peak_sample_voltage_mv": 1e-06,
+    "time_above_threshold_ms": 1e-08
+  },
+  "close": {
+    "date": "2026-09-07",
+    "identity_basis": "r-braincell-matched-027",
+    "amendment": "2026-09-07 user decision: the transfer gate closes on the measured simulator identity (BrainCell at the copied mesh vs NEURON at the same fixed step, 270-329.5 ms at 0.27 nA: 1.2e-9 ms rise, 5.4e-6 mV peak, 1.9e-11 ms width); the fixed-step-vs-CVode error is a numerical qualification of the reference, registered as the dt_series; one confirming BrainCell full train (a1-matched-027, 1500 s abort, no silence kill) is scored for identity against b1-fixed-027 (prediction: identity within 1e-6 mV / 1e-8 ms at every event) and against CVode (prediction: the same failing events as B1).",
+    "a1_abort_s": 1500,
+    "a1_silence_kill": false,
+    "identity_values": {
+      "rise_crossing_ms": 1.2e-09,
+      "peak_interpolated_voltage_mv": 5.4e-06,
+      "time_above_threshold_ms": 1.9e-11
+    },
+    "confirming_prediction": "a1-matched-027 vs b1-fixed-027: identity within 1e-6 mV / 1e-8 ms at every event over 270-1270 ms (identity_gate); tested, not the closing condition"
+  }
 }

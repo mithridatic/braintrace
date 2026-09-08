@@ -6,7 +6,7 @@ complete. This audit separates missing capability from failed qualification.
 | Capability | Current evidence | Remaining work |
 | --- | --- | --- |
 | H01 anatomy and annotations | Importers and selected measured E/I components are in use | Electrical region assignments remain inferred |
-| Distinct E and I mechanisms | Frozen profiles, channel laws, calcium and cell builders exist | Full reference transfer and human-response qualification |
+| Distinct E and I mechanisms | Frozen profiles, channel laws, calcium and cell builders exist. I transfer (SP2, closed 2026-09-07 on the measured simulator identity, user decision): BrainCell at the copied x9 mesh and dt 0.005 reproduces NEURON at the same fixed step over the full 270-1270 ms train at 0.27 nA (36 = 36 events; rise 1.4e-7 ms, sampled peak 2.7e-6 mV, width 3.2e-9 ms, raw voltage 8.3e-5 mV; over 270-329.5 ms: 1.2e-9 ms, 5.4e-6 mV, 1.9e-11 ms). The remaining error is the fixed-step integrator against the CVode reference: first order in dt at both inputs (adjacent-dt ratios 1.97-2.00 over dt 0.005 -> 0.000625), the human 1 ms crossing tolerance met at dt 0.000625 at 0.27 nA (0.981 ms, 37/37 events) and at 1.864 ms at 0.19 nA at that dt ([result](h01-i-transfer-result.md), [JSON](h01-i-transfer/sp2-close-decision.json)) | dt requirement: a BrainCell or NEURON fixed-step run compared with a CVode reference must use dt <= 0.000625 ms at 0.27 nA and a finer step at 0.19 nA (one more halving projected, not measured); the 0.19 nA dt is unmeasured (six-run cap spent); the (c) literal 1e-6 mV / 1e-8 ms over the full train did not hold (float-level identity only); human-response qualification |
 | Current stimulation and voltage recording | Donor and H01 runners save direct traces | Complete required input coverage |
 | Synapses, delays and spike output | E/I circuit builder and four connection controls exist | Qualified default I response and circuit numerical checks |
 | Direct E/I causal checks | Real H01 four-control audit records excitation and delayed E firing | Diagnostic I override is not a validated default |
@@ -22,18 +22,7 @@ The focused profile, cell, circuit and spike-output suite passed 40 tests in
 region constraints, propagating-spike masking, synaptic delivery and controls.
 This run is not a whole-package coverage measurement or a physiological pass.
 
-The full I transfer produced 42 events against 40 in the pinned reference.
-Halving the time step at the same mesh does not repair event 7: its crossing
-error is -0.192953 ms against the 0.1 ms limit. Both traces have eight complete
-events in the diagnostic window. Event 8 also fails, with error -1.709768 ms.
-The fixed sufficiency claim is false. See the
-[direct audit](h01-pv-candidate-transfer-drift-halfdt-audit.json).
-
-A working simulation pipeline is available, but numerical fidelity and
-combined human-response feasibility are not established. Do not continue
-serial physiological tuning while this transfer failure remains. Inspect
-spatial discretization and implementation differences next. Do not assume
-a new solver is required without isolating its limitation.
+The 2026-09-05 reading of the full I transfer (42 events against 40, event 7 at -0.19 ms after halving dt) was made through unequal meshes; SP2 (2026-09-07) replaced it: with the NEURON per-branch counts copied, BrainCell and NEURON at the same fixed step are the same train to floating-point accumulation over 270-1270 ms, and the residual against the CVode finalist is the fixed step's first-order drift ([result](h01-i-transfer-result.md)). The standing directive "do not continue serial physiological tuning while this transfer failure remains" is retired. In its place: any BrainCell-versus-NEURON or fixed-step-versus-CVode comparison must copy the NEURON per-branch counts (`--mesh-from`) and use a step no coarser than 0.000625 ms at 0.27 nA (1 ms crossing tolerance met with 0.981 ms at event 37; at 0.19 nA the error is 1.864 ms at that step and the required step is unmeasured). A working simulation pipeline is available; combined human-response feasibility is not established.
 
 Current runners save traces after the compiled run and do not report progress
 inside it. CPU activity does not identify the expensive operation or give a

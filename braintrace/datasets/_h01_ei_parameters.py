@@ -156,10 +156,33 @@ SST_L3_HL5MN1_SOURCE = (('soma',
  ('apic', 1.0, 2.32e-05, (('Ih', 1e-05),), None))
 
 
+# Allen perisomatic model 626170709 (human specimen 527952884, MTG layer 4 pyramidal), generated
+# from fit_parameters.json (sha256 1aa0e2c5...) by docs/evidence/h01_l4_parameters.py; the same
+# generator reproduces E_SOURCE from the L2 fit. No candidate exists, so both modes are the source.
+L4_ALLEN_527952884_SOURCE = (('soma',
+  1.0,
+  0.0004325404210761702,
+  (('Im', 0.0003408221448736093),
+   ('Ih', 0.005766004813494249),
+   ('NaTs', 2.053808334514681),
+   ('Nap', 0.0019835830648151534),
+   ('K_P', 8.370143738944957e-05),
+   ('K_T', 0.0005156799865624617),
+   ('SK', 0.48416836488227766),
+   ('Kv3_1', 0.44920028925755756),
+   ('Ca_HVA', 0.0009610538621567574),
+   ('Ca_LVA', 0.009648645320742421)),
+  (175.16982466877238, 7.4272125002753e-05)),
+ ('axon', 1.0, 0.0002680384185644075, (), None),
+ ('dend', 1.5826204667213606, 1.6307512951158188e-05, (), None),
+ ('apic', 1.5826204667213606, 1.037799308786824e-07, (), None))
+
+
 # Density tables by donor key (see h01_cell_types.DONORS) and mode. The keys of the inner
 # mapping are the valid modes of the donor; "candidate" is the default, the rest are opt-in.
 DONOR_REGIONS = {
     "l2-pyramidal-allen-541563728": {"candidate": E_CANDIDATE, "source": E_SOURCE, "b3": E_B3_EXPERIMENTAL},
     "l5-pv-basket-hl5bn1": {"candidate": I_CANDIDATE, "source": I_SOURCE, "finalist": I_FINALIST},
     "l3-sst-interneuron-hl5mn1": {"candidate": SST_L3_HL5MN1_SOURCE, "source": SST_L3_HL5MN1_SOURCE},
+    "l4-pyramidal-allen-527952884": {"candidate": L4_ALLEN_527952884_SOURCE, "source": L4_ALLEN_527952884_SOURCE},
 }

@@ -6,6 +6,7 @@ import brainstate
 import brainunit as u
 import numpy as np
 import pytest
+from . import h01_l2_cell
 from .h01_l2_cell import make_l2_cell, _stimulus_segments
 from .h01_pv_morphology import make_pv_morphology
 REFERENCE = json.loads((Path(__file__).resolve().parents[2]/"docs/evidence/h01-l2-geometry-reference.json").read_text())
@@ -35,12 +36,12 @@ def test_segments_are_returned_as_equal_length_arrays():
 
 def test_explicit_cv_policy_replaces_max_cv_length(monkeypatch):
     seen = {}
-    real_cell = braincell.Cell
+    real_cell = h01_l2_cell.H01Cell
 
     def spy(morphology, **kwargs):
         seen.update(kwargs)
         return real_cell(morphology, **kwargs)
-    monkeypatch.setattr(braincell, "Cell", spy)
+    monkeypatch.setattr(h01_l2_cell, "H01Cell", spy)
     counts = tuple(3 for _ in make_pv_morphology(REFERENCE).branches)
     policy = braincell.CVPerBranchList(counts)
     make_l2_cell(REFERENCE, cv_policy=policy)

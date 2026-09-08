@@ -14,7 +14,7 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
                         currents_na=None, control="ei", connectivity="measured", excitatory_weight_us=.01,
                         inhibitory_weight_us=.02, delay_ms=.5, max_cv_length_um=10., solver="staggered",
                         pulse_delays_ms=None, pulse_durations_ms=None, inhibitory_reversal_mv=-80.,
-                        inhibitory_tau_ms=5.):
+                        inhibitory_tau_ms=5., receptor_site="measured", i_pulse_onsets_ms=None):
     """Build the measured I-to-E contact or explicit illustrative wiring.
 
     Parameters
@@ -43,6 +43,14 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         Reversal potential and decay of the I-to-E receptor. Defaults are the
         assumed -80 mV and 5 ms; the literature pins in
         ``docs/evidence/h01-ie-synapse-literature.json`` give -75 mV and 4.18 ms.
+    receptor_site : str, optional
+        Where the I-to-E receptor sits on E. ``measured`` (default) is the
+        annotation's postsynaptic endpoint. ``soma`` is an explicit
+        perisomatic hypothesis, recorded as ``inferred`` in the evidence.
+    i_pulse_onsets_ms : sequence of float, optional
+        Onsets of an I somatic pulse train (each pulse uses the I amplitude
+        and duration). When given, the single I pulse is not delivered
+        (amplitude 0) and the train is placed as one multi-segment clamp.
     max_cv_length_um : float, optional
         Maximum spatial compartment length.
     solver : str, optional
@@ -70,6 +78,9 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         raise ValueError("Supply finite E/I pulse delays >= 0 and durations > 0.")
     if connectivity not in ("measured", "illustrative"):
         raise ValueError("Unknown connectivity basis.")
+    if receptor_site not in ("measured", "soma"):
+        raise ValueError("receptor_site must be measured or soma.")
+    train = None if i_pulse_onsets_ms is None else _pulse_train_onsets(i_pulse_onsets_ms, durations["I"])
     pre_site, post_site, measured = (measured_ie_contact(components)
         if connectivity == "measured" else (None, None, None))
     values = (excitatory_weight_us, inhibitory_weight_us, delay_ms)
@@ -88,18 +99,22 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         imported = components[role]
         if source_tag not in annotations.metadata(imported.neuron_id).tags:
             raise ValueError(f"{role} requires the source {source_tag} tag.")
+        trained = role == "I" and train is not None
         cell, record = make_h01_ei_cell(imported, annotations, polarity=role,
             regions=regions[role], region_basis=region_basis[role],
-            current_na=currents[role], delay_ms=starts[role], duration_ms=durations[role],
+            current_na=0. if trained else currents[role], delay_ms=starts[role], duration_ms=durations[role],
             max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
         soma = imported.anatomy().soma_location()
+        if trained:
+            cell.place(soma, _pulse_train_clamp(train, durations["I"], currents["I"]))
         incoming = "inh" if role == "E" else "exc"
         reversal, tau = (inhibitory_reversal_mv, inhibitory_tau_ms) if role == "E" else (0., 2.)
-        receptor_site = post_site if measured and role == "E" else soma
+        placed_measured = measured and role == "E" and receptor_site == "measured"
+        receptor = post_site if placed_measured else soma
         output_site = pre_site if measured and role == "I" else soma
-        cell.place(receptor_site, Synapse("ExpSyn", name=incoming, e=reversal*u.mV, tau=tau*u.ms, weight=1.*u.uS))
-        cell.place(receptor_site, MechanismProbe(mechanism=incoming, field="g", name="synaptic_conductance"))
-        cell.place(receptor_site, StateProbe(field="v", name="incoming_voltage"))
+        cell.place(receptor, Synapse("ExpSyn", name=incoming, e=reversal*u.mV, tau=tau*u.ms, weight=1.*u.uS))
+        cell.place(receptor, MechanismProbe(mechanism=incoming, field="g", name="synaptic_conductance"))
+        cell.place(receptor, StateProbe(field="v", name="incoming_voltage"))
         site = restrict_spike_output(cell, output_site)
         cell.place(AtLocation(*site["output_midpoint"]), StateProbe(field="v", name="output_voltage"))
         record["output_site"] = site
@@ -108,6 +123,9 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         record["current_na"] = currents[role]
         record["pulse_delay_ms"] = starts[role]
         record["pulse_duration_ms"] = durations[role]
+        record["pulse_train_onsets_ms"] = train.tolist() if trained else []
+        if measured and role == "E":
+            record["receptor_placement"] = _receptor_placement(receptor_site)
         evidence["cells"][role] = record
         network.add_population(role, cell)
     for pre, post, synapse, weight, selected in (
@@ -120,6 +138,7 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         if measured:
             contact["anatomy"] = measured
             contact["dynamics_basis"] = "Borrowed conductance, delay, reversal potential, and decay time."
+            contact["receptor_placement"] = _receptor_placement(receptor_site)
             evidence["measured_contacts"].append(contact)
         else:
             evidence["inferred_contacts"].append(contact)
@@ -129,3 +148,30 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
             network.add_projection(name=name, edges=name, synapse=synapse,
                                    weight=weight*u.uS, delay=delay_ms*u.ms)
     return network, evidence
+
+
+def _receptor_placement(receptor_site):
+    """Evidence record naming where the I-to-E receptor was placed and on what basis."""
+    if receptor_site == "measured":
+        return {"site": "measured", "status": "measured", "basis": "Annotation 8105899 postsynaptic endpoint."}
+    return {"site": "soma", "status": "inferred",
+            "basis": "Explicit perisomatic hypothesis; not the measured endpoint (cable_location [2805, 0.93])."}
+
+
+def _pulse_train_onsets(onsets_ms, duration_ms):
+    """Validated ascending pulse onsets separated by more than one pulse duration."""
+    onsets = np.asarray(onsets_ms, dtype=float)
+    if (onsets.ndim != 1 or not len(onsets) or not np.isfinite(onsets).all() or onsets[0] < 0
+            or (np.diff(onsets) <= duration_ms).any()):
+        raise ValueError("Pulse onsets must be finite, nonnegative, ascending, and further apart than the pulse.")
+    return onsets
+
+
+def _pulse_train_clamp(onsets, duration_ms, current_na):
+    """One piecewise-constant clamp: pulse, gap, pulse, ..., pulse."""
+    segments = np.empty(2*len(onsets)-1)
+    segments[0::2] = duration_ms
+    segments[1::2] = np.diff(onsets)-duration_ms
+    amplitudes = np.zeros_like(segments)
+    amplitudes[0::2] = current_na
+    return braincell.CurrentClamp(delay=float(onsets[0])*u.ms, durations=segments*u.ms, amplitudes=amplitudes*u.nA)

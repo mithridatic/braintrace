@@ -1,0 +1,484 @@
+{
+  "stage": "1",
+  "candidate": "g-natg-axon15",
+  "candidate_sha256": "f4a2aa6c24d887343e7003a0a226d6f6d702dfd707e31ad05d44773ea9c5dcbe",
+  "decision": "FAIL at cap: rejection clause met",
+  "verdict": "FAIL",
+  "bands": [
+    {
+      "row": "cycle2_ms",
+      "predicted": "<= 22.0 (from 34.76)",
+      "observed": 35.06811591199482,
+      "held": false,
+      "input": "0.19 nA"
+    },
+    {
+      "row": "count",
+      "predicted": "15 to 17 (from 14)",
+      "observed": 14,
+      "held": false,
+      "input": "0.19 nA"
+    },
+    {
+      "row": "width1_ms",
+      "predicted": "0.221 +/- 0.006",
+      "observed": 0.22016631207395676,
+      "held": true,
+      "input": "0.19 nA"
+    },
+    {
+      "row": "peak_mv",
+      "predicted": "<= 22.0",
+      "observed": 18.318502172046305,
+      "held": true,
+      "input": "0.19 nA"
+    },
+    {
+      "row": "trough1_mv",
+      "predicted": "within 1 of -80.13",
+      "observed": -80.23455674686359,
+      "held": true,
+      "input": "0.19 nA"
+    },
+    {
+      "row": "trough2_mv",
+      "predicted": "within 1 of -80.54",
+      "observed": -80.57433429084227,
+      "held": true,
+      "input": "0.19 nA"
+    },
+    {
+      "row": "trough3_mv",
+      "predicted": "within 1 of -80.65",
+      "observed": -80.69024609098817,
+      "held": true,
+      "input": "0.19 nA"
+    },
+    {
+      "row": "cycle2_ms",
+      "predicted": "<= 12.0 (from 16.37)",
+      "observed": 16.496237284883193,
+      "held": false,
+      "input": "0.27 nA"
+    },
+    {
+      "row": "count",
+      "predicted": "40 to 43 (from 37)",
+      "observed": 34,
+      "held": false,
+      "input": "0.27 nA"
+    },
+    {
+      "row": "width1_ms",
+      "predicted": "0.221 +/- 0.006",
+      "observed": 0.2203039463421419,
+      "held": true,
+      "input": "0.27 nA"
+    },
+    {
+      "row": "peak_mv",
+      "predicted": "<= 22.0",
+      "observed": 18.43498197984279,
+      "held": true,
+      "input": "0.27 nA"
+    },
+    {
+      "row": "trough1_mv",
+      "predicted": "within 1 of -78.99",
+      "observed": -79.08591874833803,
+      "held": true,
+      "input": "0.27 nA"
+    },
+    {
+      "row": "trough2_mv",
+      "predicted": "within 1 of -79.3",
+      "observed": -79.3382499892824,
+      "held": true,
+      "input": "0.27 nA"
+    },
+    {
+      "row": "trough3_mv",
+      "predicted": "within 1 of -79.61",
+      "observed": -79.65911926024609,
+      "held": true,
+      "input": "0.27 nA"
+    }
+  ],
+  "bands_held": 10,
+  "bands_total": 14,
+  "rejection": {
+    "cycle2_027_change_ms": -0.1262372848831923,
+    "cycle_limit_ms": 12.8,
+    "change_below_limit": true,
+    "loop_breaks": [],
+    "met": true
+  },
+  "initiation_axon_first": {
+    "019": true,
+    "027": true
+  },
+  "initiation": {
+    "019": {
+      "soma_crossing_ms": 297.7288778733353,
+      "axon_crossing_ms": 297.3981892078843,
+      "axon_leads_ms": 0.3306886654510208,
+      "spikes": 14
+    },
+    "027": {
+      "soma_crossing_ms": 281.06742100800625,
+      "axon_crossing_ms": 280.8433753529451,
+      "axon_leads_ms": 0.22404565506116114,
+      "spikes": 34
+    }
+  },
+  "tiers": {
+    "0.19 nA": {
+      "counts": {
+        "human": 12,
+        "model": 14
+      },
+      "usable": {
+        "pass": [
+          "ahp_mv1",
+          "ahp_mv10",
+          "ahp_mv11",
+          "ahp_mv12",
+          "ahp_mv2",
+          "ahp_mv3",
+          "ahp_mv4",
+          "ahp_mv5",
+          "ahp_mv6",
+          "ahp_mv7",
+          "ahp_mv8",
+          "ahp_mv9",
+          "rate_hz",
+          "width_ms1"
+        ],
+        "fail": [
+          "adaptation_ratio",
+          "width_ms10",
+          "width_ms11",
+          "width_ms12",
+          "width_ms2",
+          "width_ms3",
+          "width_ms4",
+          "width_ms5",
+          "width_ms6",
+          "width_ms7",
+          "width_ms8",
+          "width_ms9"
+        ],
+        "unresolvable": []
+      },
+      "usable_verdict": "fail",
+      "contract": {
+        "count": "FAIL",
+        "failing_rows": [
+          "ahp_mv1",
+          "ahp_mv10",
+          "ahp_mv11",
+          "ahp_mv12",
+          "ahp_mv2",
+          "ahp_mv3",
+          "ahp_mv4",
+          "ahp_mv5",
+          "ahp_mv6",
+          "ahp_mv7",
+          "ahp_mv8",
+          "ahp_mv9",
+          "width_ms1",
+          "width_ms10",
+          "width_ms11",
+          "width_ms12",
+          "width_ms2",
+          "width_ms3",
+          "width_ms4",
+          "width_ms5",
+          "width_ms6",
+          "width_ms7",
+          "width_ms8",
+          "width_ms9"
+        ],
+        "verdict": "FAIL"
+      }
+    },
+    "0.27 nA": {
+      "counts": {
+        "human": 43,
+        "model": 34
+      },
+      "usable": {
+        "pass": [
+          "ahp_mv1",
+          "ahp_mv10",
+          "ahp_mv11",
+          "ahp_mv12",
+          "ahp_mv13",
+          "ahp_mv14",
+          "ahp_mv15",
+          "ahp_mv16",
+          "ahp_mv17",
+          "ahp_mv18",
+          "ahp_mv19",
+          "ahp_mv2",
+          "ahp_mv20",
+          "ahp_mv21",
+          "ahp_mv22",
+          "ahp_mv23",
+          "ahp_mv24",
+          "ahp_mv25",
+          "ahp_mv26",
+          "ahp_mv27",
+          "ahp_mv28",
+          "ahp_mv29",
+          "ahp_mv3",
+          "ahp_mv30",
+          "ahp_mv31",
+          "ahp_mv32",
+          "ahp_mv33",
+          "ahp_mv34",
+          "ahp_mv4",
+          "ahp_mv5",
+          "ahp_mv6",
+          "ahp_mv7",
+          "ahp_mv8",
+          "ahp_mv9",
+          "width_ms1",
+          "width_ms10",
+          "width_ms11",
+          "width_ms12",
+          "width_ms13",
+          "width_ms14",
+          "width_ms15",
+          "width_ms16",
+          "width_ms17",
+          "width_ms18",
+          "width_ms19",
+          "width_ms2",
+          "width_ms20",
+          "width_ms21",
+          "width_ms22",
+          "width_ms5",
+          "width_ms6",
+          "width_ms7",
+          "width_ms8",
+          "width_ms9"
+        ],
+        "fail": [
+          "adaptation_ratio",
+          "rate_hz",
+          "width_ms23",
+          "width_ms24",
+          "width_ms25",
+          "width_ms26",
+          "width_ms27",
+          "width_ms28",
+          "width_ms29",
+          "width_ms3",
+          "width_ms30",
+          "width_ms31",
+          "width_ms32",
+          "width_ms33",
+          "width_ms34",
+          "width_ms4"
+        ],
+        "unresolvable": []
+      },
+      "usable_verdict": "fail",
+      "contract": {
+        "count": "FAIL",
+        "failing_rows": [
+          "ahp_mv2",
+          "ahp_mv3",
+          "ahp_mv4",
+          "width_ms10",
+          "width_ms11",
+          "width_ms12",
+          "width_ms13",
+          "width_ms14",
+          "width_ms15",
+          "width_ms16",
+          "width_ms17",
+          "width_ms18",
+          "width_ms19",
+          "width_ms2",
+          "width_ms20",
+          "width_ms21",
+          "width_ms22",
+          "width_ms23",
+          "width_ms24",
+          "width_ms25",
+          "width_ms26",
+          "width_ms27",
+          "width_ms28",
+          "width_ms29",
+          "width_ms3",
+          "width_ms30",
+          "width_ms31",
+          "width_ms32",
+          "width_ms33",
+          "width_ms34",
+          "width_ms4",
+          "width_ms5",
+          "width_ms6",
+          "width_ms7",
+          "width_ms8",
+          "width_ms9"
+        ],
+        "verdict": "FAIL"
+      }
+    }
+  },
+  "runs": [
+    {
+      "input": "019",
+      "seconds": 36.005826499982504,
+      "returncode": 0,
+      "aborted": false
+    },
+    {
+      "input": "027",
+      "seconds": 74.82736999998451,
+      "returncode": 0,
+      "aborted": false
+    }
+  ],
+  "invalid_first_launch": {
+    "launch_utc": "2026-09-07T22:38:45Z",
+    "runner_pid": 40720,
+    "runs": [
+      {
+        "input": "019",
+        "seconds": 10.94788290001452,
+        "returncode": 139,
+        "aborted": false
+      },
+      {
+        "input": "027",
+        "seconds": 8.308058700000402,
+        "returncode": 139,
+        "aborted": false
+      }
+    ],
+    "verdict_recorded_at_the_time": "NO RESULT (rc 139 at both inputs, no trace, stderr not retained)",
+    "cause": "docs/evidence/h01_pv_neuron_reference.py commit c2ce97a (SP6c donor import) added `[m for m in cell.myelin if m.parentseg() is not None]` to the geometry record. NeuronTemplate.hoc declares myelin[1], deletes every section in init (forall delete_section()), and recreates myelin only in delete_axon() for HL23PN1/HL23MN1/HL5MN1; HL5BN1 takes delete_axon_BPO(), so cell.myelin is a reference to a deleted section. Iterating it from Python throws hoc_execerror 'section in the object was deleted' as an unconverted C++ exception; the interpreter aborts (terminate called), exit 139. The new --scale code is not involved: the control without --scale crashes identically and the driver at ac5ed12 (which has --scale) runs.",
+    "isolation": "h01-i-reserve/crash-isolation.json",
+    "not_a_model_result": "The crash preceded h.finitialize: no integration ran, no trace exists, and the control without --scale crashed identically. The launch tested nothing about the candidate, so the reserve was not spent by it.",
+    "fix_commit_scope": "h01_pv_neuron_reference.py _existing_sections guard (test: test_myelin_geometry_skips_a_template_array_of_deleted_sections); h01_campaign.py stderr persistence (tests in h01_campaign_test.py)"
+  },
+  "launch_utc": "2026-09-07T22:51:42Z",
+  "runner_pid": 6720,
+  "wall_clocks": {
+    "launch_utc": "2026-09-07T22:51:42Z",
+    "report_019_written_utc": "2026-09-07T22:52:18Z",
+    "report_027_written_utc": "2026-09-07T22:53:33Z",
+    "runner_finished_utc": "2026-09-07T22:53:34Z",
+    "container_019_s": 36.0,
+    "container_027_s": 74.8,
+    "runner_total_s": 112,
+    "abort_seconds": 900,
+    "aborted": false
+  },
+  "gate": {
+    "file": "stage-0-decision.json (this folder)",
+    "decision": "drive arm"
+  },
+  "concurrent_containers": [
+    "h01-e-gain-g0-b3-sweep50 (another agent) was running at launch and through both runs"
+  ],
+  "preparation_checks": {
+    "image_help": "docker run --rm -v <worktree>/docs/evidence:/evidence braintrace-h01-neuron:9.0.2 python /evidence/h01_pv_neuron_reference.py --help: rc 0, usage lists --scale MECH:REGION:FACTOR (fixed driver)",
+    "smoke_20ms": "registered candidate JSON, 0.27 nA, --duration-ms 20, fixed driver: rc 0 in 5 s, 418 finite samples, regional_scales recorded, candidate sha256 f4a2aa6c... (crash-isolation.json split H)",
+    "dry_run": "h01_campaign.py --stage 1 --dry-run: gate open, g-natg-axon15 selected at 019 and 027",
+    "mounts": ".cache junction -> .worktrees/h01-braincell/.cache; library hashes (12/12 .mod and libnrnmech.so) and donor file hashes match the finalist's retained report",
+    "tests": "h01_pv_neuron_reference_test.py, h01_campaign_test.py, h01_i_reserve_bands_test.py: 96 passed"
+  },
+  "scoring": {
+    "usable_tier": "h01_usable_tier.py --cell I with the two reserve stems (human active-0 / active-2), output g-natg-axon15-usable.json/.md",
+    "contract": "h01_contract_score.py --records h01-i-reserve/contract-records.json (I limit pairs of h01-contract-records.json), output g-natg-axon15-contract.json/.md",
+    "initiation": "h01_initiation_score.score_run with pulse (270, 1270) ms, output g-natg-axon15-0xx-initiation.json",
+    "bands": "h01_i_reserve_bands.py (registered bands, rejection clause, loop limits)"
+  },
+  "contract_scorecard": {
+    "I 0.19": {
+      "summary": {
+        "fail": 90,
+        "pass": 28,
+        "unavailable": 2
+      },
+      "count": {
+        "human": 12,
+        "model": 14
+      },
+      "first_event_rise_residual_ms": 6.931,
+      "second_event_rise_residual_ms": 34.328
+    },
+    "I 0.27": {
+      "summary": {
+        "fail": 207,
+        "pass": 132,
+        "unavailable": 90,
+        "unresolved": 1
+      },
+      "count": {
+        "human": 43,
+        "model": 34
+      },
+      "first_event_rise_residual_ms": -0.798,
+      "second_event_rise_residual_ms": 9.446
+    }
+  },
+  "finalist_comparison": {
+    "0.19 nA": {
+      "count": {
+        "finalist": 14,
+        "reserve": 14
+      },
+      "cycle2_ms": {
+        "finalist": 34.76,
+        "reserve": 35.07
+      },
+      "cycle1_ms": {
+        "reserve": 30.45
+      },
+      "axon_lead_ms": {
+        "finalist": "0.029 to 0.045 (initiation audit)",
+        "reserve": 0.331
+      }
+    },
+    "0.27 nA": {
+      "count": {
+        "finalist": 37,
+        "reserve": 34
+      },
+      "cycle2_ms": {
+        "finalist": 16.37,
+        "reserve": 16.5
+      },
+      "cycle1_ms": {
+        "reserve": 13.47
+      },
+      "axon_lead_ms": {
+        "finalist": "0.029 to 0.045 (initiation audit)",
+        "reserve": 0.224
+      }
+    }
+  },
+  "reassessment": {
+    "prediction": "FAIL. Cycle 2 at 0.27 nA moved -0.13 ms (16.37 -> 16.50 ms), far inside the 12.8 ms decision limit; the count fell 37 -> 34 at 0.27 nA and stayed 14 at 0.19 nA; cycle 2 at 0.19 nA stayed 35.1 ms. Width, peak and the six troughs held, so the loop did not break and the change was a null, not an instability.",
+    "mechanism": "Axonal NaTg x1.5 did move the axon: the axon-first lead grew from 0.03-0.05 ms to 0.22-0.33 ms and the cycle-1 troughs are within 0.1 mV of the finalist's, yet the soma refired no sooner. The post-trough drive is therefore not carried by axonal NaTg density on this geometry (the pre-registered reassessment): the somatic and axonal sodium boundaries are both excluded, and what remains is a slow state the model lacks.",
+    "i_cell_status": "experimental, borrowed, labelled (unchanged); Noise1 sweep 48 stays sealed",
+    "open_rows": [
+      "post-trough inward drive: refire within 6-10 ms of a -79 mV trough at every input (both sodium boundaries now excluded)",
+      "accommodation along the train (threshold climb -61 to -55 mV, late fall -294 V/s)",
+      "count 14 vs 12 (0.19 nA) and 34 vs 43 (0.27 nA)",
+      "cycle-1 width 0.220 vs 0.267-0.273 ms"
+    ],
+    "closed": [
+      "axonal NaTg density as the post-trough drive (this evaluation)",
+      "somatic NaTg availability (stage-0 audit: h 0.98 at trough + 6 ms)",
+      "somatic Ca_LVA (energetic search)"
+    ],
+    "no_second_evaluation": "cap 1 is spent by this valid run; no re-run and no parameter change"
+  }
+}
