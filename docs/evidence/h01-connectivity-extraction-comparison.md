@@ -143,3 +143,13 @@ identify whether ownership, coordinate interpretation, or missing skeleton
 branches caused the mismatch. None is promoted to a simulation contact from
 this diagnostic. Simply loosening an endpoint tolerance is not justified;
 source identity and placement must be resolved first.
+
+An exact base-segment ownership check of the 27058 retained records found
+409 presynaptic and 12747 postsynaptic endpoints in the proofreading region
+lists, with no ambiguous ownership among matched endpoints. Thirty-three
+records matched at both ends; all were same-cell assignments, leaving zero
+exact-base-supported between-cell candidates in this retained subset.
+Evidence: h01-cached-exact-base-partners.json binds the membership inputs and
+eight retained shard files by hash. This is not an all-export absence result:
+records omitted by the earlier sampled-C3/axon-base retention rule were not
+revisited. Unmatched base IDs remain unresolved rather than external.

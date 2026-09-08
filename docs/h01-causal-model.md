@@ -2150,3 +2150,10 @@ centerline diagnostic, not a membrane-distance or false-merge verdict. It
 requires resolving source ownership, coordinates, or missing branches before
 promoting those records; it does not establish that the biological contacts
 are absent. No simulation contact or anatomical geometry was changed.
+
+Exact proofreading base ownership resolves 12747 postsynaptic endpoints among
+27058 retained records; 409 presynaptic endpoints also match. All 33 records
+matched at both ends have same-cell ownership. No between-cell contact in this
+retained subset gains exact ownership at both endpoints. The evidence is
+h01-cached-exact-base-partners.json. The original retention filter can omit
+other contacts, so neither completeness nor absence follows from this result.
