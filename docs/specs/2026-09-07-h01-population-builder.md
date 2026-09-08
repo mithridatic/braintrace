@@ -286,3 +286,21 @@ difference: the 40-cell stage is then **not launched** and the difference is rep
 rules for this launch: 600 s silence, 1,500 s wall. The result goes into
 `docs/evidence/h01-network-throughput.md` as a dated addendum and into the causal model's
 measurement-function table.
+
+### Addendum 2026-09-07, 19:55 (equivalence split 2: donor pinned; registered before the run)
+
+The 19:42 equivalence rerun failed as registered (recorded in `h01-network-throughput.md`). The
+3.17 mV difference on cell `3955003482` is an **intended registry change**, not a fault: the merged
+SP6c commits assign the type-matched L4 donor `l4-pyramidal-allen-527952884` to that L4-tagged
+cell where SP1 used `l2-pyramidal-allen-541563728`; both donor keys are recorded in the evidence
+JSON. New split: the same d1 rerun with `3955003482` pinned to SP1's donor through a temporary
+in-process override of `h01_network.donor_for_tags` in a wrapper script (recorded in the evidence;
+no registry or source edit; the other three cells resolve as before).
+
+Prediction: all four cells within **2e-9 mV** of the SP1 recording (the observed 2.2e-16 to 4.4e-16
+relative shifts of the axon interval endpoints accumulate over 200 float64 steps to the 1e-11 to
+1.3e-9 mV seen on the three unchanged cells), spike arrays bitwise identical, conductance probes
+identical. Rejection: any cell above 2e-9 mV or any spike difference: stop and report per-cell
+maxima. Timing label: "measured beside one NEURON container" (Stage G is running; the docker part
+of the wait condition is waived by the coordinator for this and, if it holds, for the 40-cell
+stages, which then proceed exactly as registered at 18:35 under the same label).
