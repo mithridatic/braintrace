@@ -874,7 +874,7 @@ form (plateau, not a local maximum), the 0.65 arm's trough (block), the B0 count
 (dendritic load), the width (1.01 against 0.91 ms), the resting potential (−84 against
 −72). Sweep 55 was not opened; the cap closed first.
 
-### Y4 registered predictions for the gain split (SP3, registered 2026-09-07, no observation yet)
+### Y4 registered predictions for the gain split (SP3, registered 2026-09-07; Stage 0 observed below, Stage G not run)
 
 No run has been made; this block records what was predicted so that a miss can later be
 scored against the prediction. Spec: [gain split](specs/2026-09-07-h01-e-gain-split.md);
@@ -906,6 +906,50 @@ reassessment (gain set outside the passive family: human slow Na inactivation or
 kinetics absent from the Allen genome, or a second human L2/3 donor with a recorded f-I
 curve). The observation entry replaces this block when `stage-g0-decision.json` and
 `stage-g-decision.json` land, in the same commit.
+
+### Y4 observed under Stage 0 of the gain split (2026-09-07/08, one evaluation, incomplete)
+
+**Observation.** `g0-b3` (B3 flags, sha256 `e4825c83...`) ran at sweeps 43, 50, 53, 56 in
+`braintrace-h01-neuron:9.0.2`; decision file `evidence/h01-e-gain/stage-g0-decision.json`,
+page `evidence/h01-e-gain-stage0.md`. Sweep 43 completed (820 s wall, 815 s integration).
+Sweeps 50, 53 and 56 were each killed at the 1500 s abort and are untested (SP0: killed =
+untested). Conditions: the host was shared with another agent's containers
+(`h01-i-reserve-*`, `h01-l4-reproduction-*`, `h01-i-transfer-*`) for the whole window; the
+250/310 anchor of 649-665 s (unshared host) was exceeded more than 2.3x, and the one-spike
+200 pA run did not finish inside 1500 s either.
+
+**Input-response relation, human vs model, four inputs (spikes per pA).**
+
+| Segment | Human | Model | Ratio | Model source |
+| --- | ---: | ---: | ---: | --- |
+| 200 -> 250 pA | (5-1)/50 = 0.080 | untested | - | sweep 56 killed |
+| 250 -> 310 pA | 0.0833 | 0.0333 | 0.40 | retained B3 traces (same flags, same sha256), not this evaluation |
+| 310 -> 350 pA | 0.0750 | 0.0500 | 0.67 | retained B3 traces |
+
+The human 200 pA repeat band (sweeps 56/59/60/61/62) is count 1 in every repeat (range 0,
+exact) with first-spike latency 152.5-208.7 ms (limit range x 1.47 = 82.6 ms); the model's
+200 pA point is the missing datum of the gain table.
+
+**Sweep 43 against the registered prediction.** Onset rows (1019-1120 ms) held: five of
+five within 1 mV, residuals +0.43 to +0.91 mV. Late-return rows (1520-2040 ms) missed:
++1.72, +1.71, +1.40, +1.69 mV, numerical limit 0.000 mV at every row (resolved fails); the
+2120 ms row is unavailable because the trace stops at 2100 ms. The registered rejection
+clause is met: B3's Stage B levers on F5 (`leak_reversal_shift_mv -4`, distributed
+`ih_density_factor 75`) leave the post-pulse return about 1.7 mV depolarised while the
+pre-pulse rest and the onset match the donor. Every Stage G arm is therefore judged on the
+*change* of its sweep-43 late-return rows relative to +1.4 to +1.7 mV, as registered.
+
+**What it narrows.** (1) F5 is not intact under B3: the offset is confined to the
+post-pulse return (rows after 1520 ms), so the lever that rotates the f-I curve must not
+add to it, and a G arm that also pulls the late return toward the donor gains a second
+row. (2) The gain table cannot yet separate Ih from leak; the 200 pA model point, which
+the two arms predict differently (G1: count 1; G2: count 0-1), was not observed. (3) The
+1500 s abort is too short for any active E run on a shared host; a Stage G evaluation costs
+at least 820 + 3 x 1500 s under the observed conditions, so the registered cost anchor does
+not transfer to this host state.
+
+**Status.** Y4 stays open. Stage G does not open: the gate field `decision` is null in
+`stage-g0-decision.json` until a second approval records one. Evaluations spent: 1 of 4.
 
 ### Y5 under the population edge list
 
