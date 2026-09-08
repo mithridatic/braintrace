@@ -375,5 +375,9 @@
  "governance": "detached via Start-Process; progress line every 60 s; watchdog kill at 10 min without progress; killed = untested",
  "stop_rule": "no E spikes (or < 3) in the disconnected control -> one drive change to 0.8 nA, then stop; placement stays the user's decision",
  "stage_2": "listed, not opened: the same arms with profiles promoted by SP2/SP3; own manifest then",
- "benchmark_record": "docs/evidence/h01-ie-inhibition/benchmark.json (2026-09-07: killed at 900 s, untested; run 1 of 6 spent)"
+ "benchmark_record": "docs/evidence/h01-ie-inhibition/benchmark.json (rerun record); historical: docs/evidence/h01-ie-inhibition/benchmark-2026-09-07-killed.json (2026-09-07 15:54: killed at 900 s under load, untested, does not spend the cap)",
+ "cap_notes": [
+  "2026-09-07: prior_evaluations reverted from 1 to 0; the 15:54 benchmark was killed at 900 s and by the programme rule a killed run is untested and does not spend the cap. Rerun registered with a 1500 s abort (spec addendum 2026-09-07).",
+  "2026-09-07 19:34: benchmark rerun completed in 347 s on c56616a (run 1 of 6 spent); record docs/evidence/h01-ie-inhibition/benchmark.json"
+ ]
 }

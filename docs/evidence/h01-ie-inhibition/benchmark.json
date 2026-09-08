@@ -1,44 +1,86 @@
 {
  "date": "2026-09-07",
- "spec": "docs/specs/2026-09-07-h01-functional-inhibition.md",
+ "spec": "docs/specs/2026-09-07-h01-functional-inhibition.md (addendum 2026-09-07: 1500 s abort)",
  "manifest": "docs/evidence/h01-ie-inhibition-manifest.json",
  "run": "benchmark",
  "arm": "disconnected",
  "duration_ms": 100.0,
  "e_drive_na": 0.6,
- "i_pulse_onsets_ms": [20.0, 45.0, 70.0, 95.0],
+ "i_pulse_onsets_ms": [
+  20.0,
+  45.0,
+  70.0,
+  95.0
+ ],
  "dt_ms": 0.005,
- "worktree": "h01-pair (feat/h01-pair, aa329f7)",
+ "worktree": "h01-pair (feat/h01-pair, c56616a: programme tip merged with the BrainCell construction/init/DHS performance commits)",
+ "code_commit": "c56616a",
  "braintrace_file": "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-pair/braintrace/__init__.py",
  "interpreter": "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/.cache/validation/Scripts/python.exe",
- "cache": "sibling h01-braincell .cache (archive proofread104.zip present)",
- "status": "untested",
- "status_reason": "killed at the 900 s abort: no trace written, no run-log entry; the only wrapper output was 'Circuit constructed: disconnected' at about 190 s, then nothing further",
- "started": "2026-09-07T15:54:14-07:00",
- "killed": "2026-09-07T16:09:50-07:00",
- "seconds": null,
- "seconds_elapsed_at_kill": 913,
- "seconds_per_simulated_ms": null,
- "seconds_per_simulated_ms_lower_bound": 9.13,
- "timing_label": "measured under load: CPU at 100 percent with about 12 other H01 python jobs (C3 edge-list scan, PV braincell reference, E gain split, I energetic, verified network) running throughout",
+ "cache": "sibling h01-braincell .cache (archive proofread104.zip present); trace .cache/h01/inh-disconnected-100ms.npz",
+ "status": "completed",
+ "timing_label": "measured, machine quiet except the C3 rescan",
+ "machine_state_at_launch": "wait condition met 19:28:19: E-gain evaluation 1 inputs sweep43/50/53/56 all completed; docker ps only synapse; no python process over 300 MB (the C3 rescan worker was not above 300 MB at the poll); CPU 29 percent at the last poll before launch, 10 percent after the run",
+ "started": "2026-09-07T19:28:40-07:00",
+ "finished": "2026-09-07T19:34:54-07:00",
+ "seconds": 347.0,
+ "seconds_per_simulated_ms": 3.47,
+ "construction_seconds_approx": "Circuit constructed printed between 12 s and 133 s after launch (log polled every 2 min); not resolved more finely",
+ "abort_seconds": 1500,
+ "aborted": false,
  "predicted_seconds_from_anchor": 425,
- "e_spike_count": null,
- "e_spike_times_ms": null,
- "i_spike_times_ms": null,
- "finite": null,
+ "e_spike_count": 2,
+ "e_spike_times_ms": [
+  21.775,
+  38.31
+ ],
+ "i_spike_count": 1,
+ "i_spike_times_ms": [
+  27.125
+ ],
+ "i_pulse_response": "pulse 20 ms: I spike (peak 32.5 mV at 23.585 ms, event 27.125 ms); pulses 45, 70, 95 ms: I depolarises only to about -60 mV at pulse end, no spike; the 95 ms pulse could not have produced a spike inside the window at the 6.78 ms latency",
+ "e_trajectory": "rest -83.9 mV; first spike 21.775 ms; second 38.31 ms; after 45 ms E settles near -69 mV under the constant 0.6 nA with no further spike to 100 ms (max -55.9 mV after 40 ms)",
+ "finite": true,
+ "finite_arrays": [
+  "time_ms",
+  "E_voltage",
+  "E_output_voltage",
+  "E_incoming_voltage",
+  "E_synaptic_conductance",
+  "I_voltage",
+  "I_output_voltage",
+  "I_incoming_voltage",
+  "I_synaptic_conductance"
+ ],
+ "predictions": {
+  "e_fires_at_least_1_by_100ms": true,
+  "first_e_spike_20_to_60_ms": true,
+  "i_fires_once_per_pulse": false,
+  "note": "I fired on 1 of the 3 evaluable pulses; E fired 2 spikes in the first 40 ms and none in the following 60 ms"
+ },
  "drive_rule": {
   "rule": ">= 1 E spike in 100 ms: 0.6 nA stands; 0 spikes: report, coordinator decides the single permitted change to 0.8 nA",
-  "evaluated": false,
-  "reason": "no E trace was produced, so E firing at 0.6 nA in this circuit is unobserved; the drive was not changed"
+  "evaluated": true,
+  "held": true,
+  "drive_na": 0.6,
+  "changed": false,
+  "flag_for_coordinator": "the 300 ms control rule (>= 3 E spikes with two full cycles) is not yet decided: 2 spikes by 38.3 ms then 60 ms of silence at 0.6 nA; whether a third spike appears in 300 ms is unobserved"
  },
  "derived_costs": {
-  "label": "derived: lower bounds from the 913 s elapsed at kill, not a measured rate; the run did not complete so the true cost is unknown",
-  "seconds_per_simulated_ms_lower_bound": 9.13,
-  "arm_300ms_seconds_lower_bound": 2740,
-  "arm_300ms_minutes_lower_bound": 45.7,
-  "halved_arm_300ms_seconds_lower_bound": 5480,
-  "halved_arm_300ms_minutes_lower_bound": 91.3,
-  "note": "every 300 ms arm exceeds the 15 min approval threshold under load even at the lower bound; SP1 measured 11.5 s per simulated ms for a 4-cell network on this machine"
+  "label": "derived from the measured 3.47 s per simulated ms (linear scaling, construction included in the rate); not measured",
+  "seconds_per_simulated_ms": 3.47,
+  "arm_300ms_seconds": 1041,
+  "arm_300ms_minutes": 17.4,
+  "halved_arm_300ms_seconds": 2082,
+  "halved_arm_300ms_minutes": 34.7,
+  "alternative_construction_split": "if about 120 s is construction, the simulation rate is about 2.27 s per simulated ms and a 300 ms arm is about 800 s (13.3 min), the halved arm about 1480 s (24.7 min); derived, the split is not measured",
+  "approval": "each 300 ms arm is above the 15 min approval threshold on the linear estimate; approval needed before any 300 ms arm (none launched from this task)"
  },
- "cap_accounting": {"prior_evaluations_before": 0, "this_run_counts_toward": "cap", "cap": 6, "note": "the killed benchmark is spent as run 1 of 6; untested"}
+ "cap_accounting": {
+  "prior_evaluations_before": 0,
+  "this_run_counts_toward": "cap",
+  "cap": 6,
+  "prior_evaluations_after": 1,
+  "note": "the killed 15:54 attempt is historical (benchmark-2026-09-07-killed.json) and does not spend the cap"
+ }
 }

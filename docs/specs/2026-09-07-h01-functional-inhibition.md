@@ -160,3 +160,20 @@ measures both placements and does not choose.
 
 The same four arms with the profiles SP2/SP3 promote (E gain split survivor, I finalist),
 opened only if a profile is promoted; its own manifest and predictions are written then.
+
+## Addendum 2026-09-07: benchmark rerun abort at 1500 s (registered before launch)
+
+The first 100 ms benchmark attempt (2026-09-07 15:54, `h01-ie-inhibition-benchmark.md`) was
+killed at the 900 s abort under load with no trace written; by the programme rule a killed run
+is untested and does not spend the cap (`prior_evaluations` reverted to 0, the killed record
+kept as historical under `benchmark_record`). The rerun waits until the machine is quiet (the
+E-gain evaluation 1 inputs finished or failed, `docker ps` showing only `synapse`, no python
+job over 300 MB other than the C3 rescan worker) and runs with an **abort of 1500 s**.
+Derivation: SP1 measured 11.5 s per simulated ms on this machine for a 4-cell network, which
+predicts about 19 min for 100 ms plus about 4 min of construction (the first attempt printed
+`Circuit constructed` at about 190 s); 1500 s (25 min) covers that with margin. The run is
+launched detached (`Start-Process`) with stdout and stderr to log files; the wrapper prints
+nothing during the simulation, so the only kill is at the abort. Result label: "measured,
+machine quiet except the C3 rescan". The drive rule is unchanged: >= 1 E spike at 0.6 nA
+keeps the drive; none: report, the single permitted change to 0.8 nA stays the coordinator's
+decision. No 300 ms arm is launched from this task.
