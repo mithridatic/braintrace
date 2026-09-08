@@ -1,0 +1,29 @@
+{
+  "source_commit": "b46ee7d",
+  "runner_commit": "a61519b",
+  "cells": 1,
+  "control": "ei",
+  "dt_ms": 0.005,
+  "duration_ms": 10.0,
+  "cell_id": "7196644737",
+  "n_compartments": 1647,
+  "current_na": 1.0,
+  "max_cv_um": 10.0,
+  "pulse_window_ms": [
+    2.0,
+    5.0
+  ],
+  "wall_cap_seconds": 600,
+  "silence_cap_seconds": 600,
+  "reserve_memory_bytes": 4294967296,
+  "projected_peak_bytes": 18259138560.0,
+  "memory_estimate_basis": "conservative full104 peak allowance; not a measured single-cell peak",
+  "expected_cell_metadata_sha256": "6a0562d09c0fba65dea0c147b86cb5e94db8a7fe18dbad538397e3db80a2efc0",
+  "reference_build": {
+    "path": ".cache\\h01\\readiness\\104-build-r2-build.json",
+    "sha256": "9a32737637666ea8ce6c235798ea78ef984d335f47f688db8f640c26550b9001"
+  },
+  "qualification": "bounded numerical diagnosis only; full104 rerun required",
+  "scope": "One unchanged instrumented reproduction: geometry, calcium, gating and current observations; baseline parity required",
+  "baseline_voltage_allowance_mv": 1e-09
+}

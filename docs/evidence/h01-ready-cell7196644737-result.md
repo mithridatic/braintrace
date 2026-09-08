@@ -22,3 +22,34 @@ state behavior under the unchanged input, before selecting another intervention.
 Do not clip states, alter anatomy or reduce the population to obtain a pass.
 No physiological fit was changed. The full-104 driven runtime, controls,
 refinement and physiological gates remain open.
+
+## Internal-state observation
+
+The [state decision](h01-ready-cell7196644737-state-decision.json) preserves the
+baseline voltage exactly (0 mV maximum finite difference and identical finite
+masks), all cell metadata and compartment geometry. The output compartment has
+0.165031014 um2 membrane area; the modeled soma intervals total 0.763029420 um2.
+The unchanged 1 nA point input divided by that output CV area is 605.946712
+mA/cm2. This is an assumed diagnostic input, not measured H01 stimulation.
+
+At 3.265 ms, output voltage is 378.118892 mV, calcium is 1.92819965e-7 mM,
+and inward-positive calcium current is -0.215624671 mA/cm2. At 3.270 ms,
+calcium is -2.95955282e-7 mM; Nernst reversal, SK state and voltage are NaN.
+Calcium itself becomes NaN on the following recorded step. This probe does not
+establish which of all 1,647 compartments becomes invalid first.
+
+The installed family update caches step-start calcium current and integrates
+calcium removal exponentially with that frozen current. Substituting the
+observed current and source donor gamma/decay into that exact scalar update
+predicts the negative calcium within 1.06e-22 mM. The source flux has no outward
+current clamp; the current-freezing update can cross zero before Nernst feedback
+reduces outward flux. The next numerical investigation should retain that
+feedback inside the calcium solve, preserving signed flux and source parameters.
+This identifies a numerical failure route; it does not qualify the borrowed
+physiology or repair the extreme voltage response to the assumed point input.
+
+The first observer attempt stopped before initialization because tuple-valued
+live metadata was compared directly with JSON lists. Two regression cases now
+accept only representation equivalence and reject changed geometry. The rerun
+uses a fresh label and retains both launch/provenance records. No production
+model equation or parameter changed in this observation.

@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "pid": 30988,
+  "started_utc": "2026-09-08T12:13:54.8902213Z",
+  "source_commit": "b46ee7d",
+  "plan": "h01-ready-cell7196644737-state-r2-plan.json",
+  "arguments": [
+    "-I",
+    "-u",
+    "docs/evidence/h01_installed_network.py",
+    "--audit",
+    "docs/evidence/h01-ready-104-wheel-audit.json",
+    "--example",
+    "docs/evidence/h01_cell_state_observation.py",
+    "--provenance",
+    "docs/evidence/h01-ready-cell7196644737-state-r2-provenance.json",
+    "--",
+    "--output",
+    ".cache/h01/readiness/cell7196644737-state-r2"
+  ],
+  "wall_cap_seconds": 600,
+  "silence_cap_seconds": 600,
+  "memory_reserve_bytes": 4294967296,
+  "available_bytes_at_launch": 37368004608,
+  "peak_tree_rss_bytes": 454340608,
+  "peak_counter_type": "Int64 on both Math.Max arguments",
+  "monitor_errors": 0,
+  "available_bytes_latest": 36926930944,
+  "exit_code": 0,
+  "seconds": 15.8424618
+}

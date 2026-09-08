@@ -2065,3 +2065,10 @@ A yes/no decision applies to a specified causal claim and its tested conditions.
 Keep the continuous direct response that supports the decision.
 Distinguish a contradicted prediction, an invalid test, and an unresolved explanation.
 Only supported conclusions belong in the explanations. Unresolved links stay explicit.
+
+The unchanged cell 7196644737 state observation reproduces negative calcium at
+3.270 ms with exact voltage parity. Its frozen-current exponential calcium
+update predicts that crossing to 1.06e-22 mM; dynamic Nernst reversal then becomes
+invalid. See [state diagnosis](evidence/h01-ready-cell7196644737-result.md).
+The full104 driven runtime remains failed; this is a numerical diagnosis, not
+physiological qualification or a completed repair.
