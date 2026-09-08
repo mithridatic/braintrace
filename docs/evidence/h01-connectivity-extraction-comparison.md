@@ -27,3 +27,30 @@ cable placement separately from whether a published connectivity edge exists.
 The accepted two-contact simulation remains a restricted implementation.
 Neither the size of the recoverable internal graph nor a mapping defect causing
 all rejected contacts has been established. No physiological conclusion changes.
+
+## Public artifact lookup
+
+Read-only listings on 2026-09-08 found no generated 104-cell edge list or
+file2aggloid map in the authors' recursive GitHub tree or the paper bucket root.
+The graph script also points to a local C:/work/FINAL edge-list file, rather
+than a download URL. This is a bounded lookup, not proof of global absence.
+The repository README says some BigQuery databases require private credentials;
+we have not established access to the exact tables named by the extractor.
+
+The release proofread_104/synapse_locations.csv is already imported locally:
+264090 rows, SHA256 640ccb12c75b930f96373c7273bbf9688aa111b97b425ee22d8ef6db19f496be.
+It supplies one proofread-cell ID and its pre/post role per row. The existing
+h01-partner-coordinate-audit.json found zero candidate cell pairs under its exact
+endpoint-coordinate join. This is not a newly discovered source or a complete
+partner table. No redundant full download was performed.
+
+The public c3/tables/segments directory lists 452 counts*.csv.gz objects. A
+streamed header check found c3_id and compartment/synapse counts, not base IDs
+or base-to-agglomeration membership. Those count tables cannot supply the needed
+join. The base directory listing contains volume scales and mesh, with no
+mapping table at that level. No bulk table download was performed.
+
+Next remaining routes are supplementary analysis artifacts or a release-matched
+base-to-agglomeration source. Recoverability and the number of internal 104-cell
+edges remain unproven. Do not replace this gap with another spatial-sampling
+campaign or silently promote the 126 spatial candidates.
