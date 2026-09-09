@@ -1,0 +1,644 @@
+{
+  "scope": "eight cached export shards only; membership partly sampled; unknown partners are not established external cells",
+  "source_summary_sha256": "d34153c256ce0b85cb35552a96e449118e3348d3e5c0000626f8219b5f1876ef",
+  "totals": {
+    "unresolved_pre_partner": 25891,
+    "unresolved_post_partner": 1149,
+    "internal_candidate": 13,
+    "self_candidate": 5
+  },
+  "source_record_conflicts": [],
+  "cells": {
+    "546925828": {
+      "incoming_source_records": 28,
+      "unresolved_pre_partner": 28,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 4
+    },
+    "547114083": {
+      "incoming_source_records": 105,
+      "unresolved_pre_partner": 105,
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 3
+    },
+    "620880207": {
+      "incoming_source_records": 765,
+      "unresolved_pre_partner": 763,
+      "outgoing_source_records": 120,
+      "unresolved_post_partner": 119,
+      "internal_candidate_incoming": 2,
+      "internal_candidate_outgoing": 1
+    },
+    "678539249": {
+      "incoming_source_records": 33,
+      "unresolved_pre_partner": 33,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "751294744": {
+      "incoming_source_records": 248,
+      "unresolved_pre_partner": 248,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5
+    },
+    "810151953": {
+      "incoming_source_records": 45,
+      "unresolved_pre_partner": 45,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "810970127": {
+      "incoming_source_records": 180,
+      "unresolved_pre_partner": 180,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "883843993": {
+      "incoming_source_records": 179,
+      "unresolved_pre_partner": 178,
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 2,
+      "self_candidate_outgoing": 1,
+      "self_candidate_incoming": 1
+    },
+    "955432427": {
+      "outgoing_source_records": 23,
+      "unresolved_post_partner": 21,
+      "incoming_source_records": 37,
+      "unresolved_pre_partner": 37,
+      "internal_candidate_outgoing": 2
+    },
+    "1072605926": {
+      "incoming_source_records": 100,
+      "unresolved_pre_partner": 100,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "1304599410": {
+      "incoming_source_records": 663,
+      "unresolved_pre_partner": 661,
+      "outgoing_source_records": 24,
+      "unresolved_post_partner": 23,
+      "internal_candidate_incoming": 2,
+      "internal_candidate_outgoing": 1
+    },
+    "1465400601": {
+      "incoming_source_records": 122,
+      "unresolved_pre_partner": 122
+    },
+    "1669770671": {
+      "incoming_source_records": 266,
+      "unresolved_pre_partner": 266,
+      "outgoing_source_records": 22,
+      "unresolved_post_partner": 22
+    },
+    "1684504313": {
+      "incoming_source_records": 470,
+      "unresolved_pre_partner": 470,
+      "outgoing_source_records": 6,
+      "unresolved_post_partner": 6
+    },
+    "1787105373": {
+      "incoming_source_records": 53,
+      "unresolved_pre_partner": 53
+    },
+    "1830470325": {
+      "incoming_source_records": 313,
+      "unresolved_pre_partner": 313,
+      "outgoing_source_records": 13,
+      "unresolved_post_partner": 13
+    },
+    "1874244336": {
+      "incoming_source_records": 1123,
+      "unresolved_pre_partner": 1123,
+      "outgoing_source_records": 18,
+      "unresolved_post_partner": 18
+    },
+    "1900905433": {
+      "incoming_source_records": 283,
+      "unresolved_pre_partner": 283,
+      "outgoing_source_records": 22,
+      "unresolved_post_partner": 22
+    },
+    "1930502394": {
+      "incoming_source_records": 680,
+      "unresolved_pre_partner": 680,
+      "outgoing_source_records": 9,
+      "unresolved_post_partner": 9
+    },
+    "2001418787": {
+      "incoming_source_records": 115,
+      "unresolved_pre_partner": 115,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "2047644309": {
+      "incoming_source_records": 420,
+      "unresolved_pre_partner": 420,
+      "outgoing_source_records": 12,
+      "unresolved_post_partner": 12
+    },
+    "2074305737": {
+      "incoming_source_records": 58,
+      "unresolved_pre_partner": 58,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "2103991145": {
+      "incoming_source_records": 229,
+      "unresolved_pre_partner": 229,
+      "outgoing_source_records": 8,
+      "unresolved_post_partner": 8
+    },
+    "2104047922": {
+      "incoming_source_records": 620,
+      "unresolved_pre_partner": 620,
+      "outgoing_source_records": 14,
+      "unresolved_post_partner": 14
+    },
+    "2195261734": {
+      "incoming_source_records": 163,
+      "unresolved_pre_partner": 162,
+      "outgoing_source_records": 6,
+      "unresolved_post_partner": 6,
+      "internal_candidate_incoming": 1
+    },
+    "2252715458": {
+      "incoming_source_records": 147,
+      "unresolved_pre_partner": 147,
+      "outgoing_source_records": 6,
+      "unresolved_post_partner": 5,
+      "internal_candidate_outgoing": 1
+    },
+    "2306214824": {
+      "incoming_source_records": 50,
+      "unresolved_pre_partner": 50,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 4
+    },
+    "2325998949": {
+      "incoming_source_records": 88,
+      "unresolved_pre_partner": 88
+    },
+    "2451406889": {
+      "incoming_source_records": 8,
+      "unresolved_pre_partner": 8
+    },
+    "2530864375": {
+      "incoming_source_records": 17,
+      "unresolved_pre_partner": 17
+    },
+    "2820958695": {
+      "incoming_source_records": 60,
+      "unresolved_pre_partner": 60,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5
+    },
+    "2848552900": {
+      "incoming_source_records": 157,
+      "unresolved_pre_partner": 157,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "2888180252": {
+      "incoming_source_records": 160,
+      "unresolved_pre_partner": 160
+    },
+    "2889815798": {
+      "incoming_source_records": 363,
+      "unresolved_pre_partner": 363,
+      "outgoing_source_records": 13,
+      "unresolved_post_partner": 13
+    },
+    "2903686765": {
+      "incoming_source_records": 72,
+      "unresolved_pre_partner": 72,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "3093748739": {
+      "incoming_source_records": 82,
+      "unresolved_pre_partner": 82,
+      "outgoing_source_records": 9,
+      "unresolved_post_partner": 9
+    },
+    "3111823553": {
+      "incoming_source_records": 102,
+      "unresolved_pre_partner": 102,
+      "outgoing_source_records": 7,
+      "unresolved_post_partner": 7
+    },
+    "3139317430": {
+      "incoming_source_records": 133,
+      "unresolved_pre_partner": 133,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "3178243558": {
+      "incoming_source_records": 17,
+      "unresolved_pre_partner": 17,
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 3
+    },
+    "3329117097": {
+      "incoming_source_records": 334,
+      "unresolved_pre_partner": 334,
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 3
+    },
+    "3383650350": {
+      "incoming_source_records": 71,
+      "unresolved_pre_partner": 71,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5
+    },
+    "3432315514": {
+      "incoming_source_records": 92,
+      "unresolved_pre_partner": 92,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 4
+    },
+    "3470629528": {
+      "incoming_source_records": 167,
+      "unresolved_pre_partner": 167,
+      "outgoing_source_records": 13,
+      "unresolved_post_partner": 13
+    },
+    "3503540481": {
+      "incoming_source_records": 237,
+      "unresolved_pre_partner": 237,
+      "outgoing_source_records": 9,
+      "unresolved_post_partner": 9
+    },
+    "3519995546": {
+      "incoming_source_records": 374,
+      "unresolved_pre_partner": 374,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5
+    },
+    "3571083397": {
+      "incoming_source_records": 60,
+      "unresolved_pre_partner": 60,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "3680152874": {
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 3,
+      "incoming_source_records": 45,
+      "unresolved_pre_partner": 45
+    },
+    "3751392341": {
+      "incoming_source_records": 26,
+      "unresolved_pre_partner": 26,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "3761379470": {
+      "incoming_source_records": 33,
+      "unresolved_pre_partner": 33
+    },
+    "3812058320": {
+      "incoming_source_records": 128,
+      "unresolved_pre_partner": 128,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 4
+    },
+    "3836078296": {
+      "incoming_source_records": 73,
+      "unresolved_pre_partner": 73,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "3954491075": {
+      "incoming_source_records": 79,
+      "unresolved_pre_partner": 79
+    },
+    "3955003482": {
+      "incoming_source_records": 544,
+      "unresolved_pre_partner": 544,
+      "outgoing_source_records": 7,
+      "unresolved_post_partner": 7
+    },
+    "4010150634": {
+      "incoming_source_records": 22,
+      "unresolved_pre_partner": 22
+    },
+    "4039221194": {
+      "incoming_source_records": 360,
+      "unresolved_pre_partner": 360,
+      "outgoing_source_records": 24,
+      "unresolved_post_partner": 24
+    },
+    "4125702786": {
+      "incoming_source_records": 16,
+      "unresolved_pre_partner": 16,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "4138580687": {
+      "incoming_source_records": 52,
+      "unresolved_pre_partner": 52,
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 3
+    },
+    "4157825456": {
+      "incoming_source_records": 567,
+      "unresolved_pre_partner": 565,
+      "outgoing_source_records": 57,
+      "unresolved_post_partner": 55,
+      "internal_candidate_outgoing": 2,
+      "internal_candidate_incoming": 2
+    },
+    "4188575291": {
+      "incoming_source_records": 351,
+      "unresolved_pre_partner": 351,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 3,
+      "internal_candidate_outgoing": 1
+    },
+    "4197933517": {
+      "incoming_source_records": 84,
+      "unresolved_pre_partner": 84,
+      "outgoing_source_records": 14,
+      "unresolved_post_partner": 14
+    },
+    "4260528559": {
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5,
+      "incoming_source_records": 36,
+      "unresolved_pre_partner": 36
+    },
+    "4365276903": {
+      "incoming_source_records": 71,
+      "unresolved_pre_partner": 71,
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 3
+    },
+    "4420044370": {
+      "incoming_source_records": 36,
+      "unresolved_pre_partner": 36,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "4437316933": {
+      "incoming_source_records": 111,
+      "unresolved_pre_partner": 111,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "4467761196": {
+      "incoming_source_records": 26,
+      "unresolved_pre_partner": 26,
+      "outgoing_source_records": 25,
+      "unresolved_post_partner": 25
+    },
+    "4476359994": {
+      "incoming_source_records": 88,
+      "unresolved_pre_partner": 88,
+      "outgoing_source_records": 7,
+      "unresolved_post_partner": 6,
+      "internal_candidate_outgoing": 1
+    },
+    "4522237537": {
+      "outgoing_source_records": 10,
+      "unresolved_post_partner": 10,
+      "incoming_source_records": 80,
+      "unresolved_pre_partner": 80
+    },
+    "4535129012": {
+      "incoming_source_records": 184,
+      "unresolved_pre_partner": 184,
+      "outgoing_source_records": 10,
+      "unresolved_post_partner": 10
+    },
+    "4554213569": {
+      "incoming_source_records": 434,
+      "unresolved_pre_partner": 434,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5
+    },
+    "4582188328": {
+      "incoming_source_records": 312,
+      "unresolved_pre_partner": 312,
+      "outgoing_source_records": 6,
+      "unresolved_post_partner": 6
+    },
+    "4607885827": {
+      "incoming_source_records": 450,
+      "unresolved_pre_partner": 449,
+      "outgoing_source_records": 19,
+      "unresolved_post_partner": 19,
+      "internal_candidate_incoming": 1
+    },
+    "4641147055": {
+      "incoming_source_records": 478,
+      "unresolved_pre_partner": 478,
+      "outgoing_source_records": 35,
+      "unresolved_post_partner": 35
+    },
+    "4668874666": {
+      "incoming_source_records": 112,
+      "unresolved_pre_partner": 112
+    },
+    "4711567524": {
+      "incoming_source_records": 1571,
+      "unresolved_pre_partner": 1570,
+      "outgoing_source_records": 14,
+      "unresolved_post_partner": 14,
+      "internal_candidate_incoming": 1
+    },
+    "4711641825": {
+      "incoming_source_records": 95,
+      "unresolved_pre_partner": 95,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 4
+    },
+    "4830551047": {
+      "outgoing_source_records": 10,
+      "unresolved_post_partner": 9,
+      "incoming_source_records": 75,
+      "unresolved_pre_partner": 75,
+      "internal_candidate_outgoing": 1
+    },
+    "4853956860": {
+      "incoming_source_records": 258,
+      "unresolved_pre_partner": 258,
+      "outgoing_source_records": 8,
+      "unresolved_post_partner": 8
+    },
+    "4873639924": {
+      "incoming_source_records": 751,
+      "unresolved_pre_partner": 751,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5
+    },
+    "4932057570": {
+      "incoming_source_records": 190,
+      "unresolved_pre_partner": 190,
+      "outgoing_source_records": 12,
+      "unresolved_post_partner": 12
+    },
+    "5013648003": {
+      "incoming_source_records": 56,
+      "unresolved_pre_partner": 56
+    },
+    "5015035926": {
+      "incoming_source_records": 360,
+      "unresolved_pre_partner": 360,
+      "outgoing_source_records": 23,
+      "unresolved_post_partner": 23
+    },
+    "5060444657": {
+      "incoming_source_records": 88,
+      "unresolved_pre_partner": 88,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "5061320552": {
+      "incoming_source_records": 294,
+      "unresolved_pre_partner": 293,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 3,
+      "self_candidate_outgoing": 1,
+      "self_candidate_incoming": 1
+    },
+    "5136107765": {
+      "incoming_source_records": 889,
+      "unresolved_pre_partner": 888,
+      "outgoing_source_records": 19,
+      "unresolved_post_partner": 19,
+      "internal_candidate_incoming": 1
+    },
+    "5173982155": {
+      "incoming_source_records": 247,
+      "unresolved_pre_partner": 247,
+      "outgoing_source_records": 11,
+      "unresolved_post_partner": 11
+    },
+    "5175880292": {
+      "incoming_source_records": 157,
+      "unresolved_pre_partner": 156,
+      "outgoing_source_records": 19,
+      "unresolved_post_partner": 19,
+      "internal_candidate_incoming": 1
+    },
+    "5215113731": {
+      "incoming_source_records": 117,
+      "unresolved_pre_partner": 117,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "5216806368": {
+      "incoming_source_records": 356,
+      "unresolved_pre_partner": 355,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 4,
+      "self_candidate_outgoing": 1,
+      "self_candidate_incoming": 1
+    },
+    "5319188363": {
+      "incoming_source_records": 362,
+      "unresolved_pre_partner": 362,
+      "outgoing_source_records": 25,
+      "unresolved_post_partner": 25
+    },
+    "5352961465": {
+      "outgoing_source_records": 13,
+      "unresolved_post_partner": 13,
+      "incoming_source_records": 319,
+      "unresolved_pre_partner": 319
+    },
+    "5355296383": {
+      "incoming_source_records": 291,
+      "unresolved_pre_partner": 291,
+      "outgoing_source_records": 14,
+      "unresolved_post_partner": 14
+    },
+    "5439194879": {
+      "incoming_source_records": 436,
+      "unresolved_pre_partner": 436,
+      "outgoing_source_records": 5,
+      "unresolved_post_partner": 5
+    },
+    "5536146025": {
+      "incoming_source_records": 82,
+      "unresolved_pre_partner": 82,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    },
+    "5584343344": {
+      "outgoing_source_records": 34,
+      "unresolved_post_partner": 33,
+      "incoming_source_records": 115,
+      "unresolved_pre_partner": 114,
+      "self_candidate_outgoing": 1,
+      "self_candidate_incoming": 1
+    },
+    "5654281423": {
+      "incoming_source_records": 2690,
+      "unresolved_pre_partner": 2688,
+      "outgoing_source_records": 212,
+      "unresolved_post_partner": 209,
+      "internal_candidate_incoming": 2,
+      "internal_candidate_outgoing": 3
+    },
+    "5687162964": {
+      "incoming_source_records": 97,
+      "unresolved_pre_partner": 97,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 4
+    },
+    "5805562981": {
+      "outgoing_source_records": 21,
+      "unresolved_post_partner": 21,
+      "incoming_source_records": 128,
+      "unresolved_pre_partner": 128
+    },
+    "5832764277": {
+      "incoming_source_records": 561,
+      "unresolved_pre_partner": 560,
+      "outgoing_source_records": 19,
+      "unresolved_post_partner": 18,
+      "self_candidate_outgoing": 1,
+      "self_candidate_incoming": 1
+    },
+    "5965472721": {
+      "incoming_source_records": 155,
+      "unresolved_pre_partner": 155,
+      "outgoing_source_records": 1,
+      "unresolved_post_partner": 1
+    },
+    "6126390733": {
+      "incoming_source_records": 49,
+      "unresolved_pre_partner": 49
+    },
+    "6833911543": {
+      "incoming_source_records": 65,
+      "unresolved_pre_partner": 65,
+      "outgoing_source_records": 4,
+      "unresolved_post_partner": 4
+    },
+    "7052969349": {
+      "incoming_source_records": 62,
+      "unresolved_pre_partner": 62,
+      "outgoing_source_records": 3,
+      "unresolved_post_partner": 3
+    },
+    "7196644737": {
+      "incoming_source_records": 43,
+      "unresolved_pre_partner": 43,
+      "outgoing_source_records": 9,
+      "unresolved_post_partner": 9
+    },
+    "7893125555": {
+      "incoming_source_records": 63,
+      "unresolved_pre_partner": 63,
+      "outgoing_source_records": 2,
+      "unresolved_post_partner": 2
+    }
+  },
+  "cells_with_source_records": 104,
+  "complete_connectome": false,
+  "simulation_eligible_count_not_evaluated": true
+}

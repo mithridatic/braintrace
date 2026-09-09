@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "test_exit_code": 0,
+  "coverage_by_module": {
+    "_h01_reader.py": 100.0,
+    "h01.py": 100.0,
+    "h01_anatomy.py": 97.45762711864407
+  },
+  "all_production_imports_from_wheel": true,
+  "production_module_count": 86,
+  "test_files": [
+    "braintrace/datasets/h01_test.py",
+    "braintrace/datasets/h01_anatomy_test.py",
+    "braintrace/datasets/_h01_reader_test.py",
+    "braintrace/datasets/_h01_swc_test.py",
+    "docs/evidence/h01_population_import_audit_test.py"
+  ],
+  "fixture_access": "source root appended after importing installed braintrace package; production origins checked after tests",
+  "coverage_includes_imports": true,
+  "preload": "braintrace and braincell loaded before coverage; H01 modules loaded only after coverage starts",
+  "passed_tests": 51,
+  "test_seconds": 2.85,
+  "source_commit": "4edb51b",
+  "qualification": "installed importer and anatomy regressions only; full-population installed runtime remains pending",
+  "inputs": {
+    "braintrace/datasets/h01_test.py": "e1d81a321f2f85b47bd2f32782e536e743054aabbe87a37697a215638c4f34f4",
+    "braintrace/datasets/h01_anatomy_test.py": "6957295ad4063e6b1c6f7a116a8ed5a5a5306333c30dece956f57fc54bdbdb81",
+    "braintrace/datasets/_h01_reader_test.py": "0b0421086d76a014d04de4e8403c3c63f7bc930b8b0226bd208fef7dd531af8f",
+    "braintrace/datasets/_h01_swc_test.py": "62a372b5cef2f1a4103e30a32f93ef7845abe6bee906f6b06cdf01e8b07b8a18",
+    "docs/evidence/h01_population_import_audit_test.py": "9469d536a40793f99058d32a94d8bdc2634892929979c755aa0d6f9daeb9b08b",
+    "docs/evidence/h01_population_import_audit.py": "5b00565e998b8982b0d13c3881eecd5d9ae0b2265167a93322219c9bee6a9916",
+    "docs/evidence/h01-ready-104-wheel-audit.json": "f8619b89679354975df64be35cb5f4a55e6edb0a52793f0e8adfed2206ad6e21",
+    ".cache\\h01\\readiness\\wheel-tests-r3-4edb51b.log": "3a4825271e3af1918aa404ef37e04d1e3e010db2dfa9771925a4bcb348c0c2be",
+    ".cache/h01/readiness/wheel-coverage-r3-4edb51b.json": "b03364155a9e94b8487dd1abaea7ccb2b72af7d2f9fa63f0297a16ca770b333f"
+  },
+  "earlier_attempts": [
+    {
+      "log": ".cache/h01/readiness/wheel-tests-4edb51b.log",
+      "status": "27 tests passed; coverage gate failed because measurement began after H01 imports and suite selection was incomplete"
+    },
+    {
+      "log": ".cache/h01/readiness/wheel-tests-r2-4edb51b.log",
+      "status": "Abseil startup abort before tests; untested"
+    }
+  ]
+}

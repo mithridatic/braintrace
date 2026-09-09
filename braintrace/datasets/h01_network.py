@@ -61,6 +61,24 @@ def _isolated_record(identity, rows):
     row = None if rows is None else rows.get(identity)
     if row is None:
         raise ValueError(f"Isolated cell {identity} has no component inventory row.")
+    if "selected_component" in row:
+        selected = row["selected_component"]
+        if not isinstance(selected, dict):
+            raise ValueError("Explicit component selection must be an evidence record.")
+        component, count = selected.get("component"), selected.get("nodes")
+        digest, evidence = selected.get("source_sha256"), selected.get("evidence")
+        if (type(component) is not int or component < 0 or type(count) is not int
+                or not 0 < count <= row["nodes"] or selected.get("has_soma") is not True
+                or not isinstance(digest, str) or len(digest) != 64
+                or any(c not in "0123456789abcdef" for c in digest)
+                or not isinstance(evidence, str) or not evidence.strip()):
+            raise ValueError("Explicit component selection requires valid source and soma evidence.")
+        fraction = count / row["nodes"]
+        return dict(component=component, component_nodes=count, cell_nodes=int(row["nodes"]),
+                    fraction=fraction, omitted_fraction=1-fraction, components=int(row["components"]),
+                    source_sha256=digest, selection_evidence=evidence,
+                    summary=f"isolated, explicitly selected component {component} of "
+                            f"{count} nodes, fraction {fraction:.3f}")
     if not row.get("largest_has_soma"):
         raise ValueError(f"Isolated cell {identity}: largest component lacks a soma; nothing substituted.")
     component_nodes = int(round(row["largest_share"]*row["nodes"]))
@@ -225,16 +243,20 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
         ``"disconnected"`` keeps none. Only projections change.
     include_isolated : bool, optional
         Also build every topology node without a constructible contact from its
-        largest component, which must carry a soma per ``components``. Isolated
+        explicitly selected component, or its largest component when no override
+        is supplied. The selection must carry a soma per ``components``. Isolated
         cells receive no receptors or projections; their output site is the
         soma. Fragments are never joined.
     cells : int, optional
         Build only the first ``cells`` entries of the evidence ``cell_order``
-        (incident cells first, then isolated cells by ascending largest-component
+        (incident cells first, then isolated cells by ascending selected-component
         node count). Must be between the incident count and the candidate count.
     components : dict or list, optional
         Parsed ``h01-population-components.json`` (the object, its ``cells``
         list, or a ``cell_id -> row`` mapping). Required with ``include_isolated``.
+        An optional ``selected_component`` record supplies ``component``, ``nodes``,
+        ``has_soma``, ``source_sha256`` and an ``evidence`` reference. The loaded
+        source must match its component, hash and node count before construction.
     excitatory_weight_us, inhibitory_weight_us : float, optional
         Nonnegative assumed conductance magnitudes. Signs select receptors.
     delay_ms : float, optional
@@ -295,6 +317,12 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
     for identity, record in isolated.items():
         emit(f"Loading cell {identity}, component {record['component']} ({record['summary']})")
         imported[identity] = archive.load(identity, component=record["component"])
+        if "source_sha256" in record:
+            source = imported[identity]
+            if (source.component_id != record["component"]
+                    or source.source_sha256 != record["source_sha256"]
+                    or len(source.source_rows) != record["component_nodes"]):
+                raise ValueError("Explicit component selection does not match loaded source.")
     network = braincell.Network(name="h01_verified")
     cells_built, records = {}, {}
     basis = ("Source soma/axon/AIS samples extend halfway along adjacent edges; "
@@ -323,7 +351,17 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
             network.add_edges(name=name, pre="cell_"+edge["pre_cell"], post="cell_"+edge["post_cell"], method=pairs([(0, 0)]))
             network.add_projection(name=name, edges=name, synapse=name,
                                    weight=edge["weight_us"]*u.uS, delay=delay_ms*u.ms)
-    emit(f"Construction complete: {len(cells_built)} cells, {len(network.projections)} projections")
+    imported.clear()
+    locations.clear()
+    source_sites.clear()
+    cells_built.clear()
+    from .h01_construction import _GEOMETRY_CACHE
+    from .h01 import _GLOBAL_LOADED_COMPONENTS
+    _GEOMETRY_CACHE.clear()
+    _GLOBAL_LOADED_COMPONENTS.clear()
+    import gc
+    gc.collect()
+    emit(f"Construction complete: {len(records)} cells, {len(network.projections)} projections")
     return network, dict(nodes=deepcopy(topology["nodes"]), simulated_cell_ids=identities, cell_order=order,
         cells=records, donors=donors, contacts=edge_records, blocked_contacts=blocked,
         control=control, disconnected=control == "disconnected",

@@ -82,7 +82,17 @@ Rest and subthreshold return (sweep 43, 110 pA), change relative to g0-b3:
 | 3 | g2-leak-150 | REJECTED: sweep-43 return moved -3.8 mV and 310 pA count 6 < 8; counts 0/0/6; pure-shift clause not met | `stage-g-decision.json#/arms/g2-leak-150/rejection` |
 | 4 | combined Ih half + leak x1.5 | registered, not spent: additive prediction (rest -2.7 mV, 250 pA silent, 310 count <= 6, sweep-43 about -4.5 mV) fails every band; the linear dose rule has no admissible dose | `stage-g-decision.json#/g3_selection` |
 
-## Causal statement (Hartshorne's form)
+## Source-audit amendment (2026-09-08)
+
+The [source audit](h01-e-gain-source-audit.md) supersedes the absence and
+necessity language in the historical causal interpretation below. Frozen B3
+already applies a nonzero somatic Im mechanism in all four opening runs.
+Altered M-current kinetics remain an untested hypothesis; they are not an
+identified missing mechanism. The tested passive interventions failed, but
+the sampled doses do not exclude every passive parameterization. Historical
+decision JSON and all measured numerical results remain unchanged.
+
+## Causal statement (historical stage interpretation; see amendment above)
 
 What WAS established, with conditions and mechanism; what was not is stated as the unresolved link.
 

@@ -93,12 +93,21 @@ def _rate_accessor(gate, component):
             return self._rate_for_gate(gate, voltage, ions, component=0)
         tau = self._rate_for_gate(gate, voltage, ions, component=1)
         opening, closing = self.phase_factors.get(gate, (1., 1.))
+        if np.isscalar(opening) and np.isscalar(closing) and opening == 1. and closing == 1.:
+            return tau
         state = getattr(self, gate, None)
         equilibrium = self._rate_for_gate(gate, voltage, ions, component=0)
         value = equilibrium if state is None else state.value
-        if self.mechanism == "Kv3_1":
-            return tau*jnp.where(equilibrium < value, closing, opening)
-        return tau*jnp.where(equilibrium > value, opening, closing)
+        from braincell._misc import is_traced_value
+        import jax
+        if is_traced_value(tau) or is_traced_value(equilibrium) or is_traced_value(value) or isinstance(tau, (jax.core.Tracer, jax.Array)):
+            if self.mechanism == "Kv3_1":
+                return tau*jnp.where(equilibrium < value, closing, opening)
+            return tau*jnp.where(equilibrium > value, opening, closing)
+        else:
+            if self.mechanism == "Kv3_1":
+                return tau*np.where(equilibrium < value, closing, opening)
+            return tau*np.where(equilibrium > value, opening, closing)
     return rate
 
 

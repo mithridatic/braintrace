@@ -144,5 +144,7 @@ def init_h01_network_states(network, *, progress=None, heartbeat_seconds=60.):
         seconds[name] = time.perf_counter()-cell_started
         emit(f"Initialized {name} in {seconds[name]:.1f} s")
     network.init_state()
+    import gc
+    gc.collect()
     return dict(init_state_seconds=time.perf_counter()-started, init_seconds_by_population=seconds,
                 initialized_populations=list(seconds), peak_rss_mb=process_rss_mb(peak=True))

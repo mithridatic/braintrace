@@ -1,0 +1,26 @@
+{
+  "status": "registered before launch; untested",
+  "source_commit": "b46ee7d",
+  "cells": 104,
+  "control": "ei",
+  "dt_ms": 0.005,
+  "duration_ms": 10.0,
+  "current_na": 1.0,
+  "pulse_window_ms": [
+    2.0,
+    5.0
+  ],
+  "max_cv_um": 10.0,
+  "measured_anchor": {
+    "path": ".cache\\h01\\readiness\\104-ei-1ms-build.json",
+    "sha256": "1a0d4801228c85e27808639445eb34948e655440ae88ec4049f9cbc0fa89facc"
+  },
+  "projection_rule": "measured construction + initialization + 10 times compile-and-run + measured process overhead; memory 1.25 times measured peak plus 10 times trace array bytes",
+  "projected_total_seconds": 4673.661262900076,
+  "projected_peak_bytes": 18262754560.0,
+  "available_bytes_at_registration": 38017638400,
+  "wall_cap_seconds": 6000,
+  "silence_cap_seconds": 600,
+  "reserve_memory_bytes": 4294967296,
+  "qualification": "finite driven runtime only; matched controls, numerical refinement and physiology remain separate"
+}

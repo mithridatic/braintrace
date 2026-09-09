@@ -1,0 +1,32 @@
+{
+  "wall_cap_seconds": 1500,
+  "silence_cap_seconds": 600,
+  "status": "completed",
+  "pid": 32336,
+  "seconds": 245.7929842,
+  "exit_code": 0,
+  "started_utc": "2026-09-08T09:10:24.3034607Z",
+  "arguments": [
+    "-u",
+    "-m",
+    "examples.h01_verified_network",
+    "--topology",
+    "docs/evidence/h01-verified-network.json",
+    "--cache",
+    ".cache/h01",
+    "--solver",
+    "h01_staggered_scan",
+    "--include-isolated",
+    "--cells",
+    "40",
+    "--current-na",
+    "1",
+    "--components",
+    "docs/evidence/h01-population-components.json",
+    "--output",
+    "docs/evidence/h01-ready-40-build",
+    "--build",
+    "--control",
+    "ei"
+  ]
+}

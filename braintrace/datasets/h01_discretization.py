@@ -43,18 +43,49 @@ class BoundaryAlignedCV(CVPolicy):
         tuple
             Complete, ordered branch intervals without zero-length pieces.
         """
-        base_bounds = self.base.resolve_cv_bounds(morpho, paint_rules=paint_rules)
-        cuts = [{p for interval in branch for p in interval} for branch in base_bounds]
-        for branch, lo, hi in self.region.evaluate(morpho).intervals:
-            cuts[branch].update((lo, hi))
-        result = []
-        for branch_cuts in cuts:
+        cache = getattr(morpho, "_h01_cv_bounds_cache", None)
+        if cache is None:
+            cache = {}
+            try:
+                object.__setattr__(morpho, "_h01_cv_bounds_cache", cache)
+            except (AttributeError, TypeError):
+                pass
+        key = (id(self), id(paint_rules))
+        if key in cache:
+            return cache[key]
+
+        # Collect chain of BoundaryAlignedCV
+        policies = []
+        curr = self
+        while isinstance(curr, BoundaryAlignedCV):
+            policies.append(curr)
+            curr = curr.base
+        base_policy = curr
+
+        base_bounds = base_policy.resolve_cv_bounds(morpho, paint_rules=paint_rules)
+        modified_branches = {}
+        for p in policies:
+            region_intervals = p.region.evaluate(morpho).intervals
+            for branch, lo, hi in region_intervals:
+                if branch not in modified_branches:
+                    modified_branches[branch] = {pt for interval in base_bounds[branch] for pt in interval}
+                modified_branches[branch].update((lo, hi))
+
+        if not modified_branches:
+            cache[key] = base_bounds
+            return base_bounds
+
+        result = list(base_bounds)
+        for branch, branch_cuts in modified_branches.items():
             points = [0.]
             for point in sorted(branch_cuts):
                 # BrainCell requires normalized CV widths greater than 1e-9.
                 # Source coordinate roundoff can otherwise add a cut beside 1.
-                if point-points[-1] > 1e-9:
+                if point - points[-1] > 1e-9:
                     points.append(point)
             points[-1] = 1.
-            result.append(tuple(zip(points[:-1], points[1:])))
-        return tuple(result)
+            result[branch] = tuple(zip(points[:-1], points[1:]))
+
+        res_tuple = tuple(result)
+        cache[key] = res_tuple
+        return res_tuple

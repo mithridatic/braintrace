@@ -1,0 +1,14 @@
+{
+  "decision": "SCALAR_NUMERICAL_TESTS_PASS; NOT_YET_INTEGRATED",
+  "tests_passed": 27,
+  "new_kernel_tests": 22,
+  "existing_calcium_tests": 5,
+  "kernel_line_coverage_percent": 100,
+  "observed_failure_implicit_concentration_mM": 1.0563536991597979e-10,
+  "scope": "experimental backward-Euler kernel only; no cell or population runtime qualification",
+  "inputs": {
+    "braintrace/datasets/h01_calcium_implicit.py": "b64eededc51ac17b17836a43f1ccb72b8b3d3b6c65077968667b58e08d671a8a",
+    "braintrace/datasets/h01_calcium_implicit_test.py": "5e7e11813aaeec9dec05c63a7bb2e92875bdee7ab5891f8ebb13ab70281350fd",
+    ".cache/h01/readiness/calcium-implicit-coverage.json": "2af5bd67a2759ea2e98606c8abeeaf63d9a8b584442fca1fb70cb405afe1aeab"
+  }
+}

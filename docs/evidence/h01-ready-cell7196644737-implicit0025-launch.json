@@ -1,0 +1,26 @@
+{
+  "status": "completed",
+  "pid": 32228,
+  "started_utc": "2026-09-08T12:21:16.5819805Z",
+  "source_commit": "b46ee7d",
+  "plan": "h01-ready-cell7196644737-implicit0025-plan.json",
+  "arguments": [
+    "-u",
+    "-m",
+    "docs.evidence.h01_cell_implicit_observation",
+    "--dt-ms",
+    "0.0025",
+    "--output",
+    ".cache/h01/readiness/cell7196644737-implicit0025"
+  ],
+  "wall_cap_seconds": 600,
+  "silence_cap_seconds": 600,
+  "memory_reserve_bytes": 4294967296,
+  "available_bytes_at_launch": 37207146496,
+  "peak_tree_rss_bytes": 459026432,
+  "peak_counter_type": "Int64 on both Math.Max arguments",
+  "monitor_errors": 0,
+  "available_bytes_latest": 36759863296,
+  "exit_code": 0,
+  "seconds": 20.9607318
+}

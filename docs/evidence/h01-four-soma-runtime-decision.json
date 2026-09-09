@@ -1,0 +1,48 @@
+{
+  "verdict": "PASS",
+  "scope": "Four corrected components: finite 10 ms runtime and exact construction metadata; no full104, refinement, connectivity or physiological pass",
+  "input_hashes": {
+    ".cache\\h01\\readiness\\four-soma-runtime-build.json": "8561b6b27e4bf66ce574eccb3ae1713039bbd8a52114a21e9e89396c167a981a",
+    ".cache\\h01\\readiness\\four-soma-construction-build.json": "e66b8d70a735aff618ffb4be2b1bd125d26a9e2759cbde84db3723c1373f3858",
+    ".cache\\h01\\readiness\\four-soma-runtime-traces.npz": "b449ceff24d5638d381140958068499e23f9b1c476f0c6613507d3d4144e0823"
+  },
+  "duration_ms": 10,
+  "dt_ms": 0.000625,
+  "steps": 16000,
+  "arrays": 13,
+  "compile_and_run_seconds": 317.2939884000225,
+  "rows": [
+    {
+      "cell": "7196644737",
+      "events": 1,
+      "soma_min_mv": -84.22342252006536,
+      "soma_max_mv": 48.18193670183326,
+      "output_min_mv": -84.22342252006536,
+      "output_max_mv": 48.18193670183326
+    },
+    {
+      "cell": "4138580687",
+      "events": 1,
+      "soma_min_mv": -88.58659574994769,
+      "soma_max_mv": 48.7125572480348,
+      "output_min_mv": -88.58659574994769,
+      "output_max_mv": 48.7125572480348
+    },
+    {
+      "cell": "4668874666",
+      "events": 1,
+      "soma_min_mv": -86.26683837878127,
+      "soma_max_mv": 46.92253509777781,
+      "output_min_mv": -86.26683514896968,
+      "output_max_mv": 46.9217480446375
+    },
+    {
+      "cell": "3470629528",
+      "events": 0,
+      "soma_min_mv": -84.0450506522083,
+      "soma_max_mv": -59.09252516307346,
+      "output_min_mv": -84.04505052882405,
+      "output_max_mv": -59.093066779884616
+    }
+  ]
+}

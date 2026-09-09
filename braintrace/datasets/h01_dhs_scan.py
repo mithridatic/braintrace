@@ -18,8 +18,92 @@ import brainunit as u
 import jax.lax
 import jax.numpy as jnp
 import numpy as np
+from braincell._misc import is_traced_value
+from braincell.channel._base import HH
+from braincell.ion._base import DynamicNernstIon
+from braincell.quad import _exp_euler
 from braincell.quad import _staggered as original
 from braincell.quad import register_integrator
+
+
+def _install_fast_ind_exp_euler():
+    orig_fn = _exp_euler._ind_exp_euler_step_selected
+    if getattr(orig_fn, "_h01_fast", False):
+        return
+
+    def _fast_ind_exp_euler_step_selected(
+        target,
+        *args,
+        include_paths=(),
+        excluded_paths=(),
+        pre_integral=None,
+        compute_derivative=None,
+        post_integral=None,
+        allow_empty=False,
+    ):
+        if (
+            isinstance(target, HH)
+            and not include_paths
+            and not excluded_paths
+            and pre_integral is None
+            and compute_derivative is None
+            and post_integral is None
+        ):
+            dt = brainstate.environ.get("dt")
+            target.pre_integral(*args)
+            for gate in target._iter_gates():
+                phi = target.gate_phi(gate)
+                form = target._gate_form(gate)
+                state = target._gate_state(gate)
+                if form == "inf_tau":
+                    inf = getattr(target, f"f_{gate.name}_inf")(*args)
+                    tau = getattr(target, f"f_{gate.name}_tau")(*args)
+                    linear = -phi / (tau * u.ms)
+                    derivative = phi * (inf - state.value) / (tau * u.ms)
+                else:
+                    alpha = getattr(target, f"f_{gate.name}_alpha")(*args)
+                    beta = getattr(target, f"f_{gate.name}_beta")(*args)
+                    linear = -phi * (alpha + beta) / u.ms
+                    derivative = phi * (alpha * (1.0 - state.value) - beta * state.value) / u.ms
+                phi_eval = u.math.exprel(dt * linear)
+                state.value = state.value + dt * phi_eval * derivative
+            target.post_integral(*args)
+            return
+
+        if (
+            isinstance(target, DynamicNernstIon)
+            and not include_paths
+            and pre_integral is None
+            and compute_derivative is None
+            and post_integral is None
+        ):
+            ex = tuple(tuple(p) for p in excluded_paths)
+            if ("V",) in ex:
+                dt = brainstate.environ.get("dt")
+                target.pre_integral(*args)
+                target._ion_compute_derivative_hook(*args)
+                linear = -1.0 / target.decay
+                phi_eval = u.math.exprel(dt * linear)
+                target.Ci.value = target.Ci.value + dt * phi_eval * target.Ci.derivative
+                target.post_integral(*args)
+                return
+
+        return orig_fn(
+            target,
+            *args,
+            include_paths=include_paths,
+            excluded_paths=excluded_paths,
+            pre_integral=pre_integral,
+            compute_derivative=compute_derivative,
+            post_integral=post_integral,
+            allow_empty=allow_empty,
+        )
+
+    _fast_ind_exp_euler_step_selected._h01_fast = True
+    _exp_euler._ind_exp_euler_step_selected = _fast_ind_exp_euler_step_selected
+
+
+_install_fast_ind_exp_euler()
 
 
 def _prepare_levels(edges, offsets, sentinel):
@@ -33,7 +117,7 @@ def _prepare_levels(edges, offsets, sentinel):
         children[i, :count] = edges[offsets[i]:offsets[i+1], 0]
         parents[i, :count] = edges[offsets[i]:offsets[i+1], 1]
         valid[i, :count] = True
-    return children, parents, valid
+    return jnp.asarray(children), jnp.asarray(parents), jnp.asarray(valid)
 
 
 def _triang(diags, solves, lowers, uppers, levels):
@@ -48,18 +132,40 @@ def _triang(diags, solves, lowers, uppers, levels):
     l_raw = u.get_mantissa(lowers)
     u_raw = u.get_mantissa(uppers)
     children, parents, valid = levels
+    u_c = u_raw[children]
+    l_c = l_raw[children]
 
-    def level_step(carry, indices):
-        d, s = carry
-        c, p, v = indices
-        multiplier = u_raw[c] / d[:, c]
-        delta_d = jnp.where(v, -l_raw[c] * multiplier, 0.0)
-        delta_s = jnp.where(v, -s[:, c] * multiplier, 0.0)
-        d = d.at[:, p].add(delta_d)
-        s = s.at[:, p].add(delta_s)
-        return (d, s), None
+    is_1d = (d_raw.ndim == 1) or (d_raw.shape[0] == 1)
+    if is_1d:
+        d = d_raw.reshape(-1)
+        s = s_raw.reshape(-1)
 
-    (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid))
+        def level_step_1d(carry, indices):
+            d, s = carry
+            c, p, v, uc, lc = indices
+            multiplier = uc / d[c]
+            delta_d = jnp.where(v, -lc * multiplier, 0.0)
+            delta_s = jnp.where(v, -s[c] * multiplier, 0.0)
+            d = d.at[p].add(delta_d)
+            s = s.at[p].add(delta_s)
+            return (d, s), None
+
+        (d_out, s_out), _ = jax.lax.scan(level_step_1d, (d, s), (children, parents, valid, u_c, l_c))
+        d_out = d_out.reshape(d_raw.shape)
+        s_out = s_out.reshape(s_raw.shape)
+    else:
+        def level_step(carry, indices):
+            d, s = carry
+            c, p, v, uc, lc = indices
+            multiplier = uc / d[:, c]
+            delta_d = jnp.where(v, -lc * multiplier, 0.0)
+            delta_s = jnp.where(v, -s[:, c] * multiplier, 0.0)
+            d = d.at[:, p].add(delta_d)
+            s = s.at[:, p].add(delta_s)
+            return (d, s), None
+
+        (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid, u_c, l_c))
+
     res_d = u.Quantity(d_out, d_unit) if d_unit != u.UNITLESS else d_out
     res_s = u.Quantity(s_out, s_unit) if s_unit != u.UNITLESS else s_out
     return res_d, res_s
@@ -67,7 +173,6 @@ def _triang(diags, solves, lowers, uppers, levels):
 
 def _backsub(diags, solves, lowers, indices):
     """Apply the original recursive-doubling jumps in a compiled scan."""
-    original._check_comp_backsub(diags, solves, lowers, indices)
     d_unit = u.get_unit(diags)
     s_unit = u.get_unit(solves)
     d_raw = u.get_mantissa(diags)
@@ -88,18 +193,22 @@ def _backsub(diags, solves, lowers, indices):
 
 def _voltage_step(target, t, dt, *args):
     """Use the installed voltage assembly with the two compiled kernels."""
-    source = original._get_dhs_static_source(target, node_tree=target.node_tree,
-        scheduling=target.node_scheduling(algorithm="dhs"))
-    cache = original._get_dhs_static_cache(target, source)
-    stored = getattr(target._runtime, "h01_scan_levels", None)
-    if stored is None or stored[0] is not source:
-        stored = (source, _prepare_levels(source.edges_np, source.level_offsets_np, source.n_point))
-        target._runtime.h01_scan_levels = stored
+    runtime = getattr(target, "_runtime", None)
+    pack = getattr(runtime, "h01_dhs_pack", None)
+    if pack is None:
+        source = original._get_dhs_static_source(target, node_tree=target.node_tree,
+            scheduling=target.node_scheduling(algorithm="dhs"))
+        cache = original._get_dhs_static_cache(target, source)
+        levels = _prepare_levels(source.edges_np, source.level_offsets_np, source.n_point)
+        pack = (source, cache, levels)
+        if runtime is not None and not is_traced_value(cache.diag_ms_inv):
+            runtime.h01_dhs_pack = pack
+    source, cache, levels = pack
     linear, const = original._linear_and_const_term(target, target.V.value, *args)
     numeric = original._build_dhs_numeric_state(target.V.value, linear, const,
         dt=dt, static_source=source, static_cache=cache,
         edge_point_current=original._edge_point_current(target, t=t, static_source=source))
-    d, s = _triang(numeric.diags, numeric.solves, numeric.lowers, numeric.uppers, stored[1])
+    d, s = _triang(numeric.diags, numeric.solves, numeric.lowers, numeric.uppers, levels)
     solution = _backsub(d, s, numeric.lowers, source.backsub_indices_np)
     target.V.value = original._restore_midpoint_voltage(solution,
         dynamic_rows=source.dynamic_rows_np, target_shape=target.V.value.shape)

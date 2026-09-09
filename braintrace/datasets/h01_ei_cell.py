@@ -128,6 +128,8 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
         raise ValueError(f"Donor {donor} is {profile.polarity}, not {polarity}.")
     if solver == "h01_staggered_scan":
         from . import h01_dhs_scan  # Register only on explicit selection.
+    if solver == "h01_staggered_calcium_implicit":
+        from . import h01_calcium_solver  # Register only on explicit selection.
     if not isinstance(region_basis, str) or not region_basis.strip():
         raise ValueError("Provide the basis for the inferred electrical region map.")
     if (not np.isfinite([current_na, delay_ms, duration_ms, max_cv_length_um]).all()

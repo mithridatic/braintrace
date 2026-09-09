@@ -1,0 +1,173 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "parent": null,
+      "label": "Why is no H01 cell human-qualified?",
+      "status": "question",
+      "reference": "h01-population-status.md"
+    },
+    {
+      "id": "sim",
+      "parent": "root",
+      "label": "Simulator identity\nBrainCell = NEURON at matched mesh and dt",
+      "status": "closed",
+      "reference": "h01-i-transfer/sp2-close-decision.json"
+    },
+    {
+      "id": "dt",
+      "parent": "sim",
+      "label": "Residual is time step only\ndt <= 0.000625 ms at 0.27 nA",
+      "status": "closed",
+      "reference": "h01-i-transfer/sp2-close-decision.json"
+    },
+    {
+      "id": "dt019",
+      "parent": "sim",
+      "label": "0.19 nA step",
+      "status": "open",
+      "reference": "h01-i-transfer/sp2-close-decision.json"
+    },
+    {
+      "id": "e",
+      "parent": "root",
+      "label": "E cell (L2/3 pyramid, Allen donor)\nlow-drive gain: 4 vs 1 spikes at 200 pA",
+      "status": "fail",
+      "reference": "h01-e-gain/stage-close-decision.json"
+    },
+    {
+      "id": "e_g0",
+      "parent": "e",
+      "label": "SK / Ca with axonal Na site\nsufficient for late rate at 310 pA",
+      "status": "closed",
+      "reference": "h01-e-gain/stage-g0-decision.json"
+    },
+    {
+      "id": "e_g1",
+      "parent": "e",
+      "label": "Ih density\nleft 250 pA at 8 spikes",
+      "status": "eliminated",
+      "reference": "h01-e-gain/stage-g-decision.json"
+    },
+    {
+      "id": "e_g2",
+      "parent": "e",
+      "label": "Leak\nsets rheobase as a step, not a slope",
+      "status": "eliminated",
+      "reference": "h01-e-gain/stage-g-decision.json"
+    },
+    {
+      "id": "e_open",
+      "parent": "e",
+      "label": "Slow Na inactivation or Kv7/M kinetics\nabsent from the fit; second donor",
+      "status": "open",
+      "reference": "h01-e-gain/stage-close-decision.json"
+    },
+    {
+      "id": "i",
+      "parent": "root",
+      "label": "I cell (PV basket, HL5BN1 donor)\npost-trough burst and accommodation",
+      "status": "fail",
+      "reference": "h01-i-reserve/stage-1-decision.json"
+    },
+    {
+      "id": "i_kv3",
+      "parent": "i",
+      "label": "Somatic Kv3 close factor 2.0\nloop and trough within repeatability",
+      "status": "closed",
+      "reference": "h01-i-energetic/stage-f-decision.json"
+    },
+    {
+      "id": "i_soma_na",
+      "parent": "i",
+      "label": "Somatic Na availability\nh >= 0.7 at trough + 6 ms",
+      "status": "eliminated",
+      "reference": "h01-i-reserve/stage-0-decision.json"
+    },
+    {
+      "id": "i_axon_na",
+      "parent": "i",
+      "label": "Axonal NaTg density x1.5\nmoved cycle 2 by -0.126 ms",
+      "status": "eliminated",
+      "reference": "h01-i-reserve/stage-1-decision.json"
+    },
+    {
+      "id": "i_open",
+      "parent": "i",
+      "label": "Slow state after the trough",
+      "status": "open",
+      "reference": "h01-i-reserve/stage-1-decision.json"
+    },
+    {
+      "id": "circ",
+      "parent": "root",
+      "label": "Circuit",
+      "status": "question",
+      "reference": "h01-ie-inhibition/decision.json"
+    },
+    {
+      "id": "circ_inh",
+      "parent": "circ",
+      "label": "Functional inhibition at the measured pair\n0.003 mV at the E soma",
+      "status": "untested",
+      "reference": "h01-ie-inhibition/decision.json"
+    },
+    {
+      "id": "circ_syn",
+      "parent": "circ",
+      "label": "Synapse strength\n20 nS assumed vs 3.1 nS human median",
+      "status": "open",
+      "reference": "h01-ie-synapse-literature.json"
+    },
+    {
+      "id": "circ_conn",
+      "parent": "circ",
+      "label": "Connectivity\n12 synapses among 104 cells in the whole export",
+      "status": "closed",
+      "reference": "h01-full-export-join-progress.json"
+    },
+    {
+      "id": "pop",
+      "parent": "root",
+      "label": "104-cell population",
+      "status": "question",
+      "reference": "h01-104-corrected-construction-decision.json"
+    },
+    {
+      "id": "pop_build",
+      "parent": "pop",
+      "label": "Construction 519 s, 807,588 compartments",
+      "status": "closed",
+      "reference": "h01-104-corrected-construction-decision.json"
+    },
+    {
+      "id": "pop_init",
+      "parent": "pop",
+      "label": "Initialization 144 s",
+      "status": "closed",
+      "reference": "h01-104-corrected-initialization-decision.json"
+    },
+    {
+      "id": "pop_run",
+      "parent": "pop",
+      "label": "10 ms runtime\n16,000-step program, twice killed",
+      "status": "untested",
+      "reference": "h01-104-corrected-initialization-decision.json"
+    },
+    {
+      "id": "pop_donor",
+      "parent": "pop",
+      "label": "Donors for the other 102 cells\nL4 and SST fits not reproduced",
+      "status": "eliminated",
+      "reference": "h01-donors/stage-allen-l4-decision.json"
+    }
+  ],
+  "status_counts": {
+    "question": 3,
+    "closed": 7,
+    "eliminated": 5,
+    "fail": 2,
+    "untested": 2,
+    "open": 4
+  }
+}

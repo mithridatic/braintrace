@@ -14,6 +14,24 @@ from . import h01
 SOURCE = b"0 1 100 100 100 200 -1\n1 -1 200 100 100 100 0\n2 0 200 200 100 100 1\n"
 
 
+@pytest.mark.parametrize("branching", [False, True])
+def test_short_attachment_at_large_coordinates_preserves_cable(tmp_path, monkeypatch, branching):
+    source = (b"0 0 100000 100000 100000 100 -1\n"
+              b"1 0 100100 100000 100000 100 0\n"
+              b"2 0 100101 100000 100000 100 1\n"
+              b"3 0 100100 100100 100000 100 1\n")
+    if branching:
+        source += (b"4 0 100201 100000 100000 100 2\n"
+                   b"5 0 100101 100100 100000 100 2\n")
+    path, _ = _archive(tmp_path, monkeypatch, [("12.0.swc", source)])
+    result = h01.H01Archive(path).load(12, component=0)
+    lengths = np.concatenate([np.asarray(b.lengths.to_decimal(u.um))
+                              for b in result.morphology.branches])
+    assert lengths.sum() == pytest.approx(6.432 + (6.4 if branching else 0), abs=1e-9)
+    assert lengths.min() == pytest.approx(.032, abs=1e-9)
+    assert result.source_sha256 == hashlib.sha256(source).hexdigest()
+
+
 def _archive(tmp_path, monkeypatch, members=None):
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w") as archive:

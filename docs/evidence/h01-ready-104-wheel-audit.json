@@ -1,0 +1,144 @@
+{
+  "status": "wheel content and isolated imports passed",
+  "source_commit": "4edb51b5bad26d73ee78b2b7161ba9e0061bf186",
+  "wheel": {
+    "path": ".cache\\h01\\readiness\\wheelhouse-4edb51b\\braintrace-0.2.5-py3-none-any.whl",
+    "sha256": "e6d83ac20ed27e43e8b38b883053cf9f89d722f9c23ceeb4b1604b8e32458bc2"
+  },
+  "snapshot": {
+    "path": ".cache\\h01\\readiness\\wheel-source-4edb51b.zip",
+    "sha256": "500c60268bb40143eee522ff8456f366c45e4da40ae02f8734f9ba7707c03138"
+  },
+  "installed_target": ".cache\\h01\\readiness\\wheel-install-4edb51b",
+  "package_files_exactly_match_snapshot_and_install": 106,
+  "h01_modules_imported": 31,
+  "modules": {
+    "braintrace.datasets._h01_ei_parameters": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\_h01_ei_parameters.py",
+      "sha256": "9c9e1e33657250e7433fdf06292b3438f0f78496b66483432d31b295afc6e91b"
+    },
+    "braintrace.datasets._h01_reader": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\_h01_reader.py",
+      "sha256": "0ac9e08ba13cbb907a6728a7589ee90409e35bd61203899c813c4fc5edb9476a"
+    },
+    "braintrace.datasets._h01_swc": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\_h01_swc.py",
+      "sha256": "0635bf20ee869d37fab08c8bde7a72a32936e476deb6c343e16f03161428ae89"
+    },
+    "braintrace.datasets.h01": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01.py",
+      "sha256": "694a4fa3a05b9beddf193a9404136cf9d0a6c668027a6b3f10f9f037b8266c1d"
+    },
+    "braintrace.datasets.h01_active": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_active.py",
+      "sha256": "ef251e647f3b6dd20cd0c8146f7eb4fe85a811fa26356aa74442587b4b53abe2"
+    },
+    "braintrace.datasets.h01_anatomy": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_anatomy.py",
+      "sha256": "95770952cec45f3fc6f531049bbf735529ce3d934a1e8da1bfbd2333f5df7261"
+    },
+    "braintrace.datasets.h01_annotated_demo": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_annotated_demo.py",
+      "sha256": "f0316a45c606ac0cdef4b2169b87f3f08d647ca3e13169ea8286320b3d7d7791"
+    },
+    "braintrace.datasets.h01_annotations": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_annotations.py",
+      "sha256": "4b91aa96e0841b10ae93ca8533696844aad00f6f6c94602feb1c4281fda78c20"
+    },
+    "braintrace.datasets.h01_cell_types": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_cell_types.py",
+      "sha256": "72cad4cf0ef0690d9ad14415f147bb41841adde19a00110a6ca8352683a5e179"
+    },
+    "braintrace.datasets.h01_channels": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_channels.py",
+      "sha256": "56410139a0838b6230d072a748e0572f22f16cf27b0563cfcc9175a22692f585"
+    },
+    "braintrace.datasets.h01_connectivity": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_connectivity.py",
+      "sha256": "bfc0d3717df6c5d51b9eeac0b45ec0d79fa617f7b63f959b7e8227134238f1d1"
+    },
+    "braintrace.datasets.h01_construction": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_construction.py",
+      "sha256": "9438db9d615db448381aa1e2b35c7d85a356c444afdec8ae156dbe5f24d06938"
+    },
+    "braintrace.datasets.h01_demo": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_demo.py",
+      "sha256": "badd19e18f2bda585f7518f2031c80d0d461cfead9aa15f91039e06f0b2e7f0f"
+    },
+    "braintrace.datasets.h01_dhs_scan": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_dhs_scan.py",
+      "sha256": "7603431a7704dd81f4643d9308ed7553a0ae7f82ce287339d0354226a30ac8c0"
+    },
+    "braintrace.datasets.h01_discretization": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_discretization.py",
+      "sha256": "7b71aee75b38c735d4516cab1fc88839b99ce7d66fb1f364d6e2f3d922eec79f"
+    },
+    "braintrace.datasets.h01_ei_cell": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_ei_cell.py",
+      "sha256": "673c723d0e98de71c33db4df525d363ec71ec1d15510f77263ffd6f29ab8667b"
+    },
+    "braintrace.datasets.h01_ei_circuit": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_ei_circuit.py",
+      "sha256": "eb8a49f027360ebe148736581ec7fc18bd2dfd52575eefba3e8aa8237aed2677"
+    },
+    "braintrace.datasets.h01_ei_profiles": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_ei_profiles.py",
+      "sha256": "4479f1897452479d529a20e444aa4437432194da9eb7cf14d28400662bb0b38d"
+    },
+    "braintrace.datasets.h01_l2_cell": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_l2_cell.py",
+      "sha256": "6b97996a20230df16f4bdb5479a14a7a9e1842d85467d0bd0d7a49521ff61764"
+    },
+    "braintrace.datasets.h01_l2_channels": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_l2_channels.py",
+      "sha256": "a9a301d398d87534dc897ee07936215647a857bd46104528002c1ceb8053231a"
+    },
+    "braintrace.datasets.h01_measured_contact": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_measured_contact.py",
+      "sha256": "fa9e4a47460f4618ec2d7eea40d0b612d71df169d74c63ed649ead20b108fa06"
+    },
+    "braintrace.datasets.h01_network": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_network.py",
+      "sha256": "e8bfdaa769d7264904e39a12a7059d0fad7a33838a692dec95b1885cb5e75fa5"
+    },
+    "braintrace.datasets.h01_network_init": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_network_init.py",
+      "sha256": "96246475c4d392e57192ab899aa6b184858feb7e034afdce1cc4a727e2c3c2da"
+    },
+    "braintrace.datasets.h01_pv_calcium": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_pv_calcium.py",
+      "sha256": "f836566196fe8b4eb366ede8f5637a12c10b2e05988524a1deb0dc7cfa8d6188"
+    },
+    "braintrace.datasets.h01_pv_cell": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_pv_cell.py",
+      "sha256": "62b60b5c753fde237ff338da4aebb633d5109abf67a3aadf75666b29ddf01a4e"
+    },
+    "braintrace.datasets.h01_pv_channels": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_pv_channels.py",
+      "sha256": "6e5cc684d7df9ba7748dfde192cb5cdcbbc388f16f8bf933b41093213914ef1e"
+    },
+    "braintrace.datasets.h01_pv_morphology": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_pv_morphology.py",
+      "sha256": "f0e43458d93fc905b29e9b69bce77a24ef4bebbfeae568006cabeba7e7e2ac68"
+    },
+    "braintrace.datasets.h01_pv_rates": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_pv_rates.py",
+      "sha256": "bcd1f663c22cdb1177444b7a66620a67efe1293476581186415f8ce315799c94"
+    },
+    "braintrace.datasets.h01_reference": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_reference.py",
+      "sha256": "98d063ca2bdf65f36ea6380d9af2956d4b7f0f1849ef090cdef67b0dfc30981b"
+    },
+    "braintrace.datasets.h01_spike_output": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_spike_output.py",
+      "sha256": "ed440a946a9993314977469001d1c212d71af39b95cb826b7db19e72ce3944cd"
+    },
+    "braintrace.datasets.h01_wilbers": {
+      "installed_path": ".cache\\h01\\readiness\\wheel-install-4edb51b\\braintrace\\datasets\\h01_wilbers.py",
+      "sha256": "d26c915b599ab2fa813b89be041afd01dbf11e4e7834f30e574d4df98d3008c0"
+    }
+  },
+  "isolation": "Python -I; only explicit wheel target prepended; existing dependency site-packages retained",
+  "full_population_installed_execution": "pending",
+  "physiology_qualified": false
+}
