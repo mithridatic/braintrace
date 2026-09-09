@@ -96,3 +96,14 @@ Comparison script .cache/h01/readiness/check-corrected-104-r2.py: all nine check
 PASS (100 unchanged cells match the r2 reference, four corrected cells match their
 separate build). Decision overwritten: docs/evidence/h01-104-corrected-construction-decision.json.
 Construction only. Initialization, runtime, controls and installed execution still open.
+
+## 2026-09-08 21:28 local: corrected all104 init PASS, runtime UNTESTED_TIMEOUT
+
+User-tab run of the full corrected command at dt 0.000625: construction 291 s, init_state
+144 s (PASS, docs/evidence/h01-104-corrected-initialization-decision.json), then compile and
+run stopped by the wrapper after >1365 s with no traces file. Runtime remains untested; the
+16,000-step single-program configuration has now failed twice (r2 and this). Next runtime
+attempt should use --dt-ms 0.005 (2,000 steps) under a 3600 s cap, or chunk the run loop.
+The old-selection r2 runtime job is also dead with no traces (worker gone, last heartbeat
+19195 s): record as untested. Connectivity full-export scan delegated to an agent; see
+docs/specs/2026-09-08-h01-full-export-connectivity.md when it lands.

@@ -1,0 +1,19 @@
+{
+  "verdict": "PASS",
+  "scope": "Corrected all104 initialization only (init_state); compiled runtime UNTESTED_TIMEOUT",
+  "build_json": ".cache/h01/readiness/104-corrected-ei-10ms-build.json",
+  "execution": "constructed and initialized; not compiled or simulated",
+  "construction_seconds": 291.16549490002217,
+  "init_state_seconds": 144.22292240004754,
+  "init_peak_rss_mb": 9349.3359375,
+  "cells": 104,
+  "compartments": 807588,
+  "runtime": {
+    "verdict": "UNTESTED_TIMEOUT",
+    "dt_ms": 0.000625,
+    "duration_ms": 10,
+    "steps": 16000,
+    "note": "compile and run exceeded ~1365 s before the tab wrapper stopped it (~1800 s total); no traces file; same configuration as r2 which ran 19195 s without output"
+  },
+  "launched": "2026-09-08 21:28 local, user tab, no external cap record"
+}
