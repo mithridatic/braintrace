@@ -41,4 +41,4 @@ with the family that varies most (range of family means within the parent family
 
 ## Out of scope
 
-No simulation is run, no network code or topology changes, no new physiology claim.
+No network code or topology changes and no new physiology claim. The only simulations are the six single-cell reruns for the multivari charts.
