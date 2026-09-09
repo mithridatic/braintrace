@@ -26,8 +26,10 @@ def _geometry_signature(morphology):
         return None
     cached = getattr(morphology, "_h01_geom_sig", None)
     if cached is not None:
+        if isinstance(cached, str):
+            return cached
         cached_sig, n_b, n_e = cached
-        if len(morphology.branches) == n_b and len(morphology.edges) == n_e:
+        if len(morphology._nodes) == n_b:
             return cached_sig
     digest = hashlib.sha256()
     branches = morphology.branches
@@ -49,7 +51,7 @@ def _geometry_signature(morphology):
         digest.update(str((indices[id(edge.parent)], indices[id(edge.child)], edge.parent_x, edge.child_x)).encode())
     sig = digest.hexdigest()
     try:
-        morphology._h01_geom_sig = (sig, len(branches), len(morphology.edges))
+        morphology._h01_geom_sig = (sig, len(morphology._nodes), len(morphology._nodes) - 1)
     except (AttributeError, TypeError):
         pass
     return sig
@@ -122,17 +124,30 @@ class H01Anatomy:
         rows = imported.source_rows
         xyz = rows[:, 2:5] * POSITION_UM
         xyz_round = np.round(xyz, 6)
-        keys = [tuple(p) for p in xyz_round]
+        keys = [tuple(p) for p in xyz_round.tolist()]
         if len(set(keys)) != len(keys):
             raise ValueError("Coincident source points make annotation identity ambiguous.")
         lookup = dict(zip(keys, range(len(rows))))
         self._labels = np.array([_label(c) for c in rows[:, 1]])
         self._nodes = {}
-        starts, ends, branch_ids, fractions, endpoints = [], [], [], [], []
-        expected_edges = {frozenset((int(r[0]), int(r[6]))) for r in rows if r[6] != -1}
+        expected_edges = {(int(r[0]), int(r[6])) if int(r[0]) < int(r[6]) else (int(r[6]), int(r[0]))
+                          for r in rows if r[6] != -1}
         actual_edges = []
         row_nodes = rows[:, 0].astype(int)
-        for branch_index, view in enumerate(self.morphology.branches):
+
+        branches_views = list(self.morphology.branches)
+        total_segments = sum(
+            len(v.branch.lengths.mantissa if isinstance(v.branch.lengths, u.Quantity) else v.branch.lengths)
+            for v in branches_views
+        )
+        starts = np.empty((total_segments, 3), dtype=np.float64)
+        ends = np.empty((total_segments, 3), dtype=np.float64)
+        branch_ids = np.empty(total_segments, dtype=np.int32)
+        fractions = np.empty((total_segments, 2), dtype=np.float64)
+        endpoints = np.empty((total_segments, 2), dtype=np.int32)
+
+        seg_offset = 0
+        for branch_index, view in enumerate(branches_views):
             branch = view.branch
             if (isinstance(branch.lengths, u.Quantity) and branch.lengths.unit == u.um
                     and isinstance(branch.lengths.mantissa, np.ndarray) and branch.lengths.mantissa.dtype == np.float64):
@@ -142,7 +157,8 @@ class H01Anatomy:
             l_sum = lengths.sum()
             if l_sum <= 0:
                 raise ValueError("Annotation mapping requires positive cable length.")
-            bounds = np.empty(len(lengths) + 1, dtype=float)
+            n_seg = len(lengths)
+            bounds = np.empty(n_seg + 1, dtype=float)
             bounds[0] = 0.0
             bounds[1:] = np.cumsum(lengths) / l_sum
             # Pairwise sum and cumulative sum can round differently. A source
@@ -163,10 +179,16 @@ class H01Anatomy:
 
             p_rnd = np.round(proximal, 6)
             q_rnd = np.round(distal, 6)
-            p_keys = [tuple(v) for v in p_rnd]
-            q_keys = [tuple(v) for v in q_rnd]
+            p_keys = [tuple(v) for v in p_rnd.tolist()]
+            q_keys = [tuple(v) for v in q_rnd.tolist()]
 
-            for j in range(len(proximal)):
+            starts[seg_offset:seg_offset + n_seg] = proximal
+            ends[seg_offset:seg_offset + n_seg] = distal
+            branch_ids[seg_offset:seg_offset + n_seg] = branch_index
+            fractions[seg_offset:seg_offset + n_seg, 0] = bounds[:-1]
+            fractions[seg_offset:seg_offset + n_seg, 1] = bounds[1:]
+
+            for j in range(n_seg):
                 try:
                     a = lookup[p_keys[j]]
                     b = lookup[q_keys[j]]
@@ -174,27 +196,30 @@ class H01Anatomy:
                     raise ValueError("Morphology endpoints do not match H01 source samples.") from exc
                 ra = row_nodes[a]
                 rb = row_nodes[b]
-                actual_edges.append(frozenset((ra, rb)))
+                actual_edges.append((ra, rb) if ra < rb else (rb, ra))
                 if ra not in self._nodes:
                     self._nodes[ra] = (branch_index, float(bounds[j]))
                 if rb not in self._nodes:
                     self._nodes[rb] = (branch_index, float(bounds[j + 1]))
-                starts.append(proximal[j])
-                ends.append(distal[j])
-                branch_ids.append(branch_index)
-                fractions.append((bounds[j], bounds[j + 1]))
-                endpoints.append((a, b))
+                endpoints[seg_offset + j, 0] = a
+                endpoints[seg_offset + j, 1] = b
+            seg_offset += n_seg
+
         if len(actual_edges) != len(expected_edges) or set(actual_edges) != expected_edges:
             raise ValueError("Morphology edges do not preserve the source tree.")
-        self._starts, self._ends = np.asarray(starts), np.asarray(ends)
-        self._branches, self._fractions = np.asarray(branch_ids), np.asarray(fractions)
-        self._endpoints = np.asarray(endpoints)
+        self._starts = starts
+        self._ends = ends
+        self._branches = branch_ids
+        self._fractions = fractions
+        self._endpoints = endpoints
         self._vectors = self._ends - self._starts
         self._length2 = np.sum(self._vectors**2, axis=1)
         self._lengths = np.sqrt(self._length2)
         self._row_id_to_index = {int(row[0]): i for i, row in enumerate(rows)}
         self._adjacency = [[] for _ in rows]
-        for (a, b), length in zip(self._endpoints, self._lengths):
+        for idx in range(total_segments):
+            a, b = int(endpoints[idx, 0]), int(endpoints[idx, 1])
+            length = float(self._lengths[idx])
             self._adjacency[a].append((b, length))
             self._adjacency[b].append((a, length))
 

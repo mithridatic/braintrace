@@ -11,6 +11,7 @@ import numpy as np
 
 from .h01 import ARCHIVE_SHA256, H01Archive
 from .h01_annotations import H01Annotations
+from ._h01_swc import _parse_swc_bytes
 
 
 def cell_sign(tags):
@@ -105,7 +106,7 @@ def _nearest_component(archive, cell_id, point):
         for component in archive.components(cell_id):
             name = f"{cell_id}.{component}.swc"
             raw = source.read(name)
-            rows = np.loadtxt(io.BytesIO(raw), ndmin=2)
+            rows = _parse_swc_bytes(raw)
             lookup = {int(r[0]): i for i, r in enumerate(rows)}
             children = np.flatnonzero(rows[:, 6] != -1)
             if not len(children):

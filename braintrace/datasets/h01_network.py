@@ -351,7 +351,13 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
             network.add_edges(name=name, pre="cell_"+edge["pre_cell"], post="cell_"+edge["post_cell"], method=pairs([(0, 0)]))
             network.add_projection(name=name, edges=name, synapse=name,
                                    weight=edge["weight_us"]*u.uS, delay=delay_ms*u.ms)
-    emit(f"Construction complete: {len(cells_built)} cells, {len(network.projections)} projections")
+    imported.clear()
+    locations.clear()
+    source_sites.clear()
+    cells_built.clear()
+    import gc
+    gc.collect()
+    emit(f"Construction complete: {len(records)} cells, {len(network.projections)} projections")
     return network, dict(nodes=deepcopy(topology["nodes"]), simulated_cell_ids=identities, cell_order=order,
         cells=records, donors=donors, contacts=edge_records, blocked_contacts=blocked,
         control=control, disconnected=control == "disconnected",

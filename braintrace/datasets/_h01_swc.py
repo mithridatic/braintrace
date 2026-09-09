@@ -11,9 +11,20 @@ POSITION_UM = np.array([0.032, 0.032, 0.033])
 RADIUS_UM = 0.001
 
 
+def _parse_swc_bytes(source: bytes):
+    lines = [line for line in source.splitlines() if line and not line.startswith(b'#')]
+    if not lines:
+        return np.empty((0, 7), dtype=np.float64)
+    text = b' '.join(lines)
+    data = np.fromstring(text.decode('ascii'), sep=' ', dtype=np.float64)
+    if data.size % 7 != 0:
+        raise ValueError("H01 component must contain seven finite columns.")
+    return data.reshape(-1, 7)
+
+
 def normalize(source: bytes):
     """Return raw rows and an SWC with physical geometry and neutral labels."""
-    rows = np.loadtxt(io.BytesIO(source), ndmin=2)
+    rows = _parse_swc_bytes(source)
     if rows.shape[1] != 7 or not len(rows) or not np.isfinite(rows).all():
         raise ValueError("H01 component must contain seven finite columns.")
     integer_columns = rows[:, [0, 1, 6]]

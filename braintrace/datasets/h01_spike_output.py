@@ -44,7 +44,7 @@ def restrict_spike_output(cell, location):
         raise ValueError("A single source location is required for circuit output.")
     branch, x = points[0]
     candidates = [cv for cv in cell.cvs if cv.branch_id == branch and
-                  float(cv.area.to_decimal(u.um**2)) > 0.]
+                  (cv.area.mantissa if isinstance(cv.area, u.Quantity) else float(cv.area)) > 0.]
     if not candidates:
         raise ValueError("The source branch has no membrane CV for output.")
     cv = min(candidates, key=lambda item: (abs((item.prox+item.dist)/2-x), item.id))

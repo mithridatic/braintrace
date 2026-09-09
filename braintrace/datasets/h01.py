@@ -115,9 +115,17 @@ class H01Component:
             Source-labelled selections for this morphology, with explicit
             inference policies and distance-checked spatial projection.
         """
+        cached = getattr(self, "_cached_anatomy", None)
+        if cached is not None:
+            return cached
         from .h01_anatomy import H01Anatomy
 
-        return H01Anatomy(self)
+        cached = H01Anatomy(self)
+        try:
+            object.__setattr__(self, "_cached_anatomy", cached)
+        except (AttributeError, TypeError):
+            pass
+        return cached
 
     @property
     def provenance(self):
@@ -138,6 +146,106 @@ class H01Component:
             "electrical_properties": "not supplied by H01",
             "attribution": ATTRIBUTION,
         }
+
+
+_GLOBAL_LOADED_COMPONENTS = {}
+
+
+def _fast_build_morpho_from_text(converted_text: str, filename: str):
+    import brainunit as u
+    import numpy as np
+    from braincell import Morphology, Branch
+    from braincell.morph import MorphoBranch
+    from braincell.io.swc.reader import _SwcContext, _SwcRawRow, apply_swc_rules
+    from braincell.io.swc.types import SwcReadOptions
+    from ._h01_reader import _H01Reader
+
+    reader = _H01Reader(SwcReadOptions(mode="neuromorpho"))
+    context = _SwcContext(
+        path=Path(filename),
+        options=reader.options,
+        use_corrections=reader.options.standardize_safe_fixes,
+        mark_fix_applied=True,
+    )
+    raw_rows = []
+    for line_number, raw_line in enumerate(converted_text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        raw_rows.append(_SwcRawRow(fields=tuple(line.split()), line_number=line_number))
+    context.raw_rows = raw_rows
+    apply_swc_rules(context)
+    reader._build_graph_index(context)
+    branches = reader._extract_branches(
+        context.rows,
+        context.nodes,
+        context.children,
+        context.root_id,
+        context.contour_soma_ids,
+    )
+
+    n_branches = len(branches)
+    morpho = Morphology.__new__(Morphology)
+    morpho._nodes = {}
+    morpho._name_to_id = {}
+    morpho._type_name_counters = {"custom": n_branches}
+    morpho._next_id = n_branches
+    morpho._root_name = "custom_0"
+    morpho._root_id = 0
+
+    nodes = context.nodes
+
+    for branch_index, b_info in enumerate(branches):
+        name = f"custom_{branch_index}"
+        p_ids = list(b_info.point_ids)
+        pts = [[nodes[nid].x, nodes[nid].y, nodes[nid].z] for nid in p_ids]
+        rads = [float(nodes[nid].radius) for nid in p_ids]
+
+        if b_info.attach is not None:
+            att_pt, att_rad = reader._attach_geometry(b_info.attach, nodes)
+            first_pt = pts[0]
+            if (not np.array_equal(first_pt, att_pt) and np.allclose(first_pt, att_pt)) or not np.allclose(first_pt, att_pt) or not np.isclose(rads[0], float(att_rad)):
+                pts.insert(0, list(att_pt))
+                rads.insert(0, float(att_rad))
+
+        pts_arr = np.asarray(pts, dtype=np.float64)
+        rads_arr = np.asarray(rads, dtype=np.float64)
+
+        pts_prox = pts_arr[:-1]
+        pts_dist = pts_arr[1:]
+        diff = pts_dist - pts_prox
+        lens = np.sqrt(np.sum(diff * diff, axis=1))
+
+        r_prox = rads_arr[:-1]
+        r_dist = rads_arr[1:]
+
+        br = Branch.__new__(Branch)
+        object.__setattr__(br, "lengths", u.Quantity(lens, u.um))
+        object.__setattr__(br, "radii_proximal", u.Quantity(r_prox, u.um))
+        object.__setattr__(br, "radii_distal", u.Quantity(r_dist, u.um))
+        object.__setattr__(br, "points_proximal", u.Quantity(pts_prox, u.um))
+        object.__setattr__(br, "points_distal", u.Quantity(pts_dist, u.um))
+        object.__setattr__(br, "type", "custom")
+
+        parent_id = None if branch_index == 0 else b_info.parent_index
+        parent_x = None if branch_index == 0 else float(reader._attachment_x(branches[parent_id], b_info.attach, nodes))
+        child_x = 0.0
+
+        node = MorphoBranch(
+            morpho,
+            branch_index,
+            name=name,
+            branch=br,
+            parent_id=parent_id,
+            parent_x=parent_x,
+            child_x=child_x,
+        )
+        morpho._nodes[branch_index] = node
+        morpho._name_to_id[name] = branch_index
+        if parent_id is not None:
+            morpho._nodes[parent_id]._children[name] = branch_index
+
+    return morpho, context.report
 
 
 class H01Archive:
@@ -234,17 +342,17 @@ class H01Archive:
         from ._h01_reader import _H01Reader
 
         name = self._members[(str(neuron_id), component)]
+        cache_key = (str(self.path), str(neuron_id), int(component))
+        if cache_key in _GLOBAL_LOADED_COMPONENTS:
+            return _GLOBAL_LOADED_COMPONENTS[cache_key]
         _verify(self.path)
         with zipfile.ZipFile(self.path) as archive:
             source = archive.read(name)
         rows, converted = normalize(source)
-        with tempfile.TemporaryDirectory(prefix="braintrace-h01-") as temporary:
-            path = Path(temporary) / name
-            path.write_text(converted, encoding="utf-8")
-            morphology, report = _H01Reader(
-                SwcReadOptions(mode="neuromorpho"),
-            ).read(path, return_report=True)
-        return H01Component(
+        morphology, report = _fast_build_morpho_from_text(converted, name)
+        comp = H01Component(
             str(neuron_id), component, morphology, rows, converted, report,
             hashlib.sha256(source).hexdigest(),
         )
+        _GLOBAL_LOADED_COMPONENTS[cache_key] = comp
+        return comp
