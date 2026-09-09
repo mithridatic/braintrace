@@ -1,14 +1,27 @@
 {
-  "exit_code": 124,
-  "seconds": 2400.063509700005,
-  "status": "timeout; no construction pass",
-  "remaining_workers_stopped_after_launcher_timeout": [],
-  "registered_cells": 95,
-  "last_log_lines": [
-    "[2138.6s] Discretizing cell 5015035926 and selecting its output site",
-    "[2326.6s] Registered cell 5015035926: 17792 compartments",
-    "[2326.6s] Discretizing cell 620880207 and selecting its output site"
-  ],
-  "verdict": "UNTESTED_TIMEOUT",
-  "scope": "Corrected full construction incomplete; no runtime verdict"
+  "verdict": "PASS",
+  "scope": "Corrected all104 electrical construction (rerun r2, 2026-09-08 19:03 local, exit 0); no initialization or runtime verdict",
+  "run_log": ".cache\\h01\\readiness\\104-corrected-soma-construction-r2.log",
+  "prior_attempt": "UNTESTED_TIMEOUT at 2400 s, 95 cells (superseded by this rerun)",
+  "checks": {
+    "all104": true,
+    "cell_records": true,
+    "contacts": true,
+    "nodes": true,
+    "donors": true,
+    "selection": true,
+    "order": true,
+    "construction_only": true,
+    "compartments": true
+  },
+  "input_hashes": {
+    ".cache\\h01\\readiness\\104-corrected-soma-construction-r2-build.json": "0eeab6799472a3727fe18552d3c36708a3f1c3abec35430b4a5505dcf51cdcc5",
+    ".cache\\h01\\readiness\\104-implicit-r2-construction-reference.json": "65be385b8c5357ca4de3b2ef4286b464971bda17af452f6c92f428f555cc08ad",
+    ".cache\\h01\\readiness\\four-soma-construction-build.json": "e66b8d70a735aff618ffb4be2b1bd125d26a9e2759cbde84db3723c1373f3858",
+    "docs\\evidence\\h01-population-components-soma.json": "a4b228d0427780075ed674926ce0d0ba2b311524cb43ece23d0cedee8c0c9f35"
+  },
+  "construction_seconds": 519.2995552000066,
+  "compartments": 807588,
+  "cells": 104,
+  "contacts": 2
 }

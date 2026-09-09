@@ -78,7 +78,7 @@ For packaging use a package-only git archive, await completion, then extract/bui
 Do not archive the entire evidence-heavy repository. Preserve unrelated untracked
 campaign JSON, profiles, 40-cell records and the live r2 launch record.
 
-## New terminal update
+## Terminal update (superseded, see below)
 
 Corrected all104 construction is STOPPED: exit124 after 2400 seconds, 95 cells
 registered; no complete build artifact. Automatic comparison session13397 ended
@@ -86,3 +86,13 @@ with refusal on the nonzero exit. Decision is UNTESTED_TIMEOUT in
 h01-104-corrected-construction-decision.json. No matching worker remained at the
 post-timeout check. Do not treat the active-construction snapshot above as current.
 The older runtime is a separate job; inspect it independently. No retry launched.
+
+## Rerun 2026-09-08 19:03 local: corrected all104 construction PASS
+
+Relaunched build-only on an idle machine (PID 15272, no cap wrapper): exit 0 in
+519 s, 104 cells, 807,588 compartments, 2 projections. Outputs at
+.cache/h01/readiness/104-corrected-soma-construction-r2-{build.json,npz,log}.
+Comparison script .cache/h01/readiness/check-corrected-104-r2.py: all nine checks
+PASS (100 unchanged cells match the r2 reference, four corrected cells match their
+separate build). Decision overwritten: docs/evidence/h01-104-corrected-construction-decision.json.
+Construction only. Initialization, runtime, controls and installed execution still open.
