@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flyingLogic majorVersion="5" minorVersion="0">
+<domains><domain><attributes><attribute class="java.lang.String" key="name">H01 Topographic Search</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute></attributes>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000001</attribute><attribute class="java.lang.String" key="name">Overview</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.84" green="0.9" blue="0.98"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="rectangle"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000002</attribute><attribute class="java.lang.String" key="name">Answered Yes</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.8" green="0.94" blue="0.85"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000003</attribute><attribute class="java.lang.String" key="name">Answered No</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.99" green="0.84" blue="0.82"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000004</attribute><attribute class="java.lang.String" key="name">Open</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="1" green="0.94" blue="0.73"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000005</attribute><attribute class="java.lang.String" key="name">Inconclusive</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.9" green="0.85" blue="0.98"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000006</attribute><attribute class="java.lang.String" key="name">Blocked</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.87" green="0.88" blue="0.91"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000007</attribute><attribute class="java.lang.String" key="name">Outcome</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.96" green="0.96" blue="0.96"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="rectangle"/></attribute></attributes></entityClass>
+</domain></domains>
+<displaySettings addEntityAsSuccessor="true" bias="Bias.start" confidenceVisible="false" edgeNotesVisible="true" edgeWeightsVisible="false" noteNumbersVisible="false" orientation="Orientation.leftToRight"/>
+<documentInfo author="" comments="Current diagnosis. Yes/No are predicates, not physiological verdicts. Evidence snapshot 2026-09-09, base 34ca482." keywords="H01 topographic search human reference" title="H01 human-reference topographic search"/>
+<decisionGraph><entityOperator class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator"><fuzzyOr/></entityOperator><defaultJunctorOperator class="com.flyinglogic.logicgraph.operator.FuzzyAndVertexOperator"><fuzzyAnd/></defaultJunctorOperator><logicGraph><operatorFamily class="com.flyinglogic.decisiongraph.DecisionGraphOperatorFamily"/><graph majorVersion="1" minorVersion="0" supportsGroups="true"><vertices>
+<vertex eid="1"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Overview" uuid="fa010909-0000-4000-8000-000000000001"/></attribute><attribute class="java.lang.String" key="title">H01 | Measured contacts and circuit function</attribute><attribute class="java.lang.String" key="note">Current diagnosis; donor response, transfer, circuit and population subtrees can be active simultaneously.
+
+Exact count; 1 ms timing and recovery delays; 1 mV voltage; 0.05 ms spike phases. No trace alignment or pooled override. Usable-tier separate.
+
+Released/spent: I 0.23 nA; E sweeps 53 and 55. Still sealed in this snapshot: E sweep 54 (330 pA), I Noise1 sweep 48. No holdout opened by this artifact.
+
+No simulations, fitting, morphology edits, or revival of stopped campaigns. Open/blocked leaves require separately registered and bounded experiments.
+
+Legend: YES/NO = answered predicate, not physiological pass/fail. OPEN = valid question awaiting evidence; INCONCLUSIVE = attempted but no answer; BLOCKED = prerequisite or campaign boundary. Gray outcome boxes are conditional, not selected answers.
+
+Overview links are navigation, not causal exclusions. Open the companion Markdown for the linked source index.
+
+p014.md: Topographic diagnosis asks what is happening; do not begin with a root-cause label.
+p018.md-p021.md: Binary questions cover all remaining possibilities and are quick, unambiguous and cheap; do not repeat the same split consecutively.
+p035.md, p041.md: Retain the search as an explicit tree; classify the observation before selecting the decomposition.
+p144.md: Functional Isolation: split the serial path and ask at which boundary the contrast remains.
+p182.md-p183.md, p188.md, p192.md-p194.md: Structural Dissection: retain the complementary subsystem, interactions, and each written split.
+p022.md, p074.md: Distinguish physical/mathematical constraints from man-made requirements. Use voltage/current and charge balance at electrical boundaries; no absolute-truth label for assumptions.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="2"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Overview" uuid="fa010909-0000-4000-8000-000000000001"/></attribute><attribute class="java.lang.String" key="title">Measured contacts and circuit function</attribute><attribute class="java.lang.String" key="note">Anatomical support, cable placement, event delivery, and receiver inhibition are distinct questions.
+
+Navigation group; independent residuals can coexist.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="3"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered Yes" uuid="fa010909-0000-4000-8000-000000000002"/></attribute><attribute class="java.lang.String" key="title">C01 [YES]
+Selected contacts have verified endpoints?</attribute><attribute class="java.lang.String" key="note">C01 | Selected contacts have verified endpoints?
+
+Status: YES
+
+Method: Structural dissection / anatomical identity
+
+Scope / coordinates: The retained verified set only: annotations 124698307 (EE), 65017731 (EI), 8105899 (IE).
+
+Remaining search space: Both endpoints have accepted identity/spatial support for each selected contact, or at least one lacks it.
+
+Binary predicate: Each contact in the stated retained set passes the recorded endpoint identity and spatial checks.
+
+Decision limit: Use saved exact identity and 5-voxel endpoint audit criteria; proximity alone is insufficient.
+
+Recorded observation: The completed 3000-sample summary retains three verified anatomical contacts; new candidates did not enlarge the set.
+
+YES: Check cable support per contact before simulation.
+
+NO: Retain unsupported contact candidates outside the verified simulation graph.
+
+Next check: Keep IDs, sending/receiving cell and component support; do not treat the partial map as complete connectivity.
+
+Unresolved after either answer: The answer applies to this selected set, not every exported candidate or every biological connection.
+
+Evidence (repository-relative):
+docs/h01-network.md
+docs/evidence/h01-endpoint-recheck-5voxel-3000.json
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="4"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES — recorded
+Check cable support per contact before simulation.</attribute><attribute class="java.lang.String" key="note">C01: YES outcome.
+
+Check cable support per contact before simulation.
+
+This outcome is recorded for the stated scope.
+
+Remaining: The answer applies to this selected set, not every exported candidate or every biological connection.
+
+Next: Keep IDs, sending/receiving cell and component support; do not treat the partial map as complete connectivity.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="5"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Retain unsupported contact candidates outside the verified simulation graph.</attribute><attribute class="java.lang.String" key="note">C01: NO outcome.
+
+Retain unsupported contact candidates outside the verified simulation graph.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: The answer applies to this selected set, not every exported candidate or every biological connection.
+
+Next: Keep IDs, sending/receiving cell and component support; do not treat the partial map as complete connectivity.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="6"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered No" uuid="fa010909-0000-4000-8000-000000000003"/></attribute><attribute class="java.lang.String" key="title">C02 [NO]
+EI contact has soma-connected cable?</attribute><attribute class="java.lang.String" key="note">C02 | EI contact has soma-connected cable?
+
+Status: NO
+
+Method: Structural dissection / connected component
+
+Scope / coordinates: Annotation 65017731: sender 3519995546, presynaptic component 55; receiver 3680152874 component 0.
+
+Remaining search space: Both endpoints connect to the retained simulated somata through released cable, or at least one does not.
+
+Binary predicate: Both endpoint placements are on soma-containing connected components with supported cable.
+
+Decision limit: Exact component connectivity; no guessed joins or substituted soma emissions.
+
+Recorded observation: The source is soma-free fragment 55. This anatomical contact is excluded from the simulation subset.
+
+YES: Construct this supported projection.
+
+NO: Keep the contact anatomical-only and simulation-blocked.
+
+Next check: Resolve missing cable/placement evidence before enabling this edge; no morphology repair is part of this task.
+
+Unresolved after either answer: Two other verified contacts are constructible; that does not repair this edge.
+
+Evidence (repository-relative):
+docs/h01-network.md
+docs/evidence/h01-verified-network-validation.md
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="7"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Construct this supported projection.</attribute><attribute class="java.lang.String" key="note">C02: YES outcome.
+
+Construct this supported projection.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Two other verified contacts are constructible; that does not repair this edge.
+
+Next: Resolve missing cable/placement evidence before enabling this edge; no morphology repair is part of this task.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="8"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO — recorded
+Keep the contact anatomical-only and simulation-blocked.</attribute><attribute class="java.lang.String" key="note">C02: NO outcome.
+
+Keep the contact anatomical-only and simulation-blocked.
+
+This outcome is recorded for the stated scope.
+
+Remaining: Two other verified contacts are constructible; that does not repair this edge.
+
+Next: Resolve missing cable/placement evidence before enabling this edge; no morphology repair is part of this task.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="9"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered Yes" uuid="fa010909-0000-4000-8000-000000000002"/></attribute><attribute class="java.lang.String" key="title">C03 [YES]
+Four-cell subset executes finite steps?</attribute><attribute class="java.lang.String" key="note">C03 | Four-cell subset executes finite steps?
+
+Status: YES
+
+Method: Functional isolation / runtime
+
+Scope / coordinates: Four cells, two supported projections in two separate pairs, 75,605 compartments; saved real-network validation and throughput configurations.
+
+Remaining search space: Finite real initialization and stepping exist, or they do not.
+
+Binary predicate: The retained four-cell evidence includes finite initialization and at least one actual compiled timestep.
+
+Decision limit: Finite values and completed actual timestep; report the exact run duration rather than imply a long physiological protocol.
+
+Recorded observation: Real one-step dt/duration 0.005 ms exists; throughput checks extend to 2000 steps. Construction alone is not the evidence for this Yes.
+
+YES: Runtime entry is demonstrated for the specified subset.
+
+NO: Localize construction, initialization or execution failure before functional claims.
+
+Next check: Use C04-C07 for functional inhibition; do not infer it from runtime or fixture delivery.
+
+Unresolved after either answer: No full 104-cell run, measured-pair human response, or training adapter qualification follows.
+
+Evidence (repository-relative):
+docs/h01-network.md
+docs/evidence/h01-verified-network-validation.md
+docs/evidence/h01-network-throughput.md
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="10"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES — recorded
+Runtime entry is demonstrated for the specified subset.</attribute><attribute class="java.lang.String" key="note">C03: YES outcome.
+
+Runtime entry is demonstrated for the specified subset.
+
+This outcome is recorded for the stated scope.
+
+Remaining: No full 104-cell run, measured-pair human response, or training adapter qualification follows.
+
+Next: Use C04-C07 for functional inhibition; do not infer it from runtime or fixture delivery.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="11"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Localize construction, initialization or execution failure before functional claims.</attribute><attribute class="java.lang.String" key="note">C03: NO outcome.
+
+Localize construction, initialization or execution failure before functional claims.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: No full 104-cell run, measured-pair human response, or training adapter qualification follows.
+
+Next: Use C04-C07 for functional inhibition; do not infer it from runtime or fixture delivery.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="12"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Inconclusive" uuid="fa010909-0000-4000-8000-000000000005"/></attribute><attribute class="java.lang.String" key="title">C04 [INCONCLUSIVE]
+300 ms baseline is discriminating?</attribute><attribute class="java.lang.String" key="note">C04 | 300 ms baseline is discriminating?
+
+Status: INCONCLUSIVE
+
+Method: Hierarchical / circuit measurement
+
+Scope / coordinates: SP5 disconnected baseline, 300 ms, E drive 0.6 nA, dt 0.005 ms; 12 I pulse onsets 20-295 ms.
+
+Remaining search space: Completed baseline meets the firing/discrimination conditions, or a completed baseline fails them.
+
+Binary predicate: The completed baseline has &gt;=3 E spikes, first E spike 20-60 ms, and one I spike per pulse.
+
+Decision limit: Registered baseline conditions plus the measured halving limit before any delay/inhibition verdict.
+
+Recorded observation: The baseline was stopped after construction and before a trace. Other 300 ms arms were not launched.
+
+YES: Proceed to measured-site event and conductance checks.
+
+NO: Repair the registered drive/measurement setup before testing inhibition.
+
+Next check: Any resumption requires a separately bounded plan. Retain the stopped run as untested, not a failed baseline or spent physiological evaluation.
+
+Unresolved after either answer: All downstream answers remain pending even though their hypothetical branches are shown.
+
+Evidence (repository-relative):
+docs/evidence/h01-ie-inhibition/decision.json
+docs/evidence/h01-ie-inhibition-result.md
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="13"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Proceed to measured-site event and conductance checks.</attribute><attribute class="java.lang.String" key="note">C04: YES outcome.
+
+Proceed to measured-site event and conductance checks.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: All downstream answers remain pending even though their hypothetical branches are shown.
+
+Next: Any resumption requires a separately bounded plan. Retain the stopped run as untested, not a failed baseline or spent physiological evaluation.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="14"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Repair the registered drive/measurement setup before testing inhibition.</attribute><attribute class="java.lang.String" key="note">C04: NO outcome.
+
+Repair the registered drive/measurement setup before testing inhibition.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: All downstream answers remain pending even though their hypothetical branches are shown.
+
+Next: Any resumption requires a separately bounded plan. Retain the stopped run as untested, not a failed baseline or spent physiological evaluation.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="15"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Blocked" uuid="fa010909-0000-4000-8000-000000000006"/></attribute><attribute class="java.lang.String" key="title">C05 [BLOCKED]
+Contact event produces delayed conductance?</attribute><attribute class="java.lang.String" key="note">C05 | Contact event produces delayed conductance?
+
+Status: BLOCKED
+
+Method: Functional isolation / serial delivery
+
+Scope / coordinates: SP5 measured IE placement 8105899; presynaptic site crossing, event timestamp, receptor conductance, receiver site voltage.
+
+Remaining search space: Event-to-conductance path completes with registered timing, or at least one link fails.
+
+Binary predicate: Each qualifying presynaptic event reaches the supported source site and yields receptor conductance after the configured delay.
+
+Decision limit: Delay and conductance conventions from the selected manifest; compare timestamps at the simulation resolution with a disconnected control.
+
+Recorded observation: No completed 300 ms measured arm. Fixture delivery and a short benchmark do not answer this predicate.
+
+YES: Inspect local versus somatic response in C06.
+
+NO: Split propagation, event detection, routing, and receptor response at the first missing boundary.
+
+Next check: On future authorized SP5 execution, record the event and conductance alongside V and signed synaptic current; first satisfy C04.
+
+Unresolved after either answer: Assumed synaptic magnitude/delay are not measured human contact parameters.
+
+Evidence (repository-relative):
+docs/evidence/h01-ie-inhibition/decision.json
+docs/evidence/h01-ie-inhibition-manifest.json
+docs/evidence/h01-verified-network-validation.md
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="16"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Inspect local versus somatic response in C06.</attribute><attribute class="java.lang.String" key="note">C05: YES outcome.
+
+Inspect local versus somatic response in C06.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Assumed synaptic magnitude/delay are not measured human contact parameters.
+
+Next: On future authorized SP5 execution, record the event and conductance alongside V and signed synaptic current; first satisfy C04.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="17"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Split propagation, event detection, routing, and receptor response at the first missing boundary.</attribute><attribute class="java.lang.String" key="note">C05: NO outcome.
+
+Split propagation, event detection, routing, and receptor response at the first missing boundary.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Assumed synaptic magnitude/delay are not measured human contact parameters.
+
+Next: On future authorized SP5 execution, record the event and conductance alongside V and signed synaptic current; first satisfy C04.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="18"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Blocked" uuid="fa010909-0000-4000-8000-000000000006"/></attribute><attribute class="java.lang.String" key="title">C06 [BLOCKED]
+Measured placement changes E firing?</attribute><attribute class="java.lang.String" key="note">C06 | Measured placement changes E firing?
+
+Status: BLOCKED
+
+Method: Functional isolation / receiver response
+
+Scope / coordinates: Completed SP5 measured arm versus disconnected arm, same E/I drives and frozen profiles; compare every E cycle.
+
+Remaining search space: At least one E count/timing effect exceeds qualified numerical uncertainty, or none does.
+
+Binary predicate: The measured contact changes E count or delays at least one matched E spike beyond the established halving limit.
+
+Decision limit: Registered per-cycle shift limit from measured/measured-halved, with equal counts in the halving pair and per-cycle ranges &lt;0.1 ms.
+
+Recorded observation: No 300 ms measured or halved arm completed. Gate verdict is not discriminable; placement hypothesis undetermined.
+
+YES: Functional inhibition is supported for these assumed parameters and inputs.
+
+NO: Check whether the failure to affect soma firing is placement-dependent in C07.
+
+Next check: Retain site IPSP, soma IPSP, source event, conductance, and E cycles; do not call an unresolvable shift absence of inhibition.
+
+Unresolved after either answer: Even a positive result would not validate a human circuit response; no recording of this pair exists.
+
+Evidence (repository-relative):
+docs/evidence/h01-ie-inhibition/decision.json
+docs/specs/2026-09-07-h01-functional-inhibition.md
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="19"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Functional inhibition is supported for these assumed parameters and inputs.</attribute><attribute class="java.lang.String" key="note">C06: YES outcome.
+
+Functional inhibition is supported for these assumed parameters and inputs.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Even a positive result would not validate a human circuit response; no recording of this pair exists.
+
+Next: Retain site IPSP, soma IPSP, source event, conductance, and E cycles; do not call an unresolvable shift absence of inhibition.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="20"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Check whether the failure to affect soma firing is placement-dependent in C07.</attribute><attribute class="java.lang.String" key="note">C06: NO outcome.
+
+Check whether the failure to affect soma firing is placement-dependent in C07.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Even a positive result would not validate a human circuit response; no recording of this pair exists.
+
+Next: Retain site IPSP, soma IPSP, source event, conductance, and E cycles; do not call an unresolvable shift absence of inhibition.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="21"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Blocked" uuid="fa010909-0000-4000-8000-000000000006"/></attribute><attribute class="java.lang.String" key="title">C07 [BLOCKED]
+Soma placement restores a resolved effect?</attribute><attribute class="java.lang.String" key="note">C07 | Soma placement restores a resolved effect?
+
+Status: BLOCKED
+
+Method: Structural dissection / placement
+
+Scope / coordinates: SP5 soma-control versus measured-site and disconnected controls; preserve receptor kinetics, magnitude, delay and drives.
+
+Remaining search space: Soma relocation produces the registered effect or it does not, conditional on qualified baseline/delivery/measurement.
+
+Binary predicate: The soma-control produces &gt;=0.3 mV soma IPSP and at least one E delay beyond the qualified shift limit.
+
+Decision limit: Registered &gt;=0.3 mV soma IPSP and measured delay threshold; predicted measured-site IPSP &lt;0.05 mV is not observed.
+
+Recorded observation: The soma-control arm was not launched. Placement remains undetermined.
+
+YES: Placement/load contributes under these fixed model conditions.
+
+NO: Keep drive, receptor strength, kinetics, and interactions in the remaining space.
+
+Next check: After C04-C06 and new authorization, perform the registered matched placement contrast; soma placement is a diagnostic control, not a replacement measured edge.
+
+Unresolved after either answer: Do not promote the diagnostic soma control into the anatomical network.
+
+Evidence (repository-relative):
+docs/evidence/h01-ie-inhibition/decision.json
+docs/evidence/h01-ie-inhibition-manifest.json
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="22"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Placement/load contributes under these fixed model conditions.</attribute><attribute class="java.lang.String" key="note">C07: YES outcome.
+
+Placement/load contributes under these fixed model conditions.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Do not promote the diagnostic soma control into the anatomical network.
+
+Next: After C04-C06 and new authorization, perform the registered matched placement contrast; soma placement is a diagnostic control, not a replacement measured edge.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="23"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Keep drive, receptor strength, kinetics, and interactions in the remaining space.</attribute><attribute class="java.lang.String" key="note">C07: NO outcome.
+
+Keep drive, receptor strength, kinetics, and interactions in the remaining space.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Do not promote the diagnostic soma control into the anatomical network.
+
+Next: After C04-C06 and new authorization, perform the registered matched placement contrast; soma placement is a diagnostic control, not a replacement measured edge.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+</vertices><edges>
+<edge eid="24" source="1" target="2"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="25" source="2" target="3"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="26" source="2" target="6"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="27" source="2" target="9"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="28" source="2" target="12"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="29" source="3" target="4"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="30" source="3" target="5"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="31" source="6" target="7"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="32" source="6" target="8"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="33" source="9" target="10"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="34" source="9" target="11"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="35" source="12" target="13"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="36" source="13" target="15"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="37" source="12" target="14"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="38" source="15" target="16"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="39" source="16" target="18"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="40" source="15" target="17"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="41" source="18" target="19"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="42" source="18" target="20"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="43" source="20" target="21"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="44" source="21" target="22"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="45" source="21" target="23"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+</edges></graph></logicGraph></decisionGraph>
+</flyingLogic>

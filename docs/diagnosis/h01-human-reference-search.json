@@ -1,0 +1,895 @@
+{
+  "title": "H01 human-reference topographic search",
+  "snapshot_date": "2026-09-09",
+  "base_commit": "34ca482",
+  "branch": "docs/h01-flying-logic-search-tree",
+  "purpose": "Current diagnosis; donor response, transfer, circuit and population subtrees can be active simultaneously.",
+  "contract": "Exact count; 1 ms timing and recovery delays; 1 mV voltage; 0.05 ms spike phases. No trace alignment or pooled override. Usable-tier separate.",
+  "holdouts": "Released/spent: I 0.23 nA; E sweeps 53 and 55. Still sealed in this snapshot: E sweep 54 (330 pA), I Noise1 sweep 48. No holdout opened by this artifact.",
+  "limits": "No simulations, fitting, morphology edits, or revival of stopped campaigns. Open/blocked leaves require separately registered and bounded experiments.",
+  "book_root": "C:/Users/J/Documents/Diagnosing Performance and Reliability/pages-md",
+  "evidence_root": "../../",
+  "methods": [
+    {
+      "files": "p014.md",
+      "meaning": "Topographic diagnosis asks what is happening; do not begin with a root-cause label."
+    },
+    {
+      "files": "p018.md-p021.md",
+      "meaning": "Binary questions cover all remaining possibilities and are quick, unambiguous and cheap; do not repeat the same split consecutively."
+    },
+    {
+      "files": "p035.md, p041.md",
+      "meaning": "Retain the search as an explicit tree; classify the observation before selecting the decomposition."
+    },
+    {
+      "files": "p144.md",
+      "meaning": "Functional Isolation: split the serial path and ask at which boundary the contrast remains."
+    },
+    {
+      "files": "p182.md-p183.md, p188.md, p192.md-p194.md",
+      "meaning": "Structural Dissection: retain the complementary subsystem, interactions, and each written split."
+    },
+    {
+      "files": "p022.md, p074.md",
+      "meaning": "Distinguish physical/mathematical constraints from man-made requirements. Use voltage/current and charge balance at electrical boundaries; no absolute-truth label for assumptions."
+    }
+  ],
+  "groups": [
+    {
+      "id": "R",
+      "title": "Reference and measurement",
+      "observation": "A comparison can be mis-specified or unresolvable before any mechanism is at issue.",
+      "roots": [
+        "R01",
+        "R02",
+        "R03"
+      ]
+    },
+    {
+      "id": "E",
+      "title": "E donor: gain and waveform",
+      "observation": "Frozen B3 overfires at low drive; higher-drive count agreement does not settle phase width or return.",
+      "roots": [
+        "E01",
+        "E06"
+      ]
+    },
+    {
+      "id": "I",
+      "title": "I donor: refiring and accommodation",
+      "observation": "The model misses the early burst and later accommodation despite a supported loop/trough explanation.",
+      "roots": [
+        "I01",
+        "I04"
+      ]
+    },
+    {
+      "id": "T",
+      "title": "Simulator and H01 transfer",
+      "observation": "Keep the amended short-window closure, strict full-train check, timestep error, and anatomy effects separate.",
+      "roots": [
+        "T01",
+        "T03",
+        "T05"
+      ]
+    },
+    {
+      "id": "C",
+      "title": "Measured contacts and circuit function",
+      "observation": "Anatomical support, cable placement, event delivery, and receiver inhibition are distinct questions.",
+      "roots": [
+        "C01",
+        "C02",
+        "C03",
+        "C04"
+      ]
+    },
+    {
+      "id": "P",
+      "title": "Population execution and reference coverage",
+      "observation": "Small-network execution exists; 40-cell construction and donor coverage remain separate limitations.",
+      "roots": [
+        "P01",
+        "P03",
+        "P04",
+        "P05"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "R01",
+      "group": "R",
+      "title": "Matching H01 voltage recordings exist?",
+      "status": "answered_no",
+      "method": "Reference boundary",
+      "scope": "Imported H01 anatomical cells versus the human donor recordings used to constrain their electrical profiles.",
+      "remaining_space": "Direct validation against these H01 cells, or prediction constrained by recordings from different human cells.",
+      "predicate": "A voltage recording is matched by provenance to each imported H01 cell being claimed as directly validated.",
+      "decision_limit": "Exact cell identity and recording provenance; no substitution of donor identity.",
+      "observation": "H01 supplies anatomy and annotations, not voltage recordings matched to the imported cells.",
+      "yes": "Direct H01-response comparison is available.",
+      "no": "Use donor-response validation and label H01 transfer a prediction.",
+      "next_check": "Retain donor and H01 identities separately in every response record; do not invent an H01 voltage target.",
+      "evidence": [
+        "docs/specs/2026-09-05-h01-recorded-response-acceptance-proposal.md",
+        "docs/h01-causal-model.md"
+      ],
+      "remaining_after_either_answer": "Neither anatomical identity nor a successful donor fit establishes population-wide human accuracy.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "R02",
+      "group": "R",
+      "title": "Input and measurement mappings complete?",
+      "status": "open",
+      "method": "Hierarchical / elemental",
+      "scope": "One proposed comparison at a time: donor, sweep, command waveform, bias convention, initial state, temperature, voltage correction, detector and full observation window.",
+      "remaining_space": "Comparisons with every required mapping explicitly pinned versus comparisons with at least one missing or inconsistent mapping.",
+      "predicate": "All mappings in the scope agree with the selected raw record and candidate manifest.",
+      "decision_limit": "Exact provenance/convention agreement. Per-event contract: exact count; 1 ms crossing/peak/delay; 1 mV voltage; 0.05 ms phases. No alignment.",
+      "observation": "Later I forensics use command-only input; E gain uses recorded command plus recorded bias. Earlier I bias proposals and older holdout statements are superseded.",
+      "yes": "Proceed to the per-row resolution check.",
+      "no": "Resolve the specific mapping before interpreting a residual.",
+      "next_check": "Audit the selected comparison against its current manifest and raw-record metadata; label unavailable items. Do not rerun or open data.",
+      "evidence": [
+        "docs/evidence/h01-i-energetic-result.md",
+        "docs/evidence/h01-e-gain-manifest.json",
+        "docs/specs/2026-09-05-h01-recorded-response-acceptance-proposal.md"
+      ],
+      "remaining_after_either_answer": "Complete metadata is not a numerical or physiological pass.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "R03",
+      "group": "R",
+      "title": "Is this response row resolvable?",
+      "status": "open",
+      "method": "Hierarchical / measurement",
+      "scope": "Each event/input/phase separately, at the same frozen candidate, mesh and input conventions.",
+      "remaining_space": "Rows with uncertainty below the applicable decision requirement versus rows whose uncertainty prevents that decision.",
+      "predicate": "Measurement and numerical evidence resolve the proposed comparison under its registered limit.",
+      "decision_limit": "Use the actual registered per-row limit; usable-tier human spread must be below half its tolerance. Never borrow a limit from another row or window.",
+      "observation": "No global resolution verdict is justified: T03/T04 have different timestep outcomes, and interrupted circuit arms have no halving pair.",
+      "yes": "Interpret the residual and select the appropriate behavior subtree.",
+      "no": "Park this row as unresolvable; improve its measurement or numerics first.",
+      "next_check": "Read retained repeat/refinement evidence for the selected row; state the missing measurement if absent.",
+      "evidence": [
+        "docs/specs/2026-09-07-h01-usable-circuit-plan.md",
+        "docs/evidence/h01-i-transfer/sp2-close-decision.json",
+        "docs/evidence/h01-ie-inhibition/decision.json"
+      ],
+      "remaining_after_either_answer": "A resolvable row can still fail the contract; an unresolved row cannot pass by a small pooled score.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "E01",
+      "group": "E",
+      "title": "B3 has excess low-drive spikes?",
+      "status": "answered_yes",
+      "method": "Hierarchical / input and cyclical",
+      "scope": "B3 g0-b3; Allen 541563728; 200/250/310 pA; recorded bias; nseg x9; CVode 1e-10; 2100 ms.",
+      "remaining_space": "Low-drive exact-count agreement versus at least one excess-count row at 200/250 pA.",
+      "predicate": "At least one of the 200/250 pA model counts exceeds its matched human count.",
+      "decision_limit": "Exact counts: human 1/5 at 200/250 pA; the 310 pA control is 10.",
+      "observation": "B3 gives 4/8/10 versus human 1/5/10 at 200/250/310 pA.",
+      "yes": "Localize the low-drive excess while retaining the 310 pA control.",
+      "no": "Low-drive excess is absent; inspect other response failures independently.",
+      "next_check": "Use E02-E05 to retain tested exclusions; no additional evaluation is authorized.",
+      "evidence": [
+        "docs/evidence/h01-e-gain/stage-close-decision.json"
+      ],
+      "remaining_after_either_answer": "Correct count at 310 pA is neither shared-input nor waveform validation.",
+      "yes_next": "E02",
+      "no_next": null
+    },
+    {
+      "id": "E02",
+      "group": "E",
+      "title": "Initiation is axon-first?",
+      "status": "answered_yes",
+      "method": "Structural dissection / initiation",
+      "scope": "B3 at active SP3 inputs, including sweeps 50/53/56; soma and axon threshold crossings.",
+      "remaining_space": "Axon-first versus simultaneous or soma-first initiation under the recorded detector.",
+      "predicate": "The recorded axon crossing precedes the soma crossing at the active inputs in scope.",
+      "decision_limit": "Strict ordering of the recorded crossings; retain measured lead and numerical resolution from stage-g0, not a new threshold.",
+      "observation": "Stage-g0 and closure report axon-first initiation; it persists in the tested passive interventions.",
+      "yes": "Retain the initiation site and examine the tested passive levers.",
+      "no": "Localize initiation before interpreting passive changes as gain corrections.",
+      "next_check": "Keep B3 axonal initiation fixed when formulating the next bounded gain test.",
+      "evidence": [
+        "docs/evidence/h01-e-gain/stage-g0-decision.json",
+        "docs/evidence/h01-e-gain/stage-close-decision.json"
+      ],
+      "remaining_after_either_answer": "Axon-first initiation does not establish the right count, width, or H01 region map.",
+      "yes_next": "E03",
+      "no_next": null
+    },
+    {
+      "id": "E03",
+      "group": "E",
+      "title": "Ih half meets the registered gain bands?",
+      "status": "answered_no",
+      "method": "Structural dissection / reversible intervention",
+      "scope": "g1-ih-half versus B3, distributed Ih factor 75 to 37.5; SP3 stage G; same recorded inputs and controls.",
+      "remaining_space": "That tested intervention meets every registered gain/preservation band or fails at least one.",
+      "predicate": "g1-ih-half satisfies all stage-G gain and preservation clauses.",
+      "decision_limit": "Use stage-g-decision arms/g1-ih-half/bands and rejection. The 250 pA count band is 5-7.",
+      "observation": "250 pA count remains 8; rest shifts -1.73 mV. The registered intervention is rejected.",
+      "yes": "Retain this intervention as a candidate for independent validation.",
+      "no": "Exclude this Ih dose as a sufficient registered correction.",
+      "next_check": "Carry the negative result to the next distinct tested split; do not repeat it.",
+      "evidence": [
+        "docs/evidence/h01-e-gain/stage-g-decision.json",
+        "docs/evidence/h01-e-gain/stage-close-decision.json"
+      ],
+      "remaining_after_either_answer": "Other Ih doses and interactions are not exhaustively excluded.",
+      "yes_next": null,
+      "no_next": "E04"
+    },
+    {
+      "id": "E04",
+      "group": "E",
+      "title": "Leak x1.5 meets the gain bands?",
+      "status": "answered_no",
+      "method": "Structural dissection / reversible intervention",
+      "scope": "g2-leak-150 versus B3; all registered regions; SP3 stage G.",
+      "remaining_space": "That tested intervention meets every registered gain/preservation band or fails at least one.",
+      "predicate": "g2-leak-150 satisfies every stage-G gain and preservation clause.",
+      "decision_limit": "Registered stage-G bands, including 310 pA count >=8 and preservation of sweep-43 return.",
+      "observation": "Counts become 0/0/6 at 200/250/310 pA; late return shifts about -3.8 mV. Registered clauses fail.",
+      "yes": "Retain the correction for independent validation.",
+      "no": "Exclude this leak dose as a sufficient correction with the preserved controls.",
+      "next_check": "Carry forward the failed tested dose; distinguish the unrun combined arm in E05.",
+      "evidence": [
+        "docs/evidence/h01-e-gain/stage-g-decision.json",
+        "docs/evidence/h01-e-gain/stage-close-decision.json"
+      ],
+      "remaining_after_either_answer": "No continuous-dose theorem or exhaustive passive-family exclusion is established by this single dose.",
+      "yes_next": null,
+      "no_next": "E05"
+    },
+    {
+      "id": "E05",
+      "group": "E",
+      "title": "Combined Ih/leak arm meets the bands?",
+      "status": "blocked",
+      "method": "Structural dissection / interaction",
+      "scope": "Registered g3: Ih factor 37.5 plus leak x1.5 on B3, SP3.",
+      "remaining_space": "The combined intervention meets all registered bands or misses at least one; no observation selects an outcome.",
+      "predicate": "An actual g3 evaluation satisfies every registered gain/preservation band.",
+      "decision_limit": "SP3 stage-G registered bands; additive predictions are not measurements.",
+      "observation": "g3 was registered but not run. SP3 closed FAIL at 3 of 4; the additive prediction missed the bands.",
+      "yes": "An interaction warrants further independent testing.",
+      "no": "This combined intervention fails under the tested conditions.",
+      "next_check": "No automatic resumption. A new bounded reassessment must distinguish interaction, voltage/use-dependent current, and alternative-donor explanations.",
+      "evidence": [
+        "docs/evidence/h01-e-gain/stage-close-decision.json"
+      ],
+      "remaining_after_either_answer": "Slow Na inactivation, Kv7/M, other mechanisms, interactions and reference-family differences remain hypotheses, not an exhaustive list.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "E06",
+      "group": "E",
+      "title": "B3 passes every waveform/return row?",
+      "status": "answered_no",
+      "method": "Hierarchical / within-cycle and post-pulse",
+      "scope": "Frozen B3, released E inputs; retain every event index, waveform phase, and sweep-43 post-pulse sample.",
+      "remaining_space": "All required rows pass or at least one fails; unavailable rows never count as passes.",
+      "predicate": "Every required waveform and post-pulse voltage row meets the approved contract with numerical support.",
+      "decision_limit": "1 mV voltage, 1 ms timing and recovery delays, 0.05 ms phases; shared parameters over inputs.",
+      "observation": "B3's sweep-43 late return is +1.4 to +1.7 mV; early-width defects remain. This alone prevents a full pass.",
+      "yes": "Proceed to independent transfer and held-out qualification.",
+      "no": "Keep the specific phase/return residuals separate from the gain problem.",
+      "next_check": "First compare the retained within-cycle V/dVdt and model signed-current budgets at the offending input/event; register a phase-specific split before perturbing.",
+      "evidence": [
+        "docs/evidence/h01-e-gain/stage-close-decision.json",
+        "docs/evidence/h01-e-continuation-result.md"
+      ],
+      "remaining_after_either_answer": "Older perisomatic energetic maps are historical; do not describe B3 as having no axonal initiation.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "I01",
+      "group": "I",
+      "title": "Does the energetic holdout pass the contract?",
+      "status": "answered_no",
+      "method": "Hierarchical / cycle and input",
+      "scope": "I finalist e-kv3-close2; released 0.23 nA holdout; command-only input.",
+      "remaining_space": "Complete held-out contract pass versus one or more failed/unavailable required rows.",
+      "predicate": "The frozen finalist meets every approved contract row on the released 0.23 nA response.",
+      "decision_limit": "Exact count, 1 mV voltage, 1 ms timing, 0.05 ms phases; repeatability bands are separate.",
+      "observation": "Count 26 versus 31; first peak residual 1.15 mV. The loop/trough explanation held at its claimed repeatability resolution, not the full contract.",
+      "yes": "Carry the frozen finalist into independent transfer qualification.",
+      "no": "Retain missing early burst and accommodation as unresolved responses.",
+      "next_check": "Use the post-trough current/voltage evidence and subsequent reserve result without reusing this input as a fresh holdout.",
+      "evidence": [
+        "docs/evidence/h01-i-energetic-result.md"
+      ],
+      "remaining_after_either_answer": "An explanatory result on selected rows does not qualify the whole cell.",
+      "yes_next": null,
+      "no_next": "I02"
+    },
+    {
+      "id": "I02",
+      "group": "I",
+      "title": "Axonal NaTg x1.5 restores refiring?",
+      "status": "answered_no",
+      "method": "Structural dissection / sodium boundary",
+      "scope": "g-natg-axon15, sha256 f4a2aa6c24d887343e7003a0a226d6f6d702dfd707e31ad05d44773ea9c5dcbe; 0.19/0.27 nA; command-only; x9; CVode 1e-10; 1500 ms.",
+      "remaining_space": "Registered reserve intervention restores refiring while preserving the loop/trough, or it does not.",
+      "predicate": "Every registered count/refiring/preservation band holds at both inputs.",
+      "decision_limit": "Cycle 2 <=22 ms and count 15-17 at 0.19; cycle 2 <=12 ms and count 40-43 at 0.27; retained width/peak/trough bands.",
+      "observation": "Cycle 2 is 35.068/16.496 ms, counts 14/34. Axon lead increases, but somatic refiring does not meet the bands. FAIL at cap.",
+      "yes": "Retain a supported sodium-boundary correction.",
+      "no": "Exclude this axonal NaTg density change as a sufficient correction.",
+      "next_check": "Next distinguish residual inward drive from persisting outward load using I03, with paired signed currents and voltage.",
+      "evidence": [
+        "docs/evidence/h01-i-reserve/stage-1-decision.json",
+        "docs/evidence/h01-i-reserve-result.md"
+      ],
+      "remaining_after_either_answer": "The valid run spent the reserve. Earlier process crashes tested no physiological hypothesis.",
+      "yes_next": null,
+      "no_next": "I03"
+    },
+    {
+      "id": "I03",
+      "group": "I",
+      "title": "Recovered inward drive is sufficient?",
+      "status": "open",
+      "method": "Impedance / current balance",
+      "scope": "Model post-trough interval, 6-10 ms after each complete trough, at 0.19/0.27 nA; soma and adjacent axial boundaries.",
+      "remaining_space": "Sufficient inward charge in the retained load versus an inward/outward balance that still cannot produce timely threshold crossing.",
+      "predicate": "With outward load and initialization fixed, a preregistered inward-current replay reaches the specified threshold-time band.",
+      "decision_limit": "No new numerical limit is invented. Register the replay amplitude/time course and crossing/charge limits from resolved baseline rows before an experiment.",
+      "observation": "The reserve does not identify a missing slow state uniquely. Somatic availability, tested Ca_LVA changes and the tested axonal density change narrow only their stated claims.",
+      "yes": "Dissect which inward boundary or state supplies the effect.",
+      "no": "Retain excessive outward/axial load, interactions and other missing dynamics.",
+      "next_check": "First audit current signs and charge closure over matched V/time windows; formulate a reversible inward-versus-load isolation with fixed complement and a new cap.",
+      "evidence": [
+        "docs/evidence/h01-i-reserve-result.md",
+        "docs/evidence/h01-i-trough-audit.json",
+        "docs/evidence/h01-z-map-i.md"
+      ],
+      "remaining_after_either_answer": "Human voltage does not directly measure individual ionic currents. A model replay is a causal test in the model, not a human current measurement.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "I04",
+      "group": "I",
+      "title": "Reserve waveform passes all inputs?",
+      "status": "answered_no",
+      "method": "Hierarchical / within-cycle and cyclical",
+      "scope": "Valid I reserve, 0.19/0.27 nA, every matched complete event and recovery interval.",
+      "remaining_space": "All waveform rows pass versus at least one failure or unresolved required row.",
+      "predicate": "The reserve meets every contract waveform row and the shared-input count requirement.",
+      "decision_limit": "Contract unchanged; report usable width and adaptation separately; unmatched events remain unavailable.",
+      "observation": "Counts 14/12 and 34/43 model/human; cycle-1 width about 0.220 versus human 0.267-0.273 ms, and later width/adaptation rows fail.",
+      "yes": "Proceed to independent numerical and transfer gates.",
+      "no": "Keep phase width and accommodation open even where trough voltage is acceptable.",
+      "next_check": "Retain per-cycle phase-plane traces and compare early versus late current budgets; do not tune solely to the mean rate.",
+      "evidence": [
+        "docs/evidence/h01-i-reserve-result.md",
+        "docs/evidence/h01-i-reserve/stage-1-decision.json"
+      ],
+      "remaining_after_either_answer": "Per-cycle discrepancies can coexist with a successful trough explanation.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "T01",
+      "group": "T",
+      "title": "Short-window identity closed by amendment?",
+      "status": "answered_yes",
+      "method": "Functional isolation / simulator",
+      "scope": "I r-braincell-matched-027 against NEURON b1-fixed-027; 0.27 nA, copied x9 mesh, same dt 0.005 ms; window 270-329.5 ms.",
+      "remaining_space": "The amended recorded identity closure was met, or it was not; this is explicitly a recorded decision predicate.",
+      "predicate": "The basis reproduces the quoted values and identity_gate.closed is true under the recorded user amendment.",
+      "decision_limit": "Amended basis: rise about 1.2e-9 ms, interpolated peak 5.4e-6 mV, width 1.9e-11 ms. Original 1e-6 mV automatic gate was not passed.",
+      "observation": "identity_gate.closed=true by user decision; basis/passed=false under the stricter automatic gate. Both facts are retained.",
+      "yes": "Keep the narrow closure; inspect the separate full-train predicate.",
+      "no": "Investigate matched simulator behavior within this window.",
+      "next_check": "Read T02 for the full-train numerical prediction rather than extending this closure.",
+      "evidence": [
+        "docs/evidence/h01-i-transfer/sp2-close-decision.json",
+        "docs/evidence/h01-i-transfer-result.md"
+      ],
+      "remaining_after_either_answer": "No inference to 0.19 nA, finer dt, H01 anatomy, or human waveform qualification.",
+      "yes_next": "T02",
+      "no_next": null
+    },
+    {
+      "id": "T02",
+      "group": "T",
+      "title": "Strict full-train identity check passes?",
+      "status": "answered_no",
+      "method": "Functional isolation / simulator",
+      "scope": "I a1-matched-027 versus b1-fixed-027; same dt 0.005 ms and copied mesh; 270-1270 ms at 0.27 nA.",
+      "remaining_space": "All strict identity rows satisfy the registered prediction, or one or more do not.",
+      "predicate": "The full-train comparison has equal event counts and all strict per-event identity errors within the registered limits.",
+      "decision_limit": "Rise 1e-8 ms, peak 1e-6 mV, width 1e-8 ms; retain sampled and interpolated peak definitions separately.",
+      "observation": "36/36 events; passed=false; max rise 1.415e-7 ms, raw voltage difference 8.33e-5 mV. Both sampled and interpolated peak errors exceed 1e-6 mV.",
+      "yes": "Strict confirmation holds for this configuration.",
+      "no": "Retain the strict prediction failure without undoing or broadening T01's amended decision.",
+      "next_check": "Before any rerun, reconcile sampled/interpolated peak fields with the scorer and document the failing strict rows. No tolerance relaxation.",
+      "evidence": [
+        "docs/evidence/h01-i-transfer/sp2-close-decision.json",
+        "docs/evidence/h01-i-transfer-result.md"
+      ],
+      "remaining_after_either_answer": "Tiny simulator differences are not the millisecond fixed-step-vs-CVode drift, nor evidence of a human pass.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "T03",
+      "group": "T",
+      "title": "0.27 nA dt meets the crossing limit?",
+      "status": "answered_yes",
+      "method": "Hierarchical / numerical time",
+      "scope": "NEURON finalist fixed dt 0.000625 ms versus CVode 1e-10, copied x9 mesh, 0.27 nA, 270-1270 ms.",
+      "remaining_space": "Equal event count and all rise errors <=1 ms, or not.",
+      "predicate": "The fixed-step response has equal nonzero count and every paired rising-crossing error <=1 ms.",
+      "decision_limit": "1 ms rise error and exact count for this timestep check only.",
+      "observation": "37/37 events; maximum rise error about 0.981 ms. This registered crossing check passes.",
+      "yes": "Retain this measured timestep result for the stated input.",
+      "no": "Refine numerics before interpreting this crossing residual.",
+      "next_check": "Evaluate the separate 0.19 nA result in T04; do not interpolate qualification across inputs.",
+      "evidence": [
+        "docs/evidence/h01-i-transfer/sp2-close-decision.json",
+        "docs/evidence/h01-i-transfer-result.md"
+      ],
+      "remaining_after_either_answer": "This is not a complete mesh, peak, width or human validation verdict.",
+      "yes_next": "T04",
+      "no_next": null
+    },
+    {
+      "id": "T04",
+      "group": "T",
+      "title": "0.19 nA dt meets the crossing limit?",
+      "status": "answered_no",
+      "method": "Hierarchical / numerical time",
+      "scope": "NEURON finalist fixed dt 0.000625 ms versus CVode 1e-10; copied x9 mesh; 0.19 nA; 270-1270 ms.",
+      "remaining_space": "Equal count and all rise errors <=1 ms, or not.",
+      "predicate": "The fixed-step response has equal nonzero count and all rising-crossing errors <=1 ms.",
+      "decision_limit": "1 ms rise error and exact count; same criterion as T03, different retained input.",
+      "observation": "14/14 events but maximum rise error about 1.864 ms. Cap exhausted; a further halving is projected, not measured.",
+      "yes": "Retain a measured timestep for this input.",
+      "no": "Keep numerical qualification open at 0.19 nA.",
+      "next_check": "A new bounded scope would measure one further halving and the absent matched BrainCell 0.19 train; no run in this artifact task.",
+      "evidence": [
+        "docs/evidence/h01-i-transfer/sp2-close-decision.json",
+        "docs/evidence/h01-i-transfer-result.md"
+      ],
+      "remaining_after_either_answer": "Count agreement alone cannot resolve crossing-time error.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "T05",
+      "group": "T",
+      "title": "Anatomy swap alone changes the response?",
+      "status": "open",
+      "method": "Structural dissection / anatomy and region map",
+      "scope": "Donor versus H01 morphology under frozen electrical controls and matched input, numerical, and measurement conventions; region map changes recorded separately.",
+      "remaining_space": "Qualified anatomy-only transfer contrast above the registered row limit versus no such contrast.",
+      "predicate": "A matched anatomy-only swap changes the selected response row beyond its established uncertainty.",
+      "decision_limit": "Use per-row qualified numerical contrast limits, not donor physiological tolerance as a substitute for measurement resolution.",
+      "observation": "Current H01 profiles include inferred electrical region assignments; unresolved Y1 concerns the upstream axonal outflow/region map.",
+      "yes": "Dissect morphology/region boundaries carrying the contrast.",
+      "no": "Retain source-model/reference mismatch and other unsplit differences.",
+      "next_check": "First enumerate anatomy and region-map differences; define one reversible matched swap with no invented cable and with both voltage and signed axial current.",
+      "evidence": [
+        "docs/h01-causal-model.md",
+        "docs/specs/2026-09-07-h01-transfer-isolation.md",
+        "docs/h01-network.md"
+      ],
+      "remaining_after_either_answer": "Changing anatomy and region assignment together cannot identify which caused a contrast; donor data cannot directly validate H01 physiology.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "C01",
+      "group": "C",
+      "title": "Selected contacts have verified endpoints?",
+      "status": "answered_yes",
+      "method": "Structural dissection / anatomical identity",
+      "scope": "The retained verified set only: annotations 124698307 (EE), 65017731 (EI), 8105899 (IE).",
+      "remaining_space": "Both endpoints have accepted identity/spatial support for each selected contact, or at least one lacks it.",
+      "predicate": "Each contact in the stated retained set passes the recorded endpoint identity and spatial checks.",
+      "decision_limit": "Use saved exact identity and 5-voxel endpoint audit criteria; proximity alone is insufficient.",
+      "observation": "The completed 3000-sample summary retains three verified anatomical contacts; new candidates did not enlarge the set.",
+      "yes": "Check cable support per contact before simulation.",
+      "no": "Retain unsupported contact candidates outside the verified simulation graph.",
+      "next_check": "Keep IDs, sending/receiving cell and component support; do not treat the partial map as complete connectivity.",
+      "evidence": [
+        "docs/h01-network.md",
+        "docs/evidence/h01-endpoint-recheck-5voxel-3000.json"
+      ],
+      "remaining_after_either_answer": "The answer applies to this selected set, not every exported candidate or every biological connection.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "C02",
+      "group": "C",
+      "title": "EI contact has soma-connected cable?",
+      "status": "answered_no",
+      "method": "Structural dissection / connected component",
+      "scope": "Annotation 65017731: sender 3519995546, presynaptic component 55; receiver 3680152874 component 0.",
+      "remaining_space": "Both endpoints connect to the retained simulated somata through released cable, or at least one does not.",
+      "predicate": "Both endpoint placements are on soma-containing connected components with supported cable.",
+      "decision_limit": "Exact component connectivity; no guessed joins or substituted soma emissions.",
+      "observation": "The source is soma-free fragment 55. This anatomical contact is excluded from the simulation subset.",
+      "yes": "Construct this supported projection.",
+      "no": "Keep the contact anatomical-only and simulation-blocked.",
+      "next_check": "Resolve missing cable/placement evidence before enabling this edge; no morphology repair is part of this task.",
+      "evidence": [
+        "docs/h01-network.md",
+        "docs/evidence/h01-verified-network-validation.md"
+      ],
+      "remaining_after_either_answer": "Two other verified contacts are constructible; that does not repair this edge.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "C03",
+      "group": "C",
+      "title": "Four-cell subset executes finite steps?",
+      "status": "answered_yes",
+      "method": "Functional isolation / runtime",
+      "scope": "Four cells, two supported projections in two separate pairs, 75,605 compartments; saved real-network validation and throughput configurations.",
+      "remaining_space": "Finite real initialization and stepping exist, or they do not.",
+      "predicate": "The retained four-cell evidence includes finite initialization and at least one actual compiled timestep.",
+      "decision_limit": "Finite values and completed actual timestep; report the exact run duration rather than imply a long physiological protocol.",
+      "observation": "Real one-step dt/duration 0.005 ms exists; throughput checks extend to 2000 steps. Construction alone is not the evidence for this Yes.",
+      "yes": "Runtime entry is demonstrated for the specified subset.",
+      "no": "Localize construction, initialization or execution failure before functional claims.",
+      "next_check": "Use C04-C07 for functional inhibition; do not infer it from runtime or fixture delivery.",
+      "evidence": [
+        "docs/h01-network.md",
+        "docs/evidence/h01-verified-network-validation.md",
+        "docs/evidence/h01-network-throughput.md"
+      ],
+      "remaining_after_either_answer": "No full 104-cell run, measured-pair human response, or training adapter qualification follows.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "C04",
+      "group": "C",
+      "title": "300 ms baseline is discriminating?",
+      "status": "inconclusive",
+      "method": "Hierarchical / circuit measurement",
+      "scope": "SP5 disconnected baseline, 300 ms, E drive 0.6 nA, dt 0.005 ms; 12 I pulse onsets 20-295 ms.",
+      "remaining_space": "Completed baseline meets the firing/discrimination conditions, or a completed baseline fails them.",
+      "predicate": "The completed baseline has >=3 E spikes, first E spike 20-60 ms, and one I spike per pulse.",
+      "decision_limit": "Registered baseline conditions plus the measured halving limit before any delay/inhibition verdict.",
+      "observation": "The baseline was stopped after construction and before a trace. Other 300 ms arms were not launched.",
+      "yes": "Proceed to measured-site event and conductance checks.",
+      "no": "Repair the registered drive/measurement setup before testing inhibition.",
+      "next_check": "Any resumption requires a separately bounded plan. Retain the stopped run as untested, not a failed baseline or spent physiological evaluation.",
+      "evidence": [
+        "docs/evidence/h01-ie-inhibition/decision.json",
+        "docs/evidence/h01-ie-inhibition-result.md"
+      ],
+      "remaining_after_either_answer": "All downstream answers remain pending even though their hypothetical branches are shown.",
+      "yes_next": "C05",
+      "no_next": null
+    },
+    {
+      "id": "C05",
+      "group": "C",
+      "title": "Contact event produces delayed conductance?",
+      "status": "blocked",
+      "method": "Functional isolation / serial delivery",
+      "scope": "SP5 measured IE placement 8105899; presynaptic site crossing, event timestamp, receptor conductance, receiver site voltage.",
+      "remaining_space": "Event-to-conductance path completes with registered timing, or at least one link fails.",
+      "predicate": "Each qualifying presynaptic event reaches the supported source site and yields receptor conductance after the configured delay.",
+      "decision_limit": "Delay and conductance conventions from the selected manifest; compare timestamps at the simulation resolution with a disconnected control.",
+      "observation": "No completed 300 ms measured arm. Fixture delivery and a short benchmark do not answer this predicate.",
+      "yes": "Inspect local versus somatic response in C06.",
+      "no": "Split propagation, event detection, routing, and receptor response at the first missing boundary.",
+      "next_check": "On future authorized SP5 execution, record the event and conductance alongside V and signed synaptic current; first satisfy C04.",
+      "evidence": [
+        "docs/evidence/h01-ie-inhibition/decision.json",
+        "docs/evidence/h01-ie-inhibition-manifest.json",
+        "docs/evidence/h01-verified-network-validation.md"
+      ],
+      "remaining_after_either_answer": "Assumed synaptic magnitude/delay are not measured human contact parameters.",
+      "yes_next": "C06",
+      "no_next": null
+    },
+    {
+      "id": "C06",
+      "group": "C",
+      "title": "Measured placement changes E firing?",
+      "status": "blocked",
+      "method": "Functional isolation / receiver response",
+      "scope": "Completed SP5 measured arm versus disconnected arm, same E/I drives and frozen profiles; compare every E cycle.",
+      "remaining_space": "At least one E count/timing effect exceeds qualified numerical uncertainty, or none does.",
+      "predicate": "The measured contact changes E count or delays at least one matched E spike beyond the established halving limit.",
+      "decision_limit": "Registered per-cycle shift limit from measured/measured-halved, with equal counts in the halving pair and per-cycle ranges <0.1 ms.",
+      "observation": "No 300 ms measured or halved arm completed. Gate verdict is not discriminable; placement hypothesis undetermined.",
+      "yes": "Functional inhibition is supported for these assumed parameters and inputs.",
+      "no": "Check whether the failure to affect soma firing is placement-dependent in C07.",
+      "next_check": "Retain site IPSP, soma IPSP, source event, conductance, and E cycles; do not call an unresolvable shift absence of inhibition.",
+      "evidence": [
+        "docs/evidence/h01-ie-inhibition/decision.json",
+        "docs/specs/2026-09-07-h01-functional-inhibition.md"
+      ],
+      "remaining_after_either_answer": "Even a positive result would not validate a human circuit response; no recording of this pair exists.",
+      "yes_next": null,
+      "no_next": "C07"
+    },
+    {
+      "id": "C07",
+      "group": "C",
+      "title": "Soma placement restores a resolved effect?",
+      "status": "blocked",
+      "method": "Structural dissection / placement",
+      "scope": "SP5 soma-control versus measured-site and disconnected controls; preserve receptor kinetics, magnitude, delay and drives.",
+      "remaining_space": "Soma relocation produces the registered effect or it does not, conditional on qualified baseline/delivery/measurement.",
+      "predicate": "The soma-control produces >=0.3 mV soma IPSP and at least one E delay beyond the qualified shift limit.",
+      "decision_limit": "Registered >=0.3 mV soma IPSP and measured delay threshold; predicted measured-site IPSP <0.05 mV is not observed.",
+      "observation": "The soma-control arm was not launched. Placement remains undetermined.",
+      "yes": "Placement/load contributes under these fixed model conditions.",
+      "no": "Keep drive, receptor strength, kinetics, and interactions in the remaining space.",
+      "next_check": "After C04-C06 and new authorization, perform the registered matched placement contrast; soma placement is a diagnostic control, not a replacement measured edge.",
+      "evidence": [
+        "docs/evidence/h01-ie-inhibition/decision.json",
+        "docs/evidence/h01-ie-inhibition-manifest.json"
+      ],
+      "remaining_after_either_answer": "Do not promote the diagnostic soma control into the anatomical network.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "P01",
+      "group": "P",
+      "title": "40-cell stage completes construction?",
+      "status": "answered_no",
+      "method": "Functional isolation / build before run",
+      "scope": "SP8 40-cell prefix, merged tree 0488c84; --include-isolated --cells 40 --control ei; build-only.",
+      "remaining_space": "Actual construction succeeds for every selected cell, or at least one import/build fails.",
+      "predicate": "The build completes all selected morphologies and discretization without error.",
+      "decision_limit": "Successful real construction of all 40 selected cells, not an extrapolated cost estimate.",
+      "observation": "Build fails at 82.6 s, before discretization, in H01Archive.load for cell 5805562981: from_points requires at least two points.",
+      "yes": "Proceed to separately measured initialization and runtime.",
+      "no": "Localize the import failure before investigating network stepping.",
+      "next_check": "Use P02 to retain the recorded import-level localization.",
+      "evidence": [
+        "docs/evidence/h01-population-build-40.json",
+        "docs/evidence/h01-population-build-40.md"
+      ],
+      "remaining_after_either_answer": "Subsequent init/run stages were not launched; no 40-cell runtime measurement exists.",
+      "yes_next": null,
+      "no_next": "P02"
+    },
+    {
+      "id": "P02",
+      "group": "P",
+      "title": "Import alone reproduces the failure?",
+      "status": "answered_yes",
+      "method": "Functional isolation / importer boundary",
+      "scope": "Offline H01Archive.load of 104 largest components; same BrainCell SWC reader, no simulation.",
+      "remaining_space": "Failure reproduced without network initialization or stepping, or only later in the pipeline.",
+      "predicate": "The standalone import reproduces the branch-construction failure.",
+      "decision_limit": "Same from_points exception on the released component; exact node/parent structure retained.",
+      "observation": "Seven of 104 largest components fail. Near-coincident 0.032 um nodes interact with reader np.allclose at coordinates near 3000 um; both leaf and branch-point cases occur.",
+      "yes": "Keep the fault localized to import/reader geometry handling.",
+      "no": "Investigate construction context and subsequent stages.",
+      "next_check": "A future repair needs a reproducer for both leaf and branch-point cases, preserved geometry/provenance, and full 104-component audit before rerunning 40 cells.",
+      "evidence": [
+        "docs/evidence/h01-population-build-40.md",
+        "docs/evidence/h01-population-build-40.json"
+      ],
+      "remaining_after_either_answer": "This artifact applies no repair and does not authorize collapsing nodes or inventing cable.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "P03",
+      "group": "P",
+      "title": "Twelve-cell finite execution exists?",
+      "status": "answered_yes",
+      "method": "Functional isolation / staged execution",
+      "scope": "SP8 12-cell subset: four incident cells plus eight selected isolated cells; use successful retained attempts, not killed attempts.",
+      "remaining_space": "At least one actual finite execution exists for this subset, or only construction/projections exist.",
+      "predicate": "The saved 12-cell evidence contains a completed real finite runtime after initialization.",
+      "decision_limit": "Completed real run and finite traces, with measured duration/load/attempt retained.",
+      "observation": "Attempt 3 completed 1 ms at dt 0.005 ms in both ei and disconnected configurations with finite traces; conductance probes were zero in both. Earlier killed attempts remain untested.",
+      "yes": "Retain the measured subset as the runtime boundary.",
+      "no": "Keep execution open despite construction success.",
+      "next_check": "Report the selected attempt's measured configuration; do not extrapolate qualification to 40 or 104 cells.",
+      "evidence": [
+        "docs/evidence/h01-population-build-12.json",
+        "docs/evidence/h01-population-build-12.md"
+      ],
+      "remaining_after_either_answer": "Includes isolated cells and borrowed profiles; runtime is not physiological coverage.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "P04",
+      "group": "P",
+      "title": "Added SST donor reproduces its counts?",
+      "status": "answered_no",
+      "method": "Hierarchical / reference before transfer",
+      "scope": "HL5MN1 source fit, 100/150 pA, sweeps 44/35, original and half dt.",
+      "remaining_space": "Exact counts agree at both inputs, or at least one differs.",
+      "predicate": "The source model reproduces both matched donor counts.",
+      "decision_limit": "Exact counts; retain separate repeat bands. Latency limits use |dt-pair difference| x2.95.",
+      "observation": "Human 14/34; model 16/30 at both dt values. Source reproduction rejected.",
+      "yes": "Continue waveform and transfer qualification.",
+      "no": "Isolate unchanged source-condition mismatch before using this donor as qualified physiology.",
+      "next_check": "Audit initial state, bias, temperature, waveform and mechanism conventions under a frozen source model; preserve two-input constraints.",
+      "evidence": [
+        "docs/evidence/h01-sst-reproduction.md",
+        "docs/evidence/h01-donors/stage-hl5mn1-decision.json"
+      ],
+      "remaining_after_either_answer": "Halving-dt count agreement rules out that count change over the tested pair, not every numerical issue.",
+      "yes_next": null,
+      "no_next": null
+    },
+    {
+      "id": "P05",
+      "group": "P",
+      "title": "Added L4 donor reproduces its counts?",
+      "status": "answered_no",
+      "method": "Hierarchical / reference before transfer",
+      "scope": "Allen 527952884 source fit, 100/90 pA, sweeps 69/39, original and half dt.",
+      "remaining_space": "Exact counts agree at both inputs, or at least one differs.",
+      "predicate": "The source model reproduces both matched donor counts.",
+      "decision_limit": "Exact counts; 100 pA repeat band 17-20 is separately reported and cannot replace exact 20.",
+      "observation": "Human 20/12; model 19/8 at both dt values. Being within the first repeat band does not satisfy both exact counts.",
+      "yes": "Continue waveform and transfer qualification.",
+      "no": "Isolate the source-condition mismatch before transfer claims.",
+      "next_check": "Compare pinned initial state, temperature, waveform/bias and mechanism versions; keep every input in the test.",
+      "evidence": [
+        "docs/evidence/h01-l4-reproduction.md",
+        "docs/evidence/h01-donors/stage-allen-l4-decision.json"
+      ],
+      "remaining_after_either_answer": "Anatomical labels and imported templates do not establish complete population reference coverage.",
+      "yes_next": null,
+      "no_next": null
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/evidence/h01-donors/stage-allen-l4-decision.json",
+      "sha256": "275e195cb197c4fe9b684c3252dfae0583869bd72e159de24607c0115a1eff41"
+    },
+    {
+      "path": "docs/evidence/h01-donors/stage-hl5mn1-decision.json",
+      "sha256": "4ca1eabd4dd869b0eff5ea837a9fd2681ba85cf4baf979bfffd66e5f5eb6a432"
+    },
+    {
+      "path": "docs/evidence/h01-e-continuation-result.md",
+      "sha256": "7b07ffb0cc088c2a1ef18ded8e4df5352306442f884ce4f68bfed3953a1a53c7"
+    },
+    {
+      "path": "docs/evidence/h01-e-gain-manifest.json",
+      "sha256": "e0a244c223cbcd8c77cbf1086f4da064c7aecafc2bbf799ff5173b27a36d4cd9"
+    },
+    {
+      "path": "docs/evidence/h01-e-gain/stage-close-decision.json",
+      "sha256": "fcad6a76c24321b8bb18cecda92da19f4ca76186d0fdac89521bdaad8b08a717"
+    },
+    {
+      "path": "docs/evidence/h01-e-gain/stage-g-decision.json",
+      "sha256": "5c21118a992037637fbc3f7536d6a766f426554ee5c04f5b245cffe55cd1a03c"
+    },
+    {
+      "path": "docs/evidence/h01-e-gain/stage-g0-decision.json",
+      "sha256": "de1c19dd2fc7b19f254c30d1716a65718d987810c4a01b8a395cee6ab330d630"
+    },
+    {
+      "path": "docs/evidence/h01-endpoint-recheck-5voxel-3000.json",
+      "sha256": "ad068e7c6fa73dedd7781504983c8fff494bb9b83e7315f230fa15a432d334c2"
+    },
+    {
+      "path": "docs/evidence/h01-i-energetic-result.md",
+      "sha256": "8cb9849ec898aa909acb2de052edf7273af531e15c88bf47194977ff81740b24"
+    },
+    {
+      "path": "docs/evidence/h01-i-reserve-result.md",
+      "sha256": "7f77f0a97a5f1e99ec2d7694b7eab9581e8cf1b308533711cbdbcdd02f04b7ca"
+    },
+    {
+      "path": "docs/evidence/h01-i-reserve/stage-1-decision.json",
+      "sha256": "d6bff5ab62bcfdaab2f2f6a3d23f2d8d09eeea17155c705d016374a0097063f7"
+    },
+    {
+      "path": "docs/evidence/h01-i-transfer-result.md",
+      "sha256": "c96c20c67cdbf00a478307f180a2e5cf830df16a8097a9c379d26906b395faad"
+    },
+    {
+      "path": "docs/evidence/h01-i-transfer/sp2-close-decision.json",
+      "sha256": "c520e41395234fceb0f8aca6908d4f7343a4bae4b4e7f4d33751b5c60ff575fa"
+    },
+    {
+      "path": "docs/evidence/h01-i-trough-audit.json",
+      "sha256": "d5ade8f04348d7cd6b114b9fab5c4f3ca84bcfe66e8ac1a101b904fb4a4d9f74"
+    },
+    {
+      "path": "docs/evidence/h01-ie-inhibition-manifest.json",
+      "sha256": "e00efeeefe3a537ad98945a1ca82ca38cbec9b15f7d993fb4f35665589f943d7"
+    },
+    {
+      "path": "docs/evidence/h01-ie-inhibition-result.md",
+      "sha256": "b52d7e39cdbf9d97bab9b9cbaaac5ad30370910aba0f9316bae19092111412f3"
+    },
+    {
+      "path": "docs/evidence/h01-ie-inhibition/decision.json",
+      "sha256": "7e4f727ce7a677117078f08e67bfc839ed5529c472eaf65592987e61997cf300"
+    },
+    {
+      "path": "docs/evidence/h01-l4-reproduction.md",
+      "sha256": "f05064596d3e7226e8576037f0cac731d0d6852f5389da2f19adf05da03f3ac1"
+    },
+    {
+      "path": "docs/evidence/h01-network-throughput.md",
+      "sha256": "57aacd493c6bd6ee34c0c8847ba2436920ec4b44d02f960c1e45585b426812eb"
+    },
+    {
+      "path": "docs/evidence/h01-population-build-12.json",
+      "sha256": "78f04c0257132b98966580794309bdf959c6ff3cb772875d227c75ec928804e4"
+    },
+    {
+      "path": "docs/evidence/h01-population-build-12.md",
+      "sha256": "efb9970df86458ea164591cc487236892a2fdec0f58147208373e7d61973d3f9"
+    },
+    {
+      "path": "docs/evidence/h01-population-build-40.json",
+      "sha256": "2e6364e1194bb44f7d338547e5635676357a4b0bec0496e388a5cc1014512172"
+    },
+    {
+      "path": "docs/evidence/h01-population-build-40.md",
+      "sha256": "06549e80e6117c19ce3775e132c163f8075a0e8bd738fb254ba01094ec1b8ffb"
+    },
+    {
+      "path": "docs/evidence/h01-sst-reproduction.md",
+      "sha256": "aeed7524570208d5e1ca771fa0c7f668482f5e4d737c37d58f593ea3603b28db"
+    },
+    {
+      "path": "docs/evidence/h01-verified-network-validation.md",
+      "sha256": "a4f634854fedb9c673b99c9bb7476d42b54b76111f3292568ec97b03717bef54"
+    },
+    {
+      "path": "docs/evidence/h01-z-map-i.md",
+      "sha256": "d4d93e3a6534bcab20d55d69e75ac173407754857f638a8f06ee64cc619ac980"
+    },
+    {
+      "path": "docs/h01-causal-model.md",
+      "sha256": "740fc68e6877095fb8eefa9d61b40b81b2a9ae2a7a858ff99b48afba83475220"
+    },
+    {
+      "path": "docs/h01-network.md",
+      "sha256": "28a2ac9691a3018ce147478c43a651bc6ca3aa00f3a34979e20aa28fc488dcc9"
+    },
+    {
+      "path": "docs/specs/2026-09-05-h01-recorded-response-acceptance-proposal.md",
+      "sha256": "7965377e5a5be53eb6ac1d3df0610473a5ec71635da51b5b0e4c14ad45ded0c9"
+    },
+    {
+      "path": "docs/specs/2026-09-07-h01-functional-inhibition.md",
+      "sha256": "bd01c0cd4da5cd6a9581aefa13abb6979a5b82bc5f3bcf6b0b74cbdd449d98d9"
+    },
+    {
+      "path": "docs/specs/2026-09-07-h01-transfer-isolation.md",
+      "sha256": "4b52f63588e3f2a7a9f0c6e0cffc850d2e51062e1efc508b7a006ce3d9cf8294"
+    },
+    {
+      "path": "docs/specs/2026-09-07-h01-usable-circuit-plan.md",
+      "sha256": "4ae7bbc71dcd03943688b037f2c15a2b4238dccd31838fb4d6c0b227663881cc"
+    }
+  ]
+}
