@@ -114,3 +114,13 @@ failed replacement with intact old JSON, recovery after release, and cleanup.
 The first helper test exposed PowerShell converting a null backup path to an
 empty string; explicit NullString fixes that interop issue. Future monitoring
 changes must exercise real file handles before an expensive run.
+
+## Diagnostic diagrams (2026-09-09)
+
+Hartshorne-form pictures, each generated from committed JSON by a tested script in this directory:
+Youden contract plots [E](h01-youden-contract-e.png) and [I](h01-youden-contract-i.png)
+(`h01_youden_contract.py`), the whole-programme [search tree](h01-search-tree.png)
+(`h01_search_tree.py`), and Thevenin four-box diagrams for the [I clamp](h01-thevenin-i-clamp.png)
+and the [I-to-E pair](h01-thevenin-ie-pair.png) (`h01_thevenin_boxes.py`). Readings are in
+`docs/h01-causal-model.md`. The earlier `h01-youden-i-candidate-*.png` files, which compared one
+model at two drives, were removed.

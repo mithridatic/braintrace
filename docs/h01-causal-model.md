@@ -2217,3 +2217,30 @@ Evidence: h01-104-corrected-construction-decision.json. This leaves full correct
 construction unverified; it does not contradict the four-cell construction or
 runtime passes. Available RAM was about 30.44 GiB near termination, so memory
 exhaustion is not established as the cause. No automatic retry occurred.
+
+### Diagnostic diagrams redrawn in Hartshorne's forms (2026-09-09; no new observation)
+
+Spec: `docs/specs/2026-09-09-h01-diagnostic-diagrams.md`. Every number is read from a committed
+decision or usable-tier JSON; no trace is read and nothing was simulated.
+
+**Youden plots** (`evidence/h01-youden-contract-e.png`, `-i.png`; counts in
+`evidence/h01-youden-contract.json`). Human on x, model on y, contract limit as a bar on the
+diagonal. Reading, E cell: rate 2/3 rows, adaptation 3/3, width 25/27, AHP 0/27 (unresolvable):
+the E points sit on the diagonal except the 250 pA rate, which is bias, not scatter. Reading, I
+cell: rate 1/3, adaptation 0/3, width 24/75, AHP 75/75. The I width points form a horizontal band
+at 0.22 ms against human 0.27 to 0.30 ms, well outside every limit bar: a constant bias, so the
+width miss is a single mechanism (spike repolarisation too fast), not noise. The adaptation ratios
+sit far below the diagonal at all three drives, consistent with the accommodation row of SP4.
+
+**Search tree** (`evidence/h01-search-tree.png`, nodes in `evidence/h01-search-tree.json`).
+Twenty-three nodes: 7 established, 5 eliminated, 2 failed at cap (E gain, I post-trough), 2
+launched-untested (functional inhibition, 104-cell runtime), 4 open. Reading: both failed searches
+closed with every branch inside the fitted channel family eliminated and the open branch named
+outside it, which is Hartshorne's "reassessment" outcome rather than a cause list.
+
+**Thevenin four-box diagrams** (`evidence/h01-thevenin-i-clamp.png`, `-ie-pair.png`; numbers in
+`evidence/h01-thevenin-boxes.json`). I clamp: the 31.4 pA sits on the source side as a bias, the
+electrode and membrane impedances were never measured, so the loop cannot be closed numerically;
+that is a gap in the campaign, now drawn. I-to-E pair: synapse 50 MOhm (20 nS) against human 323
+MOhm (3.1 nS), local 10 to 15 mV, soma 0.003 mV; the cable box attenuates by more than 3,000x, so
+the placement and cable, not the conductance, are the load-limiting element.
