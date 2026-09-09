@@ -524,6 +524,8 @@ def load_checkpoint(path: str | os.PathLike[str]) -> dict[str, np.ndarray]:
     if path.stat().st_size > MAX_CHECKPOINT_BYTES:
         raise ValueError("checkpoint exceeds the 32 MiB limit")
     with np.load(path, allow_pickle=False) as archive:
+        if 'h01_manifest' in archive:
+            raise ValueError('H01 checkpoint requires the H01 backend; cross-backend resume is unsupported')
         if "format" not in archive or archive["format"].shape != () or int(archive["format"]) != 1:
             raise ValueError("checkpoint format must be scalar value 1")
         result = {name: np.array(archive[name], copy=True) for name in archive.files if name != "format"}

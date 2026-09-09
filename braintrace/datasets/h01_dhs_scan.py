@@ -191,6 +191,29 @@ def _backsub(diags, solves, lowers, indices):
     return res_v
 
 
+def _solve(diags, solves, lowers, uppers, levels, jumps, edges):
+    """Use the original tree solve with an exact implicit linear derivative."""
+    d, s, low, up = map(u.get_mantissa, (diags, solves, lowers, uppers))
+    children, parents = edges[:, 0], edges[:, 1]
+
+    def matvec(value):
+        result = d*value
+        result = result.at[..., children].add(low[children]*value[..., parents])
+        return result.at[..., parents].add(up[children]*value[..., children])
+
+    def solve(_, rhs):
+        diagonal, right = _triang(d, rhs, low, up, levels)
+        return _backsub(diagonal, right, low, jumps)
+
+    def transpose_solve(_, rhs):
+        diagonal, right = _triang(d, rhs, up, low, levels)
+        return _backsub(diagonal, right, up, jumps)
+
+    result = jax.lax.custom_linear_solve(matvec, s, solve=solve, transpose_solve=transpose_solve)
+    unit = u.get_unit(solves)/u.get_unit(diags)
+    return u.Quantity(result, unit) if unit != u.UNITLESS else result
+
+
 def _voltage_step(target, t, dt, *args):
     """Use the installed voltage assembly with the two compiled kernels."""
     runtime = getattr(target, "_runtime", None)
@@ -208,8 +231,8 @@ def _voltage_step(target, t, dt, *args):
     numeric = original._build_dhs_numeric_state(target.V.value, linear, const,
         dt=dt, static_source=source, static_cache=cache,
         edge_point_current=original._edge_point_current(target, t=t, static_source=source))
-    d, s = _triang(numeric.diags, numeric.solves, numeric.lowers, numeric.uppers, levels)
-    solution = _backsub(d, s, numeric.lowers, source.backsub_indices_np)
+    solution = _solve(numeric.diags, numeric.solves, numeric.lowers, numeric.uppers,
+                      levels, source.backsub_indices_np, source.edges_np)
     target.V.value = original._restore_midpoint_voltage(solution,
         dynamic_rows=source.dynamic_rows_np, target_shape=target.V.value.shape)
 

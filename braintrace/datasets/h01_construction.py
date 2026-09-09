@@ -1546,12 +1546,21 @@ class H01Cell(braincell.Cell):
             cached = getattr(runtime, "_voltage_linearizer_cache", None)
             if cached is not None:
                 return cached
-        lin = brainstate.transform.vector_grad(
-            self.compute_membrane_derivative,
+        def membrane_derivative(voltage, time, timestep, *args):
+            with brainstate.environ.context(t=time, dt=timestep):
+                return self.compute_membrane_derivative(voltage, *args)
+
+        gradient = brainstate.transform.vector_grad(
+            membrane_derivative,
             argnums=0,
             return_value=True,
             unit_aware=False,
         )
+        def lin(voltage, *args):
+            # A cached StatefulFunction must not close over an outer loop's
+            # traced clock. Both environment values are runtime inputs here.
+            return gradient(voltage, brainstate.environ.get('t', 0.*u.ms),
+                            brainstate.environ.get('dt'), *args)
         if runtime is not None:
             runtime._voltage_linearizer_cache = lin
         return lin

@@ -9,6 +9,32 @@ from braincell.quad import _staggered as original
 from .h01_anatomy_test import imported
 
 
+def test_implicit_tree_solve_gradients_match_dense_without_level_tape():
+    from .h01_dhs_scan import _prepare_levels, _solve
+    parent = [0, 0, 0, 1, 1, 2, 5]
+    edges, offsets, jumps = tree(parent)
+    n = len(parent)
+    with brainstate.environ.context(precision=64):
+        levels = _prepare_levels(edges, offsets, n)
+        d = jnp.linspace(2., 3., n+1)[None]
+        rhs = jnp.arange(n+1, dtype=float)[None]/10
+        low = jnp.array([0., -.1, -.2, -.1, -.3, -.2, -.1, 0.])
+        up = 1.3*low
+        def sparse(d, rhs, low, up):
+            return _solve(d, rhs, low, up, levels, jumps, edges)
+        def dense(d, rhs, low, up):
+            matrix = jnp.diag(d[0]).at[edges[:, 0], edges[:, 1]].set(low[edges[:, 0]])
+            matrix = matrix.at[edges[:, 1], edges[:, 0]].set(up[edges[:, 0]])
+            return jnp.linalg.solve(matrix, rhs.T).T
+        args = (d, rhs, low, up)
+        np.testing.assert_allclose(sparse(*args), dense(*args), rtol=1e-13, atol=1e-13)
+        for mode in (jax.jacfwd, jax.jacrev):
+            actual = mode(sparse, argnums=(0, 1, 2, 3))(*args)
+            expected = mode(dense, argnums=(0, 1, 2, 3))(*args)
+            for a, e in zip(actual, expected):
+                np.testing.assert_allclose(a, e, rtol=1e-12, atol=1e-12)
+
+
 def tree(parent):
     n = len(parent)
     depth = np.zeros(n, dtype=int)

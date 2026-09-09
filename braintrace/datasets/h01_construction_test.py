@@ -136,3 +136,21 @@ def test_fast_runtime_ion_instantiation_and_geometry_parity(imported):
         assert getattr(ion, "length").shape == (1, len(cell.node_tree.nodes))
         assert np.isfinite(getattr(ion, "length").mantissa).all()
         assert np.isfinite(getattr(ion, "area").mantissa).all()
+def test_cached_voltage_linearizer_keeps_time_as_an_explicit_input(imported):
+    import brainstate
+    import jax.numpy as jnp
+    from braintrace._compiler.sparse_io_graph import SparseIOGraph
+    from examples.pp_prop.h01_arc_model import H01ArcModel
+    with brainstate.environ.context(precision=64):
+        args = arguments(imported)
+        cell, _ = make_h01_ei_cell(imported, args['annotations'], polarity='E',
+            regions=args['regions']['E'], region_basis='Synthetic regression fixture',
+            pop_size=(1,), current_na=0., solver='h01_staggered_calcium_implicit')
+        network = braincell.Network()
+        network.add_population('cell', cell)
+        model = H01ArcModel(network, ['5805562981'])
+        brainstate.transform.jit(model.update)(jnp.zeros(441))
+        model.reset_episode()
+        graph = SparseIOGraph(model, jnp.zeros(441))
+        outputs, _, _ = graph.forward(graph.inputs(jnp.zeros(441)))
+        assert all(np.isfinite(np.asarray(value)).all() for value in outputs)

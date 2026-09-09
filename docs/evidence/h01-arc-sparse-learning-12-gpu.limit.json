@@ -1,0 +1,10 @@
+{
+  "status": "untested_resource_limit",
+  "elapsed_seconds": 900.2946660550006,
+  "rss_gib": 5.43701171875,
+  "phase": "sparse_muon_compile_and_update",
+  "limits": {
+    "wall_seconds": 900.0,
+    "rss_gib": 16.0
+  }
+}
