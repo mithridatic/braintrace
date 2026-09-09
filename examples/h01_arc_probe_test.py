@@ -35,3 +35,22 @@ def test_invalid_limits_rejected_before_construction(tmp_path, monkeypatch, flag
         h01_arc_probe.main()
     assert exc.value.code == 2
     assert not (tmp_path/"unused.json").exists()
+
+
+def test_sparse_probe_uses_grouped_muon_on_actual_cable(tmp_path):
+    from braintrace.datasets.h01_network_step_test import _contact_network
+    from examples.pp_prop.h01_arc_model import H01ArcModel
+    model = H01ArcModel(_contact_network(tmp_path), ['5805562981', '5965472721'])
+    report = {}
+    phases = []
+    def phase(name, call):
+        value = call()
+        phases.append(name)
+        return value
+    h01_arc_probe._sparse_learning_probe(model, report, phase)
+    assert phases == ['sparse_pp_prop_compile', 'sparse_muon_compile_and_update', 'sparse_muon_warm_update']
+    assert report['learning_probe']['finite']
+    assert report['learning_probe']['updates'] == 2
+    assert report['learning_probe']['cold_gradient_norm'] > 0
+    assert set(report['learning_probe']['changed_parameters']) == {
+        'input', 'recurrent', 'readout_weight', 'readout_bias'}

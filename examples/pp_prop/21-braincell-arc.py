@@ -2087,6 +2087,8 @@ def _parser():
             "0 scores every operation on the complete corpus (default: 64)"
         ),
     )
+    parser.add_argument('--model-backend', choices=('braincell', 'h01'), default='braincell')
+    parser.add_argument('--h01-manifest', type=Path, help='Pinned H01 topology, assets and numerical settings')
     return parser
 
 
@@ -2127,6 +2129,8 @@ def _evolve_workflow_report(
     updates=ORDINARY_UPDATES,
     operations_per_stage=1,
     screen_tasks=DEFAULT_SCREEN_TASKS,
+    model_backend='braincell',
+    h01_manifest=None,
 ):
     """Run or resume iterative ARC evolution and summarize its terminal state."""
 
@@ -2144,12 +2148,20 @@ def _evolve_workflow_report(
         operations_per_stage=operations_per_stage,
         screen_tasks=screen_tasks,
     )
-    state = run_evolution(
-        Example21ArcAdapter(arc_root),
-        output_dir,
-        config=config,
-        progress_reporter=ConsoleProgressReporter(),
-    )
+    if model_backend == 'h01':
+        if h01_manifest is None:
+            raise ValueError('--model-backend h01 requires --h01-manifest')
+        from examples.pp_prop.h01_arc_adapter import H01ArcAdapter
+        with brainstate.environ.context(precision=64):
+            state = run_evolution(H01ArcAdapter(arc_root, h01_manifest), output_dir,
+                config=config, progress_reporter=ConsoleProgressReporter())
+    elif model_backend == 'braincell':
+        if h01_manifest is not None:
+            raise ValueError('--h01-manifest requires --model-backend h01')
+        state = run_evolution(Example21ArcAdapter(arc_root), output_dir,
+            config=config, progress_reporter=ConsoleProgressReporter())
+    else:
+        raise ValueError('Unknown model backend')
     return {
         "mode": "evolve",
         "passed": bool(state.closed and state.evaluation_completed),
@@ -2165,6 +2177,8 @@ def _evolve_workflow_report(
 
 
 def _run_command(args):
+    if (args.model_backend != 'braincell' or args.h01_manifest is not None) and args.command != 'evolve':
+        raise ValueError('H01 backend arguments require the evolve command')
     if args.command is not None and args.smoke:
         raise ValueError(
             "Choose one of proof, run, evolve, or --smoke; "
@@ -2200,6 +2214,8 @@ def _run_command(args):
                 updates=args.updates,
                 operations_per_stage=args.topology_operations_per_stage,
                 screen_tasks=args.screen_tasks,
+                model_backend=args.model_backend,
+                h01_manifest=args.h01_manifest,
             )
         else:
             report = _smoke_report()

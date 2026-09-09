@@ -123,5 +123,32 @@ class pp_prop(IODimVjpAlgorithm):
 
     __module__ = 'braintrace'
 
+    @classmethod
+    def sparse(cls, model, decay_or_rank=.99, *, max_bytes=2**30):
+        """Build the explicit sparse, coupled-state IO-factorized variant.
+
+        Parameters
+        ----------
+        model : brainstate.nn.Module
+            Model with registered ETP operations and heterogeneous state blocks.
+        decay_or_rank : float, int or pair, optional
+            Input/output trace smoothing settings.
+        max_bytes : int, optional
+            Maximum sparse output-factor storage after dependency closure.
+
+        Returns
+        -------
+        SparsePPProp
+            Finite-window learner using full state JVPs and sparse factors.
+
+        Notes
+        -----
+        This opt-in variant preserves cable coupling in factor propagation.
+        Existing position-wise pp-prop defaults are unchanged. IO factorization
+        remains approximate outside its guaranteed regimes.
+        """
+        from .sparse_pp_prop import SparsePPProp
+        return SparsePPProp(model, decay_or_rank, max_bytes=max_bytes)
+
 
 ES_D_RTRL = pp_prop

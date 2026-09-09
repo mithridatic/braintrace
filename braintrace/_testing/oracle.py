@@ -144,6 +144,7 @@ def chunked_online_param_gradients(
     algo_factory: Callable[[brainstate.nn.Module], braintrace.ETraceAlgorithm],
     chunk_size: int,
     compiled_scan: bool = False,
+    initialize_model: bool = True,
     after_init: Callable[
         [brainstate.nn.Module, braintrace.ETraceAlgorithm], None
     ] | None = None,
@@ -175,6 +176,11 @@ def chunked_online_param_gradients(
         full-size chunks in one
         :func:`brainstate.transform.scan` and run at most one shorter final
         chunk directly.
+    initialize_model : bool, optional
+        Initialize the factory's model before compilation, default ``True``.
+        Set ``False`` only when the factory returns an already initialized model,
+        such as a constructed BrainCell network whose initialization is one-shot.
+        The factory then owns its complete physical-state starting boundary.
     after_init : Callable, optional
         Host callback invoked exactly once with ``(model, algorithm)`` after
         ``init_all_states``, graph compilation, and the explicit eligibility
@@ -194,7 +200,8 @@ def chunked_online_param_gradients(
     not byte identity, when comparing it with the legacy path.
     """
     model = model_factory()
-    brainstate.nn.init_all_states(model, batch_size=1)
+    if initialize_model:
+        brainstate.nn.init_all_states(model, batch_size=1)
     algo = algo_factory(model)
     algo.compile_graph(inputs[0])
     algo.init_etrace_state()

@@ -12,6 +12,17 @@ from braintrace.datasets.h01_network_step_test import _network, _contact_network
 from .h01_arc_model import H01ArcModel
 
 
+def test_explicit_encoder_pattern_restores_sparse_identity(tmp_path):
+    indices, indptr = np.array([0], dtype=np.int32), np.array([0, *([1]*441)], dtype=np.int32)
+    model = H01ArcModel(_network(tmp_path), ['5805562981'], input_pattern=(indices, indptr))
+    assert model.input_weight.value.shape == (1,)
+    np.testing.assert_array_equal(model.input_csr.indices, indices)
+    np.testing.assert_array_equal(model.input_csr.indptr, indptr)
+    assert np.isfinite(brainstate.transform.jit(model.update)(jnp.ones(441))).all()
+    with pytest.raises(ValueError, match='integer'):
+        H01ArcModel(_network(tmp_path), ['5805562981'], input_pattern=(indices.astype(float), indptr))
+
+
 def test_forward_padding_and_readout(tmp_path):
     model = H01ArcModel(_network(tmp_path, current_na=0), ["5805562981"])
     event = jnp.ones(441)
@@ -37,7 +48,7 @@ def test_forward_padding_and_readout(tmp_path):
                    reason="pp-prop factorized traces reject cable position mixing; integration gate remains open")
 @pytest.mark.parametrize("unroll", [16, 32])
 def test_pp_prop_compiles_real_cable_state(tmp_path, unroll, record_property):
-    model = H01ArcModel(_network(tmp_path), ["5805562981"])
+    model = H01ArcModel(_network(tmp_path), ["5805562981"], checkpoint_substeps=False)
     learner = braintrace.pp_prop(model, decay_or_rank=.99, vjp_method="single-step",
                                 control_flow=braintrace.ControlFlowPolicy(scan_unroll_limit=unroll))
     try:
@@ -47,6 +58,22 @@ def test_pp_prop_compiles_real_cable_state(tmp_path, unroll, record_property):
         record_property("compiler_blocker", str(exc))
         raise
     assert learner is not None
+
+
+def test_checkpointed_cable_event_preserves_forward_and_derivatives(tmp_path):
+    from braintrace._compiler.sparse_io_graph import SparseIOGraph
+    results = []
+    with brainstate.environ.context(precision=64):
+        for checkpoint in (False, True):
+            model = H01ArcModel(_network(tmp_path, current_na=0), ['5805562981'],
+                                checkpoint_substeps=checkpoint)
+            graph = SparseIOGraph(model, jnp.zeros(441))
+            raw = graph.inputs(jnp.ones(441))
+            def forward(event):
+                return graph.forward((event, *raw[1:]))[0][0]
+            results.append((jax.jit(forward)(raw[0]), jax.jit(jax.jacrev(forward))(raw[0])))
+        for actual, expected in zip(results[0], results[1]):
+            np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
 
 
 @pytest.mark.parametrize("ids,dt,message", [

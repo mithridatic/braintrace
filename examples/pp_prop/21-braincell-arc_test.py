@@ -144,6 +144,8 @@ def test_cli_evolve_dispatches_one_resumable_pipeline(monkeypatch, tmp_path):
             "updates": 128,
             "operations_per_stage": 1,
             "screen_tasks": 64,
+            "model_backend": "braincell",
+            "h01_manifest": None,
         },
     )]
 
@@ -160,6 +162,8 @@ def test_cli_evolve_dispatches_one_resumable_pipeline(monkeypatch, tmp_path):
         "updates": 128,
         "operations_per_stage": 2,
         "screen_tasks": 32,
+        "model_backend": "braincell",
+        "h01_manifest": None,
     }
     report = json.loads((tmp_path / "run" / "example21-evolve.json").read_text())
     assert report["closed"]

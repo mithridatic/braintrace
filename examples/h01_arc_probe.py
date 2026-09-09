@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+from importlib.metadata import version
 import json
 import os
 from pathlib import Path
@@ -24,6 +25,39 @@ from braintrace.datasets.h01_network_init import init_h01_network_states, proces
 from examples.pp_prop.h01_arc_model import H01ArcModel
 
 
+def _sparse_learning_probe(model, report, phase):
+    from examples.pp_prop.example21_arc_adapter import Example21ArcAdapter
+    module = Example21ArcAdapter(Path('.'))._model()
+    learner = braintrace.pp_prop.sparse(model, .99, max_bytes=512*1024**2)
+    phase('sparse_pp_prop_compile', lambda: learner.compile_graph(jnp.zeros(441)))
+    layout = learner.graph.layout
+    report['eligibility'] = {'elements': layout.elements, 'bytes': layout.nbytes,
+        'colors': layout.color_count, 'max_support_width': max(map(len, layout.outputs), default=0),
+        'state_blocks': len(layout.shapes), 'factor_limit_bytes': 512*1024**2}
+    parameters = {'input': model.input_weight.value, 'recurrent': model.recurrent_weight.value,
+                  'readout_weight': model.readout_weight.value, 'readout_bias': model.readout_bias.value}
+    before = {name: np.array(value) for name, value in parameters.items()}
+    trainer = module.PPPropEpisodeTrainer(learner, parameters)
+    def loss(event):
+        learner(event)
+        return jnp.mean(jnp.square(model.readout()))
+    train = brainstate.transform.jit(lambda: trainer.update_episode(jnp.ones((1, 441)), step_fn=loss))
+    cold = phase('sparse_muon_compile_and_update', lambda: jax.block_until_ready(train()))
+    report['first_learning_update'] = {'loss': float(cold[0]), 'gradient_norm': float(cold[1]),
+        'finite': bool(np.isfinite(np.asarray(cold)).all()), 'updates': int(trainer.updates)}
+    warm = phase('sparse_muon_warm_update', lambda: jax.block_until_ready(train()))
+    report['learning_probe'] = {'objective': 'synthetic event squared-logit loss; not ARC training',
+        'cold_loss': float(cold[0]), 'warm_loss': float(warm[0]),
+        'cold_gradient_norm': float(cold[1]), 'warm_gradient_norm': float(warm[1]),
+        'updates': int(trainer.updates), 'optimizer_finite': bool(trainer.optimizer_is_finite()),
+        'changed_parameters': [name for name, value in trainer.parameters.items()
+                               if not np.array_equal(before[name], value)],
+        'contact_note': 'Contact activity is not forced; parameter changes can include Muon weight decay.'}
+    report['learning_probe']['finite'] = bool(np.isfinite(np.asarray(cold)).all()
+        and np.isfinite(np.asarray(warm)).all() and trainer.optimizer_is_finite()
+        and all(np.isfinite(np.asarray(value)).all() for value in jax.tree.leaves(learner.factors.value)))
+
+
 def main():
     """Run one bounded population probe and retain each completed phase.
 
@@ -37,6 +71,7 @@ def main():
     parser.add_argument("--cells", type=int, choices=(4, 12, 40, 104), required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--compile-learning", action="store_true")
+    parser.add_argument("--sparse-learning", action="store_true")
     parser.add_argument("--wall-limit-seconds", type=float, default=900.)
     parser.add_argument("--rss-limit-gib", type=float, default=16.)
     args = parser.parse_args()
@@ -46,10 +81,19 @@ def main():
     report = {"status": "running", "cells": args.cells, "phases": {},
               "event_ms": .1, "dt_ms": .005, "substeps": 20,
               "solver": "h01_staggered_calcium_implicit", "physiology": "unqualified"}
+    report['devices'] = [str(device) for device in jax.devices()]
+    report['dependencies'] = {name: version(name) for name in
+        ('jax', 'jaxlib', 'brainstate', 'brainunit', 'braincell', 'brainevent', 'optax', 'numpy')}
     report["feature_probe"] = "all-ones synthetic 441-feature vector; not an encoded ARC episode"
     report["source_sha256"] = {name: hashlib.sha256(Path(name).read_bytes()).hexdigest()
         for name in ("examples/pp_prop/h01_arc_model.py", "braintrace/datasets/h01_network_step.py",
-                     "braintrace/datasets/h01_calcium_solver.py", "braintrace/datasets/h01_construction.py")}
+                     "braintrace/datasets/h01_calcium_solver.py", "braintrace/datasets/h01_construction.py",
+                     "braintrace/datasets/h01_dhs_scan.py")}
+    if args.sparse_learning:
+        report['source_sha256'].update({name: hashlib.sha256(Path(name).read_bytes()).hexdigest()
+            for name in ('braintrace/_algorithm/sparse_pp_prop.py', 'braintrace/_algorithm/sparse_io.py',
+                         'braintrace/_compiler/sparse_io_graph.py', 'braintrace/_compiler/sparse_support.py',
+                         'braintrace/_compiler/sparse_influence.py')})
     args.output.parent.mkdir(parents=True, exist_ok=True)
     report["limits"] = {"wall_seconds": args.wall_limit_seconds, "rss_gib": args.rss_limit_gib}
     stopped = threading.Event()
@@ -72,6 +116,9 @@ def main():
 
     def save():
         report["peak_rss_mb"] = process_rss_mb(peak=True)
+        report['device_memory_bytes'] = {str(device): {key: int(value) for key, value in
+            (device.memory_stats() or {}).items() if isinstance(value, (int, np.integer))}
+            for device in jax.devices()}
         args.output.write_text(json.dumps(report, indent=2) + "\n")
 
     def phase(name, call):
@@ -122,8 +169,13 @@ def main():
             if args.compile_learning:
                 learner = braintrace.pp_prop(model, decay_or_rank=.99, vjp_method="single-step")
                 phase("pp_prop_compile", lambda: learner.compile_graph(jnp.zeros(441)))
+            if args.sparse_learning:
+                _sparse_learning_probe(model, report, phase)
             report["status"] = "forward_pass" if (not report["nonfinite_states"] and report["finite_driven"] and
                 report["finite_zero_input"] and report["zero_input_native_max_error_mv"] < 1e-8) else "fail"
+            if args.sparse_learning:
+                report['status'] = ('learning_probe_pass' if report['status'] == 'forward_pass'
+                                    and report['learning_probe']['finite'] else 'fail')
     except Exception as exc:
         report["status"] = "blocked"
         report["error_type"] = type(exc).__name__

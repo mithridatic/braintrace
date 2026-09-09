@@ -25,6 +25,10 @@ class H01ArcModel(brainstate.nn.Module):
         BrainState encoder/readout initialization seed.
     dt_ms : float, optional
         Cable interval dividing the fixed 0.1 ms ARC event.
+    input_pattern : tuple of arrays, optional
+        Explicit CSR indices and indptr for checkpoint restore or evolution.
+    checkpoint_substeps : bool, optional
+        Rematerialize cable substeps during reverse-mode differentiation.
 
     Notes
     -----
@@ -32,7 +36,8 @@ class H01ArcModel(brainstate.nn.Module):
     Compiler and allocation gates must pass before a training claim is made.
     """
 
-    def __init__(self, network, source_ids, *, seed=21, dt_ms=0.005):
+    def __init__(self, network, source_ids, *, seed=21, dt_ms=0.005, input_pattern=None,
+                 checkpoint_substeps=True):
         super().__init__()
         self.source_ids = tuple(source_ids)
         if not self.source_ids or any(not isinstance(x, str) for x in self.source_ids):
@@ -44,15 +49,25 @@ class H01ArcModel(brainstate.nn.Module):
         if not np.isfinite(dt_ms) or dt_ms <= 0 or not np.isclose(.1/dt_ms, round(.1/dt_ms)):
             raise ValueError("Cable dt must divide the 0.1 ms event interval")
         self.substeps = int(round(.1/dt_ms))
+        self.checkpoint_substeps = bool(checkpoint_substeps)
         self.stepper = H01NetworkStep(network, dt_ms)
         self.neuron_count = len(self.source_ids)
         rng = brainstate.random.RandomState(seed)
-        fanout = min(32, self.neuron_count)
-        ranks = rng.uniform(size=(441, self.neuron_count))
-        targets = jnp.sort(jnp.argsort(ranks, axis=1)[:, :fanout], axis=1).reshape(-1)
-        values = rng.normal(size=(441*fanout,)) / jnp.sqrt(441.)
-        self.input_csr = brainevent.CSR(values, targets,
-            jnp.arange(442, dtype=jnp.int32)*fanout, shape=(441, self.neuron_count), backend="jax_raw")
+        if input_pattern is None:
+            fanout = min(32, self.neuron_count)
+            ranks = rng.uniform(size=(441, self.neuron_count))
+            targets = jnp.sort(jnp.argsort(ranks, axis=1)[:, :fanout], axis=1).reshape(-1)
+            indptr = jnp.arange(442, dtype=jnp.int32)*fanout
+        else:
+            from .h01_remap import encoder_keys
+            targets, indptr = map(np.asarray, input_pattern)
+            if not np.issubdtype(targets.dtype, np.integer) or not np.issubdtype(indptr.dtype, np.integer):
+                raise ValueError('Encoder pattern must use integer indices')
+            encoder_keys(self.source_ids, targets, indptr)
+            targets, indptr = jnp.asarray(targets, dtype=jnp.int32), jnp.asarray(indptr, dtype=jnp.int32)
+        values = rng.normal(size=(len(targets),)) / jnp.sqrt(441.)
+        self.input_csr = brainevent.CSR(values, targets, indptr,
+            shape=(441, self.neuron_count), backend="jax_raw")
         self.input_weight = brainstate.ParamState(values)
         self.readout_weight = brainstate.ParamState(
             rng.normal(size=(self.neuron_count, 360))/jnp.sqrt(float(self.neuron_count)))
@@ -113,7 +128,13 @@ class H01ArcModel(brainstate.nn.Module):
         self.drive.value = .35*jnp.tanh(drive)
         self.contact_magnitude.value = braintrace.element_wise(
             self.recurrent_weight.value, weight_fn=jnp.abs)
-        brainstate.transform.for_loop(lambda _: self.stepper.update(), jnp.arange(self.substeps))
+        def cable_step(_):
+            self.stepper.update()
+        if self.checkpoint_substeps:
+            brainstate.transform.for_loop(brainstate.transform.checkpoint(cable_step, prevent_cse=False),
+                                          jnp.arange(self.substeps))
+        else:
+            brainstate.transform.for_loop(cable_step, jnp.arange(self.substeps))
         return self._soma()
 
     def _soma(self):

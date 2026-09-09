@@ -80,3 +80,37 @@ def test_active_delayed_contact_matches_native_and_reset_clears_queue(tmp_path):
     step.reset_state()
     assert np.count_nonzero(step.ring_buffers[0].value.mantissa) == 0
     assert int(step.ring_cursors[0].value) == 0
+
+
+@pytest.mark.parametrize('reversal,tau', [(0., 2.), (-80., 5.)])
+def test_half_ms_delay_and_simultaneous_arrivals_match_native(tmp_path, reversal, tau):
+    """Two real events arrive together at the retained H01 delay boundary."""
+    with brainstate.environ.context(precision=64):
+        network = _network(tmp_path)
+        network.add_population('second', _network(tmp_path).populations['cell'].cell)
+        target = _network(tmp_path, current_na=0).populations['cell'].cell
+        target.place(RootLocation(.25), Synapse('ExpSyn', name='contact', e=reversal*u.mV,
+                                               tau=tau*u.ms, weight=1.*u.uS))
+        network.add_population('post', target)
+        for source in ('cell', 'second'):
+            network.add_edges(name=source+'_edge', pre=source, post='post', method=pairs([(0, 0)]))
+            network.add_projection(name=source+'_contact', edges=source+'_edge', synapse='contact',
+                                   weight=.005*u.uS, delay=.5*u.ms)
+        native = network.run(dt=.005*u.ms, duration=.7*u.ms, spike_recording='population')
+        assert np.count_nonzero(native.spikes['cell']) == 1
+        assert np.count_nonzero(native.spikes['second']) == 1
+        expected = np.asarray(native.traces['post']['voltage'].to_decimal(u.mV)).reshape(-1)
+        np.testing.assert_allclose(expected[:100], -65., atol=1e-10)
+        assert (expected[-1]+65.)*(reversal+65.) > 0
+        network.reset_state()
+        step = H01NetworkStep(network)
+        actual = brainstate.transform.for_loop(lambda _: step.update(), jnp.arange(len(expected)))
+        np.testing.assert_allclose(np.asarray(actual['post']['voltage'].to_decimal(u.mV)).reshape(-1),
+                                   expected, atol=1e-10)
+        step.reset_state()
+        fine_native = network.run(dt=.0025*u.ms, duration=.7*u.ms, spike_recording='population')
+        network.reset_state()
+        fine = H01NetworkStep(network, dt_ms=.0025)
+        refined = brainstate.transform.for_loop(lambda _: fine.update(), jnp.arange(2*len(expected)))
+        values = np.asarray(refined['post']['voltage'].to_decimal(u.mV)).reshape(-1)
+        np.testing.assert_allclose(values, np.asarray(fine_native.traces['post']['voltage'].to_decimal(u.mV)).reshape(-1), atol=1e-10)
