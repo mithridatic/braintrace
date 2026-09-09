@@ -57,14 +57,18 @@ def normalize(source: bytes):
     if len(rows) < 2:
         raise ValueError("A singleton component has no cable geometry to simulate.")
     new_ids = {int(ids[i]): j + 1 for j, i in enumerate(order)}
-    lines = [
-        "# H01 proofread_104; positions and radii converted to micrometers.",
-        "# All SWC types are custom (0); original H01 annotations remain separate.",
-    ]
-    for i in order:
-        x, y, z = rows[i, 2:5] * POSITION_UM
-        radius = rows[i, 5] * RADIUS_UM
-        parent = -1 if parents[i] == -1 else new_ids[int(parents[i])]
-        lines.append(f"{new_ids[int(ids[i])]} 0 {x:.12g} {y:.12g} {z:.12g} {radius:.12g} {parent}")
+    order_idx = np.asarray(order, dtype=np.int32)
+    pos_um = rows[order_idx, 2:5] * POSITION_UM
+    rad_um = rows[order_idx, 5] * RADIUS_UM
+    parent_list = [-1 if parents[i] == -1 else new_ids[int(parents[i])] for i in order]
+    
+    header = (
+        "# H01 proofread_104; positions and radii converted to micrometers.\n"
+        "# All SWC types are custom (0); original H01 annotations remain separate.\n"
+    )
+    body = "\n".join(
+        f"{j+1} 0 {pos_um[j,0]:.12g} {pos_um[j,1]:.12g} {pos_um[j,2]:.12g} {rad_um[j]:.12g} {parent_list[j]}"
+        for j in range(len(order))
+    )
     rows.flags.writeable = False
-    return rows, "\n".join(lines) + "\n"
+    return rows, header + body + "\n"

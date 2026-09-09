@@ -54,17 +54,26 @@ class BoundaryAlignedCV(CVPolicy):
         if key in cache:
             return cache[key]
 
-        base_bounds = self.base.resolve_cv_bounds(morpho, paint_rules=paint_rules)
-        region_intervals = self.region.evaluate(morpho).intervals
-        if not region_intervals:
+        # Collect chain of BoundaryAlignedCV
+        policies = []
+        curr = self
+        while isinstance(curr, BoundaryAlignedCV):
+            policies.append(curr)
+            curr = curr.base
+        base_policy = curr
+
+        base_bounds = base_policy.resolve_cv_bounds(morpho, paint_rules=paint_rules)
+        modified_branches = {}
+        for p in policies:
+            region_intervals = p.region.evaluate(morpho).intervals
+            for branch, lo, hi in region_intervals:
+                if branch not in modified_branches:
+                    modified_branches[branch] = {pt for interval in base_bounds[branch] for pt in interval}
+                modified_branches[branch].update((lo, hi))
+
+        if not modified_branches:
             cache[key] = base_bounds
             return base_bounds
-
-        modified_branches = {}
-        for branch, lo, hi in region_intervals:
-            if branch not in modified_branches:
-                modified_branches[branch] = {p for interval in base_bounds[branch] for p in interval}
-            modified_branches[branch].update((lo, hi))
 
         result = list(base_bounds)
         for branch, branch_cuts in modified_branches.items():

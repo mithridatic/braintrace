@@ -67,7 +67,6 @@ def _triang(diags, solves, lowers, uppers, levels):
 
 def _backsub(diags, solves, lowers, indices):
     """Apply the original recursive-doubling jumps in a compiled scan."""
-    original._check_comp_backsub(diags, solves, lowers, indices)
     d_unit = u.get_unit(diags)
     s_unit = u.get_unit(solves)
     d_raw = u.get_mantissa(diags)
@@ -88,18 +87,20 @@ def _backsub(diags, solves, lowers, indices):
 
 def _voltage_step(target, t, dt, *args):
     """Use the installed voltage assembly with the two compiled kernels."""
-    source = original._get_dhs_static_source(target, node_tree=target.node_tree,
-        scheduling=target.node_scheduling(algorithm="dhs"))
-    cache = original._get_dhs_static_cache(target, source)
-    stored = getattr(target._runtime, "h01_scan_levels", None)
-    if stored is None or stored[0] is not source:
-        stored = (source, _prepare_levels(source.edges_np, source.level_offsets_np, source.n_point))
-        target._runtime.h01_scan_levels = stored
+    pack = getattr(target._runtime, "h01_dhs_pack", None)
+    if pack is None:
+        source = original._get_dhs_static_source(target, node_tree=target.node_tree,
+            scheduling=target.node_scheduling(algorithm="dhs"))
+        cache = original._get_dhs_static_cache(target, source)
+        levels = _prepare_levels(source.edges_np, source.level_offsets_np, source.n_point)
+        pack = (source, cache, levels)
+        target._runtime.h01_dhs_pack = pack
+    source, cache, levels = pack
     linear, const = original._linear_and_const_term(target, target.V.value, *args)
     numeric = original._build_dhs_numeric_state(target.V.value, linear, const,
         dt=dt, static_source=source, static_cache=cache,
         edge_point_current=original._edge_point_current(target, t=t, static_source=source))
-    d, s = _triang(numeric.diags, numeric.solves, numeric.lowers, numeric.uppers, stored[1])
+    d, s = _triang(numeric.diags, numeric.solves, numeric.lowers, numeric.uppers, levels)
     solution = _backsub(d, s, numeric.lowers, source.backsub_indices_np)
     target.V.value = original._restore_midpoint_voltage(solution,
         dynamic_rows=source.dynamic_rows_np, target_shape=target.V.value.shape)

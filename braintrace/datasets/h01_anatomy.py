@@ -136,10 +136,19 @@ class H01Anatomy:
         row_nodes = rows[:, 0].astype(int)
 
         branches_views = list(self.morphology.branches)
-        total_segments = sum(
-            len(v.branch.lengths.mantissa if isinstance(v.branch.lengths, u.Quantity) else v.branch.lengths)
-            for v in branches_views
-        )
+        total_segments = 0
+        branch_arrays = []
+        for v in branches_views:
+            b = getattr(v, "branch", v)
+            arrs = getattr(b, "_h01_float_arrays", None)
+            if arrs is not None:
+                total_segments += len(arrs[0])
+                branch_arrays.append(arrs)
+            else:
+                lens = v.branch.lengths.mantissa if isinstance(v.branch.lengths, u.Quantity) else v.branch.lengths
+                total_segments += len(lens)
+                branch_arrays.append(None)
+
         starts = np.empty((total_segments, 3), dtype=np.float64)
         ends = np.empty((total_segments, 3), dtype=np.float64)
         branch_ids = np.empty(total_segments, dtype=np.int32)
@@ -149,33 +158,42 @@ class H01Anatomy:
         seg_offset = 0
         for branch_index, view in enumerate(branches_views):
             branch = view.branch
-            if (isinstance(branch.lengths, u.Quantity) and branch.lengths.unit == u.um
-                    and isinstance(branch.lengths.mantissa, np.ndarray) and branch.lengths.mantissa.dtype == np.float64):
-                lengths = branch.lengths.mantissa
+            arrs = branch_arrays[branch_index]
+            if arrs is not None:
+                lengths, r_prox, r_dist, proximal, distal, l_sum, seg_starts, seg_ends = arrs
+                if l_sum <= 0:
+                    raise ValueError("Annotation mapping requires positive cable length.")
+                n_seg = len(lengths)
+                bounds = np.empty(n_seg + 1, dtype=float)
+                bounds[0] = 0.0
+                bounds[1:] = seg_ends / l_sum
+                bounds[-1] = 1.0
             else:
-                lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
-            l_sum = lengths.sum()
-            if l_sum <= 0:
-                raise ValueError("Annotation mapping requires positive cable length.")
-            n_seg = len(lengths)
-            bounds = np.empty(n_seg + 1, dtype=float)
-            bounds[0] = 0.0
-            bounds[1:] = np.cumsum(lengths) / l_sum
-            # Pairwise sum and cumulative sum can round differently. A source
-            # endpoint is exactly x=1 regardless of that reduction roundoff.
-            bounds[-1] = 1.0
+                if (isinstance(branch.lengths, u.Quantity) and branch.lengths.unit == u.um
+                        and isinstance(branch.lengths.mantissa, np.ndarray) and branch.lengths.mantissa.dtype == np.float64):
+                    lengths = branch.lengths.mantissa
+                else:
+                    lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
+                l_sum = lengths.sum()
+                if l_sum <= 0:
+                    raise ValueError("Annotation mapping requires positive cable length.")
+                n_seg = len(lengths)
+                bounds = np.empty(n_seg + 1, dtype=float)
+                bounds[0] = 0.0
+                bounds[1:] = np.cumsum(lengths) / l_sum
+                bounds[-1] = 1.0
 
-            if (isinstance(branch.points_proximal, u.Quantity) and branch.points_proximal.unit == u.um
-                    and isinstance(branch.points_proximal.mantissa, np.ndarray)):
-                proximal = branch.points_proximal.mantissa
-            else:
-                proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
+                if (isinstance(branch.points_proximal, u.Quantity) and branch.points_proximal.unit == u.um
+                        and isinstance(branch.points_proximal.mantissa, np.ndarray)):
+                    proximal = branch.points_proximal.mantissa
+                else:
+                    proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
 
-            if (isinstance(branch.points_distal, u.Quantity) and branch.points_distal.unit == u.um
-                    and isinstance(branch.points_distal.mantissa, np.ndarray)):
-                distal = branch.points_distal.mantissa
-            else:
-                distal = np.asarray(branch.points_distal.to_decimal(u.um))
+                if (isinstance(branch.points_distal, u.Quantity) and branch.points_distal.unit == u.um
+                        and isinstance(branch.points_distal.mantissa, np.ndarray)):
+                    distal = branch.points_distal.mantissa
+                else:
+                    distal = np.asarray(branch.points_distal.to_decimal(u.um))
 
             p_rnd = np.round(proximal, 6)
             q_rnd = np.round(distal, 6)

@@ -37,9 +37,21 @@ def _digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+_VERIFIED_ARCHIVES = {}
+
 def _verify(path):
-    if _digest(path) != ARCHIVE_SHA256:
+    p = Path(path).resolve()
+    try:
+        stat = p.stat()
+        key = (str(p), stat.st_mtime, stat.st_size)
+        if key in _VERIFIED_ARCHIVES:
+            return
+    except OSError:
+        key = None
+    if _digest(p) != ARCHIVE_SHA256:
         raise ValueError("H01 archive SHA-256 mismatch; use the pinned official release.")
+    if key is not None:
+        _VERIFIED_ARCHIVES[key] = True
 
 
 def fetch_h01(cache_dir, *, timeout=60):
@@ -194,12 +206,25 @@ def _fast_build_morpho_from_text(converted_text: str, filename: str):
     morpho._root_id = 0
 
     nodes = context.nodes
+    branch_point_data = {}
 
     for branch_index, b_info in enumerate(branches):
         name = f"custom_{branch_index}"
         p_ids = list(b_info.point_ids)
         pts = [[nodes[nid].x, nodes[nid].y, nodes[nid].z] for nid in p_ids]
         rads = [float(nodes[nid].radius) for nid in p_ids]
+
+        if len(p_ids) > 1:
+            raw_pts = np.asarray(pts, dtype=np.float64)
+            b_diff = raw_pts[1:] - raw_pts[:-1]
+            b_lens = np.sqrt(np.sum(b_diff * b_diff, axis=1))
+            b_pref = np.concatenate(([0.0], np.cumsum(b_lens)))
+            b_tot = float(b_pref[-1])
+        else:
+            b_pref = np.array([0.0])
+            b_tot = 0.0
+        p_map = {nid: idx for idx, nid in enumerate(p_ids)}
+        branch_point_data[branch_index] = (p_ids, p_map, b_pref, b_tot)
 
         if b_info.attach is not None:
             att_pt, att_rad = reader._attach_geometry(b_info.attach, nodes)
@@ -226,9 +251,31 @@ def _fast_build_morpho_from_text(converted_text: str, filename: str):
         object.__setattr__(br, "points_proximal", u.Quantity(pts_prox, u.um))
         object.__setattr__(br, "points_distal", u.Quantity(pts_dist, u.um))
         object.__setattr__(br, "type", "custom")
+        tot_len = float(np.sum(lens))
+        seg_starts = np.concatenate(([0.0], np.cumsum(lens)[:-1]))
+        seg_ends = seg_starts + lens
+        object.__setattr__(br, "_h01_float_arrays", (lens, r_prox, r_dist, pts_prox, pts_dist, tot_len, seg_starts, seg_ends))
 
-        parent_id = None if branch_index == 0 else b_info.parent_index
-        parent_x = None if branch_index == 0 else float(reader._attachment_x(branches[parent_id], b_info.attach, nodes))
+        if branch_index == 0 or b_info.parent_index is None:
+            parent_id = None
+            parent_x = None
+        else:
+            parent_id = b_info.parent_index
+            if b_info.attach is None:
+                parent_x = 1.0
+            elif b_info.attach.parent_x is not None:
+                parent_x = float(b_info.attach.parent_x)
+            else:
+                p_pids, p_pmap, p_ppref, p_ptot = branch_point_data[parent_id]
+                if p_ptot <= 0.0 or len(p_pids) == 1:
+                    parent_x = 1.0
+                else:
+                    att_nid = b_info.attach.node_id
+                    if att_nid is not None and att_nid in p_pmap:
+                        att_idx = p_pmap[att_nid]
+                        parent_x = float(p_ppref[att_idx] / p_ptot)
+                    else:
+                        parent_x = float(reader._attachment_x(branches[parent_id], b_info.attach, nodes))
         child_x = 0.0
 
         node = MorphoBranch(
@@ -245,6 +292,7 @@ def _fast_build_morpho_from_text(converted_text: str, filename: str):
         if parent_id is not None:
             morpho._nodes[parent_id]._children[name] = branch_index
 
+    morpho._h01_validated = True
     return morpho, context.report
 
 

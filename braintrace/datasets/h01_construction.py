@@ -31,6 +31,7 @@ from braincell.quad.protocol import DiffEqState
 import braincell._discretization.geometry as _geo_mod
 import braincell._discretization.base as _base_mod
 import braincell._discretization.mechanism as _mech_mod
+import braincell._discretization.policy as _policy_mod
 import braincell.filter.helper as _filter_helper
 
 
@@ -96,20 +97,21 @@ saiunit._base_quantity.Quantity.__init__ = _fast_q_init
 
 # 3. Fast CV geometry and frusta
 def _get_branch_float_arrays(branch):
-    cached = getattr(branch, "_h01_float_arrays", None)
+    b = getattr(branch, "_branch", branch)
+    cached = getattr(b, "_h01_float_arrays", None)
     if cached is not None:
         return cached
-    l_um = branch.lengths.mantissa if isinstance(branch.lengths, u.Quantity) else np.asarray(branch.lengths, dtype=float)
-    rp_um = branch.radii_proximal.mantissa if isinstance(branch.radii_proximal, u.Quantity) else np.asarray(branch.radii_proximal, dtype=float)
-    rd_um = branch.radii_distal.mantissa if isinstance(branch.radii_distal, u.Quantity) else np.asarray(branch.radii_distal, dtype=float)
-    pp_um = branch.points_proximal.mantissa if isinstance(branch.points_proximal, u.Quantity) else (np.asarray(branch.points_proximal, dtype=float) if branch.points_proximal is not None else None)
-    pd_um = branch.points_distal.mantissa if isinstance(branch.points_distal, u.Quantity) else (np.asarray(branch.points_distal, dtype=float) if branch.points_distal is not None else None)
+    l_um = b.lengths.mantissa if isinstance(b.lengths, u.Quantity) else np.asarray(b.lengths, dtype=float)
+    rp_um = b.radii_proximal.mantissa if isinstance(b.radii_proximal, u.Quantity) else np.asarray(b.radii_proximal, dtype=float)
+    rd_um = b.radii_distal.mantissa if isinstance(b.radii_distal, u.Quantity) else np.asarray(b.radii_distal, dtype=float)
+    pp_um = b.points_proximal.mantissa if isinstance(b.points_proximal, u.Quantity) else (np.asarray(b.points_proximal, dtype=float) if b.points_proximal is not None else None)
+    pd_um = b.points_distal.mantissa if isinstance(b.points_distal, u.Quantity) else (np.asarray(b.points_distal, dtype=float) if b.points_distal is not None else None)
     tot_len = float(np.sum(l_um))
     seg_starts = np.concatenate(([0.0], np.cumsum(l_um)[:-1]))
     seg_ends = seg_starts + l_um
     cached = (l_um, rp_um, rd_um, pp_um, pd_um, tot_len, seg_starts, seg_ends)
     try:
-        object.__setattr__(branch, "_h01_float_arrays", cached)
+        object.__setattr__(b, "_h01_float_arrays", cached)
     except (AttributeError, TypeError):
         pass
     return cached
@@ -131,8 +133,12 @@ def _fast_build_frusta(branch, *, prox: float, dist: float):
     start_um = prox_f * total_length_um
     end_um = dist_f * total_length_um
 
+    start_idx = max(0, int(np.searchsorted(segment_ends_um, start_um - _geo_mod.EPS_LEN_UM, side='left')))
+    end_idx = min(len(lengths_um), int(np.searchsorted(segment_starts_um, end_um + _geo_mod.EPS_LEN_UM, side='right')) + 1)
+
     frusta = []
-    for seg_idx, seg_length_um in enumerate(lengths_um):
+    for seg_idx in range(start_idx, end_idx):
+        seg_length_um = float(lengths_um[seg_idx])
         seg_start_um = float(segment_starts_um[seg_idx])
         seg_end_um = float(segment_ends_um[seg_idx])
         if seg_length_um <= _geo_mod.EPS_LEN_UM:
@@ -152,8 +158,8 @@ def _fast_build_frusta(branch, *, prox: float, dist: float):
         if right_um - left_um <= _geo_mod.EPS_LEN_UM:
             continue
 
-        t0 = (left_um - seg_start_um) / float(seg_length_um)
-        t1 = (right_um - seg_start_um) / float(seg_length_um)
+        t0 = (left_um - seg_start_um) / seg_length_um
+        t1 = (right_um - seg_start_um) / seg_length_um
         r_seg_prox = float(radii_prox_um[seg_idx])
         r_seg_dist = float(radii_dist_um[seg_idx])
         r0_um = r_seg_prox + (r_seg_dist - r_seg_prox) * t0
@@ -176,6 +182,51 @@ def _fast_build_frusta(branch, *, prox: float, dist: float):
     return tuple(frusta)
 
 _geo_mod._build_frusta = _fast_build_frusta
+
+def _fast_bounds_from_max_len_um(branch, *, max_len_um: float, keep_odd: bool):
+    b = getattr(branch, "_branch", branch)
+    cached = getattr(b, "_h01_float_arrays", None)
+    if cached is not None:
+        branch_len_um = float(cached[5])
+    else:
+        branch_len_um = float(np.asarray(branch.length.to_decimal(u.um), dtype=float))
+    if branch_len_um <= max_len_um + _geo_mod.EPS_LEN_UM:
+        return ((0.0, 1.0),)
+    n_cv = int(np.ceil((branch_len_um / max_len_um) - _geo_mod.EPS_PARAM))
+    n_cv = max(1, n_cv)
+    if keep_odd and n_cv % 2 == 0:
+        n_cv += 1
+    return tuple(
+        (float(offset) / float(n_cv), float(offset + 1) / float(n_cv))
+        for offset in range(n_cv)
+    )
+
+_policy_mod._bounds_from_max_len_um = _fast_bounds_from_max_len_um
+
+_orig_validate_morphology = _geo_mod.validate_morphology
+def _fast_validate_morphology(morpho):
+    if getattr(morpho, "_h01_validated", False):
+        return
+    for branch_id, view in enumerate(morpho.branches):
+        b = getattr(view, "_branch", view)
+        cached = getattr(b, "_h01_float_arrays", None)
+        if cached is not None:
+            tot_len = cached[5]
+            if tot_len <= _geo_mod.EPS_LEN_UM:
+                raise ValueError(f"Branch {branch_id} has total length <= {_geo_mod.EPS_LEN_UM} μm; morphology rejected.")
+            radii_prox = cached[1]
+            radii_dist = cached[2]
+            if np.any(radii_prox <= 0.0) or np.any(radii_dist <= 0.0):
+                raise ValueError(f"Branch {branch_id} has non-positive radii; morphology rejected.")
+        else:
+            _orig_validate_morphology(morpho)
+            break
+    try:
+        morpho._h01_validated = True
+    except (AttributeError, TypeError):
+        pass
+
+_geo_mod.validate_morphology = _fast_validate_morphology
 
 _orig_build_cv_geometry = _geo_mod.build_cv_geometry
 _GEOMETRY_CACHE = {}
@@ -346,8 +397,8 @@ def _fast_from_cell(cls, cell: "braincell.Cell") -> _runtime_module.CellRuntimeS
     n_cv = len(cell.cvs)
 
     grouped = {}
-    cv_to_layout_sets = [set() for _ in range(n_cv)]
-    point_to_layout_sets = [set() for _ in range(n_point)]
+    cv_to_layout_lists = [[] for _ in range(n_cv)]
+    point_to_layout_lists = [[] for _ in range(n_point)]
     layout_id = 0
     pop_size = tuple(cell.pop_size)
 
@@ -426,10 +477,11 @@ def _fast_from_cell(cls, cell: "braincell.Cell") -> _runtime_module.CellRuntimeS
         layouts.append(layout_spec)
         layout_mechanisms[layout_spec.id] = mechanism
 
-        for point_id in point_ids.tolist():
-            point_to_layout_sets[point_id].add(layout_spec.id)
+        lid = layout_spec.id
+        for point_id in point_ids:
+            point_to_layout_lists[point_id].append(lid)
         for cv_id in cv_ids:
-            cv_to_layout_sets[cv_id].add(layout_spec.id)
+            cv_to_layout_lists[cv_id].append(lid)
 
         for var_name in _runtime_module._mechanism_var_names(mechanism):
             if isinstance(mechanism, braincell.CurrentClamp) and var_name == "delay":
@@ -499,8 +551,8 @@ def _fast_from_cell(cls, cell: "braincell.Cell") -> _runtime_module.CellRuntimeS
         n_point=n_point,
         n_cv=n_cv,
         layouts=tuple(layouts),
-        point_to_layout_ids=tuple(tuple(sorted(ids)) for ids in point_to_layout_sets),
-        cv_to_layout_ids=tuple(tuple(sorted(ids)) for ids in cv_to_layout_sets),
+        point_to_layout_ids=tuple(tuple(ids) for ids in point_to_layout_lists),
+        cv_to_layout_ids=tuple(tuple(ids) for ids in cv_to_layout_lists),
         voltage_shape=pop_size + (n_point,),
         state_shapes=state_shapes,
         state_buffers=state_buffers,
@@ -898,6 +950,7 @@ class H01Cell(braincell.Cell):
         self._morpho = morpho
         if cached_disc is not None:
             self._discretization_cache = cached_disc
+            self._discretization_cache_key = self._discretization_key()
         else:
             self._invalidate_discretization_cache()
             _ = self._discretization
@@ -951,6 +1004,7 @@ class H01Cell(braincell.Cell):
         self._initialized = True
         self._runtime_cvs_cache = None
         self._runtime_nodes_cache = None
+        self._discretization_cache = None
 
     def _get_axial_operator(self):
         runtime = self._runtime

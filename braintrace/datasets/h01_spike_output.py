@@ -9,11 +9,20 @@ class _SiteSpike:
     base: object
     cv_id: int
     n_cv: int
+    mask: object = None
+
+    def __init__(self, base: object, cv_id: int, n_cv: int):
+        object.__setattr__(self, "base", base)
+        object.__setattr__(self, "cv_id", cv_id)
+        object.__setattr__(self, "n_cv", n_cv)
+        mask = np.zeros(n_cv, dtype=bool)
+        mask[cv_id] = True
+        object.__setattr__(self, "mask", mask)
 
     def __call__(self, voltage):
         if voltage.shape[-1] != self.n_cv:
             raise ValueError("Output-site mask no longer matches the cell mesh.")
-        return self.base(voltage)*(np.arange(self.n_cv) == self.cv_id)
+        return self.base(voltage)*self.mask
 
 
 def restrict_spike_output(cell, location):

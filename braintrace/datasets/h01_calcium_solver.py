@@ -9,6 +9,24 @@ from .h01_calcium_implicit import calcium_backward_euler
 from .h01_dhs_scan import _voltage_step
 
 
+def _get_node_ca_constants(node):
+    cached = getattr(node, "_h01_ca_constants", None)
+    if cached is not None:
+        return cached
+    factor = (node.gamma*(1.*u.mA/u.cm**2)/(2*u.faraday_constant*node.depth)).to_decimal(u.mM/u.ms)
+    nernst = (u.gas_constant*node.temp/(node.valence*u.faraday_constant)).to_decimal(u.mV)
+    decay = node.decay.to_decimal(u.ms)
+    rest = node.rest.to_decimal(u.mM)
+    Co = node.Co.to_decimal(u.mM)
+    reversal = node.E.to_decimal(u.mV)
+    cached = (factor, nernst, decay, rest, Co, reversal)
+    try:
+        object.__setattr__(node, "_h01_ca_constants", cached)
+    except (AttributeError, TypeError):
+        pass
+    return cached
+
+
 def _calcium_snapshot(node, voltage):
     """Capture old voltage and validate an ohmic calcium current sum."""
     zero = voltage*0.
@@ -25,12 +43,10 @@ def _calcium_snapshot(node, voltage):
 
 def _advance_calcium(node, voltage, conductance, dt):
     """Advance only concentration using the source constants and signed flux."""
-    factor = (node.gamma*(1.*u.mA/u.cm**2)/(2*u.faraday_constant*node.depth)).to_decimal(u.mM/u.ms)
-    nernst = (u.gas_constant*node.temp/(node.valence*u.faraday_constant)).to_decimal(u.mV)
+    factor, nernst, decay, rest, Co, _ = _get_node_ca_constants(node)
     node.Ci.value = calcium_backward_euler(node.Ci.value.to_decimal(u.mM),
         voltage.to_decimal(u.mV), conductance, dt.to_decimal(u.ms),
-        node.decay.to_decimal(u.ms), factor, nernst,
-        node.rest.to_decimal(u.mM), node.Co.to_decimal(u.mM))*u.mM
+        decay, factor, nernst, rest, Co)*u.mM
 
 
 @register_integrator('h01_staggered_calcium_implicit', category='staggered',
