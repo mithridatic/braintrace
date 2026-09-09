@@ -1,0 +1,1872 @@
+{
+  "nodes": [
+    {
+      "index": 0,
+      "cell_id": "546925828",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 1,
+      "cell_id": "547114083",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 2,
+      "cell_id": "620880207",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 3,
+      "cell_id": "678539249",
+      "tags": [
+        "L2",
+        "neuron",
+        "interneuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 4,
+      "cell_id": "751294744",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 5,
+      "cell_id": "810151953",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 6,
+      "cell_id": "810970127",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 7,
+      "cell_id": "883843993",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 8,
+      "cell_id": "955432427",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 9,
+      "cell_id": "1072605926",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 10,
+      "cell_id": "1304599410",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 11,
+      "cell_id": "1465400601",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 12,
+      "cell_id": "1669770671",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 13,
+      "cell_id": "1684504313",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 14,
+      "cell_id": "1787105373",
+      "tags": [
+        "L1",
+        "neuron",
+        "interneuron",
+        "web-like-interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 15,
+      "cell_id": "1830470325",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 16,
+      "cell_id": "1874244336",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 17,
+      "cell_id": "1900905433",
+      "tags": [
+        "L3",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 18,
+      "cell_id": "1930502394",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 19,
+      "cell_id": "2001418787",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 20,
+      "cell_id": "2047644309",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 21,
+      "cell_id": "2074305737",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 22,
+      "cell_id": "2103991145",
+      "tags": [
+        "L3",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 23,
+      "cell_id": "2104047922",
+      "tags": [
+        "L3",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 24,
+      "cell_id": "2195261734",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 25,
+      "cell_id": "2252715458",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 26,
+      "cell_id": "2306214824",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 27,
+      "cell_id": "2325998949",
+      "tags": [
+        "L1",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 28,
+      "cell_id": "2451406889",
+      "tags": [
+        "L4",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 29,
+      "cell_id": "2530864375",
+      "tags": [
+        "L1",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 30,
+      "cell_id": "2820958695",
+      "tags": [
+        "L2",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 31,
+      "cell_id": "2848552900",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 32,
+      "cell_id": "2888180252",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 33,
+      "cell_id": "2889815798",
+      "tags": [
+        "L4",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 34,
+      "cell_id": "2903686765",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 35,
+      "cell_id": "3093748739",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 36,
+      "cell_id": "3111823553",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 37,
+      "cell_id": "3139317430",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 38,
+      "cell_id": "3178243558",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 39,
+      "cell_id": "3329117097",
+      "tags": [
+        "L3",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 40,
+      "cell_id": "3383650350",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 41,
+      "cell_id": "3432315514",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 42,
+      "cell_id": "3470629528",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 43,
+      "cell_id": "3503540481",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 44,
+      "cell_id": "3519995546",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 45,
+      "cell_id": "3571083397",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 46,
+      "cell_id": "3680152874",
+      "tags": [
+        "L2",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 47,
+      "cell_id": "3751392341",
+      "tags": [
+        "L2",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 48,
+      "cell_id": "3761379470",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 49,
+      "cell_id": "3812058320",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 50,
+      "cell_id": "3836078296",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 51,
+      "cell_id": "3954491075",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 52,
+      "cell_id": "3955003482",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 53,
+      "cell_id": "4010150634",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 54,
+      "cell_id": "4039221194",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 55,
+      "cell_id": "4125702786",
+      "tags": [
+        "L5",
+        "neuron",
+        "interneuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 56,
+      "cell_id": "4138580687",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 57,
+      "cell_id": "4157825456",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 58,
+      "cell_id": "4188575291",
+      "tags": [
+        "L3",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 59,
+      "cell_id": "4197933517",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 60,
+      "cell_id": "4260528559",
+      "tags": [
+        "L3",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 61,
+      "cell_id": "4365276903",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 62,
+      "cell_id": "4420044370",
+      "tags": [
+        "L3",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 63,
+      "cell_id": "4437316933",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 64,
+      "cell_id": "4467761196",
+      "tags": [
+        "L1",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 65,
+      "cell_id": "4476359994",
+      "tags": [
+        "L5",
+        "neuron",
+        "interneuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 66,
+      "cell_id": "4522237537",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 67,
+      "cell_id": "4535129012",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 68,
+      "cell_id": "4554213569",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 69,
+      "cell_id": "4582188328",
+      "tags": [
+        "L3",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 70,
+      "cell_id": "4607885827",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 71,
+      "cell_id": "4641147055",
+      "tags": [
+        "L2",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 72,
+      "cell_id": "4668874666",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 73,
+      "cell_id": "4711567524",
+      "tags": [
+        "L3",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 74,
+      "cell_id": "4711641825",
+      "tags": [
+        "L3",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 75,
+      "cell_id": "4830551047",
+      "tags": [
+        "L2",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 76,
+      "cell_id": "4853956860",
+      "tags": [
+        "L5",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 77,
+      "cell_id": "4873639924",
+      "tags": [
+        "L3",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 78,
+      "cell_id": "4932057570",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 79,
+      "cell_id": "5013648003",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 80,
+      "cell_id": "5015035926",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 81,
+      "cell_id": "5060444657",
+      "tags": [
+        "L4",
+        "neuron",
+        "interneuron",
+        "web-like-interneuron",
+        "lot-of-axon"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 82,
+      "cell_id": "5061320552",
+      "tags": [
+        "L3",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 83,
+      "cell_id": "5136107765",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 84,
+      "cell_id": "5173982155",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 85,
+      "cell_id": "5175880292",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 86,
+      "cell_id": "5215113731",
+      "tags": [
+        "L6",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 87,
+      "cell_id": "5216806368",
+      "tags": [
+        "L6",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 88,
+      "cell_id": "5319188363",
+      "tags": [
+        "L6",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 89,
+      "cell_id": "5352961465",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 90,
+      "cell_id": "5355296383",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 91,
+      "cell_id": "5439194879",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 92,
+      "cell_id": "5536146025",
+      "tags": [
+        "L6",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 93,
+      "cell_id": "5584343344",
+      "tags": [
+        "L5",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 94,
+      "cell_id": "5654281423",
+      "tags": [
+        "L6",
+        "pyramidal",
+        "neuron",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 95,
+      "cell_id": "5687162964",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 96,
+      "cell_id": "5805562981",
+      "tags": [
+        "L2",
+        "neuron",
+        "interneuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 97,
+      "cell_id": "5832764277",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 98,
+      "cell_id": "5965472721",
+      "tags": [
+        "L3",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 99,
+      "cell_id": "6126390733",
+      "tags": [
+        "L2",
+        "neuron",
+        "interneuron"
+      ],
+      "polarity": "I",
+      "dale_sign": -1
+    },
+    {
+      "index": 100,
+      "cell_id": "6833911543",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 101,
+      "cell_id": "7052969349",
+      "tags": [
+        "WM",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 102,
+      "cell_id": "7196644737",
+      "tags": [
+        "WM",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 103,
+      "cell_id": "7893125555",
+      "tags": [
+        "WM",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    }
+  ],
+  "contacts": [
+    {
+      "annotation_id": "124698307",
+      "pre_cell": "4188575291",
+      "post_cell": "3955003482",
+      "type": 2,
+      "pre_voxel": [
+        325789,
+        181779,
+        1167
+      ],
+      "post_voxel": [
+        325767,
+        181740,
+        1181
+      ],
+      "pre_proofread_label": "4188575291",
+      "post_proofread_label": "3955003482",
+      "pre_nearest_offset": [
+        0,
+        0,
+        0
+      ],
+      "post_nearest_offset": [
+        0,
+        0,
+        0
+      ],
+      "endpoints_verified": true,
+      "endpoints_within_box": true,
+      "pre_index": 58,
+      "post_index": 52,
+      "dale_sign": 1,
+      "connection_type": "EE",
+      "pre_placement": {
+        "distance_um": 0.37099326139419747,
+        "component": 0,
+        "has_soma": true,
+        "source_swc_sha256": "9c098f7809cbaf233608444c51364d060e2e59ddbbc8ee2861218a4b5925ffa7",
+        "ambiguous": false,
+        "position_um": [
+          2606.312,
+          1454.232,
+          38.511
+        ],
+        "cable_location": [
+          3796,
+          0.7607701240515989
+        ]
+      },
+      "post_placement": {
+        "distance_um": 0.3817524026775165,
+        "component": 0,
+        "has_soma": true,
+        "source_swc_sha256": "4f9590d25265a4b5737ccece98384563cf38d65b302ac583773bd599d3f785a7",
+        "ambiguous": false,
+        "position_um": [
+          2606.136,
+          1453.92,
+          38.973
+        ],
+        "cable_location": [
+          21714,
+          0.7426987246088801
+        ]
+      },
+      "construction_ready": true,
+      "blockers": []
+    },
+    {
+      "annotation_id": "65017731",
+      "pre_cell": "3519995546",
+      "post_cell": "3680152874",
+      "type": 2,
+      "pre_voxel": [
+        396311,
+        158368,
+        432
+      ],
+      "post_voxel": [
+        396322,
+        158372,
+        432
+      ],
+      "pre_proofread_label": "3519995546",
+      "post_proofread_label": "3680152874",
+      "pre_nearest_offset": [
+        0,
+        0,
+        0
+      ],
+      "post_nearest_offset": [
+        0,
+        0,
+        0
+      ],
+      "endpoints_verified": true,
+      "endpoints_within_box": true,
+      "pre_index": 44,
+      "post_index": 46,
+      "dale_sign": 1,
+      "connection_type": "EI",
+      "pre_placement": {
+        "distance_um": 0.20808430201015324,
+        "component": 55,
+        "has_soma": false,
+        "source_swc_sha256": "ca5849e1d502834030ce4d081891bf211203d3b8bd847887ee8df420dfba7443",
+        "ambiguous": false,
+        "position_um": [
+          3170.4880000000003,
+          1266.944,
+          14.256
+        ],
+        "cable_location": [
+          658,
+          0.5340677325045128
+        ]
+      },
+      "post_placement": {
+        "distance_um": 0.19477670018428433,
+        "component": 0,
+        "has_soma": true,
+        "source_swc_sha256": "bfb44cad0bbe675a878da0c31bad0e8c1a84df23c9a6a010fb6f04093e5e7e3a",
+        "ambiguous": false,
+        "position_um": [
+          3170.576,
+          1266.976,
+          14.256
+        ],
+        "cable_location": [
+          570,
+          0.5532983093930511
+        ]
+      },
+      "construction_ready": false,
+      "blockers": [
+        "pre: source component has no soma; no cable connection to soma is supplied"
+      ]
+    },
+    {
+      "annotation_id": "8105899",
+      "pre_cell": "5584343344",
+      "post_cell": "4157825456",
+      "type": 1,
+      "pre_voxel": [
+        262063,
+        210823,
+        4315
+      ],
+      "post_voxel": [
+        262054,
+        210816,
+        4315
+      ],
+      "pre_proofread_label": "5584343344",
+      "post_proofread_label": "4157825456",
+      "pre_nearest_offset": [
+        0,
+        0,
+        0
+      ],
+      "post_nearest_offset": [
+        0,
+        0,
+        0
+      ],
+      "endpoints_verified": true,
+      "endpoints_within_box": true,
+      "pre_index": 93,
+      "post_index": 57,
+      "dale_sign": -1,
+      "connection_type": "IE",
+      "pre_placement": {
+        "distance_um": 0.15565925382341556,
+        "component": 0,
+        "has_soma": true,
+        "source_swc_sha256": "53de2bec08c12096f742ecc01fca1293f24f3a09637558f9bf86ac4edb6a4f92",
+        "ambiguous": false,
+        "position_um": [
+          2096.504,
+          1686.584,
+          142.395
+        ],
+        "cable_location": [
+          974,
+          0.5754461212601991
+        ]
+      },
+      "post_placement": {
+        "distance_um": 0.13310219168154944,
+        "component": 0,
+        "has_soma": true,
+        "source_swc_sha256": "d49c452524cf7c35ded56a1ef55ebf205e00573ea11b2a9204060362777d40ce",
+        "ambiguous": false,
+        "position_um": [
+          2096.4320000000002,
+          1686.528,
+          142.395
+        ],
+        "cable_location": [
+          2805,
+          0.9324765948060377
+        ]
+      },
+      "construction_ready": true,
+      "blockers": []
+    }
+  ],
+  "excluded_contacts": [
+    {
+      "annotation_id": "100144637",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "102259144",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "102305670",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "103822813",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "10478123",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "108171241",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "108301250",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "108471882",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "109360923",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "109893121",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "109899789",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "112467397",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "114952934",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "116483373",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "116688884",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "11673508",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "11715445",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "117174015",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "118020119",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "119340808",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "120849133",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "120953297",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "121188567",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "121199763",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "12305356",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "123559497",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "12477026",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "125375686",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "125872198",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "125917741",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "126091183",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "126593420",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "127829892",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "129934473",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "1303006",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "130313441",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "133886731",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "13530230",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "135616405",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "136569133",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "140313087",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "141682179",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "142989097",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "143441773",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "14477816",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "145249060",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "14528103",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "145666376",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "146026453",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "146771403",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "15650999",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "16232487",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "16284236",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "17585238",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "19690278",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "20470362",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "2067517",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "25747388",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "27195516",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "28728132",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "32136349",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "3283527",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "34428532",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "34902484",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "43561472",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "43970566",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "45852953",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "47199952",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "47964556",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "48296985",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "51821909",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "53267084",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "54906016",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "582047",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "59528985",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "59723160",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "59727895",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "6178378",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "62374479",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "63967920",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "63977941",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "64580496",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "66270803",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "67651832",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "68575152",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "68870053",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "71527686",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "71808175",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "72534918",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "73184052",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "73723691",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "75320335",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "77120253",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "78369788",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "79265497",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "81131902",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "81192657",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "82122302",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "82518017",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "84290094",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "85204895",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "85787101",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "86294644",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "87007535",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "87527105",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89000653",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89339102",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89815959",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89875505",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "90446184",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "91718495",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "92529008",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "93139913",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "93316465",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "94974176",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "95566965",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "95907584",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "96502623",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "97611677",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "99500285",
+      "reason": "exact endpoints not verified"
+    }
+  ],
+  "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+  "scope": "Observed subset only. Missing connections do not establish biological absence.",
+  "endpoint_audit_sha256": "3063d29c3e24f05b6e546a0160c9514970f5d630f51e9ce693bc671cf28c3ca2",
+  "max_distance_um": 1.0,
+  "counts": {
+    "nodes": 104,
+    "excitatory": 79,
+    "inhibitory": 25,
+    "verified_contacts": 3,
+    "construction_ready": 2
+  }
+}
