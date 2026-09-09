@@ -1,0 +1,501 @@
+{
+  "scope": "Existing-data observations; no simulation or parameter intervention.",
+  "method": "Existing landmarks and pv_currents; linear interpolation at trough + 6 ms. First, second, penultimate spikes.",
+  "sign": "Inward positive nA; capacitive term is the negative storage current.",
+  "runs": [
+    {
+      "trace": "docs\\evidence\\h01-multivari-runs\\i-kv3-close2-019.npz",
+      "trace_sha256": "be3bda0567d603f3c01f1b97ffe8fc7ce02903aab771f1adb5f6da42c3436897",
+      "metadata_sha256": "40f191f315546d244ea1ed3b05ff91804f5757431b73ab55e8c91ffaba488ff3",
+      "candidate": {
+        "file": "e-kv3-close2.candidate.json",
+        "values": {
+          "axon_calcium_decay_ms": 300.0,
+          "axon_calcium_gamma": 0.004,
+          "conductance_factor": 1.1,
+          "conductance_region": "soma",
+          "cvode_atol": 1e-10,
+          "nseg_factor": 9,
+          "observe_charge_balance": true,
+          "observe_spike_currents": true,
+          "refine_region": "all",
+          "scale_conductance": "NaTg",
+          "sodium_h_recovery_factor": 1.0,
+          "sodium_h_slope_mv": 5.0,
+          "sodium_h_tau_factor": 0.15,
+          "somatic_calva_factor": 0.5,
+          "somatic_kv3_close_factor": 2.0,
+          "somatic_kv3_tau_factor": 0.5
+        },
+        "sha256": "921cc6d45178848b724b6cbd04f21a201e59ec66d157d9b80f4b1727c4f0f0b1"
+      },
+      "input_na": 0.19,
+      "bias_na": 0.0,
+      "solver": {
+        "method": "CVode",
+        "cvode_atol": 1e-10
+      },
+      "nseg_factor": 9,
+      "geometry": {
+        "area_um2": 154.66601152501264,
+        "cm_uf_cm2": 2.0,
+        "location": "NeuronTemplate[0].soma[0](0.5)",
+        "neighbours": [
+          {
+            "location": "NeuronTemplate[0].soma[0](0.388889)",
+            "resistance_mohm": 0.006720839939506301,
+            "voltage_key": "axial_neighbour_0_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].soma[0](0.611111)",
+            "resistance_mohm": 0.006720839939506301,
+            "voltage_key": "axial_neighbour_1_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[19](0.0555556)",
+            "resistance_mohm": 1.4540642965278776,
+            "voltage_key": "axial_neighbour_2_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[16](0.0555556)",
+            "resistance_mohm": 1.260940836482102,
+            "voltage_key": "axial_neighbour_3_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[13](0.0555556)",
+            "resistance_mohm": 0.9955072170833702,
+            "voltage_key": "axial_neighbour_4_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[12](0.0185185)",
+            "resistance_mohm": 0.2939916469760279,
+            "voltage_key": "axial_neighbour_5_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[9](0.0555556)",
+            "resistance_mohm": 0.17993387166584277,
+            "voltage_key": "axial_neighbour_6_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[0](0.0555556)",
+            "resistance_mohm": 1.6103985587051763,
+            "voltage_key": "axial_neighbour_7_mv"
+          }
+        ]
+      },
+      "count": 14,
+      "samples": [
+        {
+          "spike": 1,
+          "trough_ms": 301.1903742138827,
+          "at_ms": 307.1903742138827,
+          "next_threshold_ms": 332.6291559661615,
+          "threshold_wait_from_trough_ms": 31.43878175227877,
+          "currents_na": {
+            "applied": 0.19,
+            "NaTg": 0.000684671044391861,
+            "Nap": 3.5141697651990235e-09,
+            "K_P": -0.00016027839247217048,
+            "K_T": -7.078718247535618e-09,
+            "Kv3_1": -0.006099644756779414,
+            "Im": -1.4717562632455126e-06,
+            "SK": -6.395433219028041e-07,
+            "Ca_HVA": 1.6638979603149244e-11,
+            "Ca_LVA": 0.002383062423355749,
+            "capacitive": -0.001976721920816097,
+            "leak": -0.006864311915205497,
+            "Ih": 0.002617426231220018,
+            "axial": -0.18058208786619975
+          },
+          "balance_residual_na": 4.7799629935354994e-17,
+          "axial_outflow_fraction_of_applied": 0.9504320414010513,
+          "storage_current_na": 0.001976721920816097,
+          "states": {
+            "voltage_mv": -77.05503173889683,
+            "NaTg_h": 0.9856668826682273,
+            "NaTg_m": 0.01869694301171332,
+            "axon_calcium_mm": 0.00012000919217754271,
+            "axon_sk_gate": 0.002177539498156708,
+            "axon_sk_current_ma_cm2": 0.006287829777929636
+          },
+          "neighbour_minus_soma_mv": [
+            -0.00025336392664761036,
+            -0.00029839154688696395,
+            -0.03052478952713795,
+            -0.018375698398102127,
+            -0.01605672995258575,
+            -0.001172595916355178,
+            -0.0029561085605808923,
+            -0.04247192054466604
+          ]
+        },
+        {
+          "spike": 2,
+          "trough_ms": 335.94925648043306,
+          "at_ms": 341.94925648043306,
+          "next_threshold_ms": 371.7535111427547,
+          "threshold_wait_from_trough_ms": 35.804254662321625,
+          "currents_na": {
+            "applied": 0.19,
+            "NaTg": 0.0005987763092262798,
+            "Nap": 2.6769503953633736e-09,
+            "K_P": -0.0001599893562321485,
+            "K_T": -5.679870509485745e-09,
+            "Kv3_1": -0.005556257632941705,
+            "Im": -1.1333049433091692e-06,
+            "SK": -7.934114222516589e-07,
+            "Ca_HVA": 9.797899924809239e-12,
+            "Ca_LVA": 0.0016282571778111856,
+            "capacitive": -0.00198787705585309,
+            "leak": -0.006718368848403267,
+            "Ih": 0.0026311288597313967,
+            "axial": -0.18043373974385088
+          },
+          "balance_residual_na": -4.634642323477967e-19,
+          "axial_outflow_fraction_of_applied": 0.9496512618097415,
+          "storage_current_na": 0.00198787705585309,
+          "states": {
+            "voltage_mv": -77.47855508149992,
+            "NaTg_h": 0.9868126013162208,
+            "NaTg_m": 0.01785314034045978,
+            "axon_calcium_mm": 0.00013483978025342748,
+            "axon_sk_gate": 0.0038163534340243947,
+            "axon_sk_current_ma_cm2": 0.010130853012037928
+          },
+          "neighbour_minus_soma_mv": [
+            -0.000257333557921345,
+            -0.0003144588890003535,
+            -0.02955330316621019,
+            -0.017735626183181325,
+            -0.015623934870348358,
+            -0.001144275775297063,
+            -0.002871663672568596,
+            -0.040936330571452954
+          ]
+        },
+        {
+          "spike": 13,
+          "trough_ms": 1105.7805935079691,
+          "at_ms": 1111.7805935079691,
+          "next_threshold_ms": 1186.6222069188218,
+          "threshold_wait_from_trough_ms": 80.84161341085269,
+          "currents_na": {
+            "applied": 0.19,
+            "NaTg": 0.0005087804070235513,
+            "Nap": 1.9121976945619945e-09,
+            "K_P": -0.00011367964462311007,
+            "K_T": -4.6053874706251985e-09,
+            "Kv3_1": -0.004883835801814567,
+            "Im": -8.653948255464305e-07,
+            "SK": -6.812354490474496e-07,
+            "Ca_HVA": 5.038121297716422e-12,
+            "Ca_LVA": 0.0012249754888995902,
+            "capacitive": -0.0018001901262897505,
+            "leak": -0.006539881749570169,
+            "Ih": 0.0023582977677648847,
+            "axial": -0.18075291702296414
+          },
+          "balance_residual_na": 3.931797507664216e-17,
+          "axial_outflow_fraction_of_applied": 0.951331142226127,
+          "storage_current_na": 0.0018001901262897505,
+          "states": {
+            "voltage_mv": -77.99652043857824,
+            "NaTg_h": 0.9880694206934569,
+            "NaTg_m": 0.016879741450587887,
+            "axon_calcium_mm": 0.00016132335375849613,
+            "axon_sk_gate": 0.009003111883105265,
+            "axon_sk_current_ma_cm2": 0.020476208670336657
+          },
+          "neighbour_minus_soma_mv": [
+            -0.00024873320269457733,
+            -0.00034083445969769325,
+            -0.028891323641047715,
+            -0.01725164848099429,
+            -0.015358509504201581,
+            -0.0011266008380665879,
+            -0.002818558593051043,
+            -0.03954390131105279
+          ]
+        }
+      ]
+    },
+    {
+      "trace": "docs\\evidence\\h01-multivari-runs\\i-kv3-close2-023.npz",
+      "trace_sha256": "5634888a886e2e7919df2f6829b2320676f3f1d95ad7ec4c8271745ef7fb4f4d",
+      "metadata_sha256": "766fce230d6098d7bd47614a516baf41c733955ae22223b4ec55a983fe25117a",
+      "candidate": {
+        "file": "e-kv3-close2.candidate.json",
+        "values": {
+          "axon_calcium_decay_ms": 300.0,
+          "axon_calcium_gamma": 0.004,
+          "conductance_factor": 1.1,
+          "conductance_region": "soma",
+          "cvode_atol": 1e-10,
+          "nseg_factor": 9,
+          "observe_charge_balance": true,
+          "observe_spike_currents": true,
+          "refine_region": "all",
+          "scale_conductance": "NaTg",
+          "sodium_h_recovery_factor": 1.0,
+          "sodium_h_slope_mv": 5.0,
+          "sodium_h_tau_factor": 0.15,
+          "somatic_calva_factor": 0.5,
+          "somatic_kv3_close_factor": 2.0,
+          "somatic_kv3_tau_factor": 0.5
+        },
+        "sha256": "921cc6d45178848b724b6cbd04f21a201e59ec66d157d9b80f4b1727c4f0f0b1"
+      },
+      "input_na": 0.23,
+      "bias_na": 0.0,
+      "solver": {
+        "method": "CVode",
+        "cvode_atol": 1e-10
+      },
+      "nseg_factor": 9,
+      "geometry": {
+        "area_um2": 154.66601152501264,
+        "cm_uf_cm2": 2.0,
+        "location": "NeuronTemplate[0].soma[0](0.5)",
+        "neighbours": [
+          {
+            "location": "NeuronTemplate[0].soma[0](0.388889)",
+            "resistance_mohm": 0.006720839939506301,
+            "voltage_key": "axial_neighbour_0_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].soma[0](0.611111)",
+            "resistance_mohm": 0.006720839939506301,
+            "voltage_key": "axial_neighbour_1_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[19](0.0555556)",
+            "resistance_mohm": 1.4540642965278776,
+            "voltage_key": "axial_neighbour_2_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[16](0.0555556)",
+            "resistance_mohm": 1.260940836482102,
+            "voltage_key": "axial_neighbour_3_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[13](0.0555556)",
+            "resistance_mohm": 0.9955072170833702,
+            "voltage_key": "axial_neighbour_4_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[12](0.0185185)",
+            "resistance_mohm": 0.2939916469760279,
+            "voltage_key": "axial_neighbour_5_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[9](0.0555556)",
+            "resistance_mohm": 0.17993387166584277,
+            "voltage_key": "axial_neighbour_6_mv"
+          },
+          {
+            "location": "NeuronTemplate[0].dend[0](0.0555556)",
+            "resistance_mohm": 1.6103985587051763,
+            "voltage_key": "axial_neighbour_7_mv"
+          }
+        ]
+      },
+      "count": 26,
+      "samples": [
+        {
+          "spike": 1,
+          "trough_ms": 288.2819069154765,
+          "at_ms": 294.2819069154765,
+          "next_threshold_ms": 305.88011769348213,
+          "threshold_wait_from_trough_ms": 17.598210778005637,
+          "currents_na": {
+            "applied": 0.23,
+            "NaTg": 0.001094491274278674,
+            "Nap": 8.72240705810906e-09,
+            "K_P": -0.00019902642535494556,
+            "K_T": -1.229994777322805e-08,
+            "Kv3_1": -0.00821277964053598,
+            "Im": -2.9919094917317275e-06,
+            "SK": -8.935837878800147e-07,
+            "Ca_HVA": 6.44316384826219e-11,
+            "Ca_LVA": 0.003179326103689108,
+            "capacitive": -0.0025557602833403592,
+            "leak": -0.007381958488945895,
+            "Ih": 0.0025015938067333206,
+            "axial": -0.21842199734013518
+          },
+          "balance_residual_na": 6.773919112948941e-17,
+          "axial_outflow_fraction_of_applied": 0.9496608580005876,
+          "storage_current_na": 0.0025557602833403592,
+          "states": {
+            "voltage_mv": -75.5528335735351,
+            "NaTg_h": 0.980876860065683,
+            "NaTg_m": 0.02198400561041481,
+            "axon_calcium_mm": 0.00012021967249588668,
+            "axon_sk_gate": 0.0021935405094532278,
+            "axon_sk_current_ma_cm2": 0.007525493861194134
+          },
+          "neighbour_minus_soma_mv": [
+            -0.0003114945696593734,
+            -0.0003656903122410284,
+            -0.036465816086727484,
+            -0.022069010947142764,
+            -0.019055910449495436,
+            -0.0013987277282104414,
+            -0.003515661347574774,
+            -0.05095979705678945
+          ]
+        },
+        {
+          "spike": 2,
+          "trough_ms": 308.99974733661065,
+          "at_ms": 314.99974733661065,
+          "next_threshold_ms": 327.8529264985281,
+          "threshold_wait_from_trough_ms": 18.853179161917467,
+          "currents_na": {
+            "applied": 0.23,
+            "NaTg": 0.0009497710358249192,
+            "Nap": 6.54799109000635e-09,
+            "K_P": -0.00024349196076283718,
+            "K_T": -9.275848518896367e-09,
+            "Kv3_1": -0.007581131707486324,
+            "Im": -2.315005324423976e-06,
+            "SK": -1.3223846775073514e-06,
+            "Ca_HVA": 3.979960091580759e-11,
+            "Ca_LVA": 0.0024144907162812067,
+            "capacitive": -0.002539767212194427,
+            "leak": -0.0072262837133716005,
+            "Ih": 0.002526328118346623,
+            "axial": -0.2182962751985778
+          },
+          "balance_residual_na": 5.390563862731351e-18,
+          "axial_outflow_fraction_of_applied": 0.9491142399938165,
+          "storage_current_na": 0.002539767212194427,
+          "states": {
+            "voltage_mv": -76.00459810579314,
+            "NaTg_h": 0.9824887315105131,
+            "NaTg_m": 0.02093235109983453,
+            "axon_calcium_mm": 0.0001365950881603423,
+            "axon_sk_gate": 0.004056290762184495,
+            "axon_sk_current_ma_cm2": 0.012789245842317406
+          },
+          "neighbour_minus_soma_mv": [
+            -0.0003148526234920765,
+            -0.00038745742712236955,
+            -0.03527551641262973,
+            -0.021287571545134505,
+            -0.018517528527919536,
+            -0.0013617831275267568,
+            -0.0034109061587329235,
+            -0.04906415521399622
+          ]
+        },
+        {
+          "spike": 25,
+          "trough_ms": 1186.4256120890852,
+          "at_ms": 1192.4256120890852,
+          "next_threshold_ms": 1226.7043767449877,
+          "threshold_wait_from_trough_ms": 40.27876465590248,
+          "currents_na": {
+            "applied": 0.23,
+            "NaTg": 0.0006628242938242464,
+            "Nap": 3.1852762757976226e-09,
+            "K_P": -0.00013672676760724835,
+            "K_T": -6.08612638094541e-09,
+            "Kv3_1": -0.005890830146904974,
+            "Im": -1.3195287746137912e-06,
+            "SK": -1.348325919573583e-06,
+            "Ca_HVA": 1.2051870604852399e-11,
+            "Ca_LVA": 0.0013193939468785706,
+            "capacitive": -0.002039564356675752,
+            "leak": -0.006829452496230794,
+            "Ih": 0.002285060824465574,
+            "axial": -0.21936803455425724
+          },
+          "balance_residual_na": -2.991584038543454e-17,
+          "axial_outflow_fraction_of_applied": 0.9537740632793793,
+          "storage_current_na": 0.002039564356675752,
+          "states": {
+            "voltage_mv": -77.15619295175098,
+            "NaTg_h": 0.9859578350390272,
+            "NaTg_m": 0.018489196356696116,
+            "axon_calcium_mm": 0.00019874234304187492,
+            "axon_sk_gate": 0.024171720790912992,
+            "axon_sk_current_ma_cm2": 0.05004109388649859
+          },
+          "neighbour_minus_soma_mv": [
+            -0.00028599704175320535,
+            -0.0004964282763871851,
+            -0.03198092038628213,
+            -0.01915424559377501,
+            -0.016927704375714704,
+            -0.001240326300976313,
+            -0.0031101702920638746,
+            -0.04389553186961578
+          ]
+        }
+      ]
+    }
+  ],
+  "b3_records": [
+    {
+      "trace": "docs\\evidence\\h01-multivari-runs\\e-b3-sweep50.npz",
+      "trace_sha256": "bb1a942fcfa519502173d9db88a63690482c1476863a70136a54dac04a4212cd",
+      "metadata_sha256": "3c96b8494b8338da941b38ee65bcf9fc6991561d696fb691af67ec037502ec01",
+      "arrays": [
+        "time_ms",
+        "voltage_mv",
+        "applied_current_na",
+        "raw_sample_index",
+        "axon_voltage_mv"
+      ],
+      "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+      "record_soma_currents": false,
+      "geometry": null
+    },
+    {
+      "trace": "docs\\evidence\\h01-multivari-runs\\e-b3-sweep53.npz",
+      "trace_sha256": "3e4b5dd65106f2049891f843c8f936e1239201519c150de19c3ea84ca2c3d741",
+      "metadata_sha256": "d9161bc05ac7c3f60932c44536b458f585ebcfc9cf28d71a041d46b2d36e7254",
+      "arrays": [
+        "time_ms",
+        "voltage_mv",
+        "applied_current_na",
+        "raw_sample_index",
+        "axon_voltage_mv"
+      ],
+      "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+      "record_soma_currents": false,
+      "geometry": null
+    },
+    {
+      "trace": "docs\\evidence\\h01-multivari-runs\\e-b3-sweep55.npz",
+      "trace_sha256": "e9f46c1b8cf3ee6875dd036b081d6468a79c8a730cf0762cd4125545ffb3fb8a",
+      "metadata_sha256": "80443d26b1218ead806adf544c2c5d75daf866302ea8a0402986c808a11d5466",
+      "arrays": [
+        "time_ms",
+        "voltage_mv",
+        "applied_current_na",
+        "raw_sample_index",
+        "axon_voltage_mv"
+      ],
+      "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+      "record_soma_currents": false,
+      "geometry": null
+    },
+    {
+      "trace": "docs\\evidence\\h01-multivari-runs\\e-b3-sweep56.npz",
+      "trace_sha256": "1d3441766b904e9ba4a0c9296f0681b0bb8c68eb6cadd92be1b5a0a3e0641181",
+      "metadata_sha256": "a177363dbe0eb0cc42a871f7803280f29d4277731a8ced7a1e774c89ac51b1f3",
+      "arrays": [
+        "time_ms",
+        "voltage_mv",
+        "applied_current_na",
+        "raw_sample_index",
+        "axon_voltage_mv"
+      ],
+      "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564",
+      "record_soma_currents": false,
+      "geometry": null
+    }
+  ]
+}

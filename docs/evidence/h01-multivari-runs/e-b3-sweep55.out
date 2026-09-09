@@ -1,0 +1,7 @@
+warning /work/source-model/morphology.swc: more than one tree:
+  root at line 4
+  root at line 10245
+  root at line 10303
+  root at line 10474
+  root at line 10589
+{"samples": 986370, "sections": 91, "output": "/evidence/h01-multivari-runs/e-b3-sweep55"}

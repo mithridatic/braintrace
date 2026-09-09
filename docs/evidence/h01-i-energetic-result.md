@@ -1,5 +1,10 @@
 # I cell, Stage 3 energetic search: result
 
+Interpretation amended on 2026-09-09: the Stage X SK arm also removed the baseline somatic sodium increase.
+It used an earlier candidate, not the retained finalist.
+The original necessity claims below exceed that test's scope.
+See the [parameter audit and current observations](h01-causal-current-observations-2026-09-09.md) for the corrected explanation.
+
 Manifest `h01-i-energetic-manifest.json`, runs in `h01-i-energetic/`, budgets in
 `h01-i-energetic-stage-{r,x,d,e,f}-budgets.md`, decisions in
 `h01-i-energetic/stage-*-decision.json`. Input datum: command current only

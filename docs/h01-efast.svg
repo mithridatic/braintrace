@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1840 1080" width="1840" height="1080" role="img" aria-labelledby="title desc">
+<title id="title">H01 EFAST — cell response and synaptic transfer</title>
+<desc id="desc">Functional decomposition of one modeled cell and its incoming contacts. Read left for HOW and right for WHY. Applied, ionic, axial, and synaptic currents jointly change membrane charge. Capacitance relates charge to the voltage response. Pink boxes are proposed gateways to characterize. Blue boxes identify separate test boundaries, not completed tests. Scope lines exclude external sources and the use of the cell response in the circuit. Functional links do not specify time order or remove voltage and calcium feedback.</desc>
+<style>
+  text { font-family: Arial, Helvetica, sans-serif; fill: #253239; }
+  .heading { font-size: 30px; font-weight: 700; }
+  .sub { font-size: 17px; fill: #56666d; }
+  .scope-label { font-size: 12px; letter-spacing: 1.8px; fill: #68777c; }
+  .box { fill: #fff; stroke: #4e6169; stroke-width: 1.5; }
+  .gateway { fill: #fae1dd; stroke: #97564f; }
+  .test { fill: #d9edf0; stroke: #487580; }
+  .outside { fill: #f3f3ee; stroke: #9ba5a6; }
+  .name { font-size: 19px; font-weight: 500; text-anchor: middle; }
+  .detail { font-size: 14px; fill: #617177; text-anchor: middle; }
+  .wire { fill: none; stroke: #566a73; stroke-width: 1.8; stroke-linecap: square; stroke-linejoin: round; }
+  .scope { stroke: #a4b0b2; stroke-width: 1.3; stroke-dasharray: 7 7; }
+  .logic { font-size: 11px; font-weight: 700; letter-spacing: 1px; fill: #65777f; }
+  .dir { fill: #345f8e; }
+  .dir-label { font-size: 13px; font-weight: 700; fill: white; text-anchor: middle; }
+</style>
+<rect width="1840" height="1080" fill="#fbfaf6"/>
+<text class="heading" x="42" y="46">H01 EFAST</text>
+<text class="sub" x="42" y="76">One cell and its incoming synapses. Repeat this map for each cell.</text>
+<text class="sub" x="42" y="102">Links show functions and their purpose, not time order. Voltage, gates, and calcium remain coupled.</text>
+<!-- Compact legend at the top; colors are measurement roles, not status. -->
+<rect x="1090" y="29" width="19" height="15" class="box gateway"/>
+<text class="sub" x="1120" y="43">Gateway to characterize</text>
+<rect x="1410" y="29" width="19" height="15" class="box test"/>
+<text class="sub" x="1440" y="43">Separate test boundary</text>
+<text class="scope-label" x="264" y="145">MODELED CELL + INCOMING CONTACTS</text>
+<line x1="248" y1="131" x2="248" y2="1025" class="scope"/>
+<line x1="1580" y1="131" x2="1580" y2="1025" class="scope"/>
+<path class="dir" d="M42 137 L61 122 V131 H125 V143 H61 V152 Z"/>
+<text class="dir-label" x="87" y="142">HOW</text>
+<path class="dir" d="M1800 137 L1781 122 V131 H1717 V143 H1781 V152 Z"/>
+<text class="dir-label" x="1754" y="142">WHY</text>
+<!-- Functional connections. Sources joined by one common stem are AND relationships. -->
+<g class="wire">
+  <path d="M222 228 H800"/>
+  <path d="M502 343 H540"/>
+  <path d="M222 453 H540"/>
+  <path d="M760 343 H780 V453 H760 M780 398 H800"/>
+  <path d="M760 578 H780 V688 H760 M780 633 H800"/>
+  <path d="M222 688 H540"/>
+  <path d="M222 863 H282 M502 863 H540"/>
+  <path d="M760 863 H780 V973 H760 M780 918 H800"/>
+  <path d="M1020 228 H1050 V918 H1020"/>
+  <path d="M1020 398 H1050 M1020 633 H1050 M1050 573 H1080"/>
+  <path d="M1300 573 H1330 M1550 573 H1608"/>
+  <!-- Vertical support: when current flows, channel energy is dissipated. -->
+  <path d="M910 436 V470"/>
+  <!-- Vertical support: voltage response involves membrane energy storage. -->
+  <path d="M1440 611 V713"/>
+</g>
+<g fill="#566a73">
+  <circle cx="780" cy="398" r="3"/><circle cx="780" cy="633" r="3"/>
+  <circle cx="780" cy="918" r="3"/><circle cx="1050" cy="573" r="3"/>
+</g>
+<text class="logic" x="770" y="402" text-anchor="end">AND</text>
+<text class="logic" x="770" y="637" text-anchor="end">AND</text>
+<text class="logic" x="770" y="922" text-anchor="end">AND</text>
+<text class="logic" x="1040" y="565" text-anchor="end">AND</text>
+<text class="logic" x="922" y="457">IF–THEN</text>
+<text class="logic" x="1452" y="667">IF–THEN</text>
+<!-- Sources outside the chosen functional boundary. -->
+<g>
+  <title>The imposed input is a model input. Its amplitude, duration, and location belong to the run record.</title>
+  <rect x="42" y="190" width="180" height="76" class="box outside"/>
+  <text class="name" x="132" y="222"><tspan x="132">Supply applied</tspan><tspan x="132" dy="24">current</tspan></text>
+</g>
+<g>
+  <title>Ion reservoirs supply electrochemical energy. Fixed reversals assume maintained gradients. Calcium reversal uses modeled concentrations.</title>
+  <rect x="42" y="415" width="180" height="76" class="box outside"/>
+  <text class="name" x="132" y="447"><tspan x="132">Supply ion</tspan><tspan x="132" dy="24">gradients</tspan></text>
+</g>
+<g>
+  <title>Adjacent compartments provide the other voltages needed for axial current. A disconnected branch supplies no axial connection.</title>
+  <rect x="42" y="650" width="180" height="76" class="box outside"/>
+  <text class="name" x="132" y="682"><tspan x="132">Supply adjacent</tspan><tspan x="132" dy="24">voltages</tspan></text>
+</g>
+<g>
+  <title>The source cell voltage comes from another instance of this cell-response map.</title>
+  <rect x="42" y="825" width="180" height="76" class="box outside"/>
+  <text class="name" x="132" y="857"><tspan x="132">Supply source</tspan><tspan x="132" dy="24">voltage</tspan></text>
+</g>
+<!-- Applied-current function. -->
+<g>
+  <title>Apply the specified point current at its declared location, with its recorded input convention.</title>
+  <rect x="800" y="190" width="220" height="76" class="box"/>
+  <text class="name" x="910" y="221">Apply input current</text>
+  <text class="detail" x="910" y="246">I applied</text>
+</g>
+<!-- Ionic-current decomposition: state-dependent conductance AND driving force. -->
+<g>
+  <title>Voltage and calcium affect the channel-state equations. Initial state and preceding input affect later conductance.</title>
+  <rect x="282" y="305" width="220" height="76" class="box test"/>
+  <text class="name" x="392" y="336">Update channel states</text>
+  <text class="detail" x="392" y="361">voltage · calcium · history</text>
+</g>
+<g>
+  <rect x="540" y="305" width="220" height="76" class="box"/>
+  <text class="name" x="650" y="331"><tspan x="650">Set channel</tspan><tspan x="650" dy="24">conductance</tspan></text>
+</g>
+<g>
+  <title>Reversal potential minus local voltage sets the inward-positive driving force.</title>
+  <rect x="540" y="415" width="220" height="76" class="box"/>
+  <text class="name" x="650" y="446">Set ion driving force</text>
+  <text class="detail" x="650" y="471">E ion − V</text>
+</g>
+<g>
+  <title>Measure ionic current and driving voltage together. Channel currents can cancel each other and mask local errors.</title>
+  <rect x="800" y="360" width="220" height="76" class="box test"/>
+  <text class="name" x="910" y="391">Conduct ionic current</text>
+  <text class="detail" x="910" y="416">I ion = g ion (E ion − V)</text>
+</g>
+<g>
+  <title>Ohmic channels dissipate energy at g times the squared driving voltage. Ions themselves are not dissipated.</title>
+  <rect x="800" y="470" width="220" height="76" class="box"/>
+  <text class="name" x="910" y="501">Dissipate energy</text>
+  <text class="detail" x="910" y="526">P = g ion (E ion − V)²</text>
+</g>
+<!-- Axial-current decomposition. -->
+<g>
+  <title>Connected length, radius, and axial resistivity determine cable conductance.</title>
+  <rect x="540" y="540" width="220" height="76" class="box"/>
+  <text class="name" x="650" y="566"><tspan x="650">Set cable</tspan><tspan x="650" dy="24">conductance</tspan></text>
+</g>
+<g>
+  <rect x="540" y="650" width="220" height="76" class="box"/>
+  <text class="name" x="650" y="681">Set voltage difference</text>
+  <text class="detail" x="650" y="706">V adjacent − V</text>
+</g>
+<g>
+  <title>Axial current transfers charge between connected compartments. Its effect depends on both compartments' local states and cable properties.</title>
+  <rect x="800" y="595" width="220" height="76" class="box test"/>
+  <text class="name" x="910" y="626">Transmit axial current</text>
+  <text class="detail" x="910" y="651">I axial</text>
+</g>
+<!-- Synaptic-current decomposition. -->
+<g>
+  <title>The modeled source site and event rule determine emission. The configured delay determines delivery. These are separate testable implementation choices.</title>
+  <rect x="282" y="825" width="220" height="76" class="box test"/>
+  <text class="name" x="392" y="856">Deliver source events</text>
+  <text class="detail" x="392" y="881">source site · event rule · delay</text>
+</g>
+<g>
+  <title>Delivered events and receptor decay determine conductance. Synaptic weight and dynamics are model assumptions, not H01 measurements.</title>
+  <rect x="540" y="825" width="220" height="76" class="box"/>
+  <text class="name" x="650" y="851"><tspan x="650">Set receptor</tspan><tspan x="650" dy="24">conductance</tspan></text>
+</g>
+<g>
+  <rect x="540" y="935" width="220" height="76" class="box"/>
+  <text class="name" x="650" y="966">Set synaptic drive</text>
+  <text class="detail" x="650" y="991">E synapse − V</text>
+</g>
+<g>
+  <title>Characterize receptor conductance, receiving voltage, and current. Delivery alone does not prove spike suppression or a human-matched response.</title>
+  <rect x="800" y="880" width="220" height="76" class="box gateway"/>
+  <text class="name" x="910" y="906"><tspan x="910">Generate synaptic</tspan><tspan x="910" dy="24">current</tspan></text>
+</g>
+<!-- AND junction of all membrane current terms. Their relative effects are state-dependent. -->
+<g>
+  <title>All four current terms share this balance. A term can be zero: the AND junction does not require every current to be nonzero. Inward-positive net current changes membrane charge. No one current is assigned exclusively to rate, width, or recovery.</title>
+  <rect x="1080" y="535" width="220" height="76" class="box"/>
+  <text class="name" x="1190" y="558"><tspan x="1190">Change membrane</tspan><tspan x="1190" dy="22">charge</tspan></text>
+  <text class="detail" x="1190" y="600">dQ/dt = I net</text>
+</g>
+<g>
+  <title>Characterize V(t) with the input and initial state. Retain rise, peak, fall, recovery, and event timing. Gateway status does not imply a completed qualification.</title>
+  <rect x="1330" y="535" width="220" height="76" class="box gateway"/>
+  <text class="name" x="1440" y="561"><tspan x="1440">Generate voltage</tspan><tspan x="1440" dy="24">response</tspan></text>
+</g>
+<g>
+  <title>For constant membrane capacitance, charge and voltage are related by Q = C V. Electrical energy is C V squared over two.</title>
+  <rect x="1330" y="713" width="220" height="76" class="box test"/>
+  <text class="name" x="1440" y="744">Store electrical energy</text>
+  <text class="detail" x="1440" y="769">Q = C V · W = ½ C V²</text>
+</g>
+<g>
+  <title>Cell responses feed other cells through the model's declared contacts. Whole-circuit behavior requires additional tests beyond this single-cell functional map.</title>
+  <rect x="1608" y="535" width="190" height="76" class="box outside"/>
+  <text class="name" x="1703" y="561"><tspan x="1703">Form circuit</tspan><tspan x="1703" dy="24">response</tspan></text>
+</g>
+</svg>
