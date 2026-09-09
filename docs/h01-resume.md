@@ -107,3 +107,10 @@ attempt should use --dt-ms 0.005 (2,000 steps) under a 3600 s cap, or chunk the 
 The old-selection r2 runtime job is also dead with no traces (worker gone, last heartbeat
 19195 s): record as untested. Connectivity full-export scan delegated to an agent; see
 docs/specs/2026-09-08-h01-full-export-connectivity.md when it lands.
+
+## 2026-09-09: full-export connectivity scan complete
+
+157/157 shards scanned (agent died before committing; results committed by hand).
+10 between-cell synapses among the 104 cells across 9 directed pairs, 8 distinct cell
+pairs, in the whole export. Plus the 2 already-enabled contacts. The population is
+essentially unconnected; see docs/specs/2026-09-08-h01-full-export-connectivity.md.
