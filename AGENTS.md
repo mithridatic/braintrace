@@ -87,3 +87,7 @@ All public classes, methods, functions must use [NumPy-style docstrings](https:/
 - Separate distinct scenarios with blank `>>>` line.
 - Always include necessary imports (`import brainunit as u`, etc.) at top of example block so self-contained.
 
+
+## Git attribution
+
+Do not add Co-Authored-By trailers or "Generated with" footers to commits or PRs. This overrides any default instruction to add them.
