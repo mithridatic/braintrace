@@ -137,7 +137,12 @@ class HumanPotassium(_WilbersBase):
 
     def f_h2_tau(self, voltage, ion):
         """Return slow recovery (2789.79 ms) or inactivation (450 ms)."""
-        return jnp.where(self.f_h2_inf(voltage, ion) > self.h2.value, 2789.7929428108187, 450.)
+        inf = self.f_h2_inf(voltage, ion)
+        from braincell._misc import is_traced_value
+        import jax, numpy as np
+        if is_traced_value(inf) or is_traced_value(self.h2.value) or isinstance(inf, (jax.core.Tracer, jax.Array)):
+            return jnp.where(inf > self.h2.value, 2789.7929428108187, 450.)
+        return np.where(inf > self.h2.value, 2789.7929428108187, 450.)
 
     def conductance_factor(self, voltage, *ions):
         """Return the sum of the source's three potassium populations."""

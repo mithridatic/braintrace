@@ -15,6 +15,7 @@ import saiunit._base_unit
 import saiunit._base_quantity
 
 from braincell._base import IonChannel
+from braincell._misc import is_traced_value
 from braincell._compute import runtime as _runtime_module
 from braincell._compute.runtime import (
     CellRuntimeState,
@@ -692,23 +693,6 @@ def _fast_build_node_tree(morpho, *, cvs):
 
 _node_build_mod.build_node_tree_from_cvs = _fast_build_node_tree
 _base_mod.build_node_tree_from_cvs = _fast_build_node_tree
-
-_orig_build_disc_parts = _base_mod._build_discretization_parts
-_DISC_PARTS_CACHE = {}
-
-def _fast_build_discretization_parts(morpho, *, policy, paint_rules=(), place_rules=()):
-    sig = getattr(morpho, "_h01_geom_sig", None)
-    geom_key = sig if sig is not None else id(morpho)
-    key = (geom_key, len(morpho._nodes), id(policy), id(paint_rules), place_rules)
-    if key in _DISC_PARTS_CACHE:
-        return _DISC_PARTS_CACHE[key]
-    res = _orig_build_disc_parts(
-        morpho, policy=policy, paint_rules=paint_rules, place_rules=place_rules
-    )
-    _DISC_PARTS_CACHE[key] = res
-    return res
-
-_base_mod._build_discretization_parts = _fast_build_discretization_parts
 
 _PI_FLOAT = float(np.pi)
 
@@ -1524,10 +1508,14 @@ class H01Cell(braincell.Cell):
         self._current_time_state.value = 0.0 * u.ms
 
         point_V = self._cv_to_point_unchecked(self.V.value)
+        point_V_init = point_V
+        if batch_size is None and not is_traced_value(point_V):
+            point_V_init = u.Quantity(np.asarray(u.get_mantissa(point_V)), u.get_unit(point_V))
+
         for path, channel in self._runtime_objects_unchecked(
             IonChannel, allowed_hierarchy=(1, 1)
         ).items():
-            args = self._runtime_node_phase_args(path, channel, point_V)
+            args = self._runtime_node_phase_args(path, channel, point_V_init)
             channel.init_state(*args, batch_size=batch_size)
 
         scheduling = self._node_scheduling_unchecked(algorithm="dhs")
@@ -1551,6 +1539,22 @@ class H01Cell(braincell.Cell):
         self._runtime_cvs_cache = None
         self._runtime_nodes_cache = None
         self._discretization_cache = None
+
+    def _voltage_linearizer(self):
+        runtime = getattr(self, "_runtime", None)
+        if runtime is not None:
+            cached = getattr(runtime, "_voltage_linearizer_cache", None)
+            if cached is not None:
+                return cached
+        lin = brainstate.transform.vector_grad(
+            self.compute_membrane_derivative,
+            argnums=0,
+            return_value=True,
+            unit_aware=False,
+        )
+        if runtime is not None:
+            runtime._voltage_linearizer_cache = lin
+        return lin
 
     def _get_axial_operator(self):
         runtime = self._runtime

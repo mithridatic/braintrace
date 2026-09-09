@@ -355,10 +355,9 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
     locations.clear()
     source_sites.clear()
     cells_built.clear()
-    from .h01_construction import _GEOMETRY_CACHE, _DISC_PARTS_CACHE
+    from .h01_construction import _GEOMETRY_CACHE
     from .h01 import _GLOBAL_LOADED_COMPONENTS
     _GEOMETRY_CACHE.clear()
-    _DISC_PARTS_CACHE.clear()
     _GLOBAL_LOADED_COMPONENTS.clear()
     import gc
     gc.collect()

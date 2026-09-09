@@ -19,8 +19,91 @@ import jax.lax
 import jax.numpy as jnp
 import numpy as np
 from braincell._misc import is_traced_value
+from braincell.channel._base import HH
+from braincell.ion._base import DynamicNernstIon
+from braincell.quad import _exp_euler
 from braincell.quad import _staggered as original
 from braincell.quad import register_integrator
+
+
+def _install_fast_ind_exp_euler():
+    orig_fn = _exp_euler._ind_exp_euler_step_selected
+    if getattr(orig_fn, "_h01_fast", False):
+        return
+
+    def _fast_ind_exp_euler_step_selected(
+        target,
+        *args,
+        include_paths=(),
+        excluded_paths=(),
+        pre_integral=None,
+        compute_derivative=None,
+        post_integral=None,
+        allow_empty=False,
+    ):
+        if (
+            isinstance(target, HH)
+            and not include_paths
+            and not excluded_paths
+            and pre_integral is None
+            and compute_derivative is None
+            and post_integral is None
+        ):
+            dt = brainstate.environ.get("dt")
+            target.pre_integral(*args)
+            for gate in target._iter_gates():
+                phi = target.gate_phi(gate)
+                form = target._gate_form(gate)
+                state = target._gate_state(gate)
+                if form == "inf_tau":
+                    inf = getattr(target, f"f_{gate.name}_inf")(*args)
+                    tau = getattr(target, f"f_{gate.name}_tau")(*args)
+                    linear = -phi / (tau * u.ms)
+                    derivative = phi * (inf - state.value) / (tau * u.ms)
+                else:
+                    alpha = getattr(target, f"f_{gate.name}_alpha")(*args)
+                    beta = getattr(target, f"f_{gate.name}_beta")(*args)
+                    linear = -phi * (alpha + beta) / u.ms
+                    derivative = phi * (alpha * (1.0 - state.value) - beta * state.value) / u.ms
+                phi_eval = u.math.exprel(dt * linear)
+                state.value = state.value + dt * phi_eval * derivative
+            target.post_integral(*args)
+            return
+
+        if (
+            isinstance(target, DynamicNernstIon)
+            and not include_paths
+            and pre_integral is None
+            and compute_derivative is None
+            and post_integral is None
+        ):
+            ex = tuple(tuple(p) for p in excluded_paths)
+            if ("V",) in ex:
+                dt = brainstate.environ.get("dt")
+                target.pre_integral(*args)
+                target._ion_compute_derivative_hook(*args)
+                linear = -1.0 / target.decay
+                phi_eval = u.math.exprel(dt * linear)
+                target.Ci.value = target.Ci.value + dt * phi_eval * target.Ci.derivative
+                target.post_integral(*args)
+                return
+
+        return orig_fn(
+            target,
+            *args,
+            include_paths=include_paths,
+            excluded_paths=excluded_paths,
+            pre_integral=pre_integral,
+            compute_derivative=compute_derivative,
+            post_integral=post_integral,
+            allow_empty=allow_empty,
+        )
+
+    _fast_ind_exp_euler_step_selected._h01_fast = True
+    _exp_euler._ind_exp_euler_step_selected = _fast_ind_exp_euler_step_selected
+
+
+_install_fast_ind_exp_euler()
 
 
 def _prepare_levels(edges, offsets, sentinel):
