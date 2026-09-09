@@ -18,6 +18,7 @@ import brainunit as u
 import jax.lax
 import jax.numpy as jnp
 import numpy as np
+from braincell._misc import is_traced_value
 from braincell.quad import _staggered as original
 from braincell.quad import register_integrator
 
@@ -33,7 +34,7 @@ def _prepare_levels(edges, offsets, sentinel):
         children[i, :count] = edges[offsets[i]:offsets[i+1], 0]
         parents[i, :count] = edges[offsets[i]:offsets[i+1], 1]
         valid[i, :count] = True
-    return children, parents, valid
+    return jnp.asarray(children), jnp.asarray(parents), jnp.asarray(valid)
 
 
 def _triang(diags, solves, lowers, uppers, levels):
@@ -48,18 +49,40 @@ def _triang(diags, solves, lowers, uppers, levels):
     l_raw = u.get_mantissa(lowers)
     u_raw = u.get_mantissa(uppers)
     children, parents, valid = levels
+    u_c = u_raw[children]
+    l_c = l_raw[children]
 
-    def level_step(carry, indices):
-        d, s = carry
-        c, p, v = indices
-        multiplier = u_raw[c] / d[:, c]
-        delta_d = jnp.where(v, -l_raw[c] * multiplier, 0.0)
-        delta_s = jnp.where(v, -s[:, c] * multiplier, 0.0)
-        d = d.at[:, p].add(delta_d)
-        s = s.at[:, p].add(delta_s)
-        return (d, s), None
+    is_1d = (d_raw.ndim == 1) or (d_raw.shape[0] == 1)
+    if is_1d:
+        d = d_raw.reshape(-1)
+        s = s_raw.reshape(-1)
 
-    (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid))
+        def level_step_1d(carry, indices):
+            d, s = carry
+            c, p, v, uc, lc = indices
+            multiplier = uc / d[c]
+            delta_d = jnp.where(v, -lc * multiplier, 0.0)
+            delta_s = jnp.where(v, -s[c] * multiplier, 0.0)
+            d = d.at[p].add(delta_d)
+            s = s.at[p].add(delta_s)
+            return (d, s), None
+
+        (d_out, s_out), _ = jax.lax.scan(level_step_1d, (d, s), (children, parents, valid, u_c, l_c))
+        d_out = d_out.reshape(d_raw.shape)
+        s_out = s_out.reshape(s_raw.shape)
+    else:
+        def level_step(carry, indices):
+            d, s = carry
+            c, p, v, uc, lc = indices
+            multiplier = uc / d[:, c]
+            delta_d = jnp.where(v, -lc * multiplier, 0.0)
+            delta_s = jnp.where(v, -s[:, c] * multiplier, 0.0)
+            d = d.at[:, p].add(delta_d)
+            s = s.at[:, p].add(delta_s)
+            return (d, s), None
+
+        (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid, u_c, l_c))
+
     res_d = u.Quantity(d_out, d_unit) if d_unit != u.UNITLESS else d_out
     res_s = u.Quantity(s_out, s_unit) if s_unit != u.UNITLESS else s_out
     return res_d, res_s
@@ -87,14 +110,16 @@ def _backsub(diags, solves, lowers, indices):
 
 def _voltage_step(target, t, dt, *args):
     """Use the installed voltage assembly with the two compiled kernels."""
-    pack = getattr(target._runtime, "h01_dhs_pack", None)
+    runtime = getattr(target, "_runtime", None)
+    pack = getattr(runtime, "h01_dhs_pack", None)
     if pack is None:
         source = original._get_dhs_static_source(target, node_tree=target.node_tree,
             scheduling=target.node_scheduling(algorithm="dhs"))
         cache = original._get_dhs_static_cache(target, source)
         levels = _prepare_levels(source.edges_np, source.level_offsets_np, source.n_point)
         pack = (source, cache, levels)
-        target._runtime.h01_dhs_pack = pack
+        if runtime is not None and not is_traced_value(cache.diag_ms_inv):
+            runtime.h01_dhs_pack = pack
     source, cache, levels = pack
     linear, const = original._linear_and_const_term(target, target.V.value, *args)
     numeric = original._build_dhs_numeric_state(target.V.value, linear, const,

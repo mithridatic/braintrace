@@ -49,6 +49,23 @@ def _advance_calcium(node, voltage, conductance, dt):
         decay, factor, nernst, rest, Co)*u.mM
 
 
+def _get_implicit_plan(target):
+    runtime = getattr(target, "_runtime", None)
+    plan = getattr(runtime, "_h01_implicit_plan", None)
+    if plan is not None:
+        return plan
+    ions = target._family_ion_nodes()
+    channels = target._family_channel_nodes()
+    pv_calcium_nodes = [node for _, node in ions if isinstance(node, PVCalcium)]
+    dependent_ion_paths = [path for path, node in ions if not isinstance(node, (PVCalcium, IndependentIntegration))]
+    independent_ions = [node for _, node in ions if isinstance(node, IndependentIntegration)]
+    excluded_paths = [('V',), *[path for path, _ in channels]]
+    plan = (ions, channels, pv_calcium_nodes, dependent_ion_paths, independent_ions, excluded_paths)
+    if runtime is not None:
+        runtime._h01_implicit_plan = plan
+    return plan
+
+
 @register_integrator('h01_staggered_calcium_implicit', category='staggered',
     description='Experimental H01 scan voltage with backward-Euler Nernst calcium.')
 def _implicit_step(target, *args):
@@ -56,21 +73,16 @@ def _implicit_step(target, *args):
     if target.ion_channel_update_order != 'family':
         raise ValueError('Implicit H01 calcium requires family ordering.')
     t, dt = brainstate.environ.get('t', 0.), brainstate.environ.get('dt')
-    ions = target._family_ion_nodes()
-    channels = target._family_channel_nodes()
+    ions, channels, pv_calcium_nodes, dependent_ion_paths, independent_ions, excluded_paths = _get_implicit_plan(target)
     point_old = target._cv_to_point_unchecked(target.V.value)
-    snapshots = [(node, *_calcium_snapshot(node, point_old))
-                 for _, node in ions if isinstance(node, PVCalcium)]
+    snapshots = [(node, *_calcium_snapshot(node, point_old)) for node in pv_calcium_nodes]
     target.cache_ion_total_currents(target.V.value)
     _voltage_step(target, t, dt, *args)
     point_v = target._cv_to_point_unchecked(target.V.value)
     target._integrate_runtime_synapse_dynamics(point_v)
-    paths = [path for path,node in ions if not isinstance(node, (PVCalcium, IndependentIntegration))]
-    target._integrate_selected_ion_self_states(ions, paths, point_v,
-        excluded_paths=[('V',), *[path for path,_ in channels]])
-    for _, node in ions:
-        if isinstance(node, IndependentIntegration):
-            node.ind_update(point_v, recursive_child=False)
+    target._integrate_selected_ion_self_states(ions, dependent_ion_paths, point_v, excluded_paths=excluded_paths)
+    for node in independent_ions:
+        node.ind_update(point_v, recursive_child=False)
     for node, old_v, conductance in snapshots:
         _advance_calcium(node, old_v, conductance, dt)
     for path, node in channels:

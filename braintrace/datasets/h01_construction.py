@@ -993,11 +993,19 @@ class H01Cell(braincell.Cell):
             channel.init_state(*args, batch_size=batch_size)
 
         scheduling = self._node_scheduling_unchecked(algorithm="dhs")
-        self._runtime.dhs_static_source_np = build_dhs_static_source_1d(
+        dhs_source = build_dhs_static_source_1d(
             self,
             node_tree=self.node_tree,
             scheduling=scheduling,
         )
+        self._runtime.dhs_static_source_np = dhs_source
+        try:
+            from .h01_dhs_scan import _prepare_levels
+            dhs_cache = _st._get_dhs_static_cache(self, dhs_source)
+            levels = _prepare_levels(dhs_source.edges_np, dhs_source.level_offsets_np, dhs_source.n_point)
+            self._runtime.h01_dhs_pack = (dhs_source, dhs_cache, levels)
+        except Exception:
+            pass
         self._runtime.axial_operator_np = None
         self._runtime.axial_operator_cache = None
         self._axial_jax = None

@@ -1,6 +1,8 @@
 """Experimental positive calcium solve; not installed in an H01 integrator."""
 
 import brainstate
+import jax
+import jax.lax
 import jax.numpy as jnp
 
 
@@ -49,6 +51,8 @@ def calcium_backward_euler(c_old, voltage, conductance, dt, decay, flux_factor,
     b = dt*flux_factor*(conductance*1e-3)*nernst_factor
     d = c_old+dt*c_rest/decay+b*equilibrium_log
 
+    zero_cond_res = d / a
+
     def bisect(bounds, unused):
         lo, hi = bounds
         mid = lo+(hi-lo)/2.
@@ -56,6 +60,6 @@ def calcium_backward_euler(c_old, voltage, conductance, dt, decay, flux_factor,
         return (jnp.where(residual <= 0, mid, lo),
                 jnp.where(residual > 0, mid, hi)), None
 
-    (lower, upper), _ = brainstate.transform.scan(bisect, (lower, upper), xs=None, length=64)
-    result = jnp.exp(lower+(upper-lower)/2.)
+    (lower, upper), _ = jax.lax.scan(bisect, (lower, upper), xs=None, length=48)
+    result = jnp.where(b <= 0.0, zero_cond_res, jnp.exp(lower+(upper-lower)/2.))
     return jnp.where(valid & jnp.isfinite(result) & (result > 0), result, jnp.nan)
