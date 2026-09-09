@@ -29,13 +29,18 @@ input is an all-ones 441-feature vector, **not an encoded ARC episode**.
 | 4 | 75,605 | 48.60 | 39.61 | 12.95 | 11.99 | 2.10 | 1,397.67 |
 | 12 | 84,097 | 52.71 | 51.98 | 33.12 | 34.04 | 2.28 | 2,109 |
 | 40 | 165,092 | 105.37 | 148.07 | 135.18 | 137.30 | 5.54 | 4,635.63 |
+| 104 | 807,588 | 700.31 | 469.95 | 280.46 | 194.13 | 13.91 | 14,326.70 |
 
 Each completed probe matched native zero-input soma voltages exactly and had
 finite driven soma voltages. The 40-cell probe additionally inspected all 1,127
-model states and found no nonfinite values. The 104-cell check is separately
-approved with a 2,700-second wall limit and 16 GiB RSS limit; its JSON report is
-authoritative when complete. These are short-window forward checks, not long
-rollout or physiological evidence.
+model states and found no nonfinite values. The 104-cell check passed under its
+separately approved 2,700-second wall limit and 16 GiB RSS limit. It inspected
+all 2,391 registered states with no nonfinite values, matched native soma voltages
+with maximum error 0.0 mV, and measured a 3.0447 mV maximum encoder-driven change.
+Its authoritative report is `h01-arc-probe-104.json`. All these probes used two
+anatomical contacts and zero synthetic contacts. These are short-window forward
+checks, not long rollout or physiological evidence. Phase timings exclude reset
+and miscellaneous reporting overhead and should not be summed as total wall time.
 
 ## Learning blocker
 
