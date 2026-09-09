@@ -1,0 +1,185 @@
+"""Exploratory ARC encoder and readout around actual H01 cable dynamics."""
+
+from dataclasses import replace
+
+import brainevent
+import brainstate
+import braintrace
+import brainunit as u
+import jax.numpy as jnp
+import numpy as np
+
+from braintrace.datasets.h01_network_step import H01NetworkStep
+
+
+class H01ArcModel(brainstate.nn.Module):
+    """Encode ARC events into held soma currents on multicompartment cells.
+
+    Parameters
+    ----------
+    network : braincell.Network
+        Constructed H01 cells with zero baseline soma clamps and voltage probes.
+    source_ids : sequence of str
+        Stable source identifiers in network population order.
+    seed : int, optional
+        BrainState encoder/readout initialization seed.
+    dt_ms : float, optional
+        Cable interval dividing the fixed 0.1 ms ARC event.
+
+    Notes
+    -----
+    This computational interface does not qualify donor physiology or pp-prop.
+    Compiler and allocation gates must pass before a training claim is made.
+    """
+
+    def __init__(self, network, source_ids, *, seed=21, dt_ms=0.005):
+        super().__init__()
+        self.source_ids = tuple(source_ids)
+        if not self.source_ids or any(not isinstance(x, str) for x in self.source_ids):
+            raise ValueError("Nonempty string source IDs are required")
+        if len(set(self.source_ids)) != len(self.source_ids):
+            raise ValueError("Source IDs must be unique")
+        if len(self.source_ids) != len(network.populations):
+            raise ValueError("Source IDs must match network populations")
+        if not np.isfinite(dt_ms) or dt_ms <= 0 or not np.isclose(.1/dt_ms, round(.1/dt_ms)):
+            raise ValueError("Cable dt must divide the 0.1 ms event interval")
+        self.substeps = int(round(.1/dt_ms))
+        self.stepper = H01NetworkStep(network, dt_ms)
+        self.neuron_count = len(self.source_ids)
+        rng = brainstate.random.RandomState(seed)
+        fanout = min(32, self.neuron_count)
+        ranks = rng.uniform(size=(441, self.neuron_count))
+        targets = jnp.sort(jnp.argsort(ranks, axis=1)[:, :fanout], axis=1).reshape(-1)
+        values = rng.normal(size=(441*fanout,)) / jnp.sqrt(441.)
+        self.input_csr = brainevent.CSR(values, targets,
+            jnp.arange(442, dtype=jnp.int32)*fanout, shape=(441, self.neuron_count))
+        self.input_weight = brainstate.ParamState(values)
+        self.readout_weight = brainstate.ParamState(
+            rng.normal(size=(self.neuron_count, 360))/jnp.sqrt(float(self.neuron_count)))
+        self.readout_bias = brainstate.ParamState(jnp.zeros(360))
+        self.drive = brainstate.ShortTermState(jnp.zeros(self.neuron_count))
+        blocks = self.stepper.setup.delivery_blocks
+        if any(len(block.pre_index) != 1 for block in blocks):
+            raise ValueError("H01 requires one named placed contact per delivery block")
+        self.recurrent_weight = brainstate.ParamState(jnp.asarray([
+            float(np.asarray(block.weight.to_decimal(u.uS)).reshape(())) for block in blocks]))
+        ops = tuple(self._contact_op(index, block) for index, block in enumerate(blocks))
+        self.stepper.delivery = replace(self.stepper.delivery, delivery_ops=ops)
+        for index, cell in enumerate(self.stepper.cells):
+            table = cell.runtime.clamp_routing_table
+            if table is None or len(table.midpoint_ids) != 1:
+                raise ValueError("Each H01 cell must have exactly one soma clamp route")
+            cell.add_current_input("h01_arc_encoder", self._current_op(index, cell, table))
+
+    def _contact_op(self, index, block):
+        def deliver(spikes):
+            magnitude = braintrace.element_wise(self.recurrent_weight.value, weight_fn=jnp.abs)[index]
+            event = spikes[block.pre_index[0]] * magnitude
+            size = self.stepper.network.populations[block.source.post_population].size*block.source.n_active
+            return jnp.zeros(size).at[block.flat_target_index[0]].add(event)*u.uS
+        return deliver
+
+    def _current_op(self, index, cell, table):
+        def current(_voltage):
+            density = jnp.zeros(cell.runtime.pop_size + (cell.runtime.n_point,))
+            return density.at[..., table.midpoint_ids].set(
+                self.drive.value[index]/table.midpoint_area)*u.nA/u.cm**2
+        return current
+
+    def update(self, event):
+        """Advance one 0.1 ms event with its bounded soma current held fixed.
+
+        Parameters
+        ----------
+        event : array-like
+            The 441 ARC input features.
+
+        Returns
+        -------
+        array
+            One soma voltage in millivolts per cell.
+        """
+        drive = braintrace.sparse_matmul(event, self.input_weight.value, sparse_mat=self.input_csr)
+        self.drive.value = .35*jnp.tanh(drive)
+        brainstate.transform.for_loop(lambda _: self.stepper.update(), jnp.arange(self.substeps))
+        return self._soma()
+
+    def _soma(self):
+        return jnp.stack([cell.sample_probes()["voltage"].to_decimal(u.mV).reshape(())
+                          for cell in self.stepper.cells])
+
+    def step(self, event, advance=True, blocked_source=None):
+        """Advance an event only when its padding mask permits.
+
+        Parameters
+        ----------
+        event : array-like
+            ARC event features.
+        advance : bool, optional
+            False preserves all state.
+        blocked_source : int, optional
+            Unsupported here; causal controls use explicit network manifests.
+
+        Returns
+        -------
+        array
+            Soma voltages, or zero for padding.
+        """
+        if blocked_source is not None:
+            raise ValueError("Use an explicit H01 contact-control manifest")
+        return brainstate.transform.cond(advance, lambda: self.update(event),
+                                        lambda: jnp.zeros_like(self.drive.value))
+
+    def interval(self, event, advance=True, *, substeps=1):
+        """Advance one ARC interval using the manifest's cable clock.
+
+        Parameters
+        ----------
+        event : array-like
+            ARC features.
+        advance : bool, optional
+            Episode padding mask.
+        substeps : int, optional
+            Must be one; construct a matched finer-clock model for refinement.
+
+        Returns
+        -------
+        array
+            Soma voltages or padding zeros.
+        """
+        if substeps != 1:
+            raise ValueError("H01 cable refinement requires a matched dt_ms model")
+        return self.step(event, advance)
+
+    def readout_features(self):
+        """Return normalized soma features.
+
+        Returns
+        -------
+        array
+            tanh((V_mV + 65)/20) per cell.
+        """
+        return jnp.tanh((self._soma()+65)/20)
+
+    def readout(self):
+        """Return the 360 ARC logits.
+
+        Returns
+        -------
+        array
+            Direct trainable linear readout.
+        """
+        return self.readout_features() @ self.readout_weight.value + self.readout_bias.value
+
+    def reset_episode(self, learner=None):
+        """Reset physical, delivery, clock and optional eligibility state.
+
+        Parameters
+        ----------
+        learner : object, optional
+            Compiled learner with a reset_state method.
+        """
+        self.stepper.reset_state()
+        self.drive.value = jnp.zeros_like(self.drive.value)
+        if learner is not None:
+            learner.reset_state()

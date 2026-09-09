@@ -230,7 +230,8 @@ class H01Archive:
         selects discretization and biophysics. H01 labels are retained as
         annotations rather than guessed into standard SWC compartment types.
         """
-        import braincell
+        from braincell.io.swc import SwcReadOptions
+        from .h01_attachment import H01SwcReader
 
         name = self._members[(str(neuron_id), component)]
         _verify(self.path)
@@ -240,9 +241,9 @@ class H01Archive:
         with tempfile.TemporaryDirectory(prefix="braintrace-h01-") as temporary:
             path = Path(temporary) / name
             path.write_text(converted, encoding="utf-8")
-            morphology, report = braincell.Morphology.from_swc(
-                path, mode="neuromorpho", return_report=True,
-            )
+            morphology, report = H01SwcReader(
+                options=SwcReadOptions(mode="neuromorpho"),
+            ).read(path, return_report=True)
         return H01Component(
             str(neuron_id), component, morphology, rows, converted, report,
             hashlib.sha256(source).hexdigest(),
