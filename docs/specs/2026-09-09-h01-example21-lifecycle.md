@@ -6,6 +6,14 @@ This specification supersedes the deferred-only scope and physiological training
 prerequisites of `2026-09-08-h01-example21-adapter-contract.md`. Physiology is a
 separate reported result, never inferred from computational integration.
 
+Source update: incorporate feat/h01-braincell at 914b32b, including its existing
+importer repair and four source-supported component corrections. The authoritative
+selection is `docs/evidence/h01-population-components-soma.json`, not the historical
+largest-component inventory. Probe the current opt-in
+`h01_staggered_calcium_implicit` solver at 0.005 ms; its numerical qualification is
+still a separate gate. The new cache correction removes retained JAX tracers without
+changing its equations. The two constructible contacts remain unchanged.
+
 ## Population and compatibility
 
 Use all 104 selected source components, pinned archive and annotation digests,
@@ -65,3 +73,13 @@ reuse immutable construction assets and enforce explicit memory limits. Measure
 costs before campaign estimates; runs estimated above 15 minutes require approval.
 Report population, numerical agreement, learning, evolution, physiology and ARC
 scores separately. No ARC score threshold or complete eight-round run is required.
+
+## Implementation gate status
+
+The current forward prototype does not satisfy lifecycle acceptance. Actual cable
+fixtures and the 12-cell population reproduce pp-prop compiler rejection of
+non-position-preserving encoder-to-state paths; changing the scan unroll limit
+does not resolve it. Preserve this explicit blocker until cable dependencies and
+bounded eligibility are supported. Do not wire an apparently trainable backend
+that silently omits those dependencies. Measured execution and outstanding gates
+are recorded in [the lifecycle status report](../evidence/h01-arc-lifecycle-status.md).

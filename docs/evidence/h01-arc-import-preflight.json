@@ -1,5 +1,6 @@
 {
-  "status": "running",
+  "status": "superseded_interrupted",
+  "note": "Stopped at the measured-cost approval boundary. This older-main importer and largest-component selection were superseded by the current H01 branch and corrected soma manifest; see h01-arc-import-current-preflight.json.",
   "rows": [
     {
       "source_id": "3955003482",

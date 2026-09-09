@@ -28,7 +28,7 @@ def main():
     topology = json.loads(args.topology.read_text())
     components = json.loads(args.components.read_text())
     plan = plan_h01_cells(topology, include_isolated=True, cells=104, components=components)
-    selected = {row["cell_id"]: row["largest_component"] for row in components["cells"]}
+    selected = {identity: row["component"] for identity, row in plan["isolated_cells"].items()}
     for contact in topology["contacts"]:
         if contact["construction_ready"]:
             for side in ("pre", "post"):

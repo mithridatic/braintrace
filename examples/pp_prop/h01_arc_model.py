@@ -52,7 +52,7 @@ class H01ArcModel(brainstate.nn.Module):
         targets = jnp.sort(jnp.argsort(ranks, axis=1)[:, :fanout], axis=1).reshape(-1)
         values = rng.normal(size=(441*fanout,)) / jnp.sqrt(441.)
         self.input_csr = brainevent.CSR(values, targets,
-            jnp.arange(442, dtype=jnp.int32)*fanout, shape=(441, self.neuron_count))
+            jnp.arange(442, dtype=jnp.int32)*fanout, shape=(441, self.neuron_count), backend="jax_raw")
         self.input_weight = brainstate.ParamState(values)
         self.readout_weight = brainstate.ParamState(
             rng.normal(size=(self.neuron_count, 360))/jnp.sqrt(float(self.neuron_count)))
@@ -63,27 +63,37 @@ class H01ArcModel(brainstate.nn.Module):
             raise ValueError("H01 requires one named placed contact per delivery block")
         self.recurrent_weight = brainstate.ParamState(jnp.asarray([
             float(np.asarray(block.weight.to_decimal(u.uS)).reshape(())) for block in blocks]))
+        self.contact_magnitude = brainstate.ShortTermState(jnp.abs(self.recurrent_weight.value))
         ops = tuple(self._contact_op(index, block) for index, block in enumerate(blocks))
-        self.stepper.delivery = replace(self.stepper.delivery, delivery_ops=ops)
+        self.stepper.ring_buffers = tuple(brainstate.HiddenState(state.value)
+                                          for state in self.stepper.ring_buffers)
+        self.stepper.delivery = replace(self.stepper.delivery, delivery_ops=ops,
+                                        ring_buffers=self.stepper.ring_buffers)
         for index, cell in enumerate(self.stepper.cells):
             table = cell.runtime.clamp_routing_table
-            if table is None or len(table.midpoint_ids) != 1:
+            if table is None or len(table.midpoint_ids) + len(table.boundary_ids) != 1:
                 raise ValueError("Each H01 cell must have exactly one soma clamp route")
-            cell.add_current_input("h01_arc_encoder", self._current_op(index, cell, table))
+            cell.runtime.evaluate_point_clamps = self._current_op(index, cell, table)
+            # A native run may have cached a voltage derivative before encoder attachment.
+            if hasattr(cell.runtime, "_voltage_linearizer_cache"):
+                cell.runtime._voltage_linearizer_cache = None
 
     def _contact_op(self, index, block):
         def deliver(spikes):
-            magnitude = braintrace.element_wise(self.recurrent_weight.value, weight_fn=jnp.abs)[index]
+            magnitude = self.contact_magnitude.value[index]
             event = spikes[block.pre_index[0]] * magnitude
             size = self.stepper.network.populations[block.source.post_population].size*block.source.n_active
             return jnp.zeros(size).at[block.flat_target_index[0]].add(event)*u.uS
         return deliver
 
     def _current_op(self, index, cell, table):
-        def current(_voltage):
-            density = jnp.zeros(cell.runtime.pop_size + (cell.runtime.n_point,))
-            return density.at[..., table.midpoint_ids].set(
-                self.drive.value[index]/table.midpoint_area)*u.nA/u.cm**2
+        original = cell.runtime.evaluate_point_clamps
+        point = int(np.concatenate((table.midpoint_ids, table.boundary_ids))[0])
+        def current(*, t, point_ids=None):
+            value = original(t=t, point_ids=point_ids)
+            if point_ids is None or point in np.asarray(point_ids):
+                value = value.at[..., point].add(self.drive.value[index]*u.nA)
+            return value
         return current
 
     def update(self, event):
@@ -101,6 +111,8 @@ class H01ArcModel(brainstate.nn.Module):
         """
         drive = braintrace.sparse_matmul(event, self.input_weight.value, sparse_mat=self.input_csr)
         self.drive.value = .35*jnp.tanh(drive)
+        self.contact_magnitude.value = braintrace.element_wise(
+            self.recurrent_weight.value, weight_fn=jnp.abs)
         brainstate.transform.for_loop(lambda _: self.stepper.update(), jnp.arange(self.substeps))
         return self._soma()
 
@@ -181,5 +193,6 @@ class H01ArcModel(brainstate.nn.Module):
         """
         self.stepper.reset_state()
         self.drive.value = jnp.zeros_like(self.drive.value)
+        self.contact_magnitude.value = jnp.abs(self.recurrent_weight.value)
         if learner is not None:
             learner.reset_state()
