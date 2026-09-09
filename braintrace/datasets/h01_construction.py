@@ -85,6 +85,51 @@ def _fast_to_decimal(self, unit=saiunit._base_unit.UNITLESS):
 
 saiunit._base_quantity.Quantity.to_decimal = _fast_to_decimal
 
+_orig_in_unit = saiunit._base_quantity.Quantity.in_unit
+def _fast_in_unit(self, other=saiunit._base_unit.UNITLESS, err_msg=None):
+    if self.unit is other or self.unit == other:
+        return self
+    return _orig_in_unit(self, other, err_msg=err_msg)
+
+saiunit._base_quantity.Quantity.in_unit = _fast_in_unit
+
+_orig_bin_op = saiunit._base_quantity.Quantity._binary_operation
+def _fast_binary_operation(
+    self,
+    other,
+    value_operation,
+    unit_operation=lambda a, b: a,
+    fail_for_mismatch=False,
+    operator_str=None,
+    inplace=False,
+):
+    if not isinstance(other, saiunit._base_quantity.Quantity):
+        other = saiunit._base_quantity._to_quantity(other)
+
+    if fail_for_mismatch:
+        if self.unit is not other.unit and self.unit != other.unit:
+            if (other.unit.is_unitless and not self.unit.is_unitless and saiunit._base_quantity._is_concrete_zero(other.mantissa)):
+                other = saiunit._base_quantity.Quantity(other.mantissa, unit=self.unit)
+            elif (self.unit.is_unitless and not other.unit.is_unitless and saiunit._base_quantity._is_concrete_zero(self.mantissa)):
+                self = saiunit._base_quantity.Quantity(self.mantissa, unit=other.unit)
+            else:
+                other = other.in_unit(
+                    self.unit,
+                    err_msg=f"Cannot calculate \n{self} {operator_str} {other}, because units do not match: {self.unit} != {other.unit}"
+                )
+    r = saiunit._base_quantity.Quantity(
+        value_operation(self.mantissa, other.mantissa),
+        unit=unit_operation(self.unit, other.unit)
+    )
+    if inplace:
+        if saiunit._base_quantity._is_tracer(self.mantissa) or isinstance(self.mantissa, saiunit._base_quantity.numbers.Number):
+            return r
+        self.update_mantissa(r.mantissa)
+        return self
+    return r
+
+saiunit._base_quantity.Quantity._binary_operation = _fast_binary_operation
+
 _orig_q_init = saiunit._base_quantity.Quantity.__init__
 def _fast_q_init(self, mantissa, unit=saiunit._base_unit.UNITLESS, dtype=None):
     if isinstance(mantissa, np.ndarray) and isinstance(unit, saiunit._base_unit.Unit) and dtype is None:
@@ -129,6 +174,22 @@ def _fast_build_frusta(branch, *, prox: float, dist: float):
 
     if total_length_um <= _geo_mod.EPS_LEN_UM:
         raise ValueError(f"Branch total length must be > {_geo_mod.EPS_LEN_UM} μm (got {total_length_um} μm).")
+
+    if len(lengths_um) == 1:
+        seg_length_um = float(lengths_um[0])
+        r_seg_prox = float(radii_prox_um[0])
+        r_seg_dist = float(radii_dist_um[0])
+        r0_um = r_seg_prox + (r_seg_dist - r_seg_prox) * prox_f
+        r1_um = r_seg_prox + (r_seg_dist - r_seg_prox) * dist_f
+        point0 = None
+        point1 = None
+        if points_proximal is not None and points_distal is not None:
+            p_prox = points_proximal[0]
+            p_dist = points_distal[0]
+            point0 = p_prox + (p_dist - p_prox) * prox_f
+            point1 = p_prox + (p_dist - p_prox) * dist_f
+        return (_geo_mod._Frustum(prox=prox_f, dist=dist_f, length_um=(dist_f - prox_f) * seg_length_um,
+                                  r_prox_um=r0_um, r_dist_um=r1_um, point_prox_um=point0, point_dist_um=point1),)
 
     start_um = prox_f * total_length_um
     end_um = dist_f * total_length_um
@@ -395,6 +456,7 @@ def _fast_from_cell(cls, cell: "braincell.Cell") -> _runtime_module.CellRuntimeS
     node_tree = cell.node_tree
     n_point = len(node_tree.nodes)
     n_cv = len(cell.cvs)
+    cv_to_mid = np.asarray(node_tree.cv_to_mid_node_id, dtype=np.int32)
 
     grouped = {}
     cv_to_layout_lists = [[] for _ in range(n_cv)]
@@ -402,44 +464,72 @@ def _fast_from_cell(cls, cell: "braincell.Cell") -> _runtime_module.CellRuntimeS
     layout_id = 0
     pop_size = tuple(cell.pop_size)
 
-    def register(*, mechanism, target, cv_ids, point_id):
-        nonlocal layout_id
-        signature = (target,) + _runtime_module.mechanism_signature(mechanism)
-        entry = grouped.get(signature)
-        if entry is None:
-            entry = {
-                "id": layout_id,
-                "mechanism": mechanism,
-                "target": target,
-                "cv_ids": set(),
-                "point_ids": set(),
-            }
-            grouped[signature] = entry
-            layout_id += 1
-        entry["cv_ids"].update(int(cv_id) for cv_id in cv_ids)
-        entry["point_ids"].add(int(point_id))
-
+    # Fast bulk registration by unique density_mech tuples
+    density_groups = {}
     for cv in cell.cvs:
-        midpoint_point_id = int(node_tree.cv_to_mid_node_id[cv.id])
-        for mechanism in cv.density_mech:
-            register(mechanism=mechanism, target="density", cv_ids=(cv.id,), point_id=midpoint_point_id)
+        mechs = cv.density_mech
+        if mechs in density_groups:
+            density_groups[mechs].append(cv.id)
+        else:
+            density_groups[mechs] = [cv.id]
+
+    for mechs, cv_id_list in density_groups.items():
+        cv_id_arr = np.asarray(cv_id_list, dtype=np.int32)
+        pt_id_arr = cv_to_mid[cv_id_arr]
+        pt_id_list = pt_id_arr.tolist()
+        for mechanism in mechs:
+            signature = ("density",) + _runtime_module.mechanism_signature(mechanism)
+            entry = grouped.get(signature)
+            if entry is None:
+                entry = {
+                    "id": layout_id,
+                    "mechanism": mechanism,
+                    "target": "density",
+                    "cv_ids": set(),
+                    "point_ids": set(),
+                }
+                grouped[signature] = entry
+                layout_id += 1
+            entry["cv_ids"].update(cv_id_list)
+            entry["point_ids"].update(pt_id_list)
 
     point_mech = tuple(node.point_mech for node in node_tree.nodes)
     if any(point_mech):
         for point_id, mechanisms in enumerate(point_mech):
             source_cv_ids = _runtime_module._source_cv_ids_for_point(node_tree, point_id=int(point_id))
             for mechanism in mechanisms:
-                register(
-                    mechanism=mechanism,
-                    target="point",
-                    cv_ids=source_cv_ids,
-                    point_id=int(point_id),
-                )
+                signature = ("point",) + _runtime_module.mechanism_signature(mechanism)
+                entry = grouped.get(signature)
+                if entry is None:
+                    entry = {
+                        "id": layout_id,
+                        "mechanism": mechanism,
+                        "target": "point",
+                        "cv_ids": set(),
+                        "point_ids": set(),
+                    }
+                    grouped[signature] = entry
+                    layout_id += 1
+                entry["cv_ids"].update(source_cv_ids)
+                entry["point_ids"].add(int(point_id))
     else:
         for cv in cell.cvs:
-            midpoint_point_id = int(node_tree.cv_to_mid_node_id[cv.id])
+            midpoint_point_id = int(cv_to_mid[cv.id])
             for mechanism in cv.point_mech:
-                register(mechanism=mechanism, target="point", cv_ids=(cv.id,), point_id=midpoint_point_id)
+                signature = ("point",) + _runtime_module.mechanism_signature(mechanism)
+                entry = grouped.get(signature)
+                if entry is None:
+                    entry = {
+                        "id": layout_id,
+                        "mechanism": mechanism,
+                        "target": "point",
+                        "cv_ids": set(),
+                        "point_ids": set(),
+                    }
+                    grouped[signature] = entry
+                    layout_id += 1
+                entry["cv_ids"].add(cv.id)
+                entry["point_ids"].add(midpoint_point_id)
 
     layouts = []
     state_shapes = {}
@@ -923,6 +1013,14 @@ class H01Cell(braincell.Cell):
     def _discretization(self):
         with _indexed_morphology(self._morpho):
             return super()._discretization
+
+    @property
+    def n_cv(self) -> int:
+        cache = self.__dict__.get("_discretization_cache")
+        if cache is not None:
+            return len(cache.cvs)
+        bounds = self.cv_policy.resolve_cv_bounds(self._morpho)
+        return sum(len(b) for b in bounds)
 
     def init_state(self, batch_size=None) -> None:
         """Lower the declaration into runtime state with sparse solver metadata.

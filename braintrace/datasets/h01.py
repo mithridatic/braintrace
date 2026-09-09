@@ -293,6 +293,11 @@ def _fast_build_morpho_from_text(converted_text: str, filename: str):
             morpho._nodes[parent_id]._children[name] = branch_index
 
     morpho._h01_validated = True
+    try:
+        from .h01_anatomy import _geometry_signature
+        _geometry_signature(morpho)
+    except Exception:
+        pass
     return morpho, context.report
 
 
