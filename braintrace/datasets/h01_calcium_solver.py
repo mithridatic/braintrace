@@ -3,6 +3,7 @@ import brainstate
 import brainunit as u
 import jax.numpy as jnp
 from braincell import IndependentIntegration
+from braincell._misc import is_traced_value
 from braincell.quad import register_integrator, ind_exp_euler_step
 from .h01_pv_calcium import PVCalcium
 from .h01_calcium_implicit import calcium_backward_euler
@@ -18,12 +19,14 @@ def _get_node_ca_constants(node):
     decay = node.decay.to_decimal(u.ms)
     rest = node.rest.to_decimal(u.mM)
     Co = node.Co.to_decimal(u.mM)
-    reversal = node.E.to_decimal(u.mV)
-    cached = (factor, nernst, decay, rest, Co, reversal)
-    try:
-        object.__setattr__(node, "_h01_ca_constants", cached)
-    except (AttributeError, TypeError):
-        pass
+    # Reversal depends on concentration and is not a source constant. Retaining
+    # it (or a traced conversion of a constant) leaks one compilation into the next.
+    cached = (factor, nernst, decay, rest, Co)
+    if not any(is_traced_value(value) for value in cached):
+        try:
+            object.__setattr__(node, "_h01_ca_constants", cached)
+        except (AttributeError, TypeError):
+            pass
     return cached
 
 
@@ -43,7 +46,7 @@ def _calcium_snapshot(node, voltage):
 
 def _advance_calcium(node, voltage, conductance, dt):
     """Advance only concentration using the source constants and signed flux."""
-    factor, nernst, decay, rest, Co, _ = _get_node_ca_constants(node)
+    factor, nernst, decay, rest, Co = _get_node_ca_constants(node)
     node.Ci.value = calcium_backward_euler(node.Ci.value.to_decimal(u.mM),
         voltage.to_decimal(u.mV), conductance, dt.to_decimal(u.ms),
         decay, factor, nernst, rest, Co)*u.mM

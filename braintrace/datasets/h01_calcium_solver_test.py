@@ -4,6 +4,7 @@ import brainstate
 import brainunit as u
 import numpy as np
 import pytest
+import jax
 from braincell.filter import AllRegion, RootLocation
 from braincell.mech import Channel, Ion, MechanismProbe, CurrentProbe, StateProbe
 from . import h01_pv_channels, h01_calcium_solver
@@ -72,3 +73,13 @@ def test_ordinary_voltage_trajectory_refines_toward_existing_solver():
             errors.append(np.max(np.abs(traces[0]-traces[1])))
     assert errors[1] < .7*errors[0]
     assert errors[0] < .01
+
+
+def test_retracing_implicit_solver_does_not_retain_tracers():
+    with brainstate.environ.context(precision=64):
+        cell = make_cell('h01_staggered_calcium_implicit')
+        with jax.checking_leaks():
+            cell.run(dt=.005*u.ms, duration=.05*u.ms)
+        cell.reset_state()
+        result = cell.run(dt=.005*u.ms, duration=.1*u.ms)
+        assert np.isfinite(result.traces['v'].to_decimal(u.mV)).all()
