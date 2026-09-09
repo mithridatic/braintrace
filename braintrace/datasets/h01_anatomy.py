@@ -127,7 +127,6 @@ class H01Anatomy:
         keys = [tuple(p) for p in xyz_round.tolist()]
         if len(set(keys)) != len(keys):
             raise ValueError("Coincident source points make annotation identity ambiguous.")
-        lookup = dict(zip(keys, range(len(rows))))
         self._labels = np.array([_label(c) for c in rows[:, 1]])
         self._nodes = {}
         expected_edges = {(int(r[0]), int(r[6])) if int(r[0]) < int(r[6]) else (int(r[6]), int(r[0]))
@@ -138,9 +137,12 @@ class H01Anatomy:
         branches_views = list(self.morphology.branches)
         total_segments = 0
         branch_arrays = []
+        has_branch_nids = True
         for v in branches_views:
             b = getattr(v, "branch", v)
             arrs = getattr(b, "_h01_float_arrays", None)
+            if getattr(b, "_h01_branch_nids", None) is None:
+                has_branch_nids = False
             if arrs is not None:
                 total_segments += len(arrs[0])
                 branch_arrays.append(arrs)
@@ -155,11 +157,31 @@ class H01Anatomy:
         fractions = np.empty((total_segments, 2), dtype=np.float64)
         endpoints = np.empty((total_segments, 2), dtype=np.int32)
 
-        seg_offset = 0
-        for branch_index, view in enumerate(branches_views):
-            branch = view.branch
-            arrs = branch_arrays[branch_index]
-            if arrs is not None:
+        if has_branch_nids and total_segments > 0:
+            ids = rows[:, 0].astype(np.int64)
+            parents = rows[:, 6].astype(np.int64)
+            roots = np.flatnonzero(parents == -1)
+            id_to_row = {int(node): i for i, node in enumerate(ids)}
+            children = {int(node): [] for node in ids}
+            for i, parent in enumerate(parents):
+                if parent != -1:
+                    children[int(parent)].append(i)
+            order = []
+            from collections import deque
+            pending = deque([int(roots[0])]) if len(roots) == 1 else deque()
+            while pending:
+                i = pending.popleft()
+                order.append(i)
+                pending.extend(children[int(ids[i])])
+            if len(order) != len(rows):
+                raise ValueError("Morphology edges do not preserve the source tree.")
+            order_idx = np.asarray(order, dtype=np.int32)
+
+            seg_offset = 0
+            for branch_index, view in enumerate(branches_views):
+                br = view.branch
+                arrs = branch_arrays[branch_index]
+                branch_nids = br._h01_branch_nids
                 lengths, r_prox, r_dist, proximal, distal, l_sum, seg_starts, seg_ends = arrs
                 if l_sum <= 0:
                     raise ValueError("Annotation mapping requires positive cable length.")
@@ -168,60 +190,104 @@ class H01Anatomy:
                 bounds[0] = 0.0
                 bounds[1:] = seg_ends / l_sum
                 bounds[-1] = 1.0
-            else:
-                if (isinstance(branch.lengths, u.Quantity) and branch.lengths.unit == u.um
-                        and isinstance(branch.lengths.mantissa, np.ndarray) and branch.lengths.mantissa.dtype == np.float64):
-                    lengths = branch.lengths.mantissa
+
+                starts[seg_offset:seg_offset + n_seg] = proximal
+                ends[seg_offset:seg_offset + n_seg] = distal
+                branch_ids[seg_offset:seg_offset + n_seg] = branch_index
+                fractions[seg_offset:seg_offset + n_seg, 0] = bounds[:-1]
+                fractions[seg_offset:seg_offset + n_seg, 1] = bounds[1:]
+
+                row_indices = [order_idx[nid - 1] for nid in branch_nids]
+                for j in range(n_seg):
+                    a = row_indices[j]
+                    b = row_indices[j + 1]
+                    ra = row_nodes[a]
+                    rb = row_nodes[b]
+                    actual_edges.append((ra, rb) if ra < rb else (rb, ra))
+                    if ra not in self._nodes:
+                        self._nodes[ra] = (branch_index, float(bounds[j]))
+                    if rb not in self._nodes:
+                        self._nodes[rb] = (branch_index, float(bounds[j + 1]))
+                    endpoints[seg_offset + j, 0] = a
+                    endpoints[seg_offset + j, 1] = b
+                seg_offset += n_seg
+
+            if total_segments > 0:
+                if not (np.allclose(starts, xyz[endpoints[:, 0]]) and np.allclose(ends, xyz[endpoints[:, 1]])):
+                    raise ValueError("Morphology endpoints do not match H01 source samples.")
+        else:
+            keys = [tuple(p) for p in xyz_round.tolist()]
+            if len(set(keys)) != len(keys):
+                raise ValueError("Coincident source points make annotation identity ambiguous.")
+            lookup = dict(zip(keys, range(len(rows))))
+
+            seg_offset = 0
+            for branch_index, view in enumerate(branches_views):
+                branch = view.branch
+                arrs = branch_arrays[branch_index]
+                if arrs is not None:
+                    lengths, r_prox, r_dist, proximal, distal, l_sum, seg_starts, seg_ends = arrs
+                    if l_sum <= 0:
+                        raise ValueError("Annotation mapping requires positive cable length.")
+                    n_seg = len(lengths)
+                    bounds = np.empty(n_seg + 1, dtype=float)
+                    bounds[0] = 0.0
+                    bounds[1:] = seg_ends / l_sum
+                    bounds[-1] = 1.0
                 else:
-                    lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
-                l_sum = lengths.sum()
-                if l_sum <= 0:
-                    raise ValueError("Annotation mapping requires positive cable length.")
-                n_seg = len(lengths)
-                bounds = np.empty(n_seg + 1, dtype=float)
-                bounds[0] = 0.0
-                bounds[1:] = np.cumsum(lengths) / l_sum
-                bounds[-1] = 1.0
+                    if (isinstance(branch.lengths, u.Quantity) and branch.lengths.unit == u.um
+                            and isinstance(branch.lengths.mantissa, np.ndarray) and branch.lengths.mantissa.dtype == np.float64):
+                        lengths = branch.lengths.mantissa
+                    else:
+                        lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
+                    l_sum = lengths.sum()
+                    if l_sum <= 0:
+                        raise ValueError("Annotation mapping requires positive cable length.")
+                    n_seg = len(lengths)
+                    bounds = np.empty(n_seg + 1, dtype=float)
+                    bounds[0] = 0.0
+                    bounds[1:] = np.cumsum(lengths) / l_sum
+                    bounds[-1] = 1.0
 
-                if (isinstance(branch.points_proximal, u.Quantity) and branch.points_proximal.unit == u.um
-                        and isinstance(branch.points_proximal.mantissa, np.ndarray)):
-                    proximal = branch.points_proximal.mantissa
-                else:
-                    proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
+                    if (isinstance(branch.points_proximal, u.Quantity) and branch.points_proximal.unit == u.um
+                            and isinstance(branch.points_proximal.mantissa, np.ndarray)):
+                        proximal = branch.points_proximal.mantissa
+                    else:
+                        proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
 
-                if (isinstance(branch.points_distal, u.Quantity) and branch.points_distal.unit == u.um
-                        and isinstance(branch.points_distal.mantissa, np.ndarray)):
-                    distal = branch.points_distal.mantissa
-                else:
-                    distal = np.asarray(branch.points_distal.to_decimal(u.um))
+                    if (isinstance(branch.points_distal, u.Quantity) and branch.points_distal.unit == u.um
+                            and isinstance(branch.points_distal.mantissa, np.ndarray)):
+                        distal = branch.points_distal.mantissa
+                    else:
+                        distal = np.asarray(branch.points_distal.to_decimal(u.um))
 
-            p_rnd = np.round(proximal, 6)
-            q_rnd = np.round(distal, 6)
-            p_keys = [tuple(v) for v in p_rnd.tolist()]
-            q_keys = [tuple(v) for v in q_rnd.tolist()]
+                p_rnd = np.round(proximal, 6)
+                q_rnd = np.round(distal, 6)
+                p_keys = [tuple(v) for v in p_rnd.tolist()]
+                q_keys = [tuple(v) for v in q_rnd.tolist()]
 
-            starts[seg_offset:seg_offset + n_seg] = proximal
-            ends[seg_offset:seg_offset + n_seg] = distal
-            branch_ids[seg_offset:seg_offset + n_seg] = branch_index
-            fractions[seg_offset:seg_offset + n_seg, 0] = bounds[:-1]
-            fractions[seg_offset:seg_offset + n_seg, 1] = bounds[1:]
+                starts[seg_offset:seg_offset + n_seg] = proximal
+                ends[seg_offset:seg_offset + n_seg] = distal
+                branch_ids[seg_offset:seg_offset + n_seg] = branch_index
+                fractions[seg_offset:seg_offset + n_seg, 0] = bounds[:-1]
+                fractions[seg_offset:seg_offset + n_seg, 1] = bounds[1:]
 
-            for j in range(n_seg):
-                try:
-                    a = lookup[p_keys[j]]
-                    b = lookup[q_keys[j]]
-                except KeyError as exc:
-                    raise ValueError("Morphology endpoints do not match H01 source samples.") from exc
-                ra = row_nodes[a]
-                rb = row_nodes[b]
-                actual_edges.append((ra, rb) if ra < rb else (rb, ra))
-                if ra not in self._nodes:
-                    self._nodes[ra] = (branch_index, float(bounds[j]))
-                if rb not in self._nodes:
-                    self._nodes[rb] = (branch_index, float(bounds[j + 1]))
-                endpoints[seg_offset + j, 0] = a
-                endpoints[seg_offset + j, 1] = b
-            seg_offset += n_seg
+                for j in range(n_seg):
+                    try:
+                        a = lookup[p_keys[j]]
+                        b = lookup[q_keys[j]]
+                    except KeyError as exc:
+                        raise ValueError("Morphology endpoints do not match H01 source samples.") from exc
+                    ra = row_nodes[a]
+                    rb = row_nodes[b]
+                    actual_edges.append((ra, rb) if ra < rb else (rb, ra))
+                    if ra not in self._nodes:
+                        self._nodes[ra] = (branch_index, float(bounds[j]))
+                    if rb not in self._nodes:
+                        self._nodes[rb] = (branch_index, float(bounds[j + 1]))
+                    endpoints[seg_offset + j, 0] = a
+                    endpoints[seg_offset + j, 1] = b
+                seg_offset += n_seg
 
         if len(actual_edges) != len(expected_edges) or set(actual_edges) != expected_edges:
             raise ValueError("Morphology edges do not preserve the source tree.")

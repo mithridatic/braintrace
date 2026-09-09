@@ -31,6 +31,7 @@ from braincell.quad.protocol import DiffEqState
 import braincell._discretization.geometry as _geo_mod
 import braincell._discretization.base as _base_mod
 import braincell._discretization.mechanism as _mech_mod
+import braincell._discretization.node_build as _node_build_mod
 import braincell._discretization.policy as _policy_mod
 import braincell.filter.helper as _filter_helper
 
@@ -298,12 +299,399 @@ def _fast_build_cv_geometry(morpho, bounds_by_branch):
     key = (geom_key, len(morpho._nodes), id(bounds_by_branch))
     if key in _GEOMETRY_CACHE:
         return _GEOMETRY_CACHE[key]
-    res = _orig_build_cv_geometry(morpho, bounds_by_branch)
+
+    _geo_mod.validate_morphology(morpho)
+    _geo_mod.validate_bounds(bounds_by_branch, morpho)
+
+    n_branches = len(morpho._nodes)
+    branch_to_cv_ids_lists = []
+    geos = []
+    parent_by_cv = []
+    children_by_cv = []
+
+    cv_id = 0
+    pi = float(np.pi)
+    inv_pi_1e4 = 1e4 / pi
+
+    for branch_id in range(n_branches):
+        node = morpho._nodes[branch_id]
+        branch = node.branch
+        arrs = getattr(branch, "_h01_float_arrays", None)
+        b_bounds = bounds_by_branch[branch_id]
+        ids = []
+
+        if arrs is not None and len(arrs[0]) == 1:
+            lens, r_prox_arr, r_dist_arr = arrs[0], arrs[1], arrs[2]
+            seg_len = float(lens[0])
+            r0 = float(r_prox_arr[0])
+            r1 = float(r_dist_arr[0])
+
+            for prox, dist in b_bounds:
+                prox_f = float(prox)
+                dist_f = float(dist)
+                L = (dist_f - prox_f) * seg_len
+                rp = r0 + (r1 - r0) * prox_f
+                rd = r0 + (r1 - r0) * dist_f
+                rm = 0.5 * (rp + rd)
+
+                slant = float(np.sqrt(L**2 + (rd - rp)**2))
+                area_um2 = pi * (rp + rd) * slant
+
+                factor_total = (L / (rp * rd)) * inv_pi_1e4 if (rp > 0 and rd > 0) else 0.0
+                factor_prox = ((0.5 * L) / (rp * rm)) * inv_pi_1e4 if (rp > 0 and rm > 0) else 0.0
+                factor_dist = ((0.5 * L) / (rm * rd)) * inv_pi_1e4 if (rm > 0 and rd > 0) else 0.0
+
+                midpoint = 0.5 * (prox_f + dist_f)
+
+                geos.append(_geo_mod._GeoCV(
+                    id=cv_id,
+                    branch_id=branch_id,
+                    branch_type=branch.type,
+                    prox=prox_f,
+                    dist=dist_f,
+                    midpoint=midpoint,
+                    parent_cv=None,
+                    children_cv=(),
+                    length_um=L,
+                    lateral_area_um2=area_um2,
+                    axial_factor_total_per_cm=factor_total,
+                    axial_factor_prox_per_cm=factor_prox,
+                    axial_factor_dist_per_cm=factor_dist,
+                    r_prox_um=rp,
+                    r_mid_um=rm,
+                    diam_arc_mean_um=rp + rd,
+                    r_dist_um=rd
+                ))
+                parent_by_cv.append(None)
+                children_by_cv.append([])
+                ids.append(cv_id)
+                cv_id += 1
+        else:
+            for prox, dist in b_bounds:
+                prox_f = float(prox)
+                dist_f = float(dist)
+                frusta = _geo_mod._build_frusta(branch, prox=prox_f, dist=dist_f)
+                length_um = sum(p.length_um for p in frusta)
+                area_um2 = _geo_mod._lateral_area_um2(frusta)
+                factor_total = _geo_mod._axial_factor_per_cm(frusta)
+                midpoint = 0.5 * (prox_f + dist_f)
+                left, right = _geo_mod._split_frusta(frusta, x=midpoint)
+                factor_prox = _geo_mod._axial_factor_per_cm(left) if left else 0.0
+                factor_dist = _geo_mod._axial_factor_per_cm(right) if right else 0.0
+                r_prox, r_dist = _geo_mod._boundary_radii_um(frusta)
+                r_mid = _geo_mod._midpoint_radius_um(frusta)
+
+                geos.append(
+                    _geo_mod._GeoCV(
+                        id=cv_id,
+                        branch_id=branch_id,
+                        branch_type=branch.type,
+                        prox=prox_f,
+                        dist=dist_f,
+                        midpoint=midpoint,
+                        parent_cv=None,
+                        children_cv=(),
+                        length_um=length_um,
+                        lateral_area_um2=area_um2,
+                        axial_factor_total_per_cm=factor_total,
+                        axial_factor_prox_per_cm=factor_prox,
+                        axial_factor_dist_per_cm=factor_dist,
+                        r_prox_um=r_prox,
+                        r_mid_um=r_mid,
+                        diam_arc_mean_um=_geo_mod._arc_weighted_mean_diam_um(frusta),
+                        r_dist_um=r_dist,
+                    )
+                )
+                parent_by_cv.append(None)
+                children_by_cv.append([])
+                ids.append(cv_id)
+                cv_id += 1
+
+        branch_to_cv_ids_lists.append(tuple(ids))
+
+    branch_to_cv_ids = tuple(branch_to_cv_ids_lists)
+
+    for ids in branch_to_cv_ids:
+        for left_id, right_id in zip(ids[:-1], ids[1:]):
+            parent_by_cv[right_id] = left_id
+            children_by_cv[left_id].append(right_id)
+
+    for edge in morpho.edges:
+        parent_ids = branch_to_cv_ids[edge.parent.index]
+        child_ids = branch_to_cv_ids[edge.child.index]
+        p_x = float(edge.parent_x)
+        if p_x >= 1.0 - 1e-9:
+            parent_cv = parent_ids[-1]
+        elif p_x <= 1e-9:
+            parent_cv = parent_ids[0]
+        else:
+            parent_cv = _geo_mod.locate_cv_on_branch(parent_ids, geos, x=p_x)
+        child_cv = child_ids[0]
+        if parent_by_cv[child_cv] is None:
+            parent_by_cv[child_cv] = parent_cv
+        if child_cv not in children_by_cv[parent_cv]:
+            children_by_cv[parent_cv].append(child_cv)
+
+    finalized = tuple(
+        _geo_mod._GeoCV(
+            id=geo.id,
+            branch_id=geo.branch_id,
+            branch_type=geo.branch_type,
+            prox=geo.prox,
+            dist=geo.dist,
+            midpoint=geo.midpoint,
+            parent_cv=parent_by_cv[geo.id],
+            children_cv=tuple(children_by_cv[geo.id]),
+            length_um=geo.length_um,
+            lateral_area_um2=geo.lateral_area_um2,
+            axial_factor_total_per_cm=geo.axial_factor_total_per_cm,
+            axial_factor_prox_per_cm=geo.axial_factor_prox_per_cm,
+            axial_factor_dist_per_cm=geo.axial_factor_dist_per_cm,
+            r_prox_um=geo.r_prox_um,
+            r_mid_um=geo.r_mid_um,
+            diam_arc_mean_um=geo.diam_arc_mean_um,
+            r_dist_um=geo.r_dist_um,
+        )
+        for geo in geos
+    )
+
+    res = _geo_mod.CVGeometryResult(
+        geos=finalized,
+        branch_to_cv_ids=branch_to_cv_ids,
+    )
     _GEOMETRY_CACHE[key] = res
     return res
 
 _geo_mod.build_cv_geometry = _fast_build_cv_geometry
 _base_mod.build_cv_geometry = _fast_build_cv_geometry
+
+def _fast_build_cv_mechanisms(morpho, geometry, *, paint_rules=(), place_rules=()):
+    geos = geometry.geos
+    buckets = [_mech_mod._init_bucket() for _ in geos]
+    cache = _mech_mod._RegionCache(morpho)
+    branch_to_cv_ids = geometry.branch_to_cv_ids
+
+    frusta_cache = {}
+
+    def _cached_frusta(branch, *, prox, dist):
+        key = (id(branch), round(float(prox), 9), round(float(dist), 9))
+        cached = frusta_cache.get(key)
+        if cached is None:
+            cached = _geo_mod._build_frusta(branch, prox=prox, dist=dist)
+            frusta_cache[key] = cached
+        return cached
+
+    for rule in paint_rules:
+        intervals_by_branch = cache.intervals(rule.region)
+        mechanism = rule.mechanism
+        is_cable = isinstance(mechanism, _mech_mod.CableProperty)
+
+        for branch_id, intervals in intervals_by_branch.items():
+            if branch_id >= len(branch_to_cv_ids):
+                continue
+            cv_ids = branch_to_cv_ids[branch_id]
+            if not cv_ids or not intervals:
+                continue
+
+            if len(intervals) == 1 and intervals[0][0] <= _mech_mod.EPS_PARAM and intervals[0][1] >= 1.0 - _mech_mod.EPS_PARAM:
+                if is_cable:
+                    for cv_id in cv_ids:
+                        buckets[cv_id].cable = mechanism
+                else:
+                    for cv_id in cv_ids:
+                        _mech_mod._apply_density(buckets[cv_id], mechanism, region_key=rule.region, fraction=1.0)
+                continue
+
+            for cv_id in cv_ids:
+                geo_cv = geos[cv_id]
+                bucket = buckets[cv_id]
+
+                if is_cable:
+                    if not _mech_mod._interval_contains(intervals, geo_cv.midpoint, epsilon=_mech_mod.EPS_PARAM):
+                        continue
+                    bucket.cable = mechanism
+                    continue
+
+                fraction = _mech_mod._coverage_fraction(morpho, geo_cv, intervals, frusta_builder=_cached_frusta)
+                if fraction <= _mech_mod.EPS_PARAM:
+                    continue
+                _mech_mod._apply_density(bucket, mechanism, region_key=rule.region, fraction=fraction)
+
+    seen_names = set()
+    for rule in place_rules:
+        for branch_id, x, display_name in cache.points(rule.locset):
+            ids = geometry.cv_ids(branch_id)
+            if not ids:
+                continue
+            cv_id = geometry.locate_cv(branch_id=branch_id, x=x)
+            geo_cv = geos[cv_id]
+            position = _mech_mod._position_for_geo(geo_cv, x=float(x))
+            for mechanism in rule.mechanisms:
+                _mech_mod._apply_place(
+                    buckets[cv_id],
+                    mechanism,
+                    display_name=display_name,
+                    seen_names=seen_names,
+                    position=position,
+                )
+
+    return buckets
+
+_mech_mod.build_cv_mechanisms = _fast_build_cv_mechanisms
+
+def _fast_build_node_tree(morpho, *, cvs):
+    n_branches = len(morpho.branches)
+    cv_ids_by_branch = [[] for _ in range(n_branches)]
+    for cv in cvs:
+        cv_ids_by_branch[cv.branch_id].append(cv.id)
+
+    drafts = []
+    cv_to_mid_node_id = np.full(len(cvs), -1, dtype=np.int32)
+    branch_endpoint_node_id_by_x = {}
+    logical_edge_roles = {}
+    logical_edge_order = []
+
+    def new_node(*, cv_id, position):
+        node_id = len(drafts)
+        drafts.append(_node_build_mod._NodeDraft(id=node_id, roles={(cv_id, position)}))
+        return node_id
+
+    def add_node_role(node_id, *, cv_id, position):
+        drafts[node_id].roles.add((cv_id, position))
+
+    def add_edge_role(parent_node_id, child_node_id, *, cv_id, half):
+        key = (parent_node_id, child_node_id)
+        entry = logical_edge_roles.get(key)
+        if entry is None:
+            entry = []
+            logical_edge_roles[key] = entry
+            logical_edge_order.append(key)
+        role = (cv_id, half)
+        if role not in entry:
+            entry.append(role)
+
+    root_branch_cv_ids = cv_ids_by_branch[0]
+    if len(root_branch_cv_ids) == 0:
+        raise ValueError("Root branch has no CVs.")
+    root_node_id = new_node(cv_id=root_branch_cv_ids[0], position="prox")
+    branch_endpoint_node_id_by_x[(0, 0.0)] = root_node_id
+
+    for branch_id in range(n_branches):
+        branch_cv_ids = cv_ids_by_branch[branch_id]
+        node = morpho._nodes[branch_id]
+        if node.parent_id is None:
+            attachment_node_id = root_node_id
+            attach_x = 0.0
+            ordered_cv_ids = branch_cv_ids
+        else:
+            p_id = node.parent_id
+            p_x = float(node.parent_x) if node.parent_x is not None else 1.0
+            if (p_id, p_x) in branch_endpoint_node_id_by_x:
+                attachment_node_id = branch_endpoint_node_id_by_x[(p_id, p_x)]
+            elif p_x >= 1.0 - 1e-9 and (p_id, 1.0) in branch_endpoint_node_id_by_x:
+                attachment_node_id = branch_endpoint_node_id_by_x[(p_id, 1.0)]
+            elif p_x <= 1e-9 and (p_id, 0.0) in branch_endpoint_node_id_by_x:
+                attachment_node_id = branch_endpoint_node_id_by_x[(p_id, 0.0)]
+            else:
+                attachment_node_id = _node_build_mod._resolve_attachment_node(
+                    p_id, parent_x=p_x,
+                    branch_endpoint_node_id_by_x=branch_endpoint_node_id_by_x,
+                    cv_to_mid_node_id=cv_to_mid_node_id,
+                    cv_ids_by_branch=cv_ids_by_branch,
+                    cvs=cvs
+                )
+            c_x = float(node.child_x) if node.child_x is not None else 0.0
+            attach_x = c_x
+            ordered_cv_ids = branch_cv_ids if attach_x <= _node_build_mod._EPS_PARAM else tuple(reversed(branch_cv_ids))
+
+        first_cv_id = ordered_cv_ids[0]
+        add_node_role(attachment_node_id, cv_id=first_cv_id, position=_node_build_mod._entry_position_for_walk(attach_x))
+        branch_endpoint_node_id_by_x[(branch_id, float(attach_x))] = attachment_node_id
+
+        for cv_id in ordered_cv_ids:
+            cv_to_mid_node_id[cv_id] = new_node(cv_id=cv_id, position="mid")
+
+        terminal_cv_id = ordered_cv_ids[-1]
+        terminal_node_id = new_node(cv_id=terminal_cv_id, position=_node_build_mod._exit_position_for_walk(attach_x))
+        branch_endpoint_node_id_by_x[(branch_id, float(1.0 - attach_x))] = terminal_node_id
+
+        n_ordered = len(ordered_cv_ids)
+        for index, cv_id in enumerate(ordered_cv_ids):
+            mid_id = int(cv_to_mid_node_id[cv_id])
+            p_node_id = attachment_node_id if index == 0 else int(cv_to_mid_node_id[ordered_cv_ids[index - 1]])
+            c_node_id = terminal_node_id if index == n_ordered - 1 else int(cv_to_mid_node_id[ordered_cv_ids[index + 1]])
+            add_edge_role(p_node_id, mid_id, cv_id=cv_id, half=_node_build_mod._entry_half_for_walk(attach_x))
+            add_edge_role(mid_id, c_node_id, cv_id=cv_id, half=_node_build_mod._exit_half_for_walk(attach_x))
+
+    branch_endpoint_node_id = _node_build_mod._build_branch_endpoint_node_id(
+        branch_endpoint_node_id_by_x=branch_endpoint_node_id_by_x,
+        n_branches=n_branches,
+    )
+
+    node_roles = tuple(
+        tuple(
+            _node_build_mod.NodeRole(cv_id=cv_id, position=position)
+            for cv_id, position in sorted(
+                draft.roles,
+                key=lambda item: (item[0], _node_build_mod._POSITION_ORDER[item[1]]),
+            )
+        )
+        for draft in drafts
+    )
+    role_to_node_id = {}
+    for node_id, roles in enumerate(node_roles):
+        for role in roles:
+            role_to_node_id[(int(role.cv_id), str(role.position))] = node_id
+
+    node_point_mech_lists = [[] for _ in node_roles]
+    node_density_mech_lists = [[] for _ in node_roles]
+    for cv in cvs:
+        mid_id = int(cv_to_mid_node_id[cv.id])
+        node_density_mech_lists[mid_id].extend(cv.density_mech)
+        for placement in cv.point_mech_roles:
+            n_id = role_to_node_id.get((cv.id, placement.position), mid_id)
+            node_point_mech_lists[n_id].append(placement.mechanism)
+
+    nodes = tuple(
+        _node_build_mod.Node(
+            id=node_id,
+            kind="mid" if all(role.position == "mid" for role in roles) else "boundary",
+            roles=roles,
+            density_mech=tuple(node_density_mech_lists[node_id]),
+            point_mech=tuple(node_point_mech_lists[node_id]),
+        )
+        for node_id, roles in enumerate(node_roles)
+    )
+
+    edges = tuple(
+        _node_build_mod.NodeEdge(
+            id=edge_id,
+            parent_node_id=p_node,
+            child_node_id=c_node,
+            roles=tuple(
+                _node_build_mod.NodeEdgeRole(
+                    cv_id=c_id,
+                    half=half,
+                    r_axial=_node_build_mod._role_axial_resistance(cvs, cv_id=c_id, half=half),
+                )
+                for c_id, half in sorted(cv_roles, key=lambda item: (item[0], item[1]))
+            ),
+        )
+        for edge_id, ((p_node, c_node), cv_roles) in enumerate(
+            (key, logical_edge_roles[key]) for key in logical_edge_order
+        )
+    )
+
+    return _node_build_mod.NodeTree(
+        nodes=nodes,
+        edges=edges,
+        root_node_id=root_node_id,
+        cv_to_mid_node_id=cv_to_mid_node_id,
+        branch_endpoint_node_id=branch_endpoint_node_id,
+    )
+
+_node_build_mod.build_node_tree_from_cvs = _fast_build_node_tree
+_base_mod.build_node_tree_from_cvs = _fast_build_node_tree
 
 _orig_build_disc_parts = _base_mod._build_discretization_parts
 _DISC_PARTS_CACHE = {}
@@ -322,6 +710,8 @@ def _fast_build_discretization_parts(morpho, *, policy, paint_rules=(), place_ru
 
 _base_mod._build_discretization_parts = _fast_build_discretization_parts
 
+_PI_FLOAT = float(np.pi)
+
 # 4. Fast mechanism coverage fraction
 def _fast_coverage_fraction(morpho, geo, intervals, *, frusta_builder=None):
     if geo.lateral_area_um2 <= _mech_mod.EPS_AREA_UM2:
@@ -330,19 +720,44 @@ def _fast_coverage_fraction(morpho, geo, intervals, *, frusta_builder=None):
     geo_prox = geo.prox
     geo_dist = geo.dist
     eps = _mech_mod.EPS_PARAM
-    for left, right in intervals:
-        l_f = float(left)
-        r_f = float(right)
-        start = max(geo_prox, l_f)
-        end = min(geo_dist, r_f)
-        if end - start <= eps:
-            continue
-        if start <= geo_prox + eps and end >= geo_dist - eps:
-            overlap += geo.lateral_area_um2
-        else:
-            branch = morpho._nodes[geo.branch_id].branch if geo.branch_id in morpho._nodes else morpho.branches[geo.branch_id]
-            build = frusta_builder if frusta_builder is not None else _fast_build_frusta
-            overlap += _geo_mod._lateral_area_um2(build(branch, prox=start, dist=end))
+    branch = morpho._nodes[geo.branch_id].branch if geo.branch_id in morpho._nodes else morpho.branches[geo.branch_id]
+    arrs = getattr(branch, "_h01_float_arrays", None)
+    is_single_seg = arrs is not None and len(arrs[0]) == 1
+
+    if is_single_seg:
+        seg_len = float(arrs[0][0])
+        r0 = float(arrs[1][0])
+        r1 = float(arrs[2][0])
+        dr = r1 - r0
+        for left, right in intervals:
+            l_f = float(left)
+            r_f = float(right)
+            start = max(geo_prox, l_f)
+            end = min(geo_dist, r_f)
+            if end - start <= eps:
+                continue
+            if start <= geo_prox + eps and end >= geo_dist - eps:
+                overlap += geo.lateral_area_um2
+            else:
+                rp = r0 + dr * start
+                rd = r0 + dr * end
+                L = (end - start) * seg_len
+                slant = np.sqrt(L * L + (rd - rp) * (rd - rp))
+                overlap += _PI_FLOAT * (rp + rd) * slant
+    else:
+        for left, right in intervals:
+            l_f = float(left)
+            r_f = float(right)
+            start = max(geo_prox, l_f)
+            end = min(geo_dist, r_f)
+            if end - start <= eps:
+                continue
+            if start <= geo_prox + eps and end >= geo_dist - eps:
+                overlap += geo.lateral_area_um2
+            else:
+                build = frusta_builder if frusta_builder is not None else _fast_build_frusta
+                overlap += _geo_mod._lateral_area_um2(build(branch, prox=start, dist=end))
+
     return max(0.0, min(1.0, overlap / geo.lateral_area_um2))
 
 _mech_mod._coverage_fraction = _fast_coverage_fraction
@@ -712,6 +1127,31 @@ def _fast_norm_region_intervals(intervals, *, epsilon=_filter_helper.EPSILON):
     return tuple(normalized)
 
 _filter_helper.normalize_region_intervals = _fast_norm_region_intervals
+
+def _fast_difference_region_intervals(left, right, *, epsilon=_filter_helper.EPSILON):
+    if not left:
+        return ()
+    if not right:
+        return _fast_norm_region_intervals(left, epsilon=epsilon)
+
+    right_group = _filter_helper._group_by_branch(right, epsilon=epsilon)
+    if not right_group:
+        return _fast_norm_region_intervals(left, epsilon=epsilon)
+
+    left_group = _filter_helper._group_by_branch(left, epsilon=epsilon)
+    out = []
+    for branch, l_ranges in left_group.items():
+        if branch not in right_group:
+            for start, end in l_ranges:
+                out.append((branch, start, end))
+        else:
+            for start, end in _filter_helper._difference_branch_ranges(
+                l_ranges, right_group[branch], epsilon=epsilon
+            ):
+                out.append((branch, start, end))
+    return _fast_norm_region_intervals(out, epsilon=epsilon)
+
+_filter_helper.difference_region_intervals = _fast_difference_region_intervals
 
 # 9. Fast binary doubling backsub
 def _fast_build_backsub_indices(parent_lookup: np.ndarray, *, n_nodes: int) -> np.ndarray:

@@ -165,6 +165,7 @@ _GLOBAL_LOADED_COMPONENTS = {}
 
 def _fast_build_morpho_from_text(converted_text: str, filename: str):
     import brainunit as u
+    import saiunit
     import numpy as np
     from braincell import Morphology, Branch
     from braincell.morph import MorphoBranch
@@ -207,6 +208,13 @@ def _fast_build_morpho_from_text(converted_text: str, filename: str):
 
     nodes = context.nodes
     branch_point_data = {}
+    _um = u.um
+
+    def _fast_q(val, unit):
+        q = saiunit._base_quantity.Quantity.__new__(saiunit._base_quantity.Quantity)
+        q._mantissa = val
+        q._unit = unit
+        return q
 
     for branch_index, b_info in enumerate(branches):
         name = f"custom_{branch_index}"
@@ -225,13 +233,23 @@ def _fast_build_morpho_from_text(converted_text: str, filename: str):
             b_tot = 0.0
         p_map = {nid: idx for idx, nid in enumerate(p_ids)}
         branch_point_data[branch_index] = (p_ids, p_map, b_pref, b_tot)
+        branch_nids = list(p_ids)
 
         if b_info.attach is not None:
             att_pt, att_rad = reader._attach_geometry(b_info.attach, nodes)
             first_pt = pts[0]
-            if (not np.array_equal(first_pt, att_pt) and np.allclose(first_pt, att_pt)) or not np.allclose(first_pt, att_pt) or not np.isclose(rads[0], float(att_rad)):
+            att_r_f = float(att_rad)
+            eq_pt = (first_pt[0] == att_pt[0] and first_pt[1] == att_pt[1] and first_pt[2] == att_pt[2])
+            if not eq_pt:
                 pts.insert(0, list(att_pt))
-                rads.insert(0, float(att_rad))
+                rads.insert(0, att_r_f)
+                if b_info.attach.node_id is not None:
+                    branch_nids.insert(0, b_info.attach.node_id)
+            elif abs(rads[0] - att_r_f) > 1e-7:
+                pts.insert(0, list(att_pt))
+                rads.insert(0, att_r_f)
+                if b_info.attach.node_id is not None:
+                    branch_nids.insert(0, b_info.attach.node_id)
 
         pts_arr = np.asarray(pts, dtype=np.float64)
         rads_arr = np.asarray(rads, dtype=np.float64)
@@ -245,16 +263,17 @@ def _fast_build_morpho_from_text(converted_text: str, filename: str):
         r_dist = rads_arr[1:]
 
         br = Branch.__new__(Branch)
-        object.__setattr__(br, "lengths", u.Quantity(lens, u.um))
-        object.__setattr__(br, "radii_proximal", u.Quantity(r_prox, u.um))
-        object.__setattr__(br, "radii_distal", u.Quantity(r_dist, u.um))
-        object.__setattr__(br, "points_proximal", u.Quantity(pts_prox, u.um))
-        object.__setattr__(br, "points_distal", u.Quantity(pts_dist, u.um))
+        object.__setattr__(br, "lengths", _fast_q(lens, _um))
+        object.__setattr__(br, "radii_proximal", _fast_q(r_prox, _um))
+        object.__setattr__(br, "radii_distal", _fast_q(r_dist, _um))
+        object.__setattr__(br, "points_proximal", _fast_q(pts_prox, _um))
+        object.__setattr__(br, "points_distal", _fast_q(pts_dist, _um))
         object.__setattr__(br, "type", "custom")
         tot_len = float(np.sum(lens))
         seg_starts = np.concatenate(([0.0], np.cumsum(lens)[:-1]))
         seg_ends = seg_starts + lens
         object.__setattr__(br, "_h01_float_arrays", (lens, r_prox, r_dist, pts_prox, pts_dist, tot_len, seg_starts, seg_ends))
+        object.__setattr__(br, "_h01_branch_nids", branch_nids)
 
         if branch_index == 0 or b_info.parent_index is None:
             parent_id = None
