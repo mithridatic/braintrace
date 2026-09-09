@@ -25,9 +25,19 @@ open, each node carrying its decision file. Thevenin: four-box source, series im
 load and dissipation with the measured or assumed value in each box and "not measured"
 written where the programme never measured one.
 
-The four `h01-youden-i-candidate-*.png` files are deleted. The multivari figures are kept
-as they are: regenerating them needs the human and model traces, which were removed from
-disk on 2026-09-09.
+The four `h01-youden-i-candidate-*.png` files are deleted.
+
+## Multivari (added the same day)
+
+| Script | Output | Source |
+|---|---|---|
+| `h01_multivari_data.py` | `h01-multivari-data.json` | Allen recordings in `.cache` (every suprathreshold long-square sweep, repeats kept apart) and model traces; six traces rerun in the NEURON image into `h01-multivari-runs/` (gitignored, log committed) |
+| `h01_multivari_chart.py` | `h01-multivari-{e,i}.{png,svg}`, `h01-multivari-chart.json` | the data JSON only |
+
+Form follows the book's Figures 104 and 136: one measure per panel as deviation from the human
+median, x nested cycle within sweep within input within machine, thin rules between inputs and a
+heavy rule between human and model, family labels stacked under the axis, and each panel titled
+with the family that varies most (range of family means within the parent family).
 
 ## Out of scope
 

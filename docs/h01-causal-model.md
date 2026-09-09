@@ -2244,3 +2244,27 @@ electrode and membrane impedances were never measured, so the loop cannot be clo
 that is a gap in the campaign, now drawn. I-to-E pair: synapse 50 MOhm (20 nS) against human 323
 MOhm (3.1 nS), local 10 to 15 mV, soma 0.003 mV; the cable box attenuates by more than 3,000x, so
 the placement and cable, not the conductance, are the load-limiting element.
+
+### Multivari charts in Hartshorne's form (2026-09-09; new model observations, no new claim)
+
+Spec addendum: `docs/specs/2026-09-09-h01-diagnostic-diagrams.md`. Six model traces were rerun
+in the NEURON image for these charts (`evidence/h01-multivari-runs/campaign-log.jsonl`: I finalist
+at 0.19 and 0.23 nA, 14 and 25 s; frozen E B3 at 200, 250, 310, 350 pA, 600 to 807 s each). Per-cycle
+features for every human suprathreshold sweep and every model trace are in
+`evidence/h01-multivari-data.json` (E 65 human / 34 model cycles, I 90 / 77); the traces themselves
+are gitignored. Charts: `evidence/h01-multivari-e.png`, `-i.png`; the family that varies most per
+measure is in `evidence/h01-multivari-chart.json`.
+
+**E cell reading.** Width and cycle length vary most by drive (human and model alike), AHP and rise
+rate vary most by machine. The human's second spike at every drive from 230 pA up is a broad
+excursion, +0.15 to +0.45 ms width and +2.4 to +4.6 mV AHP, that returns to baseline by cycle 3;
+the model shows no second-cycle excursion at any drive. The model's maximum rise rate sits a flat
++340 V/s above the human median at every drive and cycle (about 640 against 300 V/s). Both are
+constant offsets, so the E deficit outside the low-drive gain is two mechanisms, a missing
+second-spike broadening and a rise rate twice the human's, not scatter.
+
+**I cell reading.** Width and rise rate vary most by machine, cycle length by drive, AHP within a
+sweep. The model width is a flat -0.06 ms at every drive and cycle (0.22 against 0.28 ms), and its
+rise rate a flat +80 V/s; the human rise rate decays across the train at 0.19 nA (+50 to -90 V/s)
+while the model's is level. So the I width miss is one constant mechanism, and the accommodation
+row of SP4 has a picture: the human's rise rate accommodates and the model's does not.
