@@ -49,6 +49,23 @@ def test_source_identity_and_soma_not_root(imported):
         anatomy.locations("somaa")
 
 
+def test_terminal_soma_fraction_is_exact_despite_reduction_roundoff(tmp_path, monkeypatch):
+    # Branch 2265 of real H01 cell 3812058320, with local IDs and simple radii.
+    points = [(104022+6*i, 41352+6*i, 892-6*i) for i in range(9)]
+    points.append((104075, 41405, 839))
+    source = ''.join(f'{i} {3 if i == 9 else 1} {x} {y} {z} '
+                     f'{1000 if i == 9 else 100} {i-1}\n'
+                     for i, (x, y, z) in enumerate(points)).encode()
+    path, _ = _archive(tmp_path, monkeypatch, [('12.0.swc', source)])
+    cell = H01Archive(path).load(12, component=0)
+    anatomy = cell.anatomy()
+    assert anatomy.soma_location().evaluate(cell.morphology).points == ((0, 1.0),)
+    assert anatomy.location(0).evaluate(cell.morphology).points == ((0, 0.0),)
+    assert np.all((anatomy._fractions >= 0) & (anatomy._fractions <= 1))
+    np.testing.assert_allclose(_position(cell, anatomy.soma_location()),
+                               np.array(points[-1])*[.032, .032, .033], rtol=0, atol=1e-12)
+
+
 def test_geodesic_neighborhood_follows_branches_and_cuts_edges(imported):
     anatomy = imported.anatomy()
     assert _region_length(imported, anatomy.cable_neighborhood(30, radius_um=1.)) == pytest.approx(2.)

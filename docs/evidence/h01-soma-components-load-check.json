@@ -1,0 +1,54 @@
+{
+  "scope": "Four corrected source morphology imports and soma locations only; no electrical construction or simulation",
+  "rows": [
+    {
+      "cell": "3470629528",
+      "component": 1,
+      "source_sha256": "18c4be2295777e38d8c889a38f63c9a22df1b495b92985f74edf9f52db5ec09b",
+      "nodes": 21738,
+      "soma_points": [
+        [
+          2097,
+          0.5889775438687338
+        ]
+      ]
+    },
+    {
+      "cell": "4138580687",
+      "component": 2,
+      "source_sha256": "5bd3341865957b721d8aff59e652d188c16d2a145c6da938edfb52d239562c2f",
+      "nodes": 6363,
+      "soma_points": [
+        [
+          644,
+          0.25083532428929256
+        ]
+      ]
+    },
+    {
+      "cell": "4668874666",
+      "component": 1,
+      "source_sha256": "9d0f227e9d354d870edb94a066cbe59244dab260b615bd93c9ac643094cc5450",
+      "nodes": 10301,
+      "soma_points": [
+        [
+          1482,
+          0.8475690615446452
+        ]
+      ]
+    },
+    {
+      "cell": "7196644737",
+      "component": 6,
+      "source_sha256": "e8461ecd0c5586794563259e101b1266f633ca319282b6c8cd7fab143edb6eab",
+      "nodes": 5958,
+      "soma_points": [
+        [
+          1335,
+          0.7102838626269223
+        ]
+      ]
+    }
+  ],
+  "seconds": 10.605562300013844
+}

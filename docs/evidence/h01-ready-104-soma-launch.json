@@ -1,0 +1,23 @@
+{
+  "estimate_basis": "previous geometry-only audit measured 509.24 s; added population soma/region checks not yet timed",
+  "arguments": [
+    "-u",
+    "-m",
+    "docs.evidence.h01_population_import_audit",
+    "--archive",
+    ".cache/h01/proofread104.zip",
+    "--components",
+    "docs/evidence/h01-population-components.json",
+    "--topology",
+    "docs/evidence/h01-verified-network.json",
+    "--output",
+    "docs/evidence/h01-ready-104-soma-audit.json"
+  ],
+  "exit_code": 0,
+  "silence_cap_seconds": 600,
+  "wall_cap_seconds": 1800,
+  "started_utc": "2026-09-08T09:54:03.9310468Z",
+  "status": "completed",
+  "pid": 33208,
+  "seconds": 481.9602959
+}

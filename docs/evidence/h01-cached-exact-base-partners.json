@@ -1,0 +1,24 @@
+{
+  "scope": "Exact base ownership check of previously retained eight-shard subset only; no full export completeness or placement claim",
+  "input_hashes": {
+    "docs\\evidence\\h01-cellmatrix-mapping-audit.json": "360d8c334f8f1b280dd860c69a633cdee6bcb7b6de09a369f4225433e80a899e",
+    ".cache\\h01\\proofread-base-membership.json": "3201df49269d31b8e788a91607f5b07ed14c3f0d7cd2dfbae7d51fef3c287a9f",
+    ".cache\\h01\\readiness\\h01-cached-join-shard1.json": "5e9dcd26bf99a81afe8d80a562d7af39f43bb625a6ece13a44f47233af627bd6",
+    ".cache\\h01\\readiness\\h01-cached-join-shard2.json": "e5ab311d91416b5436af8dd914e0b3c0b4ad47870e6127760daec07239e7c284",
+    ".cache\\h01\\readiness\\h01-cached-join-shard3.json": "8e99cfe744f60b44b425e044c749ed3a218c476c48b5b3a9e243c66e00f0067d",
+    ".cache\\h01\\readiness\\h01-cached-join-shard4.json": "baa59c0e4136bba9c251e0f92aa8f076a903b6b68fd994d64ecf908cdf65657c",
+    ".cache\\h01\\readiness\\h01-cached-join-shard5.json": "91d78901c13aee4a04dafad7805ba1e7d68e96cec8018b5d6264592b64c70207",
+    ".cache\\h01\\readiness\\h01-cached-join-shard6.json": "e71b3f58cfaf8bead10a2f4304b19aa27663e8cef3b19b94e9ebfe1f5baf74e0",
+    ".cache\\h01\\readiness\\h01-cached-join-shard7.json": "104f2001e2eb185a36f52f7b02293752a7646d0532b630a9e07702f0a0068a94",
+    ".cache\\h01\\readiness\\h01-cached-join-shard8.json": "c1b78fac3d129a882ad645aa86a7959a08b00047676cc6f8bc7a5e29de4fa226"
+  },
+  "counts": {
+    "retained_rows": 27058,
+    "pre_exact_owner": 409,
+    "post_exact_owner": 12747,
+    "ambiguous_endpoint": 0,
+    "exact_both": 33
+  },
+  "internal_candidates": 0,
+  "rows": []
+}

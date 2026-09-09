@@ -1946,6 +1946,116 @@ carries each verdict (the dated entries below are kept as written):
 
 ## Evidence index
 
+### Y5 continuation: all-104 anatomical import, 2026-09-08
+
+The attachment-coordinate tolerance controlled the seven-component import
+failure. Retaining physically distinct attachment points in the H01-local
+reader is sufficient to load all 104 largest soma-bearing components with
+all 2,804,445 directed source segments present and no extras. The source
+coordinates and graph are compared independently in the per-cell
+[import decision](evidence/h01-population-import-104.json); the
+[result](evidence/h01-population-import-104.md) records the failing regressions
+and passing checks. This closes the reader blocker in Y5, not its population
+runtime or physiology gates. No fragments are joined and no cable is invented.
+
+The subsequent [40-cell build](evidence/h01-ready-40-build-summary.json) completed
+with 165,084 compartments and two projections in 240.850 seconds, exit 0
+([launch record](evidence/h01-ready-40-build-launch.json)). This directly
+extends verified construction from 12 to 40 cells and includes both previously
+blocked components in the prefix. Initialization and simulation of this larger
+population were untested at that construction checkpoint; see the
+[continuation result](evidence/h01-ready-40-result.md).
+
+The [40-cell initialization](evidence/h01-ready-40-init-summary.json) then
+completed for all expected population IDs in 226.172 seconds with peak resident
+memory 2,466.867 MiB, exit 0. The rerun's construction metadata matches the
+preceding build exactly. This closes initialization at 40 cells, while finite
+compiled stepping, full-104 runtime and the physiological gates remain open.
+
+The [40-cell compiled smoke](evidence/h01-ready-40-ei-1ms-summary.json) then
+completed 200 steps at dt 0.005 ms, with all 125 saved arrays finite and the
+expected time grid and 40 population identities independently checked
+([trace audit](evidence/h01-ready-40-ei-1ms-trace-audit.json)). Compile plus
+stepping took 121.588 seconds, peak resident memory 4,336.469 MiB. There were
+zero spikes before the pulse onset; this establishes finite short-window
+execution at 40 cells, not driven activity, delivery or full-104 readiness.
+
+The first full-104 construction attempt failed on cell 3812058320: the soma
+endpoint was represented as x=1.0000000000000002 while the soma interval ended
+at 1.0. Canonicalizing the anatomy index's final fraction to 1.0, without moving
+source geometry or relaxing membership, suffices for this real cell to construct
+and discretize to 9,918 compartments. The source-coordinate regression fails
+before and passes after the change. See the
+[endpoint decision](evidence/h01-ready-104-endpoint-decision.json) and
+[result](evidence/h01-ready-104-endpoint-result.md). This identifies and repairs
+one full-population construction boundary; the all-104 membership audit and build
+retry remain pending.
+
+The subsequent [all-104 geometry and soma audit](evidence/h01-ready-104-soma-audit.json)
+passed in 478.749 seconds, verifying all source segments and strict soma-region
+membership for every expected cell. This closes that membership boundary across
+the full population; it permits the build retry but does not establish full
+electrical construction or simulation.
+
+The corrected [full-104 construction gate](evidence/h01-ready-104-build-r2-decision.json)
+passes: 808,495 compartments and two supported projections, exact source-component
+provenance and all expected identities. Construction took 1,034.034 seconds.
+This closes the full-population construction boundary in Y5. Its supervisor's
+peak-memory field is invalid due to an Int32 accumulator overflow; that metric
+is excluded rather than promoted. See the [result](evidence/h01-ready-104-result.md).
+The subsequent [full-population runtime gate](evidence/h01-ready-104-ei-1ms-decision.json)
+passes for the same 104 identities and model metadata: 200 compiled steps,
+317 finite expected arrays, dt 0.005 ms. Initialization took 836.600 seconds,
+compilation/stepping 266.922 seconds, peak process memory 13,930.617 MiB.
+This closes initialization and finite pre-stimulus execution in Y5. Zero
+events and zero receptor conductances in the 1 ms window do not test the
+2-5 ms drive or delivery. Driven response, controls, numerical refinement and
+physiological qualification remain open.
+
+### Y5 driven-window failure, 2026-09-08
+
+The [first full-104 10 ms run](evidence/h01-ready-104-ei-10ms-decision.json)
+fails with nonfinite output voltage on cell 7196644737 at dt 0.005 ms and
+1 nA soma pulses at 2-5 ms. All 104 cells initialized and no resource cap
+was reached. That cell has 1,647 compartments and no modeled incident
+projections, so a faithful isolated-cell reproduction is possible. The earlier
+1 ms finite result does not extend into this driven window. No mechanism or
+first divergence time is established: the old runner discarded the returned
+arrays when checking the first nonfinite value. The evidence-persistence repair
+retains failed arrays without changing dynamics; numerical diagnosis and a new
+full-population pass remain required. This narrows Y5's runtime boundary,
+and closes no physiological or delivery gate.
+
+The [isolated-cell timestep pair](evidence/h01-ready-cell7196644737-dt-decision.json)
+reproduces the same nonfinite soma/output failure with exactly matching cell
+metadata and no projections: first nonfinite sample at 3.2700 ms with dt
+0.005 ms and 3.2675 ms with dt 0.0025 ms. Peak finite voltages are 383.810459
+and 383.792136 mV. This establishes that interactions with other modeled cells
+are not required for this failure and that the tested timestep halving is not
+sufficient to remove it. It does not identify the mechanism; inspect current
+placement, membrane area and the first divergent internal state next.
+
+### Y4 source-audit correction, 2026-09-08
+
+The [hash-linked source audit](evidence/h01-e-gain-source-audit.json) verifies
+that the frozen B3 opening runs at sweeps 43/50/53/56 all applied somatic
+`gbar_Im = 0.0003009224287506406 S/cm2` with the pinned Im source. This
+supersedes earlier wording on this page suggesting that an M current is absent
+from the Allen genome. Source Im has voltage-dependent gating; alternative
+human-specific kinetics or distributions remain untested hypotheses, not an
+identified missing mechanism or a demonstrated cause of the gain defect.
+
+Likewise, the measured failures of the tested Ih/leak doses and the registered
+additive prediction do not prove that every passive parameterization fails.
+Earlier statements that the unresolved cause is necessarily outside the
+passive family are stronger than those measurements support. The narrowed
+claim is failure of the registered tested interventions under their stated
+conditions. The current that would correct low-drive responses while retaining
+the protected responses remains unresolved. This audit launches no evaluation
+and closes no physiological gate. B3 remains unpromoted. Details and the
+source-check requirement for future hypotheses are in the
+[amendment](evidence/h01-e-gain-source-audit.md).
+
 Sources: [source and datum evidence](evidence/h01-pv-acquisition-audit.md),
 [human pyramidal sources](evidence/h01-active-wilbers-sources.json),
 [H01 anatomy](https://h01-release.storage.googleapis.com/landing.html).
@@ -1955,3 +2065,206 @@ A yes/no decision applies to a specified causal claim and its tested conditions.
 Keep the continuous direct response that supports the decision.
 Distinguish a contradicted prediction, an invalid test, and an unresolved explanation.
 Only supported conclusions belong in the explanations. Unresolved links stay explicit.
+
+The unchanged cell 7196644737 state observation reproduces negative calcium at
+3.270 ms with exact voltage parity. Its frozen-current exponential calcium
+update predicts that crossing to 1.06e-22 mM; dynamic Nernst reversal then becomes
+invalid. See [state diagnosis](evidence/h01-ready-cell7196644737-result.md).
+The full104 driven runtime remains failed; this is a numerical diagnosis, not
+physiological qualification or a completed repair.
+
+An opt-in implicit calcium solver now completes the isolated failing cell at
+both registered timesteps with finite traces and positive calcium. The paired
+voltage difference is 6.364916 mV, so refinement is still unqualified, and the
+extreme ~383.8 mV response remains. Full104 readiness is not established. See
+[experimental repair evidence](evidence/h01-ready-cell7196644737-implicit-decision.json).
+
+The finer isolated comparison narrows Y5's numerical limit: consecutive timestep
+halving errors decrease from 6.364916 to 3.471139, 1.819563 and 0.933343 mV.
+At .000625/.0003125 ms, the exact 7196644737 model with the implicit solver and
+unchanged 1 nA pulse has finite traces, positive calcium, one event each and
+.0003125 ms event timing separation. This passes only the registered isolated
+comparison, not a general error bound or full104 refinement. Evidence:
+[refinement decision](evidence/h01-ready-cell7196644737-refinement-decision.json).
+The full104 source run at .000625 ms is registered and underway; its result is
+not yet available. The installed wheel predating this solver remains unsuitable
+as the final package qualification artifact and must be rebuilt from the final
+qualified source.
+
+The explicit implicit-solver full104 construction retains all 808,495 CVs and two
+supported projections, with exact model metadata parity apart from solver name.
+The [source gate](evidence/h01-ready-104-implicit-build-decision.json) and
+[transition gate](evidence/h01-ready-104-implicit-solver-decision.json) both pass.
+This closes construction provenance for the numerical replacement in Y5;
+initialization, driven runtime and fullpopulation refinement remain unqualified.
+Measured construction time is 1134.833 s, not a runtime throughput measurement.
+
+The repaired solver's full104 initialization is now verified against its saved
+construction reference: exactly104 initialized identities, unchanged cell and
+contact metadata, 808,495 CVs, 925.829 s initialization and 8722.531 MiB peak
+resident memory through that stage. The
+[initialization decision](evidence/h01-ready-104-implicit-init-decision.json)
+narrows Y5 to the still-running compiled driven test and later qualification;
+it does not close runtime, delivery, refinement or physiology.
+
+
+The first implicit full104 driven attempt terminated at 5639.421 seconds
+with a supervisor status-file sharing violation, which killed the worker.
+Worker PIDs were checked absent; no runtime verdict was produced. Prior
+construction and initialization checkpoints remain valid. A fresh r2 attempt
+uses identical numerical inputs and caps, with atomic status publication that
+tolerates a locked reader. A real Windows file-lock regression passes creation,
+failed replacement with intact old JSON, recovery after release, and cleanup.
+The first helper test exposed PowerShell converting a null backup path to an
+empty string; explicit NullString fixes that interop issue. Future monitoring
+changes must exercise real file handles before an expensive run.
+
+The cached connectivity pass completed all eight registered shards (1-8),
+scanning 7993484 records and retaining 27058 relevant records. The saved
+h01-cached-join-summary.json lists 13 internal candidates across 11 directed
+pairs, three with explicit presynaptic axon-base support. These are partial
+export candidates with sampled partner membership, not accepted circuit edges
+or a complete graph. Raw retained records are cached and hash-bound by the
+summary so subsequent identity checks need not repeat the scan. No new network
+request or simulation was used for this pass.
+
+The partial source connectivity inventory now retains records associated with
+all104 cells, independently of simulation eligibility: 13 internal candidates,
+five self candidates, 25891 unresolved incoming partners and 1149 unresolved
+outgoing partners in eight cached export shards. Evidence:
+h01-cached-connectivity-inventory.json. This is partial sampled-membership
+connectivity, not proof that unmapped partners lie outside the selected cells.
+The enabled simulation graph remains two contacts; Y5 completeness stays open.
+
+The r2 retry completed all104 initialization in 853.693 seconds after
+1230.686 seconds construction, retaining 808495 compartments. Its immutable
+checkpoint and exact construction comparison are recorded in
+h01-ready-104-implicit-r2-init-decision.json. The worker is now in the combined
+compile/run stage; no runtime or physiology pass follows from initialization.
+
+Cached-candidate cable-placement diagnostic: all 13 internal candidates have at
+least one endpoint more than 13 um from every source SWC parent edge of the
+assigned cell, even including disconnected components. The hash-bound evidence
+is docs/evidence/h01-cached-candidate-skeleton-distances.json. This is a
+centerline diagnostic, not a membrane-distance or false-merge verdict. It
+requires resolving source ownership, coordinates, or missing branches before
+promoting those records; it does not establish that the biological contacts
+are absent. No simulation contact or anatomical geometry was changed.
+
+Exact proofreading base ownership resolves 12747 postsynaptic endpoints among
+27058 retained records; 409 presynaptic endpoints also match. All 33 records
+matched at both ends have same-cell ownership. No between-cell contact in this
+retained subset gains exact ownership at both endpoints. The evidence is
+h01-cached-exact-base-partners.json. The original retention filter can omit
+other contacts, so neither completeness nor absence follows from this result.
+
+A direct scan removes the retained-subset ambiguity for the nine cached shards:
+all 8991719 records were checked using exact region-base ownership at both
+endpoints, with 39 same-cell pairs and no between-cell pairs. Evidence:
+h01-cached-full-base-join.json. The old retention filter did not hide any
+exact-base-supported internal pair within these files. This does not resolve
+release mapping or the unscanned 157 shards, and does not invalidate separately
+verified contacts from the annotation source. No model change follows.
+
+The all104 source soma inventory reveals four component-selection exceptions:
+7196644737, 4138580687, 4668874666 and 3470629528 have larger labelled soma
+samples in components other than those selected by largest node count. See
+h01-population-stimulus-source-inventory.json and h01-ready-104-result.md.
+This challenges the anatomical representativeness of those selected components;
+a finite run of them cannot settle that issue. It does not establish a new
+causal account of the numerical failure or authorize artificial reconnection.
+Source cell-body evidence must resolve component choice before another launch.
+
+Cell-table anchor comparison supports the four alternative soma components:
+3470629528.1, 4138580687.2, 4668874666.1 and 7196644737.6. Their nearest labelled
+soma samples are respectively 5.559, 1.432, 2.912 and 1.404 um from the source
+anchor. All are closer than the currently selected components' soma samples.
+The comparison binds the source table, metadata, archive and identity mapping
+by hash in h01-soma-component-anchor-comparison.json. This provides independent
+anatomical support for explicit selection corrections, but does not recover
+omitted branches or join disconnected components. Existing r2 remains evidence
+only for its recorded, unchanged component choices.
+
+The four anchor-supported component corrections now have explicit planner and
+loader support, while contact-selected components and historical inventories
+retain their behavior. Real archive imports pass hash/node-count checks and
+resolve soma locations for all four (h01-soma-components-load-check.json).
+The 67 network/CLI tests pass with full network-module statement coverage.
+This resolves the ignored-selection software path, not whole-cell reconstruction
+or corrected electrical runtime. Those remain open pending new build evidence.
+
+Four source-supported replacement components now pass actual electrical
+construction with unchanged donors, solver, CV policy and input settings.
+The result totals 12563 compartments in 23.932 seconds; identities, source
+hashes and output registrations are checked in
+h01-four-soma-construction-decision.json. Initialization and runtime for these
+components remain open; existing r2 uses the historical selections.
+
+All four corrected components initialize successfully with exact construction
+metadata, in 22.805 seconds and 507.934 MiB peak interpreter RSS. Evidence:
+h01-four-soma-initialization-decision.json. This closes their initialization
+check only; their runtime and the full corrected population remain unverified.
+
+Corrected soma components pass finite driven 10 ms execution at .000625 ms dt,
+with unchanged donor/input/solver settings. Three emit one event and one remains
+subthreshold; h01-four-soma-runtime-decision.json retains peaks and source hashes.
+The formerly problematic 7196644737 now peaks at 48.182 mV on component 6;
+this supports the practical importance of source-supported component choice.
+It is not matched-recording physiology or full104 runtime qualification.
+
+The corrected all104 build timed out after 2400 seconds with 95 cells registered.
+Evidence: h01-104-corrected-construction-decision.json. This leaves full corrected
+construction unverified; it does not contradict the four-cell construction or
+runtime passes. Available RAM was about 30.44 GiB near termination, so memory
+exhaustion is not established as the cause. No automatic retry occurred.
+
+### Diagnostic diagrams redrawn in Hartshorne's forms (2026-09-09; no new observation)
+
+Spec: `docs/specs/2026-09-09-h01-diagnostic-diagrams.md`. Every number is read from a committed
+decision or usable-tier JSON; no trace is read and nothing was simulated.
+
+**Youden plots** (`evidence/h01-youden-contract-e.png`, `-i.png`; counts in
+`evidence/h01-youden-contract.json`). Human on x, model on y, contract limit as a bar on the
+diagonal. Reading, E cell: rate 2/3 rows, adaptation 3/3, width 25/27, AHP 0/27 (unresolvable):
+the E points sit on the diagonal except the 250 pA rate, which is bias, not scatter. Reading, I
+cell: rate 1/3, adaptation 0/3, width 24/75, AHP 75/75. The I width points form a horizontal band
+at 0.22 ms against human 0.27 to 0.30 ms, well outside every limit bar: a constant bias, so the
+width miss is a single mechanism (spike repolarisation too fast), not noise. The adaptation ratios
+sit far below the diagonal at all three drives, consistent with the accommodation row of SP4.
+
+**Search tree** (`evidence/h01-search-tree.png`, nodes in `evidence/h01-search-tree.json`).
+Twenty-three nodes: 7 established, 5 eliminated, 2 failed at cap (E gain, I post-trough), 2
+launched-untested (functional inhibition, 104-cell runtime), 4 open. Reading: both failed searches
+closed with every branch inside the fitted channel family eliminated and the open branch named
+outside it, which is Hartshorne's "reassessment" outcome rather than a cause list.
+
+**Thevenin four-box diagrams** (`evidence/h01-thevenin-i-clamp.png`, `-ie-pair.png`; numbers in
+`evidence/h01-thevenin-boxes.json`). I clamp: the 31.4 pA sits on the source side as a bias, the
+electrode and membrane impedances were never measured, so the loop cannot be closed numerically;
+that is a gap in the campaign, now drawn. I-to-E pair: synapse 50 MOhm (20 nS) against human 323
+MOhm (3.1 nS), local 10 to 15 mV, soma 0.003 mV; the cable box attenuates by more than 3,000x, so
+the placement and cable, not the conductance, are the load-limiting element.
+
+### Multivari charts in Hartshorne's form (2026-09-09; new model observations, no new claim)
+
+Spec addendum: `docs/specs/2026-09-09-h01-diagnostic-diagrams.md`. Six model traces were rerun
+in the NEURON image for these charts (`evidence/h01-multivari-runs/campaign-log.jsonl`: I finalist
+at 0.19 and 0.23 nA, 14 and 25 s; frozen E B3 at 200, 250, 310, 350 pA, 600 to 807 s each). Per-cycle
+features for every human suprathreshold sweep and every model trace are in
+`evidence/h01-multivari-data.json` (E 65 human / 34 model cycles, I 90 / 77); the traces themselves
+are gitignored. Charts: `evidence/h01-multivari-e.png`, `-i.png`; the family that varies most per
+measure is in `evidence/h01-multivari-chart.json`.
+
+**E cell reading.** Width and cycle length vary most by drive (human and model alike), AHP and rise
+rate vary most by machine. The human's second spike at every drive from 230 pA up is a broad
+excursion, +0.15 to +0.45 ms width and +2.4 to +4.6 mV AHP, that returns to baseline by cycle 3;
+the model shows no second-cycle excursion at any drive. The model's maximum rise rate sits a flat
++340 V/s above the human median at every drive and cycle (about 640 against 300 V/s). Both are
+constant offsets, so the E deficit outside the low-drive gain is two mechanisms, a missing
+second-spike broadening and a rise rate twice the human's, not scatter.
+
+**I cell reading.** Width and rise rate vary most by machine, cycle length by drive, AHP within a
+sweep. The model width is a flat -0.06 ms at every drive and cycle (0.22 against 0.28 ms), and its
+rise rate a flat +80 V/s; the human rise rate decays across the train at 0.19 nA (+50 to -90 V/s)
+while the model's is level. So the I width miss is one constant mechanism, and the accommodation
+row of SP4 has a picture: the human's rise rate accommodates and the model's does not.

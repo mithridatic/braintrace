@@ -1,0 +1,377 @@
+{
+  "scope": "exact straight source SWC edge distance across all components; source parent edges only; no cable remapping or model promotion",
+  "rows": [
+    {
+      "pre_cell": "4157825456",
+      "post_cell": "5654281423",
+      "pre_site": 56597827359,
+      "pre": {
+        "nearest_node_distance_um": 39.88792860001607,
+        "component": 19,
+        "query_um": [
+          2132.856,
+          1673.32,
+          10.626000000000001
+        ],
+        "nearest_source_segment_distance_um": 39.88792860001607,
+        "segment_component": 19
+      },
+      "post": {
+        "nearest_node_distance_um": 22.18253783948091,
+        "component": 0,
+        "query_um": [
+          2132.768,
+          1673.288,
+          10.626000000000001
+        ],
+        "nearest_source_segment_distance_um": 22.18253783948091,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "955432427",
+      "post_cell": "1304599410",
+      "pre_site": 114500362164,
+      "pre": {
+        "nearest_node_distance_um": 0.28385911998729535,
+        "component": 0,
+        "query_um": [
+          2627.48,
+          599.016,
+          37.026
+        ],
+        "nearest_source_segment_distance_um": 0.28230977284864406,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 13.528135754789052,
+        "component": 0,
+        "query_um": [
+          2627.328,
+          599.136,
+          36.96
+        ],
+        "nearest_source_segment_distance_um": 13.528135754789052,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "5654281423",
+      "post_cell": "5175880292",
+      "pre_site": 91666076357,
+      "pre": {
+        "nearest_node_distance_um": 46.15324440383376,
+        "component": 0,
+        "query_um": [
+          2095.544,
+          1626.376,
+          22.902
+        ],
+        "nearest_source_segment_distance_um": 46.15324440383376,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 78.22597697056904,
+        "component": 0,
+        "query_um": [
+          2095.352,
+          1626.304,
+          22.836000000000002
+        ],
+        "nearest_source_segment_distance_um": 78.22597697056904,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "955432427",
+      "post_cell": "620880207",
+      "pre_site": 78743284619,
+      "pre": {
+        "nearest_node_distance_um": 22.47622032282118,
+        "component": 0,
+        "query_um": [
+          2578.352,
+          590.984,
+          28.71
+        ],
+        "nearest_source_segment_distance_um": 22.47622032282118,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 50.964535679234764,
+        "component": 5,
+        "query_um": [
+          2578.328,
+          591.16,
+          28.743000000000002
+        ],
+        "nearest_source_segment_distance_um": 50.964535679234764,
+        "segment_component": 5
+      }
+    },
+    {
+      "pre_cell": "5654281423",
+      "post_cell": "4157825456",
+      "pre_site": 127961471469,
+      "post": {
+        "nearest_node_distance_um": 34.99607499420464,
+        "component": 22,
+        "query_um": [
+          2108.04,
+          1674.992,
+          36.201
+        ],
+        "nearest_source_segment_distance_um": 34.99607499420464,
+        "segment_component": 22
+      },
+      "pre": {
+        "nearest_node_distance_um": 17.638441229315134,
+        "component": 0,
+        "query_um": [
+          2108.1440000000002,
+          1675.056,
+          36.168
+        ],
+        "nearest_source_segment_distance_um": 17.638441229315134,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "620880207",
+      "post_cell": "1304599410",
+      "pre_site": 43614948969,
+      "post": {
+        "nearest_node_distance_um": 4.781029596227106,
+        "component": 0,
+        "query_um": [
+          2580.04,
+          634.872,
+          11.022
+        ],
+        "nearest_source_segment_distance_um": 4.781029596227106,
+        "segment_component": 0
+      },
+      "pre": {
+        "nearest_node_distance_um": 68.1552528349796,
+        "component": 5,
+        "query_um": [
+          2579.944,
+          634.944,
+          10.989
+        ],
+        "nearest_source_segment_distance_um": 68.1552528349796,
+        "segment_component": 5
+      }
+    },
+    {
+      "pre_cell": "4830551047",
+      "post_cell": "5136107765",
+      "pre_site": 90716375566,
+      "pre": {
+        "nearest_node_distance_um": 0.10276672613255337,
+        "component": 0,
+        "query_um": [
+          3172.928,
+          1549.8400000000001,
+          21.054000000000002
+        ],
+        "nearest_source_segment_distance_um": 0.09864090672528708,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 39.64615814930885,
+        "component": 0,
+        "query_um": [
+          3173.0,
+          1549.872,
+          21.054000000000002
+        ],
+        "nearest_source_segment_distance_um": 39.64615814930885,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "4476359994",
+      "post_cell": "4607885827",
+      "pre_site": 635399554450,
+      "pre": {
+        "nearest_node_distance_um": 17.929300516194196,
+        "component": 0,
+        "query_um": [
+          2092.4,
+          1511.016,
+          15.378
+        ],
+        "nearest_source_segment_distance_um": 17.929300516194196,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 1.0875366660485977,
+        "component": 0,
+        "query_um": [
+          2092.496,
+          1510.976,
+          15.378
+        ],
+        "nearest_source_segment_distance_um": 1.0834147408956505,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "2252715458",
+      "post_cell": "2195261734",
+      "pre_site": 83863506806,
+      "pre": {
+        "nearest_node_distance_um": 0.27585503439303516,
+        "component": 5,
+        "query_um": [
+          3071.072,
+          1002.288,
+          25.113
+        ],
+        "nearest_source_segment_distance_um": 0.2508957020596496,
+        "segment_component": 5
+      },
+      "post": {
+        "nearest_node_distance_um": 25.061655831169805,
+        "component": 0,
+        "query_um": [
+          3071.088,
+          1002.288,
+          25.080000000000002
+        ],
+        "nearest_source_segment_distance_um": 25.061655831169805,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "1304599410",
+      "post_cell": "620880207",
+      "pre_site": 150586026221,
+      "pre": {
+        "nearest_node_distance_um": 22.534744817725493,
+        "component": 0,
+        "query_um": [
+          2600.208,
+          632.088,
+          42.306000000000004
+        ],
+        "nearest_source_segment_distance_um": 22.534744817725493,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 38.54728421043429,
+        "component": 5,
+        "query_um": [
+          2600.304,
+          632.08,
+          42.306000000000004
+        ],
+        "nearest_source_segment_distance_um": 38.54728421043429,
+        "segment_component": 5
+      }
+    },
+    {
+      "pre_cell": "4188575291",
+      "post_cell": "4711567524",
+      "pre_site": 635401678819,
+      "pre": {
+        "nearest_node_distance_um": 35.359051175052755,
+        "component": 0,
+        "query_um": [
+          2739.9120000000003,
+          1460.0,
+          20.229
+        ],
+        "nearest_source_segment_distance_um": 35.359051175052755,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 0.231553449553205,
+        "component": 30,
+        "query_um": [
+          2739.952,
+          1459.872,
+          20.229
+        ],
+        "nearest_source_segment_distance_um": 0.22226016670177765,
+        "segment_component": 30
+      }
+    },
+    {
+      "pre_cell": "4157825456",
+      "post_cell": "5654281423",
+      "pre_site": 92085295466,
+      "pre": {
+        "nearest_node_distance_um": 23.482428835194987,
+        "component": 0,
+        "query_um": [
+          2139.384,
+          1658.736,
+          22.374000000000002
+        ],
+        "nearest_source_segment_distance_um": 23.482428835194987,
+        "segment_component": 0
+      },
+      "post": {
+        "nearest_node_distance_um": 31.437272718860054,
+        "component": 0,
+        "query_um": [
+          2139.368,
+          1658.608,
+          22.407
+        ],
+        "nearest_source_segment_distance_um": 31.437272718860054,
+        "segment_component": 0
+      }
+    },
+    {
+      "pre_cell": "5654281423",
+      "post_cell": "4157825456",
+      "pre_site": 163419121542,
+      "post": {
+        "nearest_node_distance_um": 21.184124834413105,
+        "component": 0,
+        "query_um": [
+          2129.256,
+          1658.144,
+          40.095
+        ],
+        "nearest_source_segment_distance_um": 21.184124834413105,
+        "segment_component": 0
+      },
+      "pre": {
+        "nearest_node_distance_um": 33.052786932420545,
+        "component": 0,
+        "query_um": [
+          2129.344,
+          1658.112,
+          40.095
+        ],
+        "nearest_source_segment_distance_um": 33.052786932420545,
+        "segment_component": 0
+      }
+    }
+  ],
+  "source_summary_sha256": "d34153c256ce0b85cb35552a96e449118e3348d3e5c0000626f8219b5f1876ef",
+  "source_archive": ".cache/h01/proofread104.zip",
+  "source_archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+  "coordinate_scales_um": {
+    "swc": [
+      0.032,
+      0.032,
+      0.033
+    ],
+    "synapse_centroid": [
+      0.008,
+      0.008,
+      0.033
+    ]
+  },
+  "decision": {
+    "minimum_worse_endpoint_distance_um": 13.528135754789052,
+    "promoted_contacts": 0,
+    "candidate_count": 13,
+    "interpretation": "Every candidate has at least one endpoint more than 13 um from any source parent edge of its assigned cell. Centerline distances do not measure surface distance or prove the cause of the mismatch. Resolve identity, coordinates, or missing branches before cable attachment."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "verdict": "PASS",
+  "scope": "Four corrected cells initialized with exact construction metadata; no compiled runtime or physiology pass",
+  "build_sha256": "6a0ffbd413ab0270205e6951507c0100107bf4f48d874a2335fb9d2245b6a0f2",
+  "reference_sha256": "e66b8d70a735aff618ffb4be2b1bd125d26a9e2759cbde84db3723c1373f3858",
+  "cell_ids": [
+    "7196644737",
+    "4138580687",
+    "4668874666",
+    "3470629528"
+  ],
+  "compartments": 12563,
+  "initialization_seconds": 22.80460010000388,
+  "peak_rss_mb": 507.93359375
+}

@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "failures": [],
+  "scope": "solver transition metadata only",
+  "cells": 104,
+  "construction_qualified": false,
+  "runtime_qualified": false,
+  "physiology_qualified": false,
+  "inputs": {
+    "previous": {
+      "path": ".cache\\h01\\readiness\\104-build-r2-build.json",
+      "sha256": "9a32737637666ea8ce6c235798ea78ef984d335f47f688db8f640c26550b9001"
+    },
+    "current": {
+      "path": ".cache\\h01\\readiness\\104-implicit-construction-reference.json",
+      "sha256": "a32286fa4dbe2fd1865a7cc50415df32a13906d76b6ac3c217ca7891a94cfd68"
+    }
+  }
+}

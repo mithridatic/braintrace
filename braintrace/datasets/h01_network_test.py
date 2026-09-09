@@ -233,3 +233,61 @@ def test_per_cell_init_progress_then_run_is_idempotent(arguments):
         result = network.run(dt=.001*u.ms, duration=.003*u.ms)
         for traces in result.traces.values():
             assert np.isfinite(traces["voltage"].to_decimal(u.mV)).all()
+
+def test_explicit_component_selection_overrides_largest_without_mutating_inventory():
+    from braintrace.datasets.h01_network import _isolated_record
+    row = dict(largest_component=0, largest_has_soma=True, largest_share=.8,
+               nodes=100, components=3, selected_component=dict(
+                   component=2, nodes=10, has_soma=True, source_sha256='a'*64,
+                   evidence='source-anchor.json'))
+    original = deepcopy(row)
+    result = _isolated_record('7', {'7': row})
+    assert result['component'] == 2
+    assert result['component_nodes'] == 10
+    assert result['fraction'] == .1 and result['omitted_fraction'] == .9
+    assert result['selection_evidence'] == 'source-anchor.json'
+    assert row == original
+
+@pytest.mark.parametrize('change', [None, {}, {'component': -1}, {'component': True},
+    {'nodes': 0}, {'nodes': 101}, {'nodes': 1.5}, {'has_soma': False},
+    {'source_sha256': 'a'}, {'source_sha256': 'g'*64}, {'evidence': ''}])
+def test_invalid_explicit_selection_rejected(change):
+    from braintrace.datasets.h01_network import _isolated_record
+    selected = dict(component=2, nodes=10, has_soma=True, source_sha256='a'*64, evidence='anchor.json')
+    if change is None:
+        selected = None
+    elif change == {}:
+        selected = {}
+    else:
+        selected.update(change)
+    with pytest.raises(ValueError, match='Explicit component'):
+        _isolated_record('7', {'7': dict(nodes=100, components=3, selected_component=selected)})
+
+
+@pytest.mark.parametrize('mismatch', ['none', 'hash', 'component', 'nodes'])
+def test_explicit_selection_checked_against_loaded_source(arguments, mismatch):
+    arguments['topology']['contacts'].pop()
+    source = arguments['archive'].load('14', 2)
+    selected = dict(component=2, nodes=len(source.source_rows), has_soma=True,
+                    source_sha256=source.source_sha256, evidence='anchor.json')
+    if mismatch == 'hash': selected['source_sha256'] = 'f'*64
+    if mismatch == 'nodes': selected['nodes'] += 1
+    if mismatch == 'component':
+        loader = arguments['archive'].load
+        arguments['archive'].load = lambda identity, component: loader(identity, 1 if identity == '14' else component)
+    components = _components(**{'14': dict(nodes=10000, selected_component=selected)})
+    if mismatch != 'none':
+        with pytest.raises(ValueError, match='does not match loaded source'):
+            make_h01_network(**arguments, include_isolated=True, components=components)
+    else:
+        with brainstate.environ.context(precision=64):
+            _, evidence = make_h01_network(**arguments, include_isolated=True, components=components)
+        assert evidence['isolated_cells']['14']['component'] == 2
+        assert evidence['cells']['14']['measured_anatomy']['member'] == '14.2.swc'
+
+
+def test_explicit_isolated_selection_does_not_override_contact_component(arguments):
+    from braintrace.datasets.h01_network import plan_h01_cells
+    components = _components(**{'12': dict(selected_component=None)})
+    plan = plan_h01_cells(arguments['topology'], include_isolated=True, components=components)
+    assert plan['isolated_cells'] == {}

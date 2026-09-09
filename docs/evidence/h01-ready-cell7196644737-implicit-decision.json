@@ -1,0 +1,81 @@
+{
+  "decision": "ISOLATED_FINITE_AT_BOTH_STEPS; REFINEMENT_NOT_QUALIFIED",
+  "runs": {
+    "implicit005": {
+      "cell_id": "7196644737",
+      "scope": "experimental calcium integrator; no physiology pass",
+      "dt_ms": 0.005,
+      "solver": "h01_staggered_calcium_implicit",
+      "exact_cell_metadata_except_solver_match": true,
+      "unchanged_geometry": true,
+      "n_cv": 1647,
+      "output_cv_id": 50,
+      "output_cv_area_um2": 0.16503101350220042,
+      "modeled_soma_area_um2": 0.7630294198620455,
+      "input_density_at_output_ma_cm2": 605.9467119413083,
+      "baseline_voltage_max_difference_mv": 0.00292139146563386,
+      "baseline_finite_masks_match": false,
+      "all_recorded_arrays_finite": true,
+      "first_nonfinite_ms": {},
+      "first_nonpositive_calcium_ms": null,
+      "finite_calcium_min_mM": 8.100963046357393e-13,
+      "peak_rss_mib": 486.12890625,
+      "elapsed_seconds": 10.914574599999469,
+      "inputs": {
+        ".cache\\h01\\readiness\\104-build-r2-build.json": "9a32737637666ea8ce6c235798ea78ef984d335f47f688db8f640c26550b9001",
+        ".cache\\h01\\readiness\\cell7196644737-dt005-traces.npz": "711dc24f83c8fc2891d0771dea4ed67841361f03526e3b264dbba23b277c8723",
+        "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\docs\\evidence\\h01_cell_implicit_observation.py": "771d38a156af56865614977c729456e633a349a66d64d9b44e10c4fa7961fc61",
+        ".cache\\h01\\readiness\\cell7196644737-implicit005.npz": "f4f7d29f2dc7b17ba2a51f537c765c7b66a3994a652d636a9ecf330430b9d06e",
+        "braintrace\\datasets\\h01_calcium_solver.py": "7835cfac7053d271349ce969fff0e82552b3df233b58870bc6ed33875840dca0",
+        "braintrace\\datasets\\h01_calcium_implicit.py": "2038c672110a5d02ce5bdb734101559ab4afd757f136b81a40ead2687dad7f82",
+        "docs\\evidence\\h01-ready-cell7196644737-implicit005-plan.json": "ac838995340cdf7e225959d3a72b5f40822130329f746704b28568ea74a19dbf",
+        "docs\\evidence\\h01-ready-cell7196644737-implicit005-launch.json": "a161a7e61ee6f4188a388c68cbdd821109e4be1aa9bdb168a93498f864939135"
+      }
+    },
+    "implicit0025": {
+      "cell_id": "7196644737",
+      "scope": "experimental calcium integrator; no physiology pass",
+      "dt_ms": 0.0025,
+      "solver": "h01_staggered_calcium_implicit",
+      "exact_cell_metadata_except_solver_match": true,
+      "unchanged_geometry": true,
+      "n_cv": 1647,
+      "output_cv_id": 50,
+      "output_cv_area_um2": 0.16503101350220042,
+      "modeled_soma_area_um2": 0.7630294198620455,
+      "input_density_at_output_ma_cm2": 605.9467119413083,
+      "baseline_voltage_max_difference_mv": 0.0053593454283600295,
+      "baseline_finite_masks_match": false,
+      "all_recorded_arrays_finite": true,
+      "first_nonfinite_ms": {},
+      "first_nonpositive_calcium_ms": null,
+      "finite_calcium_min_mM": 8.046042209296553e-13,
+      "peak_rss_mib": 485.52734375,
+      "elapsed_seconds": 14.204389999998966,
+      "inputs": {
+        ".cache\\h01\\readiness\\104-build-r2-build.json": "9a32737637666ea8ce6c235798ea78ef984d335f47f688db8f640c26550b9001",
+        ".cache\\h01\\readiness\\cell7196644737-dt0025-traces.npz": "3ee6655dbecc3946483ca6e4bf05adbbfcbda0f68e936c772a4bf4de5b72b346",
+        "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\docs\\evidence\\h01_cell_implicit_observation.py": "771d38a156af56865614977c729456e633a349a66d64d9b44e10c4fa7961fc61",
+        ".cache\\h01\\readiness\\cell7196644737-implicit0025.npz": "94b9eefd46e07a4d150d280b8dc3e30229e311379f317aa3dd09cb723f7542e2",
+        "braintrace\\datasets\\h01_calcium_solver.py": "7835cfac7053d271349ce969fff0e82552b3df233b58870bc6ed33875840dca0",
+        "braintrace\\datasets\\h01_calcium_implicit.py": "2038c672110a5d02ce5bdb734101559ab4afd757f136b81a40ead2687dad7f82",
+        "docs\\evidence\\h01-ready-cell7196644737-implicit0025-plan.json": "de7af6551ebdb5410004372a86d426f25ceeff93b14989eb1fb1abc5c17f5eee",
+        "docs\\evidence\\h01-ready-cell7196644737-implicit0025-launch.json": "235f8746d37c2e6f07cf6c753d4c018d8be036abb434ca3cb6ca93d55de7f650"
+      }
+    }
+  },
+  "comparison": {
+    "matched_end_step_max_error_mV": 6.364915590023713,
+    "max_error_time_ms": 5.015,
+    "events_coarse": 1,
+    "events_fine": 1,
+    "voltage_1mV_gate": "FAIL",
+    "qualification": "Numerical finiteness only; timestep accuracy remains unqualified."
+  },
+  "validation": {
+    "passed": 33,
+    "kernel_coverage_percent": 100,
+    "solver_coverage_percent": 95.83333333333333
+  },
+  "source_commit_note": "Launch source_commit b46ee7d identifies the original construction baseline. New solver and kernel are identified by their recorded file hashes; these runs use the source worktree, not the old installed wheel."
+}

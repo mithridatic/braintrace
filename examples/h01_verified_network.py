@@ -34,9 +34,9 @@ def main():
     parser.add_argument("--control", default="ei", choices=["ei", "e_only", "i_only", "disconnected"],
                         help="Projection control: which presynaptic Dale signs keep their projections.")
     parser.add_argument("--include-isolated", action="store_true",
-                        help="Also build cells without constructible contacts from their soma-bearing largest component.")
+                        help="Also build cells without constructible contacts using the component inventory selections.")
     parser.add_argument("--cells", type=int, help="Build only the first N cells of the evidence cell_order.")
-    parser.add_argument("--components", type=Path, default=Path("docs/evidence/h01-population-components.json"),
+    parser.add_argument("--components", type=Path, default=Path("docs/evidence/h01-population-components-soma.json"),
                         help="Component inventory used for isolated cells.")
     parser.add_argument("--init-only", action="store_true",
                         help="Construct, run init_state cell by cell (timed, peak RSS recorded), then exit without compiling or stepping.")
@@ -46,7 +46,7 @@ def main():
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--current-na", type=float, default=0., help="Same assumed soma pulse for each incident cell.")
-    parser.add_argument("--solver", default="h01_staggered_scan", choices=["h01_staggered_scan", "staggered"])
+    parser.add_argument("--solver", default="h01_staggered_scan", choices=["h01_staggered_scan", "staggered", "h01_staggered_calcium_implicit"])
     args = parser.parse_args()
     if args.disconnected:
         if args.control not in ("ei", "disconnected"):
@@ -108,31 +108,40 @@ def main():
                             init_peak_rss_mb=init["peak_rss_mb"],
                             rss_convention="psutil resident set of this interpreter; peak_wset where the platform reports it")
             emit(f"Cell states initialized in {init_seconds:.1f} s, peak RSS {init['peak_rss_mb']:.0f} MB")
-        if args.init_only:
             evidence["execution"] = "constructed and initialized; not compiled or simulated"
             build_path.write_text(json.dumps(evidence, indent=2)+"\n")
+        if args.init_only:
             emit("Init-only mode: exiting before compile and stepping")
             return
         if args.duration_ms:
             emit("Compiling and stepping")
             with heartbeat("compile and run", emit, seconds=args.heartbeat_s):
                 result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")
-            evidence["run_peak_rss_mb"] = process_rss_mb(peak=True)
             arrays = {"time_ms": np.asarray(result.time.to_decimal(u.ms))+args.dt_ms}
             for population, traces in result.traces.items():
                 for name, trace in traces.items():
                     values = np.asarray(trace.to_decimal(u.uS if name.endswith("_g") else u.mV))
-                    if not np.isfinite(values).all():
-                        raise RuntimeError("Nonfinite trace: "+population+"/"+name)
                     arrays[population+"_"+name] = values
                 arrays[population+"_events"] = np.asarray(result.spikes[population])
+            nonfinite = {}
+            for name, values in arrays.items():
+                mask = ~np.isfinite(values)
+                if mask.any():
+                    index = tuple(int(i) for i in np.argwhere(mask)[0])
+                    timestamp = arrays["time_ms"][index[0]]
+                    nonfinite[name] = dict(count=int(mask.sum()), first_index=list(index),
+                        first_time_ms=float(timestamp) if np.isfinite(timestamp) else None)
             np.savez_compressed(args.output.parent/(args.output.name+"-traces.npz"), **arrays)
-            evidence.update(execution="finite compiled smoke run", dt_ms=args.dt_ms, duration_ms=args.duration_ms,
+            evidence.update(execution="nonfinite compiled run" if nonfinite else "finite compiled smoke run",
+                            nonfinite_arrays=nonfinite, dt_ms=args.dt_ms, duration_ms=args.duration_ms,
+                            run_peak_rss_mb=process_rss_mb(peak=True),
                             initialization_and_run_seconds=time.perf_counter()-run_started,
                             compile_and_run_seconds=time.perf_counter()-run_started-init_seconds,
                             sample_convention="end of step; Network start times plus dt")
-            emit("Finite simulation traces saved")
+            emit("Nonfinite simulation traces saved for diagnosis" if nonfinite else "Finite simulation traces saved")
         build_path.write_text(json.dumps(evidence, indent=2)+"\n")
+        if args.duration_ms and nonfinite:
+            raise RuntimeError("Nonfinite traces: "+", ".join(nonfinite))
 
 
 if __name__ == "__main__":

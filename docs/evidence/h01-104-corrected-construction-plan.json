@@ -1,0 +1,28 @@
+{
+  "source_commit": "ff36ba0",
+  "scope": "Corrected all104 construction only",
+  "cap_seconds": 2400,
+  "prior_construction_seconds": 1230.686,
+  "arguments": [
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+    "-u",
+    "-m",
+    "examples.h01_verified_network",
+    "--topology",
+    "docs/evidence/h01-verified-network.json",
+    "--cache",
+    ".cache/h01",
+    "--components",
+    "docs/evidence/h01-population-components-soma.json",
+    "--include-isolated",
+    "--cells",
+    "104",
+    "--build",
+    "--solver",
+    "h01_staggered_calcium_implicit",
+    "--current-na",
+    "1",
+    "--output",
+    ".cache/h01/readiness/104-corrected-soma-construction"
+  ]
+}

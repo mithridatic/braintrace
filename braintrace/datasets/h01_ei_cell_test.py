@@ -168,3 +168,14 @@ def test_rounded_interval_ends_snap_to_branch_bounds(imported):
     regions["axon"] = _Region(_geometry_signature(imported.morphology), tuple((b, lo, hi+1e-6) for b, lo, hi in rows), "test")
     with pytest.raises(ValueError):
         _validate_regions(imported.morphology, regions, "I")
+
+
+def test_explicit_implicit_solver_runs_and_records_selection(imported):
+    annotations = SimpleNamespace(metadata=lambda _: SimpleNamespace(tags=("L2", "pyramidal")))
+    with brainstate.environ.context(precision=64):
+        cell, evidence = make_h01_ei_cell(imported, annotations, polarity="E",
+            regions={"soma": AllRegion()}, region_basis="Explicit test surrogate.",
+            solver="h01_staggered_calcium_implicit")
+        result = cell.run(dt=.001*u.ms, duration=.02*u.ms)
+    assert np.isfinite(result.traces["voltage"].to_decimal(u.mV)).all()
+    assert evidence["solver"] == "h01_staggered_calcium_implicit"

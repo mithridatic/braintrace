@@ -11,6 +11,47 @@ import numpy as np
 
 from .h01 import ARCHIVE_SHA256, H01Archive
 from .h01_annotations import H01Annotations
+from ._h01_swc import _parse_swc_bytes
+from . import h01_construction  # Ensure fast unit operations and caches are active
+
+_CABLE_CACHE = {}
+
+
+def _get_cell_cables(archive, cell_id):
+    p = Path(archive.path)
+    try:
+        stat = p.stat()
+        mtime = (stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        mtime = None
+    comps = tuple(archive.components(cell_id))
+    key = (str(p.resolve()), str(cell_id), comps, mtime)
+    cached = _CABLE_CACHE.get(key)
+    if cached is not None:
+        return cached
+    components_data = []
+    with zipfile.ZipFile(archive.path) as source:
+        for component in comps:
+            name = f"{cell_id}.{component}.swc"
+            raw = source.read(name)
+            rows = _parse_swc_bytes(raw)
+            lookup = {int(r[0]): i for i, r in enumerate(rows)}
+            children = np.flatnonzero(rows[:, 6] != -1)
+            if not len(children):
+                continue
+            parents = [lookup[int(rows[i, 6])] for i in children]
+            start = rows[parents, 2:5] * [.032, .032, .033]
+            vector = rows[children, 2:5] * [.032, .032, .033] - start
+            length2 = np.sum(vector * vector, axis=1)
+            if (length2 <= 0).any():
+                raise ValueError("Source cable has a zero-length segment.")
+            has_soma = bool((rows[:, 1] == 3).any())
+            digest = hashlib.sha256(raw).hexdigest()
+            components_data.append((component, start, vector, length2, has_soma, digest))
+    if not components_data:
+        raise ValueError("Endpoint cell has no cable component.")
+    _CABLE_CACHE[key] = components_data
+    return components_data
 
 
 def cell_sign(tags):
@@ -100,31 +141,16 @@ def select_connectivity(report, annotations):
 
 
 def _nearest_component(archive, cell_id, point):
+    cables = _get_cell_cables(archive, cell_id)
     candidates = []
-    with zipfile.ZipFile(archive.path) as source:
-        for component in archive.components(cell_id):
-            name = f"{cell_id}.{component}.swc"
-            raw = source.read(name)
-            rows = np.loadtxt(io.BytesIO(raw), ndmin=2)
-            lookup = {int(r[0]): i for i, r in enumerate(rows)}
-            children = np.flatnonzero(rows[:, 6] != -1)
-            if not len(children):
-                continue
-            parents = [lookup[int(rows[i, 6])] for i in children]
-            start = rows[parents, 2:5] * [.032, .032, .033]
-            vector = rows[children, 2:5] * [.032, .032, .033] - start
-            length2 = np.sum(vector * vector, axis=1)
-            if (length2 <= 0).any():
-                raise ValueError("Source cable has a zero-length segment.")
-            fraction = np.clip(np.sum((point-start)*vector, axis=1)/length2, 0., 1.)
-            distance = float(np.linalg.norm(start+fraction[:, None]*vector-point, axis=1).min())
-            candidates.append((distance, component, bool((rows[:, 1] == 3).any()),
-                               hashlib.sha256(raw).hexdigest()))
-    if not candidates:
-        raise ValueError("Endpoint cell has no cable component.")
+    for component, start, vector, length2, has_soma, digest in cables:
+        fraction = np.clip(np.sum((point - start) * vector, axis=1) / length2, 0., 1.)
+        diff = start + fraction[:, None] * vector - point
+        distance = float(np.sqrt(np.sum(diff * diff, axis=1).min()))
+        candidates.append((distance, component, has_soma, digest))
     candidates.sort()
     best = candidates[0]
-    ambiguous = len(candidates) > 1 and abs(candidates[1][0]-best[0]) <= 1e-9
+    ambiguous = len(candidates) > 1 and abs(candidates[1][0] - best[0]) <= 1e-9
     return dict(distance_um=best[0], component=best[1], has_soma=best[2],
                 source_swc_sha256=best[3], ambiguous=ambiguous)
 

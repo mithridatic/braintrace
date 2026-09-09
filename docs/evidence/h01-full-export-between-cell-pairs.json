@@ -1,0 +1,945 @@
+{
+  "scope": "Raw export records whose pre and post base segments are owned by two different population cells (or ambiguous ownership), from shards outside the cached nine",
+  "rows": [
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "5015035926"
+      ],
+      "post_owners": [
+        "5319188363"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 5407494994,
+          "id": 128288116391,
+          "num_voxels": null,
+          "centroid": {
+            "x": 220658,
+            "y": 212751,
+            "z": 1106
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 220645,
+              "y": 212736,
+              "z": 1105
+            },
+            "size": {
+              "x": 26,
+              "y": 30,
+              "z": 3
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "23675390304"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 5319188363,
+          "id": 635373218034,
+          "num_voxels": null,
+          "centroid": {
+            "x": 220676,
+            "y": 212739,
+            "z": 1108
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 220668,
+              "y": 212729,
+              "z": 1108
+            },
+            "size": {
+              "x": 16,
+              "y": 20,
+              "z": 1
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "6090179673"
+        },
+        "location": {
+          "x": 220664,
+          "y": 212747,
+          "z": 1107
+        },
+        "type": 1,
+        "contact_area": null,
+        "confidence": 0.9803956151008606,
+        "bounding_box": {
+          "start": {
+            "x": 220645,
+            "y": 212729,
+            "z": 1105
+          },
+          "size": {
+            "x": 39,
+            "y": 37,
+            "z": 4
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000027"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "883843993"
+      ],
+      "post_owners": [
+        "1465400601"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 883843993,
+          "id": 635402129752,
+          "num_voxels": null,
+          "centroid": {
+            "x": 348917,
+            "y": 81855,
+            "z": 1111
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 348913,
+              "y": 81846,
+              "z": 1111
+            },
+            "size": {
+              "x": 9,
+              "y": 18,
+              "z": 1
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "SOMA",
+          "base_neuron_id": "1538361367"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 1159349630,
+          "id": 635411338781,
+          "num_voxels": null,
+          "centroid": {
+            "x": 348900,
+            "y": 81858,
+            "z": 1111
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 348889,
+              "y": 81841,
+              "z": 1109
+            },
+            "size": {
+              "x": 22,
+              "y": 34,
+              "z": 4
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "1596386991"
+        },
+        "location": {
+          "x": 348905,
+          "y": 81858,
+          "z": 1111
+        },
+        "type": 1,
+        "contact_area": null,
+        "confidence": 0.9621486067771912,
+        "bounding_box": {
+          "start": {
+            "x": 348889,
+            "y": 81841,
+            "z": 1109
+          },
+          "size": {
+            "x": 33,
+            "y": 34,
+            "z": 4
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000032"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "883843993"
+      ],
+      "post_owners": [
+        "1465400601"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 883843993,
+          "id": 635402102331,
+          "num_voxels": null,
+          "centroid": {
+            "x": 348908,
+            "y": 81856,
+            "z": 1111
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 348902,
+              "y": 81848,
+              "z": 1110
+            },
+            "size": {
+              "x": 13,
+              "y": 16,
+              "z": 3
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "SOMA",
+          "base_neuron_id": "1538361367"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 1159349630,
+          "id": 635411338781,
+          "num_voxels": null,
+          "centroid": {
+            "x": 348900,
+            "y": 81858,
+            "z": 1111
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 348889,
+              "y": 81841,
+              "z": 1109
+            },
+            "size": {
+              "x": 22,
+              "y": 34,
+              "z": 4
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "1596386991"
+        },
+        "location": {
+          "x": 348902,
+          "y": 81858,
+          "z": 1111
+        },
+        "type": 1,
+        "contact_area": null,
+        "confidence": 0.9347391724586487,
+        "bounding_box": {
+          "start": {
+            "x": 348889,
+            "y": 81841,
+            "z": 1109
+          },
+          "size": {
+            "x": 26,
+            "y": 34,
+            "z": 4
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000045"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "4641147055"
+      ],
+      "post_owners": [
+        "6126390733"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 6141487438,
+          "id": 93351846305,
+          "num_voxels": null,
+          "centroid": {
+            "x": 436991,
+            "y": 220063,
+            "z": 719
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 436972,
+              "y": 220036,
+              "z": 715
+            },
+            "size": {
+              "x": 38,
+              "y": 54,
+              "z": 9
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "AXON",
+          "base_neuron_id": "14977487688"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 15006470370,
+          "id": 93351846306,
+          "num_voxels": null,
+          "centroid": {
+            "x": 436981,
+            "y": 220067,
+            "z": 719
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 436965,
+              "y": 220044,
+              "z": 715
+            },
+            "size": {
+              "x": 33,
+              "y": 47,
+              "z": 9
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "15050404722"
+        },
+        "location": {
+          "x": 436987,
+          "y": 220063,
+          "z": 719
+        },
+        "type": 2,
+        "contact_area": null,
+        "confidence": 0.9848312139511108,
+        "bounding_box": {
+          "start": {
+            "x": 436965,
+            "y": 220036,
+            "z": 715
+          },
+          "size": {
+            "x": 45,
+            "y": 55,
+            "z": 9
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000059"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "1900905433"
+      ],
+      "post_owners": [
+        "2103991145"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 38482206914,
+          "id": 441425129147,
+          "num_voxels": null,
+          "centroid": {
+            "x": 288567,
+            "y": 134024,
+            "z": 3840
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 288543,
+              "y": 133994,
+              "z": 3838
+            },
+            "size": {
+              "x": 48,
+              "y": 60,
+              "z": 5
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "AXON",
+          "base_neuron_id": "74060244105"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 65165592378,
+          "id": 441425129148,
+          "num_voxels": null,
+          "centroid": {
+            "x": 288556,
+            "y": 134029,
+            "z": 3841
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 288540,
+              "y": 134003,
+              "z": 3838
+            },
+            "size": {
+              "x": 33,
+              "y": 52,
+              "z": 6
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "74060244077"
+        },
+        "location": {
+          "x": 288565,
+          "y": 134024,
+          "z": 3841
+        },
+        "type": 2,
+        "contact_area": null,
+        "confidence": 0.9620220065116882,
+        "bounding_box": {
+          "start": {
+            "x": 288540,
+            "y": 133994,
+            "z": 3838
+          },
+          "size": {
+            "x": 51,
+            "y": 61,
+            "z": 6
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000073"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "5584343344"
+      ],
+      "post_owners": [
+        "4157825456"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 85384868035,
+          "id": 520447419204,
+          "num_voxels": null,
+          "centroid": {
+            "x": 262063,
+            "y": 210823,
+            "z": 4315
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 262053,
+              "y": 210808,
+              "z": 4313
+            },
+            "size": {
+              "x": 20,
+              "y": 31,
+              "z": 5
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "AXON",
+          "base_neuron_id": "85384868035"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 40781762246,
+          "id": 520447419203,
+          "num_voxels": null,
+          "centroid": {
+            "x": 262054,
+            "y": 210816,
+            "z": 4315
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 262045,
+              "y": 210801,
+              "z": 4313
+            },
+            "size": {
+              "x": 19,
+              "y": 31,
+              "z": 5
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "85399424333"
+        },
+        "location": {
+          "x": 262059,
+          "y": 210820,
+          "z": 4315
+        },
+        "type": 1,
+        "contact_area": null,
+        "confidence": 0.9765267372131348,
+        "bounding_box": {
+          "start": {
+            "x": 262045,
+            "y": 210801,
+            "z": 4313
+          },
+          "size": {
+            "x": 28,
+            "y": 38,
+            "z": 5
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000074"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "3519995546"
+      ],
+      "post_owners": [
+        "3680152874"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 4189305176,
+          "id": 51518622089,
+          "num_voxels": null,
+          "centroid": {
+            "x": 396311,
+            "y": 158368,
+            "z": 432
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 396300,
+              "y": 158347,
+              "z": 428
+            },
+            "size": {
+              "x": 22,
+              "y": 42,
+              "z": 8
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "AXON",
+          "base_neuron_id": "4189305176"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 4029162155,
+          "id": 51518622090,
+          "num_voxels": null,
+          "centroid": {
+            "x": 396322,
+            "y": 158372,
+            "z": 432
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 396312,
+              "y": 158354,
+              "z": 428
+            },
+            "size": {
+              "x": 20,
+              "y": 37,
+              "z": 8
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "4029162155"
+        },
+        "location": {
+          "x": 396316,
+          "y": 158369,
+          "z": 432
+        },
+        "type": 2,
+        "contact_area": null,
+        "confidence": 0.9700531363487244,
+        "bounding_box": {
+          "start": {
+            "x": 396300,
+            "y": 158347,
+            "z": 428
+          },
+          "size": {
+            "x": 32,
+            "y": 44,
+            "z": 8
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000098"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "3680152874"
+      ],
+      "post_owners": [
+        "3519995546"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 12967148905,
+          "id": 87155335793,
+          "num_voxels": null,
+          "centroid": {
+            "x": 390938,
+            "y": 157902,
+            "z": 653
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 390933,
+              "y": 157894,
+              "z": 652
+            },
+            "size": {
+              "x": 11,
+              "y": 16,
+              "z": 3
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "AXON",
+          "base_neuron_id": "12996234089"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 3519995546,
+          "id": 87155335794,
+          "num_voxels": null,
+          "centroid": {
+            "x": 390949,
+            "y": 157906,
+            "z": 654
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 390942,
+              "y": 157896,
+              "z": 653
+            },
+            "size": {
+              "x": 15,
+              "y": 20,
+              "z": 3
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "3708173623"
+        },
+        "location": {
+          "x": 390945,
+          "y": 157905,
+          "z": 654
+        },
+        "type": 1,
+        "contact_area": null,
+        "confidence": 0.9831653833389282,
+        "bounding_box": {
+          "start": {
+            "x": 390933,
+            "y": 157894,
+            "z": 652
+          },
+          "size": {
+            "x": 24,
+            "y": 22,
+            "z": 4
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000130"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "4188575291"
+      ],
+      "post_owners": [
+        "3955003482"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 4958471777,
+          "id": 125182337274,
+          "num_voxels": null,
+          "centroid": {
+            "x": 325789,
+            "y": 181779,
+            "z": 1167
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 325767,
+              "y": 181764,
+              "z": 1164
+            },
+            "size": {
+              "x": 45,
+              "y": 30,
+              "z": 7
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "AXON",
+          "base_neuron_id": "22645465471"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 5045989527,
+          "id": 125182337273,
+          "num_voxels": null,
+          "centroid": {
+            "x": 325767,
+            "y": 181740,
+            "z": 1181
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 325718,
+              "y": 181697,
+              "z": 1164
+            },
+            "size": {
+              "x": 99,
+              "y": 87,
+              "z": 34
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "22630849951"
+        },
+        "location": {
+          "x": 325767,
+          "y": 181745,
+          "z": 1181
+        },
+        "type": 2,
+        "contact_area": null,
+        "confidence": 0.9839900732040405,
+        "bounding_box": {
+          "start": {
+            "x": 325718,
+            "y": 181697,
+            "z": 1164
+          },
+          "size": {
+            "x": 99,
+            "y": 97,
+            "z": 34
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000146"
+    },
+    {
+      "kind": "between_cell",
+      "pre_owners": [
+        "4522237537"
+      ],
+      "post_owners": [
+        "3954491075"
+      ],
+      "source": {
+        "pre_synaptic_site": {
+          "neuron_id": 4522237537,
+          "id": 161715408981,
+          "num_voxels": null,
+          "centroid": {
+            "x": 297878,
+            "y": 190450,
+            "z": 1481
+          },
+          "type": 1,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 297866,
+              "y": 190416,
+              "z": 1476
+            },
+            "size": {
+              "x": 25,
+              "y": 68,
+              "z": 10
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "AXON",
+          "base_neuron_id": "31771893156"
+        },
+        "post_synaptic_partner": {
+          "neuron_id": 3969034166,
+          "id": 161715408980,
+          "num_voxels": null,
+          "centroid": {
+            "x": 297867,
+            "y": 190451,
+            "z": 1481
+          },
+          "type": 2,
+          "subtype": null,
+          "confidence": null,
+          "bounding_box": {
+            "start": {
+              "x": 297855,
+              "y": 190412,
+              "z": 1476
+            },
+            "size": {
+              "x": 25,
+              "y": 78,
+              "z": 10
+            },
+            "description": null,
+            "object_label": null
+          },
+          "mask": null,
+          "class_label": "DENDRITE",
+          "base_neuron_id": "14055726597"
+        },
+        "location": {
+          "x": 297873,
+          "y": 190451,
+          "z": 1481
+        },
+        "type": 2,
+        "contact_area": null,
+        "confidence": 0.9591320157051086,
+        "bounding_box": {
+          "start": {
+            "x": 297855,
+            "y": 190412,
+            "z": 1476
+          },
+          "size": {
+            "x": 36,
+            "y": 78,
+            "z": 10
+          },
+          "description": null,
+          "object_label": null
+        }
+      },
+      "shard": "export000000000158"
+    }
+  ]
+}

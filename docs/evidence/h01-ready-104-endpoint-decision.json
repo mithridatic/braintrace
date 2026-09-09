@@ -1,0 +1,39 @@
+{
+  "status": "endpoint correction verified on failing cell; all-population audit pending",
+  "build_attempt": {
+    "status": "failed",
+    "exit_code": 1,
+    "seconds": 587.5745617,
+    "peak_tree_rss_bytes": 2136698880
+  },
+  "cell_id": "3812058320",
+  "component": 0,
+  "source_sha256": "18fcd92de4e821f8e848460ddaf791bd675b4a8b4e7c5d8aa398c3c1813f47e4",
+  "source_soma_node": 22316,
+  "branch": 2265,
+  "before_soma_x": 1.0000000000000002,
+  "electrical_soma_interval": [
+    0.9528301886792084,
+    1.0
+  ],
+  "after_soma_x": 1.0,
+  "repair": "canonicalize final anatomy-index fraction to 1.0; preserve source geometry and interior fractions",
+  "real_cell_recheck": {
+    "construction_passed": true,
+    "compartments": 9918,
+    "donor": "l2-pyramidal-allen-541563728"
+  },
+  "regression": {
+    "failed_before": true,
+    "passed_after": true,
+    "test": "braintrace/datasets/h01_anatomy_test.py::test_terminal_soma_fraction_is_exact_despite_reduction_roundoff"
+  },
+  "validation": {
+    "targeted_tests_passed": 75,
+    "anatomy_line_coverage_percent": 97,
+    "additional_audit_tests_passed": 4
+  },
+  "full_104_construction_passed": false,
+  "runtime_qualified": false,
+  "physiology_qualified": false
+}

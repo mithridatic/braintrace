@@ -1,0 +1,251 @@
+{
+  "status": "wheel content and isolated imports passed",
+  "source_commit": "526d57f6629e956c82fc2b6b13978187b25858d3",
+  "wheel": {
+    "path": ".cache\\h01\\readiness\\wheelhouse-526d57f\\braintrace-0.2.5-py3-none-any.whl",
+    "sha256": "bfd015cee78b80a8b60d4fa3e567a69ce83cf457b50e2d52d1ab96c0be7f01e4"
+  },
+  "snapshot": {
+    "path": ".cache\\h01\\readiness\\wheel-source-526d57f.zip",
+    "sha256": "dab7a4eb2e7763bb78838144e3b469c7ebe26b1ab02653e44ea89e346d5ea542"
+  },
+  "installed_target": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f",
+  "package_files_exactly_match_snapshot_and_install": 108,
+  "h01_modules_imported": 33,
+  "modules": {
+    "braintrace.datasets._h01_ei_parameters": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\_h01_ei_parameters.py",
+      "sha256": "9c9e1e33657250e7433fdf06292b3438f0f78496b66483432d31b295afc6e91b"
+    },
+    "braintrace.datasets._h01_reader": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\_h01_reader.py",
+      "sha256": "0ac9e08ba13cbb907a6728a7589ee90409e35bd61203899c813c4fc5edb9476a"
+    },
+    "braintrace.datasets._h01_swc": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\_h01_swc.py",
+      "sha256": "0635bf20ee869d37fab08c8bde7a72a32936e476deb6c343e16f03161428ae89"
+    },
+    "braintrace.datasets.h01": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01.py",
+      "sha256": "694a4fa3a05b9beddf193a9404136cf9d0a6c668027a6b3f10f9f037b8266c1d"
+    },
+    "braintrace.datasets.h01_active": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_active.py",
+      "sha256": "ef251e647f3b6dd20cd0c8146f7eb4fe85a811fa26356aa74442587b4b53abe2"
+    },
+    "braintrace.datasets.h01_anatomy": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_anatomy.py",
+      "sha256": "95770952cec45f3fc6f531049bbf735529ce3d934a1e8da1bfbd2333f5df7261"
+    },
+    "braintrace.datasets.h01_annotated_demo": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_annotated_demo.py",
+      "sha256": "f0316a45c606ac0cdef4b2169b87f3f08d647ca3e13169ea8286320b3d7d7791"
+    },
+    "braintrace.datasets.h01_annotations": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_annotations.py",
+      "sha256": "4b91aa96e0841b10ae93ca8533696844aad00f6f6c94602feb1c4281fda78c20"
+    },
+    "braintrace.datasets.h01_calcium_implicit": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_calcium_implicit.py",
+      "sha256": "658a4bee9c43d1748fb939a9cc7006b391849a032a54afb5960057b4d753c066"
+    },
+    "braintrace.datasets.h01_calcium_solver": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_calcium_solver.py",
+      "sha256": "b51e5b50802eac30ec9a55b3d74733dcce4dfcf39fee38676992e3190609ee0a"
+    },
+    "braintrace.datasets.h01_cell_types": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_cell_types.py",
+      "sha256": "72cad4cf0ef0690d9ad14415f147bb41841adde19a00110a6ca8352683a5e179"
+    },
+    "braintrace.datasets.h01_channels": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_channels.py",
+      "sha256": "56410139a0838b6230d072a748e0572f22f16cf27b0563cfcc9175a22692f585"
+    },
+    "braintrace.datasets.h01_connectivity": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_connectivity.py",
+      "sha256": "bfc0d3717df6c5d51b9eeac0b45ec0d79fa617f7b63f959b7e8227134238f1d1"
+    },
+    "braintrace.datasets.h01_construction": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_construction.py",
+      "sha256": "9438db9d615db448381aa1e2b35c7d85a356c444afdec8ae156dbe5f24d06938"
+    },
+    "braintrace.datasets.h01_demo": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_demo.py",
+      "sha256": "badd19e18f2bda585f7518f2031c80d0d461cfead9aa15f91039e06f0b2e7f0f"
+    },
+    "braintrace.datasets.h01_dhs_scan": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_dhs_scan.py",
+      "sha256": "7603431a7704dd81f4643d9308ed7553a0ae7f82ce287339d0354226a30ac8c0"
+    },
+    "braintrace.datasets.h01_discretization": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_discretization.py",
+      "sha256": "7b71aee75b38c735d4516cab1fc88839b99ce7d66fb1f364d6e2f3d922eec79f"
+    },
+    "braintrace.datasets.h01_ei_cell": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_ei_cell.py",
+      "sha256": "795d5ca7f825e06c92af6a65123d68f1f4a66c08622251298cf518e5f8cadfae"
+    },
+    "braintrace.datasets.h01_ei_circuit": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_ei_circuit.py",
+      "sha256": "eb8a49f027360ebe148736581ec7fc18bd2dfd52575eefba3e8aa8237aed2677"
+    },
+    "braintrace.datasets.h01_ei_profiles": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_ei_profiles.py",
+      "sha256": "4479f1897452479d529a20e444aa4437432194da9eb7cf14d28400662bb0b38d"
+    },
+    "braintrace.datasets.h01_l2_cell": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_l2_cell.py",
+      "sha256": "6b97996a20230df16f4bdb5479a14a7a9e1842d85467d0bd0d7a49521ff61764"
+    },
+    "braintrace.datasets.h01_l2_channels": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_l2_channels.py",
+      "sha256": "a9a301d398d87534dc897ee07936215647a857bd46104528002c1ceb8053231a"
+    },
+    "braintrace.datasets.h01_measured_contact": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_measured_contact.py",
+      "sha256": "fa9e4a47460f4618ec2d7eea40d0b612d71df169d74c63ed649ead20b108fa06"
+    },
+    "braintrace.datasets.h01_network": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_network.py",
+      "sha256": "e8bfdaa769d7264904e39a12a7059d0fad7a33838a692dec95b1885cb5e75fa5"
+    },
+    "braintrace.datasets.h01_network_init": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_network_init.py",
+      "sha256": "96246475c4d392e57192ab899aa6b184858feb7e034afdce1cc4a727e2c3c2da"
+    },
+    "braintrace.datasets.h01_pv_calcium": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_calcium.py",
+      "sha256": "f836566196fe8b4eb366ede8f5637a12c10b2e05988524a1deb0dc7cfa8d6188"
+    },
+    "braintrace.datasets.h01_pv_cell": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_cell.py",
+      "sha256": "62b60b5c753fde237ff338da4aebb633d5109abf67a3aadf75666b29ddf01a4e"
+    },
+    "braintrace.datasets.h01_pv_channels": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_channels.py",
+      "sha256": "6e5cc684d7df9ba7748dfde192cb5cdcbbc388f16f8bf933b41093213914ef1e"
+    },
+    "braintrace.datasets.h01_pv_morphology": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_morphology.py",
+      "sha256": "f0e43458d93fc905b29e9b69bce77a24ef4bebbfeae568006cabeba7e7e2ac68"
+    },
+    "braintrace.datasets.h01_pv_rates": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_rates.py",
+      "sha256": "bcd1f663c22cdb1177444b7a66620a67efe1293476581186415f8ce315799c94"
+    },
+    "braintrace.datasets.h01_reference": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_reference.py",
+      "sha256": "98d063ca2bdf65f36ea6380d9af2956d4b7f0f1849ef090cdef67b0dfc30981b"
+    },
+    "braintrace.datasets.h01_spike_output": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_spike_output.py",
+      "sha256": "ed440a946a9993314977469001d1c212d71af39b95cb826b7db19e72ce3944cd"
+    },
+    "braintrace.datasets.h01_wilbers": {
+      "installed_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_wilbers.py",
+      "sha256": "d26c915b599ab2fa813b89be041afd01dbf11e4e7834f30e574d4df98d3008c0"
+    }
+  },
+  "production_origins": {
+    "braintrace._compatible_imports": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compatible_imports.py",
+    "braintrace._op._registries": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\_registries.py",
+    "braintrace._op._primitive": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\_primitive.py",
+    "braintrace._typing": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_typing.py",
+    "braintrace._op.conv": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\conv.py",
+    "braintrace._op.attention": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\attention.py",
+    "braintrace._op.dense": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\dense.py",
+    "braintrace._op.einsum": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\einsum.py",
+    "braintrace._op.elemwise": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\elemwise.py",
+    "braintrace._op.embedding": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\embedding.py",
+    "braintrace._op.grouped": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\grouped.py",
+    "braintrace._op.gated": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\gated.py",
+    "braintrace._op.lora": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\lora.py",
+    "braintrace._op.memory": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\memory.py",
+    "braintrace._op.outer": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\outer.py",
+    "braintrace._op.sparse": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\sparse.py",
+    "braintrace._op": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_op\\__init__.py",
+    "braintrace.nn._conv": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_conv.py",
+    "braintrace.nn._attention": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_attention.py",
+    "braintrace.nn._embedding": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_embedding.py",
+    "braintrace.nn._gated": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_gated.py",
+    "braintrace.nn._situ": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_situ.py",
+    "braintrace.nn._linear": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_linear.py",
+    "braintrace.nn._readout": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_readout.py",
+    "braintrace.nn._rnn": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\_rnn.py",
+    "braintrace.nn": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\nn\\__init__.py",
+    "braintrace._misc": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_misc.py",
+    "braintrace._algorithm._common": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\_common.py",
+    "braintrace._algorithm.axes": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\axes.py",
+    "braintrace._compiler.diagnostics": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\diagnostics.py",
+    "braintrace._compiler.jaxpr_graph": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\jaxpr_graph.py",
+    "braintrace._compiler.canonicalize": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\canonicalize.py",
+    "braintrace._compiler.base": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\base.py",
+    "braintrace._state_management": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_state_management.py",
+    "braintrace._compiler.module_info": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\module_info.py",
+    "braintrace._compiler.position_graph": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\position_graph.py",
+    "braintrace._compiler.hidden_group": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\hidden_group.py",
+    "braintrace._compiler.hid_param_op": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\hid_param_op.py",
+    "braintrace._compiler.hidden_pertubation": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\hidden_pertubation.py",
+    "braintrace._compiler.scan_descent": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\scan_descent.py",
+    "braintrace._compiler.graph": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\graph.py",
+    "braintrace._compiler.report": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\report.py",
+    "braintrace._compiler": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compiler\\__init__.py",
+    "braintrace._input_data": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_input_data.py",
+    "braintrace._algorithm.graph_executor": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\graph_executor.py",
+    "braintrace._algorithm.sequence": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\sequence.py",
+    "braintrace._algorithm.base": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\base.py",
+    "braintrace._algorithm.vjp_graph_executor": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\vjp_graph_executor.py",
+    "braintrace._algorithm.vjp_base": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\vjp_base.py",
+    "braintrace._algorithm.param_dim_vjp": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\param_dim_vjp.py",
+    "braintrace._algorithm.d_rtrl": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\d_rtrl.py",
+    "braintrace._algorithm.e_prop": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\e_prop.py",
+    "braintrace._algorithm.io_dim_vjp": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\io_dim_vjp.py",
+    "braintrace._algorithm.pp_prop": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\pp_prop.py",
+    "braintrace._algorithm.ostl": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\ostl.py",
+    "braintrace._algorithm.random_projection_vjp": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\random_projection_vjp.py",
+    "braintrace._algorithm.snap_n": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\snap_n.py",
+    "braintrace._algorithm.dni": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\dni.py",
+    "braintrace._algorithm.three_factor": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\three_factor.py",
+    "braintrace._algorithm.uoro": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\uoro.py",
+    "braintrace._algorithm": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_algorithm\\__init__.py",
+    "braintrace._compile": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_compile.py",
+    "braintrace._grad_exponential": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_grad_exponential.py",
+    "braintrace._version": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\_version.py",
+    "braintrace": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\__init__.py",
+    "braintrace.datasets": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\__init__.py",
+    "braintrace.datasets._h01_ei_parameters": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\_h01_ei_parameters.py",
+    "braintrace.datasets._h01_reader": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\_h01_reader.py",
+    "braintrace.datasets._h01_swc": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\_h01_swc.py",
+    "braintrace.datasets.h01": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01.py",
+    "braintrace.datasets.h01_wilbers": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_wilbers.py",
+    "braintrace.datasets.h01_channels": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_channels.py",
+    "braintrace.datasets.h01_annotations": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_annotations.py",
+    "braintrace.datasets.h01_discretization": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_discretization.py",
+    "braintrace.datasets.h01_active": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_active.py",
+    "braintrace.datasets.h01_anatomy": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_anatomy.py",
+    "braintrace.datasets.h01_demo": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_demo.py",
+    "braintrace.datasets.h01_annotated_demo": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_annotated_demo.py",
+    "braintrace.datasets.h01_calcium_implicit": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_calcium_implicit.py",
+    "braintrace.datasets.h01_pv_calcium": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_calcium.py",
+    "braintrace.datasets.h01_dhs_scan": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_dhs_scan.py",
+    "braintrace.datasets.h01_calcium_solver": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_calcium_solver.py",
+    "braintrace.datasets.h01_cell_types": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_cell_types.py",
+    "braintrace.datasets.h01_connectivity": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_connectivity.py",
+    "braintrace.datasets.h01_construction": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_construction.py",
+    "braintrace.datasets.h01_pv_rates": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_rates.py",
+    "braintrace.datasets.h01_pv_channels": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_channels.py",
+    "braintrace.datasets.h01_l2_channels": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_l2_channels.py",
+    "braintrace.datasets.h01_ei_profiles": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_ei_profiles.py",
+    "braintrace.datasets.h01_ei_cell": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_ei_cell.py",
+    "braintrace.datasets.h01_spike_output": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_spike_output.py",
+    "braintrace.datasets.h01_measured_contact": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_measured_contact.py",
+    "braintrace.datasets.h01_ei_circuit": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_ei_circuit.py",
+    "braintrace.datasets.h01_pv_morphology": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_morphology.py",
+    "braintrace.datasets.h01_l2_cell": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_l2_cell.py",
+    "braintrace.datasets.h01_network": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_network.py",
+    "braintrace.datasets.h01_network_init": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_network_init.py",
+    "braintrace.datasets.h01_pv_cell": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_pv_cell.py",
+    "braintrace.datasets.h01_reference": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01\\readiness\\wheel-install-526d57f\\braintrace\\datasets\\h01_reference.py"
+  },
+  "qualification": "package preparation only; full104 installed execution pending"
+}

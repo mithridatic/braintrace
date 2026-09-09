@@ -1,0 +1,11 @@
+{
+  "status": "all104 initialization checkpoint preserved",
+  "path": ".cache\\h01\\readiness\\104-implicit-r2-initialized-reference.json",
+  "sha256": "82722cc045d9b1bb3a945ded6bfb482d6b30d177163519a59b63006af5021c34",
+  "construction_reference_sha256": "65be385b8c5357ca4de3b2ef4286b464971bda17af452f6c92f428f555cc08ad",
+  "cells": 104,
+  "compartments": 808495,
+  "init_seconds": 853.6928647000168,
+  "runtime_qualified": false,
+  "physiology_qualified": false
+}

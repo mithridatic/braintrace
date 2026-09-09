@@ -1,0 +1,44 @@
+{
+  "sources": {
+    "E": "h01-e-usable\\b3-all-inputs-usable.json",
+    "I": "h01-usable-tier-i.json"
+  },
+  "pass_counts": {
+    "E": {
+      "rate_hz": [
+        2,
+        3
+      ],
+      "adaptation_ratio": [
+        3,
+        3
+      ],
+      "width_ms": [
+        25,
+        27
+      ],
+      "ahp_mv": [
+        0,
+        27
+      ]
+    },
+    "I": {
+      "rate_hz": [
+        1,
+        3
+      ],
+      "adaptation_ratio": [
+        0,
+        3
+      ],
+      "width_ms": [
+        24,
+        75
+      ],
+      "ahp_mv": [
+        75,
+        75
+      ]
+    }
+  }
+}

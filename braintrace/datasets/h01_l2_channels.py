@@ -4,14 +4,46 @@ The pinned source mechanisms are named in the E profile. These laws include
 borrowed nonhuman mechanisms; they are not measurements from the H01 donor.
 """
 
+import jax
 import jax.numpy as jnp
+import numpy as np
 from jax.nn import sigmoid
 import brainunit as u
+from braincell._misc import is_traced_value
 from braincell.channel._base import Gate
 from braincell.mech import register_channel
 from .h01_pv_channels import _PVChannel, _DEFINITIONS, _rate_accessor
 from .h01_pv_rates import pv_rates, _pair, _Q
 from .h01_wilbers import rate_trap
+
+
+def _is_jax(x):
+    return is_traced_value(x) or isinstance(x, (jax.core.Tracer, jax.Array))
+
+
+def _sig(x):
+    if _is_jax(x):
+        return sigmoid(x)
+    arr = np.asarray(x, dtype=np.float64)
+    return 1. / (1. + np.exp(-arr))
+
+
+def _exp(x):
+    if _is_jax(x):
+        return jnp.exp(x)
+    return np.exp(x)
+
+
+def _where(cond, x, y):
+    if _is_jax(cond) or _is_jax(x) or _is_jax(y):
+        return jnp.where(cond, x, y)
+    return np.where(cond, x, y)
+
+
+def _ones_like(x):
+    if _is_jax(x):
+        return jnp.ones_like(x)
+    return np.ones_like(x)
 
 
 def l2_rates(mechanism, voltage_mv, calcium_mm=1e-4, *, gate=None, component=None):
@@ -35,7 +67,8 @@ def l2_rates(mechanism, voltage_mv, calcium_mm=1e-4, *, gate=None, component=Non
     dict or tuple or array
         Gate equilibrium and time constant in milliseconds, or single component array.
     """
-    v, ca = jnp.asarray(voltage_mv), jnp.asarray(calcium_mm)
+    v = jnp.asarray(voltage_mv) if _is_jax(voltage_mv) else np.asarray(voltage_mv)
+    ca = jnp.asarray(calcium_mm) if _is_jax(calcium_mm) else np.asarray(calcium_mm)
     if mechanism == "NaTs":
         if gate == "m":
             if component == 0:
@@ -61,56 +94,56 @@ def l2_rates(mechanism, voltage_mv, calcium_mm=1e-4, *, gate=None, component=Non
     if mechanism == "Ih":
         if component == 0:
             a = rate_trap(-v, 154.9, .00643, 11.9)
-            b = .193 * jnp.exp(v / 33.1)
+            b = .193 * _exp(v / 33.1)
             return a / (a + b)
         if component == 1:
-            return 1. / (rate_trap(-v, 154.9, .00643, 11.9) + .193 * jnp.exp(v / 33.1))
-        res = _pair(rate_trap(-v, 154.9, .00643, 11.9), .193 * jnp.exp(v / 33.1))
+            return 1. / (rate_trap(-v, 154.9, .00643, 11.9) + .193 * _exp(v / 33.1))
+        res = _pair(rate_trap(-v, 154.9, .00643, 11.9), .193 * _exp(v / 33.1))
         return res if gate == "m" else {"m": res}
     if mechanism == "K_P":
         if gate == "m":
             if component == 0:
-                return sigmoid((v + 14.3) / 14.6)
-            tau = jnp.where(v < -50., 1.25 + 175.03 * jnp.exp(.026 * v), 1.25 + 13. * jnp.exp(-.026 * v)) / _Q
+                return _sig((v + 14.3) / 14.6)
+            tau = _where(v < -50., 1.25 + 175.03 * _exp(.026 * v), 1.25 + 13. * _exp(-.026 * v)) / _Q
             if component == 1:
                 return tau
-            return (sigmoid((v + 14.3) / 14.6), tau)
+            return (_sig((v + 14.3) / 14.6), tau)
         if gate == "h":
             if component == 0:
-                return sigmoid(-(v + 54.) / 11.)
-            tau = (360. + (1010. + 24. * (v + 55.)) * jnp.exp(-((v + 75.) / 48.) ** 2)) / _Q
+                return _sig(-(v + 54.) / 11.)
+            tau = (360. + (1010. + 24. * (v + 55.)) * _exp(-((v + 75.) / 48.) ** 2)) / _Q
             if component == 1:
                 return tau
-            return (sigmoid(-(v + 54.) / 11.), tau)
-        tau_m = jnp.where(v < -50., 1.25 + 175.03 * jnp.exp(.026 * v), 1.25 + 13. * jnp.exp(-.026 * v)) / _Q
-        tau_h = (360. + (1010. + 24. * (v + 55.)) * jnp.exp(-((v + 75.) / 48.) ** 2)) / _Q
-        return {"m": (sigmoid((v + 14.3) / 14.6), tau_m),
-                "h": (sigmoid(-(v + 54.) / 11.), tau_h)}
+            return (_sig(-(v + 54.) / 11.), tau)
+        tau_m = _where(v < -50., 1.25 + 175.03 * _exp(.026 * v), 1.25 + 13. * _exp(-.026 * v)) / _Q
+        tau_h = (360. + (1010. + 24. * (v + 55.)) * _exp(-((v + 75.) / 48.) ** 2)) / _Q
+        return {"m": (_sig((v + 14.3) / 14.6), tau_m),
+                "h": (_sig(-(v + 54.) / 11.), tau_h)}
     if mechanism == "K_T":
         if gate == "m":
             if component == 0:
-                return sigmoid((v + 47.) / 29.)
-            tau = (.34 + .92 * jnp.exp(-((v + 71.) / 59.) ** 2)) / _Q
+                return _sig((v + 47.) / 29.)
+            tau = (.34 + .92 * _exp(-((v + 71.) / 59.) ** 2)) / _Q
             if component == 1:
                 return tau
-            return (sigmoid((v + 47.) / 29.), tau)
+            return (_sig((v + 47.) / 29.), tau)
         if gate == "h":
             if component == 0:
-                return sigmoid(-(v + 66.) / 10.)
-            tau = (8. + 49. * jnp.exp(-((v + 73.) / 23.) ** 2)) / _Q
+                return _sig(-(v + 66.) / 10.)
+            tau = (8. + 49. * _exp(-((v + 73.) / 23.) ** 2)) / _Q
             if component == 1:
                 return tau
-            return (sigmoid(-(v + 66.) / 10.), tau)
-        return {"m": (sigmoid((v + 47.) / 29.), (.34 + .92 * jnp.exp(-((v + 71.) / 59.) ** 2)) / _Q),
-                "h": (sigmoid(-(v + 66.) / 10.), (8. + 49. * jnp.exp(-((v + 73.) / 23.) ** 2)) / _Q)}
+            return (_sig(-(v + 66.) / 10.), tau)
+        return {"m": (_sig((v + 47.) / 29.), (.34 + .92 * _exp(-((v + 71.) / 59.) ** 2)) / _Q),
+                "h": (_sig(-(v + 66.) / 10.), (8. + 49. * _exp(-((v + 73.) / 23.) ** 2)) / _Q)}
     if mechanism == "SK":
         if component == 1:
-            return jnp.ones_like(ca)
-        adjusted = jnp.where(ca < 1e-7, ca + 1e-7, ca)
+            return _ones_like(ca)
+        adjusted = _where(ca < 1e-7, ca + 1e-7, ca)
         inf = 1. / (1. + (.00043 / adjusted) ** 4.8)
         if component == 0:
             return inf
-        res = (inf, jnp.ones_like(ca))
+        res = (inf, _ones_like(ca))
         return res if gate == "z" else {"z": res}
     if mechanism not in ("Kv3_1", "Im", "Ca_HVA", "Ca_LVA"):
         raise ValueError(f"Unknown L2 mechanism: {mechanism!r}.")
@@ -129,7 +162,7 @@ class _L2Channel(_PVChannel):
     def conductance_factor(self, voltage, *ions):
         if self.mechanism == "Nap":
             # The source has instantaneous activation, first power, not m cubed.
-            return sigmoid((voltage.to_decimal(u.mV)+52.6)/4.6)*self.h.value
+            return _sig((voltage.to_decimal(u.mV)+52.6)/4.6)*self.h.value
         return super().conductance_factor(voltage, *ions)
 
 

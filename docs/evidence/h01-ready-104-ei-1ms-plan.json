@@ -1,0 +1,20 @@
+{
+  "status": "registered before launch; untested",
+  "source_commit": "b46ee7d",
+  "cells": 104,
+  "dt_ms": 0.005,
+  "duration_ms": 1.0,
+  "control": "ei",
+  "construction_seconds_measured": 1034.0335955999908,
+  "source_node_ratio": 5.221145969855832,
+  "compartment_ratio": 4.897476436238521,
+  "scaling_rule": "larger of source-node and compartment ratios applied to the measured 40-cell smoke",
+  "projected_init_seconds": 1389.4038447159614,
+  "projected_compile_and_run_seconds": 634.8303920109802,
+  "projected_peak_rss_mib": 22641.336337468256,
+  "wall_cap_seconds": 3600,
+  "silence_cap_seconds": 600,
+  "reserve_memory_bytes": 4294967296,
+  "qualification": "initialization and finite pre-stimulus smoke only; no activity, controls, numerical refinement or physiology pass",
+  "projected_total_seconds": 3058.2678323269324
+}

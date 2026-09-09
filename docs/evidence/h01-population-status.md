@@ -1,4 +1,47 @@
-# H01 population: what a user gets today (2026-09-08 close)
+# H01 population readiness
+
+## Current continuation evidence (2026-09-08)
+
+All 104 largest soma-bearing components now import with every one of their
+2,804,445 directed source segments preserved
+([audit](h01-population-import-104.json)). The reader failure reported in the
+programme-close table below is repaired. A 40-cell network with 165,084
+compartments and two supported projections now builds, initializes and executes
+200 compiled steps (1 ms), with all recorded arrays finite
+([run summary](h01-ready-40-ei-1ms-summary.json),
+[trace audit](h01-ready-40-ei-1ms-trace-audit.json),
+[result](h01-ready-40-result.md)).
+
+The first full-104 build exposed an endpoint rounding inconsistency, repaired
+without moving the measured soma. The corrected mapping passes geometry and
+strict soma-region membership checks on all 104 cells
+([audit](h01-ready-104-soma-audit.json),
+[diagnosis and result](h01-ready-104-endpoint-result.md)). Full construction now
+passes for all 104 cells: 808,495 compartments and two supported projections
+([construction gate](h01-ready-104-build-r2-decision.json),
+[current all-104 result](h01-ready-104-result.md)).
+
+The full 104-cell network now initializes and executes 200 compiled steps at
+dt 0.005 ms; all 317 expected arrays are finite and exact model/provenance
+matching passes ([runtime gate](h01-ready-104-ei-1ms-decision.json),
+[summary](h01-ready-104-ei-1ms-summary.json)). This is a pre-stimulus 1 ms
+window with no events. The first 10 ms run failed with nonfinite output voltage
+on cell 7196644737 ([decision](h01-ready-104-ei-10ms-decision.json)); its cause is
+under numerical diagnosis, and the cell has not been removed. Driven activity, final-population controls, numerical
+refinement and physiological qualification remain open. The table below preserves the earlier programme's
+close snapshot; its failed-import and 12-cell runtime limits are superseded by
+the continuation evidence above. The physiological verdicts are unchanged.
+The [E source-audit amendment](h01-e-gain-source-audit.md) also supersedes
+the earlier claims of absent M current and necessity outside the passive family.
+
+The numerical failure has since been reproduced in isolation and repaired by an
+opt-in implicit calcium solve; the isolated fine timestep pair passes its
+registered comparison. The repaired full104 construction and initialization now
+pass, with all 808,495 compartments retained. Compilation and the driven 10 ms
+run are underway, not qualified. See the [current continuation result](h01-ready-104-result.md)
+and [initialization decision](h01-ready-104-implicit-init-decision.json).
+
+## Earlier programme-close snapshot
 
 One table, no pass claimed. Every row cites the decision JSON that carries its numbers; prose
 pages are linked second. Where a row states a count it is the JSON's count. Programme spec:
@@ -59,3 +102,25 @@ constructible and steps 1 ms with matched controls at a measured cost (Y5 narrow
 defect and to unmeasured scale). Open: functional inhibition at the pair, the I cell's slow state,
 the E cell's low-drive current, 92 unsimulated cells, 157 export shards, the 0.19 nA step, and
 every human-qualification claim, none of which this evidence supports.
+
+
+The first implicit full104 driven attempt terminated at 5639.421 seconds
+with a supervisor status-file sharing violation, which killed the worker.
+Worker PIDs were checked absent; no runtime verdict was produced. Prior
+construction and initialization checkpoints remain valid. A fresh r2 attempt
+uses identical numerical inputs and caps, with atomic status publication that
+tolerates a locked reader. A real Windows file-lock regression passes creation,
+failed replacement with intact old JSON, recovery after release, and cleanup.
+The first helper test exposed PowerShell converting a null backup path to an
+empty string; explicit NullString fixes that interop issue. Future monitoring
+changes must exercise real file handles before an expensive run.
+
+## Diagnostic diagrams (2026-09-09)
+
+Hartshorne-form pictures, each generated from committed JSON by a tested script in this directory:
+Youden contract plots [E](h01-youden-contract-e.png) and [I](h01-youden-contract-i.png)
+(`h01_youden_contract.py`), the whole-programme [search tree](h01-search-tree.png)
+(`h01_search_tree.py`), and Thevenin four-box diagrams for the [I clamp](h01-thevenin-i-clamp.png)
+and the [I-to-E pair](h01-thevenin-ie-pair.png) (`h01_thevenin_boxes.py`). Readings are in
+`docs/h01-causal-model.md`. The earlier `h01-youden-i-candidate-*.png` files, which compared one
+model at two drives, were removed.

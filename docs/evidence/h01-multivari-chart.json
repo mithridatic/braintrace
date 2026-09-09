@@ -1,0 +1,90 @@
+{
+  "data": "h01-multivari-data.json",
+  "missing_model_traces": [],
+  "answers": {
+    "E": {
+      "width_ms": {
+        "nominal": 0.9860242798531544,
+        "ranges": {
+          "cycle (within sweep)": 0.026809959206730127,
+          "sweep (repeat)": 0.008055449788344049,
+          "input (drive)": 0.11180530031246105,
+          "machine (human vs model)": 0.02908258707326994
+        },
+        "varies_most": "input (drive)"
+      },
+      "ahp_mv": {
+        "nominal": -69.46875298023224,
+        "ranges": {
+          "cycle (within sweep)": 0.8262407893084145,
+          "sweep (repeat)": 0.6875023245811462,
+          "input (drive)": 1.9102567472518928,
+          "machine (human vs model)": 1.9314056384798164
+        },
+        "varies_most": "machine (human vs model)"
+      },
+      "cycle_ms": {
+        "nominal": 101.96000000000004,
+        "ranges": {
+          "cycle (within sweep)": 109.96792451585907,
+          "sweep (repeat)": 56.12000000000012,
+          "input (drive)": 256.06820512820514,
+          "machine (human vs model)": 11.020529981403357
+        },
+        "varies_most": "input (drive)"
+      },
+      "rise_v_per_s": {
+        "nominal": 300.00000260797606,
+        "ranges": {
+          "cycle (within sweep)": 25.781230215239532,
+          "sweep (repeat)": 3.9062113501166777,
+          "input (drive)": 54.26685070427959,
+          "machine (human vs model)": 342.34115201789723
+        },
+        "varies_most": "machine (human vs model)"
+      }
+    },
+    "I": {
+      "width_ms": {
+        "nominal": 0.28216342740654454,
+        "ranges": {
+          "cycle (within sweep)": 0.002029656923696166,
+          "sweep (repeat)": 0.00411753458615749,
+          "input (drive)": 0.01480443615443977,
+          "machine (human vs model)": 0.05938652484248455
+        },
+        "varies_most": "machine (human vs model)"
+      },
+      "ahp_mv": {
+        "nominal": -79.65625,
+        "ranges": {
+          "cycle (within sweep)": 0.7925476069895652,
+          "sweep (repeat)": 0.3750026226043701,
+          "input (drive)": 0.7903131987335286,
+          "machine (human vs model)": 0.6835201718070039
+        },
+        "varies_most": "cycle (within sweep)"
+      },
+      "cycle_ms": {
+        "nominal": 25.90999999999991,
+        "ranges": {
+          "cycle (within sweep)": 18.755166851829784,
+          "sweep (repeat)": 17.019999999999982,
+          "input (drive)": 54.33,
+          "machine (human vs model)": 1.925146801996938
+        },
+        "varies_most": "input (drive)"
+      },
+      "rise_v_per_s": {
+        "nominal": 542.9687499998798,
+        "ranges": {
+          "cycle (within sweep)": 18.101281843258448,
+          "sweep (repeat)": 10.937498885851255,
+          "input (drive)": 63.93230343251793,
+          "machine (human vs model)": 83.20571491026669
+        },
+        "varies_most": "machine (human vs model)"
+      }
+    }
+  }
+}

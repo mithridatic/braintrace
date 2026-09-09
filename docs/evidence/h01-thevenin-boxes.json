@@ -1,0 +1,21 @@
+{
+  "sources": [
+    "h01-ie-synapse-literature.json",
+    "h01-i-campaign\\a-into-G1a-027.json",
+    "h01-ie-inhibition\\decision.json"
+  ],
+  "numbers": {
+    "bias_pa": 31.445374082395006,
+    "human_ns": 3.1,
+    "circuit_ns": 20.0,
+    "human_rev_mv": -75,
+    "circuit_rev_mv": -80,
+    "human_delay_ms": 2.31,
+    "circuit_delay_ms": 0.5,
+    "soma_deflection_mv": 0.003,
+    "receptor_deflection_mv": [
+      10.0,
+      15.0
+    ]
+  }
+}

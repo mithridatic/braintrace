@@ -1,0 +1,112 @@
+{
+  "status": "source-presence verified",
+  "scope": "read-only source and applied-parameter audit; no new simulation",
+  "inputs": {
+    "fit": {
+      "path": ".cache\\human-pyramidal-l2\\541563728_fit.json",
+      "sha256": "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+    },
+    "Im_source": {
+      "path": ".cache\\human-pyramidal-l2\\kv3-closing-source\\Im.mod",
+      "sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c"
+    },
+    "sweep43": {
+      "path": "docs\\evidence\\h01-e-gain\\g0-b3-sweep43.json",
+      "sha256": "623d1e6228486f99d2274fce04817d4ef31d0462cd801a23f1e9522059757128"
+    },
+    "sweep50": {
+      "path": "docs\\evidence\\h01-e-gain\\g0-b3-sweep50.json",
+      "sha256": "d0ff5f544fb872b8bf5ca2cf797a810780ceb6720b8aa3bea9342ca6e9d30cb0"
+    },
+    "sweep53": {
+      "path": "docs\\evidence\\h01-e-gain\\g0-b3-sweep53.json",
+      "sha256": "06838574ea2ea28f06761c9417bf60edc9cb68e4e7277cfe7f5a6e7dc4e3c0ba"
+    },
+    "sweep56": {
+      "path": "docs\\evidence\\h01-e-gain\\g0-b3-sweep56.json",
+      "sha256": "fb9bafcd27b12d5dd66630d08dc9e62f615384313acc36811535e7a44d241398"
+    }
+  },
+  "source_Im_rows": [
+    {
+      "section": "soma",
+      "name": "gbar_Im",
+      "value": 0.0003009224287506406,
+      "mechanism": "Im"
+    }
+  ],
+  "observations": [
+    {
+      "sweep": 43,
+      "applied_Im": [
+        {
+          "section": "soma",
+          "name": "gbar_Im",
+          "value": 0.0003009224287506406,
+          "mechanism": "Im",
+          "section_count": 1
+        }
+      ],
+      "Im_source_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+      "fit_sha256": "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+    },
+    {
+      "sweep": 50,
+      "applied_Im": [
+        {
+          "section": "soma",
+          "name": "gbar_Im",
+          "value": 0.0003009224287506406,
+          "mechanism": "Im",
+          "section_count": 1
+        }
+      ],
+      "Im_source_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+      "fit_sha256": "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+    },
+    {
+      "sweep": 53,
+      "applied_Im": [
+        {
+          "section": "soma",
+          "name": "gbar_Im",
+          "value": 0.0003009224287506406,
+          "mechanism": "Im",
+          "section_count": 1
+        }
+      ],
+      "Im_source_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+      "fit_sha256": "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+    },
+    {
+      "sweep": 56,
+      "applied_Im": [
+        {
+          "section": "soma",
+          "name": "gbar_Im",
+          "value": 0.0003009224287506406,
+          "mechanism": "Im",
+          "section_count": 1
+        }
+      ],
+      "Im_source_sha256": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+      "fit_sha256": "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+    }
+  ],
+  "finding": "Frozen B3 includes a nonzero somatic Im current in all four opening gain-split runs. Absence of an M current is not a valid causal premise.",
+  "source_definition": {
+    "conductance": "gbar*m",
+    "current": "g*(v-ek)",
+    "initialization": "m=mInf",
+    "alpha_per_ms": "0.0033*exp(0.1*(v+35))",
+    "beta_per_ms": "0.0033*exp(-0.1*(v+35))",
+    "temperature_factor": "2.3^((celsius-21)/10)",
+    "source_comment_attribution": "Adams et al. 1982, M-currents in bullfrog sympathetic neurones"
+  },
+  "limits": [
+    "This verifies source presence and recorded application, not human-specific kinetics.",
+    "No measured perturbation establishes Im as necessary or sufficient for the gain defect.",
+    "Existing physiological failures, sealed holdout and campaign cap remain unchanged."
+  ],
+  "historical_decision_preserved": "docs/evidence/h01-e-gain/stage-close-decision.json"
+}

@@ -1,0 +1,82 @@
+{
+  "verdict": "PASS",
+  "scope": "Four corrected components electrically constructed; no initialization, runtime, physiology or full104 pass",
+  "build_sha256": "e66b8d70a735aff618ffb4be2b1bd125d26a9e2759cbde84db3723c1373f3858",
+  "selection_sha256": "a4b228d0427780075ed674926ce0d0ba2b311524cb43ece23d0cedee8c0c9f35",
+  "construction_seconds": 23.932328099996084,
+  "compartments": 12563,
+  "rows": [
+    {
+      "cell": "7196644737",
+      "component": 6,
+      "compartments": 1691,
+      "output_site": {
+        "source_point": [
+          1335,
+          0.7102838626269223
+        ],
+        "output_cv_id": 1633,
+        "output_midpoint": [
+          1335,
+          0.7198878868082921
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      },
+      "donor": "l2-pyramidal-allen-541563728"
+    },
+    {
+      "cell": "4138580687",
+      "component": 2,
+      "compartments": 1510,
+      "output_site": {
+        "source_point": [
+          644,
+          0.25083532428929256
+        ],
+        "output_cv_id": 798,
+        "output_midpoint": [
+          644,
+          0.2565361271140494
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      },
+      "donor": "l2-pyramidal-allen-541563728"
+    },
+    {
+      "cell": "4668874666",
+      "component": 1,
+      "compartments": 3310,
+      "output_site": {
+        "source_point": [
+          1482,
+          0.8475690615446452
+        ],
+        "output_cv_id": 2856,
+        "output_midpoint": [
+          1482,
+          0.8341192728574055
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      },
+      "donor": "l4-pyramidal-allen-527952884"
+    },
+    {
+      "cell": "3470629528",
+      "component": 1,
+      "compartments": 6052,
+      "output_site": {
+        "source_point": [
+          2097,
+          0.5889775438687338
+        ],
+        "output_cv_id": 2974,
+        "output_midpoint": [
+          2097,
+          0.5772948720657769
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      },
+      "donor": "l2-pyramidal-allen-541563728"
+    }
+  ]
+}

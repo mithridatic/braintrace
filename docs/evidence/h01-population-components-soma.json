@@ -1,0 +1,1579 @@
+{
+  "archive": "proofread104.zip",
+  "summary": {
+    "cells": 104,
+    "components": 3327,
+    "cells_with_one_soma_component": 31,
+    "cells_with_several_soma_components": 73,
+    "cells_without_soma": 0,
+    "cells_where_largest_lacks_soma": 0,
+    "largest_share_median": 0.7697998906243099,
+    "largest_share_min": 0.2471178568466451,
+    "contact_endpoints": 6,
+    "contact_endpoints_on_soma_component": 5
+  },
+  "cells": [
+    {
+      "cell_id": "546925828",
+      "components": 10,
+      "nodes": 14855,
+      "soma_components": [
+        1
+      ],
+      "largest_component": 1,
+      "largest_share": 0.7247391450690004,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "547114083",
+      "components": 92,
+      "nodes": 27899,
+      "soma_components": [
+        0,
+        1,
+        56,
+        77
+      ],
+      "largest_component": 1,
+      "largest_share": 0.6278719667371591,
+      "largest_has_soma": true,
+      "fragments_without_soma": 88
+    },
+    {
+      "cell_id": "620880207",
+      "components": 64,
+      "nodes": 84337,
+      "soma_components": [
+        0,
+        20,
+        22,
+        40,
+        56
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7544968400583374,
+      "largest_has_soma": true,
+      "fragments_without_soma": 59
+    },
+    {
+      "cell_id": "678539249",
+      "components": 9,
+      "nodes": 5785,
+      "soma_components": [
+        0,
+        5,
+        6,
+        7
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7744165946413137,
+      "largest_has_soma": true,
+      "fragments_without_soma": 5
+    },
+    {
+      "cell_id": "751294744",
+      "components": 22,
+      "nodes": 43927,
+      "soma_components": [
+        0,
+        12,
+        16
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7840280465317458,
+      "largest_has_soma": true,
+      "fragments_without_soma": 19
+    },
+    {
+      "cell_id": "810151953",
+      "components": 1,
+      "nodes": 14215,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 1.0,
+      "largest_has_soma": true,
+      "fragments_without_soma": 0
+    },
+    {
+      "cell_id": "810970127",
+      "components": 16,
+      "nodes": 49677,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9576262656762687,
+      "largest_has_soma": true,
+      "fragments_without_soma": 15
+    },
+    {
+      "cell_id": "883843993",
+      "components": 36,
+      "nodes": 39145,
+      "soma_components": [
+        11,
+        12,
+        2,
+        3,
+        7,
+        9
+      ],
+      "largest_component": 2,
+      "largest_share": 0.5809937412185464,
+      "largest_has_soma": true,
+      "fragments_without_soma": 30
+    },
+    {
+      "cell_id": "955432427",
+      "components": 19,
+      "nodes": 13040,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8837423312883436,
+      "largest_has_soma": true,
+      "fragments_without_soma": 18
+    },
+    {
+      "cell_id": "1072605926",
+      "components": 45,
+      "nodes": 25895,
+      "soma_components": [
+        0,
+        43
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6225139988414752,
+      "largest_has_soma": true,
+      "fragments_without_soma": 43
+    },
+    {
+      "cell_id": "1304599410",
+      "components": 32,
+      "nodes": 51248,
+      "soma_components": [
+        0,
+        23
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7764985950671246,
+      "largest_has_soma": true,
+      "fragments_without_soma": 30
+    },
+    {
+      "cell_id": "1465400601",
+      "components": 16,
+      "nodes": 32721,
+      "soma_components": [
+        0,
+        11,
+        6
+      ],
+      "largest_component": 0,
+      "largest_share": 0.876195715289875,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "1669770671",
+      "components": 28,
+      "nodes": 51560,
+      "soma_components": [
+        0,
+        10,
+        11,
+        14,
+        18,
+        2,
+        21,
+        26
+      ],
+      "largest_component": 0,
+      "largest_share": 0.555178432893716,
+      "largest_has_soma": true,
+      "fragments_without_soma": 20
+    },
+    {
+      "cell_id": "1684504313",
+      "components": 267,
+      "nodes": 63526,
+      "soma_components": [
+        0,
+        234,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5887510625570632,
+      "largest_has_soma": true,
+      "fragments_without_soma": 264
+    },
+    {
+      "cell_id": "1787105373",
+      "components": 3,
+      "nodes": 8912,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9857495511669659,
+      "largest_has_soma": true,
+      "fragments_without_soma": 2
+    },
+    {
+      "cell_id": "1830470325",
+      "components": 15,
+      "nodes": 18184,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.826385833699956,
+      "largest_has_soma": true,
+      "fragments_without_soma": 14
+    },
+    {
+      "cell_id": "1874244336",
+      "components": 56,
+      "nodes": 101611,
+      "soma_components": [
+        0,
+        25,
+        26
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7882611134621251,
+      "largest_has_soma": true,
+      "fragments_without_soma": 53
+    },
+    {
+      "cell_id": "1900905433",
+      "components": 43,
+      "nodes": 49940,
+      "soma_components": [
+        0,
+        12,
+        19,
+        25,
+        30,
+        5,
+        9
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6059671605927113,
+      "largest_has_soma": true,
+      "fragments_without_soma": 36
+    },
+    {
+      "cell_id": "1930502394",
+      "components": 8,
+      "nodes": 91173,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9814638105579503,
+      "largest_has_soma": true,
+      "fragments_without_soma": 7
+    },
+    {
+      "cell_id": "2001418787",
+      "components": 15,
+      "nodes": 16610,
+      "soma_components": [
+        0,
+        4
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6355809753160746,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "2047644309",
+      "components": 61,
+      "nodes": 39182,
+      "soma_components": [
+        1,
+        11,
+        24,
+        33,
+        34,
+        8
+      ],
+      "largest_component": 1,
+      "largest_share": 0.4359399724363228,
+      "largest_has_soma": true,
+      "fragments_without_soma": 55
+    },
+    {
+      "cell_id": "2074305737",
+      "components": 10,
+      "nodes": 27144,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9830533451223107,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "2103991145",
+      "components": 15,
+      "nodes": 60203,
+      "soma_components": [
+        0,
+        1
+      ],
+      "largest_component": 1,
+      "largest_share": 0.6337890138365198,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "2104047922",
+      "components": 21,
+      "nodes": 18349,
+      "soma_components": [
+        0,
+        11,
+        6,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.684887459807074,
+      "largest_has_soma": true,
+      "fragments_without_soma": 17
+    },
+    {
+      "cell_id": "2195261734",
+      "components": 39,
+      "nodes": 51454,
+      "soma_components": [
+        0,
+        15
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7718350371205348,
+      "largest_has_soma": true,
+      "fragments_without_soma": 37
+    },
+    {
+      "cell_id": "2252715458",
+      "components": 20,
+      "nodes": 36376,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.971657136573565,
+      "largest_has_soma": true,
+      "fragments_without_soma": 19
+    },
+    {
+      "cell_id": "2306214824",
+      "components": 18,
+      "nodes": 21882,
+      "soma_components": [
+        0,
+        10,
+        2,
+        6,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8332876336715108,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "2325998949",
+      "components": 32,
+      "nodes": 10001,
+      "soma_components": [
+        0,
+        27
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7479252074792521,
+      "largest_has_soma": true,
+      "fragments_without_soma": 30
+    },
+    {
+      "cell_id": "2451406889",
+      "components": 4,
+      "nodes": 3865,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9702457956015524,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3
+    },
+    {
+      "cell_id": "2530864375",
+      "components": 4,
+      "nodes": 1803,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8541320022185247,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3
+    },
+    {
+      "cell_id": "2820958695",
+      "components": 15,
+      "nodes": 9973,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.48771683545573047,
+      "largest_has_soma": true,
+      "fragments_without_soma": 14
+    },
+    {
+      "cell_id": "2848552900",
+      "components": 5,
+      "nodes": 40907,
+      "soma_components": [
+        0,
+        2
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9146845283203364,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3
+    },
+    {
+      "cell_id": "2888180252",
+      "components": 11,
+      "nodes": 19754,
+      "soma_components": [
+        0,
+        2,
+        5,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7180824136883669,
+      "largest_has_soma": true,
+      "fragments_without_soma": 7
+    },
+    {
+      "cell_id": "2889815798",
+      "components": 17,
+      "nodes": 26174,
+      "soma_components": [
+        0,
+        14
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8881714678688775,
+      "largest_has_soma": true,
+      "fragments_without_soma": 15
+    },
+    {
+      "cell_id": "2903686765",
+      "components": 10,
+      "nodes": 25404,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9122185482601165,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "3093748739",
+      "components": 10,
+      "nodes": 27448,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9014135820460507,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "3111823553",
+      "components": 23,
+      "nodes": 35870,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7895734597156399,
+      "largest_has_soma": true,
+      "fragments_without_soma": 22
+    },
+    {
+      "cell_id": "3139317430",
+      "components": 30,
+      "nodes": 34098,
+      "soma_components": [
+        0,
+        11,
+        26,
+        27,
+        29,
+        4
+      ],
+      "largest_component": 0,
+      "largest_share": 0.4444835474221362,
+      "largest_has_soma": true,
+      "fragments_without_soma": 24
+    },
+    {
+      "cell_id": "3178243558",
+      "components": 15,
+      "nodes": 7412,
+      "soma_components": [
+        0,
+        4
+      ],
+      "largest_component": 0,
+      "largest_share": 0.37075013491635184,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "3329117097",
+      "components": 25,
+      "nodes": 73826,
+      "soma_components": [
+        0,
+        1,
+        12
+      ],
+      "largest_component": 1,
+      "largest_share": 0.7677647441280849,
+      "largest_has_soma": true,
+      "fragments_without_soma": 22
+    },
+    {
+      "cell_id": "3383650350",
+      "components": 45,
+      "nodes": 18548,
+      "soma_components": [
+        0,
+        5
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8433793400905758,
+      "largest_has_soma": true,
+      "fragments_without_soma": 43
+    },
+    {
+      "cell_id": "3432315514",
+      "components": 25,
+      "nodes": 27128,
+      "soma_components": [
+        0,
+        5,
+        9
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7090828664110882,
+      "largest_has_soma": true,
+      "fragments_without_soma": 22
+    },
+    {
+      "cell_id": "3470629528",
+      "components": 9,
+      "nodes": 54270,
+      "soma_components": [
+        0,
+        1
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5892758430071863,
+      "largest_has_soma": true,
+      "fragments_without_soma": 7,
+      "selected_component": {
+        "component": 1,
+        "nodes": 21738,
+        "has_soma": true,
+        "source_sha256": "18c4be2295777e38d8c889a38f63c9a22df1b495b92985f74edf9f52db5ec09b",
+        "evidence": "docs\\evidence\\h01-soma-component-anchor-comparison.json",
+        "evidence_sha256": "84a753ec8e3e3ce59b939e539567e8742293dce66a0c80aa90117ad05c8e582a"
+      }
+    },
+    {
+      "cell_id": "3503540481",
+      "components": 37,
+      "nodes": 82089,
+      "soma_components": [
+        0,
+        23,
+        25
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9543909659028615,
+      "largest_has_soma": true,
+      "fragments_without_soma": 34
+    },
+    {
+      "cell_id": "3519995546",
+      "components": 237,
+      "nodes": 58001,
+      "soma_components": [
+        0,
+        114,
+        230,
+        57
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5511284288201928,
+      "largest_has_soma": true,
+      "fragments_without_soma": 233
+    },
+    {
+      "cell_id": "3571083397",
+      "components": 14,
+      "nodes": 21583,
+      "soma_components": [
+        0,
+        3,
+        9
+      ],
+      "largest_component": 0,
+      "largest_share": 0.49279525552518183,
+      "largest_has_soma": true,
+      "fragments_without_soma": 11
+    },
+    {
+      "cell_id": "3680152874",
+      "components": 10,
+      "nodes": 8841,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6923424951928515,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "3751392341",
+      "components": 6,
+      "nodes": 3534,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9900962082625919,
+      "largest_has_soma": true,
+      "fragments_without_soma": 5
+    },
+    {
+      "cell_id": "3761379470",
+      "components": 5,
+      "nodes": 8620,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7142691415313225,
+      "largest_has_soma": true,
+      "fragments_without_soma": 4
+    },
+    {
+      "cell_id": "3812058320",
+      "components": 23,
+      "nodes": 38028,
+      "soma_components": [
+        0,
+        5
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8803776164931103,
+      "largest_has_soma": true,
+      "fragments_without_soma": 21
+    },
+    {
+      "cell_id": "3836078296",
+      "components": 2,
+      "nodes": 23574,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9998727411555103,
+      "largest_has_soma": true,
+      "fragments_without_soma": 1
+    },
+    {
+      "cell_id": "3954491075",
+      "components": 8,
+      "nodes": 21974,
+      "soma_components": [
+        0,
+        6
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9351506325657596,
+      "largest_has_soma": true,
+      "fragments_without_soma": 6
+    },
+    {
+      "cell_id": "3955003482",
+      "components": 57,
+      "nodes": 127996,
+      "soma_components": [
+        0,
+        20,
+        22,
+        33,
+        42,
+        5,
+        7
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8610190943466983,
+      "largest_has_soma": true,
+      "fragments_without_soma": 50
+    },
+    {
+      "cell_id": "4010150634",
+      "components": 9,
+      "nodes": 13299,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8777351680577486,
+      "largest_has_soma": true,
+      "fragments_without_soma": 8
+    },
+    {
+      "cell_id": "4039221194",
+      "components": 30,
+      "nodes": 48714,
+      "soma_components": [
+        10,
+        11,
+        18,
+        2,
+        21,
+        3
+      ],
+      "largest_component": 2,
+      "largest_share": 0.7759371022703946,
+      "largest_has_soma": true,
+      "fragments_without_soma": 24
+    },
+    {
+      "cell_id": "4125702786",
+      "components": 10,
+      "nodes": 14617,
+      "soma_components": [
+        0,
+        3,
+        4
+      ],
+      "largest_component": 3,
+      "largest_share": 0.5401929260450161,
+      "largest_has_soma": true,
+      "fragments_without_soma": 7
+    },
+    {
+      "cell_id": "4138580687",
+      "components": 5,
+      "nodes": 20664,
+      "soma_components": [
+        0,
+        2
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6440669763840495,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3,
+      "selected_component": {
+        "component": 2,
+        "nodes": 6363,
+        "has_soma": true,
+        "source_sha256": "5bd3341865957b721d8aff59e652d188c16d2a145c6da938edfb52d239562c2f",
+        "evidence": "docs\\evidence\\h01-soma-component-anchor-comparison.json",
+        "evidence_sha256": "84a753ec8e3e3ce59b939e539567e8742293dce66a0c80aa90117ad05c8e582a"
+      }
+    },
+    {
+      "cell_id": "4157825456",
+      "components": 51,
+      "nodes": 84800,
+      "soma_components": [
+        0,
+        1,
+        11,
+        38,
+        39
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5468042452830189,
+      "largest_has_soma": true,
+      "fragments_without_soma": 46
+    },
+    {
+      "cell_id": "4188575291",
+      "components": 25,
+      "nodes": 63851,
+      "soma_components": [
+        0,
+        23
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7977322203254452,
+      "largest_has_soma": true,
+      "fragments_without_soma": 23
+    },
+    {
+      "cell_id": "4197933517",
+      "components": 16,
+      "nodes": 22785,
+      "soma_components": [
+        0,
+        2
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5145929339477726,
+      "largest_has_soma": true,
+      "fragments_without_soma": 14
+    },
+    {
+      "cell_id": "4260528559",
+      "components": 11,
+      "nodes": 8561,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5595140754584744,
+      "largest_has_soma": true,
+      "fragments_without_soma": 10
+    },
+    {
+      "cell_id": "4365276903",
+      "components": 8,
+      "nodes": 24045,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9048450821376586,
+      "largest_has_soma": true,
+      "fragments_without_soma": 7
+    },
+    {
+      "cell_id": "4420044370",
+      "components": 2,
+      "nodes": 4629,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9989198531000216,
+      "largest_has_soma": true,
+      "fragments_without_soma": 1
+    },
+    {
+      "cell_id": "4437316933",
+      "components": 30,
+      "nodes": 30909,
+      "soma_components": [
+        0,
+        2,
+        23
+      ],
+      "largest_component": 0,
+      "largest_share": 0.750137500404413,
+      "largest_has_soma": true,
+      "fragments_without_soma": 27
+    },
+    {
+      "cell_id": "4467761196",
+      "components": 40,
+      "nodes": 9890,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7600606673407482,
+      "largest_has_soma": true,
+      "fragments_without_soma": 39
+    },
+    {
+      "cell_id": "4476359994",
+      "components": 4,
+      "nodes": 15283,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.865013413596807,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3
+    },
+    {
+      "cell_id": "4522237537",
+      "components": 11,
+      "nodes": 29710,
+      "soma_components": [
+        0,
+        6
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9051497812184449,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "4535129012",
+      "components": 7,
+      "nodes": 37368,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9671911796189253,
+      "largest_has_soma": true,
+      "fragments_without_soma": 6
+    },
+    {
+      "cell_id": "4554213569",
+      "components": 38,
+      "nodes": 32064,
+      "soma_components": [
+        0,
+        31,
+        32,
+        36
+      ],
+      "largest_component": 0,
+      "largest_share": 0.515999251497006,
+      "largest_has_soma": true,
+      "fragments_without_soma": 34
+    },
+    {
+      "cell_id": "4582188328",
+      "components": 36,
+      "nodes": 82343,
+      "soma_components": [
+        0,
+        1,
+        27
+      ],
+      "largest_component": 1,
+      "largest_share": 0.8522643090487352,
+      "largest_has_soma": true,
+      "fragments_without_soma": 33
+    },
+    {
+      "cell_id": "4607885827",
+      "components": 6,
+      "nodes": 16230,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9000616142945164,
+      "largest_has_soma": true,
+      "fragments_without_soma": 5
+    },
+    {
+      "cell_id": "4641147055",
+      "components": 167,
+      "nodes": 64344,
+      "soma_components": [
+        0,
+        113,
+        114,
+        150,
+        159,
+        160,
+        91,
+        94
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7831033196568444,
+      "largest_has_soma": true,
+      "fragments_without_soma": 159
+    },
+    {
+      "cell_id": "4668874666",
+      "components": 21,
+      "nodes": 37311,
+      "soma_components": [
+        0,
+        1,
+        10,
+        12
+      ],
+      "largest_component": 0,
+      "largest_share": 0.3065047841119241,
+      "largest_has_soma": true,
+      "fragments_without_soma": 17,
+      "selected_component": {
+        "component": 1,
+        "nodes": 10301,
+        "has_soma": true,
+        "source_sha256": "9d0f227e9d354d870edb94a066cbe59244dab260b615bd93c9ac643094cc5450",
+        "evidence": "docs\\evidence\\h01-soma-component-anchor-comparison.json",
+        "evidence_sha256": "84a753ec8e3e3ce59b939e539567e8742293dce66a0c80aa90117ad05c8e582a"
+      }
+    },
+    {
+      "cell_id": "4711567524",
+      "components": 206,
+      "nodes": 111809,
+      "soma_components": [
+        0,
+        14,
+        193,
+        194,
+        2,
+        30,
+        33,
+        62,
+        63,
+        66,
+        67,
+        71,
+        99
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5942634313874554,
+      "largest_has_soma": true,
+      "fragments_without_soma": 193
+    },
+    {
+      "cell_id": "4711641825",
+      "components": 4,
+      "nodes": 7615,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8856204858831254,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3
+    },
+    {
+      "cell_id": "4830551047",
+      "components": 14,
+      "nodes": 12256,
+      "soma_components": [
+        1,
+        9
+      ],
+      "largest_component": 1,
+      "largest_share": 0.6783616187989556,
+      "largest_has_soma": true,
+      "fragments_without_soma": 12
+    },
+    {
+      "cell_id": "4853956860",
+      "components": 3,
+      "nodes": 8116,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9603252833908329,
+      "largest_has_soma": true,
+      "fragments_without_soma": 2
+    },
+    {
+      "cell_id": "4873639924",
+      "components": 104,
+      "nodes": 136367,
+      "soma_components": [
+        2,
+        25,
+        26,
+        4,
+        45,
+        66,
+        70,
+        73,
+        75,
+        81,
+        83,
+        91
+      ],
+      "largest_component": 4,
+      "largest_share": 0.4277941144118445,
+      "largest_has_soma": true,
+      "fragments_without_soma": 92
+    },
+    {
+      "cell_id": "4932057570",
+      "components": 36,
+      "nodes": 23135,
+      "soma_components": [
+        1,
+        11,
+        16,
+        17,
+        20,
+        4,
+        8
+      ],
+      "largest_component": 1,
+      "largest_share": 0.342727469202507,
+      "largest_has_soma": true,
+      "fragments_without_soma": 29
+    },
+    {
+      "cell_id": "5013648003",
+      "components": 15,
+      "nodes": 20159,
+      "soma_components": [
+        0,
+        5,
+        9
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5138151694032442,
+      "largest_has_soma": true,
+      "fragments_without_soma": 12
+    },
+    {
+      "cell_id": "5015035926",
+      "components": 58,
+      "nodes": 85992,
+      "soma_components": [
+        0,
+        11,
+        15,
+        28,
+        32
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6792841194529724,
+      "largest_has_soma": true,
+      "fragments_without_soma": 53
+    },
+    {
+      "cell_id": "5060444657",
+      "components": 59,
+      "nodes": 22877,
+      "soma_components": [
+        0,
+        24,
+        50
+      ],
+      "largest_component": 0,
+      "largest_share": 0.4514140840145124,
+      "largest_has_soma": true,
+      "fragments_without_soma": 56
+    },
+    {
+      "cell_id": "5061320552",
+      "components": 24,
+      "nodes": 27410,
+      "soma_components": [
+        0,
+        1,
+        5
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5364465523531557,
+      "largest_has_soma": true,
+      "fragments_without_soma": 21
+    },
+    {
+      "cell_id": "5136107765",
+      "components": 62,
+      "nodes": 87780,
+      "soma_components": [
+        0,
+        1,
+        14,
+        3,
+        39,
+        4,
+        44,
+        48,
+        49,
+        5,
+        54,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6416381863750285,
+      "largest_has_soma": true,
+      "fragments_without_soma": 50
+    },
+    {
+      "cell_id": "5173982155",
+      "components": 19,
+      "nodes": 29170,
+      "soma_components": [
+        0,
+        11,
+        12,
+        15,
+        17,
+        3,
+        5
+      ],
+      "largest_component": 3,
+      "largest_share": 0.3481659238944121,
+      "largest_has_soma": true,
+      "fragments_without_soma": 12
+    },
+    {
+      "cell_id": "5175880292",
+      "components": 46,
+      "nodes": 38523,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9127274615164966,
+      "largest_has_soma": true,
+      "fragments_without_soma": 45
+    },
+    {
+      "cell_id": "5215113731",
+      "components": 8,
+      "nodes": 34011,
+      "soma_components": [
+        0,
+        5,
+        7
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8976801623004322,
+      "largest_has_soma": true,
+      "fragments_without_soma": 5
+    },
+    {
+      "cell_id": "5216806368",
+      "components": 55,
+      "nodes": 72031,
+      "soma_components": [
+        0,
+        2,
+        39,
+        40,
+        44
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8923657869528397,
+      "largest_has_soma": true,
+      "fragments_without_soma": 50
+    },
+    {
+      "cell_id": "5319188363",
+      "components": 44,
+      "nodes": 39833,
+      "soma_components": [
+        0,
+        16,
+        21
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7874124469660834,
+      "largest_has_soma": true,
+      "fragments_without_soma": 41
+    },
+    {
+      "cell_id": "5352961465",
+      "components": 30,
+      "nodes": 78199,
+      "soma_components": [
+        0,
+        17,
+        19,
+        20,
+        22,
+        24
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8718142175731147,
+      "largest_has_soma": true,
+      "fragments_without_soma": 24
+    },
+    {
+      "cell_id": "5355296383",
+      "components": 48,
+      "nodes": 39273,
+      "soma_components": [
+        0,
+        23,
+        31,
+        32,
+        36
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6457107936750439,
+      "largest_has_soma": true,
+      "fragments_without_soma": 43
+    },
+    {
+      "cell_id": "5439194879",
+      "components": 11,
+      "nodes": 22094,
+      "soma_components": [
+        0,
+        4
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7231827645514619,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "5536146025",
+      "components": 15,
+      "nodes": 39503,
+      "soma_components": [
+        0,
+        1
+      ],
+      "largest_component": 1,
+      "largest_share": 0.4941903146596461,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "5584343344",
+      "components": 27,
+      "nodes": 39307,
+      "soma_components": [
+        0,
+        11,
+        18,
+        19,
+        5
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9732872007530465,
+      "largest_has_soma": true,
+      "fragments_without_soma": 22
+    },
+    {
+      "cell_id": "5654281423",
+      "components": 28,
+      "nodes": 65581,
+      "soma_components": [
+        0,
+        2,
+        3,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8581296412070569,
+      "largest_has_soma": true,
+      "fragments_without_soma": 24
+    },
+    {
+      "cell_id": "5687162964",
+      "components": 17,
+      "nodes": 34600,
+      "soma_components": [
+        0,
+        10,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8994219653179191,
+      "largest_has_soma": true,
+      "fragments_without_soma": 14
+    },
+    {
+      "cell_id": "5805562981",
+      "components": 12,
+      "nodes": 14726,
+      "soma_components": [
+        0,
+        9
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7200190139888633,
+      "largest_has_soma": true,
+      "fragments_without_soma": 10
+    },
+    {
+      "cell_id": "5832764277",
+      "components": 80,
+      "nodes": 105539,
+      "soma_components": [
+        0,
+        1,
+        13,
+        17,
+        32,
+        34,
+        4,
+        41,
+        42,
+        43,
+        46,
+        53,
+        62,
+        79
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6735519570964288,
+      "largest_has_soma": true,
+      "fragments_without_soma": 66
+    },
+    {
+      "cell_id": "5965472721",
+      "components": 20,
+      "nodes": 8664,
+      "soma_components": [
+        0,
+        10
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6000692520775623,
+      "largest_has_soma": true,
+      "fragments_without_soma": 18
+    },
+    {
+      "cell_id": "6126390733",
+      "components": 6,
+      "nodes": 5944,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9488559892328399,
+      "largest_has_soma": true,
+      "fragments_without_soma": 5
+    },
+    {
+      "cell_id": "6833911543",
+      "components": 10,
+      "nodes": 22536,
+      "soma_components": [
+        0,
+        1,
+        6
+      ],
+      "largest_component": 1,
+      "largest_share": 0.6870784522541711,
+      "largest_has_soma": true,
+      "fragments_without_soma": 7
+    },
+    {
+      "cell_id": "7052969349",
+      "components": 6,
+      "nodes": 33142,
+      "soma_components": [
+        0,
+        2,
+        3
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9909178685655663,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3
+    },
+    {
+      "cell_id": "7196644737",
+      "components": 32,
+      "nodes": 24114,
+      "soma_components": [
+        0,
+        13,
+        14,
+        15,
+        18,
+        20,
+        3,
+        6,
+        7
+      ],
+      "largest_component": 0,
+      "largest_share": 0.2471178568466451,
+      "largest_has_soma": true,
+      "fragments_without_soma": 23,
+      "selected_component": {
+        "component": 6,
+        "nodes": 5958,
+        "has_soma": true,
+        "source_sha256": "e8461ecd0c5586794563259e101b1266f633ca319282b6c8cd7fab143edb6eab",
+        "evidence": "docs\\evidence\\h01-soma-component-anchor-comparison.json",
+        "evidence_sha256": "84a753ec8e3e3ce59b939e539567e8742293dce66a0c80aa90117ad05c8e582a"
+      }
+    },
+    {
+      "cell_id": "7893125555",
+      "components": 41,
+      "nodes": 24620,
+      "soma_components": [
+        0,
+        15,
+        17,
+        2,
+        26
+      ],
+      "largest_component": 17,
+      "largest_share": 0.4344435418359058,
+      "largest_has_soma": true,
+      "fragments_without_soma": 36
+    }
+  ],
+  "contacts": [
+    {
+      "annotation_id": "124698307",
+      "side": "pre",
+      "cell_id": "4188575291",
+      "component": 0,
+      "on_soma_component": true
+    },
+    {
+      "annotation_id": "124698307",
+      "side": "post",
+      "cell_id": "3955003482",
+      "component": 0,
+      "on_soma_component": true
+    },
+    {
+      "annotation_id": "65017731",
+      "side": "pre",
+      "cell_id": "3519995546",
+      "component": 55,
+      "on_soma_component": false
+    },
+    {
+      "annotation_id": "65017731",
+      "side": "post",
+      "cell_id": "3680152874",
+      "component": 0,
+      "on_soma_component": true
+    },
+    {
+      "annotation_id": "8105899",
+      "side": "pre",
+      "cell_id": "5584343344",
+      "component": 0,
+      "on_soma_component": true
+    },
+    {
+      "annotation_id": "8105899",
+      "side": "post",
+      "cell_id": "4157825456",
+      "component": 0,
+      "on_soma_component": true
+    }
+  ],
+  "selection_provenance": {
+    "original_inventory_sha256": "ba30af2d1d50c953b8c93de0f646a8cc55bcbb3f488c5528decd8d04e90b16bb",
+    "policy": "Explicit anchor-supported overrides for four isolated cells; original largest-component statistics preserved; omitted components not joined"
+  }
+}
