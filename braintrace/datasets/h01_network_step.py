@@ -45,13 +45,18 @@ class H01NetworkStep(brainstate.nn.Module):
         self.ring_cursors = self.delivery.ring_cursors
         self.tick = brainstate.ShortTermState(jnp.asarray(0, dtype=jnp.int32))
 
-    def update(self):
+    def update(self, sample_probes=True):
         """Advance a cable step and return all named population probes.
+
+        Parameters
+        ----------
+        sample_probes : bool, optional
+            Whether to sample and return all placed probes; default True.
 
         Returns
         -------
-        dict
-            Nested population and probe values after dynamics advance.
+        dict or None
+            Nested population and probe values after dynamics advance, or None.
         """
         dt = self.dt_ms*u.ms
         with brainstate.environ.context(dt=dt, t=self.tick.value*dt):
@@ -64,7 +69,7 @@ class H01NetworkStep(brainstate.nn.Module):
             for cell in self.cells:
                 cell._update_dynamics()
             snapshots = {name: pop.cell.sample_probes()
-                         for name, pop in self.network.populations.items()}
+                         for name, pop in self.network.populations.items()} if sample_probes else None
             enqueue_future_events(self.setup.delivery_blocks, self.delivery,
                                   populations=self.network.populations)
             advance_delivery_state(self.delivery)

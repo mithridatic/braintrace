@@ -80,6 +80,7 @@ def test_active_delayed_contact_matches_native_and_reset_clears_queue(tmp_path):
     step.reset_state()
     assert np.count_nonzero(step.ring_buffers[0].value.mantissa) == 0
     assert int(step.ring_cursors[0].value) == 0
+    assert step.update(sample_probes=False) is None
 
 
 @pytest.mark.parametrize('reversal,tau', [(0., 2.), (-80., 5.)])

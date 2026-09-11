@@ -31,7 +31,7 @@ def _same(left, right):
 
 
 def _merge(values, shape, *, positional=False):
-    if positional and prod(shape) <= 4096:
+    if positional and prod(shape) <= 4096 and any(isinstance(value.bits, np.ndarray) for value in values):
         try:
             bits = np.zeros(shape, dtype=object)
             for value in values:

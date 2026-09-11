@@ -3,6 +3,7 @@
 import brainstate
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 
 def _zeros(layout, dtype):
@@ -10,14 +11,18 @@ def _zeros(layout, dtype):
                  for shape, row in zip(layout.shapes, layout.outputs))
 
 
-def _selectors(layout, color):
-    colors = jnp.asarray(layout.colors, dtype=jnp.int32)
-    return tuple(colors[jnp.asarray(row, dtype=jnp.int32)] == color for row in layout.outputs)
-
-
-def _accumulate(factors, tangents, selectors):
-    return tuple(factor + tangent[..., None] * select
-                 for factor, tangent, select in zip(factors, tangents, selectors, strict=True))
+def _color_metadata(layout):
+    colors_np = np.asarray(layout.colors, dtype=np.int32)
+    block_col_for_color = []
+    for c in range(layout.color_count):
+        active_dict = {}
+        for i, row in enumerate(layout.outputs):
+            for col, out_idx in enumerate(row):
+                if colors_np[out_idx] == c:
+                    active_dict[i] = col
+                    break
+        block_col_for_color.append(active_dict)
+    return colors_np, block_col_for_color
 
 
 def instant_factors(tail, output, layout):
@@ -45,17 +50,25 @@ def instant_factors(tail, output, layout):
     """
     if output.shape != (len(layout.colors),):
         raise ValueError('ETP output shape does not match sparse layout')
-    factors = _zeros(layout, output.dtype)
     if not layout.color_count:
-        return factors
-    colors = jnp.asarray(layout.colors, dtype=jnp.int32)
+        return _zeros(layout, output.dtype)
 
-    def direction(carry, color):
-        seed = (colors == color).astype(output.dtype)
+    colors_np, _ = _color_metadata(layout)
+    tangents_by_color = []
+    for c in range(layout.color_count):
+        out_mask = (colors_np == c).astype(output.dtype)
+        seed = jnp.asarray(out_mask)
         _, tangents = jax.jvp(tail, (output,), (seed,))
-        return _accumulate(carry, tangents, _selectors(layout, color)), None
+        tangents_by_color.append(tangents)
 
-    return brainstate.transform.scan(direction, factors, jnp.arange(layout.color_count))[0]
+    result = []
+    for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
+        if not row:
+            result.append(jnp.zeros(shape + (0,), dtype=output.dtype))
+            continue
+        cols = [tangents_by_color[colors_np[out_idx]][i] for out_idx in row]
+        result.append(jnp.stack(cols, axis=-1))
+    return tuple(result)
 
 
 def propagate_factors(transition, state, factors, layout):
@@ -88,18 +101,28 @@ def propagate_factors(transition, state, factors, layout):
     for value, factor, shape, row in zip(state, factors, layout.shapes, layout.outputs):
         if value.shape != shape or factor.shape != shape + (len(row),):
             raise ValueError('State or factor shape does not match sparse layout')
-    result = tuple(jnp.zeros_like(factor) for factor in factors)
     if not layout.color_count:
-        return result
+        return tuple(jnp.zeros_like(factor) for factor in factors)
 
-    def direction(carry, color):
-        selectors = _selectors(layout, color)
-        seed = tuple(jnp.sum(factor * select, axis=-1)
-                     for factor, select in zip(factors, selectors))
+    colors_np, block_col_for_color = _color_metadata(layout)
+    tangents_by_color = []
+    for c in range(layout.color_count):
+        active_dict = block_col_for_color[c]
+        seed = tuple(
+            factors[i][..., active_dict[i]] if i in active_dict else jnp.zeros_like(st)
+            for i, st in enumerate(state)
+        )
         _, tangents = jax.jvp(transition, (state,), (seed,))
-        return _accumulate(carry, tangents, selectors), None
+        tangents_by_color.append(tangents)
 
-    return brainstate.transform.scan(direction, result, jnp.arange(layout.color_count))[0]
+    result = []
+    for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
+        if not row:
+            result.append(jnp.zeros_like(factors[i]))
+            continue
+        cols = [tangents_by_color[colors_np[out_idx]][i] for out_idx in row]
+        result.append(jnp.stack(cols, axis=-1))
+    return tuple(result)
 
 
 def contract_factors(factors, cotangents, layout):
@@ -126,6 +149,8 @@ def contract_factors(factors, cotangents, layout):
     for factor, cotangent, shape, row in zip(factors, cotangents, layout.shapes, layout.outputs):
         if factor.shape != shape + (len(row),) or cotangent.shape != shape:
             raise ValueError('Factor or cotangent shape does not match sparse layout')
+        if not row:
+            continue
         value = jnp.sum(factor * cotangent[..., None], axis=tuple(range(len(shape))))
         result = result.at[jnp.asarray(row, dtype=jnp.int32)].add(value)
     return result
@@ -152,15 +177,30 @@ def advance_factors(transition, output, state, factors, layout, decay):
     tuple
         ``decay * J_state @ factors + (1-decay) * J_output`` in sparse form.
     """
-    result = _zeros(layout, output.dtype)
     if not layout.color_count:
-        return result
-    colors = jnp.asarray(layout.colors, dtype=jnp.int32)
-    def direction(carry, color):
-        selectors = _selectors(layout, color)
-        hidden_seed = tuple(decay*jnp.sum(factor*select, axis=-1)
-                            for factor, select in zip(factors, selectors, strict=True))
-        output_seed = (1-decay)*(colors == color).astype(output.dtype)
-        _, tangent = jax.jvp(transition, (output, state), (output_seed, hidden_seed))
-        return _accumulate(carry, tangent, selectors), None
-    return brainstate.transform.scan(direction, result, jnp.arange(layout.color_count))[0]
+        return _zeros(layout, output.dtype)
+
+    colors_np, block_col_for_color = _color_metadata(layout)
+    tangents_by_color = []
+    for c in range(layout.color_count):
+        out_mask = (colors_np == c).astype(output.dtype)
+        out_seed = (1.0 - decay) * jnp.asarray(out_mask)
+
+        active_dict = block_col_for_color[c]
+        hidden_seed = tuple(
+            decay * factors[i][..., active_dict[i]] if i in active_dict else jnp.zeros_like(st)
+            for i, st in enumerate(state)
+        )
+
+        _, tangent = jax.jvp(transition, (output, state), (out_seed, hidden_seed))
+        tangents_by_color.append(tangent)
+
+    result = []
+    for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
+        if not row:
+            result.append(jnp.zeros(shape + (0,), dtype=output.dtype))
+            continue
+        cols = [tangents_by_color[colors_np[out_idx]][i] for out_idx in row]
+        result.append(jnp.stack(cols, axis=-1))
+    return tuple(result)
+

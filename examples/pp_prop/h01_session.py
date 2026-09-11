@@ -1,6 +1,7 @@
 """Trainable H01 runtime construction and durable episode-boundary restoration."""
 
 from dataclasses import dataclass
+from functools import lru_cache
 from importlib.metadata import version
 import hashlib
 from pathlib import Path
@@ -19,14 +20,8 @@ from .h01_runtime import build_network
 from .h01_remap import remap_mutation, remap_optimizer_group
 
 
-def numerical_settings():
-    """Return the pinned numerical clocks and installed dependency identities.
-
-    Returns
-    -------
-    dict
-        Settings persisted in every H01 checkpoint.
-    """
+@lru_cache(maxsize=1)
+def _numerical_settings_cached():
     root = Path(__file__).resolve().parents[2]
     paths = sorted((root/'braintrace'/'datasets').glob('h01*.py'))
     paths += [root/name for name in ('braintrace/_algorithm/sparse_pp_prop.py',
@@ -41,6 +36,19 @@ def numerical_settings():
         implementation_sha256=implementation,
         dependencies={name: version(name) for name in
             ('jax', 'jaxlib', 'brainstate', 'brainunit', 'braincell', 'brainevent', 'optax', 'numpy')})
+
+
+def numerical_settings():
+    """Return the pinned numerical clocks and installed dependency identities.
+
+    Returns
+    -------
+    dict
+        Settings persisted in every H01 checkpoint.
+    """
+    cached = _numerical_settings_cached()
+    return dict(cached, implementation_sha256=dict(cached['implementation_sha256']),
+                dependencies=dict(cached['dependencies']))
 
 
 @dataclass

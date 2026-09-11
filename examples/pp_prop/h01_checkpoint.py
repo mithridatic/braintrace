@@ -93,7 +93,7 @@ def _validate_arrays(topology, arrays):
             or np.any(indices < 0) or np.any(indices >= cells)):
         raise ValueError('Invalid H01 encoder connectivity')
     for start, end in zip(indptr[:-1], indptr[1:]):
-        if len(np.unique(indices[start:end])) != end-start:
+        if end - start > 1 and len(set(indices[start:end])) != end-start:
             raise ValueError('An encoder feature cannot have duplicate cell targets')
     shapes = {'input': (len(indices),), 'recurrent': (contacts,),
               'readout_weight': (cells, 360), 'readout_bias': (360,)}
@@ -111,7 +111,7 @@ def _inventory(arrays):
         if not np.isfinite(value).all():
             raise ValueError('Checkpoint arrays must be finite')
         result[name] = {'shape': list(value.shape), 'dtype': value.dtype.str,
-                        'sha256': hashlib.sha256(value.tobytes(order='C')).hexdigest()}
+                        'sha256': hashlib.sha256(memoryview(np.ascontiguousarray(value))).hexdigest()}
     return result
 
 

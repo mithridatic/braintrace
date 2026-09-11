@@ -129,7 +129,7 @@ class H01ArcModel(brainstate.nn.Module):
         self.contact_magnitude.value = braintrace.element_wise(
             self.recurrent_weight.value, weight_fn=jnp.abs)
         def cable_step(_):
-            self.stepper.update()
+            self.stepper.update(sample_probes=False)
         if self.checkpoint_substeps:
             brainstate.transform.for_loop(brainstate.transform.checkpoint(cable_step, prevent_cse=False),
                                           jnp.arange(self.substeps))
