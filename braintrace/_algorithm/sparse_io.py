@@ -46,7 +46,11 @@ def instant_factors(tail, output, layout):
         _, tan = jax.jvp(tail, (output,), (out_s,))
         return tan
 
-    tangents = jax.vmap(_jvp_tail, in_axes=0)(out_seeds)
+    if layout.color_count == 1:
+        tan = _jvp_tail(out_seeds[0])
+        tangents = tuple(t[None, ...] for t in tan)
+    else:
+        tangents = jax.vmap(_jvp_tail, in_axes=0)(out_seeds)
 
     result = []
     for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
@@ -109,7 +113,11 @@ def propagate_factors(transition, state, factors, layout):
         _, tan = jax.jvp(transition, (state,), (hid_s,))
         return tan
 
-    tangents = jax.vmap(_jvp_trans, in_axes=0)(tuple(hidden_seeds))
+    if layout.color_count == 1:
+        tan = _jvp_trans(tuple(h[0] for h in hidden_seeds))
+        tangents = tuple(t[None, ...] for t in tan)
+    else:
+        tangents = jax.vmap(_jvp_trans, in_axes=0)(tuple(hidden_seeds))
 
     result = []
     for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
@@ -198,7 +206,11 @@ def advance_factors(transition, output, state, factors, layout, decay):
         _, tan = jax.jvp(transition, (output, state), (out_s, hid_s))
         return tan
 
-    tangents = jax.vmap(_jvp_step, in_axes=(0, 0))(out_seeds, tuple(hidden_seeds))
+    if layout.color_count == 1:
+        tan = _jvp_step(out_seeds[0], tuple(h[0] for h in hidden_seeds))
+        tangents = tuple(t[None, ...] for t in tan)
+    else:
+        tangents = jax.vmap(_jvp_step, in_axes=(0, 0))(out_seeds, tuple(hidden_seeds))
 
     result = []
     for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):

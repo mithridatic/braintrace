@@ -137,14 +137,17 @@ def init_h01_network_states(network, *, progress=None, heartbeat_seconds=60.):
         cell = network.populations[name].cell
         if getattr(cell, "_initialized", False):
             continue
-        emit(f"Initializing {name} ({index}/{len(names)}, {getattr(cell, 'n_cv', 'unknown')} compartments)")
+        if progress is not None:
+            emit(f"Initializing {name} ({index}/{len(names)}, {getattr(cell, 'n_cv', 'unknown')} compartments)")
         cell_started = time.perf_counter()
-        with heartbeat("init_state "+name, emit, seconds=heartbeat_seconds):
+        if progress is not None:
+            with heartbeat("init_state "+name, emit, seconds=heartbeat_seconds):
+                cell.init_state()
+        else:
             cell.init_state()
         seconds[name] = time.perf_counter()-cell_started
-        emit(f"Initialized {name} in {seconds[name]:.1f} s")
+        if progress is not None:
+            emit(f"Initialized {name} in {seconds[name]:.1f} s")
     network.init_state()
-    import gc
-    gc.collect()
     return dict(init_state_seconds=time.perf_counter()-started, init_seconds_by_population=seconds,
                 initialized_populations=list(seconds), peak_rss_mb=process_rss_mb(peak=True))

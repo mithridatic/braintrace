@@ -15,12 +15,26 @@ import numpy as np
 from .h01_topology import H01Topology
 
 
+_ASSET_DIGEST_CACHE = {}
+
+
 def _digest_file(path):
+    path_obj = Path(path)
+    try:
+        st = path_obj.stat()
+        key = (str(path_obj.resolve()), st.st_mtime_ns, st.st_size)
+        if key in _ASSET_DIGEST_CACHE:
+            return _ASSET_DIGEST_CACHE[key]
+    except OSError:
+        key = None
     digest = hashlib.sha256()
     with open(path, 'rb') as stream:
         for chunk in iter(lambda: stream.read(1024**2), b''):
             digest.update(chunk)
-    return digest.hexdigest()
+    result = digest.hexdigest()
+    if key is not None:
+        _ASSET_DIGEST_CACHE[key] = result
+    return result
 
 
 def _valid_digest(value):

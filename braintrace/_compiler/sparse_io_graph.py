@@ -98,7 +98,7 @@ class SparseIOGraph:
                               eqns=[eqn for eqn in original.eqns if id(eqn) not in ids])
         self._num_out = len(original.outvars)
         raw = self.inputs(*args)
-        _, _, output = self.forward(raw)
+        output = jnp.zeros(self.output_size, dtype=self.operations[0].y.aval.dtype)
         hidden = tuple(raw[i] for i in self.state_input_indices)
         self.layout = analyze_transition(lambda y, h: self.transition(y, h, raw),
                                          output, hidden, max_bytes=max_bytes)

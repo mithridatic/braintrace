@@ -190,19 +190,38 @@ def _backsub(diags, solves, lowers, indices):
 def _solve(diags, solves, lowers, uppers, levels, jumps, edges):
     """Use the original tree solve with an exact implicit linear derivative."""
     d, s, low, up = map(u.get_mantissa, (diags, solves, lowers, uppers))
-    children, parents = edges[:, 0], edges[:, 1]
+    children_edges, parents_edges = edges[:, 0], edges[:, 1]
+    children, parents, valid = levels
+    low_c = low[children]
+    up_c = up[children]
 
     def matvec(value):
         result = d*value
-        result = result.at[..., children].add(low[children]*value[..., parents])
-        return result.at[..., parents].add(up[children]*value[..., children])
+        result = result.at[..., children_edges].add(low[children_edges]*value[..., parents_edges])
+        return result.at[..., parents_edges].add(up[children_edges]*value[..., children_edges])
+
+    def level_step(carry, indices):
+        d_c, s_c = carry
+        c, p, v, uc, lc = indices
+        multiplier = uc / d_c[..., c]
+        delta_d = jnp.where(v, -lc * multiplier, 0.0)
+        delta_s = jnp.where(v, -s_c[..., c] * multiplier, 0.0)
+        d_c = d_c.at[..., p].add(delta_d)
+        s_c = s_c.at[..., p].add(delta_s)
+        return (d_c, s_c), None
 
     def solve(_, rhs):
-        diagonal, right = _triang_raw(d, rhs, low, up, levels)
+        if children.shape[0] == 0:
+            diagonal, right = d, rhs
+        else:
+            (diagonal, right), _ = jax.lax.scan(level_step, (d, rhs), (children, parents, valid, up_c, low_c))
         return _backsub_raw(diagonal, right, low, jumps)
 
     def transpose_solve(_, rhs):
-        diagonal, right = _triang_raw(d, rhs, up, low, levels)
+        if children.shape[0] == 0:
+            diagonal, right = d, rhs
+        else:
+            (diagonal, right), _ = jax.lax.scan(level_step, (d, rhs), (children, parents, valid, low_c, up_c))
         return _backsub_raw(diagonal, right, up, jumps)
 
     result = jax.lax.custom_linear_solve(matvec, s, solve=solve, transpose_solve=transpose_solve)
