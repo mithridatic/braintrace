@@ -57,13 +57,34 @@ def _get_implicit_plan(target):
     plan = getattr(runtime, "_h01_implicit_plan", None)
     if plan is not None:
         return plan
+    from braincell import Ion, MixIons
     ions = target._family_ion_nodes()
     channels = target._family_channel_nodes()
     pv_calcium_nodes = [node for _, node in ions if isinstance(node, PVCalcium)]
     dependent_ion_paths = [path for path, node in ions if not isinstance(node, (PVCalcium, IndependentIntegration))]
     independent_ions = [node for _, node in ions if isinstance(node, IndependentIntegration)]
     excluded_paths = [('V',), *[path for path, _ in channels]]
-    plan = (ions, channels, pv_calcium_nodes, dependent_ion_paths, independent_ions, excluded_paths)
+    
+    channel_plan = []
+    for path, node in channels:
+        is_ind = target._is_independent_channel(node)
+        if hasattr(node, "_channel") and hasattr(node, "_infos"):
+            target_node = node._channel
+            info_fn = node._infos
+            channel_plan.append((target_node, is_ind, lambda pv, ifn=info_fn: (pv, *ifn())))
+        elif len(path) >= 4 and path[-2] == "channels":
+            owner = target._node_at_path(path[:-2])
+            if isinstance(owner, Ion):
+                channel_plan.append((node, is_ind, lambda pv, o=owner: (pv, o.pack_info())))
+            elif isinstance(owner, MixIons):
+                roots = tuple(node.root_type.__args__)
+                channel_plan.append((node, is_ind, lambda pv, o=owner, r=roots: (pv, *(o._get_ion(root).pack_info() for root in r))))
+            else:
+                channel_plan.append((node, is_ind, lambda pv: (pv,)))
+        else:
+            channel_plan.append((node, is_ind, lambda pv: (pv,)))
+
+    plan = (ions, channel_plan, pv_calcium_nodes, dependent_ion_paths, independent_ions, excluded_paths)
     if runtime is not None:
         runtime._h01_implicit_plan = plan
     return plan
@@ -76,7 +97,7 @@ def _implicit_step(target, *args):
     if target.ion_channel_update_order != 'family':
         raise ValueError('Implicit H01 calcium requires family ordering.')
     t, dt = brainstate.environ.get('t', 0.), brainstate.environ.get('dt')
-    ions, channels, pv_calcium_nodes, dependent_ion_paths, independent_ions, excluded_paths = _get_implicit_plan(target)
+    ions, channel_plan, pv_calcium_nodes, dependent_ion_paths, independent_ions, excluded_paths = _get_implicit_plan(target)
     point_old = target._cv_to_point_unchecked(target.V.value)
     snapshots = [(node, *_calcium_snapshot(node, point_old)) for node in pv_calcium_nodes]
     target.cache_ion_total_currents(target.V.value)
@@ -88,9 +109,8 @@ def _implicit_step(target, *args):
         node.ind_update(point_v, recursive_child=False)
     for node, old_v, conductance in snapshots:
         _advance_calcium(node, old_v, conductance, dt)
-    for path, node in channels:
-        channel, arguments = target._channel_integration_target_and_args(path, node, point_v)
-        if target._is_independent_channel(node):
-            channel.ind_update(*arguments)
+    for channel, is_ind, args_fn in channel_plan:
+        if is_ind:
+            channel.ind_update(*args_fn(point_v))
         else:
-            ind_exp_euler_step(channel, *arguments)
+            ind_exp_euler_step(channel, *args_fn(point_v))

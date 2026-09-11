@@ -53,13 +53,24 @@ def calcium_backward_euler(c_old, voltage, conductance, dt, decay, flux_factor,
 
     zero_cond_res = d / a
 
-    def bisect(bounds, unused):
+    def bisect_step(bounds, unused):
         lo, hi = bounds
-        mid = lo+(hi-lo)/2.
-        residual = a*jnp.exp(mid)+b*mid-d
+        mid = lo + (hi - lo) * 0.5
+        residual = a * jnp.exp(mid) + b * mid - d
         return (jnp.where(residual <= 0, mid, lo),
                 jnp.where(residual > 0, mid, hi)), None
 
-    (lower, upper), _ = jax.lax.scan(bisect, (lower, upper), xs=None, length=48)
-    result = jnp.where(b <= 0.0, zero_cond_res, jnp.exp(lower+(upper-lower)/2.))
+    (lo, hi), _ = jax.lax.scan(bisect_step, (lower, upper), xs=None, length=6)
+    x = (lo + hi) * 0.5
+
+    def halley_step(x, unused):
+        ex = jnp.exp(x)
+        fx = a * ex + b * x - d
+        f1 = a * ex + b
+        f2 = a * ex
+        dx = (2.0 * fx * f1) / (2.0 * f1 * f1 - fx * f2 + 1e-30)
+        return x - dx, None
+
+    x_final, _ = jax.lax.scan(halley_step, x, xs=None, length=4)
+    result = jnp.where(b <= 0.0, zero_cond_res, jnp.exp(x_final))
     return jnp.where(valid & jnp.isfinite(result) & (result > 0), result, jnp.nan)

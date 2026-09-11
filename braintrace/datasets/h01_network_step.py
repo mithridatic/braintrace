@@ -43,6 +43,8 @@ class H01NetworkStep(brainstate.nn.Module):
                                               delivery_ops=self.setup.delivery_ops)
         self.ring_buffers = self.delivery.ring_buffers
         self.ring_cursors = self.delivery.ring_cursors
+        self.has_delivery = bool(self.setup.delivery_blocks)
+        self._dt = self.dt_ms * u.ms
         self.tick = brainstate.ShortTermState(jnp.asarray(0, dtype=jnp.int32))
 
     def update(self, sample_probes=True):
@@ -58,10 +60,11 @@ class H01NetworkStep(brainstate.nn.Module):
         dict or None
             Nested population and probe values after dynamics advance, or None.
         """
-        dt = self.dt_ms*u.ms
+        dt = self._dt
         with brainstate.environ.context(dt=dt, t=self.tick.value*dt):
-            write_arrivals(self.setup.delivery_blocks, self.delivery,
-                           populations=self.network.populations)
+            if self.has_delivery:
+                write_arrivals(self.setup.delivery_blocks, self.delivery,
+                               populations=self.network.populations)
             for cell in self.cells:
                 cell._prepare_next_synapse_inputs()
             for cell in self.cells:
@@ -70,9 +73,10 @@ class H01NetworkStep(brainstate.nn.Module):
                 cell._update_dynamics()
             snapshots = {name: pop.cell.sample_probes()
                          for name, pop in self.network.populations.items()} if sample_probes else None
-            enqueue_future_events(self.setup.delivery_blocks, self.delivery,
-                                  populations=self.network.populations)
-            advance_delivery_state(self.delivery)
+            if self.has_delivery:
+                enqueue_future_events(self.setup.delivery_blocks, self.delivery,
+                                      populations=self.network.populations)
+                advance_delivery_state(self.delivery)
             self.tick.value = self.tick.value + 1
             for cell in self.cells:
                 cell._set_current_time(self.tick.value*dt)

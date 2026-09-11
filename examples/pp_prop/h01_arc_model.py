@@ -117,7 +117,7 @@ class H01ArcModel(brainstate.nn.Module):
         point = int(np.concatenate((table.midpoint_ids, table.boundary_ids))[0])
         def current(*, t, point_ids=None):
             value = original(t=t, point_ids=point_ids)
-            if point_ids is None or point in np.asarray(point_ids):
+            if point_ids is None or point in point_ids or (isinstance(point_ids, np.ndarray) and point in point_ids):
                 value = value.at[..., point].add(self.drive.value[index]*u.nA)
             return value
         return current

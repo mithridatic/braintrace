@@ -58,15 +58,17 @@ def _install_fast_ind_exp_euler():
                 if form == "inf_tau":
                     inf = getattr(target, f"f_{gate.name}_inf")(*args)
                     tau = getattr(target, f"f_{gate.name}_tau")(*args)
-                    linear = -phi / (tau * u.ms)
-                    derivative = phi * (inf - state.value) / (tau * u.ms)
+                    decay = dt * phi / (tau * u.ms)
+                    exp_decay = u.math.exp(-decay)
+                    state.value = inf + (state.value - inf) * exp_decay
                 else:
                     alpha = getattr(target, f"f_{gate.name}_alpha")(*args)
                     beta = getattr(target, f"f_{gate.name}_beta")(*args)
-                    linear = -phi * (alpha + beta) / u.ms
-                    derivative = phi * (alpha * (1.0 - state.value) - beta * state.value) / u.ms
-                phi_eval = u.math.exprel(dt * linear)
-                state.value = state.value + dt * phi_eval * derivative
+                    ab = alpha + beta
+                    decay = dt * phi * ab / u.ms
+                    exp_decay = u.math.exp(-decay)
+                    inf = jnp.where(ab > 0, alpha / jnp.maximum(ab, 1e-30), 0.0)
+                    state.value = inf + (state.value - inf) * exp_decay
             target.post_integral(*args)
             return
 
@@ -120,17 +122,10 @@ def _prepare_levels(edges, offsets, sentinel):
     return jnp.asarray(children), jnp.asarray(parents), jnp.asarray(valid)
 
 
-def _triang(diags, solves, lowers, uppers, levels):
-    """Eliminate complete tree levels in the original order."""
+def _triang_raw(d_raw, s_raw, l_raw, u_raw, levels):
+    """Eliminate complete tree levels on raw arrays."""
     if levels[0].shape[0] == 0:
-        return diags, solves
-
-    d_unit = u.get_unit(diags)
-    s_unit = u.get_unit(solves)
-    d_raw = u.get_mantissa(diags)
-    s_raw = u.get_mantissa(solves)
-    l_raw = u.get_mantissa(lowers)
-    u_raw = u.get_mantissa(uppers)
+        return d_raw, s_raw
     children, parents, valid = levels
     u_c = u_raw[children]
     l_c = l_raw[children]
@@ -146,19 +141,27 @@ def _triang(diags, solves, lowers, uppers, levels):
         return (d, s), None
 
     (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid, u_c, l_c))
+    return d_out, s_out
+
+
+def _triang(diags, solves, lowers, uppers, levels):
+    """Eliminate complete tree levels in the original order."""
+    d_unit = u.get_unit(diags)
+    s_unit = u.get_unit(solves)
+    d_raw = u.get_mantissa(diags)
+    s_raw = u.get_mantissa(solves)
+    l_raw = u.get_mantissa(lowers)
+    u_raw = u.get_mantissa(uppers)
+
+    d_out, s_out = _triang_raw(d_raw, s_raw, l_raw, u_raw, levels)
 
     res_d = u.Quantity(d_out, d_unit) if d_unit != u.UNITLESS else d_out
     res_s = u.Quantity(s_out, s_unit) if s_unit != u.UNITLESS else s_out
     return res_d, res_s
 
 
-def _backsub(diags, solves, lowers, indices):
-    """Apply the original recursive-doubling jumps in a compiled scan."""
-    d_unit = u.get_unit(diags)
-    s_unit = u.get_unit(solves)
-    d_raw = u.get_mantissa(diags)
-    s_raw = u.get_mantissa(solves)
-    l_raw = u.get_mantissa(lowers)
+def _backsub_raw(d_raw, s_raw, l_raw, indices):
+    """Apply the recursive-doubling jumps on raw arrays."""
     l_raw = l_raw.at[..., 0].set(0.0)
     lower_effect = -l_raw / d_raw
     solve_effect = s_raw / d_raw
@@ -168,6 +171,18 @@ def _backsub(diags, solves, lowers, indices):
         return (lower * lower[..., parents], solution + lower * solution[..., parents]), None
 
     (_, result), _ = jax.lax.scan(jump_step, (lower_effect, solve_effect), indices)
+    return result
+
+
+def _backsub(diags, solves, lowers, indices):
+    """Apply the original recursive-doubling jumps in a compiled scan."""
+    d_unit = u.get_unit(diags)
+    s_unit = u.get_unit(solves)
+    d_raw = u.get_mantissa(diags)
+    s_raw = u.get_mantissa(solves)
+    l_raw = u.get_mantissa(lowers)
+
+    result = _backsub_raw(d_raw, s_raw, l_raw, indices)
     res_v = u.Quantity(result, s_unit / d_unit) if (s_unit / d_unit) != u.UNITLESS else result
     return res_v
 
@@ -183,12 +198,12 @@ def _solve(diags, solves, lowers, uppers, levels, jumps, edges):
         return result.at[..., parents].add(up[children]*value[..., children])
 
     def solve(_, rhs):
-        diagonal, right = _triang(d, rhs, low, up, levels)
-        return _backsub(diagonal, right, low, jumps)
+        diagonal, right = _triang_raw(d, rhs, low, up, levels)
+        return _backsub_raw(diagonal, right, low, jumps)
 
     def transpose_solve(_, rhs):
-        diagonal, right = _triang(d, rhs, up, low, levels)
-        return _backsub(diagonal, right, up, jumps)
+        diagonal, right = _triang_raw(d, rhs, up, low, levels)
+        return _backsub_raw(diagonal, right, up, jumps)
 
     result = jax.lax.custom_linear_solve(matvec, s, solve=solve, transpose_solve=transpose_solve)
     unit = u.get_unit(solves)/u.get_unit(diags)
