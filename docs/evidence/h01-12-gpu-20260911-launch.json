@@ -1,0 +1,76 @@
+{
+  "source_commit": "4daa82d",
+  "branch": "probe/h01-12-gpu-20260911",
+  "image_id": "sha256:4a7546a80f424ad79b0a950e3683ebf214aab164bf2b1d58f50ad939293bfb90",
+  "state": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-11T17:03:44.953087138Z",
+    "FinishedAt": "2026-09-11T17:10:15.755206523Z"
+  },
+  "command": [
+    "python",
+    "-m",
+    "examples.h01_arc_probe",
+    "--cache",
+    "/h01",
+    "--cells",
+    "12",
+    "--sparse-learning",
+    "--output",
+    "/evidence/h01-12-gpu-20260911.json",
+    "--wall-limit-seconds",
+    "900",
+    "--rss-limit-gib",
+    "16"
+  ],
+  "environment": [
+    "JAX_PLATFORMS=cuda",
+    "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "PYTHON_VERSION=3.14.0",
+    "PYTHON_SHA256=2299dae542d395ce3883aca00d3c910307cd68e0b2f7336098c8e7b7eee9f3e9",
+    "XLA_PYTHON_CLIENT_PREALLOCATE=false",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "PYTHONUNBUFFERED=1",
+    "JAX_COMPILATION_CACHE_DIR=/cache/jax",
+    "JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0.5",
+    "JAX_PERSISTENT_CACHE_MIN_ENTRY_SIZE_BYTES=0",
+    "PYTHONPATH=/opt/braintrace"
+  ],
+  "mounts": [
+    {
+      "Type": "bind",
+      "Source": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.cache\\worktree-recovery-2026-09-09\\h01-braincell\\.cache\\h01",
+      "Destination": "/h01",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-12-gpu-20260911",
+      "Destination": "/opt/braintrace",
+      "Mode": "ro",
+      "RW": false,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "bind",
+      "Source": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-12-gpu-20260911\\docs\\evidence",
+      "Destination": "/evidence",
+      "Mode": "",
+      "RW": true,
+      "Propagation": "rprivate"
+    }
+  ],
+  "memory_bytes": 17179869184,
+  "memory_swap_bytes": 17179869184,
+  "network": "none"
+}
