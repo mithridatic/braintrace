@@ -1,0 +1,90 @@
+Loading cell 4188575291, component 0
+Checking pre cable location for contact 124698307
+Loading cell 3955003482, component 0
+Checking post cable location for contact 124698307
+Loading cell 5584343344, component 0
+Checking pre cable location for contact 8105899
+Loading cell 4157825456, component 0
+Checking post cable location for contact 8105899
+Loading cell 678539249, component 0 (isolated, largest component 0 of 4480 nodes, fraction 0.774)
+Loading cell 2451406889, component 0 (isolated, largest component 0 of 3750 nodes, fraction 0.970)
+Loading cell 2530864375, component 0 (isolated, largest component 0 of 1540 nodes, fraction 0.854)
+Loading cell 2820958695, component 0 (isolated, largest component 0 of 4864 nodes, fraction 0.488)
+Loading cell 3178243558, component 0 (isolated, largest component 0 of 2748 nodes, fraction 0.371)
+Loading cell 3751392341, component 0 (isolated, largest component 0 of 3499 nodes, fraction 0.990)
+Loading cell 4260528559, component 0 (isolated, largest component 0 of 4790 nodes, fraction 0.560)
+Loading cell 4420044370, component 0 (isolated, largest component 0 of 4624 nodes, fraction 0.999)
+Building electrical cell 3955003482
+Building electrical cell 4157825456
+Building electrical cell 4188575291
+Building electrical cell 5584343344
+Building electrical cell 2530864375
+Building electrical cell 3178243558
+Building electrical cell 3751392341
+Building electrical cell 2451406889
+Building electrical cell 678539249
+Building electrical cell 4420044370
+Building electrical cell 4260528559
+Building electrical cell 2820958695
+Discretizing cell 3955003482 and selecting its output site
+Registered cell 3955003482: 33965 compartments
+Discretizing cell 4157825456 and selecting its output site
+Registered cell 4157825456: 12966 compartments
+Discretizing cell 4188575291 and selecting its output site
+Registered cell 4188575291: 13989 compartments
+Discretizing cell 5584343344 and selecting its output site
+Registered cell 5584343344: 14685 compartments
+Discretizing cell 2530864375 and selecting its output site
+Registered cell 2530864375: 413 compartments
+Discretizing cell 3178243558 and selecting its output site
+Registered cell 3178243558: 966 compartments
+Discretizing cell 3751392341 and selecting its output site
+Registered cell 3751392341: 748 compartments
+Discretizing cell 2451406889 and selecting its output site
+Registered cell 2451406889: 1697 compartments
+Discretizing cell 678539249 and selecting its output site
+Registered cell 678539249: 1037 compartments
+Discretizing cell 4420044370 and selecting its output site
+Registered cell 4420044370: 1054 compartments
+Discretizing cell 4260528559 and selecting its output site
+Registered cell 4260528559: 1207 compartments
+Discretizing cell 2820958695 and selecting its output site
+Registered cell 2820958695: 1370 compartments
+Construction complete: 12 cells, 2 projections
+construction {'seconds': 26.082299824804068, 'status': 'pass'}
+Initializing cell_3955003482 (1/12, 33965 compartments)
+Initialized cell_3955003482 in 7.9 s
+Initializing cell_4157825456 (2/12, 12966 compartments)
+Initialized cell_4157825456 in 3.0 s
+Initializing cell_4188575291 (3/12, 13989 compartments)
+Initialized cell_4188575291 in 3.2 s
+Initializing cell_5584343344 (4/12, 14685 compartments)
+Initialized cell_5584343344 in 4.2 s
+Initializing cell_2530864375 (5/12, 413 compartments)
+Initialized cell_2530864375 in 0.9 s
+Initializing cell_3178243558 (6/12, 966 compartments)
+Initialized cell_3178243558 in 0.9 s
+Initializing cell_3751392341 (7/12, 748 compartments)
+Initialized cell_3751392341 in 0.9 s
+Initializing cell_2451406889 (8/12, 1697 compartments)
+Initialized cell_2451406889 in 1.1 s
+Initializing cell_678539249 (9/12, 1037 compartments)
+Initialized cell_678539249 in 1.0 s
+Initializing cell_4420044370 (10/12, 1054 compartments)
+Initialized cell_4420044370 in 1.0 s
+Initializing cell_4260528559 (11/12, 1207 compartments)
+Initialized cell_4260528559 in 1.0 s
+Initializing cell_2820958695 (12/12, 1370 compartments)
+Initialized cell_2820958695 in 1.0 s
+initialization {'seconds': 25.924846882931888, 'status': 'pass'}
+native_compile_and_event {'seconds': 28.027839711867273, 'status': 'pass'}
+model_setup {'seconds': 2.6219300059601665, 'status': 'pass'}
+adapter_compile_and_event {'seconds': 25.650634557940066, 'status': 'pass'}
+encoded_event_warm {'seconds': 1.6687094047665596, 'status': 'pass'}
+/workspace/h01-masked-muon/braintrace/_compiler/module_info.py:210: UserWarning: The state ('readout_bias',) is not found in the compiled model.
+  _check_consistent_states_between_model_and_compiler(
+/workspace/h01-masked-muon/braintrace/_compiler/module_info.py:210: UserWarning: The state ('readout_weight',) is not found in the compiled model.
+  _check_consistent_states_between_model_and_compiler(
+sparse_pp_prop_compile {'seconds': 5.257812756113708, 'status': 'pass'}
+sparse_muon_compile_and_update {'seconds': 245.94870938546956, 'status': 'pass'}
+sparse_muon_warm_update {'seconds': 10.280878622084856, 'status': 'pass'}

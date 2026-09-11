@@ -1,0 +1,143 @@
+{
+  "passed": true,
+  "checks": {
+    "source_commit": true,
+    "exit_zero": true,
+    "probe_pass": true,
+    "cuda": true,
+    "cells": true,
+    "all_phases": true,
+    "two_updates": true,
+    "finite": true,
+    "finite_losses": true,
+    "native_equivalence": true,
+    "actual_algorithms": true,
+    "decay": true,
+    "all_groups_changed": true,
+    "wall_limit": true,
+    "rss_limit": true,
+    "workspace_limit": true,
+    "source_bytes": true
+  },
+  "source_checks": {
+    "examples/pp_prop/h01_arc_model.py": true,
+    "braintrace/datasets/h01_network_step.py": true,
+    "braintrace/datasets/h01_calcium_solver.py": true,
+    "braintrace/datasets/h01_construction.py": true,
+    "braintrace/datasets/h01_dhs_scan.py": true,
+    "examples/pp_prop/h01_muon.py": true,
+    "examples/pp_prop/21-braincell-arc.py": true,
+    "braintrace/_algorithm/sparse_pp_prop.py": true,
+    "braintrace/_algorithm/sparse_io.py": true,
+    "braintrace/_compiler/sparse_io_graph.py": true,
+    "braintrace/_compiler/sparse_support.py": true,
+    "braintrace/_compiler/sparse_influence.py": true,
+    "examples/h01_arc_probe.py": true
+  },
+  "source_commit": "b2f0fd02bf9be7f829d12a18181977db72d81d08",
+  "elapsed_seconds": 418.03509952127934,
+  "peak_rss_mib": 7503.796875,
+  "compartments": 84097,
+  "groups": {
+    "input": {
+      "algorithm": "masked_muon",
+      "weight_decay": 0.1,
+      "matrix_shape": [
+        1,
+        441,
+        12
+      ],
+      "parameters": 5292,
+      "learning_rate": 0.001,
+      "workspace_estimate_bytes": 514944
+    },
+    "recurrent": {
+      "algorithm": "masked_muon",
+      "weight_decay": 0.1,
+      "matrix_shape": [
+        1,
+        12,
+        12
+      ],
+      "parameters": 2,
+      "learning_rate": 0.0003,
+      "workspace_estimate_bytes": 20736
+    },
+    "readout_weight": {
+      "algorithm": "muon",
+      "weight_decay": 0.1,
+      "matrix_shape": [
+        1,
+        12,
+        360
+      ],
+      "parameters": 4320,
+      "learning_rate": 0.003,
+      "workspace_estimate_bytes": 421632
+    },
+    "readout_bias": {
+      "algorithm": "adamw",
+      "weight_decay": 0.1,
+      "matrix_shape": null,
+      "parameters": 360,
+      "learning_rate": 0.003,
+      "workspace_estimate_bytes": 0
+    }
+  },
+  "learning_probe": {
+    "objective": "synthetic event squared-logit loss; not ARC training",
+    "cold_loss": 0.4381818941040354,
+    "warm_loss": 0.423757835361942,
+    "cold_gradient_norm": 0.3239759274475163,
+    "warm_gradient_norm": 0.505772169808163,
+    "updates": 2,
+    "optimizer_finite": true,
+    "changed_parameters": [
+      "input",
+      "readout_bias",
+      "readout_weight",
+      "recurrent"
+    ],
+    "contact_note": "Contact activity is not forced; parameter changes can include Muon weight decay.",
+    "finite": true
+  },
+  "phases": {
+    "construction": {
+      "seconds": 26.082299824804068,
+      "status": "pass"
+    },
+    "initialization": {
+      "seconds": 25.924846882931888,
+      "status": "pass"
+    },
+    "native_compile_and_event": {
+      "seconds": 28.027839711867273,
+      "status": "pass"
+    },
+    "model_setup": {
+      "seconds": 2.6219300059601665,
+      "status": "pass"
+    },
+    "adapter_compile_and_event": {
+      "seconds": 25.650634557940066,
+      "status": "pass"
+    },
+    "encoded_event_warm": {
+      "seconds": 1.6687094047665596,
+      "status": "pass"
+    },
+    "sparse_pp_prop_compile": {
+      "seconds": 5.257812756113708,
+      "status": "pass"
+    },
+    "sparse_muon_compile_and_update": {
+      "seconds": 245.94870938546956,
+      "status": "pass"
+    },
+    "sparse_muon_warm_update": {
+      "seconds": 10.280878622084856,
+      "status": "pass"
+    }
+  },
+  "raw_sha256": "d69307482039ff9dc285f425ced5bc5db3cb7e4fc6a06f7fb68569b50bde54ae"
+}

@@ -1,0 +1,35 @@
+{
+  "source_commit": "b2f0fd02bf9be7f829d12a18181977db72d81d08",
+  "cwd": "/workspace/h01-masked-muon",
+  "command": [
+    "/workspace/venv314/bin/python",
+    "-m",
+    "examples.h01_arc_probe",
+    "--cache",
+    "/h01",
+    "--cells",
+    "12",
+    "--sparse-learning",
+    "--output",
+    "/evidence/h01-12-masked-muon-b2f0fd0.json",
+    "--wall-limit-seconds",
+    "900",
+    "--rss-limit-gib",
+    "16"
+  ],
+  "dependencies": {
+    "jax": "0.11.0",
+    "jaxlib": "0.11.0",
+    "brainstate": "0.5.3",
+    "braincell": "0.1.0",
+    "optax": "0.2.8",
+    "numpy": "2.4.6"
+  },
+  "source_sha256": {
+    "examples/pp_prop/h01_muon.py": "e3d9fd58dca155fc8c5319fc83b0d5ca33fdaa216760cee5ed3134f7922274dc",
+    "examples/pp_prop/21-braincell-arc.py": "76533a8da56387be7a09397f77faae114ebb9cd60fb72f5f04e37e6235fe3eaf",
+    "examples/h01_arc_probe.py": "45b07756c0c8c16d04acf47e3e45738e42236b565584aa106365f891f2a1fcfe"
+  },
+  "gpu": "NVIDIA GeForce RTX 4090, GPU-521cf038-65a6-c1ce-3984-4b4a712ebf5c, 24564 MiB",
+  "started_utc": "2026-09-11T21:15:31Z"
+}

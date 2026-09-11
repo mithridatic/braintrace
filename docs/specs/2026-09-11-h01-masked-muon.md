@@ -59,4 +59,5 @@ module coverage must exceed 90 percent. No real 12-cell probe or training campai
 The code remains a masked-Muon variant. Numerical equivalence to its dense
 reference does not establish a training-quality improvement or human physiology.
 Legacy H01 optimizer checkpoints require a fresh run, not silent state conversion.
-A separately authorized real 12-cell probe is the next runtime validation step.
+The subsequently authorized Vast 12-cell probe passed, as did 20 GPU optimizer
+tests. See ../evidence/h01-12-masked-muon-b2f0fd0.md for exact acceptance boundaries.
