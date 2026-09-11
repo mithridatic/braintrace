@@ -302,8 +302,9 @@ def _fast_build_cv_geometry(morpho, bounds_by_branch):
     if key in _GEOMETRY_CACHE:
         return _GEOMETRY_CACHE[key]
 
-    _geo_mod.validate_morphology(morpho)
-    _geo_mod.validate_bounds(bounds_by_branch, morpho)
+    if not getattr(morpho, "_h01_validated", False):
+        _geo_mod.validate_morphology(morpho)
+        _geo_mod.validate_bounds(bounds_by_branch, morpho)
 
     n_branches = len(morpho._nodes)
     branch_to_cv_ids_lists = []
@@ -1499,25 +1500,41 @@ class H01Cell(braincell.Cell):
                 root_nodes[f"layout_{layout.id}"] = node
 
         self.ion_channels = self._format_elements(IonChannel, **root_nodes)
-        self.C = cv_value_vector(self, attr_name="cm")
-        self.V_th = bridge.fill_like(self.varshape, self.V_th)
+        
+        varshape = self.varshape
+        if batch_size is None:
+            n_cv = len(self.cvs)
+            cm_arr = np.fromiter((cv.cm.mantissa if isinstance(cv.cm, u.Quantity) else float(cv.cm) for cv in self.cvs), dtype=np.float64, count=n_cv)
+            self.C = u.Quantity(np.broadcast_to(cm_arr, varshape), u.uF / u.cm**2)
+            v_th_val = self.V_th.mantissa if isinstance(self.V_th, u.Quantity) else float(self.V_th)
+            self.V_th = u.Quantity(np.full(varshape, v_th_val, dtype=np.float64), u.mV)
+            v_init_val = self._V_init.mantissa if isinstance(self._V_init, u.Quantity) else float(self._V_init)
+            v_np = np.full(varshape, v_init_val, dtype=np.float64)
+            self.V = DiffEqState(u.Quantity(v_np, u.mV))
+            self.spike = brainstate.ShortTermState(np.zeros(varshape, dtype=np.float64))
+            self._current_time_state.value = 0.0 * u.ms
 
-        v_initializer = (
-            self._V_init if self._V_init is not None
-            else cv_value_vector(self, attr_name="v")
-        )
-        if self._V_init is not None:
-            v_initializer = bridge.fill_like(self.varshape, v_initializer)
-        v_value = braintools.init.param(v_initializer, self.varshape)
-        v_value = bridge.expand_with_batch_axis(v_value, batch_size, name="Cell.V")
-        self.V = DiffEqState(v_value)
-        self.spike = brainstate.ShortTermState(self.get_spike(self.V.value, self.V.value))
-        self._current_time_state.value = 0.0 * u.ms
-
-        point_V = self._cv_to_point_unchecked(self.V.value)
-        point_V_init = point_V
-        if batch_size is None and not is_traced_value(point_V):
-            point_V_init = u.Quantity(np.asarray(u.get_mantissa(point_V)), u.get_unit(point_V))
+            point_ids = self._runtime.node_tree.cv_to_mid_node_id
+            n_point = self._runtime.n_point
+            point_V_np = np.zeros(varshape[:-1] + (n_point,), dtype=np.float64)
+            point_V_np[..., point_ids] = v_np
+            point_V_init = u.Quantity(point_V_np, u.mV)
+        else:
+            self.C = cv_value_vector(self, attr_name="cm")
+            self.V_th = bridge.fill_like(self.varshape, self.V_th)
+            v_initializer = (
+                self._V_init if self._V_init is not None
+                else cv_value_vector(self, attr_name="v")
+            )
+            if self._V_init is not None:
+                v_initializer = bridge.fill_like(self.varshape, v_initializer)
+            v_value = braintools.init.param(v_initializer, self.varshape)
+            v_value = bridge.expand_with_batch_axis(v_value, batch_size, name="Cell.V")
+            self.V = DiffEqState(v_value)
+            self.spike = brainstate.ShortTermState(self.get_spike(self.V.value, self.V.value))
+            self._current_time_state.value = 0.0 * u.ms
+            point_V = self._cv_to_point_unchecked(self.V.value)
+            point_V_init = point_V
 
         for path, channel in self._runtime_objects_unchecked(
             IonChannel, allowed_hierarchy=(1, 1)

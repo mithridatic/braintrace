@@ -11,6 +11,32 @@ def _zeros(layout, dtype):
                  for shape, row in zip(layout.shapes, layout.outputs))
 
 
+def _get_layout_precomputed(layout):
+    pre = getattr(layout, "_sparse_io_precomputed", None)
+    if pre is not None:
+        return pre
+    colors_np = np.asarray(layout.colors, dtype=np.int32)
+    color_count = layout.color_count
+    out_mask_np = (colors_np[None, :] == np.arange(color_count)[:, None]) if color_count > 1 else None
+
+    block_specs = []
+    for shape, row in zip(layout.shapes, layout.outputs):
+        if not row:
+            spec = ("empty", shape, ())
+        else:
+            row_colors = colors_np[np.asarray(row, dtype=np.int32)]
+            is_full = (len(row_colors) == color_count and np.array_equal(row_colors, np.arange(color_count)))
+            spec = ("full" if is_full else "sparse", shape, tuple(row_colors.tolist()))
+        block_specs.append(spec)
+
+    pre = (colors_np, out_mask_np, tuple(block_specs))
+    try:
+        object.__setattr__(layout, "_sparse_io_precomputed", pre)
+    except (AttributeError, TypeError):
+        pass
+    return pre
+
+
 def instant_factors(tail, output, layout):
     """Differentiate an ETP output's tail into sparse heterogeneous state blocks.
 
@@ -50,8 +76,8 @@ def instant_factors(tail, output, layout):
                 result.append(t[..., None])
         return tuple(result)
 
-    colors_np = np.asarray(layout.colors, dtype=np.int32)
-    out_seeds = jnp.asarray(colors_np[None, :] == np.arange(layout.color_count)[:, None], dtype=output.dtype)
+    colors_np, out_mask_np, block_specs = _get_layout_precomputed(layout)
+    out_seeds = jnp.asarray(out_mask_np, dtype=output.dtype)
 
     def _jvp_tail(out_s):
         _, tan = jax.jvp(tail, (output,), (out_s,))
@@ -60,16 +86,14 @@ def instant_factors(tail, output, layout):
     tangents = jax.vmap(_jvp_tail, in_axes=0)(out_seeds)
 
     result = []
-    for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
-        if not row:
+    for i, (kind, shape, row_colors) in enumerate(block_specs):
+        if kind == "empty":
             result.append(jnp.zeros(shape + (0,), dtype=output.dtype))
-            continue
-        row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-        if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
-            cols = tangents[i]
+        elif kind == "full":
+            result.append(jnp.moveaxis(tangents[i], 0, -1))
         else:
             cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
-        result.append(jnp.moveaxis(cols, 0, -1))
+            result.append(jnp.moveaxis(cols, 0, -1))
     return tuple(result)
 
 
@@ -120,20 +144,22 @@ def propagate_factors(transition, state, factors, layout):
                 result.append(t[..., None])
         return tuple(result)
 
-    colors_np = np.asarray(layout.colors, dtype=np.int32)
+    colors_np, _, block_specs = _get_layout_precomputed(layout)
     hidden_seeds = []
-    for factor, shape, row in zip(factors, layout.shapes, layout.outputs):
-        if not row:
+    for factor, (kind, shape, row_colors) in zip(factors, block_specs):
+        if kind == "empty":
             hidden_seeds.append(jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype))
+        elif kind == "full":
+            hidden_seeds.append(jnp.moveaxis(factor, -1, 0))
+        elif len(row_colors) == 1:
+            hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
+                row_colors[0]
+            ].set(factor[..., 0])
+            hidden_seeds.append(hid_s)
         else:
-            row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-            moved = jnp.moveaxis(factor, -1, 0)
-            if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
-                hid_s = moved
-            else:
-                hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
-                    jnp.asarray(row_colors, dtype=jnp.int32)
-                ].set(moved)
+            hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
+                jnp.asarray(row_colors, dtype=jnp.int32)
+            ].set(jnp.moveaxis(factor, -1, 0))
             hidden_seeds.append(hid_s)
 
     def _jvp_trans(hid_s):
@@ -143,16 +169,14 @@ def propagate_factors(transition, state, factors, layout):
     tangents = jax.vmap(_jvp_trans, in_axes=0)(tuple(hidden_seeds))
 
     result = []
-    for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
-        if not row:
+    for i, (kind, shape, row_colors) in enumerate(block_specs):
+        if kind == "empty":
             result.append(jnp.zeros_like(factors[i]))
-            continue
-        row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-        if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
-            cols = tangents[i]
+        elif kind == "full":
+            result.append(jnp.moveaxis(tangents[i], 0, -1))
         else:
             cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
-        result.append(jnp.moveaxis(cols, 0, -1))
+            result.append(jnp.moveaxis(cols, 0, -1))
     return tuple(result)
 
 
@@ -230,24 +254,24 @@ def advance_factors(transition, output, state, factors, layout, decay):
                 result.append(t[..., None])
         return tuple(result)
 
-    colors_np = np.asarray(layout.colors, dtype=np.int32)
-    out_seeds = (1.0 - decay) * jnp.asarray(
-        colors_np[None, :] == np.arange(layout.color_count)[:, None], dtype=output.dtype
-    )
+    colors_np, out_mask_np, block_specs = _get_layout_precomputed(layout)
+    out_seeds = (1.0 - decay) * jnp.asarray(out_mask_np, dtype=output.dtype)
 
     hidden_seeds = []
-    for factor, shape, row in zip(factors, layout.shapes, layout.outputs):
-        if not row:
+    for factor, (kind, shape, row_colors) in zip(factors, block_specs):
+        if kind == "empty":
             hidden_seeds.append(jnp.zeros((layout.color_count,) + shape, dtype=output.dtype))
+        elif kind == "full":
+            hidden_seeds.append(decay * jnp.moveaxis(factor, -1, 0))
+        elif len(row_colors) == 1:
+            hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
+                row_colors[0]
+            ].set(decay * factor[..., 0])
+            hidden_seeds.append(hid_s)
         else:
-            row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-            moved = decay * jnp.moveaxis(factor, -1, 0)
-            if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
-                hid_s = moved
-            else:
-                hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
-                    jnp.asarray(row_colors, dtype=jnp.int32)
-                ].set(moved)
+            hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
+                jnp.asarray(row_colors, dtype=jnp.int32)
+            ].set(decay * jnp.moveaxis(factor, -1, 0))
             hidden_seeds.append(hid_s)
 
     def _jvp_step(out_s, hid_s):
@@ -257,14 +281,12 @@ def advance_factors(transition, output, state, factors, layout, decay):
     tangents = jax.vmap(_jvp_step, in_axes=(0, 0))(out_seeds, tuple(hidden_seeds))
 
     result = []
-    for i, (shape, row) in enumerate(zip(layout.shapes, layout.outputs)):
-        if not row:
+    for i, (kind, shape, row_colors) in enumerate(block_specs):
+        if kind == "empty":
             result.append(jnp.zeros(shape + (0,), dtype=output.dtype))
-            continue
-        row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-        if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
-            cols = tangents[i]
+        elif kind == "full":
+            result.append(jnp.moveaxis(tangents[i], 0, -1))
         else:
             cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
-        result.append(jnp.moveaxis(cols, 0, -1))
+            result.append(jnp.moveaxis(cols, 0, -1))
     return tuple(result)
