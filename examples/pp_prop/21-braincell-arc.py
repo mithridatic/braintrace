@@ -2150,18 +2150,18 @@ def _evolve_workflow_report(
     )
     if model_backend == 'h01':
         if h01_manifest is None:
-            raise ValueError('--model-backend h01 requires --h01-manifest')
+            raise ValueError('H01 model backend requires --h01-manifest; provide the manifest path.')
         from examples.pp_prop.h01_arc_adapter import H01ArcAdapter
         with brainstate.environ.context(precision=64):
             state = run_evolution(H01ArcAdapter(arc_root, h01_manifest), output_dir,
                 config=config, progress_reporter=ConsoleProgressReporter())
     elif model_backend == 'braincell':
         if h01_manifest is not None:
-            raise ValueError('--h01-manifest requires --model-backend h01')
+            raise ValueError('The --h01-manifest flag requires --model-backend h01; select h01 backend.')
         state = run_evolution(Example21ArcAdapter(arc_root), output_dir,
             config=config, progress_reporter=ConsoleProgressReporter())
     else:
-        raise ValueError('Unknown model backend')
+        raise ValueError('Unknown model backend; choose braincell or h01.')
     return {
         "mode": "evolve",
         "passed": bool(state.closed and state.evaluation_completed),
@@ -2178,7 +2178,7 @@ def _evolve_workflow_report(
 
 def _run_command(args):
     if (args.model_backend != 'braincell' or args.h01_manifest is not None) and args.command != 'evolve':
-        raise ValueError('H01 backend arguments require the evolve command')
+        raise ValueError('H01 backend arguments require the evolve command; choose evolve to run H01.')
     if args.command is not None and args.smoke:
         raise ValueError(
             "Choose one of proof, run, evolve, or --smoke; "

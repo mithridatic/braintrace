@@ -135,36 +135,17 @@ def _triang(diags, solves, lowers, uppers, levels):
     u_c = u_raw[children]
     l_c = l_raw[children]
 
-    is_1d = (d_raw.ndim == 1) or (d_raw.shape[0] == 1)
-    if is_1d:
-        d = d_raw.reshape(-1)
-        s = s_raw.reshape(-1)
+    def level_step(carry, indices):
+        d, s = carry
+        c, p, v, uc, lc = indices
+        multiplier = uc / d[..., c]
+        delta_d = jnp.where(v, -lc * multiplier, 0.0)
+        delta_s = jnp.where(v, -s[..., c] * multiplier, 0.0)
+        d = d.at[..., p].add(delta_d)
+        s = s.at[..., p].add(delta_s)
+        return (d, s), None
 
-        def level_step_1d(carry, indices):
-            d, s = carry
-            c, p, v, uc, lc = indices
-            multiplier = uc / d[c]
-            delta_d = jnp.where(v, -lc * multiplier, 0.0)
-            delta_s = jnp.where(v, -s[c] * multiplier, 0.0)
-            d = d.at[p].add(delta_d)
-            s = s.at[p].add(delta_s)
-            return (d, s), None
-
-        (d_out, s_out), _ = jax.lax.scan(level_step_1d, (d, s), (children, parents, valid, u_c, l_c))
-        d_out = d_out.reshape(d_raw.shape)
-        s_out = s_out.reshape(s_raw.shape)
-    else:
-        def level_step(carry, indices):
-            d, s = carry
-            c, p, v, uc, lc = indices
-            multiplier = uc / d[:, c]
-            delta_d = jnp.where(v, -lc * multiplier, 0.0)
-            delta_s = jnp.where(v, -s[:, c] * multiplier, 0.0)
-            d = d.at[:, p].add(delta_d)
-            s = s.at[:, p].add(delta_s)
-            return (d, s), None
-
-        (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid, u_c, l_c))
+    (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid, u_c, l_c))
 
     res_d = u.Quantity(d_out, d_unit) if d_unit != u.UNITLESS else d_out
     res_s = u.Quantity(s_out, s_unit) if s_unit != u.UNITLESS else s_out
@@ -178,13 +159,13 @@ def _backsub(diags, solves, lowers, indices):
     d_raw = u.get_mantissa(diags)
     s_raw = u.get_mantissa(solves)
     l_raw = u.get_mantissa(lowers)
-    l_raw = l_raw.at[0].set(0.0)
+    l_raw = l_raw.at[..., 0].set(0.0)
     lower_effect = -l_raw / d_raw
     solve_effect = s_raw / d_raw
 
     def jump_step(carry, parents):
         lower, solution = carry
-        return (lower * lower[:, parents], solution + lower * solution[:, parents]), None
+        return (lower * lower[..., parents], solution + lower * solution[..., parents]), None
 
     (_, result), _ = jax.lax.scan(jump_step, (lower_effect, solve_effect), indices)
     res_v = u.Quantity(result, s_unit / d_unit) if (s_unit / d_unit) != u.UNITLESS else result

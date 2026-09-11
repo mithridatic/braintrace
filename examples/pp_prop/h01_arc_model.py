@@ -92,6 +92,17 @@ class H01ArcModel(brainstate.nn.Module):
             # A native run may have cached a voltage derivative before encoder attachment.
             if hasattr(cell.runtime, "_voltage_linearizer_cache"):
                 cell.runtime._voltage_linearizer_cache = None
+        soma_cv_ids = []
+        for cell in self.stepper.cells:
+            found_cv = None
+            for layout in cell.runtime.layouts:
+                decl = cell.runtime.get_layout_mechanism(layout.id)
+                if getattr(decl, 'name', None) == 'voltage':
+                    from braincell._multi_compartment.probes import _representative_cv_id
+                    found_cv = _representative_cv_id(cell.runtime, point_id=int(layout.point_index[0]))
+                    break
+            soma_cv_ids.append(found_cv)
+        self._soma_cv_ids = tuple(soma_cv_ids)
 
     def _contact_op(self, index, block):
         def deliver(spikes):
@@ -138,6 +149,9 @@ class H01ArcModel(brainstate.nn.Module):
         return self._soma()
 
     def _soma(self):
+        if hasattr(self, '_soma_cv_ids') and all(cv is not None for cv in self._soma_cv_ids):
+            return jnp.stack([cell.V.value[..., cv].to_decimal(u.mV).reshape(())
+                              for cell, cv in zip(self.stepper.cells, self._soma_cv_ids)])
         return jnp.stack([cell.sample_probes()["voltage"].to_decimal(u.mV).reshape(())
                           for cell in self.stepper.cells])
 
