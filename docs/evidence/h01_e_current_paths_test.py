@@ -45,3 +45,21 @@ def test_window_means_and_interspike_windows():
     volt_t, volt = np.array([1000., 2020.]), np.array([-70., -60.])
     windows = paths.interspike_windows(rows, volt_t, volt)
     assert [w["stop_ms"] for w in windows] == [1290., 2020.] and windows[1]["tail"] and not windows[0]["tail"]
+
+
+def test_plateau_offset_gates_admissibility(tmp_path):
+    low = [_row(False, {"Nap": .01, "Im": -.001, "axial": -.005})]
+    high = [_row(False, {"Nap": .01, "Im": -.05, "axial": -.2})]
+    rule = paths.lever_rule({"200 pA": low, "310 pA": high}, offset_na=.05)
+    assert rule["levers"]["Nap"]["carries_drift"] and not rule["levers"]["Nap"]["carries_plateau_offset"]
+    assert rule["admissible"] == []
+    time = np.arange(0., 2400., .1)
+    human = np.full_like(time, -84.)
+    human[(time >= 1020.) & (time < 2020.)] = -67.
+    np.savez(tmp_path/"sweep-56.npz", time_ms=time, corrected_voltage_mv=human)
+    model = np.full_like(time, -84.)
+    model[(time >= 1020.) & (time < 2020.)] = -62.
+    contrast = paths.plateau_contrast({"time_ms": time, "voltage_mv": model}, tmp_path/"sweep-56.npz", .2)
+    assert abs(contrast["late_pulse_offset_mv"]-5.) < 1e-9
+    assert abs(contrast["model_input_resistance_mohm"]-110.) < 1e-9
+    assert abs(contrast["offset_na"]-5./110.) < 1e-12

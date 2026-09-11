@@ -95,7 +95,34 @@ def stage0_bands(label, summary, reference):
             {"row": "axon_first", "predicted": True, "observed": summary["axon_first"], "held": summary["axon_first"], "input": label}]
 
 
-def lever_rule(paths):
+PLATEAU_WINDOWS = {"late_pulse": (1800., 2000.), "mid_pulse": (1300., 1500.), "post_pulse": (2100., 2300.)}
+
+
+def _window_stats(time, voltage, window):
+    mask = (time >= window[0]) & (time < window[1])
+    return {"p10_mv": float(np.percentile(voltage[mask], 10)), "p50_mv": float(np.percentile(voltage[mask], 50)),
+            "mean_mv": float(voltage[mask].mean())}
+
+
+def plateau_contrast(data, human_path, applied_na):
+    """Human and model voltage statistics in the mid-pulse, late-pulse and post-pulse windows.
+
+    The p10 statistic follows the interspike floor when spikes are present. ``offset_na`` is
+    the model-minus-human late-pulse p50 difference divided by the model's input resistance
+    (late-pulse p50 minus post-pulse p50, over the applied current): the whole-cell current a
+    lever must remove at the plateau to land the human's level.
+    """
+    human = np.load(human_path)
+    ht, hv = human["time_ms"], human["corrected_voltage_mv"]
+    mt, mv = np.asarray(data["time_ms"], float), np.asarray(data["voltage_mv"], float)
+    rows = {name: {"human": _window_stats(ht, hv, w), "model": _window_stats(mt, mv, w)} for name, w in PLATEAU_WINDOWS.items()}
+    model_rin = (rows["late_pulse"]["model"]["p50_mv"]-rows["post_pulse"]["model"]["p50_mv"])/applied_na
+    offset_mv = rows["late_pulse"]["model"]["p50_mv"]-rows["late_pulse"]["human"]["p50_mv"]
+    return {"windows": rows, "model_input_resistance_mohm": float(model_rin),
+            "late_pulse_offset_mv": float(offset_mv), "offset_na": float(offset_mv/model_rin)}
+
+
+def lever_rule(paths, offset_na=None):
     """Apply the registered lever rule to the 200 pA and 310 pA interspike balances.
 
     ``paths`` maps input label to its drift rows. The 200 pA reference window is the
@@ -119,24 +146,32 @@ def lever_rule(paths):
             continue
         carries = drift_low is not None and abs(low_means[name]) >= abs(drift_low)
         selective = low_shares.get(name) is not None and high_shares.get(name) is not None and high_shares[name] < low_shares[name]
+        carries_offset = None if offset_na is None else bool(abs(low_means[name]) >= abs(offset_na))
         verdicts[name] = {"mean_200pa_na": low_means[name], "mean_310pa_late_na": high_means.get(name),
                           "share_200pa": low_shares.get(name), "share_310pa_late": high_shares.get(name),
                           "carries_drift": bool(carries), "selective_for_low_drive": bool(selective),
-                          "admissible": bool(carries and selective)}
-    return {"drift_200pa_na": drift_low, "levers": verdicts,
-            "admissible": [n for n, v in verdicts.items() if v["admissible"]]}
+                          "carries_plateau_offset": carries_offset,
+                          "admissible": bool(carries and selective and (carries_offset is None or carries_offset))}
+    return {"drift_200pa_na": drift_low, "plateau_offset_na": offset_na, "levers": verdicts,
+            "admissible": [n for n, v in verdicts.items() if v["admissible"]],
+            "note": "carries_drift is the registered rule (a); at a drift near zero it is met by every term, so the plateau offset "
+                    "(model minus human late-pulse level over the model input resistance) is the current a lever must actually carry."}
 
 
-def decide(folder, reference_usable):
+def decide(folder, reference_usable, human_cache=None):
     reference = json.loads(reference_usable.read_text(encoding="utf-8"))["tables"]
-    bands, paths, summaries = [], {}, {}
+    bands, paths, summaries, plateaus = [], {}, {}, {}
     for name, label in INPUTS.items():
         data, report = load_run(folder, f"m0-b3-currents-{name}")
         summaries[label] = cycle_summary(data)
         bands += stage0_bands(label, summaries[label], reference[label]["model"])
         paths[label] = drift_rows(data, report)
+        if human_cache is not None:
+            plateaus[label] = plateau_contrast(data, human_cache/f"sweep-{name[len('sweep'):]}.npz",
+                                               float(np.mean(np.asarray(data["applied_current_na"], float)[(np.asarray(data["time_ms"], float) >= 1800.) & (np.asarray(data["time_ms"], float) < 2000.)])))
     held = all(b["held"] for b in bands)
-    rule = lever_rule(paths) if held else {"note": "not applied: stage 0 bands missed"}
+    offset = plateaus["200 pA"]["offset_na"] if "200 pA" in plateaus else None
+    rule = lever_rule(paths, offset) if held else {"note": "not applied: stage 0 bands missed"}
     log = json.loads((folder/"campaign-log.json").read_text(encoding="utf-8"))
     return {"stage": "0", "candidate": "m0-b3-currents",
             "candidate_sha256": json.loads((folder/"m0-b3-currents-sweep53.json").read_text(encoding="utf-8"))["candidate_json"]["sha256"],
@@ -144,7 +179,7 @@ def decide(folder, reference_usable):
             "verdict": "PASS" if held else "FAIL",
             "decision": "B3 reproduced with soma currents recorded; lever rule applied" if held else "reproduction failed; stop",
             "bands": bands, "bands_held": sum(b["held"] for b in bands), "bands_total": len(bands),
-            "summaries": summaries, "current_paths": paths, "lever_rule": rule,
+            "summaries": summaries, "current_paths": paths, "plateau_contrast": plateaus, "lever_rule": rule,
             "runs": [{"name": e["name"], "evaluation_index": e["evaluation_index"],
                       "runs": [{k: r[k] for k in ("input", "seconds", "returncode", "aborted")} for r in e["runs"]]} for e in log]}
 
@@ -161,15 +196,24 @@ def render(decision):
             m = r["means_na"]
             cells = [f"{m.get(k, float('nan')):.4f}" for k in ("applied", "axial", "NaTs", "Nap", "Im", "SK", "Ih", "pas", "K_P", "K_T", "Kv3_1")]
             lines.append(f"| {r['window']}{' (tail)' if r['tail'] else ''} | {r['duration_ms']:.1f} | {r['voltage_change_mv']:.2f} | {r['drift_na']:.4f} | "+" | ".join(cells)+" |")
+    if decision.get("plateau_contrast"):
+        lines += ["", "## Plateau contrast (p50 mV; human | model)", "",
+                  "| Input | mid pulse 1300-1500 | late pulse 1800-2000 | post pulse 2100-2300 | model R_in (MOhm) | late offset (mV) | offset (nA) |",
+                  "| --- | --- | --- | --- | ---: | ---: | ---: |"]
+        for label, c in decision["plateau_contrast"].items():
+            w = c["windows"]
+            cells = [f"{w[k]['human']['p50_mv']:.1f} | {w[k]['model']['p50_mv']:.1f}" for k in ("mid_pulse", "late_pulse", "post_pulse")]
+            lines.append(f"| {label} | "+" | ".join(cells)+f" | {c['model_input_resistance_mohm']:.0f} | {c['late_pulse_offset_mv']:.2f} | {c['offset_na']:.4f} |")
     rule = decision["lever_rule"]
     if "levers" in rule:
-        lines += ["", f"## Lever rule (drift at 200 pA {rule['drift_200pa_na']:.4f} nA)", "",
-                  "| Lever | mean 200 pA | mean 310 pA late | share 200 | share 310 late | carries drift | selective | admissible |",
-                  "| --- | ---: | ---: | ---: | ---: | --- | --- | --- |"]
+        offset = rule.get("plateau_offset_na")
+        lines += ["", f"## Lever rule (drift at 200 pA {rule['drift_200pa_na']:.5f} nA; plateau offset {offset if offset is None else round(offset, 4)} nA)", "",
+                  "| Lever | mean 200 pA | mean 310 pA late | share 200 | share 310 late | carries drift | selective | carries offset | admissible |",
+                  "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |"]
         for name, v in rule["levers"].items():
             lines.append(f"| {name} | {v['mean_200pa_na']:.4f} | {v['mean_310pa_late_na']:.4f} | {v['share_200pa']:.3f} | {v['share_310pa_late']:.3f} | "
-                         f"{v['carries_drift']} | {v['selective_for_low_drive']} | {v['admissible']} |")
-        lines += ["", f"Admissible levers: {rule['admissible'] or 'none'}"]
+                         f"{v['carries_drift']} | {v['selective_for_low_drive']} | {v['carries_plateau_offset']} | {v['admissible']} |")
+        lines += ["", f"Admissible levers: {rule['admissible'] or 'none'}", "", rule["note"]]
     return "\n".join(lines)+"\n"
 
 
@@ -177,8 +221,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--folder", type=Path, default=EVIDENCE/"h01-e-currents")
     parser.add_argument("--reference", type=Path, default=EVIDENCE/"h01-e-gain"/"g0-b3-usable.json")
+    parser.add_argument("--human-cache", type=Path, help="directory holding sweep-<n>.npz human exports (plateau contrast)")
     args = parser.parse_args(argv)
-    decision = decide(args.folder, args.reference)
+    decision = decide(args.folder, args.reference, args.human_cache)
     (args.folder/"stage-0-decision.json").write_text(json.dumps(decision, indent=2), encoding="utf-8")
     (args.folder/"stage-0-current-paths.md").write_text(render(decision), encoding="utf-8")
     print(render(decision))

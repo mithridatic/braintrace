@@ -61,3 +61,13 @@ sweep 55 is not rerun. Both tiers reported for every arm. A stage-1 pass is a
 gain-split result for B3, not a contract pass and not a promotion; promotion
 needs the sealed sweep-54 prediction under the population programme's rules.
 The causal model Y4 section is updated in the same commit as each decision JSON.
+
+## Addendum (2026-09-11, after the sweep-56 run, before sweeps 50 and 53 finished)
+
+Rule (a) as registered ("carries the net drift current") is degenerate: at 200 pA the
+interspike drift is below 0.0002 nA, so every term meets it. The quantity a lever must
+carry is the plateau offset: the model's late-pulse level minus the human's, over the
+model's input resistance (`h01_e_current_paths.plateau_contrast`). It is added to the
+scorer as rule (c), `carries_plateau_offset`, and gates admissibility together with (a)
+and (b). Registered before sweeps 50 and 53 completed and before any stage-1 dose was
+chosen. No band of stage 1 changes.
