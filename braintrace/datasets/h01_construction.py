@@ -1502,15 +1502,24 @@ class H01Cell(braincell.Cell):
         self.ion_channels = self._format_elements(IonChannel, **root_nodes)
         
         varshape = self.varshape
-        if batch_size is None:
+        v_initializer = (
+            self._V_init if self._V_init is not None
+            else cv_value_vector(self, attr_name="v")
+        )
+        if batch_size is None and not is_traced_value(v_initializer):
             n_cv = len(self.cvs)
             cm_arr = np.fromiter((cv.cm.mantissa if isinstance(cv.cm, u.Quantity) else float(cv.cm) for cv in self.cvs), dtype=np.float64, count=n_cv)
             self.C = u.Quantity(np.broadcast_to(cm_arr, varshape), u.uF / u.cm**2)
             v_th_val = self.V_th.mantissa if isinstance(self.V_th, u.Quantity) else float(self.V_th)
             self.V_th = u.Quantity(np.full(varshape, v_th_val, dtype=np.float64), u.mV)
-            v_init_val = self._V_init.mantissa if isinstance(self._V_init, u.Quantity) else float(self._V_init)
-            v_np = np.full(varshape, v_init_val, dtype=np.float64)
-            self.V = DiffEqState(u.Quantity(v_np, u.mV))
+            if isinstance(v_initializer, u.Quantity):
+                v_init_val = v_initializer.mantissa
+                v_unit = v_initializer.unit
+            else:
+                v_init_val = float(v_initializer)
+                v_unit = u.mV
+            v_np = np.broadcast_to(np.asarray(v_init_val, dtype=np.float64), varshape)
+            self.V = DiffEqState(u.Quantity(v_np, v_unit))
             self.spike = brainstate.ShortTermState(np.zeros(varshape, dtype=np.float64))
             self._current_time_state.value = 0.0 * u.ms
 
@@ -1518,14 +1527,10 @@ class H01Cell(braincell.Cell):
             n_point = self._runtime.n_point
             point_V_np = np.zeros(varshape[:-1] + (n_point,), dtype=np.float64)
             point_V_np[..., point_ids] = v_np
-            point_V_init = u.Quantity(point_V_np, u.mV)
+            point_V_init = u.Quantity(point_V_np, v_unit)
         else:
             self.C = cv_value_vector(self, attr_name="cm")
             self.V_th = bridge.fill_like(self.varshape, self.V_th)
-            v_initializer = (
-                self._V_init if self._V_init is not None
-                else cv_value_vector(self, attr_name="v")
-            )
             if self._V_init is not None:
                 v_initializer = bridge.fill_like(self.varshape, v_initializer)
             v_value = braintools.init.param(v_initializer, self.varshape)

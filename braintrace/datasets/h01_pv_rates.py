@@ -60,7 +60,14 @@ def _ones_like(x):
 
 def _pair(alpha, beta, q=1.):
     total = alpha+beta
-    return alpha/total, 1./(q*total)
+    inf = alpha/total
+    if _is_jax(inf):
+        inf = jnp.clip(inf, 0., 1.)
+    elif isinstance(inf, np.ndarray):
+        inf = np.clip(inf, 0., 1.)
+    elif isinstance(inf, (int, float)):
+        inf = max(0., min(1., float(inf)))
+    return inf, 1./(q*total)
 
 
 def _natg(v, ca, gate=None, component=None):
