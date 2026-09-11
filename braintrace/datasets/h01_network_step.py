@@ -44,6 +44,7 @@ class H01NetworkStep(brainstate.nn.Module):
         self.ring_buffers = self.delivery.ring_buffers
         self.ring_cursors = self.delivery.ring_cursors
         self.has_delivery = bool(self.setup.delivery_blocks)
+        self.has_synapses = any(any(getattr(l, "kind", "").startswith("synapse") for l in getattr(cell._runtime, "layouts", ())) for cell in self.cells)
         self._dt = self.dt_ms * u.ms
         self.tick = brainstate.ShortTermState(jnp.asarray(0, dtype=jnp.int32))
 
@@ -65,10 +66,11 @@ class H01NetworkStep(brainstate.nn.Module):
             if self.has_delivery:
                 write_arrivals(self.setup.delivery_blocks, self.delivery,
                                populations=self.network.populations)
-            for cell in self.cells:
-                cell._prepare_next_synapse_inputs()
-            for cell in self.cells:
-                cell._begin_step()
+            if self.has_synapses:
+                for cell in self.cells:
+                    cell._prepare_next_synapse_inputs()
+                for cell in self.cells:
+                    cell._begin_step()
             for cell in self.cells:
                 cell._update_dynamics()
             snapshots = {name: pop.cell.sample_probes()

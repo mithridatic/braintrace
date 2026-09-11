@@ -31,7 +31,16 @@ def _get_node_ca_constants(node):
 
 
 def _calcium_snapshot(node, voltage):
-    """Capture old voltage and validate an ohmic calcium current sum."""
+    """Capture old voltage and compute calcium conductance directly."""
+    if hasattr(node, "channels") and node.channels:
+        ion_info = node.pack_info()
+        g = None
+        for ch in node.channels.values():
+            cond = (ch.g_max * ch.conductance_factor(voltage, ion_info)).to_decimal(u.mS/u.cm**2)
+            g = cond if g is None else (g + cond)
+        if g is None:
+            g = jnp.zeros_like(u.get_mantissa(voltage))
+        return voltage, g
     zero = voltage*0.
     i0 = node.current(zero, include_external=True)
     i1 = node.current(zero+1.*u.mV, include_external=True)

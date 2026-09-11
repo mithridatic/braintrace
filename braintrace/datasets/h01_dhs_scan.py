@@ -187,9 +187,8 @@ def _backsub(diags, solves, lowers, indices):
     return res_v
 
 
-def _solve(diags, solves, lowers, uppers, levels, jumps, edges):
-    """Use the original tree solve with an exact implicit linear derivative."""
-    d, s, low, up = map(u.get_mantissa, (diags, solves, lowers, uppers))
+def _solve_raw(d, s, low, up, levels, jumps, edges):
+    """Use the tree solve with an exact implicit linear derivative on raw arrays."""
     children_edges, parents_edges = edges[:, 0], edges[:, 1]
     children, parents, valid = levels
     low_c = low[children]
@@ -224,7 +223,13 @@ def _solve(diags, solves, lowers, uppers, levels, jumps, edges):
             (diagonal, right), _ = jax.lax.scan(level_step, (d, rhs), (children, parents, valid, low_c, up_c))
         return _backsub_raw(diagonal, right, up, jumps)
 
-    result = jax.lax.custom_linear_solve(matvec, s, solve=solve, transpose_solve=transpose_solve)
+    return jax.lax.custom_linear_solve(matvec, s, solve=solve, transpose_solve=transpose_solve)
+
+
+def _solve(diags, solves, lowers, uppers, levels, jumps, edges):
+    """Use the original tree solve with an exact implicit linear derivative."""
+    d, s, low, up = map(u.get_mantissa, (diags, solves, lowers, uppers))
+    result = _solve_raw(d, s, low, up, levels, jumps, edges)
     unit = u.get_unit(solves)/u.get_unit(diags)
     return u.Quantity(result, unit) if unit != u.UNITLESS else result
 
