@@ -41,6 +41,11 @@ SP10 = "docs/specs/2026-09-11-h01-i-sk-isolation.md"
 SP11 = "docs/specs/2026-09-11-h01-e-current-measurement.md"
 SP10_MAN = "docs/evidence/h01-i-sk-manifest.json"
 SP11_MAN = "docs/evidence/h01-e-currents-manifest.json"
+SP10_RESULT = "docs/evidence/h01-i-sk-result.md"
+SP10_S1 = "docs/evidence/h01-i-sk/stage-1-decision.json"
+SP11_RESULT = "docs/evidence/h01-e-currents-result.md"
+SP11_CLOSE = "docs/evidence/h01-e-currents/stage-close-decision.json"
+SP12 = "docs/specs/2026-09-11-h01-e-spike-triggered-outward.md"
 
 COLORS = {
     "Undesirable Effect": "#b35f48",
@@ -136,13 +141,17 @@ def build_nodes() -> list[dict]:
              "All eight recorded soma neighbours sit below the soma voltage. Recovered sodium therefore does not imply rapid soma charging. The same path appears in early and late samples at 0.19 and 0.23 nA. Downstream cable currents remain unresolved.",
              [CM, I_CURRENTS, I_ENERGETIC], "supported"),
         node("ie_sk", IE,
-             "IE2. I cell: along the 0.23 nA train the axonal calcium rises 0.000120 to 0.000199 mM, the axonal SK gate rises 0.0022 to 0.024, and the trough-to-threshold delay grows 17.6 to 40.3 ms.",
-             "These observations locate current and state changes; they do not isolate the cause of the timing error (Y3).",
-             [SP10, CM, I_CURRENTS], "supported"),
+             "IE2 (established by INJ1). I cell: the calcium-activated axonal SK current carries the finalist's late delay. With axonal SK density zero as the single change: 0.19 nA count 14 -> 29, last trough-to-threshold delay 80.8 -> 32.2 ms; 0.27 nA count 37 -> 59, delay 27.2 -> 14.1 ms; 22 of 22 bands held.",
+             "Along the finalist's 0.23 nA train the axonal SK gate rises 0.0022 to 0.024 as the delay grows 17.6 to 40.3 ms. Without SK the cycle stops growing after cycle 2; widths (0.221 ms), peaks, troughs 1-3 (within 0.04 mV) and axon-first initiation are unchanged; no depolarisation block. This is a mechanism result, not a repair: both counts move away from the human (12, 43).",
+             [SP10_S1, SP10_RESULT, CM], "supported"),
         node("ie_sk_confounded", IE,
-             "IE3. I cell: the earlier 'no axonal SK' arm (57/138 spikes) was not a single-change comparison; it also returned somatic NaTg to 1.0 and used Kv3 closing factor 0.5 (the finalist uses 2.0).",
-             "So no isolated axonal-SK effect exists for the finalist. Increasing axonal NaTg density 1.5x failed its registered recovery prediction; that dose does not exclude all axonal density changes.",
+             "IE3 (superseded). I cell: the earlier 'no axonal SK' arm (57/138 spikes) was not a single-change comparison; it also returned somatic NaTg to 1.0 and used Kv3 closing factor 0.5 (the finalist uses 2.0).",
+             "That confound is why the SK path needed INJ1. Increasing axonal NaTg density 1.5x failed its registered recovery prediction; that dose does not exclude all axonal density changes.",
              [I_CURRENTS, CM], "supported"),
+        node("ie_i_late_fi", IE,
+             "IE8. I cell late cycle and late-rate f-I: the human's late cycle is ~100 ms at 0.19 nA (96-117) and ~25 ms at 0.27 nA (24-26); the finalist gives 84 and 30.4 ms, the SK-free model 33-35 and 17.1 ms. The human lies between the two model settings at 0.27 nA and beyond both at 0.19 nA.",
+             "Late-rate f-I from the mean of the last five cycles: human 8.2 -> 39.4 Hz (0.39 Hz/pA, zero near 169 pA); s1-sk-axon0 28.3 -> 58.5 Hz (0.38 Hz/pA, zero near 115 pA); s0-finalist 12.0 -> 32.9 Hz (0.26 Hz/pA, zero near 144 pA). The SK-free model has the human's late gain and a rheobase about 55 pA too low; the SK dose lowers the gain without moving the rheobase to the human's. A brake that accumulates with calcium grows with the input; the human's late slowing shrinks with the input. Three lines through two points each, not a mechanism.",
+             [SP10_RESULT, SP10_S1], "supported"),
         node("ie_kv3", IE,
              "IE4. I cell: earlier comparisons support a role for sodium duration and retained Kv3 activation in the spike fall and trough; removing somatic Kv3 produced depolarisation block in that earlier candidate.",
              "A repeated width difference does not establish one unique mechanism (Y3). The finalist's somatic Kv3 close factor is 2.0.",
@@ -151,10 +160,22 @@ def build_nodes() -> list[dict]:
              "IE5. E cell: the passive levers move the f-I curve and the sweep-43 subthreshold return (F5) in a fixed ratio. Ih half: 250 pA count 8 -> 8, rest -1.73 mV, return -0.7 mV. Leak x1.5: counts 0/0/6 at 200/250/310 pA, return -3.06 to -3.78 mV, past the donor.",
              "The 250 pA count is a step in the leak, not a line: no leak dose lands it at 5 while the 310 pA rate stays within 1.5 Hz. Somatic SK (0.35) with calcium decay 1.0 sets the late 310 pA interval (10.05 vs 10.00 Hz) but translates the whole curve and cannot rotate it. The combined arm (g3) was registered and not run because its additive prediction fails every band.",
              [E_CLOSE, E_STAGE_G], "supported"),
-        node("ie_b3_notrace", IE,
-             "IE6. E cell: the saved B3 traces contain soma and axon voltage but no channel currents or calcium (record_soma_currents false). The current that carries the three excess low-drive spikes has never been measured.",
-             "The older E current study used different sodium, calcium and regional settings, so its budgets cannot explain B3. B3 already contains a somatic M current, Im, at 0.0003009 S/cm2 (source correction in Y4).",
-             [SP11, CM], "supported"),
+        node("ie_e_passthrough", IE,
+             "IE6 (measured by INJ2 stage 0). E cell: between spikes the B3 soma is a pass-through. At 200 pA it passes 0.188 of the applied 0.196 nA into the cable (96 percent); the soma ionic terms sum to about -9 pA (leak -6.6, Kv3 -3.0, SK -1.7, NaTs +1.5, Nap +1.5, Im -0.1 pA); net drift below 0.2 pA. Only SK changes with input (-7 pA at 250, -13 pA at 310).",
+             "Consequence for the registered levers: Nap can supply at most 1.7 pA and Im 0.2 pA at the plateau, against an offset of 20-50 pA (0.02-0.05 nA) to carry; an Im dose that reaches it (about 100x) acts more strongly at the 310 pA threshold and removes that train. Under the scorer's rules the only admissible boundary is the axial current: the lever lives in the cable or in a mechanism the fit lacks. B3 reproduced exactly with currents recorded (counts 4/8/10, peak times and troughs identical to g0-b3, axon-first).",
+             [SP11_CLOSE, SP11_RESULT], "supported"),
+        node("ie_e_postspike", IE,
+             "IE9 (measured by INJ2 stage 0). E cell at 200 pA: after its single spike (206 ms) the human sits at -67.1 mV (late pulse) and -67.7 mV (mid pulse); the model averages -64.8 mV late and -61.9 mV mid while firing four times. At 110 pA with no spike the same model matches the human onset rows within 0.4-0.9 mV, so the offset appears only after a spike.",
+             "Offset 2.0 mV by p50 (0.020 nA at the model's 98 MOhm), 2.3 mV by mean late, 5.8 mV by mean mid pulse. Unresolved link: a current that holds the human 2-6 mV below the model after a spike, silent without a spike, not present in the soma genome, carried through the cable boundary in the model.",
+             [SP11_CLOSE, SP11_RESULT, SP12], "supported"),
+        node("ie_e_threshold", IE,
+             "IE10. E cell: the human's spike threshold climbs along the train (-56.4 to -52.8 mV at 310 pA; -55.8 to -54.3 mV at 250 pA); the model's stays at -57.2 mV at every input.",
+             "A rising threshold is not supplied by the sAHP/KNa family alone; the SP12 draft pairs it with sodium slow inactivation as a separate hypothesis.",
+             [SP12, SP11_RESULT], "supported"),
+        node("ie_cross", IE,
+             "IE11 (observed pattern, not a cause). Both humans show a higher rheobase and a steeper late gain than their donor models: E counts 1/5/10/13 vs model 4/8/10/12 at 200/250/310/350 pA; I late rate 8.2 -> 39.4 Hz (zero near 169 pA) vs finalist 12.0 -> 32.9 Hz (zero near 144 pA). Both humans show a threshold that climbs along the train; both models hold a fixed threshold.",
+             "A shared pattern across two cells and two fits. It does not identify a mechanism and is recorded here as a constraint on candidate causes.",
+             [E_CLOSE, SP10_RESULT, SP11_RESULT, SP12], "supported"),
         node("ie_pop_runtime", IE,
              "IE7. Population: construction, initialisation, compilation, stepping and trace analysis are separate runtime stages; the corrected 104-cell run has a construction and initialisation pass but no completed driven runtime record.",
              "The runtime timeout does not establish numerical failure or memory exhaustion; a timeout needs a stage record before it can support a performance explanation.",
@@ -162,25 +183,29 @@ def build_nodes() -> list[dict]:
         # -------------------------------------------------------- root causes
         node("rc_vdep", RC,
              "RC1 (open). E cell: the current that removes three spikes at 200-250 pA while leaving the 310 pA train and the sweep-43 return fixed must be voltage- or use-dependent and lies outside the fit's passive family.",
-             "Reassessment candidates: a slow sodium inactivation absent from the Allen genome; Kv7/M kinetics absent from the Allen genome; a second human L2/3 donor with a recorded f-I curve (SP6b lead). No candidate has been run; any is a new spec with its own cap.",
-             [E_CLOSE, CM], "unverified"),
+             "After INJ2 the unresolved link is narrowed: the current holds the human 2-6 mV below the model after a spike at 200 pA, is silent without a spike (110 pA rows), is not in the soma genome, and is carried through the cable boundary. Candidates (SP11 close): a spike-triggered slow outward current (sAHP or KNa; SP12 draft); dendritic or axonal placement of an existing outward conductance; a second human L2/3 donor with a recorded f-I curve (SP6b lead). Nap-down and Im-up are excluded (cannot carry the offset). Each candidate is a new spec with its own cap.",
+             [SP11_CLOSE, E_CLOSE, CM], "unverified"),
         node("rc_burst", RC,
-             "RC2 (open). I cell: the current balance that would restore early refiring (cycle 2 at or below 22 ms) and the later train changes is unidentified.",
-             "Y3 'Open': a matched SK test must retain the other finalist settings and measure the current change before the timing change. The finalist remains experimental.",
-             [CM, SP10], "unverified"),
+             "RC2 (open). I cell: the current balance that would restore early refiring (cycle 2 at or below 22 ms) is unidentified. The human's early burst (cycles 2-4 at 6-10 ms) is absent with and without axonal SK.",
+             "INJ1 isolated the late-delay path (axonal SK) but changed cycle 2 by only -3.9 ms at 0.19 nA and -0.4 ms at 0.27 nA. The finalist remains experimental; both tiers fail count and rate at both inputs for both arms.",
+             [SP10_RESULT, SP10_S1, CM], "unverified"),
         node("rc_donor", RC,
              "RC3 (open). The fitted electrical properties are a donor's, not H01's: B3 runs on Allen 541563728 geometry with the kv3-closing-source mechanism library, and no H01 physiological recording exists to qualify against.",
              "Additional donor fits also miss recorded counts: HL5MN1 gave 16 and 30 against 14 and 34; Allen 527952884 gave 19 and 8 against 20 and 12 (Y6). These runs do not establish a missing biological mechanism; the condition behind each count difference is unidentified.",
              [CM, E_CLOSE, DONOR_HL5, DONOR_L4], "unverified"),
         # --------------------------------------------------------- injections
         node("inj_sp10", INJ,
-             "INJ1 (running). SP10: isolate the axonal SK effect on the I finalist. Stage 0 s0-finalist (byte-identical) at 0.19 and 0.27 nA, then stage 1 s1-sk-axon0 (--scale SK:axon:0) as the single change.",
-             "Pre-registered prediction (stage 1): if axonal SK is the direct path of the growing delay, removing it shortens the late trough-to-threshold delay by more than 12.8 ms at both inputs and raises counts above 14 and 37, while cycle 2 moves less than 12.8 ms and widths, peaks and early troughs stay within stage-0 bands. Rejection: delay not shortened beyond 12.8 ms; or spikes lost; or depolarisation block (above -20 mV for more than 5 ms). A count rise away from the human (12, 43) is a mechanism observation, not a promotion. Two evaluations, 1800 s abort, no holdout opened. Stage 0 must reproduce counts 14 and 37, cycle 2 (34.76, 16.37 ms) within 0.1 ms and troughs 1-3 within 0.1 mV.",
-             [SP10, SP10_MAN], "unverified"),
+             "INJ1 (executed, CLOSED PASS). SP10: isolate the axonal SK effect on the I finalist. Stage 0 s0-finalist reproduced the container (14, 37; 12/12 bands). Stage 1 s1-sk-axon0 (--scale SK:axon:0, single change) held 22 of 22 bands; rejection not met.",
+             "Pre-registered prediction: removing axonal SK shortens the late trough-to-threshold delay by more than 12.8 ms at both inputs and raises counts above 14 and 37, while cycle 2 moves less than 12.8 ms and widths, peaks and early troughs stay within stage-0 bands. Observed: delay shortened 48.7 ms at 0.19 nA and 13.1 ms at 0.27 nA; counts 29 and 59; cycle 2 changed -3.9 and -0.4 ms; widths 0.221 ms, troughs within 0.04 mV, axon-first, longest time above -20 mV 0.22 ms. Not a repair: both counts move away from the human; the finalist stays experimental. Two evaluations spent of two; sweep 48 stays sealed. Causal model Y3 updated in commit 8869c22.",
+             [SP10_S1, SP10_RESULT, SP10, SP10_MAN], "supported"),
         node("inj_sp11", INJ,
-             "INJ2 (running). SP11: measure the B3 current paths (stage 0, unchanged B3 with record_soma_currents at 200, 250, 310 pA), then one voltage-dependent lever (stage 1: Nap density reduced or Im density raised).",
-             "Stage 0 prediction: counts 4, 8, 10; every rise crossing within 0.1 ms and every trough within 0.1 mV of g0-b3; axon-first. Rejection: any count or crossing difference (stop). Lever selection rule from stage-0 numbers: (a) its interspike current at 200 pA is at least the net drift current there; (b) its share at 310 pA is smaller than at 200 pA. Stage 1 bands: 200 pA count 1 (1-2); 250 pA 5-7; 310 pA 9-10 with rate within 1.5 Hz of 10.0 Hz and late cycles 110-124 ms within 12.8 ms; sweep-43 rows move less than 1 mV. Rejection: 310 pA count below 9 or late cycle moves more than 12.8 ms; or sweep-43 rows move 1 mV or more. Cap three evaluations, 2400 s abort; sweep 54 sealed. A pass is a gain-split result, not a promotion.",
-             [SP11, SP11_MAN], "unverified"),
+             "INJ2 (stage 0 executed PASS 12/12; stage 1 registered, NOT spent; CLOSED). SP11: unchanged B3 rerun with record_soma_currents at 200, 250, 310 pA reproduced g0-b3 exactly (counts 4/8/10, identical peak times and troughs, axon-first) with every soma current recorded.",
+             "Stage 0 prediction held: counts 4, 8, 10; crossings within 0.1 ms; troughs within 0.1 mV; axon-first. Stage 1 (n1-nap-* Nap reduced, k1-im-* Im raised) not spent under the fail-fast rule: both fail the registered 200 pA band (count 1) by construction, since the current they can add or remove at the plateau is at most 0.0017 nA against an offset of 0.020-0.05 nA, and the Im dose that closes the gap removes the 310 pA train (registered rejection). One evaluation spent of three. Runs took 885, 981 and 1015 s. B3 stays frozen and unpromoted; causal model Y4 updated in the same commit.",
+             [SP11_CLOSE, SP11_RESULT, SP11, SP11_MAN], "supported"),
+        node("inj_sp12", INJ,
+             "INJ3 (proposed, DRAFT, not approved, not run). SP12: a spike-triggered, long-lasting outward current absent from the Allen genome (slow calcium-activated potassium, sAHP, or sodium-activated potassium, KNa) on the E cell. Needs a new mod file (KsAHP.mod or KNa.mod) in the kv3-closing-source library and user approval before code.",
+             "Predicted signature: (1) a post-spike level shift that persists over the 1 s pulse at rheobase; (2) an accumulating brake at 250 pA that spreads cycles to about 300 ms; (3) little effect on the late 310 pA train; (4) a rising threshold only if paired with sodium slow inactivation. Registered predictions (dose to be fixed before any run): stage 0 dose scan on sweep 56, post-spike late-pulse p50 within 1 mV of -67.4 mV with count 1 (band 1-2); stage 1 at sweeps 50, 53, 43: 250 pA count 5-7 with cycles 4-5 of 250-350 ms, 310 pA count 9-10 with late cycles within 12.8 ms of 120 ms, sweep-43 onset rows within 1 mV of g0-b3. Rejection: 310 pA count below 9 (and the further clauses in the draft). Excluded by construction: a uniform outward conductance active from -72 mV; a faster SK dose.",
+             [SP12, SP11_CLOSE], "unverified"),
         junction("j_e"),
         junction("j_i_late"),
         junction("j_i_count"),
@@ -193,13 +218,18 @@ def build_edges() -> list[dict]:
         edge("rc_vdep", "j_e", "input"),
         edge("ie_passive", "j_e", "input"),
         edge("j_e", "ude_e_lowdrive", "causes", "candidate cause; passive family excluded"),
-        edge("ie_b3_notrace", "rc_vdep", "describes", "why the current is still unidentified"),
+        edge("ie_e_passthrough", "rc_vdep", "describes", "soma levers excluded; cable boundary only"),
+        edge("ie_e_postspike", "rc_vdep", "describes", "offset appears only after a spike"),
+        edge("ie_e_threshold", "rc_vdep", "describes", "not supplied by sAHP/KNa alone"),
         edge("rc_donor", "ude_e_lowdrive", "describes", "candidate: second human L2/3 donor (SP6b lead)"),
+        edge("ie_cross", "ude_e_lowdrive", "describes", "shared pattern; not a cause"),
+        edge("ie_cross", "ude_i_count", "describes", "shared pattern; not a cause"),
         # I cell branch
         edge("ie_axial", "j_i_late", "input"),
         edge("ie_sk", "j_i_late", "input"),
-        edge("j_i_late", "ude_i_latecycle", "causes", "measured together; not isolated"),
-        edge("ie_sk_confounded", "ie_sk", "describes", "why SK is not isolated"),
+        edge("j_i_late", "ude_i_latecycle", "causes", "SK path established by INJ1; axial path measured"),
+        edge("ie_sk_confounded", "ie_sk", "describes", "earlier confound, superseded by INJ1"),
+        edge("ie_i_late_fi", "ude_i_latecycle", "describes", "human late cycle vs both model settings"),
         edge("rc_burst", "ude_i_burst", "causes", "unidentified balance"),
         edge("ude_i_burst", "j_i_count", "input"),
         edge("ude_i_latecycle", "j_i_count", "input"),
@@ -209,15 +239,17 @@ def build_edges() -> list[dict]:
         edge("rc_donor", "ude_pop", "causes"),
         edge("ie_pop_runtime", "ude_pop", "causes"),
         # injections
-        edge("inj_sp10", "ie_sk", "describes", "tests whether axonal SK is the direct path"),
-        edge("inj_sp10", "rc_burst", "describes", "prediction excludes the early refire"),
-        edge("inj_sp11", "ie_b3_notrace", "describes", "stage 0 removes this gap"),
-        edge("inj_sp11", "rc_vdep", "describes", "stage 1 tests Nap or Im"),
+        edge("inj_sp10", "ie_sk", "describes", "executed: established the SK path (22/22)"),
+        edge("inj_sp10", "rc_burst", "describes", "early burst absent at both settings"),
+        edge("inj_sp11", "ie_e_passthrough", "describes", "stage 0 measured this"),
+        edge("inj_sp11", "ie_e_postspike", "describes", "stage 0 measured this"),
+        edge("inj_sp11", "rc_vdep", "describes", "stage 1 not spent: Nap/Im cannot carry the offset"),
+        edge("inj_sp12", "rc_vdep", "describes", "proposed test (draft, needs approval)"),
     ]
 
 
 REVIEW_TEXT = {
-    "causes": ("Cause sufficiency", "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link."),
+    "causes": ("Cause insufficiency", "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link."),
     "describes": ("Entity existence", "Does the described condition exist as stated in the named evidence file, or is it assumed?"),
 }
 
@@ -254,30 +286,32 @@ def explanation(nodes: list[dict]) -> dict:
             "Two single-cell fits (E: frozen B3 on Allen 541563728 geometry; I: the Kv3 close factor 2.0 "
             "energetic-search finalist) are compared with human recordings under the approved 1 mV contract "
             "and the separate usable tier. The 104-cell H01 population builds and initialises but has no "
-            "completed driven runtime qualification. Two tests (SP10, SP11) are running on the Vast.ai box "
-            "under pre-registered predictions."
+            "completed driven runtime qualification. Two tests ran on the Vast.ai box under pre-registered "
+            "predictions and are closed: SP10 (PASS, axonal SK is the I finalist's late-delay path) and SP11 "
+            "(stage 0 PASS with soma currents recorded; stage 1 not spent). SP12 is a draft awaiting approval."
         ),
         "narrative": (
             "Undesirable Effects are the contract rows that fail. Intermediate Effects are measured "
-            "mechanisms copied from the decision files. Root Causes are the candidate causes the campaign "
-            "leaves open; none is established. Injections are the two running tests, with their "
-            "pre-registered predictions and rejection clauses. Arrows point from cause to effect "
-            "(downward); 'describes' links carry context, not causation. Every node names its evidence file. "
-            "Status 'supported' means the numbers on the node are read directly from that file; "
-            "'unverified' means the node is a candidate or a not-yet-run test."
+            "mechanisms copied from the decision files; IE11 is a cross-cell pattern recorded as a constraint, "
+            "not a cause. Root Causes are the candidate causes the campaign leaves open; none is established. "
+            "Injections are the two executed tests (with prediction, observation and verdict) and one proposed "
+            "test. Arrows point from cause to effect (downward); 'describes' links carry context, not "
+            "causation. Every node names its evidence file. Status 'supported' means the numbers on the node "
+            "are read directly from that file; 'unverified' means the node is a candidate or a not-yet-run test."
         ),
         "uncertainties": (
-            "The E low-drive current has never been measured (SP11 stage 0 fixes that). The axonal SK "
-            "effect in the I finalist has no single-change comparison (SP10 stage 1 fixes that). Neither "
-            "test can produce a contract pass or a promotion. The population runtime timeout has no stage "
-            "record. Whether any H01 cell's physiology matches the donor fits is untestable with the data "
-            "held."
+            "The E post-spike offset (2-6 mV at 200 pA) is carried through the cable boundary and is not in "
+            "the soma genome; its mechanism (sAHP/KNa, dendritic or axonal placement, or a donor difference) "
+            "is untested. The I early burst is absent with and without axonal SK and has no candidate "
+            "mechanism. Neither executed test produced a contract pass or a promotion. The population "
+            "runtime timeout has no stage record. Whether any H01 cell's physiology matches the donor fits "
+            "is untestable with the data held."
         ),
         "predictions": (
-            "SP10 stage 1: late trough-to-threshold delay shortens by more than 12.8 ms at 0.19 and 0.27 nA "
-            "with counts above 14 and 37, or the axonal-SK path is rejected. SP11 stage 0: counts 4, 8, 10 "
-            "reproduced within 0.1 ms / 0.1 mV; stage 1 lever lands 200 pA at 1-2 and 250 pA at 5-7 while "
-            "310 pA stays 9-10 within 1.5 Hz and sweep-43 rows move less than 1 mV, or the lever is rejected."
+            "SP12 (if approved): a spike-triggered slow outward current lands the 200 pA post-spike p50 "
+            "within 1 mV of -67.4 mV with count 1, then 250 pA count 5-7 with cycles 4-5 of 250-350 ms, "
+            "310 pA count 9-10 with late cycles within 12.8 ms of 120 ms, and sweep-43 onset rows within "
+            "1 mV of g0-b3; otherwise the family is rejected."
         ),
         "nodeIds": [n["id"] for n in nodes],
         "testIds": [],
