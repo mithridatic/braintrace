@@ -1,0 +1,62 @@
+{
+  "purpose": "SP11 E cell: measure the unchanged B3 soma current paths at 200, 250 and 310 pA (the Y4 missing-link measurement of docs/evidence/h01-causal-current-observations-2026-09-09.md), then one registered voltage-dependent intervention. Specification: docs/specs/2026-09-11-h01-e-current-measurement.md.",
+  "cap": 3,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 2400,
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv, kv3-closing-source mechanisms compiled with nrnivmodl from the same mod files as image braintrace-h01-neuron:9.0.2).",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-currents",
+  "inputs": {
+    "sweep56": ["--cache", "/work", "--sweep", "56", "--include-recorded-bias"],
+    "sweep50": ["--cache", "/work", "--sweep", "50", "--include-recorded-bias"],
+    "sweep53": ["--cache", "/work", "--sweep", "53", "--include-recorded-bias"],
+    "sweep43": ["--cache", "/work", "--sweep", "43", "--include-recorded-bias"]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed (h01_l2_sweep_export.SEALED) and is not an input of any stage. Sweep 55 (350 pA) was opened by the usable campaign and is not rerun here.",
+  "evaluation": "One parameter set at its stage's inputs; one evaluation = serial runs in one process.",
+  "base_candidate": {
+    "file": "h01-e-usable/b3-sk035-ca-decay.candidate.json",
+    "sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
+  },
+  "stages": {
+    "0": {
+      "title": "Stage 0: frozen B3 with soma current recording at sweeps 56, 50, 53 (200, 250, 310 pA)",
+      "prediction": "Counts 4, 8, 10 (h01-e-gain/stage-g0-decision.json); every rise-crossing time within 0.1 ms and every trough within 0.1 mV of g0-b3 (the probes do not change the solution beyond CVode noise); axon-first initiation at all three inputs. Between spikes at 200 pA the applied command exceeds the summed outward soma currents by a small margin that the recorded terms make explicit; Nap, Im, SK and Ih magnitudes in the interspike windows are measured, not predicted.",
+      "rejection": "A different count at any input, or a crossing beyond 0.1 ms, means the recording option or the executor changed the model: stop, record the difference, and do not open stage 1.",
+      "unchanged": "All B3 flags (b3-sk035-ca-decay.candidate.json): calcium_decay_factor 1.0, distribute_ih, ih_density_factor 75, insert_density NaTs:axon:3.814, kv3_closing_factor 0.9, leak_reversal_shift_mv -4, regional_density SK:soma:0.35, sodium_density_factor 0.9, sodium_opening_factor 2.0, sodium_recovery_factor 1.0, stop 2100 ms; nseg factor 9; CVode 1e-10; recorded command plus recorded bias; Allen 541563728 geometry; library kv3-closing-source. The single addition is record_soma_currents true.",
+      "decision_file": "stage-0-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "m0-b3-currents",
+      "stage": "0",
+      "arm": "measurement",
+      "inputs_note": "Stage 0 is launched with --only-input sweep56 --only-input sweep50 --only-input sweep53; sweep43 belongs to stage 1 arms only.",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": true
+      }
+    }
+  ]
+}

@@ -169,3 +169,22 @@ def test_container_stderr_is_persisted_for_every_input(tmp_path, monkeypatch):
     assert (folder/"c0-z.stderr.log").exists()
     assert campaign.persist_container_output(folder, "c0-y", b"out", b"bytes") == ["bytes"]
     assert (folder/"c0-y.stderr.log").read_text(encoding="utf-8").startswith("bytes")
+
+
+def test_local_command_rewrites_mounts_and_sets_the_library_cwd(tmp_path):
+    manifest = _manifest()
+    manifest.update({"executor": "local", "python": "/venv/bin/python"})
+    manifest["inputs"]["019"] = ["--cache", "/work", "--sweep", "50", "--donor-json", "/evidence/d.json"]
+    command = campaign.local_command(tmp_path, manifest, manifest["candidates"][0], "019")
+    cache = (tmp_path/".cache/pv").resolve().as_posix()
+    evidence = (tmp_path/"docs/evidence").resolve().as_posix()
+    assert command[:2] == ["/venv/bin/python", evidence+"/h01_pv_neuron_reference.py"]
+    assert command[command.index("--cache")+1] == cache
+    assert command[command.index("--donor-json")+1] == evidence+"/d.json"
+    assert command[command.index("--candidate-json")+1] == evidence+"/h01-i-campaign/c0.candidate.json"
+    assert command[-1] == evidence+"/h01-i-campaign/c0-019"
+    assert "docker" not in command
+    assert campaign.run_cwd(tmp_path, manifest) == (tmp_path/".cache/pv/lib").resolve().as_posix()
+    assert campaign.run_command(tmp_path, manifest, manifest["candidates"][0], "019") == command
+    assert campaign.run_cwd(tmp_path, _manifest()) is None
+    assert campaign.run_command(tmp_path, _manifest(), manifest["candidates"][0], "019")[0] == "docker"

@@ -89,6 +89,46 @@ def docker_command(root, manifest, candidate, input_name):
             *manifest["inputs"][input_name], "--output", f"{out}-{input_name}"]
 
 
+def _rewrite_mount(text, cache, evidence):
+    """Map the container mount prefixes of one flag value onto host paths (``executor: local``)."""
+    if text == "/work" or text.startswith("/work/"):
+        return cache+text[len("/work"):]
+    if text == "/evidence" or text.startswith("/evidence/"):
+        return evidence+text[len("/evidence"):]
+    return text
+
+
+def local_command(root, manifest, candidate, input_name):
+    """Direct interpreter invocation for a host without Docker (``manifest["executor"] == "local"``).
+
+    ``manifest["python"]`` names the interpreter (a NEURON venv). Every ``/work`` and
+    ``/evidence`` prefix of the input flags is rewritten to the host cache and evidence
+    directories, so the same manifest inputs serve both executors; the working directory
+    (``cache_dir/library``) is set by ``run_candidate`` so NEURON loads the compiled
+    mechanisms from ``./x86_64`` exactly as the container's ``-w`` does.
+    """
+    evidence = (root/"docs/evidence").resolve().as_posix()
+    cache = (root/manifest["cache_dir"]).resolve().as_posix()
+    out = evidence+"/"+manifest["output_dir"]+"/"+candidate["name"]
+    return [manifest["python"], evidence+"/"+manifest["driver"], "--candidate-json", out+".candidate.json",
+            *(_rewrite_mount(flag, cache, evidence) for flag in manifest["inputs"][input_name]),
+            "--output", f"{out}-{input_name}"]
+
+
+def run_command(root, manifest, candidate, input_name):
+    """The invocation for one candidate and one input under the manifest's executor."""
+    if manifest.get("executor") == "local":
+        return local_command(root, manifest, candidate, input_name)
+    return docker_command(root, manifest, candidate, input_name)
+
+
+def run_cwd(root, manifest):
+    """Working directory of a local run (the mechanism library); None for Docker."""
+    if manifest.get("executor") != "local":
+        return None
+    return (root/manifest["cache_dir"]/manifest["library"]).resolve().as_posix()
+
+
 def container_name(manifest, candidate, input_name):
     """Deterministic container name so an aborted run can be killed, not only abandoned."""
     return f"{manifest['output_dir']}-{candidate['name']}-{input_name}".replace(".", "-")
@@ -364,21 +404,22 @@ def run_candidate(root, manifest, candidate, dry_run, inputs=None, abort_seconds
     limit = manifest["abort_seconds"] if abort_seconds is None else abort_seconds
     rows = []
     for input_name in (list(manifest["inputs"]) if inputs is None else inputs):
-        command = docker_command(root, manifest, candidate, input_name)
+        command = run_command(root, manifest, candidate, input_name)
         stem = f"{candidate['name']}-{input_name}"
         start = time.perf_counter()
         code, aborted, tail, log_name = None, False, [], None
         if not dry_run:
             try:
                 completed = subprocess.run(command, env={**os.environ, "MSYS_NO_PATHCONV": "1"}, capture_output=True,
-                                           text=True, timeout=limit)
+                                           text=True, timeout=limit, cwd=run_cwd(root, manifest))
                 code = completed.returncode
                 stdout, stderr = completed.stdout, completed.stderr
             except subprocess.TimeoutExpired as expired:
                 aborted = True
                 stdout, stderr = expired.stdout, expired.stderr
-                subprocess.run(["docker", "kill", container_name(manifest, candidate, input_name)],
-                               capture_output=True, text=True, check=False)
+                if manifest.get("executor") != "local":
+                    subprocess.run(["docker", "kill", container_name(manifest, candidate, input_name)],
+                                   capture_output=True, text=True, check=False)
                 for suffix in (".json", ".npz"):
                     stale = folder/f"{stem}{suffix}"
                     if stale.exists():
