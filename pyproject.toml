@@ -123,6 +123,7 @@ markers = [
 ]
 addopts = "-m 'not diagnostic'"
 python_files = ["*_test.py"]
+testpaths = ["braintrace", "examples"]
 pythonpath = ["examples/pp_prop"]
 
 

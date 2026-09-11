@@ -1,5 +1,6 @@
 """Tests for the structural-evolution CFSG symmetry example."""
 
+import functools
 import importlib.util
 import pathlib
 from types import SimpleNamespace
@@ -12,6 +13,7 @@ EXAMPLE = pathlib.Path(__file__).resolve().with_name(
 )
 
 
+@functools.lru_cache(maxsize=1)
 def _load():
     spec = importlib.util.spec_from_file_location("_pp_prop_cfsg", EXAMPLE)
     module = importlib.util.module_from_spec(spec)

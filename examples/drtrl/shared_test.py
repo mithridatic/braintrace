@@ -1,3 +1,4 @@
+import functools
 import importlib.util
 import pathlib
 
@@ -5,6 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 
 
+@functools.lru_cache(maxsize=1)
 def _load_shared():
     root = pathlib.Path(__file__).resolve().parent
     spec = importlib.util.spec_from_file_location("_drtrl_shared", root / "_shared.py")

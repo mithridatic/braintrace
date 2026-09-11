@@ -1,5 +1,6 @@
 """Tests for the post-training neuron-pruning example."""
 
+import functools
 import importlib.util
 import pathlib
 from dataclasses import replace
@@ -13,6 +14,7 @@ EXAMPLE = (
 )
 
 
+@functools.lru_cache(maxsize=1)
 def _load():
     spec = importlib.util.spec_from_file_location("_pp_prop_neuron_pruning", EXAMPLE)
     module = importlib.util.module_from_spec(spec)

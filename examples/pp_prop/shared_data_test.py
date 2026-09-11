@@ -1,6 +1,7 @@
 """Unit tests for examples/pp_prop/_shared.py data generators."""
 
 import builtins
+import functools
 import importlib.util
 import pathlib
 
@@ -9,6 +10,7 @@ import numpy as np
 import pytest
 
 
+@functools.lru_cache(maxsize=1)
 def _load_shared():
     spec = importlib.util.spec_from_file_location(
         "_pp_prop_shared",

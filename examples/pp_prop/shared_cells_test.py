@@ -1,5 +1,6 @@
 """Unit tests for examples/pp_prop/_shared.py SNN cells."""
 
+import functools
 import importlib.util
 import pathlib
 
@@ -8,6 +9,7 @@ import jax.numpy as jnp
 import brainunit as u
 
 
+@functools.lru_cache(maxsize=1)
 def _load_shared():
     spec = importlib.util.spec_from_file_location(
         "_pp_prop_shared",

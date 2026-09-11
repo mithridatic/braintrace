@@ -1,5 +1,6 @@
 """Bound branch-index work and eliminate dense axial solver overhead during H01 construction."""
 
+import bisect
 import sys
 from contextlib import contextmanager
 
@@ -1133,7 +1134,7 @@ def _fast_difference_region_intervals(left, right, *, epsilon=_filter_helper.EPS
                 l_ranges, right_group[branch], epsilon=epsilon
             ):
                 out.append((branch, start, end))
-    return _fast_norm_region_intervals(out, epsilon=epsilon)
+    return tuple(out)
 
 _filter_helper.difference_region_intervals = _fast_difference_region_intervals
 
@@ -1178,6 +1179,12 @@ def _fast_clone_morpho(morpho: braincell.Morphology) -> braincell.Morphology:
     cv_cache = getattr(morpho, "_h01_cv_bounds_cache", None)
     if cv_cache is not None:
         cloned._h01_cv_bounds_cache = cv_cache
+    geo_cache = getattr(morpho, "_h01_cv_geometry_cache", None)
+    if geo_cache is not None:
+        cloned._h01_cv_geometry_cache = geo_cache
+    disc_cache = getattr(morpho, "_h01_disc_cache", None)
+    if disc_cache is not None:
+        cloned._h01_disc_cache = disc_cache
     return cloned
 
 braincell.morph.morphology.clone_morpho = _fast_clone_morpho

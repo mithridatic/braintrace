@@ -1,5 +1,6 @@
 """Tests for the multi-task structural evolution example."""
 
+import functools
 import importlib.util
 import pathlib
 
@@ -8,6 +9,7 @@ import numpy as np
 EXAMPLE = pathlib.Path(__file__).resolve().with_name("18-structural-evolution.py")
 
 
+@functools.lru_cache(maxsize=1)
 def _load():
     spec = importlib.util.spec_from_file_location("_pp_prop_structural_evolution", EXAMPLE)
     module = importlib.util.module_from_spec(spec)

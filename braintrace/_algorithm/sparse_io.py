@@ -58,7 +58,12 @@ def instant_factors(tail, output, layout):
             result.append(jnp.zeros(shape + (0,), dtype=output.dtype))
             continue
         row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-        cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
+        if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
+            cols = tangents[i]
+        elif layout.color_count == 1:
+            cols = tangents[i]
+        else:
+            cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
         result.append(jnp.moveaxis(cols, 0, -1))
     return tuple(result)
 
@@ -104,9 +109,14 @@ def propagate_factors(transition, state, factors, layout):
         else:
             row_colors = colors_np[np.asarray(row, dtype=np.int32)]
             moved = jnp.moveaxis(factor, -1, 0)
-            hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
-                jnp.asarray(row_colors, dtype=jnp.int32)
-            ].set(moved)
+            if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
+                hid_s = moved
+            elif layout.color_count == 1:
+                hid_s = moved
+            else:
+                hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
+                    jnp.asarray(row_colors, dtype=jnp.int32)
+                ].set(moved)
             hidden_seeds.append(hid_s)
 
     def _jvp_trans(hid_s):
@@ -125,7 +135,12 @@ def propagate_factors(transition, state, factors, layout):
             result.append(jnp.zeros_like(factors[i]))
             continue
         row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-        cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
+        if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
+            cols = tangents[i]
+        elif layout.color_count == 1:
+            cols = tangents[i]
+        else:
+            cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
         result.append(jnp.moveaxis(cols, 0, -1))
     return tuple(result)
 
@@ -197,9 +212,14 @@ def advance_factors(transition, output, state, factors, layout, decay):
         else:
             row_colors = colors_np[np.asarray(row, dtype=np.int32)]
             moved = decay * jnp.moveaxis(factor, -1, 0)
-            hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
-                jnp.asarray(row_colors, dtype=jnp.int32)
-            ].set(moved)
+            if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
+                hid_s = moved
+            elif layout.color_count == 1:
+                hid_s = moved
+            else:
+                hid_s = jnp.zeros((layout.color_count,) + shape, dtype=factor.dtype).at[
+                    jnp.asarray(row_colors, dtype=jnp.int32)
+                ].set(moved)
             hidden_seeds.append(hid_s)
 
     def _jvp_step(out_s, hid_s):
@@ -218,6 +238,11 @@ def advance_factors(transition, output, state, factors, layout, decay):
             result.append(jnp.zeros(shape + (0,), dtype=output.dtype))
             continue
         row_colors = colors_np[np.asarray(row, dtype=np.int32)]
-        cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
+        if len(row_colors) == layout.color_count and np.array_equal(row_colors, np.arange(layout.color_count)):
+            cols = tangents[i]
+        elif layout.color_count == 1:
+            cols = tangents[i]
+        else:
+            cols = tangents[i][jnp.asarray(row_colors, dtype=jnp.int32)]
         result.append(jnp.moveaxis(cols, 0, -1))
     return tuple(result)

@@ -1,5 +1,6 @@
 """Native sparse-storage and backend tests for the pp-prop sparse example."""
 
+import functools
 import importlib.util
 import pathlib
 import sys
@@ -15,6 +16,7 @@ import jax.numpy as jnp
 EXAMPLE = pathlib.Path(__file__).resolve().parent / "09-operator-sparse.py"
 
 
+@functools.lru_cache(maxsize=1)
 def _load_example():
     """Load the sparse example without relying on its non-module filename."""
     sys.modules.pop("_shared", None)

@@ -1,5 +1,6 @@
 """Native sparse-gradient tests for the pp-prop sparse example."""
 
+import functools
 import importlib.util
 import pathlib
 
@@ -14,6 +15,7 @@ import braintrace
 EXAMPLE = pathlib.Path(__file__).resolve().parent / "09-operator-sparse.py"
 
 
+@functools.lru_cache(maxsize=1)
 def _load_example():
     spec = importlib.util.spec_from_file_location("_pp_prop_sparse_gradient", EXAMPLE)
     module = importlib.util.module_from_spec(spec)

@@ -1,5 +1,6 @@
 """Timeout test for sparse benchmark process supervision."""
 
+import functools
 import importlib.util
 import pathlib
 import sys
@@ -9,6 +10,7 @@ from types import SimpleNamespace
 MODULE_PATH = pathlib.Path(__file__).with_name("sparse_benchmark_supervisor.py")
 
 
+@functools.lru_cache(maxsize=1)
 def _load():
     spec = importlib.util.spec_from_file_location("_supervisor_timeout", MODULE_PATH)
     module = importlib.util.module_from_spec(spec)

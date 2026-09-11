@@ -1,5 +1,6 @@
 """Memory-limit tests for sparse benchmark supervision."""
 
+import functools
 import importlib.util
 import pathlib
 import subprocess
@@ -11,6 +12,7 @@ import pytest
 MODULE_PATH = pathlib.Path(__file__).with_name("sparse_benchmark_supervisor.py")
 
 
+@functools.lru_cache(maxsize=1)
 def _load():
     spec = importlib.util.spec_from_file_location("_sparse_supervisor_memory", MODULE_PATH)
     module = importlib.util.module_from_spec(spec)
