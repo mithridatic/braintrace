@@ -1,6 +1,6 @@
 # SP10. I cell: isolate the axonal SK effect on the finalist
 
-Status: spec written 2026-09-11 before any run. Branch
+Status: CLOSED 2026-09-11, both stages PASS (see `docs/evidence/h01-i-sk-result.md`). Written before any run. Branch
 `campaign/h01-currents-2026-09-11`. Manifest
 `docs/evidence/h01-i-sk-manifest.json`, output `docs/evidence/h01-i-sk/`.
 Executor: the Vast.ai box (`ssh braintrace-gpu`), NEURON 9.0.2 in a Python 3.12

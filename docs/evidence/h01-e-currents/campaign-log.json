@@ -1,0 +1,82 @@
+[
+  {
+    "name": "m0-b3-currents",
+    "candidate_sha256": "9c3cbbdd0ef2354b455a2f1ace9cc973691536f3db2b4a8f48662a2e3c212852",
+    "evaluation_index": 1,
+    "abort_seconds": 2400,
+    "inputs": {
+      "sweep56": "completed",
+      "sweep50": "completed",
+      "sweep53": "completed",
+      "sweep43": "untested"
+    },
+    "runs": [
+      {
+        "name": "m0-b3-currents",
+        "input": "sweep56",
+        "seconds": 885.1250344803557,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-currents/m0-b3-currents-sweep56.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-e-currents/m0-b3-currents.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "56",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-e-currents/m0-b3-currents-sweep56"
+        ]
+      },
+      {
+        "name": "m0-b3-currents",
+        "input": "sweep50",
+        "seconds": 980.8386284792796,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-currents/m0-b3-currents-sweep50.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-e-currents/m0-b3-currents.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "50",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-e-currents/m0-b3-currents-sweep50"
+        ]
+      },
+      {
+        "name": "m0-b3-currents",
+        "input": "sweep53",
+        "seconds": 1015.4235178306699,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-currents/m0-b3-currents-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-e-currents/m0-b3-currents.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-e-currents/m0-b3-currents-sweep53"
+        ]
+      }
+    ]
+  }
+]

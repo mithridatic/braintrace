@@ -1,0 +1,45 @@
+{
+  "stage": "close",
+  "closed_utc": "2026-09-11T23:05:00Z",
+  "spec": "docs/specs/2026-09-11-h01-e-current-measurement.md",
+  "manifest": "docs/evidence/h01-e-currents-manifest.json",
+  "executor": "Vast box, NEURON 9.0.2, campaign runner executor:local",
+  "gates": ["h01-e-currents/stage-0-decision.json (PASS, 12 of 12 bands)"],
+  "decision": "CLOSED after stage 0; stage 1 registered and not spent",
+  "decision_rule": "Fail-fast (as h01-e-gain stage close, Hartshorne p034/p179): an evaluation whose registered prediction fails by construction cannot change the decision and is not spent.",
+  "evaluations": {"spent": 1, "cap": 3, "registered_not_spent": 2},
+  "stage_0": {
+    "candidate": "m0-b3-currents",
+    "candidate_sha256": "9c3cbbdd0ef2354b455a2f1ace9cc973691536f3db2b4a8f48662a2e3c212852",
+    "verdict": "B3 reproduced exactly (counts 4/8/10; peak times and troughs identical to g0-b3 at the printed precision; axon-first at all three inputs) with every soma current recorded.",
+    "wall_seconds": {"sweep56": 885, "sweep50": 981, "sweep53": 1015}
+  },
+  "established": {
+    "soma_is_a_pass_through_at_low_drive": {
+      "statement": "Between spikes at 200 pA the soma passes 0.188 of the applied 0.196 nA into the connected cable (96 percent); the summed soma ionic current is about -0.009 nA (leak -0.0066, Kv3 -0.003, SK -0.0017, NaTs +0.0015, Nap +0.0015, Im -0.0001, Ih, K_P, K_T, Ca below 0.0001). At 250 and 310 pA the same pattern holds with SK rising to -0.007 and -0.013 nA. The net drift current is below 0.0002 nA everywhere.",
+      "evidence": "h01-e-currents/stage-0-decision.json#/current_paths"
+    },
+    "plateau_offset_is_a_post_spike_contrast": {
+      "statement": "At 200 pA the human's late-pulse level after its single spike is -67.1 mV (mean 1800-2000 ms); the model's is -64.8 mV (mean) and -65.1 mV (p50), with the model input resistance 98 MOhm. The offset is 2.0 mV by p50 (0.020 nA) and 2.3 mV by mean; in the mid pulse, where the model fires, it is 5.8 mV by mean. At 110 pA without a spike the same model matched the human onset rows within 0.4-0.9 mV (stage-g0). The difference therefore appears only after a spike.",
+      "evidence": "h01-e-currents/stage-0-decision.json#/plateau_contrast, h01-e-gain/stage-g0-decision.json#/bands"
+    },
+    "registered_levers_cannot_carry_the_offset": {
+      "statement": "The largest whole-soma current either registered lever can change is its own: Nap 0.0017 nA, Im 0.0002 nA (the fit places both in the soma only, at 2.8e-4 and 3.0e-4 S/cm2). The offset to carry is 0.020 nA by p50 and about 0.05 nA by mean. Removing all of Nap reaches 8 percent of the smaller figure; an Im dose that reaches it (about 100x) acts more strongly at the 310 pA threshold (m_inf 0.12 at -55 mV against 0.0045 at -62 mV) and removes that train. Under the scorer's rules (a), (b) and (c) the only admissible boundary is the axial current: the cable, not a soma channel.",
+      "evidence": "h01-e-currents/stage-0-decision.json#/lever_rule"
+    }
+  },
+  "stage_1": {
+    "status": "registered, not spent",
+    "candidates_registered": ["n1-nap-* (Nap density reduced)", "k1-im-* (Im density raised)"],
+    "reason_not_spent": "Both candidates fail the registered 200 pA band (count 1) by construction: the current they can add or remove at the plateau is at most 0.0017 nA against an offset of 0.020-0.05 nA, and the Im dose that closes the gap removes the 310 pA train (registered rejection). No dose is admissible, so the evaluations are not spent."
+  },
+  "unresolved_link": "The current that holds the human 2-6 mV below the model after a spike at 200 pA, silent without a spike (110 pA rows) and not present in the soma genome. It is carried through the cable boundary in the model, so it is either a dendritic or axonal mechanism, or a spike-triggered slow outward current absent from the fit.",
+  "reassessment": {
+    "candidates": [
+      "a spike-triggered slow outward current (sAHP or KNa), draft spec docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
+      "dendritic or axonal placement of an existing outward conductance (needs a regional density scan with the F5 rows as the rejection)",
+      "a second human L2/3 donor with a recorded f-I curve (SP6b lead)"
+    ],
+    "not_a_further_evaluation": "Each candidate is a new spec with its own cap; the sAHP/KNa family needs a new mod file and is not runnable under this manifest."
+  }
+}

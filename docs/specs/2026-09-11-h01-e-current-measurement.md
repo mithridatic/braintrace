@@ -1,6 +1,6 @@
 # SP11. E cell: measure the B3 current paths, then one voltage-dependent lever
 
-Status: spec written 2026-09-11 before any run. Branch
+Status: CLOSED 2026-09-11 after stage 0 (PASS); stage 1 registered and not spent under the fail-fast rule (see `docs/evidence/h01-e-currents-result.md`). Written before any run. Branch
 `campaign/h01-currents-2026-09-11`. Manifest
 `docs/evidence/h01-e-currents-manifest.json`, output `docs/evidence/h01-e-currents/`.
 Executor: the Vast.ai box, NEURON 9.0.2 (see the SP10 spec for the local executor).
