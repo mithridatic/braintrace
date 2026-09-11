@@ -276,8 +276,24 @@ Its 57/138-spike result cannot establish an isolated SK effect in the finalist.
 Increasing axonal NaTg density by 1.5 times failed the registered recovery prediction.
 That tested dose does not exclude all axonal density changes.
 
-**Open.** A matched SK test must retain the other finalist settings and measure the current change before the timing change.
-The current balance that would restore early refiring and later train changes remains unidentified.
+**Isolated: axonal SK carries the late delay (2026-09-11).**
+The matched single-change test was run on the Vast executor after the finalist reproduced its container counts, cycle 2 and troughs 1-3 within 0.1 ms and 0.1 mV
+([stage 0](evidence/h01-i-sk/stage-0-decision.json)).
+Setting axonal SK density to zero, with every other finalist setting retained, removed the growth of the cycle along the train.
+At 0.19 nA the last trough-to-threshold delay fell from 80.8 to 32.2 ms and the count rose from 14 to 29; at 0.27 nA the delay fell from 27.2 to 14.1 ms and the count rose from 37 to 59.
+Cycle 2 moved by less than 4 ms, widths, peaks and troughs 1-3 stayed inside their bands, initiation stayed axon-first, and no depolarisation block occurred
+([stage 1](evidence/h01-i-sk/stage-1-decision.json), 22 of 22 bands).
+Thus, under the finalist settings, the calcium-activated axonal SK current is the direct path of the growing late delay.
+Its removal is not a repair: both counts move away from the human (12, 43).
+
+The same tables show the human's late cycle to be about 100 ms at 0.19 nA and about 25 ms at 0.27 nA.
+The finalist's late cycle is 84 ms and 30 ms; without axonal SK it is 33 ms and 17 ms.
+The human late cycle therefore lies between the two model settings at 0.27 nA but beyond both at 0.19 nA.
+A brake that accumulates with calcium grows with the input; the human's late slowing shrinks with the input.
+This input dependence is a response difference that a single SK dose cannot describe.
+
+**Open.** The current balance that would restore early refiring (the human's three-to-five spike burst at 6-10 ms cycles, absent at every model setting) remains unidentified.
+The mechanism that slows the human's late cycle at low input more than at high input remains unidentified.
 The finalist remains experimental.
 
 The [I response chart](evidence/h01-multivari-i.png) shows model widths approximately 0.06 ms below the human values.

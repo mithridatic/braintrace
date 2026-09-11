@@ -52,5 +52,59 @@
         ]
       }
     ]
+  },
+  {
+    "name": "s1-sk-axon0",
+    "candidate_sha256": "14e44b16292cd5eefe6653340c73e79b115ecae4789357e1916a1257637c89c3",
+    "evaluation_index": 2,
+    "abort_seconds": 1800,
+    "inputs": {
+      "019": "completed",
+      "027": "completed"
+    },
+    "runs": [
+      {
+        "name": "s1-sk-axon0",
+        "input": "019",
+        "seconds": 36.938938110135496,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-i-sk/s1-sk-axon0-019.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-i-sk/s1-sk-axon0.candidate.json",
+          "--current-na",
+          "0.19",
+          "--duration-ms",
+          "1500",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-i-sk/s1-sk-axon0-019"
+        ]
+      },
+      {
+        "name": "s1-sk-axon0",
+        "input": "027",
+        "seconds": 65.60745465569198,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-i-sk/s1-sk-axon0-027.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-i-sk/s1-sk-axon0.candidate.json",
+          "--current-na",
+          "0.27",
+          "--duration-ms",
+          "1500",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-i-sk/s1-sk-axon0-027"
+        ]
+      }
+    ]
   }
 ]
