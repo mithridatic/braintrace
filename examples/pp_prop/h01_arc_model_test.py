@@ -44,20 +44,14 @@ def test_forward_padding_and_readout(tmp_path):
     np.testing.assert_array_equal(before, model._soma())
 
 
-@pytest.mark.xfail(strict=True, raises=braintrace.NotSupportedError,
-                   reason="pp-prop factorized traces reject cable position mixing; integration gate remains open")
 @pytest.mark.parametrize("unroll", [16, 32])
 def test_pp_prop_compiles_real_cable_state(tmp_path, unroll, record_property):
     model = H01ArcModel(_network(tmp_path), ["5805562981"], checkpoint_substeps=False)
     learner = braintrace.pp_prop(model, decay_or_rank=.99, vjp_method="single-step",
                                 control_flow=braintrace.ControlFlowPolicy(scan_unroll_limit=unroll))
-    try:
+    with pytest.raises(braintrace.NotSupportedError, match="position-preserving") as exc_info:
         learner.compile_graph(jnp.zeros(441))
-    except braintrace.NotSupportedError as exc:
-        assert "position-preserving" in str(exc)
-        record_property("compiler_blocker", str(exc))
-        raise
-    assert learner is not None
+    record_property("compiler_blocker", str(exc_info.value))
 
 
 def test_checkpointed_cable_event_preserves_forward_and_derivatives(tmp_path):
