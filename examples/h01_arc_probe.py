@@ -28,16 +28,20 @@ from examples.pp_prop.h01_arc_model import H01ArcModel
 def _sparse_learning_probe(model, report, phase):
     from examples.pp_prop.example21_arc_adapter import Example21ArcAdapter
     module = Example21ArcAdapter(Path('.'))._model()
+    from examples.pp_prop.h01_muon import model_optimizer
+    parameters = {'input': model.input_weight.value, 'recurrent': model.recurrent_weight.value,
+                  'readout_weight': model.readout_weight.value, 'readout_bias': model.readout_bias.value}
+    optimizer = model_optimizer(model, parameters)
+    report['optimizer'] = dict(groups=optimizer.report, metadata=optimizer.metadata(),
+        workspace_estimate_bytes=optimizer.workspace_estimate_bytes)
     learner = braintrace.pp_prop.sparse(model, .99, max_bytes=512*1024**2)
     phase('sparse_pp_prop_compile', lambda: learner.compile_graph(jnp.zeros(441)))
     layout = learner.graph.layout
     report['eligibility'] = {'elements': layout.elements, 'bytes': layout.nbytes,
         'colors': layout.color_count, 'max_support_width': max(map(len, layout.outputs), default=0),
         'state_blocks': len(layout.shapes), 'factor_limit_bytes': 512*1024**2}
-    parameters = {'input': model.input_weight.value, 'recurrent': model.recurrent_weight.value,
-                  'readout_weight': model.readout_weight.value, 'readout_bias': model.readout_bias.value}
     before = {name: np.array(value) for name, value in parameters.items()}
-    trainer = module.PPPropEpisodeTrainer(learner, parameters)
+    trainer = module.PPPropEpisodeTrainer(learner, parameters, optimizer_adapter=optimizer)
     def loss(event):
         learner(event)
         return jnp.mean(jnp.square(model.readout()))
@@ -91,7 +95,8 @@ def main():
                      "braintrace/datasets/h01_dhs_scan.py")}
     if args.sparse_learning:
         report['source_sha256'].update({name: hashlib.sha256(Path(name).read_bytes()).hexdigest()
-            for name in ('braintrace/_algorithm/sparse_pp_prop.py', 'braintrace/_algorithm/sparse_io.py',
+            for name in ('examples/pp_prop/h01_muon.py', 'examples/pp_prop/21-braincell-arc.py',
+                         'braintrace/_algorithm/sparse_pp_prop.py', 'braintrace/_algorithm/sparse_io.py',
                          'braintrace/_compiler/sparse_io_graph.py', 'braintrace/_compiler/sparse_support.py',
                          'braintrace/_compiler/sparse_influence.py')})
     args.output.parent.mkdir(parents=True, exist_ok=True)

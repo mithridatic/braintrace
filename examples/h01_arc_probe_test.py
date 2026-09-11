@@ -49,6 +49,11 @@ def test_sparse_probe_uses_grouped_muon_on_actual_cable(tmp_path):
         return value
     h01_arc_probe._sparse_learning_probe(model, report, phase)
     assert phases == ['sparse_pp_prop_compile', 'sparse_muon_compile_and_update', 'sparse_muon_warm_update']
+    groups = report['optimizer']['groups']
+    assert groups['input']['algorithm'] == groups['recurrent']['algorithm'] == 'masked_muon'
+    assert groups['readout_weight']['algorithm'] == 'muon'
+    assert groups['readout_bias']['algorithm'] == 'adamw'
+    assert all(group['weight_decay'] == .1 for group in groups.values())
     assert report['learning_probe']['finite']
     assert report['learning_probe']['updates'] == 2
     assert report['learning_probe']['cold_gradient_norm'] > 0

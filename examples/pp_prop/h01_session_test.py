@@ -28,13 +28,13 @@ def test_real_update_save_restore_and_clone_optimizer(imported, tmp_path):
         doc['sources']['12']['archive_sha256'] = digest
         session = H01Session.build(H01Topology.from_dict(doc), archive, trainer_type,
                                   assets=(digest,), progress=lambda _: None)
-        def update():
-            session.trainer.reset_episode()
+        def update(target):
+            target.trainer.reset_episode()
             def loss(event):
-                session.learner(event)
-                return jnp.mean(jnp.square(session.model.readout()))
-            return session.trainer.update_episode(jnp.zeros((1, 441)), step_fn=loss)
-        result = brainstate.transform.jit(update)()
+                target.learner(event)
+                return jnp.mean(jnp.square(target.model.readout()))
+            return target.trainer.update_episode(jnp.zeros((1, 441)), step_fn=loss)
+        result = brainstate.transform.jit(lambda: update(session))()
         assert np.isfinite(np.asarray(result)).all()
         assert int(session.trainer.updates) == 1
         path = tmp_path/'episode.npz'
@@ -48,10 +48,16 @@ def test_real_update_save_restore_and_clone_optimizer(imported, tmp_path):
         event = jnp.zeros(441)
         np.testing.assert_array_equal(brainstate.transform.jit(restored.model.update)(event),
                                       brainstate.transform.jit(session.model.update)(event))
+        first = brainstate.transform.jit(lambda: update(session))()
+        resumed = brainstate.transform.jit(lambda: update(restored))()
+        np.testing.assert_array_equal(first, resumed)
+        for left, right in zip(jax.tree.leaves((session.trainer.parameters, session.trainer.muon_groups)),
+                               jax.tree.leaves((restored.trainer.parameters, restored.trainer.muon_groups))):
+            np.testing.assert_array_equal(left, right)
         parent_head = np.array(restored.trainer.parameters['readout_weight'][0])
         cloned = restored.mutate(restored.topology.clone('12', stage='clone'), archive,
                                  progress=lambda _: None, release_parent=True)
-        assert cloned.model.neuron_count == 2 and int(cloned.trainer.updates) == 1
+        assert cloned.model.neuron_count == 2 and int(cloned.trainer.updates) == 2
         assert restored.model is None and restored.trainer is None
         np.testing.assert_array_equal(cloned.trainer.parameters['readout_weight'][1], parent_head)
         for leaf in jax.tree.leaves(cloned.trainer.muon_groups['readout_weight']):
@@ -59,14 +65,39 @@ def test_real_update_save_restore_and_clone_optimizer(imported, tmp_path):
                 assert np.count_nonzero(np.asarray(leaf)[1]) == 0
 
 
-@pytest.mark.parametrize('mismatch', ['dependencies', 'implementation', 'precision'])
+@pytest.mark.parametrize('mismatch', ['dependencies', 'implementation', 'precision', 'optimizer'])
 def test_incompatible_runtime_fails_before_morphology_construction(mismatch):
     from .h01_topology_test import _topology
     settings = numerical_settings()
     if mismatch == 'dependencies':
         settings['dependencies']['jax'] = 'different'
+    elif mismatch == 'optimizer':
+        settings.pop('optimizer_policy')
     elif mismatch == 'implementation':
         settings['implementation_sha256'] = {}
     with brainstate.environ.context(precision=32 if mismatch == 'precision' else 64):
-        with pytest.raises(ValueError, match='dependencies|implementation|precision'):
+        with pytest.raises(ValueError, match='dependencies|implementation|precision|optimizer'):
             H01Session.build(_topology(), None, None, settings=settings)
+
+
+def test_saved_optimizer_layout_mismatch_prevents_compilation(monkeypatch):
+    from types import SimpleNamespace as Obj
+    from . import h01_session as subject
+    from .h01_muon_test import fixture
+    adapter,params=fixture()
+    model=Obj(**{name:Obj(value=params[group]) for name,group in
+                 [('input_weight','input'),('recurrent_weight','recurrent'),
+                  ('readout_weight','readout_weight'),('readout_bias','readout_bias')]})
+    monkeypatch.setattr(subject,'build_network',lambda *a,**k:(None,None))
+    monkeypatch.setattr(subject,'init_h01_network_states',lambda *a,**k:None)
+    monkeypatch.setattr(subject,'H01ArcModel',lambda *a,**k:model)
+    monkeypatch.setattr(subject,'model_optimizer',lambda *a,**k:adapter)
+    def forbidden(*a,**k):
+        raise AssertionError('Learner must not be constructed for an invalid optimizer layout')
+    monkeypatch.setattr(subject.braintrace.pp_prop,'sparse',forbidden)
+    settings=numerical_settings()
+    settings['optimizer']=adapter.metadata()
+    settings['optimizer']['layouts']['input']['coordinates'][0][1]=99
+    with brainstate.environ.context(precision=64):
+        with pytest.raises(ValueError,match='optimizer layout'):
+            H01Session.build(Obj(to_dict=lambda:dict(active_cells=['a','b'])),None,None,settings=settings)

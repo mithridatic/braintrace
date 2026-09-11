@@ -1,5 +1,6 @@
 """Trainable H01 runtime construction and durable episode-boundary restoration."""
 
+import copy
 from dataclasses import dataclass
 from functools import lru_cache
 from importlib.metadata import version
@@ -17,6 +18,7 @@ from braintrace.datasets.h01_network_init import init_h01_network_states
 from .h01_arc_model import H01ArcModel
 from .h01_checkpoint import load_checkpoint, save_checkpoint, restore_optimizer
 from .h01_runtime import build_network
+from .h01_muon import POLICY, model_optimizer
 from .h01_remap import remap_mutation, remap_optimizer_group
 
 
@@ -27,10 +29,12 @@ def _numerical_settings_cached():
     paths += [root/name for name in ('braintrace/_algorithm/sparse_pp_prop.py',
         'braintrace/_algorithm/sparse_io.py', 'braintrace/_compiler/sparse_io_graph.py',
         'braintrace/_compiler/sparse_support.py', 'braintrace/_compiler/sparse_influence.py',
-        'examples/pp_prop/h01_arc_model.py', 'examples/pp_prop/h01_arc_execution.py')]
+        'examples/pp_prop/h01_arc_model.py', 'examples/pp_prop/h01_arc_execution.py',
+        'examples/pp_prop/h01_muon.py', 'examples/pp_prop/21-braincell-arc.py',
+        'examples/pp_prop/h01_session.py')]
     implementation = {str(path.relative_to(root)).replace('\\', '/'): hashlib.sha256(path.read_bytes()).hexdigest()
                       for path in paths if not path.name.endswith('_test.py')}
-    return dict(dt_ms=.005, event_ms=.1, substeps=20, precision=64,
+    return dict(optimizer_policy=POLICY, dt_ms=.005, event_ms=.1, substeps=20, precision=64,
         solver='h01_staggered_calcium_implicit', max_cv_length_um=10., decay=.99,
         factor_limit_bytes=512*1024**2, seed=21, checkpoint_substeps=True,
         implementation_sha256=implementation,
@@ -47,8 +51,7 @@ def numerical_settings():
         Settings persisted in every H01 checkpoint.
     """
     cached = _numerical_settings_cached()
-    return dict(cached, implementation_sha256=dict(cached['implementation_sha256']),
-                dependencies=dict(cached['dependencies']))
+    return copy.deepcopy(cached)
 
 
 @dataclass
@@ -74,7 +77,7 @@ class H01Session:
 
     @classmethod
     def build(cls, topology, archive, trainer_type, *, settings=None, assets=(),
-              parameters=None, input_pattern=None, progress=None):
+              parameters=None, input_pattern=None, progress=None, optimizer_slots=None):
         """Construct, initialize and compile the full active H01 model.
 
         Parameters
@@ -95,6 +98,8 @@ class H01Session:
             Encoder CSR indices and indptr.
         progress : callable, optional
             Construction and initialization progress callback.
+        optimizer_slots : mapping, optional
+            Inherited parallel-contact plane assignments during mutation.
 
         Returns
         -------
@@ -103,6 +108,8 @@ class H01Session:
         """
         settings = numerical_settings() if settings is None else dict(settings)
         installed = numerical_settings()
+        if settings.get('optimizer_policy') != installed['optimizer_policy']:
+            raise ValueError('Incompatible H01 optimizer checkpoint; legacy AdamW continuation is unsupported')
         if settings['dependencies'] != installed['dependencies']:
             raise ValueError('H01 checkpoint dependencies differ from this runtime')
         if settings['implementation_sha256'] != installed['implementation_sha256']:
@@ -126,9 +133,17 @@ class H01Session:
                 if value.shape != state.value.shape or not np.isfinite(value).all():
                     raise ValueError('Invalid restored H01 parameter: '+name)
                 state.value = jnp.asarray(value, dtype=state.value.dtype)
+        values = {name: state.value for name, state in states.items()}
+        saved_optimizer = settings.get('optimizer')
+        slots = optimizer_slots if optimizer_slots is not None else (
+            saved_optimizer['slots'] if saved_optimizer is not None else None)
+        optimizer = model_optimizer(model, values, inherited_slots=slots)
+        if saved_optimizer is not None and optimizer_slots is None and saved_optimizer != optimizer.metadata():
+            raise ValueError('H01 optimizer layout differs from checkpoint')
+        settings['optimizer'] = optimizer.metadata()
         learner = braintrace.pp_prop.sparse(model, settings['decay'], max_bytes=settings['factor_limit_bytes'])
         learner.compile_graph(jnp.zeros(441))
-        trainer = trainer_type(learner, {name: state.value for name, state in states.items()})
+        trainer = trainer_type(learner, values, optimizer_adapter=optimizer)
         return cls(topology, model, learner, trainer, settings, tuple(assets))
 
     def save(self, path, *, stage_id, parent_checkpoint_sha256=None, continuation=None):
@@ -227,7 +242,7 @@ class H01Session:
             gc.collect()
         result = self.build(topology, archive, trainer_type, settings=self.settings, assets=self.assets,
             parameters=transported['parameters'], input_pattern=(transported['input_indices'], transported['input_indptr']),
-            progress=progress)
+            progress=progress, optimizer_slots=self.settings['optimizer']['slots'])
         groups = {}
         for name, old in parent_groups.items():
             groups[name] = remap_optimizer_group(old, result.trainer.muon_groups[name],

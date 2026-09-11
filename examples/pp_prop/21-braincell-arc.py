@@ -978,9 +978,12 @@ class PPPropEpisodeTrainer:
         Trainable parameter values keyed by optimizer group.
     learning_rates : mapping, optional
         Learning rate for each parameter group.
+    optimizer_adapter : object, optional
+        Explicit optimizer with ``init`` and ``update`` methods. Owns its rates.
     """
 
-    def __init__(self, learner, parameters, learning_rates=None):
+    def __init__(self, learner, parameters, learning_rates=None, *, optimizer_adapter=None):
+        self.optimizer_adapter = optimizer_adapter
         self.learner = learner
         parameter_values = dict(parameters)
         model = getattr(learner, "model4compile", None)
@@ -990,9 +993,14 @@ class PPPropEpisodeTrainer:
                 parameter_values[name] = state.value
         self._parameters_state = brainstate.State(parameter_values)
         self.learning_rates = learning_rates or LEARNING_RATES
+        self._updates_state = brainstate.State(jnp.asarray(0, dtype=jnp.int32))
+        if optimizer_adapter is not None:
+            self.adam = AdamState({}, {})
+            self.adam_groups = {}
+            self._muon_groups_state = brainstate.State(optimizer_adapter.init(self.parameters))
+            return
         zeros = jax.tree_util.tree_map(jnp.zeros_like, self.parameters)
         self.adam = AdamState(zeros, zeros)
-        self._updates_state = brainstate.State(jnp.asarray(0, dtype=jnp.int32))
         self.adam_groups = {
             name: AdamState(jnp.zeros_like(value), jnp.zeros_like(value))
             for name, value in self.parameters.items()
@@ -1113,13 +1121,14 @@ class PPPropEpisodeTrainer:
     def _group_gradients(self, gradients):
         """Map compiled parameter paths to the declared optimizer groups."""
 
-        if not self.adam_groups or set(gradients).issubset(self.adam_groups):
+        groups = self.parameters if self.optimizer_adapter is not None else self.adam_groups
+        if not groups or set(gradients).issubset(groups):
             return gradients
         grouped = {}
         for path, gradient in gradients.items():
             parts = path if isinstance(path, tuple) else (path,)
             name = next(
-                (group for group in self.adam_groups if any(group in str(part) for part in parts)),
+                (group for group in groups if any(group in str(part) for part in parts)),
                 None,
             )
             if name is not None:
@@ -1130,10 +1139,11 @@ class PPPropEpisodeTrainer:
         """Write grouped optimizer values back to matching compiled states."""
 
         states = getattr(self.learner, "param_states", {})
+        groups = self.parameters if self.optimizer_adapter is not None else self.adam_groups
         for path, state in states.items():
             parts = path if isinstance(path, tuple) else (path,)
             name = next(
-                (group for group in self.adam_groups or {} if any(group in str(part) for part in parts)),
+                (group for group in groups or {} if any(group in str(part) for part in parts)),
                 None,
             )
             if name in self.parameters:
@@ -1265,9 +1275,13 @@ class PPPropEpisodeTrainer:
         gradients, norm = clip_gradient(gradients)
         gradients = self._group_gradients(gradients)
         if self.adam_groups is not None:
-            self.parameters, self.muon_groups = grouped_muon_update(
-                self.parameters, gradients, self.muon_groups, self.learning_rates
-            )
+            if self.optimizer_adapter is not None:
+                self.parameters, self.muon_groups = self.optimizer_adapter.update(
+                    self.parameters, gradients, self.muon_groups)
+            else:
+                self.parameters, self.muon_groups = grouped_muon_update(
+                    self.parameters, gradients, self.muon_groups, self.learning_rates
+                )
             self._project_dale_parameters()
             self._sync_compiled_parameters()
         else:
