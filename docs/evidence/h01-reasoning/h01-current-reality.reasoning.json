@@ -1,0 +1,1023 @@
+{
+  "id": "doc_bfe45119-a37",
+  "title": "H01 model vs human recordings",
+  "graph": {
+    "classes": [
+      {
+        "id": "Undesirable Effect",
+        "label": "Undesirable Effect",
+        "color": "#b35f48"
+      },
+      {
+        "id": "Intermediate Effect",
+        "label": "Intermediate Effect",
+        "color": "#697b8a"
+      },
+      {
+        "id": "Root Cause",
+        "label": "Root Cause",
+        "color": "#9b6947"
+      },
+      {
+        "id": "Injection",
+        "label": "Injection",
+        "color": "#4f76a3"
+      },
+      {
+        "id": "operator",
+        "label": "operator",
+        "color": "#697b8a"
+      }
+    ],
+    "direction": "DOWN",
+    "edges": [
+      {
+        "id": "rc_vdep__j_e",
+        "source": "rc_vdep",
+        "target": "j_e",
+        "relation": "input"
+      },
+      {
+        "id": "ie_passive__j_e",
+        "source": "ie_passive",
+        "target": "j_e",
+        "relation": "input"
+      },
+      {
+        "id": "j_e__ude_e_lowdrive",
+        "source": "j_e",
+        "target": "ude_e_lowdrive",
+        "relation": "causes",
+        "label": "candidate cause; passive family excluded"
+      },
+      {
+        "id": "ie_b3_notrace__rc_vdep",
+        "source": "ie_b3_notrace",
+        "target": "rc_vdep",
+        "relation": "describes",
+        "label": "why the current is still unidentified"
+      },
+      {
+        "id": "rc_donor__ude_e_lowdrive",
+        "source": "rc_donor",
+        "target": "ude_e_lowdrive",
+        "relation": "describes",
+        "label": "candidate: second human L2/3 donor (SP6b lead)"
+      },
+      {
+        "id": "ie_axial__j_i_late",
+        "source": "ie_axial",
+        "target": "j_i_late",
+        "relation": "input"
+      },
+      {
+        "id": "ie_sk__j_i_late",
+        "source": "ie_sk",
+        "target": "j_i_late",
+        "relation": "input"
+      },
+      {
+        "id": "j_i_late__ude_i_latecycle",
+        "source": "j_i_late",
+        "target": "ude_i_latecycle",
+        "relation": "causes",
+        "label": "measured together; not isolated"
+      },
+      {
+        "id": "ie_sk_confounded__ie_sk",
+        "source": "ie_sk_confounded",
+        "target": "ie_sk",
+        "relation": "describes",
+        "label": "why SK is not isolated"
+      },
+      {
+        "id": "rc_burst__ude_i_burst",
+        "source": "rc_burst",
+        "target": "ude_i_burst",
+        "relation": "causes",
+        "label": "unidentified balance"
+      },
+      {
+        "id": "ude_i_burst__j_i_count",
+        "source": "ude_i_burst",
+        "target": "j_i_count",
+        "relation": "input"
+      },
+      {
+        "id": "ude_i_latecycle__j_i_count",
+        "source": "ude_i_latecycle",
+        "target": "j_i_count",
+        "relation": "input"
+      },
+      {
+        "id": "j_i_count__ude_i_count",
+        "source": "j_i_count",
+        "target": "ude_i_count",
+        "relation": "causes",
+        "label": "count = cycles that fit the pulse"
+      },
+      {
+        "id": "ie_kv3__ude_i_width",
+        "source": "ie_kv3",
+        "target": "ude_i_width",
+        "relation": "causes",
+        "label": "supported role; not a unique mechanism"
+      },
+      {
+        "id": "rc_donor__ude_pop",
+        "source": "rc_donor",
+        "target": "ude_pop",
+        "relation": "causes"
+      },
+      {
+        "id": "ie_pop_runtime__ude_pop",
+        "source": "ie_pop_runtime",
+        "target": "ude_pop",
+        "relation": "causes"
+      },
+      {
+        "id": "inj_sp10__ie_sk",
+        "source": "inj_sp10",
+        "target": "ie_sk",
+        "relation": "describes",
+        "label": "tests whether axonal SK is the direct path"
+      },
+      {
+        "id": "inj_sp10__rc_burst",
+        "source": "inj_sp10",
+        "target": "rc_burst",
+        "relation": "describes",
+        "label": "prediction excludes the early refire"
+      },
+      {
+        "id": "inj_sp11__ie_b3_notrace",
+        "source": "inj_sp11",
+        "target": "ie_b3_notrace",
+        "relation": "describes",
+        "label": "stage 0 removes this gap"
+      },
+      {
+        "id": "inj_sp11__rc_vdep",
+        "source": "inj_sp11",
+        "target": "rc_vdep",
+        "relation": "describes",
+        "label": "stage 1 tests Nap or Im"
+      }
+    ],
+    "events": [],
+    "explanations": [
+      {
+        "id": "crt_account",
+        "title": "Current Reality Tree: H01 single-cell fits and population against the human recordings",
+        "effect": "H01 model vs human recordings",
+        "conditions": "Two single-cell fits (E: frozen B3 on Allen 541563728 geometry; I: the Kv3 close factor 2.0 energetic-search finalist) are compared with human recordings under the approved 1 mV contract and the separate usable tier. The 104-cell H01 population builds and initialises but has no completed driven runtime qualification. Two tests (SP10, SP11) are running on the Vast.ai box under pre-registered predictions.",
+        "narrative": "Undesirable Effects are the contract rows that fail. Intermediate Effects are measured mechanisms copied from the decision files. Root Causes are the candidate causes the campaign leaves open; none is established. Injections are the two running tests, with their pre-registered predictions and rejection clauses. Arrows point from cause to effect (downward); 'describes' links carry context, not causation. Every node names its evidence file. Status 'supported' means the numbers on the node are read directly from that file; 'unverified' means the node is a candidate or a not-yet-run test.",
+        "uncertainties": "The E low-drive current has never been measured (SP11 stage 0 fixes that). The axonal SK effect in the I finalist has no single-change comparison (SP10 stage 1 fixes that). Neither test can produce a contract pass or a promotion. The population runtime timeout has no stage record. Whether any H01 cell's physiology matches the donor fits is untestable with the data held.",
+        "predictions": "SP10 stage 1: late trough-to-threshold delay shortens by more than 12.8 ms at 0.19 and 0.27 nA with counts above 14 and 37, or the axonal-SK path is rejected. SP11 stage 0: counts 4, 8, 10 reproduced within 0.1 ms / 0.1 mV; stage 1 lever lands 200 pA at 1-2 and 250 pA at 5-7 while 310 pA stays 9-10 within 1.5 Hz and sweep-43 rows move less than 1 mV, or the lever is rejected.",
+        "nodeIds": [
+          "ude_e_lowdrive",
+          "ude_i_count",
+          "ude_i_burst",
+          "ude_i_latecycle",
+          "ude_i_width",
+          "ude_pop",
+          "ie_axial",
+          "ie_sk",
+          "ie_sk_confounded",
+          "ie_kv3",
+          "ie_passive",
+          "ie_b3_notrace",
+          "ie_pop_runtime",
+          "rc_vdep",
+          "rc_burst",
+          "rc_donor",
+          "inj_sp10",
+          "inj_sp11",
+          "j_e",
+          "j_i_late",
+          "j_i_count"
+        ],
+        "testIds": [],
+        "evidence": [],
+        "status": "unverified",
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "ude_e_lowdrive",
+        "type": "Undesirable Effect",
+        "text": "UDE1. E cell (frozen B3): low-drive spike counts are 4 and 8 at 200 and 250 pA against the human 1 and 5; 310 pA matches (10/10); 350 pA is 12 vs 13.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Count error changes sign across inputs (+3, +3, 0, -1), so no constant offset describes it. Usable-tier verdicts: 200 pA count FAIL; 250 pA count and rate (7.73 vs 4.79 Hz) FAIL; 310 pA count and rate pass. B3 stays unpromoted.\n\nEvidence: docs/evidence/h01-e-gain/stage-close-decision.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "ude_e_lowdrive_ev0",
+            "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ude_e_lowdrive_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ude_i_count",
+        "type": "Undesirable Effect",
+        "text": "UDE2. I cell (Kv3 close factor 2.0 finalist): counts are 14 vs human 12 at 0.19 nA and 37 vs human 43 at 0.27 nA.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Rates 14.63 vs 12.19 Hz (limit 1.83) and 36.58 vs 43.63 Hz: both rate rows fail. At 0.23 nA (reserved input) the finalist gave 26 spikes against 31.\n\nEvidence: docs/evidence/h01-i-sk/s0-finalist-usable.json; docs/evidence/h01-i-reserve/stage-1-decision.json",
+        "evidence": [
+          {
+            "id": "ude_i_count_ev0",
+            "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ude_i_count_ev1",
+            "title": "docs/evidence/h01-i-reserve/stage-1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-reserve/stage-1-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ude_i_burst",
+        "type": "Undesirable Effect",
+        "text": "UDE3. I cell: the human early burst is absent. At 0.27 nA the human fires cycles 2-4 at 6.3, 5.9 and 7.0 ms (cycle 5 at 12.1 ms); the model's cycles start at 13.6 ms and lengthen monotonically (16.4, 17.1, 17.9 ms).",
+        "status": "supported",
+        "confidence": null,
+        "notes": "At 0.19 nA the same pattern: human cycles 2-3 are 7.6 and 10.2 ms; model cycles 2-3 are 34.8 and 39.2 ms. Values are cycle_ms from the usable-tier tables.\n\nEvidence: docs/evidence/h01-i-sk/s0-finalist-usable.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "ude_i_burst_ev0",
+            "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ude_i_burst_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ude_i_latecycle",
+        "type": "Undesirable Effect",
+        "text": "UDE4. I cell at 0.27 nA: the human train settles to a ~25 ms plateau (24.2-26.7 ms over the last five cycles); the model drifts to a 30.4 ms plateau.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "At 0.19 nA the sign differs: human late cycles are 96-117 ms, the model's 82-84 ms. The model's steady late cycle is therefore not a fixed offset from the human's.\n\nEvidence: docs/evidence/h01-i-sk/s0-finalist-usable.json",
+        "evidence": [
+          {
+            "id": "ude_i_latecycle_ev0",
+            "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ude_i_width",
+        "type": "Undesirable Effect",
+        "text": "UDE5. I cell spike widths are about 0.06 ms narrow: model 0.221-0.224 ms against human 0.267-0.300 ms at both inputs.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Usable-tier width rows fail on cycles 2-12 at 0.19 nA and cycles 23-37 at 0.27 nA (the earlier 0.27 nA cycles pass on the wider limit). The I response chart shows the same ~0.06 ms difference and a different rise-rate change along the train.\n\nEvidence: docs/evidence/h01-i-sk/s0-finalist-usable.json; docs/evidence/h01-multivari-i.png; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "ude_i_width_ev0",
+            "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ude_i_width_ev1",
+            "title": "docs/evidence/h01-multivari-i.png",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-multivari-i.png",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ude_i_width_ev2",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ude_pop",
+        "type": "Undesirable Effect",
+        "text": "UDE6. Population: no H01 physiology is qualified. The corrected 104-cell population built (807,588 compartments, two contacts) and initialised, but the compiled 10 ms runtime ended without a trace verdict.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "H01 donor qualification would need matching H01 physiological evidence that this project does not have (Qualification rules). The single-cell fits use donor anatomy in NEURON, not an H01 transfer test.\n\nEvidence: docs/evidence/h01-104-corrected-initialization-decision.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "ude_pop_ev0",
+            "title": "docs/evidence/h01-104-corrected-initialization-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-104-corrected-initialization-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ude_pop_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_axial",
+        "type": "Intermediate Effect",
+        "text": "IE1. I cell: axial outflow carries 0.18058 nA, about 95% of the applied current, at 6 ms after the first trough at 0.19 nA; the signed balance leaves 0.00198 nA to charge the soma. Sodium availability there is 0.986.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "All eight recorded soma neighbours sit below the soma voltage. Recovered sodium therefore does not imply rapid soma charging. The same path appears in early and late samples at 0.19 and 0.23 nA. Downstream cable currents remain unresolved.\n\nEvidence: docs/h01-causal-model.md; docs/evidence/h01-causal-current-observations-2026-09-09.md; docs/evidence/h01-i-energetic-result.md",
+        "evidence": [
+          {
+            "id": "ie_axial_ev0",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_axial_ev1",
+            "title": "docs/evidence/h01-causal-current-observations-2026-09-09.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-causal-current-observations-2026-09-09.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_axial_ev2",
+            "title": "docs/evidence/h01-i-energetic-result.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-energetic-result.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_sk",
+        "type": "Intermediate Effect",
+        "text": "IE2. I cell: along the 0.23 nA train the axonal calcium rises 0.000120 to 0.000199 mM, the axonal SK gate rises 0.0022 to 0.024, and the trough-to-threshold delay grows 17.6 to 40.3 ms.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "These observations locate current and state changes; they do not isolate the cause of the timing error (Y3).\n\nEvidence: docs/specs/2026-09-11-h01-i-sk-isolation.md; docs/h01-causal-model.md; docs/evidence/h01-causal-current-observations-2026-09-09.md",
+        "evidence": [
+          {
+            "id": "ie_sk_ev0",
+            "title": "docs/specs/2026-09-11-h01-i-sk-isolation.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-i-sk-isolation.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_sk_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_sk_ev2",
+            "title": "docs/evidence/h01-causal-current-observations-2026-09-09.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-causal-current-observations-2026-09-09.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_sk_confounded",
+        "type": "Intermediate Effect",
+        "text": "IE3. I cell: the earlier 'no axonal SK' arm (57/138 spikes) was not a single-change comparison; it also returned somatic NaTg to 1.0 and used Kv3 closing factor 0.5 (the finalist uses 2.0).",
+        "status": "supported",
+        "confidence": null,
+        "notes": "So no isolated axonal-SK effect exists for the finalist. Increasing axonal NaTg density 1.5x failed its registered recovery prediction; that dose does not exclude all axonal density changes.\n\nEvidence: docs/evidence/h01-causal-current-observations-2026-09-09.md; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "ie_sk_confounded_ev0",
+            "title": "docs/evidence/h01-causal-current-observations-2026-09-09.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-causal-current-observations-2026-09-09.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_sk_confounded_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_kv3",
+        "type": "Intermediate Effect",
+        "text": "IE4. I cell: earlier comparisons support a role for sodium duration and retained Kv3 activation in the spike fall and trough; removing somatic Kv3 produced depolarisation block in that earlier candidate.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "A repeated width difference does not establish one unique mechanism (Y3). The finalist's somatic Kv3 close factor is 2.0.\n\nEvidence: docs/h01-causal-model.md; docs/evidence/h01-i-energetic-result.md",
+        "evidence": [
+          {
+            "id": "ie_kv3_ev0",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_kv3_ev1",
+            "title": "docs/evidence/h01-i-energetic-result.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-energetic-result.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_passive",
+        "type": "Intermediate Effect",
+        "text": "IE5. E cell: the passive levers move the f-I curve and the sweep-43 subthreshold return (F5) in a fixed ratio. Ih half: 250 pA count 8 -> 8, rest -1.73 mV, return -0.7 mV. Leak x1.5: counts 0/0/6 at 200/250/310 pA, return -3.06 to -3.78 mV, past the donor.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The 250 pA count is a step in the leak, not a line: no leak dose lands it at 5 while the 310 pA rate stays within 1.5 Hz. Somatic SK (0.35) with calcium decay 1.0 sets the late 310 pA interval (10.05 vs 10.00 Hz) but translates the whole curve and cannot rotate it. The combined arm (g3) was registered and not run because its additive prediction fails every band.\n\nEvidence: docs/evidence/h01-e-gain/stage-close-decision.json; docs/evidence/h01-e-gain/stage-g-decision.json",
+        "evidence": [
+          {
+            "id": "ie_passive_ev0",
+            "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_passive_ev1",
+            "title": "docs/evidence/h01-e-gain/stage-g-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-g-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_b3_notrace",
+        "type": "Intermediate Effect",
+        "text": "IE6. E cell: the saved B3 traces contain soma and axon voltage but no channel currents or calcium (record_soma_currents false). The current that carries the three excess low-drive spikes has never been measured.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The older E current study used different sodium, calcium and regional settings, so its budgets cannot explain B3. B3 already contains a somatic M current, Im, at 0.0003009 S/cm2 (source correction in Y4).\n\nEvidence: docs/specs/2026-09-11-h01-e-current-measurement.md; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "ie_b3_notrace_ev0",
+            "title": "docs/specs/2026-09-11-h01-e-current-measurement.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-current-measurement.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_b3_notrace_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_pop_runtime",
+        "type": "Intermediate Effect",
+        "text": "IE7. Population: construction, initialisation, compilation, stepping and trace analysis are separate runtime stages; the corrected 104-cell run has a construction and initialisation pass but no completed driven runtime record.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The runtime timeout does not establish numerical failure or memory exhaustion; a timeout needs a stage record before it can support a performance explanation.\n\nEvidence: docs/evidence/h01-104-corrected-initialization-decision.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "ie_pop_runtime_ev0",
+            "title": "docs/evidence/h01-104-corrected-initialization-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-104-corrected-initialization-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "ie_pop_runtime_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "rc_vdep",
+        "type": "Root Cause",
+        "text": "RC1 (open). E cell: the current that removes three spikes at 200-250 pA while leaving the 310 pA train and the sweep-43 return fixed must be voltage- or use-dependent and lies outside the fit's passive family.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Reassessment candidates: a slow sodium inactivation absent from the Allen genome; Kv7/M kinetics absent from the Allen genome; a second human L2/3 donor with a recorded f-I curve (SP6b lead). No candidate has been run; any is a new spec with its own cap.\n\nEvidence: docs/evidence/h01-e-gain/stage-close-decision.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "rc_vdep_ev0",
+            "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "rc_vdep_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "rc_burst",
+        "type": "Root Cause",
+        "text": "RC2 (open). I cell: the current balance that would restore early refiring (cycle 2 at or below 22 ms) and the later train changes is unidentified.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Y3 'Open': a matched SK test must retain the other finalist settings and measure the current change before the timing change. The finalist remains experimental.\n\nEvidence: docs/h01-causal-model.md; docs/specs/2026-09-11-h01-i-sk-isolation.md",
+        "evidence": [
+          {
+            "id": "rc_burst_ev0",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "rc_burst_ev1",
+            "title": "docs/specs/2026-09-11-h01-i-sk-isolation.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-i-sk-isolation.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "rc_donor",
+        "type": "Root Cause",
+        "text": "RC3 (open). The fitted electrical properties are a donor's, not H01's: B3 runs on Allen 541563728 geometry with the kv3-closing-source mechanism library, and no H01 physiological recording exists to qualify against.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Additional donor fits also miss recorded counts: HL5MN1 gave 16 and 30 against 14 and 34; Allen 527952884 gave 19 and 8 against 20 and 12 (Y6). These runs do not establish a missing biological mechanism; the condition behind each count difference is unidentified.\n\nEvidence: docs/h01-causal-model.md; docs/evidence/h01-e-gain/stage-close-decision.json; docs/evidence/h01-donors/stage-hl5mn1-decision.json; docs/evidence/h01-donors/stage-allen-l4-decision.json",
+        "evidence": [
+          {
+            "id": "rc_donor_ev0",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "rc_donor_ev1",
+            "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "rc_donor_ev2",
+            "title": "docs/evidence/h01-donors/stage-hl5mn1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-donors/stage-hl5mn1-decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "rc_donor_ev3",
+            "title": "docs/evidence/h01-donors/stage-allen-l4-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-donors/stage-allen-l4-decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "inj_sp10",
+        "type": "Injection",
+        "text": "INJ1 (running). SP10: isolate the axonal SK effect on the I finalist. Stage 0 s0-finalist (byte-identical) at 0.19 and 0.27 nA, then stage 1 s1-sk-axon0 (--scale SK:axon:0) as the single change.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Pre-registered prediction (stage 1): if axonal SK is the direct path of the growing delay, removing it shortens the late trough-to-threshold delay by more than 12.8 ms at both inputs and raises counts above 14 and 37, while cycle 2 moves less than 12.8 ms and widths, peaks and early troughs stay within stage-0 bands. Rejection: delay not shortened beyond 12.8 ms; or spikes lost; or depolarisation block (above -20 mV for more than 5 ms). A count rise away from the human (12, 43) is a mechanism observation, not a promotion. Two evaluations, 1800 s abort, no holdout opened. Stage 0 must reproduce counts 14 and 37, cycle 2 (34.76, 16.37 ms) within 0.1 ms and troughs 1-3 within 0.1 mV.\n\nEvidence: docs/specs/2026-09-11-h01-i-sk-isolation.md; docs/evidence/h01-i-sk-manifest.json",
+        "evidence": [
+          {
+            "id": "inj_sp10_ev0",
+            "title": "docs/specs/2026-09-11-h01-i-sk-isolation.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-i-sk-isolation.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "inj_sp10_ev1",
+            "title": "docs/evidence/h01-i-sk-manifest.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-manifest.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "inj_sp11",
+        "type": "Injection",
+        "text": "INJ2 (running). SP11: measure the B3 current paths (stage 0, unchanged B3 with record_soma_currents at 200, 250, 310 pA), then one voltage-dependent lever (stage 1: Nap density reduced or Im density raised).",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Stage 0 prediction: counts 4, 8, 10; every rise crossing within 0.1 ms and every trough within 0.1 mV of g0-b3; axon-first. Rejection: any count or crossing difference (stop). Lever selection rule from stage-0 numbers: (a) its interspike current at 200 pA is at least the net drift current there; (b) its share at 310 pA is smaller than at 200 pA. Stage 1 bands: 200 pA count 1 (1-2); 250 pA 5-7; 310 pA 9-10 with rate within 1.5 Hz of 10.0 Hz and late cycles 110-124 ms within 12.8 ms; sweep-43 rows move less than 1 mV. Rejection: 310 pA count below 9 or late cycle moves more than 12.8 ms; or sweep-43 rows move 1 mV or more. Cap three evaluations, 2400 s abort; sweep 54 sealed. A pass is a gain-split result, not a promotion.\n\nEvidence: docs/specs/2026-09-11-h01-e-current-measurement.md; docs/evidence/h01-e-currents-manifest.json",
+        "evidence": [
+          {
+            "id": "inj_sp11_ev0",
+            "title": "docs/specs/2026-09-11-h01-e-current-measurement.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-current-measurement.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          },
+          {
+            "id": "inj_sp11_ev1",
+            "title": "docs/evidence/h01-e-currents-manifest.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents-manifest.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-11"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+      },
+      {
+        "id": "j_e",
+        "type": "operator",
+        "text": "All of these hold together",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Dettmer ellipse (joint sufficiency) drawn as the app's AND junction. No probability is computed.\n\nEvidence: ",
+        "evidence": [],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node",
+        "operator": "AND",
+        "mode": "boolean"
+      },
+      {
+        "id": "j_i_late",
+        "type": "operator",
+        "text": "All of these hold together",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Dettmer ellipse (joint sufficiency) drawn as the app's AND junction. No probability is computed.\n\nEvidence: ",
+        "evidence": [],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node",
+        "operator": "AND",
+        "mode": "boolean"
+      },
+      {
+        "id": "j_i_count",
+        "type": "operator",
+        "text": "All of these hold together",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Dettmer ellipse (joint sufficiency) drawn as the app's AND junction. No probability is computed.\n\nEvidence: ",
+        "evidence": [],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node",
+        "operator": "AND",
+        "mode": "boolean"
+      }
+    ],
+    "project": {
+      "calendar": {
+        "exceptions": [],
+        "hours": 8,
+        "weekdays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "date": "2026-09-11",
+      "direction": "forward",
+      "resources": []
+    },
+    "relationshipReviews": [
+      {
+        "id": "review_j_e__ude_e_lowdrive",
+        "edgeId": "j_e__ude_e_lowdrive",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_j_e__ude_e_lowdrive",
+            "category": "Cause sufficiency",
+            "concern": "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link.",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ie_b3_notrace__rc_vdep",
+        "edgeId": "ie_b3_notrace__rc_vdep",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ie_b3_notrace__rc_vdep",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_rc_donor__ude_e_lowdrive",
+        "edgeId": "rc_donor__ude_e_lowdrive",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_rc_donor__ude_e_lowdrive",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_j_i_late__ude_i_latecycle",
+        "edgeId": "j_i_late__ude_i_latecycle",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_j_i_late__ude_i_latecycle",
+            "category": "Cause sufficiency",
+            "concern": "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link.",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ie_sk_confounded__ie_sk",
+        "edgeId": "ie_sk_confounded__ie_sk",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ie_sk_confounded__ie_sk",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_rc_burst__ude_i_burst",
+        "edgeId": "rc_burst__ude_i_burst",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_rc_burst__ude_i_burst",
+            "category": "Cause sufficiency",
+            "concern": "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link.",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_j_i_count__ude_i_count",
+        "edgeId": "j_i_count__ude_i_count",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_j_i_count__ude_i_count",
+            "category": "Cause sufficiency",
+            "concern": "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link.",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ie_kv3__ude_i_width",
+        "edgeId": "ie_kv3__ude_i_width",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ie_kv3__ude_i_width",
+            "category": "Cause sufficiency",
+            "concern": "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link.",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_rc_donor__ude_pop",
+        "edgeId": "rc_donor__ude_pop",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_rc_donor__ude_pop",
+            "category": "Cause sufficiency",
+            "concern": "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link.",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ie_pop_runtime__ude_pop",
+        "edgeId": "ie_pop_runtime__ude_pop",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ie_pop_runtime__ude_pop",
+            "category": "Cause sufficiency",
+            "concern": "Is the stated cause enough on its own, or is an unlisted condition needed? Record it before asserting the link.",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_inj_sp10__ie_sk",
+        "edgeId": "inj_sp10__ie_sk",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_inj_sp10__ie_sk",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_inj_sp10__rc_burst",
+        "edgeId": "inj_sp10__rc_burst",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_inj_sp10__rc_burst",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_inj_sp11__ie_b3_notrace",
+        "edgeId": "inj_sp11__ie_b3_notrace",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_inj_sp11__ie_b3_notrace",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_inj_sp11__rc_vdep",
+        "edgeId": "inj_sp11__rc_vdep",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_inj_sp11__rc_vdep",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "end": 10000,
+      "step": 100
+    },
+    "tests": [],
+    "summaries": [],
+    "characteristics": [],
+    "verifications": []
+  },
+  "scenarios": [],
+  "revision": 0,
+  "history": [],
+  "undo": [],
+  "redo": [],
+  "proposals": [],
+  "jobs": [],
+  "access": {
+    "direct": true
+  }
+}
