@@ -1,0 +1,336 @@
+{
+  "stage": "1",
+  "spec": "docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
+  "manifest": "docs/evidence/h01-e-sodium-slow-manifest.json",
+  "closed_utc": "2026-09-12T20:05:00Z",
+  "evaluations": {
+    "spent": 5,
+    "cap": 6
+  },
+  "decision": "FAIL, by the registered rejection: no threshold step of 1.0 mV appears at depth 0.6 (spike 2 is +0.37 mV above spike 1; spike 10 is +1.5 mV), and the 200 pA count does not fall (4 at both depths, level -64.6 against the reference -65.0 and the recorded -67.1).",
+  "observed": "The gate does what it was built to do to the rise: spike 1 unchanged at both inputs (636 to 644 against 639 V/s at 310 pA; 606 to 608 against 598 at 200 pA; first spike within 0.6 ms), and later spikes lose rise progressively, to 0.72 of spike 1 by spike 10 at depth 0.6 (461 against 644 V/s) and 0.83 at depth 0.3. The threshold barely follows: +0.03 and +0.37 mV at spike 2, +0.5 and +1.5 mV at spike 10, against the recorded +1.4 mV at spike 2 and +3.6 by spike 5. At 200 pA the count stays 4, the intervals lengthen by at most 40 ms, and the level after the spikes does not move.",
+  "inference": "In this fit a loss of sodium availability moves the rise about 19 percent per millivolt of threshold; the recorded cell moves them together at 4 to 10 percent per millivolt (E: 0.86 of the rise with +1.4 mV at spike 2; I: 0.91 with +4 mV at 0.27 nA). So the fit's threshold is not set by the availability of the sodium it carries, and the recorded step cannot be produced by removing that availability at any depth: the depth that would give +1.4 mV at spike 2 would take the rise far below the recording and does not exist inside the registered range. The shared-function element is not sodium availability alone. What the failure fixes: the recorded threshold step, together with its modest rise loss, needs a threshold that answers to what a spike leaves behind; this fit's threshold answers only to its axonal initiation.",
+  "not_run": "Stage 2 (I cell) is not run: the spec applies the surviving depth and none survived. Running the I fit at depth 0.6 would tell whether the threshold insensitivity is this fit's initiation geometry or general; it is proposed, not spent.",
+  "runs": {
+    "depth 0.3, sweep 53": {
+      "checks": [
+        {
+          "check": "count 9 or 10",
+          "pass": true,
+          "run": 10,
+          "reference": 10
+        },
+        {
+          "check": "spike-1 rise unchanged",
+          "pass": true,
+          "run": 636.1135063591809,
+          "reference": 639.0752464279614
+        },
+        {
+          "check": "first spike unchanged",
+          "pass": true,
+          "run": 34.24000000000001,
+          "reference": 34.22000000000003
+        },
+        {
+          "check": "threshold step at spike 2 above the limit",
+          "pass": false,
+          "run": 0.0283933268976142,
+          "reference": 1.0
+        },
+        {
+          "check": "spike-2 rise fraction (recorded 0.86)",
+          "pass": true,
+          "run": 0.987020787875017,
+          "reference": 0.86
+        },
+        {
+          "check": "hold from spike 5 (spike 10 minus spike 5 within the limit)",
+          "pass": true,
+          "run": 0.1231551205986463,
+          "reference": 1.0
+        }
+      ],
+      "all_pass": false,
+      "cycles": [
+        {
+          "spike": 1,
+          "threshold_mv": -57.11,
+          "max_rise_v_s": 636.1,
+          "t_ms": 34.24
+        },
+        {
+          "spike": 2,
+          "threshold_mv": -57.08,
+          "max_rise_v_s": 627.9,
+          "t_ms": 48.1
+        },
+        {
+          "spike": 3,
+          "threshold_mv": -56.92,
+          "max_rise_v_s": 582.5,
+          "t_ms": 72.68
+        },
+        {
+          "spike": 4,
+          "threshold_mv": -56.76,
+          "max_rise_v_s": 566.2,
+          "t_ms": 189.52
+        },
+        {
+          "spike": 5,
+          "threshold_mv": -56.74,
+          "max_rise_v_s": 561.8,
+          "t_ms": 323.74
+        },
+        {
+          "spike": 6,
+          "threshold_mv": -56.63,
+          "max_rise_v_s": 555.4,
+          "t_ms": 448.92
+        },
+        {
+          "spike": 7,
+          "threshold_mv": -56.53,
+          "max_rise_v_s": 545.6,
+          "t_ms": 570.1
+        },
+        {
+          "spike": 8,
+          "threshold_mv": -56.51,
+          "max_rise_v_s": 544.6,
+          "t_ms": 688.04
+        },
+        {
+          "spike": 9,
+          "threshold_mv": -56.48,
+          "max_rise_v_s": 542.0,
+          "t_ms": 803.54
+        },
+        {
+          "spike": 10,
+          "threshold_mv": -56.62,
+          "max_rise_v_s": 530.2,
+          "t_ms": 917.14
+        }
+      ],
+      "level_p50_mv": -64.17
+    },
+    "depth 0.3, sweep 56": {
+      "checks": [
+        {
+          "check": "count falls (at most 3 at depth 0.6; recorded 1)",
+          "pass": false,
+          "run": 4,
+          "reference": 4
+        },
+        {
+          "check": "spike-1 rise unchanged",
+          "pass": true,
+          "run": 607.6993088299805,
+          "reference": 597.6780326696378
+        },
+        {
+          "check": "first spike unchanged",
+          "pass": true,
+          "run": 127.22000000000003,
+          "reference": 126.92000000000007
+        },
+        {
+          "check": "post-spike level towards -67.1 (reference -65.0)",
+          "pass": false,
+          "run": -64.88778915835005,
+          "reference": -67.1
+        }
+      ],
+      "all_pass": false,
+      "cycles": [
+        {
+          "spike": 1,
+          "threshold_mv": -57.12,
+          "max_rise_v_s": 607.7,
+          "t_ms": 127.22
+        },
+        {
+          "spike": 2,
+          "threshold_mv": -57.01,
+          "max_rise_v_s": 581.8,
+          "t_ms": 202.88
+        },
+        {
+          "spike": 3,
+          "threshold_mv": -56.77,
+          "max_rise_v_s": 579.1,
+          "t_ms": 476.08
+        },
+        {
+          "spike": 4,
+          "threshold_mv": -56.86,
+          "max_rise_v_s": 571.5,
+          "t_ms": 782.6
+        }
+      ],
+      "level_p50_mv": -64.89
+    },
+    "depth 0.6, sweep 53": {
+      "checks": [
+        {
+          "check": "count 9 or 10",
+          "pass": true,
+          "run": 10,
+          "reference": 10
+        },
+        {
+          "check": "spike-1 rise unchanged",
+          "pass": true,
+          "run": 644.0863608129208,
+          "reference": 639.0752464279614
+        },
+        {
+          "check": "first spike unchanged",
+          "pass": true,
+          "run": 34.24000000000001,
+          "reference": 34.22000000000003
+        },
+        {
+          "check": "threshold step at spike 2 above the limit",
+          "pass": false,
+          "run": 0.3697601114304234,
+          "reference": 1.0
+        },
+        {
+          "check": "spike-2 rise fraction (recorded 0.86)",
+          "pass": true,
+          "run": 0.9517885856410367,
+          "reference": 0.86
+        },
+        {
+          "check": "hold from spike 5 (spike 10 minus spike 5 within the limit)",
+          "pass": true,
+          "run": 0.5010855119140629,
+          "reference": 1.0
+        }
+      ],
+      "all_pass": false,
+      "cycles": [
+        {
+          "spike": 1,
+          "threshold_mv": -57.25,
+          "max_rise_v_s": 644.1,
+          "t_ms": 34.24
+        },
+        {
+          "spike": 2,
+          "threshold_mv": -56.88,
+          "max_rise_v_s": 613.0,
+          "t_ms": 48.44
+        },
+        {
+          "spike": 3,
+          "threshold_mv": -56.59,
+          "max_rise_v_s": 548.4,
+          "t_ms": 73.34
+        },
+        {
+          "spike": 4,
+          "threshold_mv": -56.16,
+          "max_rise_v_s": 523.1,
+          "t_ms": 186.66
+        },
+        {
+          "spike": 5,
+          "threshold_mv": -56.23,
+          "max_rise_v_s": 509.8,
+          "t_ms": 320.66
+        },
+        {
+          "spike": 6,
+          "threshold_mv": -55.9,
+          "max_rise_v_s": 493.2,
+          "t_ms": 444.62
+        },
+        {
+          "spike": 7,
+          "threshold_mv": -55.84,
+          "max_rise_v_s": 481.2,
+          "t_ms": 564.32
+        },
+        {
+          "spike": 8,
+          "threshold_mv": -55.82,
+          "max_rise_v_s": 478.6,
+          "t_ms": 680.48
+        },
+        {
+          "spike": 9,
+          "threshold_mv": -55.69,
+          "max_rise_v_s": 470.5,
+          "t_ms": 793.96
+        },
+        {
+          "spike": 10,
+          "threshold_mv": -55.73,
+          "max_rise_v_s": 461.3,
+          "t_ms": 905.32
+        }
+      ],
+      "level_p50_mv": -63.44
+    },
+    "depth 0.6, sweep 56": {
+      "checks": [
+        {
+          "check": "count falls (at most 3 at depth 0.6; recorded 1)",
+          "pass": false,
+          "run": 4,
+          "reference": 4
+        },
+        {
+          "check": "spike-1 rise unchanged",
+          "pass": true,
+          "run": 605.8923122313688,
+          "reference": 597.6780326696378
+        },
+        {
+          "check": "first spike unchanged",
+          "pass": true,
+          "run": 127.51999999999998,
+          "reference": 126.92000000000007
+        },
+        {
+          "check": "post-spike level towards -67.1 (reference -65.0)",
+          "pass": false,
+          "run": -64.56071437760289,
+          "reference": -67.1
+        }
+      ],
+      "all_pass": false,
+      "cycles": [
+        {
+          "spike": 1,
+          "threshold_mv": -57.07,
+          "max_rise_v_s": 605.9,
+          "t_ms": 127.52
+        },
+        {
+          "spike": 2,
+          "threshold_mv": -56.83,
+          "max_rise_v_s": 570.9,
+          "t_ms": 210.32
+        },
+        {
+          "spike": 3,
+          "threshold_mv": -56.49,
+          "max_rise_v_s": 539.3,
+          "t_ms": 500.38
+        },
+        {
+          "spike": 4,
+          "threshold_mv": -56.49,
+          "max_rise_v_s": 538.7,
+          "t_ms": 821.92
+        }
+      ],
+      "level_p50_mv": -64.56
+    }
+  }
+}

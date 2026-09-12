@@ -30,7 +30,7 @@ without supplying a complete explanation of a human-model difference.
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
 | PV finalist's recovery interval grows along a train | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. See Y3. |
-| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. What remains is use-dependent and lives in the sodium equations both fits share. Matching the cable to the recorded cell will have little effect. See Y4. |
+| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. What remains is use-dependent: after a spike the recorded threshold steps up with a modest loss of rise, while in this fit a loss of sodium availability lowers the rise and leaves the threshold, because the threshold is set by the axonal initiation. Neither the cable nor slow inactivation of the fitted sodium will produce the recorded response. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -293,22 +293,36 @@ spike 1 is the same in every sweep, so the change has recovered by the next swee
 200 pA one spike is followed by 800 ms without another, so it has not recovered inside
 800 ms ([cycle tables](evidence/h01-topographic/cycle-tables.md)). The model holds
 threshold and rise flat at every drive. Both fits carry the same Colbert and Pan 2002
-sodium equations, which inactivate quickly and not slowly. Slow inactivation, fitted to
-none of these cells, enters during a spike and recovers at rest over about a second; it
-would leave the first spike alone because the gate is shut below threshold, would step the
-threshold at spike 2 and hold it, would lower the rise of later spikes while sparing the
-first, and would remove the later spikes at 200 pA.
+sodium equations, which inactivate quickly and not slowly. A slow inactivation gate that
+enters during a spike and recovers at rest, added to the sodium this fit carries, leaves
+the first spike alone and lowers the rise of the later spikes, but it does not move the
+threshold: removing 40 percent of the sodium availability by spike 10 takes the rise to
+0.72 of spike 1 and the threshold up 1.5 mV, and at spike 2 it gives +0.4 mV where the
+recording gives +1.4 with the rise at 0.86; at 200 pA the count stays 4 and the level after
+the spikes does not move ([stage 1](evidence/h01-e-sodium-slow/stage-1-decision.json)). In
+this fit the rise answers to sodium availability at about 19 percent per millivolt of
+threshold; in the recorded cells the two move together at 4 to 10 percent per millivolt.
+The fit's threshold is therefore set by its axonal initiation and not by the availability
+of its sodium, and no depth of that gate reproduces the recorded step, because the depth
+that would move the threshold would take the rise far below the recording. What a spike
+leaves behind in the recorded cell raises its threshold with only a modest loss of rise;
+in this fit nothing that lowers sodium availability raises the threshold by that much.
 
 **Consequence.** Matching the model's cable to the recorded cell will have little effect on
 the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
-Doses of the soma channels this fit already carries cannot supply the low-input count. The
-next change worth making is to the shared sodium equations, and
-[SP16](specs/2026-09-12-h01-sodium-slow-inactivation.md) states the four observations that
-would refute it.
+Doses of the soma channels this fit already carries cannot supply the low-input count.
+Slow inactivation of the sodium this fit carries will not produce the recorded threshold
+step or the 200 pA count at any depth
+([SP16 stage 1](evidence/h01-e-sodium-slow/stage-1-decision.json)); it is a rise lever in
+this fit, not a threshold lever. The next split is whether the same is true of the
+interneuron fit, whose initiation is not a dense axonal insertion: if its threshold does
+follow sodium availability, the pyramidal failure is that fit's initiation geometry and not
+the hypothesis.
 
 **Limit.** No sufficient repair is established, and B3 stays unpromoted. Slow inactivation
-is a registered hypothesis, not an established cause, and it is not offered as an
-explanation of the spike rise, which no gate released at rest can change. A gate fitted to
+of the fitted sodium is refuted as the shared-function element for this fit at depths up to
+0.6 with the registered time course; other time courses and other carriers of what a spike
+leaves behind are not excluded. A gate fitted to
 a response cannot name a channel. The membrane area of an H01 skeleton, converted from
 skeleton radii, is not established as physical, so that anatomy's failure to spike says
 nothing about the recorded cell.
