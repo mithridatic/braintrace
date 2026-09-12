@@ -1,0 +1,152 @@
+{
+  "purpose": "SP16 (I side): the pinned NaTg mechanism rebuilt with the slow inactivation gate (docs/evidence/h01-l2-mechanisms/NaTg.slow.mod regenerated on the box from the source, SUFFIX kept). Stage 0 reruns the unchanged PV finalist at depth 0 and must reproduce the retained 0.19 nA reference; stage 2 applies the depth that survives the E scan at 0.19 and 0.27 nA. Specification: docs/specs/2026-09-12-h01-sodium-slow-inactivation.md (amended).",
+  "cap": 4,
+  "prior_evaluations": 0,
+  "max_concurrent": 1,
+  "abort_seconds": 1800,
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv, mechanisms compiled with nrnivmodl from the same mod files as image braintrace-h01-neuron:9.0.2). The PV driver's default template/biophys/morphology paths are /work/source/*, served by a /work symlink to the library on that host.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pv/kv3-phase-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "output_dir": "h01-i-sodium-slow",
+  "inputs": {
+    "019": [
+      "--current-na",
+      "0.19",
+      "--duration-ms",
+      "1500"
+    ],
+    "027": [
+      "--current-na",
+      "0.27",
+      "--duration-ms",
+      "1500"
+    ]
+  },
+  "holdout": "0.23 nA is SPENT (h01-prediction-i.md); it is not an input of any stage. Sweep 48 (PV Noise 1) stays sealed.",
+  "evaluation": "One candidate at one input = one evaluation; stage 0 spends one (0.19 nA), stage 2 two.",
+  "base_candidate": {
+    "file": "h01-i-sk-manifest.json#s0-finalist",
+    "note": "The PV finalist (Kv3 close factor 2.0): retained reference at 0.19 nA (count 14, spike-1 rise 592 V/s, threshold -60.5 mV flat) and 0.27 nA (count 37, rise 613 V/s)."
+  },
+  "reference": {
+    "019": {
+      "count": 14,
+      "max_rise_v_s": 592.0,
+      "threshold_mv": -60.5
+    },
+    "027": {
+      "count": 37,
+      "max_rise_v_s": 613.0,
+      "threshold_mv": -61.1
+    }
+  },
+  "decision_limits": {
+    "threshold_mv": 1.5,
+    "rise_fraction": 0.035,
+    "count_fraction": 0.1
+  },
+  "stages": {
+    "0": {
+      "title": "Stage 0: reproduction at depth 0 with the patched library, 0.19 nA",
+      "prediction": "Count 14; spike-1 rise within 3.5 percent of 592 V/s; threshold -60.5 mV flat within 0.1 mV.",
+      "rejection": "Any difference beyond those: the patch changed the mechanism; no dose is run.",
+      "unchanged": "Everything but the compiled NaTg."
+    },
+    "2": {
+      "title": "Stage 2: the surviving E depth at 0.19 and 0.27 nA",
+      "prediction": "0.27 nA: threshold rises by at least 1.5 mV by spike 5 and then holds; rise falls towards 0.91 of spike 1; spike 1 unchanged; count within 10 percent of 37. 0.19 nA: threshold rises by at least 1.5 mV by the last spike; spike 1 unchanged; count within 10 percent of 14.",
+      "rejection": "Spike 1 moves; the counts leave those bands; or the threshold does not rise.",
+      "unchanged": "Every flag but the dose; nseg 9; both inputs (both tiers)."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s0-repro",
+      "stage": "0",
+      "arm": "reproduction",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      },
+      "inputs_note": "stage 0: launched with --only-input 019"
+    },
+    {
+      "name": "s2-d03",
+      "stage": "2",
+      "arm": "dissection",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma",
+        "mechanism_parameter": [
+          "NaTg:all:slow_inactivation:0.3"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      },
+      "inputs_note": "stage 2: launched only if 0.3 is the surviving E depth"
+    },
+    {
+      "name": "s2-d06",
+      "stage": "2",
+      "arm": "dissection",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma",
+        "mechanism_parameter": [
+          "NaTg:all:slow_inactivation:0.6"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      },
+      "inputs_note": "stage 2: launched only if 0.6 is the surviving E depth"
+    }
+  ]
+}
