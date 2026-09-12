@@ -1,0 +1,38 @@
+{
+  "mapping": "Dendritic and apical membrane-area dose to whole-cell load, measured from the stage-2 200 pA runs (the soma and axon are unchanged, so a x1.5 area dose is a 1.27x whole-cell conductance).",
+  "rows": [
+    {
+      "dose": "x1",
+      "r_in_MOhm": 95.3,
+      "conductance_ratio": 1.0,
+      "c_onset_pF": 125.0
+    },
+    {
+      "dose": "x1.5",
+      "r_in_MOhm": 74.8,
+      "conductance_ratio": 1.274,
+      "c_onset_pF": 153.4
+    },
+    {
+      "dose": "x2",
+      "r_in_MOhm": 60.2,
+      "conductance_ratio": 1.583,
+      "c_onset_pF": 176.6
+    },
+    {
+      "dose": "x3",
+      "r_in_MOhm": 44.8,
+      "conductance_ratio": 2.127,
+      "c_onset_pF": 214.1
+    }
+  ],
+  "human_over_model_conductance": 1.131,
+  "human_sits_at": {
+    "between": [
+      "x1",
+      "x1.5"
+    ],
+    "fraction_of_the_x1_5_dose": 0.478
+  },
+  "reading_rule": "The upstroke change the human's own cable difference can explain is about 0.48 of the change the x1.5 dose produces. The human-model upstroke gap at 310 pA is 639.1 - 347.7 = 291.4 V/s."
+}

@@ -1,6 +1,6 @@
 {
   "purpose": "SP15 stages 2 and 3 (Q2 for the E upstroke, graded): hold the function (B3 genome and flags), change the input by a graded amount. The dendritic and apical membrane area (cm, g_pas and the distributed Ih density together) is scaled 1.5, 2 and 3 times at fixed geometry. Stage 2 asks at 200 pA (closed: every dose silenced the cell); stage 3 asks at 310 pA, where the model and the human both fire ten spikes. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 2 and 3 addenda).",
-  "cap": 11,
+  "cap": 13,
   "prior_evaluations": 0,
   "max_concurrent": 2,
   "abort_seconds": 1800,
@@ -58,6 +58,13 @@
       "unchanged": "All B3 flags of q2-nseg1.candidate.json; nseg factor 9; CVode 1e-10; recorded command plus bias; stop 2100 ms; no soma-current probes; the geometry, the axial resistance and every soma mechanism.",
       "decision_file": "stage-4-decision.json",
       "reading_aid": "The human's own passive load is 1.13x B3's conductance and 1.03x its capacitance (h01-e-cable-load/human-passive-load.json); the dose series gives the slope of the upstroke against load, so the reading is whether a 1.13x load change can cover the 290 V/s human-model gap."
+    },
+    "5": {
+      "title": "Stage 5: the human-matched load. Dendritic and apical membrane area x1.25 (about 1.13x whole-cell conductance, the human's own measured load difference) at sweeps 53 and 56, nseg factor 9",
+      "prediction": "Registered before stage 4 was read. The human's passive load is 1.13x B3's conductance and 1.03x its capacitance (h01-e-cable-load/human-passive-load.json), and the dose-to-load map puts that at a x1.25 area dose (h01-e-cable-load/dose-to-load-map.json). Inputs branch: with the load set to the human's, the spike-1 maximum rise at 310 pA lands within 10 percent of the human's 347.7 V/s. Function branch: it stays within 10 percent of the model's own 639.1 V/s. Reported, not banded: the measured input resistance and onset capacitance of the dose (the check that the dose really is 1.13x), the counts at 310 and 200 pA, the first-spike times, the thresholds and the threshold climb.",
+      "rejection": "The measured conductance ratio of the dose misses 1.13x by more than 0.03 (the dose did not set the input to the human's value), or the cell does not fire a comparable train at 310 pA (no reading, as in stages 1 to 3).",
+      "unchanged": "All B3 flags of q2-nseg1.candidate.json; nseg factor 9; CVode 1e-10; recorded command plus bias; stop 2100 ms; no soma-current probes; the geometry, the axial resistance and every soma mechanism.",
+      "decision_file": "stage-5-decision.json"
     }
   },
   "candidates": [
@@ -404,7 +411,39 @@
         "record_soma_currents": false
       },
       "inputs_note": "stage 4: launched with --only-input sweep53"
+    },
+    {
+      "name": "c125-human-load-n9",
+      "stage": "5",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "membrane_area_factor": [
+          "dend:1.25",
+          "apic:1.25"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 5: launched with --only-input sweep53 --only-input sweep56"
     }
   ],
-  "cap_note": "Stage 3's four evaluations were spent on an invalid control: at nseg factor 1 the 310 pA response is not B3's (72 spikes then silence against 10 steady spikes at nseg 9), so the series read a mesh artefact, not the dose. As with the stage-1 pre-construction failure, these are not model evaluations of the registered question. Cap raised to 11 for stage 4, which repeats the series at the mesh where the reference response lives."
+  "cap_note": "Stage 3's four evaluations were spent on an invalid control: at nseg factor 1 the 310 pA response is not B3's (72 spikes then silence against 10 steady spikes at nseg 9), so the series read a mesh artefact, not the dose. As with the stage-1 pre-construction failure, these are not model evaluations of the registered question. Cap raised to 11 for stage 4, which repeats the series at the mesh where the reference response lives. Cap raised to 13 for stage 5, registered before the stage-4 numbers were read."
 }
