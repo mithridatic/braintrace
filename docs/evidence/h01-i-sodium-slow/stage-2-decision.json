@@ -1,0 +1,117 @@
+{
+  "stage": "2",
+  "spec": "docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
+  "manifest": "docs/evidence/h01-i-sodium-slow-manifest.json",
+  "closed_utc": "2026-09-12T20:40:00Z",
+  "evaluations": {
+    "spent": 3,
+    "cap": 4
+  },
+  "why_run": "Stage 1 failed on the E fit, whose threshold is set by a dense axonal insertion. The I fit has no such insertion, so its answer separates that geometry from the hypothesis. Approved by the user after the stage-1 report.",
+  "decision": "FAIL, same shape as the E fit: at depth 0.6 the threshold rises 0.9 mV by the last spike at 0.19 nA and 1.9 mV at 0.27 nA (limit 1.5; recorded +8.5 and +4), while the rise falls to 0.86 and 0.69 of spike 1 (recorded 0.76 and 0.91). Spike 1 unchanged; counts inside the band (13 against 14, 34 against 37).",
+  "inference": "The insensitivity of the threshold to sodium availability is not the pyramidal fit's geometry; it is shared by both fits. In both, a loss of availability is a rise lever (12 to 19 percent of the rise per millivolt of threshold), while both recorded cells move threshold and rise together at 2 to 10 percent per millivolt. Slow inactivation of the fitted sodium is refuted as the shared-function element in both cells at the registered time course and depths.",
+  "runs": {
+    "0.19 nA": {
+      "run": "s2-d06-019",
+      "count": 13,
+      "reference_count": 14,
+      "run_cycles": {
+        "spike 1": {
+          "threshold_mv": -60.67,
+          "max_rise_v_s": 600.8
+        },
+        "spike 2": {
+          "threshold_mv": -60.46,
+          "max_rise_v_s": 589.0
+        },
+        "spike 5": {
+          "threshold_mv": -60.08,
+          "max_rise_v_s": 544.8
+        },
+        "spike 10": {
+          "threshold_mv": -59.94,
+          "max_rise_v_s": 534.0
+        },
+        "spike 13": {
+          "threshold_mv": -59.84,
+          "max_rise_v_s": 519.0
+        }
+      },
+      "reference_cycles": {
+        "spike 1": {
+          "threshold_mv": -60.54,
+          "max_rise_v_s": 591.8
+        },
+        "spike 2": {
+          "threshold_mv": -60.47,
+          "max_rise_v_s": 586.5
+        },
+        "spike 5": {
+          "threshold_mv": -60.45,
+          "max_rise_v_s": 595.2
+        },
+        "spike 10": {
+          "threshold_mv": -60.38,
+          "max_rise_v_s": 585.4
+        },
+        "spike 14": {
+          "threshold_mv": -60.29,
+          "max_rise_v_s": 593.8
+        }
+      },
+      "threshold_rise_last_vs_first_mv": 0.83,
+      "rise_fraction_last": 0.864
+    },
+    "0.27 nA": {
+      "run": "s2-d06-027",
+      "count": 34,
+      "reference_count": 37,
+      "run_cycles": {
+        "spike 1": {
+          "threshold_mv": -61.07,
+          "max_rise_v_s": 609.7
+        },
+        "spike 2": {
+          "threshold_mv": -60.85,
+          "max_rise_v_s": 582.4
+        },
+        "spike 5": {
+          "threshold_mv": -60.54,
+          "max_rise_v_s": 560.4
+        },
+        "spike 10": {
+          "threshold_mv": -59.93,
+          "max_rise_v_s": 509.1
+        },
+        "spike 34": {
+          "threshold_mv": -59.17,
+          "max_rise_v_s": 420.2
+        }
+      },
+      "reference_cycles": {
+        "spike 1": {
+          "threshold_mv": -61.11,
+          "max_rise_v_s": 613.3
+        },
+        "spike 2": {
+          "threshold_mv": -61.05,
+          "max_rise_v_s": 607.7
+        },
+        "spike 5": {
+          "threshold_mv": -60.68,
+          "max_rise_v_s": 599.8
+        },
+        "spike 10": {
+          "threshold_mv": -60.36,
+          "max_rise_v_s": 581.9
+        },
+        "spike 37": {
+          "threshold_mv": -60.26,
+          "max_rise_v_s": 568.6
+        }
+      },
+      "threshold_rise_last_vs_first_mv": 1.89,
+      "rise_fraction_last": 0.689
+    }
+  }
+}

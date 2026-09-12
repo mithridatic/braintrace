@@ -218,9 +218,16 @@ they inactivate slowly: entry is fast while the membrane is depolarised and reco
 at rest. Both this fit and the pyramidal fit carry the same Colbert and Pan 2002 sodium
 equations, which inactivate quickly and not slowly, so the same missing element would
 produce this signature in both cells. [SP16](specs/2026-09-12-h01-sodium-slow-inactivation.md)
-applies that one change to both, with separate entry and recovery time constants, and
-states what would refute it. A gate with one time constant of a second will not produce it,
-because it cannot both rise inside 43 ms and hold for a second. Changing the axonal SK dose will not
+applied that one change to both, with separate entry and recovery time constants, and it
+is refuted in both: in this fit, removing 40 percent of the sodium availability along the
+train takes the rise to 0.69 of spike 1 at 0.27 nA and raises the threshold 1.9 mV, where
+the recorded cell keeps 0.91 of its rise while its threshold climbs 4 mV
+([stage 2](evidence/h01-i-sodium-slow/stage-2-decision.json)). In both fits a loss of
+sodium availability is a rise lever and not a threshold lever, 12 to 19 percent of the
+rise per millivolt; in both recorded cells the threshold climbs with only a modest loss of
+rise, 2 to 10 percent per millivolt. So what a spike leaves behind in the recorded cells
+raises the threshold by another route than the availability of the fitted sodium, and it
+is present in both cells. Changing the axonal SK dose will not
 produce it, because that conductance is calcium-driven and grows with input, while the
 recorded cell's late slowing shrinks with input.
 
@@ -314,10 +321,13 @@ Doses of the soma channels this fit already carries cannot supply the low-input 
 Slow inactivation of the sodium this fit carries will not produce the recorded threshold
 step or the 200 pA count at any depth
 ([SP16 stage 1](evidence/h01-e-sodium-slow/stage-1-decision.json)); it is a rise lever in
-this fit, not a threshold lever. The next split is whether the same is true of the
-interneuron fit, whose initiation is not a dense axonal insertion: if its threshold does
-follow sodium availability, the pyramidal failure is that fit's initiation geometry and not
-the hypothesis.
+this fit, not a threshold lever, and the same is true of the interneuron fit, whose
+initiation is not a dense axonal insertion
+([stage 2](evidence/h01-i-sodium-slow/stage-2-decision.json)); so the insensitivity is not
+this fit's geometry. What remains to be read, from the retained traces and before any
+mechanism is named, is the recorded approach to threshold cycle by cycle: whether the net
+current at a fixed voltage just below threshold grows more outward from spike to spike, or
+whether the take-off itself moves while the approach does not.
 
 **Limit.** No sufficient repair is established, and B3 stays unpromoted. Slow inactivation
 of the fitted sodium is refuted as the shared-function element for this fit at depths up to
