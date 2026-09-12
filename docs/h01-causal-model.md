@@ -30,7 +30,7 @@ without supplying a complete explanation of a human-model difference.
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
 | PV finalist's recovery interval grows along a train | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. See Y3. |
-| B3 keeps firing after the human stops at low input | The retained traces show a post-spike response contrast. A slow outward conductance is a registered explanation to test; neither a missing human channel nor the sufficient repair has been established. See Y4. |
+| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. What remains is use-dependent and lives in the sodium equations both fits share. Matching the cable to the recorded cell will have little effect. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -209,206 +209,80 @@ Evidence: [charge and intervention results](evidence/h01-i-energetic-result.md),
 [reserve decision](evidence/h01-i-reserve/stage-1-decision.json),
 [current measurements and intervention correction](evidence/h01-causal-current-observations-2026-09-09.md).
 
-## Y4. B3 has excess low-input spikes and waveform errors
+## Y4. B3 fires too often at low input and rises too fast at every input
 
-**Conditions.** Frozen B3 uses Allen specimen 541563728 donor anatomy in NEURON,
-the recorded command plus bias, ninefold mesh refinement, and CVode tolerance
-1e-10. The pulse is 1020-2020 ms. Absolute trace times below use that clock;
-subtract 1020 ms for latency from pulse onset. These are not H01 transfer tests.
-The [SP11 manifest](evidence/h01-e-currents-manifest.json) and
+**Conditions.** Frozen B3 is the Allen 541563728 perisomatic fit on that donor's anatomy
+in NEURON, driven by the recorded command plus its recorded bias, at ninefold mesh
+refinement and CVode tolerance 1e-10, over the 1020 to 2020 ms pulse. It is compared with
+one human layer 2/3 pyramidal cell recorded under the same command. Rise rates are
+measured on a uniform time grid, and every difference is stated against the repeat spread
+of that recording, which is 0.3 mV in level, 0.25 mV in threshold and 1.5 V/s in rise.
+The [manifest](evidence/h01-e-currents-manifest.json) and
 [candidate](evidence/h01-e-currents/m0-b3-currents.candidate.json) fix the settings.
 
-**Response to explain.** Frozen B3 has axon-first initiation at the tested active inputs.
+**Response to explain.** B3 initiates in the axon at every active input and still produces
+the wrong response. It fires 4, 8, 10 and 12 times at 200, 250, 310 and 350 pA against the
+recorded 1, 5, 10 and 13, so the count error changes sign across the inputs and no constant
+offset describes it. Three further differences are large against the recording's own spread:
 
-Its counts are 4, 8, 10, and 12 at 200, 250, 310, and 350 pA.
-The corresponding recorded counts are 1, 5, 10, and 13.
-The count error changes from +3 to −1 across these inputs.
-Thus, a constant count offset cannot describe the defect.
-Early widths and the late sweep-43 return also remain defective.
-Correct initiation order is therefore insufficient for correct response.
+| difference | human | model | spreads |
+| --- | ---: | ---: | ---: |
+| spike rise, every cycle and input | 347.7 V/s | 639.1 V/s | 177 |
+| threshold climb along the 310 pA train | +2.1 mV | +0.1 mV | 8 |
+| level after a spike at 200 pA | -67.06 mV | -65.00 mV | 7 |
 
-Halving Ih density retained eight spikes at 250 pA and shifted rest by −1.73 mV.
-Increasing leak by 1.5 times silenced 250 pA and reduced the 310 pA count to six.
-It also moved the subthreshold return beyond its allowed range.
-These tested interventions failed to preserve the protected responses.
-The combined intervention was not run.
-Its additive prediction cannot establish its actual response or exclude an interaction.
+The model's first spike is also early, by less than four spreads of the recording's own
+first-spike scatter, which is too small to treat as a separate effect.
 
-**Source correction.** B3 already contains a somatic M current, `Im`.
-The applied maximum density is 0.0003009224287506406 S/cm².
-The earlier claim that this current was absent was incorrect.
-Alternative kinetics or distributions remain hypotheses.
+**Mechanism.** The rate of rise falls as membrane load rises, at about 254 volts per second
+for each unit of whole-cell conductance ratio, and the spike count collapses once the load
+passes about 1.3 times the fitted value. The recorded cell's own load, measured where
+neither cell spikes, is 1.13 times the model's conductance and 1.03 times its capacitance.
+Although the cable load contributes, at the recorded cell's own load it covers about a tenth
+of the rise difference, and it cannot supply the count because the count collapses before
+the rise moves far.
 
-The failed Ih and leak doses do not prove that every passive parameter choice fails.
-Ih and SK are state-dependent conductances; grouping them as a passive family hides that distinction.
+Charge does not accumulate in the soma either. Between spikes at 200 pA the whole soma
+sinks about 0.069 nA of the applied 0.196 nA, the rest leaving axially, and the largest
+soma candidate is the persistent sodium current at 0.012 nA. Removing all of it silences
+200 pA rather than reducing the count to the recorded one, so that current is necessary for
+the first spike and not an explanation of the count.
 
-**Explanatory boundary.** A change must correct the low-input trajectory while
-preserving higher-input and subthreshold responses. A spike-triggered outward
-current is one registered hypothesis, not a deduction that a particular channel
-is missing. Comparing a spiking 200 pA trial with a non-spiking 110 pA trial changes
-input as well as spike history; it does not isolate which change caused the contrast.
-No sufficient repair is established. B3 remains unpromoted.
+What remains is use-dependent and lives in the sodium equations the fits share. Where
+neither cell spikes the two agree within 1 mV; after a spike they separate by time since
+the spike and not by voltage, and their net membrane currents meet again after the last
+spike of a train. A conductance that opens with a spike and stays open for seconds is
+sufficient to reproduce the single-spike response at 200 pA, with the pre-spike trace and
+the first spike unchanged, and it is not sufficient for the trains, because the dose that
+holds the 200 pA level accumulates along the faster trains and removes spikes the recording
+keeps. Both fits carry the same Colbert and Pan 2002 sodium equations, which inactivate
+quickly and not slowly. Slow inactivation, fitted to none of these cells, would leave the
+first spike alone because it is released at rest, would raise the threshold along the train,
+and would lower the rise of later spikes while sparing the first.
 
-**Measured: the B3 soma currents at every tested input (2026-09-11, corrected the same day).**
-Unchanged B3 was rerun on the Vast executor with every soma current recorded and reproduced `g0-b3` exactly
-([stage 0](evidence/h01-e-currents/stage-0-decision.json), 12 of 12 bands).
-The tables give the balance of the middle soma segment, one of nine (65.8 of 592 um2).
-An earlier statement that the soma passes 96 percent of the input into the cable described that segment and is withdrawn
-([erratum](evidence/h01-e-currents/stage-close-decision.json)).
-The erratum reports whole-soma interspike estimates at 200 pA of approximately
--0.069 nA net ionic current: leak -0.058, Kv3 -0.017, SK -0.016, NaTs +0.010,
-Nap +0.012 and Im -0.0002 nA, against applied current 0.196 nA.
-These are window summaries, not instantaneous values throughout recovery.
-The retained current trace directly measures only the middle soma segment.
-It must not be multiplied by nine without establishing the currents in the other segments.
-B3 also inserts axonal NaTs and distributes Ih; the earlier claim that every active
-mechanism was confined to the soma was incorrect. Nap and Im are the somatic levers
-under discussion, not an inventory of all active mechanisms in B3.
+**Consequence.** Matching the model's cable to the recorded cell will have little effect on
+the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
+Doses of the soma channels this fit already carries cannot supply the low-input count. The
+next change worth making is to the shared sodium equations, and
+[SP16](specs/2026-09-12-h01-sodium-slow-inactivation.md) states the four observations that
+would refute it.
 
-**Direct observations, reanalyzed on Vast.** At 200 pA the model crosses -20 mV
-at 1147.18, 1216.28, 1476.13, and 1771.80 ms; the human crosses at 1225.46 ms.
-These are sampled upward crossings, not peak times or the 10 V/s threshold datum.
-At 1160 ms the model is below the human (-64.52 versus -60.75 mV): it has already
-spiked while the human is still approaching its first spike. At 1300 ms it is above
-the human (-65.13 versus -69.56 mV). Between 1850 and 2000 ms the model recovers
-from -65.47 to -63.16 mV; the human remains near -67 mV (-67.13 and -66.66 mV
-at those endpoints). The contrast is a time-dependent recovery and refiring
-trajectory, not a constant voltage offset. See the
-[direct trace audit](evidence/h01-causal-direct-trace-audit-2026-09-11.md).
+**Limit.** No sufficient repair is established, and B3 stays unpromoted. Slow inactivation
+is a registered hypothesis, not an established cause, and it is not offered as an
+explanation of the spike rise, which no gate released at rest can change. A gate fitted to
+a response cannot name a channel. The membrane area of an H01 skeleton, converted from
+skeleton radii, is not established as physical, so that anatomy's failure to spike says
+nothing about the recorded cell.
 
-That audit also identifies two problems in the old offset estimate. The model's
-adaptive sample grid gives unequal time intervals: its unweighted 1300-1500 ms
-mean is -61.93 mV, while trapezoidal time weighting gives -63.42 mV. The declared
-2100-2300 ms post-pulse window contains only the terminal model sample at 2100 ms.
-Thus the quoted 98 MOhm is not a validated input resistance measured over that
-window. Dividing a voltage summary by this estimate does not measure a required
-missing current. Neither those ratios nor a channel's baseline mean current
-bound its full intervention effect: voltage, gates, and axial exchange feed back.
-
-Nap is active outside spikes, which motivates the comparison against a slow
-post-spike conductance. Its removal is registered as the SP12 comparison arm;
-registration does not mean an evaluation completed. The Im evaluation was not run.
-Claims that these unrun interventions cannot work or necessarily remove the 310 pA
-train are predictions, not established explanations. The SP11
-[erratum](evidence/h01-e-currents/stage-close-decision.json) already withdrew the
-original Nap exclusion based on segment area; this audit additionally limits
-the inference from aggregates.
-
-**Proposed causal explanation (SP12).** Depolarization during a spike activates
-a slowly closing potassium conductance; retained activation carries outward
-current during recovery; the changed net current keeps the membrane below the
-next regenerative rise. This predicts fewer low-input spikes while preserving
-the pre-spike response and the protected higher-input trains. Those predictions
-are essential because adding outward current can also silence wanted spikes.
-
-The implemented [KsAHP gate](evidence/h01-l2-mechanisms/KsAHP.mod) is smooth:
-its steady-state activation is logistic with midpoint -20 mV and slope 2 mV;
-its time constant interpolates between 1000 and 1 ms. It is nearly closed at
-subthreshold voltage, not identically zero below -20 mV. A pre-spike neutrality
-check is therefore an empirical requirement, not a consequence of an exact switch.
-The recorded calcium trajectory does not establish a biological carrier for this
-effect. This phenomenological test cannot identify sAHP, KNa, or any human channel.
-
-The approved [SP12 specification](specs/2026-09-11-h01-e-spike-triggered-outward.md)
-registers doses 3.4968e-4 and 1.0316e-3 S/cm2 and a Nap-zero comparison.
-They remain fixed exploratory doses, but their 0.020/0.059 nA sizing rationale
-is an aggregate-based estimate subject to the limitations above. Keep the
-[registered predictions](evidence/h01-e-sahp-manifest.json) separate from a direct
-trace verdict: matching mid/late medians cannot establish the intervening
-trajectory, and failure at two doses cannot exclude an entire biological family.
-A conductance nearly inactive before the first spike also does not explain B3's
-approximately 78 ms premature first spike in this recording.
-
-**Tested (SP12 stage 0, 2026-09-12).** Both KsAHP doses gave one spike at 200 pA, at B3's time (1147.35 ms), with the trace before it unchanged to 0.000 mV.
-Dose A (3.50e-4 S/cm2) followed the human within 0.5 mV from 1240 to 1700 ms and then rose by 1.4 mV as the gate decayed; the human's level did not rise.
-Its late-pulse median was 1.26 mV above the human's, so the registered bands failed and stage 1 was not opened
-([decision](evidence/h01-e-sahp/stage-0-reanalysis.json), [result](evidence/h01-e-sahp-result.md)).
-Dose B (1.03e-3 S/cm2) held the level 3 to 6 mV below the human.
-Thus, a spike-triggered outward current is sufficient to remove the three excess spikes at 200 pA without changing the response before the first spike.
-The 1 s tail is not sufficient for the human's level over the whole pulse.
-This does not identify the channel, and it does not explain the early first spike.
-
-The comparison arm (Nap soma density 0) gave no spike at 200 pA.
-Nap is therefore a necessary condition for the first spike under B3's settings at this input.
-Its baseline current (0.012 nA) did not bound its intervention effect, as the audit above cautioned.
-Its removal does not reproduce the human's response, which has one spike.
-
-**Registered (SP13).** The same gate with a 5 s tail at 3.12e-4 S/cm2, sized from the two SP12 doses ([spec](specs/2026-09-12-h01-e-sahp-tail.md)).
-The derived prediction is -67.06 mV late and -67.43 mV mid pulse with one spike.
-Stage 1 at 250, 310 and 110 pA is the discriminating test: a gate that accumulates along the 310 pA train predicts a lower count there, which the registered rejection names.
-
-**Tested (SP13, 2026-09-12).** At 200 pA the 5 s gate gave one spike at B3's time, a mid-pulse median of -67.94 mV and a late median of -67.32 mV (human -67.47 and -67.06); all six bands held
-([stage 0](evidence/h01-e-sahp-tail/stage-0-decision.json)).
-At 110 pA the five onset rows equal B3 to 0.000 mV, so the gate is silent without a spike.
-At 250 pA the model fired three times (a doublet, then one spike 442 ms later) against the human's five; at 310 pA it fired seven times with 184 ms late cycles against the human's ten at 120 ms
-([stage 1](evidence/h01-e-sahp-tail/stage-1-decision.json), 11 of 16 bands; [result](evidence/h01-e-sahp-tail-result.md)).
-The gate reached 0.83 and 0.96 along those trains.
-Thus, a spike-triggered brake that persists for seconds is sufficient for the 200 pA response and is not sufficient for the three inputs together, because it accumulates while the human's 310 pA cycles equal unchanged B3's.
-Two accounts remain untested: the human's brake saturates after one spike and B3 lands 310 pA only through a compensating gain error (the cross-cell pattern of a steeper human gain), or the 200 pA shift is not a brake that persists into a train.
-SP13 is closed; a saturating brake paired with one gain lever is the drafted next test ([SP14](specs/2026-09-12-h01-e-brake-plus-gain.md), not approved, now deferred behind SP15).
-
-**Characterised (SP15 stage 0, 2026-09-12, retained traces, no simulation).**
-The human's five 200 pA repeats give the decision limits: level 0.3 mV, threshold 0.25 mV, maximum rise 1.5 V/s, first spike 23 ms
-([decision](evidence/h01-topographic/stage-0-decision.json), [figures](evidence/h01-topographic/)).
-Against them, the largest contrast is the spike upstroke: the human's maximum rise is 332 V/s at every cycle and input, the model's 598 V/s (177 sigma).
-The post-spike level at 200 pA (model 2.1 mV above, 6.9 sigma) and the threshold climb over the 310 pA train (human +2.1 mV, model +0.1 mV, 8.1 sigma) follow.
-The first spike, 78 ms early, is 3.3 sigma and marginal; the cycle-2 interval at 310 pA is inside the repeat limit.
-The onset capacitance is the same in both (128 and 125 pF), so the upstroke contrast is not a difference in near-soma charging.
-Load curves (injected current minus capacitive current, against voltage) after the first spike at 200 pA: the human absorbs the whole 0.196 nA between -70 and -65 mV and holds; the model absorbs 0.09 nA there and reaches 0.19 nA only at -62 mV.
-After the last spike at 250 and 310 pA the two curves converge.
-Thus, the post-spike difference is in time after a spike, not in voltage: a use-dependent branch of the function, as SP13 found by intervention.
-The upstroke is a separate elemental contrast whose branch (somatic sodium in the function, or cable load in the inputs) is the first split to run.
-
-**Tested (SP15 stage 1, 2026-09-12).** The B3 genome was run on an H01 L2 pyramidal skeleton (955432427, 2460 um of cable, the B3 soma held) beside the donor anatomy at the same mesh
-([decision](evidence/h01-e-morphology/stage-1-decision.json)).
-The mesh control held: 653 V/s at nseg 1 against 598 at nseg 9, with count, first spike and threshold unchanged.
-The H01 anatomy did not spike at 200 pA: the plateau sat at -78 mV, the onset capacitance was 785 pF against 125 pF, and the input resistance about 38 MOhm against 98.
-Thus, the cable load moves the low-input response by more than any tested channel change, but this change was too large to read the upstroke; the registered no-reading outcome applies.
-Whether the H01 load is physical or inflated by the skeleton conversion is not established.
-A graded change of the donor cable (membrane area scaled by 1.5 and 2) is the registered way to read the upstroke's branch.
-
-**Measured: the human cell's own cable load (2026-09-12).**
-At 110 pA neither cell spikes, so the passive load is read directly from the retained traces
-([measurement](evidence/h01-e-cable-load/human-passive-load.json)).
-The human's input resistance is 80.4 MOhm and B3's is 90.9 MOhm; the onset capacitances are 128 and 124 pF; the time constants are 10.3 and 11.3 ms.
-Thus, the human cell has 1.13 times the model's membrane conductance and 1.03 times its capacitance.
-This is the observed range of this input, and a cable explanation of any response difference must work inside it.
-
-**Tested (SP15 stages 2 to 4, 2026-09-12).** The dendritic and apical membrane area was scaled at fixed geometry, which changes the cable load and nothing else.
-The doses act on the load as intended and monotonically: input resistance 95, 75, 60 and 45 MOhm at x1, x1.5, x2 and x3.
-At 200 pA every dose silenced the cell, because B3 sits just above its rheobase there
-([stage 2](evidence/h01-e-cable-load/stage-2-decision.json)).
-At 310 pA, where the model and the human both fire ten spikes, the spike-1 rise fell with the dose: 639.1, 569.5 and 512.5 V/s, with the x3 dose silent
-([stage 4](evidence/h01-e-cable-load/stage-4-decision.json)).
-Thus, the cable load does change the upstroke, at about -254 V/s for each unit of conductance ratio.
-At the human's own load of 1.13 times, that slope predicts 606 V/s against the human's 347.7 V/s.
-The cable therefore accounts for about one tenth of the upstroke difference, and the remainder is in the function.
-Higher doses grow the threshold climb the human shows, but they destroy the protected spike count while doing it.
-
-**Method corrections in the same tests.** Two measurement errors were found and fixed.
-First, a control at a coarser mesh reproduced the spike-1 rise within 9 percent but fired 72 times at 310 pA against the reference 10; a control must reproduce the response, not one summary value, and the scorer now requires the reference spike count
-([stage 3](evidence/h01-e-cable-load/stage-3-decision.json)).
-Second, every rise had been measured on the solver's adaptive grid, which is dense through the upstroke and inflates the value; all rises are now measured after resampling to a uniform 0.02 ms grid.
-With that correction a fresh fine-mesh control reproduces the retained fine-mesh reference to 0.1 V/s.
-
-**Registered (SP16).** The sodium mechanisms of both fits are the same Colbert and Pan 2002 template, which has fast inactivation only.
-A slow inactivation gate was added to both, with a depth of zero as the default so that the unchanged model is unchanged
-([specification](specs/2026-09-12-h01-sodium-slow-inactivation.md), [mechanisms](evidence/h01-l2-mechanisms/slow-inactivation-provenance.json)).
-The registered signature is cyclical: the gate must leave the first spike unchanged, because it is open at rest, and it must grow the threshold along the train.
-It is not predicted to change the spike-1 rise, which is the separate elemental contrast.
-
-The human threshold also climbs along the train (-56.4 to -52.8 mV at 310 pA); the model's stays at -57.2 mV at every input.
-This is a response difference the recorded soma currents do not explain.
-
-The [E response chart](evidence/h01-multivari-e.png) shows a broader second human spike at several inputs.
-The model lacks a comparable change and has a much faster rise.
-These patterns identify response differences; they do not determine the number or identity of their causes.
-
-Evidence: [frozen continuation](evidence/h01-e-continuation-result.md),
+Evidence: [soma currents and their erratum](evidence/h01-e-currents/stage-close-decision.json),
+[direct trace audit](evidence/h01-causal-direct-trace-audit-2026-09-11.md),
+[spike-triggered gate, one second](evidence/h01-e-sahp/stage-0-reanalysis.json),
+[spike-triggered gate, five seconds](evidence/h01-e-sahp-tail/stage-1-decision.json),
+[families and load curves](evidence/h01-topographic/stage-0-decision.json),
+[cable-load slope](evidence/h01-e-cable-load/stage-4-decision.json),
+[the recorded cell's own load](evidence/h01-e-cable-load/human-passive-load.json),
 [gain decision](evidence/h01-e-gain/stage-close-decision.json),
-[source correction](evidence/h01-e-gain-source-audit.json),
-[implemented densities](../braintrace/datasets/_h01_ei_parameters.py),
-[B3 evidence boundary and next tests](evidence/h01-causal-current-observations-2026-09-09.md).
+[implemented densities](../braintrace/datasets/_h01_ei_parameters.py).
 
 ## Y5. Anatomy, delivery, and population execution
 
@@ -721,6 +595,9 @@ The separate usable tier has different limits and retains uncertainty.
 An unavailable or unresolvable row is not a pass.
 The [contract](specs/2026-09-05-h01-recorded-response-acceptance-proposal.md) defines the full comparison.
 
+A control qualifies only if it reproduces the compared response, not one summary value of it. A control that matched a spike rise within 9 percent while firing 72 times against a reference 10 is not a control.
+A rate of change is qualified only on a uniform time grid. The variable-step solver samples densely through a spike upstroke, which inflates a sampled maximum rise; every rise in this document is measured after resampling.
+A slope is qualified only over the observed range of its own variable. A dose outside the range the recorded cell occupies measures the model, not the difference from the recording.
 Numerical qualification needs the same physical model at the compared numerical settings.
 Transfer qualification needs the same donor, input, state, mesh, and parameter laws across implementations.
 Human qualification needs agreement with the specified recording.
