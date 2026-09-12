@@ -47,6 +47,22 @@ class H01NetworkStep(brainstate.nn.Module):
         self.has_synapses = any(any(getattr(l, "kind", "").startswith("synapse") for l in getattr(cell._runtime, "layouts", ())) for cell in self.cells)
         self._dt = self.dt_ms * u.ms
         self.tick = brainstate.ShortTermState(jnp.asarray(0, dtype=jnp.int32))
+        self.chemistry = None
+
+    def bind_chemistry(self, coupling):
+        """Attach physical potassium coupling before compiling any steps.
+
+        Parameters
+        ----------
+        coupling : PotassiumCoupling
+            Bindings for these initialized cells and a matching physical dt.
+        """
+        if self.chemistry is not None or int(self.tick.value) != 0:
+            raise ValueError('Bind chemistry once, before stepping')
+        if (coupling.environment.dt_ms != self.dt_ms or
+                {id(b.cell) for b in coupling.bindings} != {id(c) for c in self.cells}):
+            raise ValueError('Chemistry must cover this network at the same dt')
+        self.chemistry = coupling
 
     def update(self, sample_probes=True):
         """Advance a cable step and return all named population probes.
@@ -71,8 +87,11 @@ class H01NetworkStep(brainstate.nn.Module):
                     cell._prepare_next_synapse_inputs()
                 for cell in self.cells:
                     cell._begin_step()
+            potassium_current = self.chemistry.currents() if self.chemistry is not None else None
             for cell in self.cells:
                 cell._update_dynamics()
+            if self.chemistry is not None:
+                self.chemistry.update(potassium_current)
             snapshots = {name: pop.cell.sample_probes()
                          for name, pop in self.network.populations.items()} if sample_probes else None
             if self.has_delivery:
@@ -91,6 +110,8 @@ class H01NetworkStep(brainstate.nn.Module):
         -------
         None
         """
+        if self.chemistry is not None:
+            self.chemistry.reset_state()
         self.network.reset_state()
         self.tick.value = jnp.zeros_like(self.tick.value)
         for state in self.ring_buffers + self.ring_cursors:

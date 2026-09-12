@@ -6,7 +6,6 @@ from math import prod
 import brainstate
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from braintrace._compatible_imports import Jaxpr, Var
 from braintrace._misc import NotSupportedError
@@ -52,7 +51,8 @@ class SparseIOGraph:
     Every floating-point temporal state is represented, including delayed
     conductance queues. States whose incoming value is syntactically unread
     cannot carry temporal credit and retain only their native forward state.
-    Integer clocks and Boolean events have no differentiable tangent.
+    Integer clocks, Boolean events and typed random keys have no differentiable
+    tangent; their native forward state is still retained and restored.
     """
 
     def __init__(self, model, *args, max_bytes=2**30):
@@ -87,7 +87,7 @@ class SparseIOGraph:
             if isinstance(state, brainstate.ParamState):
                 continue
             for inv, outv in zip(jax.tree.leaves(ins), jax.tree.leaves(outs), strict=True):
-                if np.issubdtype(inv.aval.dtype, np.inexact) and inv in used:
+                if jnp.issubdtype(inv.aval.dtype, jnp.inexact) and inv in used:
                     self.state_input_indices.append(original.invars.index(inv))
                     self.state_output_indices.append(original.outvars.index(outv))
                     self.state_paths.append(self.info.state_id_to_path[id(state)])

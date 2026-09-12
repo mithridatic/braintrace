@@ -69,7 +69,7 @@ def topology_from_evidence(evidence, contact_audit, archive):
 
 
 def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
-                  max_cv_length_um=10., progress=None):
+                  max_cv_length_um=10., progress=None, environment_potassium=False):
     """Build real selected cables and placed conductance contacts for a topology.
 
     Parameters
@@ -84,6 +84,8 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         Frozen spatial discretization length.
     progress : callable, optional
         Construction progress callback.
+    environment_potassium : bool, optional
+        Declare external K pools; caller must bind chemistry after initialization.
 
     Returns
     -------
@@ -109,7 +111,8 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         cell, record = make_h01_ei_cell(imported, annotations, polarity=source['polarity'],
             donor=source['donor'], mode=source['profile']['mode'], regions=_regions(imported),
             region_basis=source['region_basis'], current_na=0., delay_ms=2., duration_ms=3.,
-            max_cv_length_um=max_cv_length_um, solver=solver, pop_size=(1,))
+            max_cv_length_um=max_cv_length_um, solver=solver, pop_size=(1,),
+            environment_potassium=environment_potassium)
         if json.dumps(record['borrowed_dynamics'], sort_keys=True) != json.dumps(source['profile'], sort_keys=True):
             raise ValueError('Frozen H01 donor profile differs from this runtime')
         cells[identity], records[identity] = cell, record

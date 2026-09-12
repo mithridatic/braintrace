@@ -51,7 +51,9 @@ def _validate_regions(morphology, regions, polarity):
     return intervals
 
 
-def _paint_profile(cell, profile, regions, *, active=True):
+def _paint_profile(cell, profile, regions, *, active=True, environment_potassium=False):
+    if environment_potassium:
+        from braintrace.biophysics import cable_potassium  # Register on explicit opt-in.
     prefix = profile.channel_prefix
     for family, cm, leak, channels, calcium in profile.regions:
         if family not in regions:
@@ -71,7 +73,8 @@ def _paint_profile(cell, profile, regions, *, active=True):
             # Ih is the one registered mechanism whose root type needs no ion; every other channel
             # needs the fixed sodium/potassium ions (SP2: the B3 axon row carries NaTs, no calcium).
             cell.paint(region, Ion("SodiumFixed", name="sodium", E=profile.sodium_reversal_mv*u.mV))
-            cell.paint(region, Ion("PotassiumFixed", name="potassium", E=profile.potassium_reversal_mv*u.mV))
+            cell.paint(region, Ion("EnvironmentPotassium" if environment_potassium else "PotassiumFixed",
+                                   name="potassium", E=profile.potassium_reversal_mv*u.mV))
         if calcium is not None:
             cell.paint(region, Ion("H01PV_Calcium", name="calcium", decay=calcium[0]*u.ms, gamma=calcium[1]))
         for mechanism, density in channels:
@@ -82,7 +85,7 @@ def _paint_profile(cell, profile, regions, *, active=True):
 
 def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, donor=None,
                      mode="candidate", current_na=0., delay_ms=2., duration_ms=3.,
-                     max_cv_length_um=10., solver="staggered", pop_size=()):
+                     max_cv_length_um=10., solver="staggered", pop_size=(), environment_potassium=False):
     """Build an H01 cell with the selected donor physiology for its explicit E/I role.
 
     Parameters
@@ -112,6 +115,9 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
         BrainCell solver, default staggered.
     pop_size : tuple, optional
         BrainCell population shape. Use (1,) for a distinct cell in Network.
+    environment_potassium : bool, optional
+        Paint externally owned K pools. Bind a ChemicalEnvironment after
+        initialization and before compilation; default preserves fixed K.
 
     Returns
     -------
@@ -147,7 +153,7 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
         policy = BoundaryAlignedCV(policy, region)
     cell = H01Cell(imported.morphology, cv_policy=policy,
                           V_init=profile.initial_mv*u.mV, solver=solver, pop_size=pop_size)
-    _paint_profile(cell, profile, regions)
+    _paint_profile(cell, profile, regions, environment_potassium=environment_potassium)
     cell.place(soma, StateProbe(field="v", name="voltage"))
     cell.place(soma, braincell.CurrentClamp(delay=delay_ms*u.ms, durations=duration_ms*u.ms,
                                           amplitudes=current_na*u.nA))
@@ -156,4 +162,6 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
                 "inferred_region_basis": region_basis, "electrical_intervals": intervals,
                 "solver": solver, "max_cv_length_um": max_cv_length_um,
                 "synaptic_connectivity": "Not supplied by this single-cell builder."}
+    if environment_potassium:
+        evidence['potassium_environment'] = 'external pools require binding before simulation'
     return cell, evidence
