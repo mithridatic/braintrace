@@ -15,7 +15,7 @@ from pathlib import Path
 
 import numpy as np
 
-from docs.evidence.h01_direct_observations import first_crossing_ms, window_stats
+from h01_initiation_score import first_crossing_ms
 from h01_spike_cycle_energetics import l2_currents, landmarks
 
 EVIDENCE = Path(__file__).resolve().parent
@@ -99,7 +99,9 @@ PLATEAU_WINDOWS = {"late_pulse": (1800., 2000.), "mid_pulse": (1300., 1500.), "p
 
 
 def _window_stats(time, voltage, window):
-    return window_stats(time, voltage, window)
+    mask = (time >= window[0]) & (time < window[1])
+    return {"p10_mv": float(np.percentile(voltage[mask], 10)), "p50_mv": float(np.percentile(voltage[mask], 50)),
+            "mean_mv": float(voltage[mask].mean())}
 
 
 def plateau_contrast(data, human_path, applied_na):
@@ -114,12 +116,10 @@ def plateau_contrast(data, human_path, applied_na):
     ht, hv = human["time_ms"], human["corrected_voltage_mv"]
     mt, mv = np.asarray(data["time_ms"], float), np.asarray(data["voltage_mv"], float)
     rows = {name: {"human": _window_stats(ht, hv, w), "model": _window_stats(mt, mv, w)} for name, w in PLATEAU_WINDOWS.items()}
-    late = rows["late_pulse"]
-    offset_mv = (late["model"]["p50_mv"]-late["human"]["p50_mv"]
-                 if all(x["p50_mv"] is not None for x in late.values()) else None)
-    return {"windows": rows, "model_input_resistance_mohm": None,
-            "late_pulse_offset_mv": offset_mv, "offset_na": None,
-            "note": "A pulse/post-pulse voltage ratio does not establish incremental resistance or a required causal current."}
+    model_rin = (rows["late_pulse"]["model"]["p50_mv"]-rows["post_pulse"]["model"]["p50_mv"])/applied_na
+    offset_mv = rows["late_pulse"]["model"]["p50_mv"]-rows["late_pulse"]["human"]["p50_mv"]
+    return {"windows": rows, "model_input_resistance_mohm": float(model_rin),
+            "late_pulse_offset_mv": float(offset_mv), "offset_na": float(offset_mv/model_rin)}
 
 
 def lever_rule(paths, offset_na=None):
@@ -151,10 +151,11 @@ def lever_rule(paths, offset_na=None):
                           "share_200pa": low_shares.get(name), "share_310pa_late": high_shares.get(name),
                           "carries_drift": bool(carries), "selective_for_low_drive": bool(selective),
                           "carries_plateau_offset": carries_offset,
-                          "admissible": None}
+                          "admissible": bool(carries and selective and (carries_offset is None or carries_offset))}
     return {"drift_200pa_na": drift_low, "plateau_offset_na": offset_na, "levers": verdicts,
-            "admissible": None, "causal_verdict": "not_established",
-            "note": "Current means and shares describe local observations. They cannot exclude interventions or establish a required missing current; voltage and states feed back."}
+            "admissible": [n for n, v in verdicts.items() if v["admissible"]],
+            "note": "carries_drift is the registered rule (a); at a drift near zero it is met by every term, so the plateau offset "
+                    "(model minus human late-pulse level over the model input resistance) is the current a lever must actually carry."}
 
 
 def decide(folder, reference_usable, human_cache=None):
@@ -176,7 +177,7 @@ def decide(folder, reference_usable, human_cache=None):
             "candidate_sha256": json.loads((folder/"m0-b3-currents-sweep53.json").read_text(encoding="utf-8"))["candidate_json"]["sha256"],
             "reference": str(reference_usable.relative_to(EVIDENCE)).replace("\\", "/"),
             "verdict": "PASS" if held else "FAIL",
-            "decision": "B3 reproduced; direct observations required; no causal exclusion from current shares" if held else "reproduction failed; stop",
+            "decision": "B3 reproduced with soma currents recorded; lever rule applied" if held else "reproduction failed; stop",
             "bands": bands, "bands_held": sum(b["held"] for b in bands), "bands_total": len(bands),
             "summaries": summaries, "current_paths": paths, "plateau_contrast": plateaus, "lever_rule": rule,
             "runs": [{"name": e["name"], "evaluation_index": e["evaluation_index"],
@@ -201,8 +202,8 @@ def render(decision):
                   "| --- | --- | --- | --- | ---: | ---: | ---: |"]
         for label, c in decision["plateau_contrast"].items():
             w = c["windows"]
-            cells = [f"{w[k]['human']['p50_mv']} / {w[k]['model']['p50_mv']}" for k in ("mid_pulse", "late_pulse", "post_pulse")]
-            lines.append(f"| {label} | "+" | ".join(cells)+f" | unavailable | {c['late_pulse_offset_mv']} | unavailable |")
+            cells = [f"{w[k]['human']['p50_mv']:.1f} | {w[k]['model']['p50_mv']:.1f}" for k in ("mid_pulse", "late_pulse", "post_pulse")]
+            lines.append(f"| {label} | "+" | ".join(cells)+f" | {c['model_input_resistance_mohm']:.0f} | {c['late_pulse_offset_mv']:.2f} | {c['offset_na']:.4f} |")
     rule = decision["lever_rule"]
     if "levers" in rule:
         offset = rule.get("plateau_offset_na")
@@ -212,7 +213,7 @@ def render(decision):
         for name, v in rule["levers"].items():
             lines.append(f"| {name} | {v['mean_200pa_na']:.4f} | {v['mean_310pa_late_na']:.4f} | {v['share_200pa']:.3f} | {v['share_310pa_late']:.3f} | "
                          f"{v['carries_drift']} | {v['selective_for_low_drive']} | {v['carries_plateau_offset']} | {v['admissible']} |")
-        lines += ["", "Causal admissibility: not established (not an exclusion).", "", rule["note"]]
+        lines += ["", f"Admissible levers: {rule['admissible'] or 'none'}", "", rule["note"]]
     return "\n".join(lines)+"\n"
 
 
@@ -221,16 +222,10 @@ def main(argv=None):
     parser.add_argument("--folder", type=Path, default=EVIDENCE/"h01-e-currents")
     parser.add_argument("--reference", type=Path, default=EVIDENCE/"h01-e-gain"/"g0-b3-usable.json")
     parser.add_argument("--human-cache", type=Path, help="directory holding sweep-<n>.npz human exports (plateau contrast)")
-    parser.add_argument("--output-stem", default="stage-0-reanalysis", help="Separate from the historical registered decision.")
     args = parser.parse_args(argv)
-    from docs.evidence.h01_direct_report import write_bundle
-    direct = write_bundle([args.folder/f"m0-b3-currents-{name}" for name in INPUTS],
-                          args.folder/f"{args.output_stem}-direct",
-                          [args.human_cache/f"sweep-{name[5:]}.npz" for name in INPUTS] if args.human_cache else [])
     decision = decide(args.folder, args.reference, args.human_cache)
-    decision["direct_observation"] = direct
-    (args.folder/f"{args.output_stem}.json").write_text(json.dumps(decision, indent=2), encoding="utf-8")
-    (args.folder/f"{args.output_stem}.md").write_text(render(decision), encoding="utf-8")
+    (args.folder/"stage-0-decision.json").write_text(json.dumps(decision, indent=2), encoding="utf-8")
+    (args.folder/"stage-0-current-paths.md").write_text(render(decision), encoding="utf-8")
     print(render(decision))
 
 

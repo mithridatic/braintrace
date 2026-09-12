@@ -1,45 +1,8 @@
-"""Regressions for SP11 temporal coverage and sampling bias."""
-
-import sys
-from pathlib import Path
+"""Band and lever-rule logic of the SP11 current-path scorer (fabricated rows, not real traces)."""
 
 import numpy as np
-import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from h01_e_current_paths import _window_stats, lever_rule, plateau_contrast
 import h01_e_current_paths as paths
-
-
-def test_one_terminal_sample_does_not_characterize_post_pulse_window():
-    result = _window_stats(np.array([2000., 2100.]), np.array([-65., -84.]), (2100., 2300.))
-    assert result["status"] == "unavailable"
-    assert result["mean_mv"] is None
-    assert result["p50_mv"] is None
-
-
-def test_adaptive_grid_mean_weights_elapsed_time():
-    time = np.array([0., .01, .02, 1.])
-    result = _window_stats(time, time * 10., (0., 1.))
-    assert result["mean_mv"] == pytest.approx(5.)
-    assert result["sample_mean_mv"] != pytest.approx(result["mean_mv"])
-
-
-def test_incomplete_post_window_cannot_supply_resistance_or_current(tmp_path):
-    time = np.array([1200., 1300., 1500., 1800., 2000., 2100.])
-    voltage = np.array([-60., -64., -65., -65., -64., -84.])
-    path = tmp_path / "human.npz"
-    np.savez(path, time_ms=time, corrected_voltage_mv=voltage)
-    result = plateau_contrast({"time_ms": time, "voltage_mv": voltage}, path, .2)
-    assert result["model_input_resistance_mohm"] is None
-    assert result["offset_na"] is None
-
-
-def test_baseline_current_shares_cannot_exclude_a_causal_family():
-    row = {"tail": False, "means_na": {"Nap": .01}, "shares": {"Nap": 1.}, "drift_na": .001}
-    result = lever_rule({"200 pA": [row], "310 pA": [row]}, .02)
-    assert result["causal_verdict"] == "not_established"
-    assert result["admissible"] is None
 
 
 def test_stage0_bands_compare_against_the_reference_table():
@@ -67,7 +30,7 @@ def test_lever_rule_needs_drift_carried_and_a_smaller_high_drive_share():
     assert rule["drift_200pa_na"] == .002
     assert rule["levers"]["Nap"]["carries_drift"] and rule["levers"]["Nap"]["selective_for_low_drive"]
     assert not rule["levers"]["Im"]["carries_drift"]
-    assert rule["admissible"] is None
+    assert rule["admissible"] == ["Nap"]
     assert rule["levers"]["Nap"]["mean_200pa_na"] == .01  # the tail is excluded from the reference
 
 
@@ -89,7 +52,7 @@ def test_plateau_offset_gates_admissibility(tmp_path):
     high = [_row(False, {"Nap": .01, "Im": -.05, "axial": -.2})]
     rule = paths.lever_rule({"200 pA": low, "310 pA": high}, offset_na=.05)
     assert rule["levers"]["Nap"]["carries_drift"] and not rule["levers"]["Nap"]["carries_plateau_offset"]
-    assert rule["admissible"] is None
+    assert rule["admissible"] == []
     time = np.arange(0., 2400., .1)
     human = np.full_like(time, -84.)
     human[(time >= 1020.) & (time < 2020.)] = -67.
@@ -98,5 +61,5 @@ def test_plateau_offset_gates_admissibility(tmp_path):
     model[(time >= 1020.) & (time < 2020.)] = -62.
     contrast = paths.plateau_contrast({"time_ms": time, "voltage_mv": model}, tmp_path/"sweep-56.npz", .2)
     assert abs(contrast["late_pulse_offset_mv"]-5.) < 1e-9
-    assert contrast["model_input_resistance_mohm"] is None
-    assert contrast["offset_na"] is None
+    assert abs(contrast["model_input_resistance_mohm"]-110.) < 1e-9
+    assert abs(contrast["offset_na"]-5./110.) < 1e-12

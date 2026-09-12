@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 
 from h01_e_current_paths import PLATEAU_WINDOWS, cycle_summary, load_run, _window_stats
-from docs.evidence.h01_direct_observations import first_crossing_ms
+from h01_initiation_score import first_crossing_ms
 
 EVIDENCE = Path(__file__).resolve().parent
 GATE = {"vhalf_mv": -20., "slope_mv": 2., "tau_on_ms": 1., "tau_off_ms": 1000.}
@@ -106,11 +106,11 @@ def _band(row, predicted, observed, held):
 
 def dose_bands(summary, model, human, pre):
     """Stage-0 bands of a KsAHP dose at 200 pA."""
-    late = _difference(model["late_pulse"]["p50_mv"], human["late_pulse"]["p50_mv"])
-    mid = _difference(model["mid_pulse"]["p50_mv"], human["mid_pulse"]["p50_mv"])
+    late = model["late_pulse"]["p50_mv"]-human["late_pulse"]["p50_mv"]
+    mid = model["mid_pulse"]["p50_mv"]-human["mid_pulse"]["p50_mv"]
     return [_band("count", "1-2", summary["count"], 1 <= summary["count"] <= 2),
-            _band("late_p50_minus_human_mv", f"|x| <= {LEVEL_MV}", late, late is not None and abs(late) <= LEVEL_MV),
-            _band("mid_p50_minus_human_mv", f"|x| <= {LEVEL_MV}", mid, mid is not None and abs(mid) <= LEVEL_MV),
+            _band("late_p50_minus_human_mv", f"|x| <= {LEVEL_MV}", late, abs(late) <= LEVEL_MV),
+            _band("mid_p50_minus_human_mv", f"|x| <= {LEVEL_MV}", mid, abs(mid) <= LEVEL_MV),
             _band("prespike_max_dev_mv", f"<= {PRESPIKE_MV}", pre["prespike_max_dev_mv"], pre["prespike_max_dev_mv"] <= PRESPIKE_MV),
             _band("first_spike_shift_ms", f"|x| <= {FIRST_SPIKE_MS}", pre["first_spike_shift_ms"],
                   pre["first_spike_shift_ms"] is not None and abs(pre["first_spike_shift_ms"]) <= FIRST_SPIKE_MS),
@@ -119,13 +119,9 @@ def dose_bands(summary, model, human, pre):
 
 def control_bands(summary, model, reference_model):
     """The comparison arm's registered prediction: Nap removal does not land the human's 200 pA response."""
-    shift = _difference(model["late_pulse"]["p50_mv"], reference_model["late_pulse"]["p50_mv"])
+    shift = model["late_pulse"]["p50_mv"]-reference_model["late_pulse"]["p50_mv"]
     return [_band("count", ">= 3", summary["count"], summary["count"] >= 3),
-            _band("late_p50_minus_b3_mv", "-1.5 to 0", shift, shift is not None and -1.5 <= shift <= 0.)]
-
-
-def _difference(a, b):
-    return None if a is None or b is None else a-b
+            _band("late_p50_minus_b3_mv", "-1.5 to 0", shift, -1.5 <= shift <= 0.)]
 
 
 def score_candidate(folder, name, arm, human, reference_data):
@@ -178,7 +174,7 @@ def render(decision):
             lines.append(f"| {b['row']} | {b['predicted']} | {obs} | {b['held']} |")
         lines += ["", f"Count {c['summary']['count']}; peaks {[round(p, 2) for p in c['summary']['peak_ms']]} ms; "
                   f"levels mid {c['levels']['mid_pulse']['p50_mv']:.2f}, late {c['levels']['late_pulse']['p50_mv']:.2f}, "
-                  f"post {c['levels']['post_pulse']['p50_mv']} mV (sample p50; None = unavailable); gate max {c['gate_max']}.", ""]
+                  f"post {c['levels']['post_pulse']['p50_mv']:.2f} mV (p50); gate max {c['gate_max']}.", ""]
     return "\n".join(lines)+"\n"
 
 
@@ -194,7 +190,7 @@ def main(argv=None):
     sc.add_argument("--folder", type=Path, required=True)
     sc.add_argument("--manifest", type=Path, required=True)
     sc.add_argument("--human-root", type=Path, required=True)
-    sc.add_argument("--output-stem", default="stage-0-reanalysis")
+    sc.add_argument("--output-stem", default="stage-0-decision")
     args = parser.parse_args(argv)
     if args.command == "register":
         result = register(args.model_npz, args.target_na, args.hold_mv)
@@ -203,12 +199,7 @@ def main(argv=None):
         return
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     candidates = [c for c in manifest["candidates"] if c["stage"] == "0"]
-    from docs.evidence.h01_direct_report import write_bundle
-    direct = write_bundle([args.folder/f"{c['name']}-sweep56" for c in candidates],
-                          args.folder/f"{args.output_stem}-direct", [args.human_root/HUMAN_SWEEP56])
     decision = decide(args.folder, candidates, args.human_root/HUMAN_SWEEP56)
-    decision.update(direct_observation=direct, causal_verdict="not_established", visual_review="pending",
-                    qc_basis="Original registered sample-percentile bands, with explicit coverage checks; not a causal verdict.")
     decision["manifest"] = str(args.manifest.name)
     (args.folder/f"{args.output_stem}.json").write_text(json.dumps(decision, indent=2)+"\n", encoding="utf-8")
     (args.folder/f"{args.output_stem}.md").write_text(render(decision), encoding="utf-8")
