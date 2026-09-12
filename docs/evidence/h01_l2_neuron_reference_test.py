@@ -281,3 +281,40 @@ def test_mechanism_parameter_is_parsed_and_applied_to_every_segment(monkeypatch)
     assert [s.KsAHP.tau_off for s in sections[1]] == [1000., 1000.]
     with pytest.raises(ValueError):
         driver.apply_mechanism_parameters(sections, [dict(item, region="dend")], lambda name, sec: sec.name().startswith("soma"))
+
+
+def test_membrane_area_factor_scales_cm_leak_and_distributed_ih(monkeypatch):
+    folder = Path(__file__).parent
+    fake_neuron = types.ModuleType("neuron")
+    fake_neuron.h = object()
+    monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
+    monkeypatch.syspath_prepend(str(folder))
+    driver = types.SimpleNamespace(**runpy.run_path(str(folder / "h01_l2_neuron_reference.py")))
+
+    class Ih:
+        gbar = 1e-4
+
+    class Segment:
+        def __init__(self):
+            self.g_pas, self.Ih = 4e-5, Ih()
+
+    class Section:
+        def __init__(self, name, n=2):
+            self._name, self.cm, self.segments = name, 2.3, [Segment() for _ in range(n)]
+
+        def name(self):
+            return self._name
+
+        def __iter__(self):
+            return iter(self.segments)
+
+    sections = [Section("dend[0]"), Section("apic[0]"), Section("soma[0]")]
+    factors = [driver.parse_capacitance_factor("dend:2"), driver.parse_capacitance_factor("apic:2")]
+    applied = driver.apply_membrane_area_factors(sections, factors, lambda name, sec: sec.name().startswith(("dend", "apic")))
+    assert [a["section_count"] for a in applied] == [1, 1]
+    for sec in sections[:2]:
+        assert sec.cm == pytest.approx(4.6)
+        assert all(seg.g_pas == pytest.approx(8e-5) and seg.Ih.gbar == pytest.approx(2e-4) for seg in sec)
+    assert sections[2].cm == 2.3 and all(seg.g_pas == 4e-5 and seg.Ih.gbar == 1e-4 for seg in sections[2])
+    with pytest.raises(ValueError):
+        driver.apply_membrane_area_factors(sections, [driver.parse_capacitance_factor("axon:2")], lambda name, sec: True)

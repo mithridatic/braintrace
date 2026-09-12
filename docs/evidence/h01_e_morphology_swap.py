@@ -165,6 +165,35 @@ def decide(control, test, reference=B3_NSEG9_RISE_V_S):
             "mesh_ok": mesh_ok, "delta_v_s": delta, "verdict": verdict}
 
 
+def graded_decide(series, control_reference=B3_NSEG9_RISE_V_S, mesh_tolerance=MESH_TOLERANCE):
+    """Read the graded cable series: does the upstroke leave the control band, monotonically, while still spiking?
+
+    ``series`` is an ordered list of ``{"dose", "upstroke"}`` starting with the x1 control.
+    """
+    if not series or series[0]["upstroke"]["max_rise_v_s"] is None:
+        return {"verdict": "no control reading", "series": series}
+    control = series[0]["upstroke"]["max_rise_v_s"]
+    band = max(3.*abs(control-control_reference), mesh_tolerance*control)
+    rises = [(s["dose"], s["upstroke"]["max_rise_v_s"]) for s in series if s["upstroke"]["max_rise_v_s"] is not None]
+    spiking = [d for d, _ in rises]
+    deltas = [{"dose": d, "max_rise_v_s": r, "delta_v_s": r-control, "outside_band": abs(r-control) > band} for d, r in rises]
+    values = [r for _, r in rises]
+    monotone = all(b <= a+1e-9 for a, b in zip(values, values[1:])) or all(b >= a-1e-9 for a, b in zip(values, values[1:]))
+    outside = [x for x in deltas if x["outside_band"]]
+    silent = [s["dose"] for s in series if s["upstroke"]["max_rise_v_s"] is None]
+    if outside and monotone:
+        verdict = "inputs: the upstroke follows the cable load"
+    elif outside:
+        verdict = "outside the band but not monotone: the dose is not acting through the cable load"
+    elif silent:
+        verdict = "function: the upstroke holds its band at every dose that spikes; larger doses only silence the cell"
+    else:
+        verdict = "function: the upstroke holds its band across the whole series"
+    return {"control_v_s": control, "reference_nseg9_v_s": control_reference, "band_v_s": band,
+            "monotone": monotone, "doses_spiking": spiking, "doses_silent": silent,
+            "rows": deltas, "series": series, "verdict": verdict}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -176,9 +205,24 @@ def main(argv=None):
     s.add_argument("--folder", type=Path, required=True)
     s.add_argument("--control", required=True, help="stem of the donor-anatomy run")
     s.add_argument("--test", required=True, help="stem of the H01-anatomy run")
+    g = sub.add_parser("grade")
+    g.add_argument("--folder", type=Path, required=True, help="folder of the graded runs")
+    g.add_argument("--control-npz", type=Path, required=True, help="the x1 control trace")
+    g.add_argument("--dose", action="append", required=True, metavar="LABEL=STEM",
+                   help="ordered doses after the control, e.g. x1.5=c15-area-sweep56")
+    g.add_argument("--output-stem", default="stage-2-decision")
     args = parser.parse_args(argv)
     if args.command == "prepare":
         print(json.dumps(prepare(args.cell_id, args.component, args.out), indent=2))
+        return
+    if args.command == "grade":
+        series = [{"dose": "x1", "upstroke": upstroke(args.control_npz)}]
+        for text in args.dose:
+            label, stem = text.split("=", 1)
+            series.append({"dose": label, "upstroke": upstroke(args.folder/f"{stem}.npz")})
+        decision = graded_decide(series)
+        (args.folder/f"{args.output_stem}.json").write_text(json.dumps(decision, indent=2)+"\n", encoding="utf-8")
+        print(json.dumps(decision, indent=2))
         return
     decision = decide(upstroke(args.folder/f"{args.control}.npz"), upstroke(args.folder/f"{args.test}.npz"))
     (args.folder/"stage-1-decision.json").write_text(json.dumps(decision, indent=2)+"\n", encoding="utf-8")

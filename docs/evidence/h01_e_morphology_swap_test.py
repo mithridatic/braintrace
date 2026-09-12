@@ -50,3 +50,29 @@ def test_decide_reads_mesh_control_then_anatomy_sensitivity():
     assert not bad["mesh_ok"] and "mesh" in bad["verdict"]
     silent = swap.decide(ctl, dict(ctl, max_rise_v_s=None, count=0))
     assert "did not spike" in silent["verdict"]
+
+
+def _series(*pairs):
+    return [{"dose": d, "upstroke": {"max_rise_v_s": r, "count": 4 if r else 0}} for d, r in pairs]
+
+
+def test_graded_decide_reads_a_monotone_departure_as_the_input_branch():
+    out = swap.graded_decide(_series(("x1", 653.), ("x1.5", 520.), ("x2", 430.), ("x3", 360.)))
+    assert out["band_v_s"] == pytest.approx(3*abs(653.-swap.B3_NSEG9_RISE_V_S))
+    assert out["monotone"] and out["verdict"].startswith("inputs")
+    assert [r["outside_band"] for r in out["rows"]] == [False, False, True, True]
+
+
+def test_graded_decide_reads_a_held_band_as_the_function_branch():
+    out = swap.graded_decide(_series(("x1", 653.), ("x1.5", 640.), ("x2", 631.), ("x3", None)))
+    assert out["doses_silent"] == ["x3"] and out["doses_spiking"] == ["x1", "x1.5", "x2"]
+    assert out["verdict"].startswith("function") and "silence" in out["verdict"]
+    held = swap.graded_decide(_series(("x1", 653.), ("x1.5", 640.), ("x2", 631.)))
+    assert held["verdict"].endswith("across the whole series")
+
+
+def test_graded_decide_flags_a_non_monotone_departure_and_a_missing_control():
+    out = swap.graded_decide(_series(("x1", 653.), ("x1.5", 900.), ("x2", 400.)))
+    assert not out["monotone"] and "not monotone" in out["verdict"]
+    assert swap.graded_decide([])["verdict"] == "no control reading"
+    assert swap.graded_decide(_series(("x1", None)))["verdict"] == "no control reading"

@@ -130,6 +130,25 @@ inputs branch if it moves by more. Rejection: mesh control outside 10 percent (n
 reading), or no spike on the H01 anatomy (a count contrast of the input, recorded, no
 upstroke reading). One evaluation.
 
+## Stage 2 addendum (registered 2026-09-12 after stage 1, before the run)
+
+Stage 1 met its registered no-reading outcome: the H01 skeleton is so large a load that the
+cell stops spiking (onset capacitance 785 against 125 pF), so the upstroke could not be
+compared. The book's rule is that a split must keep Y observable, so the same isolation
+question is asked with a graded input change on the donor anatomy: the dendritic and apical
+membrane area (capacitance, leak and the distributed Ih density together) is scaled 1.5, 2
+and 3 times at fixed geometry and with every soma mechanism held. Driver flag
+`--membrane-area-factor REGION:FACTOR`; manifest
+[h01-e-cable-load-manifest.json](../evidence/h01-e-cable-load-manifest.json); scorer
+`h01_e_morphology_swap.py grade`. The x1 point is the stage-1 control run (653.3 V/s,
+count 4, first spike 126.5 ms, threshold -57.4 mV).
+
+Prediction: function branch if the spike-1 maximum rise stays within 166 V/s of 653 V/s at
+every dose that still spikes; inputs branch if it falls monotonically and leaves that band
+while the cell is still spiking. Rejection: every dose that leaves the band also fails to
+spike (a repeat of the stage-1 no-reading case), or the departure is not monotone across
+the three doses (the dose is not acting through the cable load). Three evaluations.
+
 ## Registered stage 0 (no simulation)
 
 Produce, from retained traces: the phase-plane small multiples (rows: cycle 1, 2, middle,

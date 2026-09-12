@@ -94,6 +94,25 @@ def apply_mechanism_parameters(sections, parameters, ismembrane):
                 assert getattr(getattr(segment, item["mechanism"]), item["name"]) == item["value"]
 
 
+def apply_membrane_area_factors(sections, factors, ismembrane):
+    """Scale the cable load of a region: cm, g_pas and (where present) the distributed Ih density, per segment."""
+    applied = []
+    for item in factors:
+        regions = REGIONS if item["region"] == "all" else (item["region"],)
+        selected = [sec for sec in sections if sec.name().split("[")[0] in regions]
+        if not selected:
+            raise ValueError(f"No section in region {item['region']} for the membrane-area factor.")
+        for sec in selected:
+            sec.cm *= item["factor"]
+            has_ih = ismembrane("Ih", sec=sec)
+            for segment in sec:
+                segment.g_pas *= item["factor"]
+                if has_ih:
+                    segment.Ih.gbar *= item["factor"]
+        applied.append({**item, "section_count": len(selected)})
+    return applied
+
+
 def inserted_probes(soma, inserted, ismembrane):
     """Recording pointers for soma-inserted mechanisms that carry their own probes.
 
@@ -158,6 +177,9 @@ def main():
     parser.add_argument("--insert-density", action="append", default=[],
                         help="MECHANISM:REGION:VALUE, repeatable; adds a mechanism at an absolute density (S/cm2) "
                              "to a region that has none, with the soma's reversal potentials")
+    parser.add_argument("--membrane-area-factor", action="append", default=[],
+                        help="REGION:FACTOR, repeatable; scales the membrane area of a region (cm, g_pas and any "
+                             "distributed Ih density together), i.e. the cable load, without changing geometry")
     parser.add_argument("--mechanism-parameter", action="append", default=[],
                         help="MECHANISM:REGION:NAME:VALUE, repeatable; sets a RANGE parameter of an inserted "
                              "mechanism in every segment of the region (e.g. KsAHP:soma:tau_off:5000)")
@@ -196,6 +218,7 @@ def main():
         capacitance = [parse_capacitance_factor(text) for text in args.capacitance_factor]
         inserted = [parse_insert_density(text) for text in args.insert_density]
         parameters = [parse_mechanism_parameter(text) for text in args.mechanism_parameter]
+        area_factors = [parse_capacitance_factor(text) for text in args.membrane_area_factor]
     except ValueError as error:
         parser.error(str(error))
     if args.kv3_closing_factor is not None and (not np.isfinite(args.kv3_closing_factor)
@@ -345,6 +368,7 @@ def main():
                     segment.Kv3_1.m_closing_factor = args.kv3_closing_factor
                     assert segment.Kv3_1.m_closing_factor == args.kv3_closing_factor
     apply_mechanism_parameters(sections, parameters, h.ismembrane)
+    area_applied = apply_membrane_area_factors(sections, area_factors, h.ismembrane)
     h.celsius = conditions["celsius"]
     h.CVode().active(0)
     if args.cvode_atol is not None:
@@ -436,6 +460,7 @@ def main():
               "regional_density_interventions": regional,
               "insert_density_interventions": inserted,
               "mechanism_parameters": parameters,
+              "membrane_area_factors": area_applied,
               "capacitance_factors": capacitance,
               "charge_balance_geometry": balance_geometry,
               "candidate_json": candidate_record,
