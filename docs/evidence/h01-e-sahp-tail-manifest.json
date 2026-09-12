@@ -13,10 +13,34 @@
   "driver": "h01_l2_neuron_reference.py",
   "output_dir": "h01-e-sahp-tail",
   "inputs": {
-    "sweep56": ["--cache", "/work", "--sweep", "56", "--include-recorded-bias"],
-    "sweep50": ["--cache", "/work", "--sweep", "50", "--include-recorded-bias"],
-    "sweep53": ["--cache", "/work", "--sweep", "53", "--include-recorded-bias"],
-    "sweep43": ["--cache", "/work", "--sweep", "43", "--include-recorded-bias"]
+    "sweep56": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "56",
+      "--include-recorded-bias"
+    ],
+    "sweep50": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "50",
+      "--include-recorded-bias"
+    ],
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ],
+    "sweep43": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "43",
+      "--include-recorded-bias"
+    ]
   },
   "holdout": "Sweep 54 (330 pA) is sealed (h01_l2_sweep_export.SEALED) and is not an input of any stage. Sweep 55 (350 pA) was opened by the usable campaign and is not rerun here.",
   "evaluation": "One parameter set at its stage's inputs; one evaluation = serial runs in one process.",
@@ -36,7 +60,8 @@
       "title": "Stage 1: the same candidate at sweeps 50, 53 and 43 (250, 310, 110 pA)",
       "prediction": "250 pA: count 5-7 with cycles 4-5 of 250-350 ms. 310 pA: count 9-10 with late cycles within 12.8 ms of 120 ms. 110 pA: every sweep-43 onset row (1019-1120 ms) within 1 mV of the human and within 0.1 mV of g0-b3.",
       "rejection": "The 310 pA count falls below 9, or any sweep-43 row moves by 0.1 mV or more against g0-b3, or the 250 pA count leaves 5-7.",
-      "decision_file": "stage-1-decision.json"
+      "decision_file": "stage-1-decision.json",
+      "unchanged": "The stage-0 candidate's flags exactly (s0-ksahp-tail5 = s1-ksahp-tail5): KsAHP soma 3.12e-4 S/cm2 with tau_off 5000 ms on top of all SP12 dose-A flags; nseg factor 9, CVode 1e-10, recorded command plus bias, stop 2100 ms, record_soma_currents."
     }
   },
   "candidates": [
@@ -49,11 +74,18 @@
         "calcium_decay_factor": 1.0,
         "distribute_ih": true,
         "ih_density_factor": 75.0,
-        "insert_density": ["NaTs:axon:3.814", "KsAHP:soma:0.000312"],
-        "mechanism_parameter": ["KsAHP:soma:tau_off:5000"],
+        "insert_density": [
+          "NaTs:axon:3.814",
+          "KsAHP:soma:0.000312"
+        ],
+        "mechanism_parameter": [
+          "KsAHP:soma:tau_off:5000"
+        ],
         "kv3_closing_factor": 0.9,
         "leak_reversal_shift_mv": -4.0,
-        "regional_density": ["SK:soma:0.35"],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
         "sodium_density_factor": 0.9,
         "sodium_opening_factor": 2.0,
         "sodium_recovery_factor": 1.0,
@@ -74,11 +106,18 @@
         "calcium_decay_factor": 1.0,
         "distribute_ih": true,
         "ih_density_factor": 75.0,
-        "insert_density": ["NaTs:axon:3.814", "KsAHP:soma:0.000312"],
-        "mechanism_parameter": ["KsAHP:soma:tau_off:5000"],
+        "insert_density": [
+          "NaTs:axon:3.814",
+          "KsAHP:soma:0.000312"
+        ],
+        "mechanism_parameter": [
+          "KsAHP:soma:tau_off:5000"
+        ],
         "kv3_closing_factor": 0.9,
         "leak_reversal_shift_mv": -4.0,
-        "regional_density": ["SK:soma:0.35"],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
         "sodium_density_factor": 0.9,
         "sodium_opening_factor": 2.0,
         "sodium_recovery_factor": 1.0,
