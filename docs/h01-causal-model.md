@@ -159,7 +159,7 @@ voltage trajectory and postpones the next regenerative rise. Sodium availability
 can have recovered while the net current available to charge the membrane remains small.
 This is a state-dependent feedback mechanism, not a fixed delay added to each spike.
 
-**Discriminating test (2026-09-11).**
+**Discriminating test.**
 The matched single-change test was run on the Vast executor after the finalist reproduced its container counts, cycle 2 and troughs 1-3 within 0.1 ms and 0.1 mV
 ([stage 0](evidence/h01-i-sk/stage-0-decision.json)).
 Setting axonal SK density to zero, with every other finalist setting retained,
@@ -189,16 +189,33 @@ early burst. The current balance that would restore early refiring remains unide
 The mechanism that slows the human's late cycle at low input more than at high input remains unidentified.
 The finalist remains experimental.
 
-**Characterised (SP15 stage 0, 2026-09-12, retained traces, no simulation).**
-The human's four single-spike repeats give the decision limits: level 0.17 mV, threshold 0.38 mV, maximum rise 5 V/s, first spike 8 ms
+**Mechanism: what the recorded cell does along a train that the finalist does not.**
+Differences here are stated against the recording's own repeat spread, which is 0.17 mV in
+level, 0.38 mV in threshold, 5 V/s in rise and 8 ms in first-spike latency
 ([decision](evidence/h01-topographic/stage-0-decision.json), [figures](evidence/h01-topographic/)).
-The maximum rise of spike 1 is the same in human and model (597 and 592 V/s), but the human leaves threshold abruptly (a kink at -58 mV) while the model soma rises through a gradual foot from -64 to -40 mV.
-The human threshold climbs 4.8 mV over the 0.27 nA train and its maximum rise falls to 450 V/s by the last cycle at 0.19 nA; the model climbs 0.9 mV and holds 590 V/s (10 sigma).
-The early cycle-2 contrast (6.3 against 16.4 ms) is 0.8 of the 12.8 ms repeat limit and is not a steep X by the contrast rule.
-Load curves after the first spike at 0.19 and 0.27 nA: between -78 and -65 mV the human absorbs 0 to -0.1 nA of the injected current (a net inward current carries it to the next spike in 6 to 8 ms); the model absorbs 0.16 to 0.25 nA there.
-After the last spike the two curves overlap.
-Thus, the I cell's difference is also in time after a spike: an early post-spike inward balance that the model lacks, which fades along the train, while the threshold climb and rise decline accumulate.
-The onset capacitance differs by 19 percent (human 70 pF, model 57 pF); this is a candidate inputs contrast not yet referred to a repeat limit.
+The first spike of the two cells rises at the same rate, 597 against 592 V/s, so no
+difference in sodium density or in near-soma charging is available to explain the train.
+Along the train the two separate in two ways that accumulate: the recorded threshold climbs
+4.8 mV over the 0.27 nA train while the finalist's climbs 0.9 mV, and the recorded rise
+falls to 450 V/s by the last cycle at 0.19 nA while the finalist holds 590 V/s. Between
+spikes the two cells also differ by time since the spike rather than by voltage. Just after
+a spike, between -78 and -65 mV, the recorded cell is carried to its next threshold in six
+to eight milliseconds by a small net inward current, while the finalist absorbs 0.16 to
+0.25 nA at the same voltages; after the last spike of a train the two meet again. The early
+cycle difference that follows from this is inside the campaign's repeat limit for a cycle
+and is not treated as a separate effect.
+
+The finalist's onset capacitance is 57 pF against the recorded cell's 70 pF. That is a
+difference in the input, not in the channels, and it has no repeat spread of its own yet.
+
+**Consequence.** A climbing threshold with a falling rise, appearing only along a train and
+recovering between trains, is what sodium channels do when they inactivate slowly. Both
+this fit and the pyramidal fit carry the same Colbert and Pan 2002 sodium equations, which
+inactivate quickly and not slowly, so the same missing element would produce this signature
+in both cells. [SP16](specs/2026-09-12-h01-sodium-slow-inactivation.md) applies that one
+change to both and states what would refute it. Changing the axonal SK dose will not
+produce it, because that conductance is calcium-driven and grows with input, while the
+recorded cell's late slowing shrinks with input.
 
 The [I response chart](evidence/h01-multivari-i.png) shows model widths approximately 0.06 ms below the human values.
 It also shows different changes in rise rate along the train.
