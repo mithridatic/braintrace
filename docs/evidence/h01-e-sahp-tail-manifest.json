@@ -1,0 +1,94 @@
+{
+  "purpose": "SP13 E cell: the SP12 spike-triggered gate (KsAHP) with a 5 s tail at one dose fixed from the SP12 traces. Specification: docs/specs/2026-09-12-h01-e-sahp-tail.md.",
+  "cap": 2,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 2400,
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv); kv3-closing-source library at the SP12 recompile with KsAHP.mod.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor; it lacks KsAHP)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-sahp-tail",
+  "inputs": {
+    "sweep56": ["--cache", "/work", "--sweep", "56", "--include-recorded-bias"],
+    "sweep50": ["--cache", "/work", "--sweep", "50", "--include-recorded-bias"],
+    "sweep53": ["--cache", "/work", "--sweep", "53", "--include-recorded-bias"],
+    "sweep43": ["--cache", "/work", "--sweep", "43", "--include-recorded-bias"]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed (h01_l2_sweep_export.SEALED) and is not an input of any stage. Sweep 55 (350 pA) was opened by the usable campaign and is not rerun here.",
+  "evaluation": "One parameter set at its stage's inputs; one evaluation = serial runs in one process.",
+  "base_candidate": {
+    "file": "h01-e-sahp/s0-ksahp-a.candidate.json",
+    "note": "SP12 dose A; this candidate changes tau_off 1000 to 5000 ms and the density 3.4968e-4 to 3.12e-4 S/cm2."
+  },
+  "stages": {
+    "0": {
+      "title": "Stage 0: KsAHP with tau_off 5000 ms at sweep 56 (200 pA)",
+      "prediction": "Count 1-2; late-pulse and mid-pulse p50 within 1 mV of the human (-67.06 and -67.47 mV; derived prediction -67.06 and -67.43 mV); the trace before B3's first spike unchanged within 0.1 mV and the first spike within 1 ms of 1147.2 ms; axon-first. Reported: every 100 ms p50 from 1240 to 2000 ms within 1 mV of the human.",
+      "rejection": "Any band fails: the family is closed at this gate shape for tails of 1 to 5 s and stage 1 is not opened.",
+      "unchanged": "All SP12 dose-A flags except the two named; nseg factor 9, CVode 1e-10, recorded command plus bias, stop 2100 ms, record_soma_currents.",
+      "decision_file": "stage-0-decision.json"
+    },
+    "1": {
+      "title": "Stage 1: the same candidate at sweeps 50, 53 and 43 (250, 310, 110 pA)",
+      "prediction": "250 pA: count 5-7 with cycles 4-5 of 250-350 ms. 310 pA: count 9-10 with late cycles within 12.8 ms of 120 ms. 110 pA: every sweep-43 onset row (1019-1120 ms) within 1 mV of the human and within 0.1 mV of g0-b3.",
+      "rejection": "The 310 pA count falls below 9, or any sweep-43 row moves by 0.1 mV or more against g0-b3, or the 250 pA count leaves 5-7.",
+      "decision_file": "stage-1-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "s0-ksahp-tail5",
+      "stage": "0",
+      "arm": "dose",
+      "inputs_note": "Stage 0 is launched with --only-input sweep56; stage 1 reuses this candidate at sweeps 50, 53, 43.",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814", "KsAHP:soma:0.000312"],
+        "mechanism_parameter": ["KsAHP:soma:tau_off:5000"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "s1-ksahp-tail5",
+      "stage": "1",
+      "arm": "dose",
+      "inputs_note": "Stage 1 is launched with --only-input sweep50 --only-input sweep53 --only-input sweep43.",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814", "KsAHP:soma:0.000312"],
+        "mechanism_parameter": ["KsAHP:soma:tau_off:5000"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": true
+      }
+    }
+  ]
+}

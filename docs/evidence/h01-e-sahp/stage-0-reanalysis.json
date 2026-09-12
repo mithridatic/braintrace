@@ -1,0 +1,443 @@
+{
+  "stage": "0",
+  "human": {
+    "late_pulse": {
+      "status": "available",
+      "requested_ms": [
+        1800.0,
+        2000.0
+      ],
+      "recorded_ms": [
+        0.0,
+        6019.98
+      ],
+      "sample_count": 10000,
+      "mean_mv": -67.053103941679,
+      "sample_mean_mv": -67.05313362926245,
+      "p10_mv": -67.18750068545341,
+      "p50_mv": -67.06250229477882,
+      "percentile_basis": "unweighted original samples; not elapsed time"
+    },
+    "mid_pulse": {
+      "status": "available",
+      "requested_ms": [
+        1300.0,
+        1500.0
+      ],
+      "recorded_ms": [
+        0.0,
+        6019.98
+      ],
+      "sample_count": 10000,
+      "mean_mv": -67.66274476349354,
+      "sample_mean_mv": -67.66288695111871,
+      "p10_mv": -69.03125116229057,
+      "p50_mv": -67.46875265240669,
+      "percentile_basis": "unweighted original samples; not elapsed time"
+    },
+    "post_pulse": {
+      "status": "available",
+      "requested_ms": [
+        2100.0,
+        2300.0
+      ],
+      "recorded_ms": [
+        0.0,
+        6019.98
+      ],
+      "sample_count": 10000,
+      "mean_mv": -85.77605961933732,
+      "sample_mean_mv": -85.77618461921811,
+      "p10_mv": -87.12500476837158,
+      "p50_mv": -85.5937539935112,
+      "percentile_basis": "unweighted original samples; not elapsed time"
+    }
+  },
+  "reference": "h01-e-currents/m0-b3-currents-sweep56",
+  "candidates": [
+    {
+      "candidate": "s0-ksahp-a",
+      "arm": "dose",
+      "summary": {
+        "count": 1,
+        "peak_ms": [
+          1147.3500899594724
+        ],
+        "trough_mv": [
+          -71.06801995271692
+        ],
+        "cycle_ms": [
+          130.60657183352555
+        ],
+        "axon_first": true,
+        "axon_leads_ms": 0.218890715399084
+      },
+      "levels": {
+        "late_pulse": {
+          "status": "available",
+          "requested_ms": [
+            1800.0,
+            2000.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 32308,
+          "mean_mv": -65.81069622904246,
+          "sample_mean_mv": -65.80786756960009,
+          "p10_mv": -66.11611050035647,
+          "p50_mv": -65.80485221000309,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        },
+        "mid_pulse": {
+          "status": "available",
+          "requested_ms": [
+            1300.0,
+            1500.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 44866,
+          "mean_mv": -67.8834245411454,
+          "sample_mean_mv": -67.9266143294157,
+          "p10_mv": -68.30893300139496,
+          "p50_mv": -67.93455400699655,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        },
+        "post_pulse": {
+          "status": "unavailable",
+          "requested_ms": [
+            2100.0,
+            2300.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 1,
+          "mean_mv": null,
+          "sample_mean_mv": null,
+          "p10_mv": null,
+          "p50_mv": null,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        }
+      },
+      "prespike": {
+        "prespike_max_dev_mv": 1.0829585619376303e-06,
+        "first_spike_ms": 1147.1795400251613,
+        "reference_first_spike_ms": 1147.1795400110357,
+        "first_spike_shift_ms": 1.4125589586910792e-08
+      },
+      "gate_max": {
+        "soma_KsAHP_ma_cm2": 0.017603155108441088,
+        "soma_KsAHP_z": 0.5096363416996305
+      },
+      "bands": [
+        {
+          "row": "count",
+          "predicted": "1-2",
+          "observed": 1,
+          "held": true
+        },
+        {
+          "row": "late_p50_minus_human_mv",
+          "predicted": "|x| <= 1.0",
+          "observed": 1.257650084775733,
+          "held": false
+        },
+        {
+          "row": "mid_p50_minus_human_mv",
+          "predicted": "|x| <= 1.0",
+          "observed": -0.46580135458985694,
+          "held": true
+        },
+        {
+          "row": "prespike_max_dev_mv",
+          "predicted": "<= 0.1",
+          "observed": 1.0829585619376303e-06,
+          "held": true
+        },
+        {
+          "row": "first_spike_shift_ms",
+          "predicted": "|x| <= 1.0",
+          "observed": 1.4125589586910792e-08,
+          "held": true
+        },
+        {
+          "row": "axon_first",
+          "predicted": true,
+          "observed": true,
+          "held": true
+        }
+      ],
+      "bands_held": 5,
+      "bands_total": 6,
+      "wall_seconds": 635.2542433748022,
+      "candidate_sha256": "d46e3b6d1cc92568a9177b8844b3c6d81fc9313173bcb17d54d95b33005d6372"
+    },
+    {
+      "candidate": "s0-ksahp-b",
+      "arm": "dose",
+      "summary": {
+        "count": 1,
+        "peak_ms": [
+          1147.3500919554263
+        ],
+        "trough_mv": [
+          -74.56092727941082
+        ],
+        "cycle_ms": [
+          226.01043304105656
+        ],
+        "axon_first": true,
+        "axon_leads_ms": 0.21889071805139793
+      },
+      "levels": {
+        "late_pulse": {
+          "status": "available",
+          "requested_ms": [
+            1800.0,
+            2000.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 40011,
+          "mean_mv": -70.31879650194371,
+          "sample_mean_mv": -70.31883253434951,
+          "p10_mv": -70.74812653627937,
+          "p50_mv": -70.31403158467064,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        },
+        "mid_pulse": {
+          "status": "available",
+          "requested_ms": [
+            1300.0,
+            1500.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 48886,
+          "mean_mv": -73.43115765592216,
+          "sample_mean_mv": -73.46915071980246,
+          "p10_mv": -74.06378157584956,
+          "p50_mv": -73.47614066520174,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        },
+        "post_pulse": {
+          "status": "unavailable",
+          "requested_ms": [
+            2100.0,
+            2300.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 1,
+          "mean_mv": null,
+          "sample_mean_mv": null,
+          "p10_mv": null,
+          "p50_mv": null,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        }
+      },
+      "prespike": {
+        "prespike_max_dev_mv": 1.083347086705544e-06,
+        "first_spike_ms": 1147.1795400353415,
+        "reference_first_spike_ms": 1147.1795400110357,
+        "first_spike_shift_ms": 2.430579115753062e-08
+      },
+      "gate_max": {
+        "soma_KsAHP_ma_cm2": 0.05182071342507987,
+        "soma_KsAHP_z": 0.5085512468965286
+      },
+      "bands": [
+        {
+          "row": "count",
+          "predicted": "1-2",
+          "observed": 1,
+          "held": true
+        },
+        {
+          "row": "late_p50_minus_human_mv",
+          "predicted": "|x| <= 1.0",
+          "observed": -3.2515292898918204,
+          "held": false
+        },
+        {
+          "row": "mid_p50_minus_human_mv",
+          "predicted": "|x| <= 1.0",
+          "observed": -6.007388012795047,
+          "held": false
+        },
+        {
+          "row": "prespike_max_dev_mv",
+          "predicted": "<= 0.1",
+          "observed": 1.083347086705544e-06,
+          "held": true
+        },
+        {
+          "row": "first_spike_shift_ms",
+          "predicted": "|x| <= 1.0",
+          "observed": 2.430579115753062e-08,
+          "held": true
+        },
+        {
+          "row": "axon_first",
+          "predicted": true,
+          "observed": true,
+          "held": true
+        }
+      ],
+      "bands_held": 4,
+      "bands_total": 6,
+      "wall_seconds": 656.3325488111004,
+      "candidate_sha256": "214f0ef9d4f84daa77fcb1b8f54f6f0629919d3d22a7407bdd1adb0b282a9f68"
+    },
+    {
+      "candidate": "s0-nap-zero",
+      "arm": "control",
+      "summary": {
+        "count": 0,
+        "peak_ms": [],
+        "trough_mv": [],
+        "cycle_ms": [],
+        "axon_first": false,
+        "axon_leads_ms": null
+      },
+      "levels": {
+        "late_pulse": {
+          "status": "available",
+          "requested_ms": [
+            1800.0,
+            2000.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 30005,
+          "mean_mv": -63.0539694067079,
+          "sample_mean_mv": -63.053970387368764,
+          "p10_mv": -63.06677102330767,
+          "p50_mv": -63.05326966621867,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        },
+        "mid_pulse": {
+          "status": "available",
+          "requested_ms": [
+            1300.0,
+            1500.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 44339,
+          "mean_mv": -63.25716928513961,
+          "sample_mean_mv": -63.26528438733657,
+          "p10_mv": -63.352915560739866,
+          "p50_mv": -63.25917078272541,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        },
+        "post_pulse": {
+          "status": "unavailable",
+          "requested_ms": [
+            2100.0,
+            2300.0
+          ],
+          "recorded_ms": [
+            0.0,
+            2100.0
+          ],
+          "sample_count": 1,
+          "mean_mv": null,
+          "sample_mean_mv": null,
+          "p10_mv": null,
+          "p50_mv": null,
+          "percentile_basis": "unweighted original samples; not elapsed time"
+        }
+      },
+      "prespike": {
+        "prespike_max_dev_mv": 5.476124191038771,
+        "first_spike_ms": null,
+        "reference_first_spike_ms": 1147.1795400110357,
+        "first_spike_shift_ms": null
+      },
+      "gate_max": {},
+      "bands": [
+        {
+          "row": "count",
+          "predicted": ">= 3",
+          "observed": 0,
+          "held": false
+        },
+        {
+          "row": "late_p50_minus_b3_mv",
+          "predicted": "-1.5 to 0",
+          "observed": 2.035926227676427,
+          "held": false
+        }
+      ],
+      "bands_held": 0,
+      "bands_total": 2,
+      "wall_seconds": 593.6771221701056,
+      "candidate_sha256": "e4d55d717604361a57f0a8b443bd646166bf8e431195feb5e48b8f107bca1557"
+    }
+  ],
+  "decision": "FAIL",
+  "survivor": null,
+  "control_note": "Nap removal broke its registered prediction; the spike-triggered reading is not isolated.",
+  "direct_observation": {
+    "json": "docs\\evidence\\h01-e-sahp\\stage-0-reanalysis-direct.json",
+    "markdown": "docs\\evidence\\h01-e-sahp\\stage-0-reanalysis-direct.md",
+    "arrays": "docs\\evidence\\h01-e-sahp\\stage-0-reanalysis-direct.npz",
+    "plots": [
+      "docs\\evidence\\h01-e-sahp\\stage-0-reanalysis-direct-multivari.png",
+      "docs\\evidence\\h01-e-sahp\\stage-0-reanalysis-direct-conjugates.png",
+      "docs\\evidence\\h01-e-sahp\\stage-0-reanalysis-direct-trajectories.png"
+    ],
+    "visual_review": "pending",
+    "causal_verdict": "not_established"
+  },
+  "causal_verdict": "not_established",
+  "visual_review": "pending",
+  "qc_basis": "Original registered sample-percentile bands, with explicit coverage checks; not a causal verdict.",
+  "manifest": "h01-e-sahp-manifest.json",
+  "campaign_close": {
+    "closed_utc": "2026-09-12T02:30:00Z",
+    "spec": "docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
+    "executor": "Vast box, NEURON 9.0.2, campaign runner executor:local; kv3-closing-source recompiled with KsAHP.mod (library sha256 176f0285...)",
+    "evaluations": {
+      "spent": 3,
+      "cap": 4,
+      "stage_1": "not opened (registered rejection: no dose held every band)"
+    },
+    "wall_seconds": {
+      "s0-ksahp-a": 635,
+      "s0-ksahp-b": 656
+    },
+    "decision": "FAIL under the registered bands; family closed at this tail length and gate shape only",
+    "decision_rule": "Registered: PASS only if a KsAHP dose holds all six bands. Dose A held five of six (late p50 +1.26 mV against the 1 mV band); dose B four of six. The comparison arm broke its own prediction, so that is recorded before any reading of the doses.",
+    "reading": {
+      "dose_a": "Count 1 with B3's first spike unchanged (1147.35 ms; pre-spike deviation 0.000 mV: the recompiled library reproduces B3). The post-spike level follows the human within 0.5 mV from 1240 to 1700 ms (p50 per 100 ms, model/human: -68.43/-68.94, -68.19/-68.28, -67.64/-66.91, -67.19/-66.84, -66.78/-66.97) and then drifts upward as the 1 s gate decays: -66.40/-67.22 at 1700-1800, -66.01/-67.09 at 1800-1900, -65.62/-67.00 at 1900-2000 ms. The human's level does not decay within the pulse.",
+      "dose_b": "Count 1; the level overshoots (mid -73.48, late -70.31 mV). The 0.059 nA mid-pulse target was sized against a window in which unchanged B3 spikes; it is not a level offset.",
+      "control": "Nap soma density 0 gives no spike at 200 pA (count 0; pulse maximum -63.04 mV at the pulse end; 1100-1140 ms level 2.0 mV below B3). Nap is a rheobase lever whose intervention effect (4 to 0 spikes) is far larger than its 0.012 nA baseline current suggested: a baseline current does not bound an intervention effect. Its signature differs from the human's: the human reaches threshold and fires once; Nap removal prevents the first spike.",
+      "residual": "The only unmet band is the late level, and its sign and time course are the gate's tail: the human's post-spike shift persists over 800 ms; a 1000 ms tail loses 1.4 mV of it. From the two windows (human +0.4 mV, dose A +2.1 mV between mid and late) the tail that keeps the level within the band is about 5 s.",
+      "not_excluded": "A failed dose pair does not exclude the family. The family is closed at this tail length and gate shape only."
+    },
+    "tiers": {
+      "contract": "200 pA count 1 = human 1 for both doses (pass); first-spike time 1147 vs 1225 ms fails the 1 ms row; the pre-spike ramp (B3 78 ms early) is unchanged by a gate that is silent before a spike. Nap-zero: count 0 fails.",
+      "usable": "h01-e-sahp/s0-ksahp-a-usable.md, s0-ksahp-b-usable.md, s0-nap-zero-usable.md (200 pA only)."
+    },
+    "next": "SP13 (docs/specs/2026-09-12-h01-e-sahp-tail.md): the same gate with tau_off 5000 ms at one registered dose, one evaluation at sweep 56, then the registered stage 1 at sweeps 50, 53, 43 if it holds.",
+    "limits": "Window medians are summaries; the per-100-ms p50 series above is the retained trajectory comparison. The model trace stops at 2100 ms, so no post-pulse window exists for the model. The direct-observation bundle in this folder (stage-0-reanalysis-direct*) was produced by a parallel reanalysis and is retained beside this record."
+  }
+}

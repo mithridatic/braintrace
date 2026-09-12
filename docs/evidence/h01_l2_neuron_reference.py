@@ -69,6 +69,31 @@ PROBED_INSERTS = {"KsAHP": (("ik", "mA/cm2; outward positive; local soma(0.5)"),
                             ("z", "dimensionless; spike-triggered gate; local soma(0.5)"))}
 
 
+def parse_mechanism_parameter(text):
+    """Parse ``MECHANISM:REGION:NAME:VALUE`` into validated parts (value finite)."""
+    parts = text.split(":")
+    if len(parts) != 4:
+        raise ValueError("Mechanism parameter must be MECHANISM:REGION:NAME:VALUE.")
+    mechanism, region, name, value = parts[0], parts[1], parts[2], float(parts[3])
+    if region not in REGIONS:
+        raise ValueError("Region must be one of soma, axon, dend, apic.")
+    if not np.isfinite(value):
+        raise ValueError("Mechanism parameter value must be finite.")
+    return {"mechanism": mechanism, "region": region, "name": name, "value": value}
+
+
+def apply_mechanism_parameters(sections, parameters, ismembrane):
+    """Set each RANGE parameter in every segment of its region; the mechanism must be present there."""
+    for item in parameters:
+        selected = [sec for sec in sections if sec.name().split("[")[0] == item["region"]]
+        if not selected or not all(ismembrane(item["mechanism"], sec=sec) for sec in selected):
+            raise ValueError(f"{item['mechanism']} is not inserted in every {item['region']} section.")
+        for sec in selected:
+            for segment in sec:
+                setattr(getattr(segment, item["mechanism"]), item["name"], item["value"])
+                assert getattr(getattr(segment, item["mechanism"]), item["name"]) == item["value"]
+
+
 def inserted_probes(soma, inserted, ismembrane):
     """Recording pointers for soma-inserted mechanisms that carry their own probes.
 
@@ -133,6 +158,9 @@ def main():
     parser.add_argument("--insert-density", action="append", default=[],
                         help="MECHANISM:REGION:VALUE, repeatable; adds a mechanism at an absolute density (S/cm2) "
                              "to a region that has none, with the soma's reversal potentials")
+    parser.add_argument("--mechanism-parameter", action="append", default=[],
+                        help="MECHANISM:REGION:NAME:VALUE, repeatable; sets a RANGE parameter of an inserted "
+                             "mechanism in every segment of the region (e.g. KsAHP:soma:tau_off:5000)")
     parser.add_argument("--candidate-json", type=Path,
                         help="JSON object of flag names to values used as defaults; explicit flags override")
     parser.add_argument("--donor-json", type=Path,
@@ -167,6 +195,7 @@ def main():
         regional = [parse_regional_density(text) for text in args.regional_density]
         capacitance = [parse_capacitance_factor(text) for text in args.capacitance_factor]
         inserted = [parse_insert_density(text) for text in args.insert_density]
+        parameters = [parse_mechanism_parameter(text) for text in args.mechanism_parameter]
     except ValueError as error:
         parser.error(str(error))
     if args.kv3_closing_factor is not None and (not np.isfinite(args.kv3_closing_factor)
@@ -315,6 +344,7 @@ def main():
                 for segment in sec:
                     segment.Kv3_1.m_closing_factor = args.kv3_closing_factor
                     assert segment.Kv3_1.m_closing_factor == args.kv3_closing_factor
+    apply_mechanism_parameters(sections, parameters, h.ismembrane)
     h.celsius = conditions["celsius"]
     h.CVode().active(0)
     if args.cvode_atol is not None:
@@ -405,6 +435,7 @@ def main():
               "leak_reversal_shift_mv": args.leak_reversal_shift_mv,
               "regional_density_interventions": regional,
               "insert_density_interventions": inserted,
+              "mechanism_parameters": parameters,
               "capacitance_factors": capacitance,
               "charge_balance_geometry": balance_geometry,
               "candidate_json": candidate_record,

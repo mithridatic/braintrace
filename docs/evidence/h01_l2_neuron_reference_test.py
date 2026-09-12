@@ -242,3 +242,42 @@ def test_inserted_probes_record_only_soma_inserts_with_registered_fields(monkeyp
     probes = driver.inserted_probes(Soma(), inserted, lambda name, sec: name == "KsAHP")
     assert [(p[0], p[1]) for p in probes] == [("soma_KsAHP_ma_cm2", "ik-pointer"), ("soma_KsAHP_z", "z-pointer")]
     assert driver.inserted_probes(Soma(), inserted, lambda name, sec: False) == []
+
+
+def test_mechanism_parameter_is_parsed_and_applied_to_every_segment(monkeypatch):
+    folder = Path(__file__).parent
+    fake_neuron = types.ModuleType("neuron")
+    fake_neuron.h = object()
+    monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
+    monkeypatch.syspath_prepend(str(folder))
+    driver = types.SimpleNamespace(**runpy.run_path(str(folder / "h01_l2_neuron_reference.py")))
+    assert driver.parse_mechanism_parameter("KsAHP:soma:tau_off:5000") == {
+        "mechanism": "KsAHP", "region": "soma", "name": "tau_off", "value": 5000.}
+    for bad in ("KsAHP:soma:tau_off", "KsAHP:all:tau_off:1", "KsAHP:soma:tau_off:nan"):
+        with pytest.raises(ValueError):
+            driver.parse_mechanism_parameter(bad)
+
+    class Mechanism:
+        tau_off = 1000.
+
+    class Segment:
+        def __init__(self):
+            self.KsAHP = Mechanism()
+
+    class Section:
+        def __init__(self, name, n=2):
+            self._name, self.segments = name, [Segment() for _ in range(n)]
+
+        def name(self):
+            return self._name
+
+        def __iter__(self):
+            return iter(self.segments)
+
+    sections = [Section("soma[0]"), Section("dend[0]")]
+    item = driver.parse_mechanism_parameter("KsAHP:soma:tau_off:5000")
+    driver.apply_mechanism_parameters(sections, [item], lambda name, sec: sec.name().startswith("soma"))
+    assert [s.KsAHP.tau_off for s in sections[0]] == [5000., 5000.]
+    assert [s.KsAHP.tau_off for s in sections[1]] == [1000., 1000.]
+    with pytest.raises(ValueError):
+        driver.apply_mechanism_parameters(sections, [dict(item, region="dend")], lambda name, sec: sec.name().startswith("soma"))
