@@ -21,6 +21,7 @@ ORIGIN = f"H01 progressive search tree (Hartshorne splits); built {DATE} from th
 
 STRATEGY = "docs/specs/2026-09-12-h01-topographic-strategy.md"
 SP13_S1 = "docs/evidence/h01-e-sahp-tail/stage-1-decision.json"
+SP15_S0 = "docs/evidence/h01-topographic/stage-0-decision.json"
 SP12_DEC = "docs/evidence/h01-e-sahp/stage-0-reanalysis.json"
 E_USABLE = "docs/evidence/h01-e-gain/g0-b3-usable.json"
 I_USABLE = "docs/evidence/h01-i-sk/s0-finalist-usable.json"
@@ -54,14 +55,14 @@ def build_nodes():
           [E_USABLE, I_USABLE, STRATEGY], "supported"),
         # Q1 Matryoshka
         n("q1", Q, "Q1 (Matryoshka). In which family does the contrast live?", "Families: elemental (within one spike cycle), cyclical (spike to spike), structural (cell to cell), temporal (sweep to sweep). Answered from retained traces; no run.", [STRATEGY], "unverified"),
-        n("q1_elemental", R, "Elemental: retained. After one spike at 200 pA the human holds -67 mV for 800 ms while B3 ramps to -57 mV and fires three more times; the contrast is 2-6 mV against a repeat envelope under 1 mV.",
-          "Phase-plane and post-spike trajectory of cycle 1, human against model, per input, still to be drawn (stage 0 of SP15).", [SP12_DEC, E_G0], "supported"),
-        n("q1_cyclical", R, "Cyclical: retained. The human threshold climbs along the train (-56.4 to -52.8 mV at 310 pA) and the second spike broadens; the models hold a fixed threshold. The I human fires an early burst (6-10 ms cycles) the model never shows.",
-          "Cycle-to-cycle signatures are in the usable-tier cycle tables.", [E_USABLE, I_USABLE, SP10_RESULT], "supported"),
+        n("q1_elemental", R, "Elemental: retained (SP15 stage 0). E: spike upstroke 332 vs 598 V/s (177 sigma of the repeats) at every cycle; post-spike level at 200 pA 2.1 mV (6.9 sigma). I: post-spike level 4.7 mV (28 sigma); upstroke equal but the human leaves threshold with a kink the model soma lacks.",
+          "Phase planes and load curves drawn from retained traces: docs/evidence/h01-topographic/. First spike (E, 78 ms early) is 3.3 sigma, marginal.", [SP15_S0, SP12_DEC, E_G0], "supported"),
+        n("q1_cyclical", R, "Cyclical: retained (SP15 stage 0). Threshold climb over the train: E human +2.1 mV vs model +0.1 (8.1 sigma); I human +4.8 vs +0.9 (10 sigma); the I human's upstroke falls to 450 V/s by the last cycle while the model holds 590. The I early burst (cycle 2: 6.3 vs 16.4 ms) is 0.8 of the 12.8 ms repeat limit: not a steep X.",
+          "Use-dependent signatures that accumulate along the train.", [SP15_S0, E_USABLE, I_USABLE], "supported"),
         n("q1_structural", R, "Structural: retained and strongest. Both humans share one deviation from both fits: higher rheobase, steeper late gain, climbing threshold, post-spike slowing that shrinks with input.",
           "Two different cells sharing one deviation from two different fits places the steep X in what the fits share.", [SP10_RESULT, SP11_CLOSE, CM], "supported"),
-        n("q1_temporal", X, "Temporal: eliminated. Sweep-to-sweep repeat variation is 12.8 ms in cycle and under 1 mV in level; far below the contrasts above.",
-          "The repeatability limits of the usable tier come from these repeats.", [E_USABLE, I_USABLE], "supported"),
+        n("q1_temporal", X, "Temporal: eliminated (SP15 stage 0). Repeat sigma: E level 0.3 mV, threshold 0.25 mV, rise 1.5 V/s, first spike 23 ms; I level 0.17 mV, threshold 0.38 mV, rise 5 V/s, first spike 8 ms.",
+          "These are the decision limits every contrast above is divided by.", [SP15_S0, E_USABLE, I_USABLE], "supported"),
         # Q2 Isolation
         n("q2", Q, "Q2 (Isolation). Does the contrast come in on the inputs (anatomy, passive cable, per-cell densities) or live in the function (shared active kinetics)?", "Both branches must be phrased on Y only.", [STRATEGY], "unverified"),
         n("q2_inputs", X, "Inputs below threshold: eliminated. At 110 pA without a spike the model matches the human onset rows within 0.4-0.9 mV; Ih and leak doses moved the protected rows past their bands.",
@@ -72,14 +73,16 @@ def build_nodes():
           "One evaluation pair; registers before it runs.", [STRATEGY], "unverified"),
         # Q3 z-strategy
         n("q3", Q, "Q3 (z-strategy). Where in voltage and in time after a spike do the human's and the model's net-current load curves separate?", "Pipette = flow source (Norton); cell = load. I_net(t) = I_inj - C dV/dt from retained traces; C from the 110 pA onset transient.", [STRATEGY], "unverified"),
-        n("q3_v", O, "Separation in voltage: a voltage-dependent branch (a conductance open at the plateau).", "If the curves separate at the same V regardless of time since the spike.", [STRATEGY], "unverified"),
-        n("q3_t", O, "Separation in time after the spike: a use-dependent branch (a gate that opens or closes with spikes).", "SP13 says a single accumulating outward gate over-brakes 250/310 pA; the climbing threshold says lost sodium availability rather than added potassium.", [SP13_S1, STRATEGY], "unverified"),
+        n("q3_v", X, "Separation in voltage: eliminated (SP15 stage 0). After the last spike the human and model load curves overlap at the same voltages in both cells; the onset capacitance is equal in E (128 vs 125 pF).", "I onset capacitance differs by 19 percent (70 vs 57 pF): a candidate inputs contrast not yet referred to a repeat limit.", [SP15_S0], "supported"),
+        n("q3_t", R, "Separation in time after the spike: retained (SP15 stage 0). Load curves converge after the last spike in both cells and differ only early after a spike: E human absorbs the whole 0.196 nA at -70 to -65 mV (holds) while B3 absorbs 0.09 nA; I human absorbs 0 to -0.1 nA at -78 to -65 mV (net inward, refires in 6-8 ms) while the finalist absorbs 0.16-0.25 nA.", "Opposite sign early in the two cells, same convergence late; with the climbing threshold and the falling I upstroke this favours use-dependent sodium availability plus an early post-spike inward balance over a plateau conductance.", [SP15_S0, SP13_S1, STRATEGY], "supported"),
         # eliminated levers (recorded, not to be re-run)
         n("levers", X, "Named levers dosed before a split (eliminated as a method, not as physics): Ih half, leak x1.5, SK 0.35, Nap zero (silences 200 pA), Im x100 (kills 310 pA), KsAHP 1 s and 5 s tails (over-brake 250/310 pA).",
           "Each was sized from counts, medians or an offset divided by an input resistance: lossy transforms of Y. The book's rule: locate the family and the branch first, then name a mechanism once.", [E_CLOSE, SP11_CLOSE, SP12_DEC, SP13_S1], "supported"),
         # next test
         n("next", T, "Next (after Q1-Q3): one 2x2 dissection {E, I} x {kinetics as fitted, kinetics with slow sodium inactivation}. The signature follows the function if it moves toward both humans with one change.",
           "Registered prediction and rejection to be written before the run; SP14 (brake plus gain lever) deferred.", [STRATEGY], "unverified"),
+        n("q2_upstroke", T, "Next split (E upstroke, 177 sigma): hold the function, change the input (B3 genome on the H01 morphology, one run). If 600 V/s persists it is somatic sodium in the function; if it falls it is the cable load in the inputs.",
+          "Registered before it runs; stage 1 of SP15.", [SP15_S0, STRATEGY], "unverified"),
         # policies
         n("policy", P, "Policies: contrasts > 3 sigma of the repeat envelope; samples of three; Y only; every split written before its data; fail fast under the cap; both tiers; sweeps 54 and 48 sealed.",
           "From Hartshorne chapters 1-5 and the campaign's own AGENTS rules.", [STRATEGY], "supported"),
@@ -98,6 +101,7 @@ def build_edges():
         cm.edge("q2", "q2_inputs", "describes", "branch"),
         cm.edge("q2", "q2_function", "describes", "branch"),
         cm.edge("q2_function", "q2_swap", "describes", "tactic to close the split"),
+        cm.edge("q1_elemental", "q2_upstroke", "describes", "E upstroke: first split to run"),
         cm.edge("q2_function", "q3", "describes", "locate the function element energetically"),
         cm.edge("q3", "q3_v", "describes", "branch"),
         cm.edge("q3", "q3_t", "describes", "branch"),
@@ -137,7 +141,13 @@ def main():
     print("wrote", OUT, len(doc["graph"]["nodes"]), "nodes", len(doc["graph"]["edges"]), "edges")
     if "--no-export" in sys.argv:
         return
-    opened = cm.request({"action": "open", "path": str(OUT)})
+    # The engine caches documents by path across restarts; open a uniquely named copy so the export is fresh.
+    fresh = OUT.with_name(f"h01-search-tree.{uuid.uuid4().hex[:8]}.reasoning.json")
+    fresh.write_text(OUT.read_text(encoding="utf-8"), encoding="utf-8")
+    try:
+        opened = cm.request({"action": "open", "path": str(fresh)})
+    finally:
+        fresh.unlink(missing_ok=True)
     issues = cm.request({"action": "validate", "document": opened["id"]})
     print("validate:", json.dumps(issues, indent=1))
     if any(x.get("severity") == "error" for x in issues):

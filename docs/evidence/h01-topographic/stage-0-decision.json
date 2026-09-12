@@ -1,0 +1,482 @@
+{
+  "stage": "0",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "decision": "family and branch named; no lever named",
+  "largest_contrasts": [
+    {
+      "cell": "E",
+      "largest_contrast": {
+        "family": "elemental",
+        "row": "max rise of spike 1 (V/s) 200 pA",
+        "human": 332.0312476719955,
+        "model": 597.6780326696378,
+        "diff": 265.64678499764227,
+        "sigma_key": "max_rise_v_s",
+        "ratio": 176.77376729814222
+      }
+    },
+    {
+      "cell": "I",
+      "largest_contrast": {
+        "family": "elemental",
+        "row": "post-spike level p50 0.19 nA",
+        "human": -66.5,
+        "model": -71.21957780197349,
+        "diff": -4.719577801973486,
+        "sigma_key": "level_p50_mv",
+        "ratio": -28.54136720846355
+      }
+    }
+  ],
+  "structural": [
+    {
+      "row": "rheobase (human above model)",
+      "E": "+ (1 vs 4 spikes at 200 pA)",
+      "I": "+ (late-rate zero 169 vs 144 pA)"
+    },
+    {
+      "row": "late gain (human steeper)",
+      "E": "+ (1/5/10/13 vs 4/8/10/12)",
+      "I": "+ (0.39 vs 0.26 Hz/pA)"
+    },
+    {
+      "row": "threshold climbs along the train (model fixed)",
+      "E": "+ (-56.4 to -52.8 mV at 310 pA)",
+      "I": "+ (usable-tier cycle tables)"
+    },
+    {
+      "row": "post-spike slowing shrinks with input (model brake grows)",
+      "E": "+ (one spike then hold at 200 pA; 120 ms cycles at 310 pA)",
+      "I": "+ (late cycle 100 ms at 0.19, 25 ms at 0.27 nA)"
+    }
+  ],
+  "cells": [
+    {
+      "cell": "E",
+      "envelope": {
+        "rows": [
+          {
+            "sweep": 56,
+            "count": 1,
+            "first_spike_ms": 205.22000000000003,
+            "threshold_mv": -54.71875289082527,
+            "ahp_mv": -70.0000017285347,
+            "max_rise_v_s": 332.0312476719955,
+            "level_p50_mv": -67.06250229477882
+          },
+          {
+            "sweep": 59,
+            "count": 1,
+            "first_spike_ms": 208.1400000000001,
+            "threshold_mv": -55.15625098347664,
+            "ahp_mv": -69.53125217556953,
+            "max_rise_v_s": 328.12503632187884,
+            "level_p50_mv": -66.81250178813934
+          },
+          {
+            "sweep": 60,
+            "count": 1,
+            "first_spike_ms": 152.0,
+            "threshold_mv": -54.75000062584877,
+            "ahp_mv": -69.62500283122063,
+            "max_rise_v_s": 329.6875223898766,
+            "level_p50_mv": -66.75000259280205
+          },
+          {
+            "sweep": 61,
+            "count": 1,
+            "first_spike_ms": 198.5,
+            "threshold_mv": -54.50000011920929,
+            "ahp_mv": -69.87500333786011,
+            "max_rise_v_s": 328.9062879051279,
+            "level_p50_mv": -66.28125303983688
+          },
+          {
+            "sweep": 62,
+            "count": 1,
+            "first_spike_ms": 203.31999999999994,
+            "threshold_mv": -54.96875339746475,
+            "ahp_mv": -70.21875450015068,
+            "max_rise_v_s": 328.9062646201851,
+            "level_p50_mv": -66.50000208616257
+          }
+        ],
+        "sigma": {
+          "count": 0.0,
+          "first_spike_ms": 23.4272806787301,
+          "threshold_mv": 0.25136393828440934,
+          "ahp_mv": 0.27898452839912763,
+          "max_rise_v_s": 1.502750035018539,
+          "level_p50_mv": 0.30006484197719563
+        }
+      },
+      "contrasts": [
+        {
+          "family": "elemental",
+          "row": "post-spike level p50 200 pA",
+          "human": -67.06250229477882,
+          "model": -65.00274576632314,
+          "diff": 2.0597565284556794,
+          "sigma_key": "level_p50_mv",
+          "ratio": 6.864371430133148
+        },
+        {
+          "family": "elemental",
+          "row": "count 200 pA",
+          "human": 1,
+          "model": 4,
+          "diff": 3,
+          "sigma_key": "count",
+          "ratio": "sigma 0 (identical in every repeat)"
+        },
+        {
+          "family": "elemental",
+          "row": "first spike ms 200 pA",
+          "human": 205.22000000000003,
+          "model": 126.92000000000007,
+          "diff": -78.29999999999995,
+          "sigma_key": "first_spike_ms",
+          "ratio": -3.3422573056500506
+        },
+        {
+          "family": "elemental",
+          "row": "max rise of spike 1 (V/s) 200 pA",
+          "human": 332.0312476719955,
+          "model": 597.6780326696378,
+          "diff": 265.64678499764227,
+          "sigma_key": "max_rise_v_s",
+          "ratio": 176.77376729814222
+        },
+        {
+          "family": "cyclical",
+          "row": "threshold climb first to last 310 pA",
+          "human": 2.125002443790436,
+          "model": 0.08299032539200368,
+          "diff": -2.042012118398432,
+          "sigma_key": "threshold_mv",
+          "ratio": -8.123727422220638
+        },
+        {
+          "family": "cyclical",
+          "row": "cycle 2 ms 310 pA",
+          "human": 12.1400000000001,
+          "model": 13.480000000000018,
+          "diff": 1.3399999999999181,
+          "sigma_key": "cycle repeat limit 12.8 ms",
+          "ratio": 0.1046874999999936
+        },
+        {
+          "family": "temporal",
+          "row": "repeat sigma (first spike ms / threshold mV / AHP mV / level mV)",
+          "human": [
+            23.4272806787301,
+            0.25136393828440934,
+            0.27898452839912763,
+            0.30006484197719563
+          ],
+          "model": null,
+          "diff": null,
+          "sigma_key": null,
+          "ratio": 1.0
+        }
+      ],
+      "capacitance": {
+        "human_nf": 0.1277917598337979,
+        "model_nf": 0.12445563389430699,
+        "method": "initial slope over 1 ms after pulse onset at the first input; effective near-soma capacitance, same estimator on both traces"
+      },
+      "load_curve_bins": [
+        {
+          "who": "human",
+          "window": "after spike 1",
+          "input": "200 pA",
+          "v_bin_mv": [
+            -75.0,
+            -70.0
+          ],
+          "i_load_p50_na": null,
+          "samples": 1
+        },
+        {
+          "who": "human",
+          "window": "after spike 1",
+          "input": "200 pA",
+          "v_bin_mv": [
+            -70.0,
+            -65.0
+          ],
+          "i_load_p50_na": 0.1962881437250763,
+          "samples": 38924
+        },
+        {
+          "who": "human",
+          "window": "after spike 1",
+          "input": "200 pA",
+          "v_bin_mv": [
+            -65.0,
+            -60.0
+          ],
+          "i_load_p50_na": 0.21625582518735265,
+          "samples": 588
+        },
+        {
+          "who": "model",
+          "window": "after spike 1",
+          "input": "200 pA",
+          "v_bin_mv": [
+            -75.0,
+            -70.0
+          ],
+          "i_load_p50_na": 0.08825453214254907,
+          "samples": 45
+        },
+        {
+          "who": "model",
+          "window": "after spike 1",
+          "input": "200 pA",
+          "v_bin_mv": [
+            -70.0,
+            -65.0
+          ],
+          "i_load_p50_na": 0.1067059530010766,
+          "samples": 322
+        },
+        {
+          "who": "model",
+          "window": "after spike 1",
+          "input": "200 pA",
+          "v_bin_mv": [
+            -65.0,
+            -60.0
+          ],
+          "i_load_p50_na": 0.18753817997103295,
+          "samples": 2714
+        }
+      ]
+    },
+    {
+      "cell": "I",
+      "envelope": {
+        "rows": [
+          {
+            "sweep": 40,
+            "count": 1,
+            "first_spike_ms": 67.20000000000005,
+            "threshold_mv": -58.53125223517418,
+            "ahp_mv": -78.84375149011612,
+            "max_rise_v_s": 576.5625275676725,
+            "level_p50_mv": -75.34375184774399
+          },
+          {
+            "sweep": 41,
+            "count": 1,
+            "first_spike_ms": 84.18000000000006,
+            "threshold_mv": -57.937500566244125,
+            "ahp_mv": -79.21875411272049,
+            "max_rise_v_s": 565.6250286818213,
+            "level_p50_mv": -75.53125315904617
+          },
+          {
+            "sweep": 42,
+            "count": 1,
+            "first_spike_ms": 68.42000000000007,
+            "threshold_mv": -58.2812517285347,
+            "ahp_mv": -79.0312528014183,
+            "max_rise_v_s": 576.5625275676725,
+            "level_p50_mv": -75.1562542617321
+          },
+          {
+            "sweep": 43,
+            "count": 1,
+            "first_spike_ms": 78.48000000000002,
+            "threshold_mv": -57.656252324581146,
+            "ahp_mv": -79.0000050663948,
+            "max_rise_v_s": 570.31251490168,
+            "level_p50_mv": -75.46875396370888
+          }
+        ],
+        "sigma": {
+          "count": 0.0,
+          "first_spike_ms": 8.160465672987046,
+          "threshold_mv": 0.38390057644872605,
+          "ahp_mv": 0.15388935331177822,
+          "max_rise_v_s": 5.317859903722983,
+          "level_p50_mv": 0.16535920537730792
+        }
+      },
+      "contrasts": [
+        {
+          "family": "elemental",
+          "row": "post-spike level p50 0.19 nA",
+          "human": -66.5,
+          "model": -71.21957780197349,
+          "diff": -4.719577801973486,
+          "sigma_key": "level_p50_mv",
+          "ratio": -28.54136720846355
+        },
+        {
+          "family": "elemental",
+          "row": "count 0.19 nA",
+          "human": 12,
+          "model": 14,
+          "diff": 2,
+          "sigma_key": "count",
+          "ratio": "sigma 0 (identical in every repeat)"
+        },
+        {
+          "family": "elemental",
+          "row": "first spike ms 0.19 nA",
+          "human": 20.600000000000023,
+          "model": 27.920000000000016,
+          "diff": 7.319999999999993,
+          "sigma_key": "first_spike_ms",
+          "ratio": 0.897007633305881
+        },
+        {
+          "family": "elemental",
+          "row": "max rise of spike 1 (V/s) 0.19 nA",
+          "human": 596.8750119205615,
+          "model": 591.7795365392661,
+          "diff": -5.095475381295387,
+          "sigma_key": "max_rise_v_s",
+          "ratio": -0.9581815755860912
+        },
+        {
+          "family": "cyclical",
+          "row": "threshold climb first to last 0.27 nA",
+          "human": 4.750003814697266,
+          "model": 0.8550568463524542,
+          "diff": -3.8949469683448115,
+          "sigma_key": "threshold_mv",
+          "ratio": -10.145717947013873
+        },
+        {
+          "family": "cyclical",
+          "row": "cycle 2 ms 0.27 nA",
+          "human": 6.279999999999973,
+          "model": 16.360000000000014,
+          "diff": 10.080000000000041,
+          "sigma_key": "cycle repeat limit 12.8 ms",
+          "ratio": 0.7875000000000032
+        },
+        {
+          "family": "temporal",
+          "row": "repeat sigma (first spike ms / threshold mV / AHP mV / level mV)",
+          "human": [
+            8.160465672987046,
+            0.38390057644872605,
+            0.15388935331177822,
+            0.16535920537730792
+          ],
+          "model": null,
+          "diff": null,
+          "sigma_key": null,
+          "ratio": 1.0
+        }
+      ],
+      "capacitance": {
+        "human_nf": 0.06966404069928575,
+        "model_nf": 0.056672840241942295,
+        "method": "initial slope over 1 ms after pulse onset at the first input; effective near-soma capacitance, same estimator on both traces"
+      },
+      "load_curve_bins": [
+        {
+          "who": "human",
+          "window": "after spike 1",
+          "input": "0.19 nA",
+          "v_bin_mv": [
+            -75.0,
+            -70.0
+          ],
+          "i_load_p50_na": 0.01366289698028142,
+          "samples": 99
+        },
+        {
+          "who": "human",
+          "window": "after spike 1",
+          "input": "0.19 nA",
+          "v_bin_mv": [
+            -70.0,
+            -65.0
+          ],
+          "i_load_p50_na": 0.03543290969874485,
+          "samples": 113
+        },
+        {
+          "who": "human",
+          "window": "after spike 1",
+          "input": "0.19 nA",
+          "v_bin_mv": [
+            -65.0,
+            -60.0
+          ],
+          "i_load_p50_na": -0.01137261764660255,
+          "samples": 70
+        },
+        {
+          "who": "model",
+          "window": "after spike 1",
+          "input": "0.19 nA",
+          "v_bin_mv": [
+            -75.0,
+            -70.0
+          ],
+          "i_load_p50_na": 0.17069373046052372,
+          "samples": 676
+        },
+        {
+          "who": "model",
+          "window": "after spike 1",
+          "input": "0.19 nA",
+          "v_bin_mv": [
+            -70.0,
+            -65.0
+          ],
+          "i_load_p50_na": 0.16229391587433545,
+          "samples": 375
+        },
+        {
+          "who": "model",
+          "window": "after spike 1",
+          "input": "0.19 nA",
+          "v_bin_mv": [
+            -65.0,
+            -60.0
+          ],
+          "i_load_p50_na": -0.045160745087038184,
+          "samples": 49
+        }
+      ]
+    }
+  ],
+  "campaign_close": {
+    "closed_utc": "2026-09-12T05:30:00Z",
+    "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+    "simulations": 0,
+    "method_notes": [
+      "Model CVode traces resampled to a uniform 0.02 ms grid before any median (the adaptive grid is dense around spikes and biased earlier window medians by up to 0.1 mV and load medians by 0.1 nA).",
+      "Load curves use a 0.5 ms boxcar before differentiating; C from the initial slope over 1 ms after pulse onset, same estimator on both traces.",
+      "Repeat sigma: E from sweeps 56, 59-62 (200 pA); I from sweeps 40-43 (single-spike input at 1020-2020 ms)."
+    ],
+    "families": {
+      "E": {
+        "elemental": "max rise of spike 1: human 332 V/s (repeat sigma 1.5), model 598 (177 sigma) at every cycle and input; post-spike level at 200 pA: model 2.06 mV above the human (6.9 sigma); first spike 78 ms early (3.3 sigma, marginal).",
+        "cyclical": "threshold climb over the 310 pA train: human +2.1 mV, model +0.1 (8.1 sigma); cycle 2 at 310 pA within 0.1 of the 12.8 ms limit (no contrast).",
+        "structural": "shared with the I cell (see structural table)",
+        "temporal": "sigma 0.3 mV level, 0.25 mV threshold, 23 ms first spike, 1.5 V/s rise: eliminated as a family",
+        "capacitance": "human 128 pF, model 125 pF: no inputs contrast at the onset",
+        "load_curve": "after spike 1 at 200 pA the human absorbs the whole 0.196 nA at -70 to -65 mV (holds); the model absorbs 0.09 nA there and reaches 0.19 nA only at -62 mV. At 250 and 310 pA the human curve dips below zero near -68 mV right after the trough (a net inward rebound the model lacks) and both curves converge after the last spike."
+      },
+      "I": {
+        "elemental": "post-spike level in 1050-1250 ms at 0.19 nA: model 4.7 mV below the human (28 sigma); max rise of spike 1 equal (597 vs 592 V/s, 1 sigma); the human upstroke leaves threshold abruptly (kink at -58 mV) while the model soma shows a gradual foot from -64 to -40 mV.",
+        "cyclical": "threshold climb over the 0.27 nA train: human +4.8 mV, model +0.9 (10 sigma); the human max rise falls to 450 V/s by the last cycle at 0.19 nA, the model stays near 590; cycle 2 at 0.27 nA: 6.3 vs 16.4 ms, 0.79 of the 12.8 ms limit (not a steep X).",
+        "structural": "shared with the E cell",
+        "temporal": "sigma 0.17 mV level, 0.38 mV threshold, 8 ms first spike, 5 V/s rise: eliminated",
+        "capacitance": "human 70 pF, model 57 pF (19 percent): a candidate inputs contrast, not yet referred to a repeat sigma",
+        "load_curve": "after spike 1 at 0.19 and 0.27 nA the human absorbs 0 to -0.1 nA between -78 and -65 mV (a net inward current carries it to the next spike in 6-8 ms) while the model absorbs 0.16-0.25 nA; after the last spike both curves overlap at 0.15-0.25 nA."
+      }
+    },
+    "decision": "Families: elemental and cyclical carry the contrast in both cells; temporal eliminated; structural shared. Branch: function, use-dependent, for the threshold climb (both cells), the rise decline along the train (I) and the post-spike load difference (both cells, opposite sign early, converging late). The E upstroke (177 sigma) is a separate elemental contrast whose branch (somatic sodium function or cable-load input) is the first Q2 split to run. No lever is named.",
+    "next_split": "Q2 for the E upstroke: hold the function, change the input (the same B3 genome on the H01 morphology), one run; if the 600 V/s upstroke persists it is the function (sodium density or kinetics), if it falls it is the cable load. Q3 for the post-spike currents: the separation is in time after the spike, not in voltage (the curves converge after the last spike), which favours a use-dependent gate over a plateau conductance; the I cell's early inward rebound and the E cell's early hold are the two signatures one mechanism family must explain in opposite directions or two must be separated."
+  }
+}

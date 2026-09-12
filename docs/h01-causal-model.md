@@ -189,6 +189,17 @@ early burst. The current balance that would restore early refiring remains unide
 The mechanism that slows the human's late cycle at low input more than at high input remains unidentified.
 The finalist remains experimental.
 
+**Characterised (SP15 stage 0, 2026-09-12, retained traces, no simulation).**
+The human's four single-spike repeats give the decision limits: level 0.17 mV, threshold 0.38 mV, maximum rise 5 V/s, first spike 8 ms
+([decision](evidence/h01-topographic/stage-0-decision.json), [figures](evidence/h01-topographic/)).
+The maximum rise of spike 1 is the same in human and model (597 and 592 V/s), but the human leaves threshold abruptly (a kink at -58 mV) while the model soma rises through a gradual foot from -64 to -40 mV.
+The human threshold climbs 4.8 mV over the 0.27 nA train and its maximum rise falls to 450 V/s by the last cycle at 0.19 nA; the model climbs 0.9 mV and holds 590 V/s (10 sigma).
+The early cycle-2 contrast (6.3 against 16.4 ms) is 0.8 of the 12.8 ms repeat limit and is not a steep X by the contrast rule.
+Load curves after the first spike at 0.19 and 0.27 nA: between -78 and -65 mV the human absorbs 0 to -0.1 nA of the injected current (a net inward current carries it to the next spike in 6 to 8 ms); the model absorbs 0.16 to 0.25 nA there.
+After the last spike the two curves overlap.
+Thus, the I cell's difference is also in time after a spike: an early post-spike inward balance that the model lacks, which fades along the train, while the threshold climb and rise decline accumulate.
+The onset capacitance differs by 19 percent (human 70 pF, model 57 pF); this is a candidate inputs contrast not yet referred to a repeat limit.
+
 The [I response chart](evidence/h01-multivari-i.png) shows model widths approximately 0.06 ms below the human values.
 It also shows different changes in rise rate along the train.
 A repeated difference does not establish one unique mechanism.
@@ -334,7 +345,19 @@ At 250 pA the model fired three times (a doublet, then one spike 442 ms later) a
 The gate reached 0.83 and 0.96 along those trains.
 Thus, a spike-triggered brake that persists for seconds is sufficient for the 200 pA response and is not sufficient for the three inputs together, because it accumulates while the human's 310 pA cycles equal unchanged B3's.
 Two accounts remain untested: the human's brake saturates after one spike and B3 lands 310 pA only through a compensating gain error (the cross-cell pattern of a steeper human gain), or the 200 pA shift is not a brake that persists into a train.
-SP13 is closed; a saturating brake paired with one gain lever is the drafted next test ([SP14](specs/2026-09-12-h01-e-brake-plus-gain.md), not approved).
+SP13 is closed; a saturating brake paired with one gain lever is the drafted next test ([SP14](specs/2026-09-12-h01-e-brake-plus-gain.md), not approved, now deferred behind SP15).
+
+**Characterised (SP15 stage 0, 2026-09-12, retained traces, no simulation).**
+The human's five 200 pA repeats give the decision limits: level 0.3 mV, threshold 0.25 mV, maximum rise 1.5 V/s, first spike 23 ms
+([decision](evidence/h01-topographic/stage-0-decision.json), [figures](evidence/h01-topographic/)).
+Against them, the largest contrast is the spike upstroke: the human's maximum rise is 332 V/s at every cycle and input, the model's 598 V/s (177 sigma).
+The post-spike level at 200 pA (model 2.1 mV above, 6.9 sigma) and the threshold climb over the 310 pA train (human +2.1 mV, model +0.1 mV, 8.1 sigma) follow.
+The first spike, 78 ms early, is 3.3 sigma and marginal; the cycle-2 interval at 310 pA is inside the repeat limit.
+The onset capacitance is the same in both (128 and 125 pF), so the upstroke contrast is not a difference in near-soma charging.
+Load curves (injected current minus capacitive current, against voltage) after the first spike at 200 pA: the human absorbs the whole 0.196 nA between -70 and -65 mV and holds; the model absorbs 0.09 nA there and reaches 0.19 nA only at -62 mV.
+After the last spike at 250 and 310 pA the two curves converge.
+Thus, the post-spike difference is in time after a spike, not in voltage: a use-dependent branch of the function, as SP13 found by intervention.
+The upstroke is a separate elemental contrast whose branch (somatic sodium in the function, or cable load in the inputs) is the first split to run.
 
 The human threshold also climbs along the train (-56.4 to -52.8 mV at 310 pA); the model's stays at -57.2 mV at every input.
 This is a response difference the recorded soma currents do not explain.

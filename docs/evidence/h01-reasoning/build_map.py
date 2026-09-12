@@ -394,7 +394,13 @@ def main() -> None:
     print("wrote", OUT, len(doc["graph"]["nodes"]), "nodes", len(doc["graph"]["edges"]), "edges")
     if "--no-export" in sys.argv:
         return
-    opened = request({"action": "open", "path": str(OUT)})
+    # The engine caches documents by path across restarts; open a uniquely named copy so the export is fresh.
+    fresh = OUT.with_name(f"h01-current-reality.{uuid.uuid4().hex[:8]}.reasoning.json")
+    fresh.write_text(OUT.read_text(encoding="utf-8"), encoding="utf-8")
+    try:
+        opened = request({"action": "open", "path": str(fresh)})
+    finally:
+        fresh.unlink(missing_ok=True)
     doc_id = opened["id"]
     issues = request({"action": "validate", "document": doc_id})
     print("validate:", json.dumps(issues, indent=1))

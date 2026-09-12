@@ -1,5 +1,5 @@
 {
-  "id": "doc_fd8d615b-339",
+  "id": "doc_17522e87-d2f",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -107,6 +107,13 @@
         "label": "tactic to close the split"
       },
       {
+        "id": "q1_elemental__q2_upstroke",
+        "source": "q1_elemental",
+        "target": "q2_upstroke",
+        "relation": "describes",
+        "label": "E upstroke: first split to run"
+      },
+      {
         "id": "q2_function__q3",
         "source": "q2_function",
         "target": "q3",
@@ -175,6 +182,7 @@
           "q3_t",
           "levers",
           "next",
+          "q2_upstroke",
           "policy"
         ],
         "testIds": [],
@@ -241,13 +249,21 @@
       {
         "id": "q1_elemental",
         "type": "Branch retained",
-        "text": "Elemental: retained. After one spike at 200 pA the human holds -67 mV for 800 ms while B3 ramps to -57 mV and fires three more times; the contrast is 2-6 mV against a repeat envelope under 1 mV.",
+        "text": "Elemental: retained (SP15 stage 0). E: spike upstroke 332 vs 598 V/s (177 sigma of the repeats) at every cycle; post-spike level at 200 pA 2.1 mV (6.9 sigma). I: post-spike level 4.7 mV (28 sigma); upstroke equal but the human leaves threshold with a kink the model soma lacks.",
         "status": "supported",
         "confidence": null,
-        "notes": "Phase-plane and post-spike trajectory of cycle 1, human against model, per input, still to be drawn (stage 0 of SP15).\n\nEvidence: docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-gain/stage-g0-decision.json",
+        "notes": "Phase planes and load curves drawn from retained traces: docs/evidence/h01-topographic/. First spike (E, 78 ms early) is 3.3 sigma, marginal.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json; docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-gain/stage-g0-decision.json",
         "evidence": [
           {
             "id": "q1_elemental_ev0",
+            "title": "docs/evidence/h01-topographic/stage-0-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-0-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_elemental_ev1",
             "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
@@ -255,7 +271,7 @@
             "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "q1_elemental_ev1",
+            "id": "q1_elemental_ev2",
             "title": "docs/evidence/h01-e-gain/stage-g0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-g0-decision.json",
@@ -268,13 +284,21 @@
       {
         "id": "q1_cyclical",
         "type": "Branch retained",
-        "text": "Cyclical: retained. The human threshold climbs along the train (-56.4 to -52.8 mV at 310 pA) and the second spike broadens; the models hold a fixed threshold. The I human fires an early burst (6-10 ms cycles) the model never shows.",
+        "text": "Cyclical: retained (SP15 stage 0). Threshold climb over the train: E human +2.1 mV vs model +0.1 (8.1 sigma); I human +4.8 vs +0.9 (10 sigma); the I human's upstroke falls to 450 V/s by the last cycle while the model holds 590. The I early burst (cycle 2: 6.3 vs 16.4 ms) is 0.8 of the 12.8 ms repeat limit: not a steep X.",
         "status": "supported",
         "confidence": null,
-        "notes": "Cycle-to-cycle signatures are in the usable-tier cycle tables.\n\nEvidence: docs/evidence/h01-e-gain/g0-b3-usable.json; docs/evidence/h01-i-sk/s0-finalist-usable.json; docs/evidence/h01-i-sk-result.md",
+        "notes": "Use-dependent signatures that accumulate along the train.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json; docs/evidence/h01-e-gain/g0-b3-usable.json; docs/evidence/h01-i-sk/s0-finalist-usable.json",
         "evidence": [
           {
             "id": "q1_cyclical_ev0",
+            "title": "docs/evidence/h01-topographic/stage-0-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-0-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_cyclical_ev1",
             "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/g0-b3-usable.json",
@@ -282,18 +306,10 @@
             "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "q1_cyclical_ev1",
+            "id": "q1_cyclical_ev2",
             "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
-            "stance": "supports",
-            "origin": "repository file inspected 2026-09-12"
-          },
-          {
-            "id": "q1_cyclical_ev2",
-            "title": "docs/evidence/h01-i-sk-result.md",
-            "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -338,13 +354,21 @@
       {
         "id": "q1_temporal",
         "type": "Branch eliminated",
-        "text": "Temporal: eliminated. Sweep-to-sweep repeat variation is 12.8 ms in cycle and under 1 mV in level; far below the contrasts above.",
+        "text": "Temporal: eliminated (SP15 stage 0). Repeat sigma: E level 0.3 mV, threshold 0.25 mV, rise 1.5 V/s, first spike 23 ms; I level 0.17 mV, threshold 0.38 mV, rise 5 V/s, first spike 8 ms.",
         "status": "supported",
         "confidence": null,
-        "notes": "The repeatability limits of the usable tier come from these repeats.\n\nEvidence: docs/evidence/h01-e-gain/g0-b3-usable.json; docs/evidence/h01-i-sk/s0-finalist-usable.json",
+        "notes": "These are the decision limits every contrast above is divided by.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json; docs/evidence/h01-e-gain/g0-b3-usable.json; docs/evidence/h01-i-sk/s0-finalist-usable.json",
         "evidence": [
           {
             "id": "q1_temporal_ev0",
+            "title": "docs/evidence/h01-topographic/stage-0-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-0-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_temporal_ev1",
             "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/g0-b3-usable.json",
@@ -352,7 +376,7 @@
             "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "q1_temporal_ev1",
+            "id": "q1_temporal_ev2",
             "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
@@ -483,18 +507,18 @@
       },
       {
         "id": "q3_v",
-        "type": "Branch open",
-        "text": "Separation in voltage: a voltage-dependent branch (a conductance open at the plateau).",
-        "status": "unverified",
+        "type": "Branch eliminated",
+        "text": "Separation in voltage: eliminated (SP15 stage 0). After the last spike the human and model load curves overlap at the same voltages in both cells; the onset capacitance is equal in E (128 vs 125 pF).",
+        "status": "supported",
         "confidence": null,
-        "notes": "If the curves separate at the same V regardless of time since the spike.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "I onset capacitance differs by 19 percent (70 vs 57 pF): a candidate inputs contrast not yet referred to a repeat limit.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json",
         "evidence": [
           {
             "id": "q3_v_ev0",
-            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
-            "stance": "context",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-0-decision.json",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
         ],
@@ -502,26 +526,34 @@
       },
       {
         "id": "q3_t",
-        "type": "Branch open",
-        "text": "Separation in time after the spike: a use-dependent branch (a gate that opens or closes with spikes).",
-        "status": "unverified",
+        "type": "Branch retained",
+        "text": "Separation in time after the spike: retained (SP15 stage 0). Load curves converge after the last spike in both cells and differ only early after a spike: E human absorbs the whole 0.196 nA at -70 to -65 mV (holds) while B3 absorbs 0.09 nA; I human absorbs 0 to -0.1 nA at -78 to -65 mV (net inward, refires in 6-8 ms) while the finalist absorbs 0.16-0.25 nA.",
+        "status": "supported",
         "confidence": null,
-        "notes": "SP13 says a single accumulating outward gate over-brakes 250/310 pA; the climbing threshold says lost sodium availability rather than added potassium.\n\nEvidence: docs/evidence/h01-e-sahp-tail/stage-1-decision.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "Opposite sign early in the two cells, same convergence late; with the climbing threshold and the falling I upstroke this favours use-dependent sodium availability plus an early post-spike inward balance over a plateau conductance.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json; docs/evidence/h01-e-sahp-tail/stage-1-decision.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
         "evidence": [
           {
             "id": "q3_t_ev0",
-            "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
-            "stance": "context",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-0-decision.json",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "q3_t_ev1",
+            "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q3_t_ev2",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
-            "stance": "context",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
         ],
@@ -580,6 +612,33 @@
         "evidence": [
           {
             "id": "next_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q2_upstroke",
+        "type": "Next test",
+        "text": "Next split (E upstroke, 177 sigma): hold the function, change the input (B3 genome on the H01 morphology, one run). If 600 V/s persists it is somatic sodium in the function; if it falls it is the cable load in the inputs.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Registered before it runs; stage 1 of SP15.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q2_upstroke_ev0",
+            "title": "docs/evidence/h01-topographic/stage-0-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-0-decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q2_upstroke_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
@@ -778,6 +837,22 @@
         "reservations": [
           {
             "id": "reservation_q2_function__q2_swap",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q1_elemental__q2_upstroke",
+        "edgeId": "q1_elemental__q2_upstroke",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q1_elemental__q2_upstroke",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",
