@@ -97,5 +97,141 @@
         ]
       }
     ]
+  },
+  {
+    "name": "c10-area-310",
+    "candidate_sha256": "a7e74ea0a37a3e180b7f2014cd2ca7c824adcda5428f475c1c8af316efaf7f0d",
+    "evaluation_index": 4,
+    "abort_seconds": 1800,
+    "inputs": {
+      "sweep56": "untested",
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "c10-area-310",
+        "input": "sweep53",
+        "seconds": 130.05438093282282,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-cable-load/c10-area-310-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c10-area-310.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c10-area-310-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "c15-area-310",
+    "candidate_sha256": "9edad19a6e736e6c3f840cd155614d73748fe55ae3dc4fe87a376b4ab531e962",
+    "evaluation_index": 5,
+    "abort_seconds": 1800,
+    "inputs": {
+      "sweep56": "untested",
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "c15-area-310",
+        "input": "sweep53",
+        "seconds": 68.41661662049592,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-cable-load/c15-area-310-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c15-area-310.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c15-area-310-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "c20-area-310",
+    "candidate_sha256": "50f28ac918324a9884f92f13a36ee64ff79ac1050fc64ea3527ad5a37b610223",
+    "evaluation_index": 6,
+    "abort_seconds": 1800,
+    "inputs": {
+      "sweep56": "untested",
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "c20-area-310",
+        "input": "sweep53",
+        "seconds": 69.49986518640071,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-cable-load/c20-area-310-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c20-area-310.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c20-area-310-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "c30-area-310",
+    "candidate_sha256": "3a8114da4f0b12efbf2d263805e7d678bc55e4fc23f6936c2eb8f853fe24b3aa",
+    "evaluation_index": 7,
+    "abort_seconds": 1800,
+    "inputs": {
+      "sweep56": "untested",
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "c30-area-310",
+        "input": "sweep53",
+        "seconds": 60.24800407513976,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-cable-load/c30-area-310-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c30-area-310.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-cable-load/c30-area-310-sweep53"
+        ]
+      }
+    ]
   }
 ]

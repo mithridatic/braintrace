@@ -1,0 +1,26 @@
+{
+  "measurement": "Subthreshold passive load at 110 pA (sweep 43, no spike in either): rest before the pulse, plateau 1800-2000 ms, onset capacitance from the first 1 ms after the step.",
+  "human": {
+    "rest_mv": -84.47,
+    "step_pa": 110,
+    "plateau_mv": -75.62,
+    "r_in_MOhm": 80.4,
+    "c_onset_pF": 128,
+    "tau_ms": 10.3
+  },
+  "model_b3": {
+    "rest_mv": -83.97,
+    "step_pa": 110,
+    "plateau_mv": -73.97,
+    "r_in_MOhm": 90.9,
+    "c_onset_pF": 124,
+    "tau_ms": 11.3
+  },
+  "model_trace": "h01-e-sahp-tail/s1-ksahp-tail5-sweep43.npz (the 5 s KsAHP gate is silent without a spike, so this trace is B3's passive response; it matches g0-b3's onset rows to 0.000 mV)",
+  "ratios": {
+    "conductance_human_over_model": 1.131,
+    "capacitance_human_over_model": 1.032,
+    "tau_human_over_model": 0.912
+  },
+  "reading": "The human cell's passive load is 13 percent more conductance and 3 percent more capacitance than B3's, with a 1 ms shorter time constant. This is the observable range of the input for this pair: any claim that the cable load explains a model-human difference must do it with about a 1.13x load change, not more."
+}

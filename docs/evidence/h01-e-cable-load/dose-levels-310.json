@@ -1,0 +1,63 @@
+[
+  {
+    "dose": "x1",
+    "count": 72,
+    "rise1": 650.3,
+    "rises": [
+      650,
+      548,
+      516,
+      518
+    ],
+    "thr1": -57.28,
+    "thr_climb": -8.76,
+    "first_ms": 34.1,
+    "late_cycle_ms": 45.2,
+    "rest_mv": -83.97,
+    "c_onset_pF": 125
+  },
+  {
+    "dose": "x1.5",
+    "count": 3,
+    "rise1": 579.5,
+    "rises": [
+      579,
+      464,
+      290
+    ],
+    "thr1": -57.36,
+    "thr_climb": 0.27,
+    "first_ms": 64.6,
+    "late_cycle_ms": 25.4,
+    "rest_mv": -83.57,
+    "c_onset_pF": 153
+  },
+  {
+    "dose": "x2",
+    "count": 3,
+    "rise1": 527.7,
+    "rises": [
+      528,
+      347,
+      66
+    ],
+    "thr1": -57.5,
+    "thr_climb": 13.14,
+    "first_ms": 155.8,
+    "late_cycle_ms": 55.6,
+    "rest_mv": -83.33,
+    "c_onset_pF": 177
+  },
+  {
+    "dose": "x3",
+    "count": 0,
+    "rise1": null,
+    "rises": [],
+    "thr1": null,
+    "thr_climb": null,
+    "first_ms": null,
+    "late_cycle_ms": null,
+    "rest_mv": -83.06,
+    "c_onset_pF": 214
+  }
+]

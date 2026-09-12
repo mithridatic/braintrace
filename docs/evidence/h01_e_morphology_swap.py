@@ -165,14 +165,22 @@ def decide(control, test, reference=B3_NSEG9_RISE_V_S):
             "mesh_ok": mesh_ok, "delta_v_s": delta, "verdict": verdict}
 
 
-def graded_decide(series, control_reference=B3_NSEG9_RISE_V_S, mesh_tolerance=MESH_TOLERANCE):
+def graded_decide(series, control_reference=B3_NSEG9_RISE_V_S, mesh_tolerance=MESH_TOLERANCE, reference_count=None):
     """Read the graded cable series: does the upstroke leave the control band, monotonically, while still spiking?
 
-    ``series`` is an ordered list of ``{"dose", "upstroke"}`` starting with the x1 control.
+    ``series`` is an ordered list of ``{"dose", "upstroke"}`` starting with the x1 control. When
+    ``reference_count`` is given, the control must also reproduce the reference response (the same
+    spike count): a control that matches one summary number but not the response is not a control.
     """
     if not series or series[0]["upstroke"]["max_rise_v_s"] is None:
         return {"verdict": "no control reading", "series": series}
     control = series[0]["upstroke"]["max_rise_v_s"]
+    control_count = series[0]["upstroke"].get("count")
+    if reference_count is not None and control_count != reference_count:
+        return {"verdict": f"control invalid: it gives {control_count} spikes against the reference {reference_count}; "
+                           "the series reads a different response, not the dose",
+                "control_v_s": control, "control_count": control_count, "reference_count": reference_count,
+                "series": series}
     band = max(3.*abs(control-control_reference), mesh_tolerance*control)
     rises = [(s["dose"], s["upstroke"]["max_rise_v_s"]) for s in series if s["upstroke"]["max_rise_v_s"] is not None]
     spiking = [d for d, _ in rises]
@@ -191,7 +199,8 @@ def graded_decide(series, control_reference=B3_NSEG9_RISE_V_S, mesh_tolerance=ME
         verdict = "function: the upstroke holds its band at every dose that spikes; larger doses only silence the cell"
     else:
         verdict = "function: the upstroke holds its band across the whole series"
-    return {"control_v_s": control, "reference_nseg9_v_s": control_reference, "band_v_s": band,
+    return {"control_v_s": control, "control_count": control_count, "reference_count": reference_count,
+            "reference_nseg9_v_s": control_reference, "band_v_s": band,
             "monotone": monotone, "doses_spiking": spiking, "doses_silent": silent,
             "rows": deltas, "series": series, "verdict": verdict}
 
@@ -214,6 +223,8 @@ def main(argv=None):
                    help="ordered doses after the control, e.g. x1.5=c15-area-sweep56")
     g.add_argument("--reference-v-s", type=float, default=B3_NSEG9_RISE_V_S,
                    help="the fine-mesh maximum rise this series' control is checked against (default: the 200 pA value)")
+    g.add_argument("--reference-count", type=int,
+                   help="spike count of the fine-mesh reference response; the control must reproduce it")
     g.add_argument("--output-stem", default="stage-2-decision")
     args = parser.parse_args(argv)
     if args.command == "prepare":
@@ -224,7 +235,7 @@ def main(argv=None):
         for text in args.dose:
             label, stem = text.split("=", 1)
             series.append({"dose": label, "upstroke": upstroke(args.folder/f"{stem}.npz")})
-        decision = graded_decide(series, control_reference=args.reference_v_s)
+        decision = graded_decide(series, control_reference=args.reference_v_s, reference_count=args.reference_count)
         (args.folder/f"{args.output_stem}.json").write_text(json.dumps(decision, indent=2)+"\n", encoding="utf-8")
         print(json.dumps(decision, indent=2))
         return

@@ -1,6 +1,6 @@
 {
   "purpose": "SP15 stages 2 and 3 (Q2 for the E upstroke, graded): hold the function (B3 genome and flags), change the input by a graded amount. The dendritic and apical membrane area (cm, g_pas and the distributed Ih density together) is scaled 1.5, 2 and 3 times at fixed geometry. Stage 2 asks at 200 pA (closed: every dose silenced the cell); stage 3 asks at 310 pA, where the model and the human both fire ten spikes. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 2 and 3 addenda).",
-  "cap": 7,
+  "cap": 11,
   "prior_evaluations": 0,
   "max_concurrent": 2,
   "abort_seconds": 1800,
@@ -48,7 +48,16 @@
       "prediction": "The x1 control at nseg 1 reproduces the nseg-9 spike-1 maximum rise 639.1 V/s within 10 percent. If the upstroke lives in the function, the maximum rise stays within max(3 x that mesh deviation, 10 percent of the control) at every dose that still spikes; if it lives in the input, it falls monotonically and leaves that band while the cell is still spiking. The human value at this input is 347.7 V/s with ten spikes; the model gives ten spikes too, so the count is comparable across the series. Reported, not banded: count, first spike, threshold, plateau level, onset capacitance and input resistance at each dose.",
       "rejection": "Every dose that leaves the band also fails to spike (the stage-1 and stage-2 no-reading case), or the departure is not monotone across the three doses.",
       "unchanged": "All B3 flags of q2-nseg1.candidate.json; nseg factor 1; CVode 1e-10; recorded command plus bias; stop 2100 ms; no soma-current probes; the geometry, the axial resistance and every soma mechanism.",
-      "decision_file": "stage-3-decision.json"
+      "decision_file": "stage-3-decision.json",
+      "outcome": "CLOSED 2026-09-12 as CONTROL INVALID: the nseg-1 x1 control fires 72 times and then falls silent at 310 pA (plateau -74 mV after 400 ms) against the nseg-9 reference of 10 steady spikes at -64.6 mV; the x2 dose enters depolarisation block at -28 mV. The spike-1 upstroke band held (9.0 percent mesh deviation), which is why a one-number control check passed a control that does not reproduce the response. The scorer now requires the control to reproduce the reference spike count."
+    },
+    "4": {
+      "title": "Stage 4: the same three doses plus the x1 control at sweep 53 (310 pA), nseg factor 9",
+      "prediction": "The x1 control at nseg 9 reproduces the reference response: 10 spikes with spike-1 maximum rise 639.1 V/s and a stable interspike level near -64.6 mV. If the upstroke lives in the function, the maximum rise then stays within max(3 x the control's deviation from 639.1, 10 percent of the control) at every dose that still fires a comparable train; if it lives in the input, it falls monotonically and leaves that band while the cell still fires. The human at this input gives 10 spikes with 347.7 V/s, so the model and human counts are comparable at x1.",
+      "rejection": "The control does not reproduce the reference count of 10 (control invalid, as in stage 3); or every dose that leaves the band also stops firing a comparable train (no reading, as in stages 1 and 2); or the departure is not monotone.",
+      "unchanged": "All B3 flags of q2-nseg1.candidate.json; nseg factor 9; CVode 1e-10; recorded command plus bias; stop 2100 ms; no soma-current probes; the geometry, the axial resistance and every soma mechanism.",
+      "decision_file": "stage-4-decision.json",
+      "reading_aid": "The human's own passive load is 1.13x B3's conductance and 1.03x its capacitance (h01-e-cable-load/human-passive-load.json); the dose series gives the slope of the upstroke against load, so the reading is whether a 1.13x load change can cover the 290 V/s human-model gap."
     }
   },
   "candidates": [
@@ -271,6 +280,131 @@
         "record_soma_currents": false
       },
       "inputs_note": "launched with --only-input sweep53"
+    },
+    {
+      "name": "c10-area-310-n9",
+      "stage": "4",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 4: launched with --only-input sweep53"
+    },
+    {
+      "name": "c15-area-310-n9",
+      "stage": "4",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "membrane_area_factor": [
+          "dend:1.5",
+          "apic:1.5"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 4: launched with --only-input sweep53"
+    },
+    {
+      "name": "c20-area-310-n9",
+      "stage": "4",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "membrane_area_factor": [
+          "dend:2",
+          "apic:2"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 4: launched with --only-input sweep53"
+    },
+    {
+      "name": "c30-area-310-n9",
+      "stage": "4",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "membrane_area_factor": [
+          "dend:3",
+          "apic:3"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 4: launched with --only-input sweep53"
     }
-  ]
+  ],
+  "cap_note": "Stage 3's four evaluations were spent on an invalid control: at nseg factor 1 the 310 pA response is not B3's (72 spikes then silence against 10 steady spikes at nseg 9), so the series read a mesh artefact, not the dose. As with the stage-1 pre-construction failure, these are not model evaluations of the registered question. Cap raised to 11 for stage 4, which repeats the series at the mesh where the reference response lives."
 }

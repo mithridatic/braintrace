@@ -82,3 +82,14 @@ def test_graded_decide_refuses_a_branch_when_only_the_control_spikes():
     out = swap.graded_decide(_series(("x1", 653.), ("x1.5", None), ("x2", None), ("x3", None)))
     assert out["verdict"].startswith("no reading")
     assert out["doses_spiking"] == ["x1"] and out["doses_silent"] == ["x1.5", "x2", "x3"]
+
+
+def test_graded_decide_rejects_a_control_that_matches_the_number_but_not_the_response():
+    series = _series(("x1", 697.), ("x1.5", 607.), ("x2", 549.))
+    series[0]["upstroke"]["count"] = 72
+    out = swap.graded_decide(series, control_reference=639.1, reference_count=10)
+    assert out["verdict"].startswith("control invalid") and "72" in out["verdict"]
+    assert "rows" not in out
+    series[0]["upstroke"]["count"] = 10
+    ok = swap.graded_decide(series, control_reference=639.1, reference_count=10)
+    assert ok["verdict"].startswith("function") and ok["control_count"] == 10
