@@ -3,7 +3,7 @@
 NEURON	{
 	SUFFIX NaTg
 	USEION na READ ena WRITE ina
-	RANGE gbar, g, ina, slow_inactivation, s_vhalf, s_slope, s_tau_ms, vshifth, vshiftm, slopeh, slopem, h_tau_factor, h_recovery_factor
+	RANGE gbar, g, ina, slow_inactivation, s_vhalf, s_slope, s_tau_entry_ms, s_tau_recovery_ms, vshifth, vshiftm, slopeh, slopem, h_tau_factor, h_recovery_factor
 }
 
 UNITS	{
@@ -15,9 +15,10 @@ UNITS	{
 PARAMETER	{
 	gbar = 0.00001 (S/cm2)
 	slow_inactivation = 0 : fraction of the conductance the slow gate can remove; 0 keeps the source mechanism
-	s_vhalf = -60 (mV)
+	s_vhalf = -50 (mV) : above the 200 pA plateau, so the gate is shut below threshold
 	s_slope = 6 (mV)
-	s_tau_ms = 1000 (ms)
+	s_tau_entry_ms = 10 (ms) : above the half-point, during a spike
+	s_tau_recovery_ms = 1000 (ms) : below the half-point, between sweeps
 	vshifth = 0 (mV)
 	vshiftm = 0 (mV)
 	h_tau_factor = 1
@@ -95,6 +96,6 @@ PROCEDURE rates(){
 		hTau = h_tau_factor*(1/(hAlpha + hBeta))/qt
 		hInf = hAlpha/(hAlpha + hBeta)
 		sInf = 1 - slow_inactivation/(1 + exp(-(v - s_vhalf)/s_slope))
-		sTau = s_tau_ms
+		sTau = s_tau_recovery_ms + (s_tau_entry_ms - s_tau_recovery_ms)/(1 + exp(-(v - s_vhalf)/s_slope))
 	UNITSON
 }

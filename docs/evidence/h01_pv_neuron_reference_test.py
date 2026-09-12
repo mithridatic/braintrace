@@ -216,9 +216,50 @@ def test_regional_scale_applies_after_the_single_slot_and_raises_on_no_match():
         exec(compile(ast.Module(body=loops, type_ignores=[]), "scaling", "exec"), scope)
 
 
+def test_mechanism_parameter_is_repeatable_and_rejects_malformed_text(monkeypatch):
+    scope = _cli_scope(monkeypatch, ["--mechanism-parameter", "NaTg:all:slow_inactivation:0.3",
+                                     "--mechanism-parameter", "NaTg:soma:s_tau_entry_ms:10"])
+    assert scope["mechanism_parameters"] == [
+        {"mechanism": "NaTg", "region": "all", "name": "slow_inactivation", "value": .3},
+        {"mechanism": "NaTg", "region": "soma", "name": "s_tau_entry_ms", "value": 10.}]
+    for text in ("NaTg:all:slow_inactivation", "NaTg:apex:slow_inactivation:0.3", "NaTg:all:slow_inactivation:nan"):
+        with pytest.raises(SystemExit) as error:
+            _cli_scope(monkeypatch, ["--mechanism-parameter", text])
+        assert error.value.code == 2
+
+
+def test_mechanism_parameter_sets_every_matching_section_and_raises_on_no_match_or_no_parameter():
+    tree = ast.parse(SOURCE.read_text())
+    loops = [n for n in tree.body if isinstance(n, ast.For) and ast.unparse(n).startswith("for item in mechanism_parameters")]
+    assert len(loops) == 1
+
+    class Section:
+        def __init__(self, family, mechs):
+            self._name, self._mechs, self.slow_inactivation_NaTg = f"Cell[0].{family}[0]", mechs, 0.
+
+        def name(self):
+            return self._name
+
+        def psection(self):
+            return {"density_mechs": self._mechs}
+
+    sections = [Section("soma", {"NaTg": {}}), Section("axon", {"NaTg": {}}), Section("dend", {})]
+    scope = {"cell": SimpleNamespace(all=sections),
+             "mechanism_parameters": [{"mechanism": "NaTg", "region": "all", "name": "slow_inactivation", "value": .3}]}
+    exec(compile(ast.Module(body=loops, type_ignores=[]), "parameters", "exec"), scope)
+    assert [s.slow_inactivation_NaTg for s in sections] == [.3, .3, 0.]
+    scope["mechanism_parameters"] = [{"mechanism": "NaTg", "region": "dend", "name": "slow_inactivation", "value": .3}]
+    with pytest.raises(RuntimeError, match="matched no section"):
+        exec(compile(ast.Module(body=loops, type_ignores=[]), "parameters", "exec"), scope)
+    scope["mechanism_parameters"] = [{"mechanism": "NaTg", "region": "soma", "name": "s_vhalf", "value": -50.}]
+    with pytest.raises(RuntimeError, match="no RANGE parameter"):
+        exec(compile(ast.Module(body=loops, type_ignores=[]), "parameters", "exec"), scope)
+
+
 def test_report_records_the_regional_scales():
     text = SOURCE.read_text()
     assert '"regional_scales": regional_scales' in text
+    assert '"mechanism_parameters": mechanism_parameters' in text
     assert '"conductance_intervention": {"mechanism": args.scale_conductance' in text
 
 

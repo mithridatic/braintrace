@@ -30,6 +30,8 @@ SP10_RESULT = "docs/evidence/h01-i-sk-result.md"
 SP11_CLOSE = "docs/evidence/h01-e-currents/stage-close-decision.json"
 E_CLOSE = "docs/evidence/h01-e-gain/stage-close-decision.json"
 CM = "docs/h01-causal-model.md"
+SP16 = "docs/specs/2026-09-12-h01-sodium-slow-inactivation.md"
+CYCLES = "docs/evidence/h01-topographic/cycle-tables.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -79,8 +81,14 @@ def build_nodes():
         n("levers", X, "Named levers dosed before a split (eliminated as a method, not as physics): Ih half, leak x1.5, SK 0.35, Nap zero (silences 200 pA), Im x100 (kills 310 pA), KsAHP 1 s and 5 s tails (over-brake 250/310 pA).",
           "Each was sized from counts, medians or an offset divided by an input resistance: lossy transforms of Y. The book's rule: locate the family and the branch first, then name a mechanism once.", [E_CLOSE, SP11_CLOSE, SP12_DEC, SP13_S1], "supported"),
         # next test
-        n("next", T, "Next (after Q1-Q3): one 2x2 dissection {E, I} x {kinetics as fitted, kinetics with slow sodium inactivation}. The signature follows the function if it moves toward both humans with one change.",
-          "Registered prediction and rejection to be written before the run; SP14 (brake plus gain lever) deferred.", [STRATEGY], "unverified"),
+        n("q4", Q, "Q4 (cyclical Matryoshka, retained traces, no run). What is the SHAPE of the use-dependence, cycle by cycle: a step or an accumulation; does it recover between sweeps?",
+          "Stage 0 compressed the cyclical family to one number (threshold first-to-last). Hartshorne ch.3: compare the same position in consecutive cycles; ch.5: a single compressed value loses the answer to the strategic question.", [CYCLES], "supported"),
+        n("q4_e", R, "E human, 230-350 pA (7 sweeps, one per drive): threshold steps +1.2 to +3.6 mV between spike 1 and spike 2 (inside the first interval) and then holds for the rest of the second at every drive; rise steps from 345-352 V/s to 0.86-0.93 of that, then drifts 5 percent. Spike 1 is identical in every sweep (rise sd 2.7 V/s): full recovery between sweeps. At 200 pA: one spike then a hold below threshold for 800 ms (0 spikes in 2 of 7 repeats).",
+          "Recovery bracket: longer than 800 ms, shorter than the inter-sweep gap.", [CYCLES], "supported"),
+        n("q4_i", R, "I human: at 0.27 nA the threshold steps +4 mV over the first 5 spikes (43 ms) then holds near -58.4 for 40 more spikes; rise 602 to 550 then holds. At 0.19 nA the climb is gradual across the whole second (-60.5 to -52, rise 597 to 452) as the intervals lengthen. Both fits: flat.",
+          "Two shapes in one cell: fast-then-flat at high drive, gradual at low drive.", [CYCLES], "supported"),
+        n("next", T, "Next (SP16, amended): one sodium gate with fast entry above its half-point and slow recovery below, applied to both fits; predictions per cycle with decision limits (E 1.0 mV, I 1.5 mV; spike-1 rise within 3.5 percent); E at 310 and 200 pA, I at 0.19 and 0.27 nA; eight evaluations.",
+          "The first draft's single 1 s time constant and -60 mV half-point were withdrawn before any run: the constant time constant cannot make the step, and the half-point removed 12 percent of sodium at the 200 pA plateau. SP14 (brake plus gain lever) deferred.", [SP16], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
         # policies
@@ -105,7 +113,11 @@ def build_edges():
         cm.edge("q2_function", "q3", "describes", "locate the function element energetically"),
         cm.edge("q3", "q3_v", "describes", "branch"),
         cm.edge("q3", "q3_t", "describes", "branch"),
-        cm.edge("q3_t", "next", "describes", "if use-dependent and shared"),
+        cm.edge("q3_t", "q4", "describes", "characterise the cycle before naming"),
+        cm.edge("q4", "q4_e", "describes", "E"),
+        cm.edge("q4", "q4_i", "describes", "I"),
+        cm.edge("q4_e", "next", "describes", "fixes entry and recovery separately"),
+        cm.edge("q4_i", "next", "describes", "fixes entry and recovery separately"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),
     ]
@@ -123,8 +135,8 @@ def document():
             "id": "search_tree", "title": TITLE, "effect": "Where the human-model contrast lives",
             "conditions": "Two human cells with repeats; two donor fits; retained traces from SP3-SP13 on the Vast executor.",
             "narrative": "A Hartshorne progressive search: Matryoshka family split, then inputs-against-function isolation, then the z-strategy load-curve split, before any mechanism is named. Grey branches are eliminated with the file that closed them; orange are retained; yellow are open; purple are the next tests; green are the policies.",
-            "uncertainties": "Q1's phase-plane small multiples and Q3's load curves are registered but not yet drawn. The 2x2 dissection is a hypothesis about the shared function, not a result.",
-            "predictions": "Q1 names elemental and cyclical as the families, structural as the shared pattern; Q3 separates in time after the spike; the dissection moves both cells with one change.",
+            "uncertainties": "SP16 is a hypothesis about the shared function with its time course fixed by the recordings, not a result.",
+            "predictions": "Q1 names elemental and cyclical as the families, structural as the shared pattern; Q3 separates in time after the spike; Q4 gives a step inside one interval that holds and recovers between sweeps; SP16 moves both cells with one change in that shape.",
             "nodeIds": [x["id"] for x in nodes], "testIds": [], "evidence": [], "status": "unverified", "origin": ORIGIN}],
         "nodes": nodes,
         "project": {"calendar": {"exceptions": [], "hours": 8, "weekdays": [1, 2, 3, 4, 5]}, "date": DATE, "direction": "forward", "resources": []},

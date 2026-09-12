@@ -1,5 +1,5 @@
 {
-  "id": "doc_05f30c51-c1e",
+  "id": "doc_44268397-d6d",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -135,11 +135,39 @@
         "label": "branch"
       },
       {
-        "id": "q3_t__next",
+        "id": "q3_t__q4",
         "source": "q3_t",
+        "target": "q4",
+        "relation": "describes",
+        "label": "characterise the cycle before naming"
+      },
+      {
+        "id": "q4__q4_e",
+        "source": "q4",
+        "target": "q4_e",
+        "relation": "describes",
+        "label": "E"
+      },
+      {
+        "id": "q4__q4_i",
+        "source": "q4",
+        "target": "q4_i",
+        "relation": "describes",
+        "label": "I"
+      },
+      {
+        "id": "q4_e__next",
+        "source": "q4_e",
         "target": "next",
         "relation": "describes",
-        "label": "if use-dependent and shared"
+        "label": "fixes entry and recovery separately"
+      },
+      {
+        "id": "q4_i__next",
+        "source": "q4_i",
+        "target": "next",
+        "relation": "describes",
+        "label": "fixes entry and recovery separately"
       },
       {
         "id": "levers__q3",
@@ -164,8 +192,8 @@
         "effect": "Where the human-model contrast lives",
         "conditions": "Two human cells with repeats; two donor fits; retained traces from SP3-SP13 on the Vast executor.",
         "narrative": "A Hartshorne progressive search: Matryoshka family split, then inputs-against-function isolation, then the z-strategy load-curve split, before any mechanism is named. Grey branches are eliminated with the file that closed them; orange are retained; yellow are open; purple are the next tests; green are the policies.",
-        "uncertainties": "Q1's phase-plane small multiples and Q3's load curves are registered but not yet drawn. The 2x2 dissection is a hypothesis about the shared function, not a result.",
-        "predictions": "Q1 names elemental and cyclical as the families, structural as the shared pattern; Q3 separates in time after the spike; the dissection moves both cells with one change.",
+        "uncertainties": "SP16 is a hypothesis about the shared function with its time course fixed by the recordings, not a result.",
+        "predictions": "Q1 names elemental and cyclical as the families, structural as the shared pattern; Q3 separates in time after the spike; Q4 gives a step inside one interval that holds and recovers between sweeps; SP16 moves both cells with one change in that shape.",
         "nodeIds": [
           "y",
           "q1",
@@ -181,6 +209,9 @@
           "q3_v",
           "q3_t",
           "levers",
+          "q4",
+          "q4_e",
+          "q4_i",
           "next",
           "q2_upstroke",
           "policy"
@@ -603,18 +634,75 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q4",
+        "type": "Search question",
+        "text": "Q4 (cyclical Matryoshka, retained traces, no run). What is the SHAPE of the use-dependence, cycle by cycle: a step or an accumulation; does it recover between sweeps?",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Stage 0 compressed the cyclical family to one number (threshold first-to-last). Hartshorne ch.3: compare the same position in consecutive cycles; ch.5: a single compressed value loses the answer to the strategic question.\n\nEvidence: docs/evidence/h01-topographic/cycle-tables.json",
+        "evidence": [
+          {
+            "id": "q4_ev0",
+            "title": "docs/evidence/h01-topographic/cycle-tables.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/cycle-tables.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q4_e",
+        "type": "Branch retained",
+        "text": "E human, 230-350 pA (7 sweeps, one per drive): threshold steps +1.2 to +3.6 mV between spike 1 and spike 2 (inside the first interval) and then holds for the rest of the second at every drive; rise steps from 345-352 V/s to 0.86-0.93 of that, then drifts 5 percent. Spike 1 is identical in every sweep (rise sd 2.7 V/s): full recovery between sweeps. At 200 pA: one spike then a hold below threshold for 800 ms (0 spikes in 2 of 7 repeats).",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Recovery bracket: longer than 800 ms, shorter than the inter-sweep gap.\n\nEvidence: docs/evidence/h01-topographic/cycle-tables.json",
+        "evidence": [
+          {
+            "id": "q4_e_ev0",
+            "title": "docs/evidence/h01-topographic/cycle-tables.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/cycle-tables.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q4_i",
+        "type": "Branch retained",
+        "text": "I human: at 0.27 nA the threshold steps +4 mV over the first 5 spikes (43 ms) then holds near -58.4 for 40 more spikes; rise 602 to 550 then holds. At 0.19 nA the climb is gradual across the whole second (-60.5 to -52, rise 597 to 452) as the intervals lengthen. Both fits: flat.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Two shapes in one cell: fast-then-flat at high drive, gradual at low drive.\n\nEvidence: docs/evidence/h01-topographic/cycle-tables.json",
+        "evidence": [
+          {
+            "id": "q4_i_ev0",
+            "title": "docs/evidence/h01-topographic/cycle-tables.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/cycle-tables.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next (after Q1-Q3): one 2x2 dissection {E, I} x {kinetics as fitted, kinetics with slow sodium inactivation}. The signature follows the function if it moves toward both humans with one change.",
+        "text": "Next (SP16, amended): one sodium gate with fast entry above its half-point and slow recovery below, applied to both fits; predictions per cycle with decision limits (E 1.0 mV, I 1.5 mV; spike-1 rise within 3.5 percent); E at 310 and 200 pA, I at 0.19 and 0.27 nA; eight evaluations.",
         "status": "unverified",
         "confidence": null,
-        "notes": "Registered prediction and rejection to be written before the run; SP14 (brake plus gain lever) deferred.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "The first draft's single 1 s time constant and -60 mV half-point were withdrawn before any run: the constant time constant cannot make the step, and the half-point removed 12 percent of sodium at the 200 pA plateau. SP14 (brake plus gain lever) deferred.\n\nEvidence: docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
         "evidence": [
           {
             "id": "next_ev0",
-            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "title": "docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -918,13 +1006,77 @@
         ]
       },
       {
-        "id": "review_q3_t__next",
-        "edgeId": "q3_t__next",
+        "id": "review_q3_t__q4",
+        "edgeId": "q3_t__q4",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q3_t__next",
+            "id": "reservation_q3_t__q4",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q4__q4_e",
+        "edgeId": "q4__q4_e",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q4__q4_e",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q4__q4_i",
+        "edgeId": "q4__q4_i",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q4__q4_i",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q4_e__next",
+        "edgeId": "q4_e__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q4_e__next",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q4_i__next",
+        "edgeId": "q4_i__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q4_i__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

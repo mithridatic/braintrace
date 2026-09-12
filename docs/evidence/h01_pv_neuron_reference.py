@@ -67,6 +67,19 @@ def _parse_scale(text):
     return {"mechanism": parts[0], "region": parts[1], "factor": factor}
 
 
+def _parse_mechanism_parameter(text):
+    """Parse ``MECHANISM:REGION:NAME:VALUE`` (mirrors ``h01_l2_neuron_reference.parse_mechanism_parameter``)."""
+    parts = str(text).split(":")
+    if len(parts) != 4:
+        raise ValueError("Mechanism parameter must be MECHANISM:REGION:NAME:VALUE.")
+    if parts[1] not in SCALE_REGIONS:
+        raise ValueError("Mechanism parameter region must be one of "+", ".join(SCALE_REGIONS)+".")
+    value = float(parts[3])
+    if not np.isfinite(value):
+        raise ValueError("Mechanism parameter value must be finite.")
+    return {"mechanism": parts[0], "region": parts[1], "name": parts[2], "value": value}
+
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--current-na", type=float, required=True)
 parser.add_argument("--bias-na", type=float, default=0.)
@@ -89,6 +102,9 @@ parser.add_argument("--conductance-region", choices=("all", "soma", "axon"), def
 parser.add_argument("--scale", action="append", default=[], metavar="MECH:REGION:FACTOR",
                     help="repeatable regional density scale applied after the single --scale-conductance slot; "
                          "mechanism NaTg, Kv3_1 or SK; region soma, axon, dend, apic or all")
+parser.add_argument("--mechanism-parameter", action="append", default=[], metavar="MECH:REGION:NAME:VALUE",
+                    help="repeatable; sets a RANGE parameter of an inserted mechanism in every section of the "
+                         "region (e.g. NaTg:all:slow_inactivation:0.3); applied after the scales")
 parser.add_argument("--cvode-atol", type=float)
 parser.add_argument("--passive", action="store_true")
 parser.add_argument("--nseg-factor", type=int, default=1)
@@ -149,6 +165,7 @@ if args.cvode_atol is not None and (not np.isfinite(args.cvode_atol) or args.cvo
     parser.error("CVode absolute tolerance must be positive and finite.")
 try:
     regional_scales = [_parse_scale(text) for text in args.scale]
+    mechanism_parameters = [_parse_mechanism_parameter(text) for text in args.mechanism_parameter]
     biophys_procedure = _biophys_procedure(args.biophys)
 except ValueError as error:
     parser.error(str(error))
@@ -218,6 +235,19 @@ for scale in regional_scales:
             touched += 1
     if not touched:
         raise RuntimeError(f"Scale {scale} matched no section carrying the mechanism.")
+for item in mechanism_parameters:
+    touched = 0
+    for section in cell.all:
+        family = section.name().split(".", 1)[1].split("[", 1)[0]
+        selected = item["region"] == "all" or family == item["region"]
+        if selected and item["mechanism"] in section.psection()["density_mechs"]:
+            parameter = item["name"]+"_"+item["mechanism"]
+            if not hasattr(section, parameter):
+                raise RuntimeError(f"{item['mechanism']} carries no RANGE parameter {item['name']}.")
+            setattr(section, parameter, item["value"])
+            touched += 1
+    if not touched:
+        raise RuntimeError(f"Mechanism parameter {item} matched no section carrying the mechanism.")
 for section in cell.all:
     family = section.name().split(".", 1)[1].split("[", 1)[0]
     selected = (args.refine_region == "all" or family == args.refine_region
@@ -328,6 +358,7 @@ report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942
           "conductance_intervention": {"mechanism": args.scale_conductance, "factor": args.conductance_factor,
                                        "region": args.conductance_region},
           "regional_scales": regional_scales,
+          "mechanism_parameters": mechanism_parameters,
           "nseg_factor": args.nseg_factor,
           "unselected_nseg_factor": args.unselected_nseg_factor,
           "refine_region": args.refine_region,

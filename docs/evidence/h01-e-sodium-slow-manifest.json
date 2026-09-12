@@ -1,0 +1,165 @@
+{
+  "purpose": "SP16 (E side): the pinned NaTs mechanism rebuilt with the slow inactivation gate (docs/evidence/h01-l2-mechanisms/NaTs.slow.mod installed over kv3-closing-source/NaTs.mod, SUFFIX kept). Stage 0 reruns the unchanged nseg-9 B3 candidate at depth 0 and must reproduce the retained 310 pA reference; stage 1 doses the gate at depths 0.3 and 0.6 at 310 and 200 pA. Specification: docs/specs/2026-09-12-h01-sodium-slow-inactivation.md (amended).",
+  "cap": 6,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 1800,
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2) from the clean worktree /workspace/braintrace-q2; the library is recompiled with nrnivmodl after the patched NaTs.mod is installed, and the provenance digest (docs/evidence/h01-l2-mechanisms/slow-inactivation-provenance.json) is checked against the installed file before stage 0.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-sodium-slow",
+  "inputs": {
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ],
+    "sweep56": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "56",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed and is not an input.",
+  "evaluation": "One candidate at one sweep = one evaluation; stage 0 spends one (sweep 53), stage 1 four.",
+  "base_candidate": {
+    "file": "h01-e-cable-load-manifest.json#c10-area-310-n9",
+    "note": "The nseg-9 B3 flags without the membrane-area factor: the retained reference at 310 pA (count 10, spike-1 rise 639.1 V/s, first spike 34.2 ms, threshold -57.2 mV) and at 200 pA (count 4, rise 598 V/s, first spike 126.9 ms, post-spike level -65.0 mV)."
+  },
+  "reference": {
+    "sweep53": {
+      "count": 10,
+      "max_rise_v_s": 639.1,
+      "first_spike_ms": 34.2,
+      "threshold_mv": -57.2
+    },
+    "sweep56": {
+      "count": 4,
+      "max_rise_v_s": 598.0,
+      "first_spike_ms": 126.9,
+      "threshold_mv": -57.2,
+      "level_p50_mv": -65.0
+    }
+  },
+  "decision_limits": {
+    "threshold_mv": 1.0,
+    "rise_fraction": 0.035,
+    "first_spike_ms": 23.0
+  },
+  "stages": {
+    "0": {
+      "title": "Stage 0: reproduction at depth 0 with the patched library, sweep 53",
+      "prediction": "Count 10; spike-1 rise within 3.5 percent of 639.1 V/s; threshold -57.2 mV within 0.1 mV on every spike; first spike within 1 ms of 34.2 ms.",
+      "rejection": "Any difference beyond those: the patch changed the mechanism; no dose is run.",
+      "unchanged": "Everything: same flags, same mesh, same solver tolerance; only the compiled NaTs differs."
+    },
+    "1": {
+      "title": "Stage 1: depths 0.3 and 0.6 at 310 pA and at 200 pA",
+      "prediction": "310 pA: spike-1 rise and first-spike time unchanged; threshold step spike 1 to 2 at least +1.0 mV, growing with depth towards +1.4; spike-2 rise falling towards 0.86 of spike 1; spike 10 minus spike 5 within 1.0 mV; count 9 or 10. 200 pA: spike-1 rise and first-spike time unchanged; count falls from 4 towards 1 (at most 3 at depth 0.6); post-spike level moves from -65.0 towards -67.1 mV.",
+      "rejection": "Spike-1 rise or first-spike time moves at either input; count at 310 pA below 9; the threshold accumulates (spike 10 minus spike 5 above 1.0 mV); no 1.0 mV step at depth 0.6.",
+      "unchanged": "Every flag but the dose; nseg 9; both inputs reported (both tiers)."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s0-repro-n9",
+      "stage": "0",
+      "arm": "reproduction",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 0: launched with --only-input sweep53"
+    },
+    {
+      "name": "s1-d03-n9",
+      "stage": "1",
+      "arm": "dissection",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "mechanism_parameter": [
+          "NaTs:soma:slow_inactivation:0.3",
+          "NaTs:axon:slow_inactivation:0.3"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 1: both inputs"
+    },
+    {
+      "name": "s1-d06-n9",
+      "stage": "1",
+      "arm": "dissection",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "mechanism_parameter": [
+          "NaTs:soma:slow_inactivation:0.6",
+          "NaTs:axon:slow_inactivation:0.6"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 1: both inputs"
+    }
+  ]
+}

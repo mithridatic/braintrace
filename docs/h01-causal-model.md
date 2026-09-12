@@ -195,9 +195,13 @@ level, 0.38 mV in threshold, 5 V/s in rise and 8 ms in first-spike latency
 ([decision](evidence/h01-topographic/stage-0-decision.json), [figures](evidence/h01-topographic/)).
 The first spike of the two cells rises at the same rate, 597 against 592 V/s, so no
 difference in sodium density or in near-soma charging is available to explain the train.
-Along the train the two separate in two ways that accumulate: the recorded threshold climbs
-4.8 mV over the 0.27 nA train while the finalist's climbs 0.9 mV, and the recorded rise
-falls to 450 V/s by the last cycle at 0.19 nA while the finalist holds 590 V/s. Between
+Along the train the two separate in the threshold and in the rise, and the shape of the
+separation depends on the drive. At 0.27 nA the recorded threshold rises 4 mV over the first
+five spikes, inside 43 ms, and then holds near -58.4 mV for forty more spikes while the
+finalist's holds at -60.5 mV; the recorded rise falls from 602 to 550 V/s over the same
+five spikes and then holds. At 0.19 nA the recorded threshold climbs across the whole
+second, from -60.5 to -52 mV, and the rise falls to 450 V/s, as the intervals lengthen; the
+finalist holds both flat ([cycle tables](evidence/h01-topographic/cycle-tables.md)). Between
 spikes the two cells also differ by time since the spike rather than by voltage. Just after
 a spike, between -78 and -65 mV, the recorded cell is carried to its next threshold in six
 to eight milliseconds by a small net inward current, while the finalist absorbs 0.16 to
@@ -208,12 +212,15 @@ and is not treated as a separate effect.
 The finalist's onset capacitance is 57 pF against the recorded cell's 70 pF. That is a
 difference in the input, not in the channels, and it has no repeat spread of its own yet.
 
-**Consequence.** A climbing threshold with a falling rise, appearing only along a train and
-recovering between trains, is what sodium channels do when they inactivate slowly. Both
-this fit and the pyramidal fit carry the same Colbert and Pan 2002 sodium equations, which
-inactivate quickly and not slowly, so the same missing element would produce this signature
-in both cells. [SP16](specs/2026-09-12-h01-sodium-slow-inactivation.md) applies that one
-change to both and states what would refute it. Changing the axonal SK dose will not
+**Consequence.** A threshold that rises with a falling rise, appearing only along a train,
+entering within a few spikes and recovering between trains, is what sodium channels do when
+they inactivate slowly: entry is fast while the membrane is depolarised and recovery is slow
+at rest. Both this fit and the pyramidal fit carry the same Colbert and Pan 2002 sodium
+equations, which inactivate quickly and not slowly, so the same missing element would
+produce this signature in both cells. [SP16](specs/2026-09-12-h01-sodium-slow-inactivation.md)
+applies that one change to both, with separate entry and recovery time constants, and
+states what would refute it. A gate with one time constant of a second will not produce it,
+because it cannot both rise inside 43 ms and hold for a second. Changing the axonal SK dose will not
 produce it, because that conductance is calcium-driven and grows with input, while the
 recorded cell's late slowing shrinks with input.
 
@@ -245,7 +252,9 @@ offset describes it. Three further differences are large against the recording's
 | difference | human | model | spreads |
 | --- | ---: | ---: | ---: |
 | spike rise, every cycle and input | 347.7 V/s | 639.1 V/s | 177 |
-| threshold climb along the 310 pA train | +2.1 mV | +0.1 mV | 8 |
+| threshold step from spike 1 to spike 2, 310 pA train | +1.4 mV | +0.0 mV | 6 |
+| threshold at spike 5 against spike 1, 310 pA train | +3.6 mV | +0.0 mV | 14 |
+| rise of spike 2 against spike 1, 310 pA train | 0.86 | 1.04 | 40 |
 | level after a spike at 200 pA | -67.06 mV | -65.00 mV | 7 |
 
 The model's first spike is also early, by less than four spreads of the recording's own
@@ -277,10 +286,18 @@ spike of a train. A conductance that opens with a spike and stays open for secon
 sufficient to reproduce the single-spike response at 200 pA, with the pre-spike trace and
 the first spike unchanged, and it is not sufficient for the trains, because the dose that
 holds the 200 pA level accumulates along the faster trains and removes spikes the recording
-keeps. Both fits carry the same Colbert and Pan 2002 sodium equations, which inactivate
-quickly and not slowly. Slow inactivation, fitted to none of these cells, would leave the
-first spike alone because it is released at rest, would raise the threshold along the train,
-and would lower the rise of later spikes while sparing the first.
+keeps. Read spike by spike, the recorded change has one shape at every drive from 230 to
+350 pA: the threshold steps up and the rise steps down between spike 1 and spike 2, inside
+the first interval, keep moving through spike 5, and then hold for the rest of the second;
+spike 1 is the same in every sweep, so the change has recovered by the next sweep; and at
+200 pA one spike is followed by 800 ms without another, so it has not recovered inside
+800 ms ([cycle tables](evidence/h01-topographic/cycle-tables.md)). The model holds
+threshold and rise flat at every drive. Both fits carry the same Colbert and Pan 2002
+sodium equations, which inactivate quickly and not slowly. Slow inactivation, fitted to
+none of these cells, enters during a spike and recovers at rest over about a second; it
+would leave the first spike alone because the gate is shut below threshold, would step the
+threshold at spike 2 and hold it, would lower the rise of later spikes while sparing the
+first, and would remove the later spikes at 200 pA.
 
 **Consequence.** Matching the model's cable to the recorded cell will have little effect on
 the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
@@ -620,6 +637,7 @@ The [contract](specs/2026-09-05-h01-recorded-response-acceptance-proposal.md) de
 A control qualifies only if it reproduces the compared response, not one summary value of it. A control that matched a spike rise within 9 percent while firing 72 times against a reference 10 is not a control.
 A rate of change is qualified only on a uniform time grid. The variable-step solver samples densely through a spike upstroke, which inflates a sampled maximum rise; every rise in this document is measured after resampling.
 A slope is qualified only over the observed range of its own variable. A dose outside the range the recorded cell occupies measures the model, not the difference from the recording.
+A response along a train is qualified only cycle by cycle. One number per train, such as the threshold first to last, hides whether the change is a step inside one interval or an accumulation over the second, and those two shapes name different time constants.
 Numerical qualification needs the same physical model at the compared numerical settings.
 Transfer qualification needs the same donor, input, state, mesh, and parameter laws across implementations.
 Human qualification needs agreement with the specified recording.
