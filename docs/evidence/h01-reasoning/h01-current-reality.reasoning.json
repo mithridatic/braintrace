@@ -1,5 +1,5 @@
 {
-  "id": "doc_0f4e96ff-9bf",
+  "id": "doc_6931f7d6-2a0",
   "title": "H01 model vs human recordings",
   "graph": {
     "classes": [
@@ -203,14 +203,42 @@
         "source": "inj_sp11",
         "target": "rc_vdep",
         "relation": "describes",
-        "label": "stage 1 not spent: Nap/Im cannot carry the offset"
+        "label": "Nap arm spent as INJ3 control; Im arm not spent"
       },
       {
-        "id": "inj_sp12__rc_vdep",
+        "id": "inj_sp12__ie_e_postspike",
         "source": "inj_sp12",
+        "target": "ie_e_postspike",
+        "relation": "describes",
+        "label": "sufficient to remove the excess spikes; 1 s tail too short"
+      },
+      {
+        "id": "inj_sp12__ie_e_nap",
+        "source": "inj_sp12",
+        "target": "ie_e_nap",
+        "relation": "describes",
+        "label": "control arm measured this"
+      },
+      {
+        "id": "ie_e_nap__rc_vdep",
+        "source": "ie_e_nap",
         "target": "rc_vdep",
         "relation": "describes",
-        "label": "proposed test (draft, needs approval)"
+        "label": "pre-spike part: Nap is necessary for the first spike"
+      },
+      {
+        "id": "inj_sp13__rc_vdep",
+        "source": "inj_sp13",
+        "target": "rc_vdep",
+        "relation": "describes",
+        "label": "executed: sufficient at 200 pA, over-brakes 250/310 pA"
+      },
+      {
+        "id": "inj_sp13__ie_cross",
+        "source": "inj_sp13",
+        "target": "ie_cross",
+        "relation": "describes",
+        "label": "points to a compensating gain error in B3 at 310 pA"
       }
     ],
     "events": [],
@@ -247,6 +275,8 @@
           "inj_sp10",
           "inj_sp11",
           "inj_sp12",
+          "inj_sp13",
+          "ie_e_nap",
           "j_e",
           "j_i_late",
           "j_i_count"
@@ -254,7 +284,7 @@
         "testIds": [],
         "evidence": [],
         "status": "unverified",
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       }
     ],
     "nodes": [
@@ -272,7 +302,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ude_e_lowdrive_ev1",
@@ -280,10 +310,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ude_i_count",
@@ -299,7 +329,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ude_i_count_ev1",
@@ -307,10 +337,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-reserve/stage-1-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ude_i_burst",
@@ -326,7 +356,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ude_i_burst_ev1",
@@ -334,10 +364,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ude_i_latecycle",
@@ -353,10 +383,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ude_i_width",
@@ -372,7 +402,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ude_i_width_ev1",
@@ -380,7 +410,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-multivari-i.png",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ude_i_width_ev2",
@@ -388,10 +418,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ude_pop",
@@ -407,7 +437,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-104-corrected-initialization-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ude_pop_ev1",
@@ -415,10 +445,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_axial",
@@ -434,7 +464,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_axial_ev1",
@@ -442,7 +472,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-causal-current-observations-2026-09-09.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_axial_ev2",
@@ -450,10 +480,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-energetic-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_sk",
@@ -469,7 +499,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/stage-1-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_sk_ev1",
@@ -477,7 +507,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_sk_ev2",
@@ -485,10 +515,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_sk_confounded",
@@ -504,7 +534,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-causal-current-observations-2026-09-09.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_sk_confounded_ev1",
@@ -512,10 +542,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_i_late_fi",
@@ -531,7 +561,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_i_late_fi_ev1",
@@ -539,10 +569,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/stage-1-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_kv3",
@@ -558,7 +588,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_kv3_ev1",
@@ -566,10 +596,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-energetic-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_passive",
@@ -585,7 +615,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_passive_ev1",
@@ -593,18 +623,18 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-g-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_e_passthrough",
         "type": "Intermediate Effect",
-        "text": "IE6 (measured by INJ2 stage 0). E cell: between spikes the B3 soma is a pass-through. At 200 pA it passes 0.188 of the applied 0.196 nA into the cable (96 percent); the soma ionic terms sum to about -9 pA (leak -6.6, Kv3 -3.0, SK -1.7, NaTs +1.5, Nap +1.5, Im -0.1 pA); net drift below 0.2 pA. Only SK changes with input (-7 pA at 250, -13 pA at 310).",
+        "text": "IE6 (measured by INJ2 stage 0; corrected by the 2026-09-11 erratum). E cell: the recorded balance is that of the middle soma segment, one of nine (65.8 of 592 um2). Whole-soma interspike estimates at 200 pA: leak -0.058, Kv3 -0.017, SK -0.016, NaTs +0.010, Nap +0.012, Im -0.0002 nA, summing to -0.069 nA (35 percent of the applied 0.196 nA). Of the segment's 0.188 nA axial outflow, 0.061 nA enters the neighbouring soma segments and 0.128 nA the cable. 'The soma is a pass-through' is withdrawn.",
         "status": "supported",
         "confidence": null,
-        "notes": "Consequence for the registered levers: Nap can supply at most 1.7 pA and Im 0.2 pA at the plateau, against an offset of 20-50 pA (0.02-0.05 nA) to carry; an Im dose that reaches it (about 100x) acts more strongly at the 310 pA threshold and removes that train. Under the scorer's rules the only admissible boundary is the axial current: the lever lives in the cable or in a mechanism the fit lacks. B3 reproduced exactly with currents recorded (counts 4/8/10, peak times and troughs identical to g0-b3, axon-first).\n\nEvidence: docs/evidence/h01-e-currents/stage-close-decision.json; docs/evidence/h01-e-currents-result.md",
+        "notes": "Whole-soma Nap (+0.012 nA) is 59 percent of the 0.020 nA p50 offset; the earlier '8 percent' and the 'not spent by construction' reasoning for the Nap arm are withdrawn (erratum in the SP11 close decision). A baseline current does not bound an intervention effect: removing Nap silenced 200 pA entirely (INJ3 control). B3 reproduced exactly with currents recorded (counts 4/8/10, peak times and troughs identical to g0-b3, axon-first).\n\nEvidence: docs/evidence/h01-e-currents/stage-close-decision.json; docs/evidence/h01-e-currents-result.md",
         "evidence": [
           {
             "id": "ie_e_passthrough_ev0",
@@ -612,7 +642,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_e_passthrough_ev1",
@@ -620,10 +650,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_e_postspike",
@@ -639,7 +669,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_e_postspike_ev1",
@@ -647,7 +677,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_e_postspike_ev2",
@@ -655,10 +685,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_e_threshold",
@@ -674,7 +704,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_e_threshold_ev1",
@@ -682,10 +712,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_cross",
@@ -701,7 +731,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_cross_ev1",
@@ -709,7 +739,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_cross_ev2",
@@ -717,7 +747,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_cross_ev3",
@@ -725,10 +755,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "ie_pop_runtime",
@@ -744,7 +774,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-104-corrected-initialization-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "ie_pop_runtime_ev1",
@@ -752,10 +782,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "rc_vdep",
@@ -763,34 +793,42 @@
         "text": "RC1 (open). E cell: the current that removes three spikes at 200-250 pA while leaving the 310 pA train and the sweep-43 return fixed must be voltage- or use-dependent and lies outside the fit's passive family.",
         "status": "unverified",
         "confidence": null,
-        "notes": "After INJ2 the unresolved link is narrowed: the current holds the human 2-6 mV below the model after a spike at 200 pA, is silent without a spike (110 pA rows), is not in the soma genome, and is carried through the cable boundary. Candidates (SP11 close): a spike-triggered slow outward current (sAHP or KNa; SP12 draft); dendritic or axonal placement of an existing outward conductance; a second human L2/3 donor with a recorded f-I curve (SP6b lead). Nap-down and Im-up are excluded (cannot carry the offset). Each candidate is a new spec with its own cap.\n\nEvidence: docs/evidence/h01-e-currents/stage-close-decision.json; docs/evidence/h01-e-gain/stage-close-decision.json; docs/h01-causal-model.md",
+        "notes": "After INJ2 the unresolved link is narrowed: the current holds the human 2-6 mV below the model after a spike at 200 pA, is silent without a spike (110 pA rows), is not in the soma genome, and is carried through the cable boundary. After INJ3 the post-spike part of the link has a sufficient mechanism (a spike-triggered outward gate) whose tail must be longer than 1 s; INJ4 tests 5 s. The pre-spike part (B3 fires 78 ms early at 200 pA) is not addressed by that gate; Nap is a necessary condition for that spike (IE12) and a partial Nap dose is a candidate for it. Im-up stays unspent (needs 100x). Other candidates: dendritic or axonal placement of an existing outward conductance; a second human L2/3 donor (SP6b lead).\n\nEvidence: docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-currents/stage-close-decision.json; docs/evidence/h01-e-gain/stage-close-decision.json; docs/h01-causal-model.md",
         "evidence": [
           {
             "id": "rc_vdep_ev0",
+            "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "rc_vdep_ev1",
             "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "rc_vdep_ev1",
+            "id": "rc_vdep_ev2",
             "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "rc_vdep_ev2",
+            "id": "rc_vdep_ev3",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "rc_burst",
@@ -806,7 +844,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "rc_burst_ev1",
@@ -814,7 +852,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/stage-1-decision.json",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "rc_burst_ev2",
@@ -822,10 +860,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "rc_donor",
@@ -841,7 +879,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "rc_donor_ev1",
@@ -849,7 +887,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "rc_donor_ev2",
@@ -857,7 +895,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-donors/stage-hl5mn1-decision.json",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "rc_donor_ev3",
@@ -865,10 +903,10 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-donors/stage-allen-l4-decision.json",
             "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "inj_sp10",
@@ -884,7 +922,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/stage-1-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "inj_sp10_ev1",
@@ -892,7 +930,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "inj_sp10_ev2",
@@ -900,7 +938,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-i-sk-isolation.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "inj_sp10_ev3",
@@ -908,18 +946,18 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-manifest.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "inj_sp11",
         "type": "Injection",
-        "text": "INJ2 (stage 0 executed PASS 12/12; stage 1 registered, NOT spent; CLOSED). SP11: unchanged B3 rerun with record_soma_currents at 200, 250, 310 pA reproduced g0-b3 exactly (counts 4/8/10, identical peak times and troughs, axon-first) with every soma current recorded.",
+        "text": "INJ2 (stage 0 executed PASS 12/12; stage 1: Nap arm spent as the INJ3 control, Im arm not spent; CLOSED with erratum). SP11: unchanged B3 rerun with record_soma_currents at 200, 250, 310 pA reproduced g0-b3 exactly (counts 4/8/10, identical peak times and troughs, axon-first) with every soma current recorded.",
         "status": "supported",
         "confidence": null,
-        "notes": "Stage 0 prediction held: counts 4, 8, 10; crossings within 0.1 ms; troughs within 0.1 mV; axon-first. Stage 1 (n1-nap-* Nap reduced, k1-im-* Im raised) not spent under the fail-fast rule: both fail the registered 200 pA band (count 1) by construction, since the current they can add or remove at the plateau is at most 0.0017 nA against an offset of 0.020-0.05 nA, and the Im dose that closes the gap removes the 310 pA train (registered rejection). One evaluation spent of three. Runs took 885, 981 and 1015 s. B3 stays frozen and unpromoted; causal model Y4 updated in the same commit.\n\nEvidence: docs/evidence/h01-e-currents/stage-close-decision.json; docs/evidence/h01-e-currents-result.md; docs/specs/2026-09-11-h01-e-current-measurement.md; docs/evidence/h01-e-currents-manifest.json",
+        "notes": "Stage 0 prediction held: counts 4, 8, 10; crossings within 0.1 ms; troughs within 0.1 mV; axon-first. Erratum 2026-09-11: the current tables are one soma segment of nine; whole-soma Nap is +0.012 nA (59 percent of the p50 offset), so the 'by construction' reason for not spending the Nap arm is withdrawn; it was spent as the INJ3 comparison arm and silenced 200 pA. The Im arm (0.0002 nA whole soma; 100x dose acts at the 310 pA threshold) stays unspent. One evaluation spent of three. Runs took 885, 981 and 1015 s. B3 stays frozen and unpromoted; causal model Y4 updated in the same commit.\n\nEvidence: docs/evidence/h01-e-currents/stage-close-decision.json; docs/evidence/h01-e-currents-result.md; docs/specs/2026-09-11-h01-e-current-measurement.md; docs/evidence/h01-e-currents-manifest.json",
         "evidence": [
           {
             "id": "inj_sp11_ev0",
@@ -927,7 +965,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "inj_sp11_ev1",
@@ -935,7 +973,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents-result.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "inj_sp11_ev2",
@@ -943,7 +981,7 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-current-measurement.md",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "inj_sp11_ev3",
@@ -951,37 +989,131 @@
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents-manifest.json",
             "stance": "supports",
-            "origin": "repository file inspected 2026-09-11"
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "inj_sp12",
         "type": "Injection",
-        "text": "INJ3 (proposed, DRAFT, not approved, not run). SP12: a spike-triggered, long-lasting outward current absent from the Allen genome (slow calcium-activated potassium, sAHP, or sodium-activated potassium, KNa) on the E cell. Needs a new mod file (KsAHP.mod or KNa.mod) in the kv3-closing-source library and user approval before code.",
-        "status": "unverified",
+        "text": "INJ3 (executed 2026-09-12, stage 0 FAIL under the registered bands; 3 of 4 evaluations; stage 1 not opened). SP12: a phenomenological spike-triggered gate (KsAHP.mod: opens above -20 mV with a 1 ms rise, closes with a 1000 ms tail) on the B3 soma at two doses fixed from the retained trace (3.50e-4 and 1.03e-3 S/cm2), plus a Nap-removal comparison arm. Dose A: count 1 at 200 pA with B3's first spike and pre-spike trace unchanged (0.000 mV), mid-pulse p50 within 0.5 mV of the human, late p50 +1.26 mV (band 1 mV): 5 of 6 bands. Dose B overshoots (mid -73.5, late -70.3 mV). Nap zero: no spike at all.",
+        "status": "supported",
         "confidence": null,
-        "notes": "Predicted signature: (1) a post-spike level shift that persists over the 1 s pulse at rheobase; (2) an accumulating brake at 250 pA that spreads cycles to about 300 ms; (3) little effect on the late 310 pA train; (4) a rising threshold only if paired with sodium slow inactivation. Registered predictions (dose to be fixed before any run): stage 0 dose scan on sweep 56, post-spike late-pulse p50 within 1 mV of -67.4 mV with count 1 (band 1-2); stage 1 at sweeps 50, 53, 43: 250 pA count 5-7 with cycles 4-5 of 250-350 ms, 310 pA count 9-10 with late cycles within 12.8 ms of 120 ms, sweep-43 onset rows within 1 mV of g0-b3. Rejection: 310 pA count below 9 (and the further clauses in the draft). Excluded by construction: a uniform outward conductance active from -72 mV; a faster SK dose.\n\nEvidence: docs/specs/2026-09-11-h01-e-spike-triggered-outward.md; docs/evidence/h01-e-currents/stage-close-decision.json",
+        "notes": "Reading: dose A follows the human within 0.5 mV from 1240 to 1700 ms and then rises 1.4 mV as the 1 s gate decays; the human's post-spike shift does not decay within the pulse. So a spike-triggered outward current is sufficient to remove the three excess 200 pA spikes without touching the pre-spike response; the 1 s tail is not sufficient for the level over the whole pulse. The gate carrier is not the fit's calcium (soma cai 1.0e-4 to 2.8e-4 mM, not spike-shaped). The comparison arm broke its prediction the other way: Nap is a rheobase lever (4 to 0 spikes), its signature differs from the human's one spike. Not addressed: B3's first spike 78 ms early. Runs 635 and 656 s on the Vast box; library recompiled with KsAHP.mod.\n\nEvidence: docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-sahp-result.md; docs/specs/2026-09-11-h01-e-spike-triggered-outward.md; docs/evidence/h01-e-sahp-manifest.json",
         "evidence": [
           {
             "id": "inj_sp12_ev0",
-            "title": "docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
+            "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
-            "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "inj_sp12_ev1",
-            "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
+            "title": "docs/evidence/h01-e-sahp-result.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
-            "stance": "context",
-            "origin": "repository file inspected 2026-09-11"
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-result.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "inj_sp12_ev2",
+            "title": "docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-11-h01-e-spike-triggered-outward.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "inj_sp12_ev3",
+            "title": "docs/evidence/h01-e-sahp-manifest.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-manifest.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
           }
         ],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node"
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "inj_sp13",
+        "type": "Injection",
+        "text": "INJ4 (executed 2026-09-12; stage 0 PASS 6/6, stage 1 FAIL 11/16; CLOSED, 2 of 2 evaluations). SP13: the same gate with a 5 s tail at 3.12e-4 S/cm2, sized from the two SP12 doses. 200 pA: one spike at B3's time, mid -67.94 and late -67.32 mV (human -67.47, -67.06; derived prediction -67.43, -67.06), every 100 ms median within 1 mV. 110 pA: five onset rows equal B3 to 0.000 mV. 250 pA: count 3 (doublet, then 442 ms silence) vs human 5. 310 pA: count 7, late cycles 184 ms vs human 10 at 120 ms; gate 0.83 and 0.96.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Inference: a spike-triggered brake that persists for seconds is sufficient for the 200 pA response and silent without a spike, but a single non-saturating brake cannot serve 200, 250 and 310 pA together because it accumulates while the human's 310 pA cycles equal unchanged B3's. Not separated by this test: (a) the human's brake saturates after one spike and B3 lands 310 pA only through a compensating low gain (IE11), or (b) the 200 pA shift is not a brake that persists into a train. The 250 pA doublet-then-silence points to (a). Draft SP14: saturating gate plus one gain lever, not approved.\n\nEvidence: docs/specs/2026-09-12-h01-e-sahp-tail.md; docs/evidence/h01-e-sahp-tail-manifest.json; docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-sahp-tail/stage-1-decision.json; docs/evidence/h01-e-sahp-tail-result.md",
+        "evidence": [
+          {
+            "id": "inj_sp13_ev0",
+            "title": "docs/specs/2026-09-12-h01-e-sahp-tail.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-e-sahp-tail.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "inj_sp13_ev1",
+            "title": "docs/evidence/h01-e-sahp-tail-manifest.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail-manifest.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "inj_sp13_ev2",
+            "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "inj_sp13_ev3",
+            "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "inj_sp13_ev4",
+            "title": "docs/evidence/h01-e-sahp-tail-result.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail-result.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "ie_e_nap",
+        "type": "Intermediate Effect",
+        "text": "IE12 (measured by INJ3 control). E cell: with soma Nap density 0, B3 gives no spike at 200 pA (pulse maximum -63.0 mV; level 2.0 mV below B3 before B3's first spike). Nap is a necessary condition for the first spike under B3's settings at this input.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Its baseline current (+0.012 nA whole soma) did not bound the intervention effect. Nap removal does not reproduce the human (one spike, then a lower level); partial Nap doses are not excluded and would act before the first spike, where B3 is 78 ms early.\n\nEvidence: docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-sahp-result.md",
+        "evidence": [
+          {
+            "id": "ie_e_nap_ev0",
+            "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "ie_e_nap_ev1",
+            "title": "docs/evidence/h01-e-sahp-result.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-result.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node"
       },
       {
         "id": "j_e",
@@ -991,7 +1123,7 @@
         "confidence": null,
         "notes": "Dettmer ellipse (joint sufficiency) drawn as the app's AND junction. No probability is computed.\n\nEvidence: ",
         "evidence": [],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node",
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node",
         "operator": "AND",
         "mode": "boolean"
       },
@@ -1003,7 +1135,7 @@
         "confidence": null,
         "notes": "Dettmer ellipse (joint sufficiency) drawn as the app's AND junction. No probability is computed.\n\nEvidence: ",
         "evidence": [],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node",
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node",
         "operator": "AND",
         "mode": "boolean"
       },
@@ -1015,7 +1147,7 @@
         "confidence": null,
         "notes": "Dettmer ellipse (joint sufficiency) drawn as the app's AND junction. No probability is computed.\n\nEvidence: ",
         "evidence": [],
-        "origin": "H01 campaign Current Reality Tree; built 2026-09-11 from the evidence files named on each node",
+        "origin": "H01 campaign Current Reality Tree; built 2026-09-12 from the evidence files named on each node",
         "operator": "AND",
         "mode": "boolean"
       }
@@ -1032,7 +1164,7 @@
           5
         ]
       },
-      "date": "2026-09-11",
+      "date": "2026-09-12",
       "direction": "forward",
       "resources": []
     },
@@ -1358,13 +1490,77 @@
         ]
       },
       {
-        "id": "review_inj_sp12__rc_vdep",
-        "edgeId": "inj_sp12__rc_vdep",
+        "id": "review_inj_sp12__ie_e_postspike",
+        "edgeId": "inj_sp12__ie_e_postspike",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_inj_sp12__rc_vdep",
+            "id": "reservation_inj_sp12__ie_e_postspike",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_inj_sp12__ie_e_nap",
+        "edgeId": "inj_sp12__ie_e_nap",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_inj_sp12__ie_e_nap",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ie_e_nap__rc_vdep",
+        "edgeId": "ie_e_nap__rc_vdep",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ie_e_nap__rc_vdep",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_inj_sp13__rc_vdep",
+        "edgeId": "inj_sp13__rc_vdep",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_inj_sp13__rc_vdep",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_inj_sp13__ie_cross",
+        "edgeId": "inj_sp13__ie_cross",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_inj_sp13__ie_cross",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

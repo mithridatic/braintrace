@@ -1,0 +1,118 @@
+[
+  {
+    "name": "s0-ksahp-tail5",
+    "candidate_sha256": "6658a4e10be1d25446c674b41c467476a49c96a15dcfdb9c7c7dbe26e0245e3f",
+    "evaluation_index": 1,
+    "abort_seconds": 2400,
+    "inputs": {
+      "sweep56": "completed",
+      "sweep50": "untested",
+      "sweep53": "untested",
+      "sweep43": "untested"
+    },
+    "runs": [
+      {
+        "name": "s0-ksahp-tail5",
+        "input": "sweep56",
+        "seconds": 649.9504020689055,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-sahp-tail/s0-ksahp-tail5-sweep56.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s0-ksahp-tail5.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "56",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s0-ksahp-tail5-sweep56"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s1-ksahp-tail5",
+    "candidate_sha256": "6658a4e10be1d25446c674b41c467476a49c96a15dcfdb9c7c7dbe26e0245e3f",
+    "evaluation_index": 2,
+    "abort_seconds": 2400,
+    "inputs": {
+      "sweep56": "untested",
+      "sweep50": "completed",
+      "sweep53": "completed",
+      "sweep43": "completed"
+    },
+    "runs": [
+      {
+        "name": "s1-ksahp-tail5",
+        "input": "sweep50",
+        "seconds": 771.1438100440428,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-sahp-tail/s1-ksahp-tail5-sweep50.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s1-ksahp-tail5.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "50",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s1-ksahp-tail5-sweep50"
+        ]
+      },
+      {
+        "name": "s1-ksahp-tail5",
+        "input": "sweep53",
+        "seconds": 956.4047244302928,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-sahp-tail/s1-ksahp-tail5-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s1-ksahp-tail5.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s1-ksahp-tail5-sweep53"
+        ]
+      },
+      {
+        "name": "s1-ksahp-tail5",
+        "input": "sweep43",
+        "seconds": 568.3339681336656,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-sahp-tail/s1-ksahp-tail5-sweep43.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s1-ksahp-tail5.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "43",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace/docs/evidence/h01-e-sahp-tail/s1-ksahp-tail5-sweep43"
+        ]
+      }
+    ]
+  }
+]

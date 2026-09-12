@@ -21,7 +21,7 @@ REPO = HERE.parents[2]
 OUT = HERE / "h01-current-reality.reasoning.json"
 STUDIO = Path(r"C:\Users\J\Documents\Projects\reasoning-studio")
 ENGINE = STUDIO / "dist" / "engine.cjs"
-DATE = "2026-09-11"
+DATE = "2026-09-12"
 ORIGIN = f"H01 campaign Current Reality Tree; built {DATE} from the evidence files named on each node"
 TITLE = "H01 model vs human recordings"
 
@@ -46,6 +46,11 @@ SP10_S1 = "docs/evidence/h01-i-sk/stage-1-decision.json"
 SP11_RESULT = "docs/evidence/h01-e-currents-result.md"
 SP11_CLOSE = "docs/evidence/h01-e-currents/stage-close-decision.json"
 SP12 = "docs/specs/2026-09-11-h01-e-spike-triggered-outward.md"
+SP12_DEC = "docs/evidence/h01-e-sahp/stage-0-reanalysis.json"
+SP12_RESULT = "docs/evidence/h01-e-sahp-result.md"
+SP12_MAN = "docs/evidence/h01-e-sahp-manifest.json"
+SP13 = "docs/specs/2026-09-12-h01-e-sahp-tail.md"
+SP13_MAN = "docs/evidence/h01-e-sahp-tail-manifest.json"
 
 COLORS = {
     "Undesirable Effect": "#b35f48",
@@ -161,8 +166,8 @@ def build_nodes() -> list[dict]:
              "The 250 pA count is a step in the leak, not a line: no leak dose lands it at 5 while the 310 pA rate stays within 1.5 Hz. Somatic SK (0.35) with calcium decay 1.0 sets the late 310 pA interval (10.05 vs 10.00 Hz) but translates the whole curve and cannot rotate it. The combined arm (g3) was registered and not run because its additive prediction fails every band.",
              [E_CLOSE, E_STAGE_G], "supported"),
         node("ie_e_passthrough", IE,
-             "IE6 (measured by INJ2 stage 0). E cell: between spikes the B3 soma is a pass-through. At 200 pA it passes 0.188 of the applied 0.196 nA into the cable (96 percent); the soma ionic terms sum to about -9 pA (leak -6.6, Kv3 -3.0, SK -1.7, NaTs +1.5, Nap +1.5, Im -0.1 pA); net drift below 0.2 pA. Only SK changes with input (-7 pA at 250, -13 pA at 310).",
-             "Consequence for the registered levers: Nap can supply at most 1.7 pA and Im 0.2 pA at the plateau, against an offset of 20-50 pA (0.02-0.05 nA) to carry; an Im dose that reaches it (about 100x) acts more strongly at the 310 pA threshold and removes that train. Under the scorer's rules the only admissible boundary is the axial current: the lever lives in the cable or in a mechanism the fit lacks. B3 reproduced exactly with currents recorded (counts 4/8/10, peak times and troughs identical to g0-b3, axon-first).",
+             "IE6 (measured by INJ2 stage 0; corrected by the 2026-09-11 erratum). E cell: the recorded balance is that of the middle soma segment, one of nine (65.8 of 592 um2). Whole-soma interspike estimates at 200 pA: leak -0.058, Kv3 -0.017, SK -0.016, NaTs +0.010, Nap +0.012, Im -0.0002 nA, summing to -0.069 nA (35 percent of the applied 0.196 nA). Of the segment's 0.188 nA axial outflow, 0.061 nA enters the neighbouring soma segments and 0.128 nA the cable. 'The soma is a pass-through' is withdrawn.",
+             "Whole-soma Nap (+0.012 nA) is 59 percent of the 0.020 nA p50 offset; the earlier '8 percent' and the 'not spent by construction' reasoning for the Nap arm are withdrawn (erratum in the SP11 close decision). A baseline current does not bound an intervention effect: removing Nap silenced 200 pA entirely (INJ3 control). B3 reproduced exactly with currents recorded (counts 4/8/10, peak times and troughs identical to g0-b3, axon-first).",
              [SP11_CLOSE, SP11_RESULT], "supported"),
         node("ie_e_postspike", IE,
              "IE9 (measured by INJ2 stage 0). E cell at 200 pA: after its single spike (206 ms) the human sits at -67.1 mV (late pulse) and -67.7 mV (mid pulse); the model averages -64.8 mV late and -61.9 mV mid while firing four times. At 110 pA with no spike the same model matches the human onset rows within 0.4-0.9 mV, so the offset appears only after a spike.",
@@ -183,8 +188,8 @@ def build_nodes() -> list[dict]:
         # -------------------------------------------------------- root causes
         node("rc_vdep", RC,
              "RC1 (open). E cell: the current that removes three spikes at 200-250 pA while leaving the 310 pA train and the sweep-43 return fixed must be voltage- or use-dependent and lies outside the fit's passive family.",
-             "After INJ2 the unresolved link is narrowed: the current holds the human 2-6 mV below the model after a spike at 200 pA, is silent without a spike (110 pA rows), is not in the soma genome, and is carried through the cable boundary. Candidates (SP11 close): a spike-triggered slow outward current (sAHP or KNa; SP12 draft); dendritic or axonal placement of an existing outward conductance; a second human L2/3 donor with a recorded f-I curve (SP6b lead). Nap-down and Im-up are excluded (cannot carry the offset). Each candidate is a new spec with its own cap.",
-             [SP11_CLOSE, E_CLOSE, CM], "unverified"),
+             "After INJ2 the unresolved link is narrowed: the current holds the human 2-6 mV below the model after a spike at 200 pA, is silent without a spike (110 pA rows), is not in the soma genome, and is carried through the cable boundary. After INJ3 the post-spike part of the link has a sufficient mechanism (a spike-triggered outward gate) whose tail must be longer than 1 s; INJ4 tests 5 s. The pre-spike part (B3 fires 78 ms early at 200 pA) is not addressed by that gate; Nap is a necessary condition for that spike (IE12) and a partial Nap dose is a candidate for it. Im-up stays unspent (needs 100x). Other candidates: dendritic or axonal placement of an existing outward conductance; a second human L2/3 donor (SP6b lead).",
+             [SP12_DEC, SP11_CLOSE, E_CLOSE, CM], "unverified"),
         node("rc_burst", RC,
              "RC2 (open). I cell: the current balance that would restore early refiring (cycle 2 at or below 22 ms) is unidentified. The human's early burst (cycles 2-4 at 6-10 ms) is absent with and without axonal SK.",
              "INJ1 isolated the late-delay path (axonal SK) but changed cycle 2 by only -3.9 ms at 0.19 nA and -0.4 ms at 0.27 nA. The finalist remains experimental; both tiers fail count and rate at both inputs for both arms.",
@@ -199,13 +204,21 @@ def build_nodes() -> list[dict]:
              "Pre-registered prediction: removing axonal SK shortens the late trough-to-threshold delay by more than 12.8 ms at both inputs and raises counts above 14 and 37, while cycle 2 moves less than 12.8 ms and widths, peaks and early troughs stay within stage-0 bands. Observed: delay shortened 48.7 ms at 0.19 nA and 13.1 ms at 0.27 nA; counts 29 and 59; cycle 2 changed -3.9 and -0.4 ms; widths 0.221 ms, troughs within 0.04 mV, axon-first, longest time above -20 mV 0.22 ms. Not a repair: both counts move away from the human; the finalist stays experimental. Two evaluations spent of two; sweep 48 stays sealed. Causal model Y3 updated in commit 8869c22.",
              [SP10_S1, SP10_RESULT, SP10, SP10_MAN], "supported"),
         node("inj_sp11", INJ,
-             "INJ2 (stage 0 executed PASS 12/12; stage 1 registered, NOT spent; CLOSED). SP11: unchanged B3 rerun with record_soma_currents at 200, 250, 310 pA reproduced g0-b3 exactly (counts 4/8/10, identical peak times and troughs, axon-first) with every soma current recorded.",
-             "Stage 0 prediction held: counts 4, 8, 10; crossings within 0.1 ms; troughs within 0.1 mV; axon-first. Stage 1 (n1-nap-* Nap reduced, k1-im-* Im raised) not spent under the fail-fast rule: both fail the registered 200 pA band (count 1) by construction, since the current they can add or remove at the plateau is at most 0.0017 nA against an offset of 0.020-0.05 nA, and the Im dose that closes the gap removes the 310 pA train (registered rejection). One evaluation spent of three. Runs took 885, 981 and 1015 s. B3 stays frozen and unpromoted; causal model Y4 updated in the same commit.",
+             "INJ2 (stage 0 executed PASS 12/12; stage 1: Nap arm spent as the INJ3 control, Im arm not spent; CLOSED with erratum). SP11: unchanged B3 rerun with record_soma_currents at 200, 250, 310 pA reproduced g0-b3 exactly (counts 4/8/10, identical peak times and troughs, axon-first) with every soma current recorded.",
+             "Stage 0 prediction held: counts 4, 8, 10; crossings within 0.1 ms; troughs within 0.1 mV; axon-first. Erratum 2026-09-11: the current tables are one soma segment of nine; whole-soma Nap is +0.012 nA (59 percent of the p50 offset), so the 'by construction' reason for not spending the Nap arm is withdrawn; it was spent as the INJ3 comparison arm and silenced 200 pA. The Im arm (0.0002 nA whole soma; 100x dose acts at the 310 pA threshold) stays unspent. One evaluation spent of three. Runs took 885, 981 and 1015 s. B3 stays frozen and unpromoted; causal model Y4 updated in the same commit.",
              [SP11_CLOSE, SP11_RESULT, SP11, SP11_MAN], "supported"),
         node("inj_sp12", INJ,
-             "INJ3 (proposed, DRAFT, not approved, not run). SP12: a spike-triggered, long-lasting outward current absent from the Allen genome (slow calcium-activated potassium, sAHP, or sodium-activated potassium, KNa) on the E cell. Needs a new mod file (KsAHP.mod or KNa.mod) in the kv3-closing-source library and user approval before code.",
-             "Predicted signature: (1) a post-spike level shift that persists over the 1 s pulse at rheobase; (2) an accumulating brake at 250 pA that spreads cycles to about 300 ms; (3) little effect on the late 310 pA train; (4) a rising threshold only if paired with sodium slow inactivation. Registered predictions (dose to be fixed before any run): stage 0 dose scan on sweep 56, post-spike late-pulse p50 within 1 mV of -67.4 mV with count 1 (band 1-2); stage 1 at sweeps 50, 53, 43: 250 pA count 5-7 with cycles 4-5 of 250-350 ms, 310 pA count 9-10 with late cycles within 12.8 ms of 120 ms, sweep-43 onset rows within 1 mV of g0-b3. Rejection: 310 pA count below 9 (and the further clauses in the draft). Excluded by construction: a uniform outward conductance active from -72 mV; a faster SK dose.",
-             [SP12, SP11_CLOSE], "unverified"),
+             "INJ3 (executed 2026-09-12, stage 0 FAIL under the registered bands; 3 of 4 evaluations; stage 1 not opened). SP12: a phenomenological spike-triggered gate (KsAHP.mod: opens above -20 mV with a 1 ms rise, closes with a 1000 ms tail) on the B3 soma at two doses fixed from the retained trace (3.50e-4 and 1.03e-3 S/cm2), plus a Nap-removal comparison arm. Dose A: count 1 at 200 pA with B3's first spike and pre-spike trace unchanged (0.000 mV), mid-pulse p50 within 0.5 mV of the human, late p50 +1.26 mV (band 1 mV): 5 of 6 bands. Dose B overshoots (mid -73.5, late -70.3 mV). Nap zero: no spike at all.",
+             "Reading: dose A follows the human within 0.5 mV from 1240 to 1700 ms and then rises 1.4 mV as the 1 s gate decays; the human's post-spike shift does not decay within the pulse. So a spike-triggered outward current is sufficient to remove the three excess 200 pA spikes without touching the pre-spike response; the 1 s tail is not sufficient for the level over the whole pulse. The gate carrier is not the fit's calcium (soma cai 1.0e-4 to 2.8e-4 mM, not spike-shaped). The comparison arm broke its prediction the other way: Nap is a rheobase lever (4 to 0 spikes), its signature differs from the human's one spike. Not addressed: B3's first spike 78 ms early. Runs 635 and 656 s on the Vast box; library recompiled with KsAHP.mod.",
+             [SP12_DEC, SP12_RESULT, SP12, SP12_MAN], "supported"),
+        node("inj_sp13", INJ,
+             "INJ4 (executed 2026-09-12; stage 0 PASS 6/6, stage 1 FAIL 11/16; CLOSED, 2 of 2 evaluations). SP13: the same gate with a 5 s tail at 3.12e-4 S/cm2, sized from the two SP12 doses. 200 pA: one spike at B3's time, mid -67.94 and late -67.32 mV (human -67.47, -67.06; derived prediction -67.43, -67.06), every 100 ms median within 1 mV. 110 pA: five onset rows equal B3 to 0.000 mV. 250 pA: count 3 (doublet, then 442 ms silence) vs human 5. 310 pA: count 7, late cycles 184 ms vs human 10 at 120 ms; gate 0.83 and 0.96.",
+             "Inference: a spike-triggered brake that persists for seconds is sufficient for the 200 pA response and silent without a spike, but a single non-saturating brake cannot serve 200, 250 and 310 pA together because it accumulates while the human's 310 pA cycles equal unchanged B3's. Not separated by this test: (a) the human's brake saturates after one spike and B3 lands 310 pA only through a compensating low gain (IE11), or (b) the 200 pA shift is not a brake that persists into a train. The 250 pA doublet-then-silence points to (a). Draft SP14: saturating gate plus one gain lever, not approved.",
+             [SP13, SP13_MAN, SP12_DEC, "docs/evidence/h01-e-sahp-tail/stage-1-decision.json", "docs/evidence/h01-e-sahp-tail-result.md"], "supported"),
+        node("ie_e_nap", IE,
+             "IE12 (measured by INJ3 control). E cell: with soma Nap density 0, B3 gives no spike at 200 pA (pulse maximum -63.0 mV; level 2.0 mV below B3 before B3's first spike). Nap is a necessary condition for the first spike under B3's settings at this input.",
+             "Its baseline current (+0.012 nA whole soma) did not bound the intervention effect. Nap removal does not reproduce the human (one spike, then a lower level); partial Nap doses are not excluded and would act before the first spike, where B3 is 78 ms early.",
+             [SP12_DEC, SP12_RESULT], "supported"),
         junction("j_e"),
         junction("j_i_late"),
         junction("j_i_count"),
@@ -243,8 +256,12 @@ def build_edges() -> list[dict]:
         edge("inj_sp10", "rc_burst", "describes", "early burst absent at both settings"),
         edge("inj_sp11", "ie_e_passthrough", "describes", "stage 0 measured this"),
         edge("inj_sp11", "ie_e_postspike", "describes", "stage 0 measured this"),
-        edge("inj_sp11", "rc_vdep", "describes", "stage 1 not spent: Nap/Im cannot carry the offset"),
-        edge("inj_sp12", "rc_vdep", "describes", "proposed test (draft, needs approval)"),
+        edge("inj_sp11", "rc_vdep", "describes", "Nap arm spent as INJ3 control; Im arm not spent"),
+        edge("inj_sp12", "ie_e_postspike", "describes", "sufficient to remove the excess spikes; 1 s tail too short"),
+        edge("inj_sp12", "ie_e_nap", "describes", "control arm measured this"),
+        edge("ie_e_nap", "rc_vdep", "describes", "pre-spike part: Nap is necessary for the first spike"),
+        edge("inj_sp13", "rc_vdep", "describes", "executed: sufficient at 200 pA, over-brakes 250/310 pA"),
+        edge("inj_sp13", "ie_cross", "describes", "points to a compensating gain error in B3 at 310 pA"),
     ]
 
 

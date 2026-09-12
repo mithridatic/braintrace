@@ -1,0 +1,219 @@
+{
+  "stage": "1",
+  "candidate": "s1-ksahp-tail5",
+  "bands": [
+    {
+      "row": "count",
+      "predicted": "5-7",
+      "observed": 3,
+      "held": false,
+      "input": "250 pA"
+    },
+    {
+      "row": "cycle_4_ms",
+      "predicted": "250-350",
+      "observed": null,
+      "held": false,
+      "input": "250 pA"
+    },
+    {
+      "row": "cycle_5_ms",
+      "predicted": "250-350",
+      "observed": null,
+      "held": false,
+      "input": "250 pA"
+    },
+    {
+      "row": "count",
+      "predicted": "9-10",
+      "observed": 7,
+      "held": false,
+      "input": "310 pA"
+    },
+    {
+      "row": "late_cycle_mean_ms",
+      "predicted": "120 +/- 12.8",
+      "observed": 184.28297949589992,
+      "held": false,
+      "input": "310 pA"
+    },
+    {
+      "row": "sub_1019_mv_vs_human",
+      "predicted": "|x| <= 1.0",
+      "observed": 0.5305781874836555,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1019_mv_vs_b3",
+      "predicted": "|x| <= 0.1",
+      "observed": -4.689582056016661e-13,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1021_mv_vs_human",
+      "predicted": "|x| <= 1.0",
+      "observed": 0.9081511909529212,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1021_mv_vs_b3",
+      "predicted": "|x| <= 0.1",
+      "observed": 1.3571366253017914e-11,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1025_mv_vs_human",
+      "predicted": "|x| <= 1.0",
+      "observed": 0.7992461980774124,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1025_mv_vs_b3",
+      "predicted": "|x| <= 0.1",
+      "observed": 1.8047785488306545e-12,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1040_mv_vs_human",
+      "predicted": "|x| <= 1.0",
+      "observed": 0.6178921970697928,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1040_mv_vs_b3",
+      "predicted": "|x| <= 0.1",
+      "observed": -6.686207143502543e-11,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1120_mv_vs_human",
+      "predicted": "|x| <= 1.0",
+      "observed": 0.42611067844441664,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "sub_1120_mv_vs_b3",
+      "predicted": "|x| <= 0.1",
+      "observed": 9.43458644542261e-11,
+      "held": true,
+      "input": "110 pA"
+    },
+    {
+      "row": "count",
+      "predicted": 0,
+      "observed": 0,
+      "held": true,
+      "input": "110 pA"
+    }
+  ],
+  "bands_held": 11,
+  "bands_total": 16,
+  "decision": "FAIL",
+  "summaries": {
+    "250 pA": {
+      "count": 3,
+      "peak_ms": [
+        1075.3880591484747,
+        1120.9881112881217,
+        1563.3433195895122
+      ],
+      "trough_mv": [
+        -70.6500731463894,
+        -70.90131431257933,
+        -70.99536257298044
+      ],
+      "cycle_ms": [
+        58.58988424906829,
+        45.64837878555545,
+        442.31050684666843
+      ],
+      "axon_first": true,
+      "axon_leads_ms": 0.2130093702821796,
+      "intervals_ms": [
+        45.600052139647005,
+        442.3552083013906
+      ]
+    },
+    "310 pA": {
+      "count": 7,
+      "peak_ms": [
+        1054.6344290543127,
+        1072.4320595976699,
+        1181.9157293879643,
+        1396.5708406574113,
+        1588.4912258328732,
+        1771.7758091401804,
+        1949.419779145111
+      ],
+      "trough_mv": [
+        -70.27601734578931,
+        -70.82885699943957,
+        -70.93168869162025,
+        -70.96677762785149,
+        -70.99088901340627,
+        -71.00944387088914,
+        -71.02338047833155
+      ],
+      "cycle_ms": [
+        37.78188203670402,
+        17.824400985512966,
+        109.54909111703478,
+        214.62253689797512,
+        191.9033581060885,
+        183.2736543732576,
+        177.63720974383773
+      ],
+      "axon_first": true,
+      "axon_leads_ms": 0.20679657016512465,
+      "intervals_ms": [
+        17.797630543357172,
+        109.48366979029447,
+        214.65511126944693,
+        191.9203851754619,
+        183.28458330730723,
+        177.64397000493068
+      ]
+    },
+    "110 pA": {
+      "count": 0,
+      "peak_ms": [],
+      "trough_mv": [],
+      "cycle_ms": [],
+      "axon_first": false,
+      "axon_leads_ms": null
+    }
+  },
+  "wall_seconds": {
+    "250 pA": 750.4288631733507,
+    "310 pA": 930.5637672226876,
+    "110 pA": 552.336157460697
+  },
+  "candidate_sha256": "6658a4e10be1d25446c674b41c467476a49c96a15dcfdb9c7c7dbe26e0245e3f",
+  "campaign_close": {
+    "closed_utc": "2026-09-12T03:05:00Z",
+    "spec": "docs/specs/2026-09-12-h01-e-sahp-tail.md",
+    "decision": "FAIL at stage 1 (registered rejection: 310 pA count below 9, 250 pA count outside 5-7); SP13 CLOSED, two evaluations spent of two",
+    "held": "All eleven sweep-43 rows: the five onset samples equal g0-b3 to 0.000 mV and lie within 0.43-0.91 mV of the human; no spike. The gate is silent without a spike, as registered.",
+    "failed": "250 pA: three spikes (1075, 1121, 1563 ms) against the human's five; after the doublet the gate (0.83) holds the cell for 442 ms. 310 pA: seven spikes against ten; the gate reaches 0.96 and the late cycles are 184 ms against the human's 120 ms.",
+    "inference": "A single spike-triggered outward gate with a long tail that lands the 200 pA response over-brakes the 250 and 310 pA trains, because it accumulates along a train (0.48 after one spike, 0.96 at 310 pA) while the human's 310 pA cycles equal unchanged B3's. Two readings are consistent with the data and are not separated by this test: (a) the human's post-spike brake saturates after the first spike and B3 at 310 pA lands the human's rate only because a second error compensates (the human's steeper gain, IE11), so a brake plus a gain lever is the next family; (b) the human's shift at 200 pA is not a brake that persists into a train at all (an input-dependent mechanism). The 250 pA outcome (a doublet, then a 442 ms silence) is the sign of (a): the brake is right after two spikes but the drive that would refire is missing.",
+    "not_excluded": "Shorter tails between 1 and 5 s, a saturating gate, a gate with a lower per-spike increment plus higher gain; each is a new spec.",
+    "tiers": {
+      "contract": "250 pA count 3 vs 5 and 310 pA count 7 vs 10 fail; 110 pA rows pass; 200 pA count passes (stage 0).",
+      "usable": "h01-e-sahp-tail/s1-ksahp-tail5-usable.md (250, 310 pA: rate 4.1 vs 4.79 Hz pass on the 15 percent limit; 6.71 vs 10 Hz fail), s1-ksahp-tail5-sweep43-usable.md, s0-ksahp-tail5-usable.md."
+    },
+    "wall_seconds": {
+      "250 pA": 750.4288631733507,
+      "310 pA": 930.5637672226876,
+      "110 pA": 552.336157460697
+    }
+  }
+}

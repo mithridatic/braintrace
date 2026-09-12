@@ -1,0 +1,104 @@
+{
+ "cell": "E-gain",
+ "model": "SP3 gain-split candidate s1-ksahp-tail5 (docs/specs/2026-09-07-h01-e-gain-split.md)",
+ "counts": {
+  "110 pA": {
+   "human": 0,
+   "model": 0
+  }
+ },
+ "repeats": [
+  {
+   "input": "repeat 56",
+   "cycle": 1,
+   "cycle_ms": 207.76,
+   "ahp_mv": -70.0000017285347,
+   "width_ms": 0.966530565644689,
+   "peak_mv": 36.21875351667404,
+   "threshold_mv": -54.71875289082527,
+   "peak_ms": 1225.76,
+   "repeat_count": 1,
+   "first_spike_ms": 205.76
+  },
+  {
+   "input": "repeat 59",
+   "cycle": 1,
+   "cycle_ms": 210.66000000000008,
+   "ahp_mv": -69.53125217556953,
+   "width_ms": 0.9610438201962097,
+   "peak_mv": 36.187502056360245,
+   "threshold_mv": -55.15625098347664,
+   "peak_ms": 1228.72,
+   "repeat_count": 1,
+   "first_spike_ms": 208.72000000000003
+  },
+  {
+   "input": "repeat 60",
+   "cycle": 1,
+   "cycle_ms": 154.53999999999996,
+   "ahp_mv": -69.62500283122063,
+   "width_ms": 0.9649580794864505,
+   "peak_mv": 35.84375089406967,
+   "threshold_mv": -54.75000062584877,
+   "peak_ms": 1172.54,
+   "repeat_count": 1,
+   "first_spike_ms": 152.53999999999996
+  },
+  {
+   "input": "repeat 61",
+   "cycle": 1,
+   "cycle_ms": 201.07999999999993,
+   "ahp_mv": -69.87500333786011,
+   "width_ms": 0.966311928865025,
+   "peak_mv": 36.12500286102295,
+   "threshold_mv": -54.50000011920929,
+   "peak_ms": 1219.04,
+   "repeat_count": 1,
+   "first_spike_ms": 199.03999999999996
+  },
+  {
+   "input": "repeat 62",
+   "cycle": 1,
+   "cycle_ms": 205.79999999999995,
+   "ahp_mv": -70.21875450015068,
+   "width_ms": 0.9584751158563449,
+   "peak_mv": 35.87500235438347,
+   "threshold_mv": -54.96875339746475,
+   "peak_ms": 1223.86,
+   "repeat_count": 1,
+   "first_spike_ms": 203.8599999999999
+  }
+ ],
+ "rows": [
+  {
+   "input": "110 pA",
+   "row": "rate_hz",
+   "cycle": null,
+   "human": 0.0,
+   "model": 0.0,
+   "limit": null,
+   "spread": null,
+   "basis": "15 percent of the human rate; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  },
+  {
+   "input": "110 pA",
+   "row": "adaptation_ratio",
+   "cycle": null,
+   "human": null,
+   "model": null,
+   "limit": null,
+   "spread": null,
+   "basis": "25 percent of the human ratio; no human repeats at this input",
+   "verdict": "unavailable",
+   "contract": "no contract row"
+  }
+ ],
+ "tables": {
+  "110 pA": {
+   "human": [],
+   "model": []
+  }
+ }
+}

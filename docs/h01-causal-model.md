@@ -326,6 +326,16 @@ Its removal does not reproduce the human's response, which has one spike.
 The derived prediction is -67.06 mV late and -67.43 mV mid pulse with one spike.
 Stage 1 at 250, 310 and 110 pA is the discriminating test: a gate that accumulates along the 310 pA train predicts a lower count there, which the registered rejection names.
 
+**Tested (SP13, 2026-09-12).** At 200 pA the 5 s gate gave one spike at B3's time, a mid-pulse median of -67.94 mV and a late median of -67.32 mV (human -67.47 and -67.06); all six bands held
+([stage 0](evidence/h01-e-sahp-tail/stage-0-decision.json)).
+At 110 pA the five onset rows equal B3 to 0.000 mV, so the gate is silent without a spike.
+At 250 pA the model fired three times (a doublet, then one spike 442 ms later) against the human's five; at 310 pA it fired seven times with 184 ms late cycles against the human's ten at 120 ms
+([stage 1](evidence/h01-e-sahp-tail/stage-1-decision.json), 11 of 16 bands; [result](evidence/h01-e-sahp-tail-result.md)).
+The gate reached 0.83 and 0.96 along those trains.
+Thus, a spike-triggered brake that persists for seconds is sufficient for the 200 pA response and is not sufficient for the three inputs together, because it accumulates while the human's 310 pA cycles equal unchanged B3's.
+Two accounts remain untested: the human's brake saturates after one spike and B3 lands 310 pA only through a compensating gain error (the cross-cell pattern of a steeper human gain), or the 200 pA shift is not a brake that persists into a train.
+SP13 is closed; a saturating brake paired with one gain lever is the drafted next test ([SP14](specs/2026-09-12-h01-e-brake-plus-gain.md), not approved).
+
 The human threshold also climbs along the train (-56.4 to -52.8 mV at 310 pA); the model's stays at -57.2 mV at every input.
 This is a response difference the recorded soma currents do not explain.
 
