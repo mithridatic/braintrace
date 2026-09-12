@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 
 from h01_spike_cycle_energetics import landmarks
+from h01_topographic_stage0 import resample
 
 EVIDENCE = Path(__file__).resolve().parent
 ROOT = EVIDENCE.parents[1]/".cache/worktree-recovery-2026-09-09"
@@ -140,8 +141,15 @@ def prepare(cell_id, component, out_dir, archive=ARCHIVE, cache=L2_CACHE, sweeps
 
 
 def upstroke(npz):
+    """Spike-1 landmarks on a uniform 0.02 ms grid.
+
+    The solver writes an adaptive grid that is dense through the upstroke, which inflates the
+    sampled maximum rise. Every rise quoted in this campaign is measured after resampling, so
+    the control, the doses and the retained fine-mesh reference are read the same way.
+    """
     data = np.load(npz)
-    t, v = np.asarray(data["time_ms"], float), np.asarray(data["voltage_mv"], float)
+    t, v, _ = resample(np.asarray(data["time_ms"], float), np.asarray(data["voltage_mv"], float),
+                      np.asarray(data["voltage_mv"], float))
     rows = landmarks(t, v, PULSE_MS)
     return {"count": len(rows), "max_rise_v_s": rows[0]["max_rise_v_s"] if rows else None,
             "first_spike_ms": rows[0]["threshold_ms"]-PULSE_MS[0] if rows else None,

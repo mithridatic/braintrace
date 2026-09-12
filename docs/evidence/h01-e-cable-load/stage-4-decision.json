@@ -1,0 +1,136 @@
+{
+  "control_v_s": 639.0752464279614,
+  "control_count": 10,
+  "reference_count": 10,
+  "reference_nseg9_v_s": 639.1,
+  "band_v_s": 63.90752464279614,
+  "monotone": true,
+  "doses_spiking": [
+    "x1",
+    "x1.5",
+    "x2"
+  ],
+  "doses_silent": [
+    "x3"
+  ],
+  "rows": [
+    {
+      "dose": "x1",
+      "max_rise_v_s": 639.0752464279614,
+      "delta_v_s": 0.0,
+      "outside_band": false
+    },
+    {
+      "dose": "x1.5",
+      "max_rise_v_s": 569.4943707758761,
+      "delta_v_s": -69.5808756520853,
+      "outside_band": true
+    },
+    {
+      "dose": "x2",
+      "max_rise_v_s": 512.5355346232906,
+      "delta_v_s": -126.53971180467079,
+      "outside_band": true
+    }
+  ],
+  "series": [
+    {
+      "dose": "x1",
+      "upstroke": {
+        "count": 10,
+        "max_rise_v_s": 639.0752464279614,
+        "first_spike_ms": 34.22000000000003,
+        "threshold_mv": -57.19655955446489
+      }
+    },
+    {
+      "dose": "x1.5",
+      "upstroke": {
+        "count": 3,
+        "max_rise_v_s": 569.4943707758761,
+        "first_spike_ms": 64.94000000000005,
+        "threshold_mv": -57.29516859458529
+      }
+    },
+    {
+      "dose": "x2",
+      "upstroke": {
+        "count": 3,
+        "max_rise_v_s": 512.5355346232906,
+        "first_spike_ms": 156.98000000000002,
+        "threshold_mv": -57.3621818098586
+      }
+    },
+    {
+      "dose": "x3",
+      "upstroke": {
+        "count": 0,
+        "max_rise_v_s": null,
+        "first_spike_ms": null,
+        "threshold_mv": null
+      }
+    }
+  ],
+  "verdict": "inputs: the upstroke follows the cable load",
+  "campaign_close": {
+    "closed_utc": "2026-09-12T05:45:00Z",
+    "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md (stage 3 to 5 addendum)",
+    "manifest": "docs/evidence/h01-e-cable-load-manifest.json",
+    "evaluations": {
+      "spent": 11,
+      "cap": 13
+    },
+    "measurement_correction": "Every rise in this campaign is now measured after resampling to a uniform 0.02 ms grid. The scorer had been reading the solver's adaptive grid, which is dense through the upstroke and inflated the sampled maximum rise (681.5 against 639.1 V/s here). With the correction the fresh nseg-9 control reproduces the retained nseg-9 reference to 0.1 V/s, so the mesh deviation is nil, and the stage-1 control reads 618.6 V/s with a 3.5 percent deviation instead of 653.3 and 9.3 percent.",
+    "control": "Valid: 10 spikes, spike-1 maximum rise 639.1 V/s, matching the retained fine-mesh reference.",
+    "registered_verdict": "Inputs: the upstroke follows the cable load. It falls monotonically with the dose (639.1, 569.5, 512.5 V/s) and leaves the band at x1.5; x3 silences the cell.",
+    "slope_reading": {
+      "rows": [
+        {
+          "dose": "x1",
+          "conductance_ratio": 1.0,
+          "count": 10,
+          "rise1": 639.1,
+          "thr1": -57.2,
+          "thr_climb": 0.08,
+          "late_cycle_ms": 117.8
+        },
+        {
+          "dose": "x1.5",
+          "conductance_ratio": 1.274,
+          "count": 3,
+          "rise1": 569.5,
+          "thr1": -57.3,
+          "thr_climb": 6.27,
+          "late_cycle_ms": 25.4
+        },
+        {
+          "dose": "x2",
+          "conductance_ratio": 1.583,
+          "count": 3,
+          "rise1": 512.5,
+          "thr1": -57.36,
+          "thr_climb": 15.6,
+          "late_cycle_ms": 56.0
+        },
+        {
+          "dose": "x3",
+          "conductance_ratio": 2.127,
+          "count": 0,
+          "rise1": null,
+          "thr1": null,
+          "thr_climb": null,
+          "late_cycle_ms": null
+        }
+      ],
+      "slope_v_s_per_conductance_ratio": -254,
+      "human_conductance_ratio": 1.131,
+      "predicted_upstroke_at_human_load_v_s": 605.8,
+      "human_upstroke_v_s": 347.7,
+      "model_fine_mesh_upstroke_v_s": 639.1,
+      "share_of_gap_explained_by_the_human_load": 0.114
+    },
+    "reading": "The cable load does move the upstroke, so the input branch is real, but the dose that moves it is far outside the human's own range. The slope is about -254 V/s per unit of whole-cell conductance ratio. The human's measured load is 1.131 times the model's, which predicts 606 V/s against the human's 347.7: about 11 percent of the 291 V/s gap. Under the campaign's contrast policy the slope must be read over the observable range of the input, and over that range the cable cannot carry the upstroke difference. The remaining 89 percent is in the function.",
+    "side_observations": "Adding cable load also grows the threshold climb the human shows (0.1 mV at x1, 6.3 at x1.5, 15.6 at x2) and shortens the late cycle, but it does so while destroying the count (10, 3, 3, 0), so it reproduces that signature only by breaking the protected response.",
+    "next": "Stage 5 measures the human-matched load directly instead of interpolating; SP16 tests the function side (slow sodium inactivation) on both cells."
+  }
+}

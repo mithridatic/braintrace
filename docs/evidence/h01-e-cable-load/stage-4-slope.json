@@ -1,0 +1,46 @@
+{
+  "rows": [
+    {
+      "dose": "x1",
+      "conductance_ratio": 1.0,
+      "count": 10,
+      "rise1": 639.1,
+      "thr1": -57.2,
+      "thr_climb": 0.08,
+      "late_cycle_ms": 117.8
+    },
+    {
+      "dose": "x1.5",
+      "conductance_ratio": 1.274,
+      "count": 3,
+      "rise1": 569.5,
+      "thr1": -57.3,
+      "thr_climb": 6.27,
+      "late_cycle_ms": 25.4
+    },
+    {
+      "dose": "x2",
+      "conductance_ratio": 1.583,
+      "count": 3,
+      "rise1": 512.5,
+      "thr1": -57.36,
+      "thr_climb": 15.6,
+      "late_cycle_ms": 56.0
+    },
+    {
+      "dose": "x3",
+      "conductance_ratio": 2.127,
+      "count": 0,
+      "rise1": null,
+      "thr1": null,
+      "thr_climb": null,
+      "late_cycle_ms": null
+    }
+  ],
+  "slope_v_s_per_conductance_ratio": -254,
+  "human_conductance_ratio": 1.131,
+  "predicted_upstroke_at_human_load_v_s": 605.8,
+  "human_upstroke_v_s": 347.7,
+  "model_fine_mesh_upstroke_v_s": 639.1,
+  "share_of_gap_explained_by_the_human_load": 0.114
+}

@@ -93,3 +93,16 @@ def test_graded_decide_rejects_a_control_that_matches_the_number_but_not_the_res
     series[0]["upstroke"]["count"] = 10
     ok = swap.graded_decide(series, control_reference=639.1, reference_count=10)
     assert ok["verdict"].startswith("function") and ok["control_count"] == 10
+
+
+def test_upstroke_is_measured_on_a_uniform_grid(tmp_path):
+    uniform = np.arange(1000., 2100., .02)
+    spike = -70.+110.*np.exp(-((uniform-1120.)/.35)**2)
+    adaptive = np.unique(np.concatenate([np.arange(1000., 2100., .5), np.arange(1119., 1122., .002)]))
+    both = {}
+    for name, t in (("uniform", uniform), ("adaptive", adaptive)):
+        v = -70.+110.*np.exp(-((t-1120.)/.35)**2)
+        p = tmp_path/f"{name}.npz"
+        np.savez(p, time_ms=t, voltage_mv=v)
+        both[name] = swap.upstroke(p)["max_rise_v_s"]
+    assert both["adaptive"] == pytest.approx(both["uniform"], rel=.02)
