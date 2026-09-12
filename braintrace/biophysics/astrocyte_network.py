@@ -73,6 +73,9 @@ class AstrocyteCalcium(brainstate.nn.Module):
     substeps : int, optional
         Internal coupled solves per cable tick; default 4 resolves the strong
         local calcium-pulse refinement fixture at .00125 ms.
+    geometry : CableChemicalGeometry or None, optional
+        Exact tapered cable CV map. When supplied, omit all three cylindrical
+        geometry arguments. The map preserves actual volumes and membrane area.
 
     Notes
     -----
@@ -82,7 +85,8 @@ class AstrocyteCalcium(brainstate.nn.Module):
     exchange are accumulated separately; no whole-cell energy claim is made.
     """
 
-    def __init__(self, length_um, diameter_um, segment_edges, *, dt_ms=.005, parameters=None, substeps=4):
+    def __init__(self, length_um=None, diameter_um=None, segment_edges=None, *, dt_ms=.005,
+                 parameters=None, substeps=4, geometry=None):
         super().__init__()
         if type(substeps) is not int or substeps < 1:
             raise ValueError('Calcium substeps must be a positive integer')
@@ -90,15 +94,29 @@ class AstrocyteCalcium(brainstate.nn.Module):
         self.parameters = parameters or CalciumParameters()
         p = self.parameters
         args = (length_um, diameter_um, segment_edges)
-        self.calcium_transport = shell_transport(*args, dt_ms=dt_ms, diffusion=p.diffusion_um2_ms)
-        self.free_transport = shell_transport(*args, dt_ms=dt_ms, diffusion=p.mobile_diffusion_um2_ms)
-        self.bound_transport = shell_transport(*args, dt_ms=dt_ms, diffusion=p.mobile_diffusion_um2_ms, radial=False)
+        self.geometry_sha256 = None
+        if geometry is None:
+            if any(value is None for value in args):
+                raise ValueError('Complete cylindrical geometry or a cable geometry map required')
+            self.calcium_transport = shell_transport(*args, dt_ms=dt_ms, diffusion=p.diffusion_um2_ms)
+            self.free_transport = shell_transport(*args, dt_ms=dt_ms, diffusion=p.mobile_diffusion_um2_ms)
+            self.bound_transport = shell_transport(*args, dt_ms=dt_ms, diffusion=p.mobile_diffusion_um2_ms, radial=False)
+            surface = np.pi*np.asarray(diameter_um)*np.asarray(length_um)
+            n = len(length_um)
+        else:
+            from .cable_geometry import CableChemicalGeometry
+            if not isinstance(geometry, CableChemicalGeometry) or any(value is not None for value in args):
+                raise ValueError('Cable geometry must be explicit and cannot mix with cylindrical arguments')
+            self.calcium_transport = geometry.transport(dt_ms=dt_ms, diffusion=p.diffusion_um2_ms)
+            self.free_transport = geometry.transport(dt_ms=dt_ms, diffusion=p.mobile_diffusion_um2_ms)
+            self.bound_transport = geometry.transport(dt_ms=dt_ms, diffusion=p.mobile_diffusion_um2_ms, radial=False)
+            surface, n = geometry.area_um2, len(geometry.volume_um3)
+            self.geometry_sha256 = geometry.sha256
         self.dt_ms = dt_ms
-        n = len(length_um)
         self.initial = jnp.broadcast_to(initial_calcium(p), (n, 25))
         self.state = brainstate.HiddenState(self.initial)
         volumes = self.calcium_transport.volumes.reshape(n, 4)
-        self.surface_to_volume = jnp.asarray(np.pi*np.asarray(diameter_um)*np.asarray(length_um))/volumes[:, 0]
+        self.surface_to_volume = jnp.asarray(surface)/volumes[:, 0]
         self.valid = brainstate.ShortTermState(jnp.asarray(True))
         self.er_amount = brainstate.ShortTermState(jnp.asarray(0.))
         self.pumped_amount = brainstate.ShortTermState(jnp.asarray(0.))

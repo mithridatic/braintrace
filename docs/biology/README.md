@@ -10,6 +10,9 @@ spikes to GABA/glutamate release, dynamic Kir cables and mapped astrocyte calciu
 The [measured glial assembly phase](glia-assembly-phase/README.md) reconstructs
 one complete selected source fragment with all other fragments accounted for,
 and verifies its 148-compartment Kir cable with exact fresh reconstruction.
+The [tapered chemistry phase](tapered-chemistry-phase/README.md) maps that cable
+to matching calcium/K volumes and conservative branch-junction diffusion,
+including a bounded measured-fragment physical checkpoint replay.
 
 ## What is executable
 
@@ -22,7 +25,8 @@ and verifies its 148-compartment Kir cable with exact fresh reconstruction.
 | GABA | Actual inhibitory population spikes drive site selection, molecule delivery, uptake/diffusion and source Hill tonic receptor | Small coupled cable fixture; measured H01 site assembly pending |
 | Astrocyte calcium | 25 states per segment, four radial shells, buffers, IP3, fixed ER reservoir, pump and coupled spatial solve | Local and three-segment independent NEURON fixtures; no demonstrated long-range calcium wave in measured H01 anatomy |
 | Astrocyte K | Dynamic Kir4.1 cable, shared intracellular/extracellular K and conservative exchange with neuronal pools | Synthetic coupled fixture and independent fixed-pool NEURON cable reference; complete glial channel repertoire and measured H01 coupled assembly pending |
-| Measured glial geometry | Source-pinned complete component selection, tapered paths, explicit exclusions and dynamic Kir cable construction | One 571-vertex H01 fragment, 148 CVs, 0.1 ms fixed-pool replay; tapered calcium mapping and complete session integration pending |
+| Measured glial geometry | Source-pinned complete component selection, tapered paths, explicit exclusions and dynamic Kir cable construction | One 571-vertex H01 fragment, 148 CVs; complete session integration pending |
+| Tapered calcium/K map | Integrated CV volumes and areas, four source shell fractions, conservative shared-junction diffusion | 148-CV calcium/K ledger and physical replay at 0.015 ms; diagnostic extracellular pools, no 3-D taper or long-wave qualification |
 | Neuron-to-glia glutamate | Actual excitatory spikes drive explicitly dosed sites, extracellular transport and mapped IP3/calcium | Synthetic diagnostic dose, short calcium response against no-glutamate control; no physiological vesicle-dose or long-wave qualification |
 | Myelin K | Explicit axon/sheath pools, radial transport, node bath boundaries, source pump laws | Conservative physical discretization; not exact source RxD equivalence, no coupled sheath electrical model |
 | Learning | Finite-window pp-prop chemical-feedback test, finite nonzero updates and diagnostic descent | Small chemical model only; not joint full-cable/glia/myelin training |

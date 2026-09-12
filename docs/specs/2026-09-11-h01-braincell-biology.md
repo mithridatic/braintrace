@@ -211,3 +211,41 @@ with 256 other components explicitly excluded. A 0.1 ms fixed-pool trajectory
 matched fresh reconstruction exactly. Evidence and unresolved tapered-calcium,
 extracellular mapping and session integration are in
 `docs/biology/glia-assembly-phase/README.md`.
+
+## Tapered cable chemical geometry phase
+
+Map an initialized cable's exact CV ordering and source branch intervals into
+chemical volumes. Integrate each clipped linear frustum's volume; preserve
+BrainCell's membrane area and half-CV axial geometric resistance. Require a
+complete nonoverlapping branch partition and agreement with the electrical
+geometry. Do not substitute midpoint or mean-radius cylinders.
+
+Use the pinned four-shell volume fractions for homothetic tapered annuli.
+Integrate source radial conductance per unit cable length. At every shared
+zero-volume boundary, eliminate the common concentration with Kirchhoff flux
+balance: pairwise conductance is g_i*g_j/sum(g). This retains sibling diffusion
+at junctions rather than approximating a fork as independent parent-child links.
+Transport stays conservative; closed endpoints introduce no reservoir volume.
+This is a declared tapered finite-volume extension, not verified source RxD or
+three-dimensional taper equivalence.
+
+Allow AstrocyteCalcium to use this geometry, with exact shell volumes and actual
+membrane-area/outer-shell-volume ratio. Reuse the same full CV volumes for K
+pool mapping. Preserve the existing cylindrical constructor and its independent
+reference gates. Pin the CV geometry identity and support only source cable
+geometries whose physical interpretation can be verified.
+
+Gate on analytic tapered volume/resistance, cylinder-limit agreement, fork
+Schur-complement flux, closed-system conservation, calcium reaction/buffer mass
+balance, continuous derivatives and source subdivision invariance. Execute a
+bounded 148-CV measured-fragment calcium/K probe with explicit diagnostic
+extracellular pools; record exact reset/reconstruction replay and all assumptions.
+No extracellular anatomy or neuronal release sites are inferred from proximity.
+
+Phase result (2026-09-12): 201 affected CPU tests passed, with 99.05% new geometry
+module coverage and 100% updated calcium-module coverage. The measured 148-CV
+probe used identical full-CV K and calcium shell volumes, passed conservative
+K and ER/pump-accounted calcium ledgers, and exactly replayed all physical states
+after fresh snapshot restoration and reset. The 0.015 ms diagnostic and explicit
+taper/extracellular assumptions are recorded in
+`docs/biology/tapered-chemistry-phase/README.md`. Full session assembly remains next.

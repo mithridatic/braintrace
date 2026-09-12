@@ -1,0 +1,60 @@
+{
+  "status": "TAPERED_CABLE_CHEMISTRY_PHASE_PASS",
+  "full_biology_status": "INCOMPLETE",
+  "base_commit": "6fce59c",
+  "date": "2026-09-12",
+  "scope": "Exact tapered CV volume/area mapping, conservative shell diffusion and bounded measured-fragment calcium/K replay",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "201",
+    "time": "190.686",
+    "timestamp": "2026-09-12T13:37:56.174822-07:00",
+    "hostname": "KYOSHI"
+  },
+  "warnings": 6,
+  "production_modules": {
+    "braintrace/biophysics/cable_geometry.py": {
+      "covered_lines": 104,
+      "num_statements": 105,
+      "percent_covered": 99.04761904761905,
+      "percent_covered_display": "99",
+      "missing_lines": 1,
+      "excluded_lines": 0,
+      "percent_statements_covered": 99.04761904761905,
+      "percent_statements_covered_display": "99"
+    },
+    "braintrace/biophysics/astrocyte_network.py": {
+      "covered_lines": 97,
+      "num_statements": 97,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    }
+  },
+  "implementation_sha256": {
+    "braintrace/biophysics/cable_geometry.py": "6b0bc05e55c570d3ba93b68b8c6d2d3523b4a57bb50d927b3681f42bba262bd6",
+    "braintrace/biophysics/astrocyte_network.py": "a034c265eddfea943750c29c13768fc6064fc92fa169926b41dc6345b5459dd4",
+    "braintrace/biophysics/cable_geometry_test.py": "afe69259e4600b3099ac3c35a8a2f9332fd27edcd9ca5e9db228ed70912cb01b",
+    "docs/biology/tapered_chemistry_probe.py": "7b85ee5d2bbca872a5389fdc095283970c118d7314a0bcdbceb5a5a1275c77db"
+  },
+  "artifact_sha256": {
+    "geometry.json": "599ff4aacec196663e0d7225880eecb0838c875473316fcb3ad4bc128c6229b4",
+    "measured-probe.json": "35cf9861d57062823321cbfcb8827309e4aac0c63080e400a4e62c4ad567af8b",
+    "verification.xml": "ea23f13415b480ca0d0d3ee558a61f03b2597d4156579d253040aaa4496a81ec",
+    "coverage.json": "563c8c40e646a03244e055886635d7420fa4f5867486e9c29fea44c92ae7a2cb"
+  },
+  "qualification": {
+    "geometry": "Exact frustum integration and shared-boundary elimination, analytic and cylinder-limit checks pass",
+    "discretization": "Homothetic finite-volume taper extension; 3-D and tapered RxD equivalence unqualified",
+    "physical": "148-CV measured fragment with diagnostic extracellular finite pools; 0.015 ms only",
+    "replay": "All packed physical states exactly match fresh checkpoint continuation and reset",
+    "learning": "Joint sparse learning unqualified",
+    "integration": "Complete H01 session factory and measured extracellular/release placement pending"
+  }
+}
