@@ -72,3 +72,45 @@ but the change was too large to keep Y observable. Next registrations: a graded 
 change on the donor anatomy (membrane area x1.5 and x2) and a check of the skeleton
 conversion's membrane area against the H01 surface mesh. Two evaluations spent of two
 (the first failed before construction: soma-current probes need nseg 3).
+
+## Stage 2 (executed): the cable load is a steep rheobase lever, still no upstroke reading
+
+Dendritic and apical membrane area (capacitance, leak and distributed Ih together) scaled
+1.5, 2 and 3 times at 200 pA, fixed geometry
+([decision](h01-e-cable-load/stage-2-decision.json)):
+
+| dose | count | onset capacitance | input resistance | 200 pA plateau |
+| --- | ---: | ---: | ---: | ---: |
+| x1 | 4 | 125 pF | 95 MOhm | -64.9 mV |
+| x1.5 | 0 | 153 pF | 75 MOhm | -68.6 mV |
+| x2 | 0 | 177 pF | 60 MOhm | -71.3 mV |
+| x3 | 0 | 214 pF | 45 MOhm | -74.1 mV |
+
+The dose acts on the load monotonically and leaves rest unchanged, but B3 sits just above
+its rheobase at 200 pA, so a 50 percent cable increase already silences it. The registered
+no-reading rejection applies again.
+
+## The human's own cable load (retained traces, no run)
+
+Measured at 110 pA where neither cell spikes
+([human-passive-load.json](h01-e-cable-load/human-passive-load.json)):
+
+| | input resistance | onset capacitance | time constant |
+| --- | ---: | ---: | ---: |
+| human | 80.4 MOhm | 128 pF | 10.3 ms |
+| B3 | 90.9 MOhm | 124 pF | 11.3 ms |
+
+The human is 1.13 times B3's conductance and 1.03 times its capacitance. That is the
+observable range of this input, so a cable-load explanation of any model-human difference
+has to work at 1.13 times, not at the 1.5 times that already silences the cell.
+
+## Stage 3 (executed): control invalid
+
+The same doses at 310 pA on the coarse mesh. The x1 control fired 72 times and then fell
+silent (plateau -74 mV), against the fine mesh's ten steady spikes at -64.6 mV; the x2 dose
+entered depolarisation block at -28 mV. The spike-1 upstroke band held (9 percent), which
+is exactly how a one-number control check passes a control that does not reproduce the
+response ([decision](h01-e-cable-load/stage-3-decision.json)). The scorer now requires the
+control to reproduce the reference spike count. Stage 4 repeats the series at the fine mesh
+and stage 5, registered before stage 4 was read, sets the model's load to the human's
+measured 1.13 times and asks whether the upstroke follows.

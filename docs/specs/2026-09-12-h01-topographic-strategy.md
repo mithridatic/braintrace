@@ -149,6 +149,31 @@ while the cell is still spiking. Rejection: every dose that leaves the band also
 spike (a repeat of the stage-1 no-reading case), or the departure is not monotone across
 the three doses (the dose is not acting through the cable load). Three evaluations.
 
+## Stages 3 to 5 addendum (registered 2026-09-12)
+
+Stage 2 met its no-reading rejection again: at 200 pA every dose silenced the cell, because
+B3 sits just above its rheobase there. The doses did act on the cable load exactly as
+intended and monotonically (onset capacitance 125, 153, 177, 214 pF; input resistance 95,
+75, 60, 45 MOhm), so the cable load is a very steep rheobase lever, steeper than any
+channel dose this campaign has tried.
+
+Stage 3 asked the same question at 310 pA, where model and human both fire ten spikes, but
+used the coarse mesh for speed. Its control was invalid: at that mesh the 310 pA response
+is 72 spikes and then silence, against ten steady spikes at the fine mesh. The registered
+band had tested one number (the spike-1 maximum rise, 9 percent deviation) and so passed a
+control that does not reproduce the response. The scorer now takes the reference spike
+count and refuses to read a series whose control misses it. Stage 4 repeats the series at
+the fine mesh.
+
+Stage 5 was registered before stage 4 was read, because the decisive quantity is not the
+dose but the human's own load. Measured from the 110 pA sweep, where neither cell spikes:
+the human's input resistance is 80.4 MOhm against B3's 90.9, and its onset capacitance
+128 pF against 124, so the human is 1.13 times B3's conductance and 1.03 times its
+capacitance. That is the observable range of this input, and the dose-to-load map puts it
+at a x1.25 area dose. Stage 5 sets the model's cable load to the human's and asks whether
+the upstroke follows: within 10 percent of the human's 347.7 V/s means the input branch,
+within 10 percent of the model's 639.1 V/s means the function branch.
+
 ## Registered stage 0 (no simulation)
 
 Produce, from retained traces: the phase-plane small multiples (rows: cycle 1, 2, middle,
