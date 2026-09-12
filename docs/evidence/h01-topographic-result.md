@@ -114,3 +114,24 @@ response ([decision](h01-e-cable-load/stage-3-decision.json)). The scorer now re
 control to reproduce the reference spike count. Stage 4 repeats the series at the fine mesh
 and stage 5, registered before stage 4 was read, sets the model's load to the human's
 measured 1.13 times and asks whether the upstroke follows.
+
+## Stage 5 (executed): the recorded cell's own load, and what it costs the model
+
+The dendritic and apical area was set so that the model carries the recorded cell's
+conductance ([decision](h01-e-cable-load/stage-5-decision.json)). The dose hit that target,
+1.137 against the recorded 1.131, and overshot the capacitance, 1.11 against 1.03, because
+scaling area moves both together while the recorded cell carries more conductance per unit
+capacitance. Its load differs in kind and not only in size.
+
+| at the recorded cell's conductance | 200 pA | 310 pA |
+| --- | ---: | ---: |
+| model count | 0 | 4, then block at -28 mV |
+| model count at its own load | 4 | 10 |
+| recorded count | 1 | 10 |
+
+The registered rejection applies, so the upstroke is again unread. The observation that
+matters is the cost: carrying the recorded load removes this fit's low-input response
+entirely. The fit therefore has less inward drive per unit load than the recorded cell, and
+its excess count at its own lighter load is not evidence that it is too excitable. Together
+with the stage-4 slope this closes the input branch: the cable is neither sufficient for the
+rise difference nor available as an explanation of the count.

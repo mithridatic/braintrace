@@ -256,8 +256,13 @@ for each unit of whole-cell conductance ratio, and the spike count collapses onc
 passes about 1.3 times the fitted value. The recorded cell's own load, measured where
 neither cell spikes, is 1.13 times the model's conductance and 1.03 times its capacitance.
 Although the cable load contributes, at the recorded cell's own load it covers about a tenth
-of the rise difference, and it cannot supply the count because the count collapses before
-the rise moves far.
+of the rise difference, and it cannot supply the count. Given the recorded cell's own
+conductance, this model stops firing at 200 pA and enters depolarisation block at 310 pA,
+while the recorded cell fires once and ten times. Carrying the recorded load therefore needs
+more inward drive than this fit has, so the excess count at the fit's own lighter load is not
+evidence of excess excitability. The recorded cell also carries 1.13 times the conductance
+with only 1.03 times the capacitance, a shorter membrane time constant than any scaling of
+membrane area can produce, so its load differs in kind and not only in size.
 
 Charge does not accumulate in the soma either. Between spikes at 200 pA the whole soma
 sinks about 0.069 nA of the applied 0.196 nA, the rest leaving axially, and the largest

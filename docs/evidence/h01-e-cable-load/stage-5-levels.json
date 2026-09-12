@@ -1,0 +1,22 @@
+{
+  "310 pA": {
+    "count": 4,
+    "rise1": 601.6,
+    "thr1": -57.1,
+    "climb": 5.91,
+    "first_ms": 47.2,
+    "late_p50": -28.06,
+    "rest": -83.74,
+    "c_onset_pF": 139
+  },
+  "200 pA": {
+    "count": 0,
+    "rise1": null,
+    "thr1": null,
+    "climb": null,
+    "first_ms": null,
+    "late_p50": -66.22,
+    "rest": -83.74,
+    "c_onset_pF": 139
+  }
+}

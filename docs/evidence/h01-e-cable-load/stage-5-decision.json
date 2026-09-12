@@ -1,0 +1,41 @@
+{
+  "stage": "5",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md (stages 3 to 5 addendum)",
+  "manifest": "docs/evidence/h01-e-cable-load-manifest.json",
+  "closed_utc": "2026-09-12T06:00:00Z",
+  "candidate": "c125-human-load-n9",
+  "dose": "dendritic and apical membrane area x1.25, chosen to set the whole-cell conductance to the recorded cell's",
+  "dose_check": {
+    "conductance_ratio_of_the_dose": 1.137,
+    "conductance_ratio_of_the_recorded_cell": 1.131,
+    "capacitance_ratio_of_the_dose": 1.11,
+    "capacitance_ratio_of_the_recorded_cell": 1.03,
+    "reading": "The dose hits the registered conductance target within the 0.03 allowance. It overshoots the capacitance, because scaling membrane area moves conductance and capacitance together while the recorded cell carries more conductance per unit capacitance. Its load therefore differs in kind, not only in size: a membrane time constant of 10.3 ms against 11.3 ms."
+  },
+  "levels": {
+    "310 pA": {
+      "count": 4,
+      "rise1": 601.6,
+      "thr1": -57.1,
+      "climb": 5.91,
+      "first_ms": 47.2,
+      "late_p50": -28.06,
+      "rest": -83.74,
+      "c_onset_pF": 139
+    },
+    "200 pA": {
+      "count": 0,
+      "rise1": null,
+      "thr1": null,
+      "climb": null,
+      "first_ms": null,
+      "late_p50": -66.22,
+      "rest": -83.74,
+      "c_onset_pF": 139
+    }
+  },
+  "decision": "No reading: the registered rejection applies, because the cell does not fire a comparable train.",
+  "observed": "At 310 pA the model fires four times and then sits in depolarisation block at -28 mV, against ten steady spikes at its own load and ten in the recording. At 200 pA it does not fire at all, against four at its own load and one in the recording.",
+  "inference": "Carrying the recorded cell's own conductance costs this fit its whole low-input response. The fit therefore has less inward drive per unit load than the recorded cell, and its excess count at its own lighter load is not evidence that it is too excitable. Read with the stage-4 slope, the cable is neither sufficient for the rise difference nor available as an explanation of the count.",
+  "next": "SP16 tests the drive side: the slow inactivation the shared sodium equations lack."
+}
