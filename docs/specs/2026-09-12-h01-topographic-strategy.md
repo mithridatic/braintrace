@@ -112,6 +112,24 @@ tree before its data are collected; prediction and rejection registered; fail fa
 the cap; both tiers reported; sweep 54 and sweep 48 stay sealed. SP14 (brake plus gain
 lever) is deferred: it names two levers before Q1 to Q3 are answered.
 
+## Stage 1 addendum (registered 2026-09-12 after stage 0, before the run)
+
+Stage 0 named the E spike upstroke (332 against 598 V/s, 177 sigma at every cycle) as the
+largest elemental contrast, with equal onset capacitance. Q2 for it: hold the function
+(the B3 genome and every B3 flag) and change the input (the cable). The H01 L2 pyramidal
+skeleton 955432427 (proofread104 component 0, 2460 um of cable) replaces the Allen
+reconstruction; the B3 soma sphere is held so that only the cable differs. Both runs use
+nseg factor 1 (the H01 skeleton has ten times the nodes), so the donor-anatomy run is the
+mesh control against the nseg-9 value. Manifest
+[h01-e-morphology-manifest.json](../evidence/h01-e-morphology-manifest.json); converter
+and scorer `h01_e_morphology_swap.py`.
+
+Prediction: mesh control within 10 percent of 597.7 V/s. Function branch if the
+H01-anatomy upstroke stays within max(3 x mesh deviation, 10 percent) of the control;
+inputs branch if it moves by more. Rejection: mesh control outside 10 percent (no
+reading), or no spike on the H01 anatomy (a count contrast of the input, recorded, no
+upstroke reading). One evaluation.
+
 ## Registered stage 0 (no simulation)
 
 Produce, from retained traces: the phase-plane small multiples (rows: cycle 1, 2, middle,

@@ -1,0 +1,30 @@
+{
+  "donor_key": "h01-955432427-b3-genome",
+  "model_id": 626170538,
+  "specimen_id": 541563728,
+  "fit": "541563728_fit.json",
+  "fit_sha256": "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3",
+  "morphology": "h01-955432427.swc",
+  "morphology_source": {
+    "archive": "proofread104.zip",
+    "member": "955432427.0.swc",
+    "member_sha256": "cc52cc1b8d396bc840648faee816f3e02b2702539c7235129625e5cbba8b9f27"
+  },
+  "sweeps": [
+    56,
+    50,
+    53,
+    43
+  ],
+  "conversion": {
+    "nodes_in": 11524,
+    "nodes_out": 9975,
+    "soma_nodes_collapsed": 1550,
+    "soma_radius_um": 6.864013671875,
+    "largest_soma_node_radius_um": 1.246794312,
+    "apical_cable_um": 869.140176781817,
+    "basal_cable_um": 1590.8324440975048,
+    "axon_nodes": 25
+  },
+  "note": "SP15 stage 1: the B3 genome on an H01 L2 pyramidal skeleton with the B3 soma sphere held (13.73 um); the input swapped is the cable. The waveform files are the human L2 exports."
+}
