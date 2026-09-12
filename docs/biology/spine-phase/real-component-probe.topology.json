@@ -1,0 +1,145 @@
+{
+  "schema": "h01-topology-v1",
+  "sources": {
+    "3178243558": {
+      "component": 0,
+      "source_sha256": "dac6f15d0b608c90856ac93a0af213858a418651921f12d4b48c01f6154ba657",
+      "polarity": "E",
+      "donor": "l2-pyramidal-allen-541563728",
+      "profile": {
+        "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+        "polarity": "E",
+        "mode": "candidate",
+        "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3",
+        "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+        "initial_mv": -83.97993469238281,
+        "reversal_mv": -87.97993469238281,
+        "axial_ohm_cm": 94.62299222737664,
+        "regions": [
+          [
+            "soma",
+            1.0,
+            0.0004214870638616726,
+            [
+              [
+                "Im",
+                0.0003009224287506406
+              ],
+              [
+                "Ih",
+                9.994138594205759e-05
+              ],
+              [
+                "NaTs",
+                3.8142926608978067
+              ],
+              [
+                "Nap",
+                0.00027834876277937903
+              ],
+              [
+                "K_P",
+                0.0002294964697530516
+              ],
+              [
+                "K_T",
+                1.1414657313560486e-08
+              ],
+              [
+                "SK",
+                0.0029986173243412404
+              ],
+              [
+                "Kv3_1",
+                0.3687667632247488
+              ],
+              [
+                "Ca_HVA",
+                0.0009983602924910323
+              ],
+              [
+                "Ca_LVA",
+                0.00824261450980065
+              ]
+            ],
+            [
+              657.0460049891833,
+              0.0008762096311710155
+            ]
+          ],
+          [
+            "axon",
+            1.0,
+            0.00028089935810004884,
+            [],
+            null
+          ],
+          [
+            "dend",
+            2.3031548608821226,
+            3.626643561453563e-05,
+            [
+              [
+                "Ih",
+                9.994138594205759e-05
+              ]
+            ],
+            null
+          ],
+          [
+            "apic",
+            2.3031548608821226,
+            4.119170292066434e-05,
+            [
+              [
+                "Ih",
+                9.994138594205759e-05
+              ]
+            ],
+            null
+          ]
+        ],
+        "limitations": [
+          "Borrowed donor and mechanisms; not measured H01 physiology.",
+          "Candidate selection is not physiological qualification.",
+          "E onset and rising-phase errors remain; I early intervals remain too short."
+        ],
+        "channel_prefix": "H01L2",
+        "sodium_reversal_mv": 53.0,
+        "potassium_reversal_mv": -107.0
+      },
+      "source_tags": [
+        "L5",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "region_basis": "Source-labelled H01 electrical regions",
+      "soma_site": [
+        476,
+        0.2460168582413275
+      ],
+      "output_site": [
+        476,
+        0.2460168582413275
+      ],
+      "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47"
+    }
+  },
+  "instances": {
+    "3178243558": {
+      "source_id": "3178243558",
+      "parent_id": null,
+      "synthetic": false,
+      "created_stage": "source"
+    }
+  },
+  "contacts": {},
+  "active_cells": [
+    "3178243558"
+  ],
+  "active_contacts": [],
+  "next_id": 0,
+  "blocked_contacts": [],
+  "mutations": []
+}

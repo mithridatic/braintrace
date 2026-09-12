@@ -3,12 +3,14 @@
 Status on 2026-09-12: **partial implementation, not full H01/Example 21 completion**.
 Worktree branch: `feat/h01-braincell-biology`, based on `e21e22c`.
 The accepted contract is in [the specification](../specs/2026-09-11-h01-braincell-biology.md).
+The [spatial assembly phase](spine-phase/README.md) now connects explicit spines
+to the H01 builder and session factory, including fresh-session checkpoint replay.
 
 ## What is executable
 
 | Mechanism | Implemented behavior | Qualification boundary |
 | --- | --- | --- |
-| Explicit spines | Cylindrical neck/head additions, geometry-preserving cable subdivision, source-location/region remapping | Tested morphology fixtures; no selected-104 spine placement or measured surface reconstruction |
+| Explicit spines | Topology-pinned H01 construction, cylindrical neck/head additions, source-location/region/contact remapping | Fixture and real 969-compartment source-component execution; additions explicitly synthetic, not a measured spine reconstruction |
 | Stochastic release | Fixed Pr, uniform/linear/bell profiles, BrainState random streams, reset/replay, H01 contact-event masking | H01 session opt-in `h01-biology-release-v1`; no fitting of Pr |
 | Extracellular transport | Matrix-free implicit finite-volume diffusion, uptake, fixed-bath and source accounting | Analytic, conservation, refinement and derivative fixtures; source-history erfc is a separate concentration-boundary mode |
 | Potassium feedback | Dynamic intracellular/extracellular K and Nernst reversal, actual cable K-current exchange | Small initialized cable/network fixtures; membrane current sampled at step start; coupled time refinement at population scale pending |
@@ -20,11 +22,13 @@ The accepted contract is in [the specification](../specs/2026-09-11-h01-braincel
 | Physical waits | Exact .1 ms silent events, bounded compiled chunks, optional eligibility evolution, padding does not advance | Tiny durations exercised; 0/1/10/20-second counts tested, full-duration biological runs not performed |
 | Physical checkpoints | v2 model/learner/chemistry/RNG/queue/cursor/optimizer capture, identity checks, atomic save and replay | Whole-event wait boundaries and already constructed matching sessions; no inside-cable-substep resume or automatic spatial reconstruction |
 
-The existing baseline remains opt-in compatible. `H01Session.build` currently
-accepts only the release-only biology schema. A complete spatial biology factory
-is **not** available. Unsupported spatial manifests, legacy biological saves
-and biological topology mutation fail explicitly instead of dropping/reusing
-unmapped state. Contact identity remapping is needed even when counts agree.
+The existing baseline remains opt-in compatible. `H01Session.build` accepts
+the release-only schema and `h01-biology-spines-v1`, including explicit contact
+head targets and probabilities keyed by contact identity. A complete coupled
+glia/myelin factory is **not** available. Unsupported spatial manifests, legacy
+biological saves and biological topology mutation fail explicitly instead of
+dropping/reusing unmapped state. Contact identity remapping is needed even when
+counts agree.
 
 ## Reference and numerical evidence
 
@@ -118,8 +122,9 @@ run by itself does not resolve the unfinished integration below.
 
 ## Verification and corrections
 
-`verification.xml` and `coverage.json` record the affected CPU gate; the compact
-`verification-summary.json` records the latest totals and implementation hashes.
+`verification.xml` and `coverage.json` record the first milestone's affected CPU
+gate; `verification-summary.json` pins that milestone's totals and implementation
+hashes. The subsequent spine-phase directory holds its own current gate records.
 Coverage is reported for new production modules separately from tests and the
 unrelated pre-existing Example 21 code. This is not a full-repository or GPU gate.
 
@@ -139,10 +144,11 @@ represented as warning-free joint-biological learning evidence.
 
 ## Remaining implementation sequence
 
-1. Build the immutable spatial assembly manifest and H01 session factory. Verify
-   c3/source coordinate alignment; select local glia and myelin; preserve all
-   exclusions and synthetic fallbacks. Integrate explicit spine additions and
-   remap contacts, probes, channel regions and optimizer identities.
+1. Extend the implemented immutable spine assembly manifest and H01 session
+   factory to glia and myelin. Select and qualify local structures using the
+   coordinate/proximity audit, preserving all exclusions and synthetic fallbacks.
+   Spine contact, probe and electrical-region remapping is now executable;
+   general biological topology mutation and optimizer transport remain pending.
 2. Connect real presynaptic spikes to GABA release sites and neuron-derived
    glutamate inputs to astrocytes. Assemble astrocyte electrical K buffering
    and myelin/sheath membrane dynamics with species and reservoir accounting.

@@ -103,12 +103,38 @@ snapshots cannot silently omit new biology. Biological topology mutation is
 rejected until a complete remapping adapter exists, including the case where
 the contact count stays constant but contact identities change.
 
-Only fixed release probabilities are currently accepted by the H01 session
-factory. Other primitives can be explicitly assembled in small systems; that
-does not make the complete spatial model available through Example 21. Measured
-astrocyte acquisition must not be described as a completed anatomical placement.
+The first milestone accepted only fixed release probabilities in the H01
+session factory. The subsequent spine assembly phase adds an explicit spatial
+schema, but does not make the complete glia/myelin model available through
+Example 21. Measured astrocyte acquisition must not be described as a completed
+anatomical placement.
 
 The finite-volume myelin transport is a distinct physical discretization. The
 pinned RxD code and its comments disagree about axial diffusion and radial
 geometry. Retain this distinction until independent reference experiments
 resolve it; copied repository conversation notes are not scientific authority.
+
+## Next phase: executable spine anatomy assembly
+
+Add `h01-biology-spines-v1`, a canonical immutable manifest pinned to the complete
+H01 topology document, source SWC digests and the `h01-swc-um` coordinate frame.
+Every active instance and release contact must occur exactly once. Each spine
+has a stable identity, explicit dimensions, source-coordinate attachment,
+direction, provenance and measured/published-donor/synthetic origin. No anatomy
+is generated or classified as measured implicitly.
+
+The H01 builder will preserve original source objects, subdivide only instances
+with explicit additions, inherit parent electrical regions, and remap soma,
+output, ordinary synaptic sites and probes. A contact can move onto a named head
+only when its original postsynaptic site matches that spine's attachment.
+Contact/parameter identities and ordering stay fixed. Retain both original and
+assembled placement evidence. Build and session paths must reject changed
+topology/source hashes, unknown targets and unsupported schema fields before
+expensive construction. v2 checkpoints bind the manifest; biological mutation
+remains rejected until all spatial features can be transported coherently.
+
+Gate this phase on meaningful malformed-manifest tests, geometry/region/contact
+preservation, an initialized compiled cable step, and an actual H01 session
+save/rebuild/restore replay with explicit spines and stochastic release. This
+phase does not promote the fragmented astrocyte candidate, generate unverified
+myelin, or claim full 104-neuron biological qualification.

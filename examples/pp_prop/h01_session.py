@@ -14,6 +14,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from braintrace.datasets.h01 import H01Archive
+from braintrace.datasets.h01_biology import H01SpatialManifest
 from braintrace.datasets.h01_network_init import init_h01_network_states
 from .h01_arc_model import H01ArcModel
 from .h01_checkpoint import load_checkpoint, save_checkpoint, restore_optimizer
@@ -34,6 +35,7 @@ def _numerical_settings_cached():
         'examples/pp_prop/h01_arc_model.py', 'examples/pp_prop/h01_arc_execution.py',
         'examples/pp_prop/h01_muon.py', 'examples/pp_prop/21-braincell-arc.py',
         'examples/pp_prop/h01_session.py')]
+    paths.append(root/'examples/pp_prop/h01_runtime.py')
     implementation = {str(path.relative_to(root)).replace('\\', '/'): hashlib.sha256(path.read_bytes()).hexdigest()
                       for path in paths if not path.name.endswith('_test.py')}
     return dict(optimizer_policy=POLICY, dt_ms=.005, event_ms=.1, substeps=20, precision=64,
@@ -119,17 +121,28 @@ class H01Session:
         if brainstate.environ.get('precision') != 64:
             raise ValueError('H01 sessions require an enclosing 64-bit precision context')
         biology = settings.get('biology')
-        if biology is not None and (not isinstance(biology, dict) or biology.get('schema') != 'h01-biology-release-v1' or
-                                    set(biology) != {'schema', 'release_probability'}):
-            raise ValueError('Unsupported biology manifest; spatial assembly is not implicit')
+        spatial = None
+        if isinstance(biology, dict) and biology.get('schema') == 'h01-biology-spines-v1':
+            spatial = H01SpatialManifest(biology, topology.to_dict())
+            # Persist the same canonical arrays validated by the manifest.
+            # Python tuple directions otherwise become lists only on save,
+            # making a freshly rebuilt session fail the identity comparison.
+            biology = settings['biology'] = spatial.to_dict()
+            probabilities = [biology['release_probability'][key] for key in topology.to_dict()['active_contacts']]
+        elif biology is not None:
+            if not isinstance(biology, dict) or biology.get('schema') != 'h01-biology-release-v1' or set(biology) != {'schema', 'release_probability'}:
+                raise ValueError('Unsupported biology manifest; spatial assembly is not implicit')
+            probabilities = biology['release_probability']
+        else:
+            probabilities = None
         network, records = build_network(topology, archive, solver=settings['solver'],
-            max_cv_length_um=settings['max_cv_length_um'], progress=progress)
+            max_cv_length_um=settings['max_cv_length_um'], progress=progress, biology=spatial)
         del records
         init_h01_network_states(network, progress=progress)
         model = H01ArcModel(network, topology.to_dict()['active_cells'], seed=settings['seed'],
                             dt_ms=settings['dt_ms'], input_pattern=input_pattern,
                             checkpoint_substeps=settings['checkpoint_substeps'],
-                            release_probability=None if biology is None else biology['release_probability'])
+                            release_probability=probabilities)
         states = dict(input=model.input_weight, recurrent=model.recurrent_weight,
                       readout_weight=model.readout_weight, readout_bias=model.readout_bias)
         if parameters is not None:

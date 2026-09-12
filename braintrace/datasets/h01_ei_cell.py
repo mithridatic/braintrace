@@ -85,7 +85,8 @@ def _paint_profile(cell, profile, regions, *, active=True, environment_potassium
 
 def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, donor=None,
                      mode="candidate", current_na=0., delay_ms=2., duration_ms=3.,
-                     max_cv_length_um=10., solver="staggered", pop_size=(), environment_potassium=False):
+                     max_cv_length_um=10., solver="staggered", pop_size=(), environment_potassium=False,
+                     spines=()):
     """Build an H01 cell with the selected donor physiology for its explicit E/I role.
 
     Parameters
@@ -118,6 +119,9 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
     environment_potassium : bool, optional
         Paint externally owned K pools. Bind a ChemicalEnvironment after
         initialization and before compilation; default preserves fixed K.
+    spines : sequence of Spine, optional
+        Explicit additions. Source regions and soma are remapped while original
+        H01 provenance is retained separately from assembled geometry.
 
     Returns
     -------
@@ -148,10 +152,16 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
     for branch, x in soma.evaluate(imported.morphology).points:
         if not any(b == branch and lo <= x <= hi for b, lo, hi in intervals["soma"]):
             raise ValueError("The measured soma probe must lie in the electrical soma region.")
+    morphology, assembly = imported.morphology, None
+    if spines:
+        from .h01_spine_assembly import assemble_spines
+        assembly = assemble_spines(imported, regions, spines)
+        morphology, regions, soma = assembly.morphology, assembly.regions, assembly.soma
+        intervals = _validate_regions(morphology, regions, polarity)
     policy = braincell.MaxCVLen(max_cv_length_um*u.um)
     for region in regions.values():
         policy = BoundaryAlignedCV(policy, region)
-    cell = H01Cell(imported.morphology, cv_policy=policy,
+    cell = H01Cell(morphology, cv_policy=policy,
                           V_init=profile.initial_mv*u.mV, solver=solver, pop_size=pop_size)
     _paint_profile(cell, profile, regions, environment_potassium=environment_potassium)
     cell.place(soma, StateProbe(field="v", name="voltage"))
@@ -164,4 +174,6 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
                 "synaptic_connectivity": "Not supplied by this single-cell builder."}
     if environment_potassium:
         evidence['potassium_environment'] = 'external pools require binding before simulation'
+    if assembly is not None:
+        evidence['spine_assembly'] = assembly.evidence
     return cell, evidence
