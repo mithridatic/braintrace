@@ -1,6 +1,6 @@
 {
-  "purpose": "SP15 stage 2 (Q2 for the E upstroke, graded): hold the function (B3 genome and flags), change the input by a graded amount that keeps the response observable. The dendritic and apical membrane area (cm, g_pas and the distributed Ih density together) is scaled 1.5, 2 and 3 times at fixed geometry. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 2 addendum).",
-  "cap": 3,
+  "purpose": "SP15 stages 2 and 3 (Q2 for the E upstroke, graded): hold the function (B3 genome and flags), change the input by a graded amount. The dendritic and apical membrane area (cm, g_pas and the distributed Ih density together) is scaled 1.5, 2 and 3 times at fixed geometry. Stage 2 asks at 200 pA (closed: every dose silenced the cell); stage 3 asks at 310 pA, where the model and the human both fire ten spikes. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 2 and 3 addenda).",
+  "cap": 7,
   "prior_evaluations": 0,
   "max_concurrent": 2,
   "abort_seconds": 1800,
@@ -13,10 +13,23 @@
   "driver": "h01_l2_neuron_reference.py",
   "output_dir": "h01-e-cable-load",
   "inputs": {
-    "sweep56": ["--cache", "/work", "--sweep", "56", "--include-recorded-bias"]
+    "sweep56": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "56",
+      "--include-recorded-bias"
+    ],
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ]
   },
-  "holdout": "Sweep 54 (330 pA) is sealed and is not an input. Only sweep 56 (200 pA) is used; the upstroke is read from spike 1.",
-  "evaluation": "One dose at sweep 56 = one evaluation; three doses = three evaluations.",
+  "holdout": "Sweep 54 (330 pA) is sealed and is not an input. Stage 2 uses sweep 56 (200 pA), stage 3 sweep 53 (310 pA); the upstroke is read from spike 1.",
+  "evaluation": "One dose at one sweep = one evaluation; stage 2 spends three, stage 3 four.",
   "base_candidate": {
     "file": "h01-e-morphology/q2-nseg1.candidate.json",
     "note": "The stage-1 control: B3 flags at nseg factor 1 without soma-current probes. Its run q2-nseg1-sweep56 is the x1 point of this series (653.3 V/s, count 4, first spike 126.5 ms, threshold -57.4 mV) and is not rerun."
@@ -27,7 +40,15 @@
       "prediction": "If the upstroke lives in the function (somatic sodium), the spike-1 maximum rise stays within max(3 x the mesh deviation, 10 percent) of the x1 control, that is within 166 V/s of 653 V/s, at every dose that still spikes. If it lives in the input (cable load), the maximum rise falls monotonically with the dose and leaves that band before the cell stops spiking. Reported, not banded: the 200 pA count, the first-spike time, the threshold, the post-spike level and the onset capacitance at each dose.",
       "rejection": "Every dose that leaves the band also fails to spike (no reading, as in stage 1), or the maximum rise moves without a monotone trend across the three doses (the dose is not acting through the cable load).",
       "unchanged": "All B3 flags of q2-nseg1.candidate.json; nseg factor 1; CVode 1e-10; recorded command plus bias; stop 2100 ms; no soma-current probes; the geometry, the axial resistance and every soma mechanism.",
-      "decision_file": "stage-2-decision.json"
+      "decision_file": "stage-2-decision.json",
+      "outcome": "CLOSED 2026-09-12: every dose silenced the cell at 200 pA (counts 4, 0, 0, 0); registered no-reading outcome. Levels in h01-e-cable-load/dose-levels.json."
+    },
+    "3": {
+      "title": "Stage 3: the same three doses plus the x1 control at sweep 53 (310 pA), nseg factor 1",
+      "prediction": "The x1 control at nseg 1 reproduces the nseg-9 spike-1 maximum rise 639.1 V/s within 10 percent. If the upstroke lives in the function, the maximum rise stays within max(3 x that mesh deviation, 10 percent of the control) at every dose that still spikes; if it lives in the input, it falls monotonically and leaves that band while the cell is still spiking. The human value at this input is 347.7 V/s with ten spikes; the model gives ten spikes too, so the count is comparable across the series. Reported, not banded: count, first spike, threshold, plateau level, onset capacitance and input resistance at each dose.",
+      "rejection": "Every dose that leaves the band also fails to spike (the stage-1 and stage-2 no-reading case), or the departure is not monotone across the three doses.",
+      "unchanged": "All B3 flags of q2-nseg1.candidate.json; nseg factor 1; CVode 1e-10; recorded command plus bias; stop 2100 ms; no soma-current probes; the geometry, the axial resistance and every soma mechanism.",
+      "decision_file": "stage-3-decision.json"
     }
   },
   "candidates": [
@@ -39,17 +60,29 @@
         "calcium_decay_factor": 1.0,
         "distribute_ih": true,
         "ih_density_factor": 75.0,
-        "insert_density": ["NaTs:axon:3.814"],
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
         "kv3_closing_factor": 0.9,
         "leak_reversal_shift_mv": -4.0,
-        "membrane_area_factor": ["dend:1.5", "apic:1.5"],
-        "regional_density": ["SK:soma:0.35"],
+        "membrane_area_factor": [
+          "dend:1.5",
+          "apic:1.5"
+        ],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
         "sodium_density_factor": 0.9,
         "sodium_opening_factor": 2.0,
         "sodium_recovery_factor": 1.0,
         "stop_ms": 2100.0
       },
-      "settings": {"nseg_factor": 1, "cvode_atol": 1e-10, "record_soma_currents": false}
+      "settings": {
+        "nseg_factor": 1,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 2: launched with --only-input sweep56"
     },
     {
       "name": "c20-area",
@@ -59,17 +92,29 @@
         "calcium_decay_factor": 1.0,
         "distribute_ih": true,
         "ih_density_factor": 75.0,
-        "insert_density": ["NaTs:axon:3.814"],
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
         "kv3_closing_factor": 0.9,
         "leak_reversal_shift_mv": -4.0,
-        "membrane_area_factor": ["dend:2", "apic:2"],
-        "regional_density": ["SK:soma:0.35"],
+        "membrane_area_factor": [
+          "dend:2",
+          "apic:2"
+        ],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
         "sodium_density_factor": 0.9,
         "sodium_opening_factor": 2.0,
         "sodium_recovery_factor": 1.0,
         "stop_ms": 2100.0
       },
-      "settings": {"nseg_factor": 1, "cvode_atol": 1e-10, "record_soma_currents": false}
+      "settings": {
+        "nseg_factor": 1,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 2: launched with --only-input sweep56"
     },
     {
       "name": "c30-area",
@@ -79,17 +124,153 @@
         "calcium_decay_factor": 1.0,
         "distribute_ih": true,
         "ih_density_factor": 75.0,
-        "insert_density": ["NaTs:axon:3.814"],
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
         "kv3_closing_factor": 0.9,
         "leak_reversal_shift_mv": -4.0,
-        "membrane_area_factor": ["dend:3", "apic:3"],
-        "regional_density": ["SK:soma:0.35"],
+        "membrane_area_factor": [
+          "dend:3",
+          "apic:3"
+        ],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
         "sodium_density_factor": 0.9,
         "sodium_opening_factor": 2.0,
         "sodium_recovery_factor": 1.0,
         "stop_ms": 2100.0
       },
-      "settings": {"nseg_factor": 1, "cvode_atol": 1e-10, "record_soma_currents": false}
+      "settings": {
+        "nseg_factor": 1,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 2: launched with --only-input sweep56"
+    },
+    {
+      "name": "c10-area-310",
+      "stage": "3",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 1,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "x1 control at 310 pA; launched with --only-input sweep53"
+    },
+    {
+      "name": "c15-area-310",
+      "stage": "3",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "membrane_area_factor": [
+          "dend:1.5",
+          "apic:1.5"
+        ],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 1,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "launched with --only-input sweep53"
+    },
+    {
+      "name": "c20-area-310",
+      "stage": "3",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "membrane_area_factor": [
+          "dend:2",
+          "apic:2"
+        ],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 1,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "launched with --only-input sweep53"
+    },
+    {
+      "name": "c30-area-310",
+      "stage": "3",
+      "arm": "isolation",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "membrane_area_factor": [
+          "dend:3",
+          "apic:3"
+        ],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 1,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "launched with --only-input sweep53"
     }
   ]
 }

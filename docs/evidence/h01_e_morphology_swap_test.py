@@ -76,3 +76,9 @@ def test_graded_decide_flags_a_non_monotone_departure_and_a_missing_control():
     assert not out["monotone"] and "not monotone" in out["verdict"]
     assert swap.graded_decide([])["verdict"] == "no control reading"
     assert swap.graded_decide(_series(("x1", None)))["verdict"] == "no control reading"
+
+
+def test_graded_decide_refuses_a_branch_when_only_the_control_spikes():
+    out = swap.graded_decide(_series(("x1", 653.), ("x1.5", None), ("x2", None), ("x3", None)))
+    assert out["verdict"].startswith("no reading")
+    assert out["doses_spiking"] == ["x1"] and out["doses_silent"] == ["x1.5", "x2", "x3"]

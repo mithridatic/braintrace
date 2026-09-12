@@ -1,0 +1,112 @@
+{
+  "control_v_s": 653.3181002770843,
+  "reference_nseg9_v_s": 597.7,
+  "band_v_s": 166.85430083125289,
+  "monotone": true,
+  "doses_spiking": [
+    "x1"
+  ],
+  "doses_silent": [
+    "x1.5",
+    "x2",
+    "x3"
+  ],
+  "rows": [
+    {
+      "dose": "x1",
+      "max_rise_v_s": 653.3181002770843,
+      "delta_v_s": 0.0,
+      "outside_band": false
+    }
+  ],
+  "series": [
+    {
+      "dose": "x1",
+      "upstroke": {
+        "count": 4,
+        "max_rise_v_s": 653.3181002770843,
+        "first_spike_ms": 126.50715093333793,
+        "threshold_mv": -57.37200484283731
+      }
+    },
+    {
+      "dose": "x1.5",
+      "upstroke": {
+        "count": 0,
+        "max_rise_v_s": null,
+        "first_spike_ms": null,
+        "threshold_mv": null
+      }
+    },
+    {
+      "dose": "x2",
+      "upstroke": {
+        "count": 0,
+        "max_rise_v_s": null,
+        "first_spike_ms": null,
+        "threshold_mv": null
+      }
+    },
+    {
+      "dose": "x3",
+      "upstroke": {
+        "count": 0,
+        "max_rise_v_s": null,
+        "first_spike_ms": null,
+        "threshold_mv": null
+      }
+    }
+  ],
+  "verdict": "no reading: every dose silenced the cell at this input",
+  "campaign_close": {
+    "closed_utc": "2026-09-12T05:10:00Z",
+    "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md (stage 2 addendum)",
+    "manifest": "docs/evidence/h01-e-cable-load-manifest.json",
+    "evaluations": {
+      "spent": 3,
+      "cap": 7
+    },
+    "wall_seconds": {
+      "c15-area": 59,
+      "c20-area": 58,
+      "c30-area": 59
+    },
+    "decision": "Registered rejection met again: every dose silenced the cell at 200 pA, so there is no upstroke reading.",
+    "levels": [
+      {
+        "dose": "x1",
+        "count": 4,
+        "rest_mv": -83.97,
+        "late_p50_mv": -64.91,
+        "onset_pF": 125.0,
+        "r_in_MOhm": 95.3
+      },
+      {
+        "dose": "x1.5",
+        "count": 0,
+        "rest_mv": -83.57,
+        "late_p50_mv": -68.6,
+        "onset_pF": 153.4,
+        "r_in_MOhm": 74.8
+      },
+      {
+        "dose": "x2",
+        "count": 0,
+        "rest_mv": -83.33,
+        "late_p50_mv": -71.3,
+        "onset_pF": 176.6,
+        "r_in_MOhm": 60.2
+      },
+      {
+        "dose": "x3",
+        "count": 0,
+        "rest_mv": -83.06,
+        "late_p50_mv": -74.1,
+        "onset_pF": 214.1,
+        "r_in_MOhm": 44.8
+      }
+    ],
+    "reading": "The dose acts on the cable load exactly as intended and monotonically: onset capacitance 125, 153, 177, 214 pF; input resistance 95, 75, 60, 45 MOhm; the 200 pA plateau falls -64.9, -68.6, -71.3, -74.1 mV. Rest is unchanged (-84.0 to -83.1 mV). The 200 pA count goes 4, 0, 0, 0: at this input B3 sits just above its rheobase, so a 50 percent cable increase is already enough to silence it. The cable load is therefore a very steep rheobase lever, steeper than any channel dose this campaign has tried.",
+    "next": "Stage 3 asks the same question at 310 pA, where the model and the human both fire ten spikes and the model has margin above rheobase. Reference for the mesh band: 639.1 V/s at nseg 9; the human is 347.7 V/s at this input."
+  }
+}

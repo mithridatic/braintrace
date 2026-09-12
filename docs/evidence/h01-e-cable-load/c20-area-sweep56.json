@@ -1,0 +1,1101 @@
+{
+  "model_id": 626170538,
+  "specimen_id": 541563728,
+  "donor": null,
+  "sweep": 56,
+  "waveform_sha256": "641ab4d4223d665bd78c18f3f4f1c8ce9dc0b4a2916ba3acc5a07e61302933fb",
+  "soma_observation_units": {
+    "axon_voltage_mv": "mV; axon[1](0.5), distal half of the 60 um stub"
+  },
+  "neuron_version": "9.0.2",
+  "dt_ms": null,
+  "solver": "CVode",
+  "cvode_atol": 1e-10,
+  "integration_seconds": 56.15263649635017,
+  "input": "command plus recorded bias",
+  "added_bias_na": -0.003711858945210089,
+  "nseg_factor": 1,
+  "requested_stop_ms": 2100.0,
+  "observed_stop_ms": 2100.0,
+  "recording_convention": "right-limit samples with indices into separately preserved raw recording",
+  "calcium_removal_intervention": {
+    "factor": 1.0,
+    "source_decay_ms": 494.01955262344603,
+    "applied_decay_ms": 494.01955262344603
+  },
+  "sodium_recovery_factor": 1.0,
+  "sodium_opening_factor": 2.0,
+  "kv3_closing_factor": 0.9,
+  "sodium_density_factor": 0.9,
+  "ih_density_factor": 75.0,
+  "leak_factor": 1.0,
+  "ih_distribution": {
+    "areas_um2": {
+      "soma": 592.0593838294642,
+      "dend": 5496.43039878429,
+      "apic": 9349.985570578809
+    },
+    "source_maximum_conductance_s": 1.542942623630362e-08,
+    "distributed_maximum_conductance_s": 1.542942623630362e-08,
+    "uniform_density_s_cm2": 9.994138594205759e-05
+  },
+  "leak_reversal_shift_mv": -4.0,
+  "regional_density_interventions": [
+    {
+      "mechanism": "SK",
+      "region": "soma",
+      "factor": 0.35
+    }
+  ],
+  "insert_density_interventions": [
+    {
+      "mechanism": "NaTs",
+      "region": "axon",
+      "value": 3.814
+    }
+  ],
+  "mechanism_parameters": [],
+  "membrane_area_factors": [
+    {
+      "region": "dend",
+      "factor": 2.0,
+      "section_count": 37
+    },
+    {
+      "region": "apic",
+      "factor": 2.0,
+      "section_count": 51
+    }
+  ],
+  "capacitance_factors": [],
+  "charge_balance_geometry": null,
+  "candidate_json": {
+    "file": "c20-area.candidate.json",
+    "values": {
+      "calcium_decay_factor": 1.0,
+      "cvode_atol": 1e-10,
+      "distribute_ih": true,
+      "ih_density_factor": 75.0,
+      "insert_density": [
+        "NaTs:axon:3.814"
+      ],
+      "kv3_closing_factor": 0.9,
+      "leak_reversal_shift_mv": -4.0,
+      "membrane_area_factor": [
+        "dend:2",
+        "apic:2"
+      ],
+      "nseg_factor": 1,
+      "record_soma_currents": false,
+      "regional_density": [
+        "SK:soma:0.35"
+      ],
+      "sodium_density_factor": 0.9,
+      "sodium_opening_factor": 2.0,
+      "sodium_recovery_factor": 1.0,
+      "stop_ms": 2100.0
+    },
+    "sha256": "50f28ac918324a9884f92f13a36ee64ff79ac1050fc64ea3527ad5a37b610223"
+  },
+  "applied_passive_parameters": [
+    {
+      "ra": 94.62299222737664,
+      "cm": [
+        {
+          "section": "soma",
+          "cm": 1.0
+        },
+        {
+          "section": "axon",
+          "cm": 1.0
+        },
+        {
+          "section": "dend",
+          "cm": 2.3031548608821226
+        },
+        {
+          "section": "apic",
+          "cm": 2.3031548608821226
+        }
+      ],
+      "e_pas": -87.97993469238281
+    }
+  ],
+  "mechanism_source_sha256": {
+    "CaDynamics.mod": "f012def9758f7d0244b81c54291edea6597c15fad99b9f7b5725b121a3567f16",
+    "Ca_HVA.mod": "021d34cf9ef3e76b0f2afee1a1eeab40eed56d0d3b1362b7e1019f4433273c71",
+    "Ca_LVA.mod": "a7a9ef262541dc96f5d19afd97778f9320808d01ce397350f1f2be3db30f920f",
+    "Ih.mod": "8616325d83add9a1a6546972352b4a62e57095ba25f3c6b5a57ab8b397e2d662",
+    "Im.mod": "e1c3bfb2186439bdb963ff2c53268efb824d8e00401aef0a14b7d2234071bb2c",
+    "K_P.mod": "2254697617c8da162ff8e5495e4d512fce53f77b44b86754855f11cee4ab3b3e",
+    "K_T.mod": "1cb9d72f985ef028922cafafed079df5c47b87a893001304181ec48881367ba7",
+    "KsAHP.mod": "b0204cc67883dd3e11de1b549091b993db8b466c11e3128fcbc97489a72a033a",
+    "Kv3_1.mod": "653befd15ec8f02af1ead3a7e5784149fe0c6e9021988d5ca822829449d83cb8",
+    "NaTs.mod": "6ba797bada310a6b880f4ab2a86e915894cc205d411474c0ce78f806af532a1f",
+    "Nap.mod": "979d21508f5b089e7b782835ea7f60311223bdc3a8e5242056c594305d2fb220",
+    "SK.mod": "079f1e3cac7444696d480b8e02853b215cd93e0c7b9986dbb54925fc49eddbeb"
+  },
+  "mechanism_library_sha256": "176f02852049d6e47e30486905d717ea64e8dae4f5e403f7c234f981ec7fa253",
+  "initial_mv": -83.97993469238281,
+  "temperature_c": 34.0,
+  "voltage_convention": "model internal voltage; compare to corrected human voltage",
+  "fit_sha256": "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3",
+  "applied_genome": [
+    {
+      "section": "soma",
+      "name": "gbar_Im",
+      "value": 0.0003009224287506406,
+      "mechanism": "Im",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Ih",
+      "value": 9.994138594205759e-05,
+      "mechanism": "Ih",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_NaTs",
+      "value": 2.6406641498523276,
+      "mechanism": "NaTs",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Nap",
+      "value": 0.00027834876277937903,
+      "mechanism": "Nap",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_K_P",
+      "value": 0.0002294964697530516,
+      "mechanism": "K_P",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_K_T",
+      "value": 1.1414657313560486e-08,
+      "mechanism": "K_T",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_SK",
+      "value": 0.001049516063519434,
+      "mechanism": "SK",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Kv3_1",
+      "value": 0.3687667632247488,
+      "mechanism": "Kv3_1",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Ca_HVA",
+      "value": 0.0009983602924910323,
+      "mechanism": "Ca_HVA",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gbar_Ca_LVA",
+      "value": 0.00824261450980065,
+      "mechanism": "Ca_LVA",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "gamma_CaDynamics",
+      "value": 0.0008762096311710155,
+      "mechanism": "CaDynamics",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "decay_CaDynamics",
+      "value": 494.01955262344603,
+      "mechanism": "CaDynamics",
+      "section_count": 1
+    },
+    {
+      "section": "soma",
+      "name": "g_pas",
+      "value": 0.0004214870638616726,
+      "mechanism": "",
+      "section_count": 1
+    },
+    {
+      "section": "axon",
+      "name": "g_pas",
+      "value": 0.00028089935810004884,
+      "mechanism": "",
+      "section_count": 2
+    },
+    {
+      "section": "dend",
+      "name": "g_pas",
+      "value": 3.626643561453563e-05,
+      "mechanism": "",
+      "section_count": 37
+    },
+    {
+      "section": "apic",
+      "name": "g_pas",
+      "value": 4.119170292066434e-05,
+      "mechanism": "",
+      "section_count": 51
+    },
+    {
+      "section": "axon",
+      "mechanism": "NaTs",
+      "name": "gbar_NaTs",
+      "value": 3.814,
+      "section_count": 2
+    },
+    {
+      "section": "dend",
+      "name": "gbar_Ih",
+      "value": 9.994138594205759e-05,
+      "mechanism": "Ih",
+      "section_count": 37
+    },
+    {
+      "section": "apic",
+      "name": "gbar_Ih",
+      "value": 9.994138594205759e-05,
+      "mechanism": "Ih",
+      "section_count": 51
+    }
+  ],
+  "sections": [
+    {
+      "name": "soma[0]",
+      "length_um": 13.72802734375,
+      "nseg": 1,
+      "cm_uf_cm2": 1.0,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": null,
+      "area_um2": 592.0593838294642
+    },
+    {
+      "name": "dend[0]",
+      "length_um": 4.753611478275155,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 9.688653617241503
+    },
+    {
+      "name": "dend[1]",
+      "length_um": 11.755108157789676,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[0]",
+      "area_um2": 20.290190749614663
+    },
+    {
+      "name": "dend[2]",
+      "length_um": 107.30352277707952,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[1]",
+      "area_um2": 159.87375682623343
+    },
+    {
+      "name": "dend[3]",
+      "length_um": 243.4342183566614,
+      "nseg": 13,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[1]",
+      "area_um2": 362.1967661029266
+    },
+    {
+      "name": "dend[4]",
+      "length_um": 27.29351126885583,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[0]",
+      "area_um2": 43.25918021067305
+    },
+    {
+      "name": "dend[5]",
+      "length_um": 10.358725777280391,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 30.154247506792057
+    },
+    {
+      "name": "dend[6]",
+      "length_um": 43.05595779637697,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[5]",
+      "area_um2": 93.89698213948935
+    },
+    {
+      "name": "dend[7]",
+      "length_um": 15.523871915279372,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[5]",
+      "area_um2": 37.97737005970278
+    },
+    {
+      "name": "dend[8]",
+      "length_um": 149.98684003066904,
+      "nseg": 7,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[7]",
+      "area_um2": 247.9587418496302
+    },
+    {
+      "name": "dend[9]",
+      "length_um": 48.32548434173279,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[7]",
+      "area_um2": 93.79376950938035
+    },
+    {
+      "name": "dend[10]",
+      "length_um": 208.6932185719869,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[9]",
+      "area_um2": 344.28347085174596
+    },
+    {
+      "name": "dend[11]",
+      "length_um": 112.66072374611169,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[9]",
+      "area_um2": 189.4846564941022
+    },
+    {
+      "name": "dend[12]",
+      "length_um": 45.058850315206385,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 65.5226752615201
+    },
+    {
+      "name": "dend[13]",
+      "length_um": 8.412826731962236,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 19.854899905212772
+    },
+    {
+      "name": "dend[14]",
+      "length_um": 90.24637283007755,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[13]",
+      "area_um2": 164.37304120939208
+    },
+    {
+      "name": "dend[15]",
+      "length_um": 2.147297649740084,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[13]",
+      "area_um2": 4.675799728365887
+    },
+    {
+      "name": "dend[16]",
+      "length_um": 146.65910228186775,
+      "nseg": 7,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[15]",
+      "area_um2": 242.34435316667557
+    },
+    {
+      "name": "dend[17]",
+      "length_um": 29.66894675443873,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[15]",
+      "area_um2": 55.68281982093251
+    },
+    {
+      "name": "dend[18]",
+      "length_um": 19.815711158613304,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[17]",
+      "area_um2": 33.39303579470967
+    },
+    {
+      "name": "dend[19]",
+      "length_um": 44.91967339942994,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[17]",
+      "area_um2": 71.31081260701902
+    },
+    {
+      "name": "dend[20]",
+      "length_um": 9.138386052015312,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 23.644803463415982
+    },
+    {
+      "name": "dend[21]",
+      "length_um": 2.2586786054470673,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[20]",
+      "area_um2": 5.770623405381365
+    },
+    {
+      "name": "dend[22]",
+      "length_um": 180.13354265935908,
+      "nseg": 9,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[21]",
+      "area_um2": 344.06980632494725
+    },
+    {
+      "name": "dend[23]",
+      "length_um": 161.04277113781401,
+      "nseg": 9,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[21]",
+      "area_um2": 310.587209579385
+    },
+    {
+      "name": "dend[24]",
+      "length_um": 129.52631769692417,
+      "nseg": 7,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[20]",
+      "area_um2": 255.84100944833835
+    },
+    {
+      "name": "dend[25]",
+      "length_um": 12.745169084308424,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 42.05221362112499
+    },
+    {
+      "name": "dend[26]",
+      "length_um": 213.46119761309686,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[25]",
+      "area_um2": 503.84525238381065
+    },
+    {
+      "name": "dend[27]",
+      "length_um": 4.680724701625942,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[25]",
+      "area_um2": 13.83994410866784
+    },
+    {
+      "name": "dend[28]",
+      "length_um": 137.71186832967828,
+      "nseg": 7,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[27]",
+      "area_um2": 248.53241884155807
+    },
+    {
+      "name": "dend[29]",
+      "length_um": 3.2587756239257364,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[27]",
+      "area_um2": 7.160991077415949
+    },
+    {
+      "name": "dend[30]",
+      "length_um": 223.57985811573297,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[29]",
+      "area_um2": 384.04073736884726
+    },
+    {
+      "name": "dend[31]",
+      "length_um": 222.68153468264873,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[29]",
+      "area_um2": 381.5734150776277
+    },
+    {
+      "name": "dend[32]",
+      "length_um": 8.021531618229671,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 19.720177500082052
+    },
+    {
+      "name": "dend[33]",
+      "length_um": 202.83428897763665,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[32]",
+      "area_um2": 392.72984681734204
+    },
+    {
+      "name": "dend[34]",
+      "length_um": 25.391622959212953,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[32]",
+      "area_um2": 56.874670103507135
+    },
+    {
+      "name": "dend[35]",
+      "length_um": 37.44744471942561,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[34]",
+      "area_um2": 62.416508242044074
+    },
+    {
+      "name": "dend[36]",
+      "length_um": 91.19888355594014,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "dend[34]",
+      "area_um2": 153.71554800943545
+    },
+    {
+      "name": "apic[0]",
+      "length_um": 9.189904408869737,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 58.85628956754519
+    },
+    {
+      "name": "apic[1]",
+      "length_um": 15.30029595802195,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[0]",
+      "area_um2": 97.98999089754794
+    },
+    {
+      "name": "apic[2]",
+      "length_um": 3.9351337743296684,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[1]",
+      "area_um2": 24.399921190904895
+    },
+    {
+      "name": "apic[3]",
+      "length_um": 261.8040370837727,
+      "nseg": 13,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[2]",
+      "area_um2": 924.5116501143516
+    },
+    {
+      "name": "apic[4]",
+      "length_um": 23.152480842549338,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[2]",
+      "area_um2": 129.65926520424756
+    },
+    {
+      "name": "apic[5]",
+      "length_um": 11.862128329840226,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[4]",
+      "area_um2": 50.84257225164254
+    },
+    {
+      "name": "apic[6]",
+      "length_um": 29.77082587191596,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[5]",
+      "area_um2": 66.06448075586613
+    },
+    {
+      "name": "apic[7]",
+      "length_um": 258.13339788068714,
+      "nseg": 13,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[6]",
+      "area_um2": 409.19443754446866
+    },
+    {
+      "name": "apic[8]",
+      "length_um": 262.5405742194623,
+      "nseg": 13,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[7]",
+      "area_um2": 373.74654068879556
+    },
+    {
+      "name": "apic[9]",
+      "length_um": 170.0470939379082,
+      "nseg": 9,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[7]",
+      "area_um2": 242.0034408377123
+    },
+    {
+      "name": "apic[10]",
+      "length_um": 20.73691420598483,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[6]",
+      "area_um2": 33.69546937853805
+    },
+    {
+      "name": "apic[11]",
+      "length_um": 20.571249489589498,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[10]",
+      "area_um2": 30.665760100098733
+    },
+    {
+      "name": "apic[12]",
+      "length_um": 63.48522791672287,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[11]",
+      "area_um2": 94.49199102786298
+    },
+    {
+      "name": "apic[13]",
+      "length_um": 45.33721017102757,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[12]",
+      "area_um2": 66.13883786930194
+    },
+    {
+      "name": "apic[14]",
+      "length_um": 38.78031602546739,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[12]",
+      "area_um2": 56.66781721719748
+    },
+    {
+      "name": "apic[15]",
+      "length_um": 36.40815339354314,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[11]",
+      "area_um2": 51.81395405233053
+    },
+    {
+      "name": "apic[16]",
+      "length_um": 80.97912019574906,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[10]",
+      "area_um2": 118.14811878538188
+    },
+    {
+      "name": "apic[17]",
+      "length_um": 29.651906225311606,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[5]",
+      "area_um2": 72.2494659838795
+    },
+    {
+      "name": "apic[18]",
+      "length_um": 72.74902464792267,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[17]",
+      "area_um2": 150.66642510319264
+    },
+    {
+      "name": "apic[19]",
+      "length_um": 285.4692423882011,
+      "nseg": 15,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[18]",
+      "area_um2": 479.79572271912434
+    },
+    {
+      "name": "apic[20]",
+      "length_um": 99.50232993035132,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[18]",
+      "area_um2": 196.36599958310975
+    },
+    {
+      "name": "apic[21]",
+      "length_um": 116.41805991718155,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[20]",
+      "area_um2": 191.62445856163626
+    },
+    {
+      "name": "apic[22]",
+      "length_um": 141.13752815045177,
+      "nseg": 7,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[20]",
+      "area_um2": 232.56134790310927
+    },
+    {
+      "name": "apic[23]",
+      "length_um": 16.22179029592169,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[22]",
+      "area_um2": 22.03607942002384
+    },
+    {
+      "name": "apic[24]",
+      "length_um": 9.289025305006941,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[22]",
+      "area_um2": 12.618440728284225
+    },
+    {
+      "name": "apic[25]",
+      "length_um": 52.924186807438296,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[17]",
+      "area_um2": 99.70324817086022
+    },
+    {
+      "name": "apic[26]",
+      "length_um": 100.0423246594761,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[25]",
+      "area_um2": 152.29843286803236
+    },
+    {
+      "name": "apic[27]",
+      "length_um": 210.9653637386626,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[25]",
+      "area_um2": 314.15415397655113
+    },
+    {
+      "name": "apic[28]",
+      "length_um": 38.51144839722784,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[4]",
+      "area_um2": 170.3486178221622
+    },
+    {
+      "name": "apic[29]",
+      "length_um": 18.93366644879596,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[28]",
+      "area_um2": 58.26144372059337
+    },
+    {
+      "name": "apic[30]",
+      "length_um": 272.34021786993947,
+      "nseg": 13,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[29]",
+      "area_um2": 581.3026213320901
+    },
+    {
+      "name": "apic[31]",
+      "length_um": 64.3704207681355,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[29]",
+      "area_um2": 177.18107094775786
+    },
+    {
+      "name": "apic[32]",
+      "length_um": 38.122829968336426,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[31]",
+      "area_um2": 92.61201195734901
+    },
+    {
+      "name": "apic[33]",
+      "length_um": 19.459394307581864,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[32]",
+      "area_um2": 42.8906587590886
+    },
+    {
+      "name": "apic[34]",
+      "length_um": 72.63304901445314,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[33]",
+      "area_um2": 127.19592664877477
+    },
+    {
+      "name": "apic[35]",
+      "length_um": 42.858991738307765,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[33]",
+      "area_um2": 75.40563399811755
+    },
+    {
+      "name": "apic[36]",
+      "length_um": 271.56302558380247,
+      "nseg": 13,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[32]",
+      "area_um2": 491.7422170228177
+    },
+    {
+      "name": "apic[37]",
+      "length_um": 64.20381627076893,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[31]",
+      "area_um2": 127.1843862947893
+    },
+    {
+      "name": "apic[38]",
+      "length_um": 86.52113749160334,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[28]",
+      "area_um2": 246.5458502319019
+    },
+    {
+      "name": "apic[39]",
+      "length_um": 82.70956331692895,
+      "nseg": 5,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[38]",
+      "area_um2": 159.02178114393507
+    },
+    {
+      "name": "apic[40]",
+      "length_um": 65.5375301556222,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[38]",
+      "area_um2": 135.99842009319218
+    },
+    {
+      "name": "apic[41]",
+      "length_um": 196.79663990517003,
+      "nseg": 9,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[40]",
+      "area_um2": 299.37164522366015
+    },
+    {
+      "name": "apic[42]",
+      "length_um": 208.0790567847911,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[40]",
+      "area_um2": 316.5349024880505
+    },
+    {
+      "name": "apic[43]",
+      "length_um": 17.69341304450931,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[1]",
+      "area_um2": 79.38528916028953
+    },
+    {
+      "name": "apic[44]",
+      "length_um": 15.357595567280374,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[43]",
+      "area_um2": 29.589951818991636
+    },
+    {
+      "name": "apic[45]",
+      "length_um": 174.53364366880524,
+      "nseg": 9,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[44]",
+      "area_um2": 265.0554875392103
+    },
+    {
+      "name": "apic[46]",
+      "length_um": 180.6787210814238,
+      "nseg": 9,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[44]",
+      "area_um2": 274.6817914588252
+    },
+    {
+      "name": "apic[47]",
+      "length_um": 63.02731597723326,
+      "nseg": 3,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[43]",
+      "area_um2": 111.64956316928435
+    },
+    {
+      "name": "apic[48]",
+      "length_um": 27.749544754630588,
+      "nseg": 1,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[0]",
+      "area_um2": 113.78823508808854
+    },
+    {
+      "name": "apic[49]",
+      "length_um": 212.0255724258507,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[48]",
+      "area_um2": 308.64622250392705
+    },
+    {
+      "name": "apic[50]",
+      "length_um": 214.76102736314544,
+      "nseg": 11,
+      "cm_uf_cm2": 4.606309721764245,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "apic[48]",
+      "area_um2": 312.62752965431434
+    },
+    {
+      "name": "axon[0]",
+      "length_um": 30.0,
+      "nseg": 1,
+      "cm_uf_cm2": 1.0,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "soma[0]",
+      "area_um2": 94.24777960769379
+    },
+    {
+      "name": "axon[1]",
+      "length_um": 30.0,
+      "nseg": 1,
+      "cm_uf_cm2": 1.0,
+      "ra_ohm_cm": 94.62299222737664,
+      "parent": "axon[0]",
+      "area_um2": 94.24777960769379
+    }
+  ],
+  "samples": 341416,
+  "qualification": "Source setup reproduction; physiology and convergence unqualified"
+}

@@ -181,7 +181,9 @@ def graded_decide(series, control_reference=B3_NSEG9_RISE_V_S, mesh_tolerance=ME
     monotone = all(b <= a+1e-9 for a, b in zip(values, values[1:])) or all(b >= a-1e-9 for a, b in zip(values, values[1:]))
     outside = [x for x in deltas if x["outside_band"]]
     silent = [s["dose"] for s in series if s["upstroke"]["max_rise_v_s"] is None]
-    if outside and monotone:
+    if len(rises) < 2:
+        verdict = "no reading: every dose silenced the cell at this input"
+    elif outside and monotone:
         verdict = "inputs: the upstroke follows the cable load"
     elif outside:
         verdict = "outside the band but not monotone: the dose is not acting through the cable load"
@@ -210,6 +212,8 @@ def main(argv=None):
     g.add_argument("--control-npz", type=Path, required=True, help="the x1 control trace")
     g.add_argument("--dose", action="append", required=True, metavar="LABEL=STEM",
                    help="ordered doses after the control, e.g. x1.5=c15-area-sweep56")
+    g.add_argument("--reference-v-s", type=float, default=B3_NSEG9_RISE_V_S,
+                   help="the fine-mesh maximum rise this series' control is checked against (default: the 200 pA value)")
     g.add_argument("--output-stem", default="stage-2-decision")
     args = parser.parse_args(argv)
     if args.command == "prepare":
@@ -220,7 +224,7 @@ def main(argv=None):
         for text in args.dose:
             label, stem = text.split("=", 1)
             series.append({"dose": label, "upstroke": upstroke(args.folder/f"{stem}.npz")})
-        decision = graded_decide(series)
+        decision = graded_decide(series, control_reference=args.reference_v_s)
         (args.folder/f"{args.output_stem}.json").write_text(json.dumps(decision, indent=2)+"\n", encoding="utf-8")
         print(json.dumps(decision, indent=2))
         return
