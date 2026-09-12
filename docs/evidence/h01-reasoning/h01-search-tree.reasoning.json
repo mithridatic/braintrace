@@ -1,0 +1,905 @@
+{
+  "id": "doc_fd8d615b-339",
+  "title": "H01 progressive search tree",
+  "graph": {
+    "classes": [
+      {
+        "id": "Search question",
+        "label": "Search question",
+        "color": "#4f76a3"
+      },
+      {
+        "id": "Branch retained",
+        "label": "Branch retained",
+        "color": "#b35f48"
+      },
+      {
+        "id": "Branch eliminated",
+        "label": "Branch eliminated",
+        "color": "#8a8f94"
+      },
+      {
+        "id": "Branch open",
+        "label": "Branch open",
+        "color": "#c9a227"
+      },
+      {
+        "id": "Policy",
+        "label": "Policy",
+        "color": "#5b8a5a"
+      },
+      {
+        "id": "Next test",
+        "label": "Next test",
+        "color": "#7a5c9e"
+      }
+    ],
+    "direction": "DOWN",
+    "edges": [
+      {
+        "id": "y__q1",
+        "source": "y",
+        "target": "q1",
+        "relation": "describes",
+        "label": "first split"
+      },
+      {
+        "id": "q1__q1_elemental",
+        "source": "q1",
+        "target": "q1_elemental",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q1__q1_cyclical",
+        "source": "q1",
+        "target": "q1_cyclical",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q1__q1_structural",
+        "source": "q1",
+        "target": "q1_structural",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q1__q1_temporal",
+        "source": "q1",
+        "target": "q1_temporal",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q1_structural__q2",
+        "source": "q1_structural",
+        "target": "q2",
+        "relation": "describes",
+        "label": "shared by both cells: split inputs from function"
+      },
+      {
+        "id": "q1_elemental__q2",
+        "source": "q1_elemental",
+        "target": "q2",
+        "relation": "describes",
+        "label": "post-spike only: split by spike history"
+      },
+      {
+        "id": "q2__q2_inputs",
+        "source": "q2",
+        "target": "q2_inputs",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q2__q2_function",
+        "source": "q2",
+        "target": "q2_function",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q2_function__q2_swap",
+        "source": "q2_function",
+        "target": "q2_swap",
+        "relation": "describes",
+        "label": "tactic to close the split"
+      },
+      {
+        "id": "q2_function__q3",
+        "source": "q2_function",
+        "target": "q3",
+        "relation": "describes",
+        "label": "locate the function element energetically"
+      },
+      {
+        "id": "q3__q3_v",
+        "source": "q3",
+        "target": "q3_v",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q3__q3_t",
+        "source": "q3",
+        "target": "q3_t",
+        "relation": "describes",
+        "label": "branch"
+      },
+      {
+        "id": "q3_t__next",
+        "source": "q3_t",
+        "target": "next",
+        "relation": "describes",
+        "label": "if use-dependent and shared"
+      },
+      {
+        "id": "levers__q3",
+        "source": "levers",
+        "target": "q3",
+        "relation": "describes",
+        "label": "why the dose scans stop here"
+      },
+      {
+        "id": "policy__q1",
+        "source": "policy",
+        "target": "q1",
+        "relation": "describes",
+        "label": "applies to every split"
+      }
+    ],
+    "events": [],
+    "explanations": [
+      {
+        "id": "search_tree",
+        "title": "H01 progressive search tree",
+        "effect": "Where the human-model contrast lives",
+        "conditions": "Two human cells with repeats; two donor fits; retained traces from SP3-SP13 on the Vast executor.",
+        "narrative": "A Hartshorne progressive search: Matryoshka family split, then inputs-against-function isolation, then the z-strategy load-curve split, before any mechanism is named. Grey branches are eliminated with the file that closed them; orange are retained; yellow are open; purple are the next tests; green are the policies.",
+        "uncertainties": "Q1's phase-plane small multiples and Q3's load curves are registered but not yet drawn. The 2x2 dissection is a hypothesis about the shared function, not a result.",
+        "predictions": "Q1 names elemental and cyclical as the families, structural as the shared pattern; Q3 separates in time after the spike; the dissection moves both cells with one change.",
+        "nodeIds": [
+          "y",
+          "q1",
+          "q1_elemental",
+          "q1_cyclical",
+          "q1_structural",
+          "q1_temporal",
+          "q2",
+          "q2_inputs",
+          "q2_function",
+          "q2_swap",
+          "q3",
+          "q3_v",
+          "q3_t",
+          "levers",
+          "next",
+          "policy"
+        ],
+        "testIds": [],
+        "evidence": [],
+        "status": "unverified",
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "y",
+        "type": "Search question",
+        "text": "Y. Human-model contrast in the recorded spike trains of two cells (E: L2/3 pyramidal; I: PV interneuron), read against each human's own repeat envelope.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Repeat envelope at 200 pA (E): count 1 in 5 of 5 sweeps; first spike 153-209 ms (57 ms spread); threshold -54.5 to -55.2 mV; AHP -69.5 to -70.2 mV. Contrasts smaller than about 3 sigma of this envelope are not searched.\n\nEvidence: docs/evidence/h01-e-gain/g0-b3-usable.json; docs/evidence/h01-i-sk/s0-finalist-usable.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "y_ev0",
+            "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "y_ev1",
+            "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "y_ev2",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q1",
+        "type": "Search question",
+        "text": "Q1 (Matryoshka). In which family does the contrast live?",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Families: elemental (within one spike cycle), cyclical (spike to spike), structural (cell to cell), temporal (sweep to sweep). Answered from retained traces; no run.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q1_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q1_elemental",
+        "type": "Branch retained",
+        "text": "Elemental: retained. After one spike at 200 pA the human holds -67 mV for 800 ms while B3 ramps to -57 mV and fires three more times; the contrast is 2-6 mV against a repeat envelope under 1 mV.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Phase-plane and post-spike trajectory of cycle 1, human against model, per input, still to be drawn (stage 0 of SP15).\n\nEvidence: docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-gain/stage-g0-decision.json",
+        "evidence": [
+          {
+            "id": "q1_elemental_ev0",
+            "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_elemental_ev1",
+            "title": "docs/evidence/h01-e-gain/stage-g0-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-g0-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q1_cyclical",
+        "type": "Branch retained",
+        "text": "Cyclical: retained. The human threshold climbs along the train (-56.4 to -52.8 mV at 310 pA) and the second spike broadens; the models hold a fixed threshold. The I human fires an early burst (6-10 ms cycles) the model never shows.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Cycle-to-cycle signatures are in the usable-tier cycle tables.\n\nEvidence: docs/evidence/h01-e-gain/g0-b3-usable.json; docs/evidence/h01-i-sk/s0-finalist-usable.json; docs/evidence/h01-i-sk-result.md",
+        "evidence": [
+          {
+            "id": "q1_cyclical_ev0",
+            "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_cyclical_ev1",
+            "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_cyclical_ev2",
+            "title": "docs/evidence/h01-i-sk-result.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q1_structural",
+        "type": "Branch retained",
+        "text": "Structural: retained and strongest. Both humans share one deviation from both fits: higher rheobase, steeper late gain, climbing threshold, post-spike slowing that shrinks with input.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Two different cells sharing one deviation from two different fits places the steep X in what the fits share.\n\nEvidence: docs/evidence/h01-i-sk-result.md; docs/evidence/h01-e-currents/stage-close-decision.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q1_structural_ev0",
+            "title": "docs/evidence/h01-i-sk-result.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk-result.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_structural_ev1",
+            "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_structural_ev2",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q1_temporal",
+        "type": "Branch eliminated",
+        "text": "Temporal: eliminated. Sweep-to-sweep repeat variation is 12.8 ms in cycle and under 1 mV in level; far below the contrasts above.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The repeatability limits of the usable tier come from these repeats.\n\nEvidence: docs/evidence/h01-e-gain/g0-b3-usable.json; docs/evidence/h01-i-sk/s0-finalist-usable.json",
+        "evidence": [
+          {
+            "id": "q1_temporal_ev0",
+            "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q1_temporal_ev1",
+            "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q2",
+        "type": "Search question",
+        "text": "Q2 (Isolation). Does the contrast come in on the inputs (anatomy, passive cable, per-cell densities) or live in the function (shared active kinetics)?",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Both branches must be phrased on Y only.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q2_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q2_inputs",
+        "type": "Branch eliminated",
+        "text": "Inputs below threshold: eliminated. At 110 pA without a spike the model matches the human onset rows within 0.4-0.9 mV; Ih and leak doses moved the protected rows past their bands.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The passive family cannot carry the low-drive count while holding the subthreshold return (E close).\n\nEvidence: docs/evidence/h01-e-gain/stage-g0-decision.json; docs/evidence/h01-e-gain/stage-close-decision.json",
+        "evidence": [
+          {
+            "id": "q2_inputs_ev0",
+            "title": "docs/evidence/h01-e-gain/stage-g0-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-g0-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q2_inputs_ev1",
+            "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q2_function",
+        "type": "Branch retained",
+        "text": "Function, use-dependent: retained. The offset appears only after a spike; a spike-triggered gate silent before the spike reproduces the 200 pA response exactly (SP13 stage 0) and the same signature is shared by both cells.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Whether the shared function element is an added outward current or a lost inward one is Q3's job.\n\nEvidence: docs/evidence/h01-e-sahp-tail/stage-1-decision.json; docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-currents/stage-close-decision.json",
+        "evidence": [
+          {
+            "id": "q2_function_ev0",
+            "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q2_function_ev1",
+            "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q2_function_ev2",
+            "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q2_swap",
+        "type": "Next test",
+        "text": "Open tactic: hold the function, swap the inputs (the same genome on the H01 morphology and on the donor morphology, one run each). If the signature stays, it follows the function.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "One evaluation pair; registers before it runs.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q2_swap_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q3",
+        "type": "Search question",
+        "text": "Q3 (z-strategy). Where in voltage and in time after a spike do the human's and the model's net-current load curves separate?",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Pipette = flow source (Norton); cell = load. I_net(t) = I_inj - C dV/dt from retained traces; C from the 110 pA onset transient.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q3_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q3_v",
+        "type": "Branch open",
+        "text": "Separation in voltage: a voltage-dependent branch (a conductance open at the plateau).",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "If the curves separate at the same V regardless of time since the spike.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q3_v_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q3_t",
+        "type": "Branch open",
+        "text": "Separation in time after the spike: a use-dependent branch (a gate that opens or closes with spikes).",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "SP13 says a single accumulating outward gate over-brakes 250/310 pA; the climbing threshold says lost sodium availability rather than added potassium.\n\nEvidence: docs/evidence/h01-e-sahp-tail/stage-1-decision.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q3_t_ev0",
+            "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q3_t_ev1",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "levers",
+        "type": "Branch eliminated",
+        "text": "Named levers dosed before a split (eliminated as a method, not as physics): Ih half, leak x1.5, SK 0.35, Nap zero (silences 200 pA), Im x100 (kills 310 pA), KsAHP 1 s and 5 s tails (over-brake 250/310 pA).",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Each was sized from counts, medians or an offset divided by an input resistance: lossy transforms of Y. The book's rule: locate the family and the branch first, then name a mechanism once.\n\nEvidence: docs/evidence/h01-e-gain/stage-close-decision.json; docs/evidence/h01-e-currents/stage-close-decision.json; docs/evidence/h01-e-sahp/stage-0-reanalysis.json; docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+        "evidence": [
+          {
+            "id": "levers_ev0",
+            "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "levers_ev1",
+            "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-currents/stage-close-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "levers_ev2",
+            "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "levers_ev3",
+            "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "next",
+        "type": "Next test",
+        "text": "Next (after Q1-Q3): one 2x2 dissection {E, I} x {kinetics as fitted, kinetics with slow sodium inactivation}. The signature follows the function if it moves toward both humans with one change.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Registered prediction and rejection to be written before the run; SP14 (brake plus gain lever) deferred.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "next_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "policy",
+        "type": "Policy",
+        "text": "Policies: contrasts > 3 sigma of the repeat envelope; samples of three; Y only; every split written before its data; fail fast under the cap; both tiers; sweeps 54 and 48 sealed.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "From Hartshorne chapters 1-5 and the campaign's own AGENTS rules.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "policy_ev0",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      }
+    ],
+    "project": {
+      "calendar": {
+        "exceptions": [],
+        "hours": 8,
+        "weekdays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "date": "2026-09-12",
+      "direction": "forward",
+      "resources": []
+    },
+    "relationshipReviews": [
+      {
+        "id": "review_y__q1",
+        "edgeId": "y__q1",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_y__q1",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q1__q1_elemental",
+        "edgeId": "q1__q1_elemental",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q1__q1_elemental",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q1__q1_cyclical",
+        "edgeId": "q1__q1_cyclical",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q1__q1_cyclical",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q1__q1_structural",
+        "edgeId": "q1__q1_structural",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q1__q1_structural",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q1__q1_temporal",
+        "edgeId": "q1__q1_temporal",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q1__q1_temporal",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q1_structural__q2",
+        "edgeId": "q1_structural__q2",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q1_structural__q2",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q1_elemental__q2",
+        "edgeId": "q1_elemental__q2",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q1_elemental__q2",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q2__q2_inputs",
+        "edgeId": "q2__q2_inputs",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q2__q2_inputs",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q2__q2_function",
+        "edgeId": "q2__q2_function",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q2__q2_function",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q2_function__q2_swap",
+        "edgeId": "q2_function__q2_swap",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q2_function__q2_swap",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q2_function__q3",
+        "edgeId": "q2_function__q3",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q2_function__q3",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q3__q3_v",
+        "edgeId": "q3__q3_v",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q3__q3_v",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q3__q3_t",
+        "edgeId": "q3__q3_t",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q3__q3_t",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q3_t__next",
+        "edgeId": "q3_t__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q3_t__next",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_levers__q3",
+        "edgeId": "levers__q3",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_levers__q3",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_policy__q1",
+        "edgeId": "policy__q1",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_policy__q1",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "end": 10000,
+      "step": 100
+    },
+    "tests": [],
+    "summaries": [],
+    "characteristics": [],
+    "verifications": []
+  },
+  "scenarios": [],
+  "revision": 0,
+  "history": [],
+  "undo": [],
+  "redo": [],
+  "proposals": [],
+  "jobs": [],
+  "access": {
+    "direct": true
+  }
+}
