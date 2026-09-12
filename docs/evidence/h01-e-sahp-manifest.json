@@ -2,7 +2,7 @@
   "purpose": "SP12 E cell: a spike-triggered slow outward conductance (KsAHP, docs/evidence/h01-l2-mechanisms/KsAHP.mod) on the B3 soma at two registered doses, against a Nap-removal comparison arm of the same current size that is not spike-triggered. Specification: docs/specs/2026-09-11-h01-e-spike-triggered-outward.md.",
   "cap": 4,
   "prior_evaluations": 0,
-  "max_concurrent": 3,
+  "max_concurrent": 2,
   "abort_seconds": 2400,
   "executor": "local",
   "python": "/workspace/h01-neuron/venv312/bin/python",
