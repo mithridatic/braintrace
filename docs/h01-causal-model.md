@@ -333,24 +333,33 @@ The failed Ih and leak doses do not prove that every passive parameter choice fa
 Ih and SK are state-dependent conductances; grouping them as a passive family hides that distinction.
 
 **Open.** A change must correct low-input counts while preserving higher-input and subthreshold responses.
-The measured boundaries place it in the cable or in a mechanism the fit lacks: a spike-triggered outward current that lasts through the pulse is the registered family
-([draft SP12](specs/2026-09-11-h01-e-spike-triggered-outward.md), not approved).
+The measured boundaries place it in a mechanism the fit lacks: a spike-triggered outward current that lasts through the pulse is the registered family
+([SP12](specs/2026-09-11-h01-e-spike-triggered-outward.md), approved 2026-09-11, doses registered before the runs).
 No such change is established. B3 remains unpromoted.
 
-**Measured: the B3 soma is a pass-through at every tested input (2026-09-11).**
+**Measured: the B3 soma currents at every tested input (2026-09-11, corrected the same day).**
 Unchanged B3 was rerun on the Vast executor with every soma current recorded and reproduced `g0-b3` exactly
 ([stage 0](evidence/h01-e-currents/stage-0-decision.json), 12 of 12 bands).
-Between spikes the soma passes 96 percent of the applied current into the cable (0.188 of 0.196 nA at 200 pA).
-The summed soma ionic current is about -0.009 nA at 200, 250 and 310 pA; only SK changes with the input (-0.0017 to -0.013 nA).
-Nap supplies +0.0015 nA and Im -0.0001 nA; the fit places both in the soma only.
-Thus, no soma channel of the fit carries a current of the size needed to change the low-drive count.
+The tables give the balance of the middle soma segment, one of nine (65.8 of 592 um2).
+An earlier statement that the soma passes 96 percent of the input into the cable described that segment and is withdrawn
+([erratum](evidence/h01-e-currents/stage-close-decision.json)).
+Between spikes at 200 pA the whole soma sinks 0.069 nA of the applied 0.196 nA: leak -0.058, Kv3 -0.017, SK -0.016, NaTs +0.010, Nap +0.012 and Im -0.0002 nA.
+Only SK changes with the input.
+The fit places every active mechanism in the soma only.
+Thus, the largest soma current a single registered lever can remove is the Nap current, 0.012 nA.
 
 **Measured: the human sits below the model only after a spike.**
 At 200 pA the human fires once at 206 ms and then holds -67.1 mV (mean 1800-2000 ms); the model fires four times and averages -64.8 mV late and -61.9 mV mid pulse.
 At 110 pA, without a spike, the same model matches the human onset rows within 0.4-0.9 mV.
 The offset is 0.020 nA by p50 at the model's 98 MOhm input resistance, and 0.02-0.06 nA by mean.
-Neither registered lever reaches it: Nap can remove at most 0.0017 nA, and an Im dose that reaches it acts more strongly at the 310 pA threshold and removes that train.
-Stage 1 was therefore registered and not spent ([close](evidence/h01-e-currents/stage-close-decision.json)).
+Removing all of Nap reaches 59 percent of the p50 offset and 20 percent of the mean offset; an Im dose that reaches it acts more strongly at the 310 pA threshold and removes that train.
+Nap is open at every plateau and at 110 pA, so it is not a spike-triggered lever.
+The Nap evaluation is spent as the SP12 comparison arm; the Im evaluation was not spent ([close](evidence/h01-e-currents/stage-close-decision.json)).
+
+**Registered (SP12).** A gate that opens only above -20 mV, with a 1 ms rise and a 1000 ms tail, is inserted on the soma as a potassium conductance.
+The recorded soma calcium rises from 1.0e-4 to 2.8e-4 mM with the depolarisation and is not spike-shaped, so it cannot carry a spike-triggered current in this fit.
+Two doses are fixed from the retained trace: 3.50e-4 S/cm2 for the 0.020 nA offset and 1.03e-3 S/cm2 for the 0.059 nA offset.
+The predictions and rejections are in the [manifest](evidence/h01-e-sahp-manifest.json).
 
 The human threshold also climbs along the train (-56.4 to -52.8 mV at 310 pA); the model's stays at -57.2 mV at every input.
 This is a response difference the recorded soma currents do not explain.

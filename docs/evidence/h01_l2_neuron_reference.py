@@ -65,6 +65,39 @@ def axial_probes(section, vectors, units):
     return geometry
 
 
+PROBED_INSERTS = {"KsAHP": (("ik", "mA/cm2; outward positive; local soma(0.5)"),
+                            ("z", "dimensionless; spike-triggered gate; local soma(0.5)"))}
+
+
+def inserted_probes(soma, inserted, ismembrane):
+    """Recording pointers for soma-inserted mechanisms that carry their own probes.
+
+    Parameters
+    ----------
+    soma : segment
+        The soma(0.5) segment whose mechanism attributes hold the pointers.
+    inserted : list of dict
+        Parsed ``--insert-density`` entries (``mechanism``, ``region``, ``value``).
+    ismembrane : callable
+        ``h.ismembrane``; a mechanism is probed only when it is present on the section.
+
+    Returns
+    -------
+    list of tuple
+        ``(vector name, pointer, unit)`` for every probed field of every soma insert.
+    """
+    probes = []
+    for item in inserted:
+        fields = PROBED_INSERTS.get(item["mechanism"])
+        if item["region"] != "soma" or fields is None or not ismembrane(item["mechanism"], sec=soma.sec):
+            continue
+        mechanism = getattr(soma, item["mechanism"])
+        for field, unit in fields:
+            probes.append((f"soma_{item['mechanism']}_{'ma_cm2' if field == 'ik' else field}",
+                           getattr(mechanism, "_ref_" + field), unit))
+    return probes
+
+
 def main():
     """Load source parameters and save one compiled NEURON rollout.
 
@@ -316,6 +349,9 @@ def main():
                                     ("soma_Im_m", soma.Im._ref_m, "dimensionless")):
             vectors[name] = h.Vector().record(pointer)
             observation_units[name] = unit + "; local soma(0.5)"
+        for name, pointer, unit in inserted_probes(soma, inserted, h.ismembrane):
+            vectors[name] = h.Vector().record(pointer)
+            observation_units[name] = unit
     integration_start = wall_clock.perf_counter()
     h.finitialize(conditions["v_init"])
     if args.cvode_atol is None:

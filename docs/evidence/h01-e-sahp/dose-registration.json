@@ -1,0 +1,30 @@
+{
+  "gate": {
+    "vhalf_mv": -20.0,
+    "slope_mv": 2.0,
+    "tau_on_ms": 1.0,
+    "tau_off_ms": 1000.0
+  },
+  "reference_trace": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\docs\\evidence\\h01-e-currents\\m0-b3-currents-sweep56.npz",
+  "first_spike_ms": 1147.1799723576034,
+  "ms_above_vhalf": 0.9879513531118391,
+  "gate_after_first_spike": 0.5100907695145912,
+  "hold_mv": -67.06,
+  "late_window_ms": [
+    1800.0,
+    2000.0
+  ],
+  "gate_late_mean": 0.24187267700556603,
+  "ek_mv": -107.0,
+  "soma_area_um2": 592.0593838294642,
+  "doses": {
+    "0.020 nA": {
+      "target_offset_na": 0.02,
+      "gbar_s_cm2": 0.000349679244328724
+    },
+    "0.059 nA": {
+      "target_offset_na": 0.059,
+      "gbar_s_cm2": 0.0010315537707697357
+    }
+  }
+}

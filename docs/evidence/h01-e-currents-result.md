@@ -29,6 +29,17 @@ axon-first initiation at every input. Runs took 885, 981 and 1015 s.
 The soma is a pass-through: 96 percent of the input leaves axially; the soma ionic
 terms sum to about -9 pA at every input; only SK changes with the input.
 
+**Erratum (2026-09-11).** The table is the balance of the soma(0.5) segment, one of
+nine soma segments (65.8 of 592 um2). Whole-soma currents are nine times larger: at
+200 pA leak -0.058, Kv3 -0.017, SK -0.016, NaTs +0.010, Nap +0.012, Im -0.0002 nA,
+summing to -0.069 nA (35 percent of the applied current). Of the segment's 0.188 nA
+axial outflow, 0.061 nA enters the neighbouring soma segments and 0.128 nA the cable.
+The "pass-through" sentence above is withdrawn; the drift and share figures stand.
+Whole-soma Nap (+0.012 nA) reaches 59 percent of the 0.020 nA p50 offset, so the
+stage-1 "not spent by construction" reasoning below is withdrawn for Nap; that
+evaluation is spent as the SP12 comparison arm (`h01-e-sahp-manifest.json`). Details in
+the `erratum_2026-09-11` block of the close decision.
+
 ## The human contrast
 
 | 200 pA, mean voltage (mV) | human | model |

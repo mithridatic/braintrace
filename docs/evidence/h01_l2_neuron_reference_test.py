@@ -219,3 +219,26 @@ def test_help_lists_the_donor_option(monkeypatch, capsys):
     with pytest.raises(SystemExit) as error:
         _run(monkeypatch, ["--help"])
     assert error.value.code == 0 and "--donor-json" in capsys.readouterr().out
+
+
+def test_inserted_probes_record_only_soma_inserts_with_registered_fields(monkeypatch):
+    folder = Path(__file__).parent
+    fake_neuron = types.ModuleType("neuron")
+    fake_neuron.h = object()
+    monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
+    monkeypatch.syspath_prepend(str(folder))
+    driver = types.SimpleNamespace(**runpy.run_path(str(folder / "h01_l2_neuron_reference.py")))
+
+    class Mechanism:
+        _ref_ik, _ref_z = "ik-pointer", "z-pointer"
+
+    class Soma:
+        sec = "soma[0]"
+        KsAHP = Mechanism()
+
+    inserted = [{"mechanism": "KsAHP", "region": "soma", "value": 1e-4},
+                {"mechanism": "KsAHP", "region": "axon", "value": 1e-4},
+                {"mechanism": "NaTs", "region": "soma", "value": 3.8}]
+    probes = driver.inserted_probes(Soma(), inserted, lambda name, sec: name == "KsAHP")
+    assert [(p[0], p[1]) for p in probes] == [("soma_KsAHP_ma_cm2", "ik-pointer"), ("soma_KsAHP_z", "z-pointer")]
+    assert driver.inserted_probes(Soma(), inserted, lambda name, sec: False) == []

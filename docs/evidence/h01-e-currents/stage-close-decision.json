@@ -4,15 +4,25 @@
   "spec": "docs/specs/2026-09-11-h01-e-current-measurement.md",
   "manifest": "docs/evidence/h01-e-currents-manifest.json",
   "executor": "Vast box, NEURON 9.0.2, campaign runner executor:local",
-  "gates": ["h01-e-currents/stage-0-decision.json (PASS, 12 of 12 bands)"],
+  "gates": [
+    "h01-e-currents/stage-0-decision.json (PASS, 12 of 12 bands)"
+  ],
   "decision": "CLOSED after stage 0; stage 1 registered and not spent",
   "decision_rule": "Fail-fast (as h01-e-gain stage close, Hartshorne p034/p179): an evaluation whose registered prediction fails by construction cannot change the decision and is not spent.",
-  "evaluations": {"spent": 1, "cap": 3, "registered_not_spent": 2},
+  "evaluations": {
+    "spent": 1,
+    "cap": 3,
+    "registered_not_spent": 2
+  },
   "stage_0": {
     "candidate": "m0-b3-currents",
     "candidate_sha256": "9c3cbbdd0ef2354b455a2f1ace9cc973691536f3db2b4a8f48662a2e3c212852",
     "verdict": "B3 reproduced exactly (counts 4/8/10; peak times and troughs identical to g0-b3 at the printed precision; axon-first at all three inputs) with every soma current recorded.",
-    "wall_seconds": {"sweep56": 885, "sweep50": 981, "sweep53": 1015}
+    "wall_seconds": {
+      "sweep56": 885,
+      "sweep50": 981,
+      "sweep53": 1015
+    }
   },
   "established": {
     "soma_is_a_pass_through_at_low_drive": {
@@ -30,7 +40,10 @@
   },
   "stage_1": {
     "status": "registered, not spent",
-    "candidates_registered": ["n1-nap-* (Nap density reduced)", "k1-im-* (Im density raised)"],
+    "candidates_registered": [
+      "n1-nap-* (Nap density reduced)",
+      "k1-im-* (Im density raised)"
+    ],
     "reason_not_spent": "Both candidates fail the registered 200 pA band (count 1) by construction: the current they can add or remove at the plateau is at most 0.0017 nA against an offset of 0.020-0.05 nA, and the Im dose that closes the gap removes the 310 pA train (registered rejection). No dose is admissible, so the evaluations are not spent."
   },
   "unresolved_link": "The current that holds the human 2-6 mV below the model after a spike at 200 pA, silent without a spike (110 pA rows) and not present in the soma genome. It is carried through the cable boundary in the model, so it is either a dendritic or axonal mechanism, or a spike-triggered slow outward current absent from the fit.",
@@ -41,5 +54,19 @@
       "a second human L2/3 donor with a recorded f-I curve (SP6b lead)"
     ],
     "not_a_further_evaluation": "Each candidate is a new spec with its own cap; the sAHP/KNa family needs a new mod file and is not runnable under this manifest."
+  },
+  "erratum_2026-09-11": {
+    "statement": "The current tables and the statements above report the soma(0.5) segment (65.8 um2), one of nine soma segments (592 um2), not the whole soma. Whole-soma interspike currents at 200 pA (late pulse) are leak -0.058, Kv3 -0.017, SK -0.016, NaTs +0.010, Nap +0.012, Im -0.0002 nA, summing to -0.069 nA, 35 percent of the applied 0.196 nA. Of the middle segment's 0.188 nA axial outflow, 0.061 nA enters the two neighbouring soma segments and 0.128 nA the attached cable.",
+    "withdrawn": [
+      "'The soma passes 96 percent of the input into the cable' (it is the middle segment that does).",
+      "'Nap can supply at most 0.0017 nA' and 'removing all of Nap reaches 8 percent of the smaller figure': whole-soma Nap is +0.012 nA, 59 percent of the 0.020 nA p50 offset and 20 percent of the 0.059 nA mid-pulse mean offset.",
+      "The 'by construction' reason for not spending the Nap arm of stage 1."
+    ],
+    "stands": [
+      "The offset appears only after a spike (110 pA rows match without one).",
+      "Im: whole-soma -0.0002 nA; the dose that carries the offset is about 100x and acts at the 310 pA threshold.",
+      "Nap is open at every plateau and at 110 pA (m_inf 0.015 at -72 mV against 0.115 at -62 mV), so it is not a spike-triggered lever."
+    ],
+    "action": "The Nap-removal evaluation is spent as the registered comparison arm of SP12 (h01-e-sahp-manifest.json, s0-nap-zero) with its own prediction. Cause: the segment area from charge_balance_geometry was read as the soma area; the scorer (h01_e_current_paths.py) reports the middle segment's balance, which is correct for the drift and share calculations but not for whole-cell lever sizing."
   }
 }

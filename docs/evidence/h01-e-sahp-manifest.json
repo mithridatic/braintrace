@@ -1,0 +1,117 @@
+{
+  "purpose": "SP12 E cell: a spike-triggered slow outward conductance (KsAHP, docs/evidence/h01-l2-mechanisms/KsAHP.mod) on the B3 soma at two registered doses, against a Nap-removal comparison arm of the same current size that is not spike-triggered. Specification: docs/specs/2026-09-11-h01-e-spike-triggered-outward.md.",
+  "cap": 4,
+  "prior_evaluations": 0,
+  "max_concurrent": 3,
+  "abort_seconds": 2400,
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv). The kv3-closing-source library is extended with KsAHP.mod (copied from docs/evidence/h01-l2-mechanisms/) and recompiled with nrnivmodl; the driver records the resulting mechanism_library_sha256 in every run report.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor; it lacks KsAHP)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-sahp",
+  "inputs": {
+    "sweep56": ["--cache", "/work", "--sweep", "56", "--include-recorded-bias"],
+    "sweep50": ["--cache", "/work", "--sweep", "50", "--include-recorded-bias"],
+    "sweep53": ["--cache", "/work", "--sweep", "53", "--include-recorded-bias"],
+    "sweep43": ["--cache", "/work", "--sweep", "43", "--include-recorded-bias"]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed (h01_l2_sweep_export.SEALED) and is not an input of any stage. Sweep 55 (350 pA) was opened by the usable campaign and is not rerun here.",
+  "evaluation": "One parameter set at its stage's inputs; one evaluation = serial runs in one process.",
+  "base_candidate": {
+    "file": "h01-e-currents/m0-b3-currents.candidate.json",
+    "sha256": "9c3cbbdd0ef2354b455a2f1ace9cc973691536f3db2b4a8f48662a2e3c212852"
+  },
+  "dose_registration": "h01-e-sahp/dose-registration.json (h01_e_sahp.py register on m0-b3-currents-sweep56 with only its first spike kept; hold -67.06 mV; targets 0.020 and 0.059 nA)",
+  "stages": {
+    "0": {
+      "title": "Stage 0: two KsAHP doses and the Nap-removal comparison arm at sweep 56 (200 pA)",
+      "prediction": "KsAHP arms: count 1-2; late-pulse (1800-2000 ms) and mid-pulse (1300-1500 ms) p50 within 1 mV of the human (-67.06 and -67.47 mV); the trace before B3's first spike unchanged within 0.1 mV and the first spike within 1 ms of 1147.2 ms (the gate is silent before a spike); axon-first. Comparison arm (Nap soma density 0): count 3 or more and a late p50 shift between 0 and -1.5 mV against m0-b3-currents (a 0.012 nA lever at 98 MOhm), i.e. it does not land the human's response.",
+      "rejection": "Neither KsAHP dose holds every band: the family, as a spike-triggered gate with a 1 s tail, does not describe the 200 pA response and stage 1 is not opened. If the comparison arm lands count 1 within 1 mV of the human, the spike-triggered reading is not isolated and the decision records that first.",
+      "unchanged": "All B3 flags (m0-b3-currents.candidate.json), nseg factor 9, CVode 1e-10, recorded command plus bias, stop 2100 ms, record_soma_currents. KsAHP gate parameters at the mod-file defaults (vhalf -20 mV, slope 2 mV, tau_on 1 ms, tau_off 1000 ms).",
+      "decision_file": "stage-0-decision.json"
+    },
+    "1": {
+      "title": "Stage 1: the surviving dose at sweeps 50, 53 and 43 (250, 310, 110 pA)",
+      "prediction": "250 pA: count 5-7 with cycles 4-5 of 250-350 ms. 310 pA: count 9-10 with late cycles within 12.8 ms of 120 ms. 110 pA: every sweep-43 onset row (1019-1120 ms) within 1 mV of the human and within 0.1 mV of g0-b3 (no spike, so the gate stays closed).",
+      "rejection": "The 310 pA count falls below 9, or any sweep-43 row moves by 0.1 mV or more against g0-b3, or the 250 pA count leaves 5-7.",
+      "decision_file": "stage-1-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "s0-ksahp-a",
+      "stage": "0",
+      "arm": "dose",
+      "inputs_note": "Stage 0 is launched with --only-input sweep56.",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814", "KsAHP:soma:0.00034968"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "s0-ksahp-b",
+      "stage": "0",
+      "arm": "dose",
+      "inputs_note": "Stage 0 is launched with --only-input sweep56.",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814", "KsAHP:soma:0.0010316"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": true
+      }
+    },
+    {
+      "name": "s0-nap-zero",
+      "stage": "0",
+      "arm": "control",
+      "inputs_note": "Stage 0 is launched with --only-input sweep56. The SP11 stage-1 Nap lever, correctly sized (whole soma +0.012 nA), spent here as the comparison arm.",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35", "Nap:soma:0"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": true
+      }
+    }
+  ]
+}
