@@ -2,11 +2,12 @@
 
 Explanation review: 2026-09-11, against saved evidence at `56240d4` on
 `campaign/h01-currents-2026-09-11` in the main checkout.
-This includes SP10, the SP11 erratum in `16c4f85`, and SP12 registration
-with manifest concurrency 2. SP12 has a dose-registration record but no
-stage decision in this checkout at that head; its predictions remain untested here.
+The initial review included SP10, the SP11 erratum in `16c4f85`, and SP12
+registration with manifest concurrency 2. The subsequent SP12 stage-0 results
+are incorporated below; both tested KsAHP doses failed the complete gate.
 The earlier implementation review covered `41eb735` and diagram records through
-`da552a7`; this update does not repeat a full implementation audit or remote run.
+`da552a7`; this update does not repeat a full implementation audit. The direct
+observation analysis was rerun on Vast using the saved B3 and SP12 traces.
 
 The model combines H01 anatomy with electrical properties from other cells.
 It predicts a response under specified inputs and initial states.
@@ -46,6 +47,14 @@ the current responsible for that offset. This follows the book's distinction bet
 summarizing performance and retaining behavior for diagnosis
 ([printed pp. 65](<C:/Users/J/Documents/Diagnosing Performance and Reliability/pages/p056.jpg>)
 and [67](<C:/Users/J/Documents/Diagnosing Performance and Reliability/pages/p058.jpg>)).
+
+The [direct-observation contract](specs/2026-09-11-h01-direct-observation-contract.md)
+is implemented in the SP11/SP12 scorer defaults. It retains original samples in
+selected cycles, local voltage/current and voltage/charge pairs, early and slow
+multivari views, and explicit missing observations. Read the
+[visual review](evidence/h01-direct-observation-review-2026-09-11.md) with the
+charts: the human's rapid initial rebound and later depression are distinct
+features that one average or one set of early samples cannot represent.
 
 ## Y1. No positive somatic spike in the diagnostic H01 I cell
 
@@ -677,8 +686,11 @@ Its old conclusions do not override the current explanations above.
 This review reads saved results; it does not repeat their simulations.
 The [2026-09-11 direct trace audit](evidence/h01-causal-direct-trace-audit-2026-09-11.md)
 reruns the B3 observation analysis on Vast and preserves the individual response,
-current boundary, and aggregate/window corrections. SP12 was observed running
-separately on that host; no completion or qualification is inferred from that status.
+current boundary, and aggregate/window corrections. The subsequent
+[B3 bundle](evidence/h01-e-currents/direct-contract-reanalysis-direct.md) and
+[SP12 bundle](evidence/h01-e-sahp/direct-contract-reanalysis-direct.md) apply the
+implemented contract to completed saved traces. This was CPU analysis on the
+Vast GPU host, not a new GPU simulation or physiological qualification.
 The [follow-up analysis](evidence/h01-causal-current-observations-2026-09-09.md) also calculates current observations from retained traces.
 Its then-missing B3 current observations and proposed SK test are superseded by
 SP11 and SP10 respectively; its earlier configuration boundaries still apply.

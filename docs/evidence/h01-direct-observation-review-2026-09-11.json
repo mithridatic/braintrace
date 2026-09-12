@@ -1,0 +1,70 @@
+{
+  "review": "h01-direct-observation-review-2026-09-11.md",
+  "artifacts": [
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis-direct-conjugates.png",
+      "sha256": "e57b7dcd69c572a1d9ca1806fe3f779858b7f1466947deac883c0e62a5ffe3bc"
+    },
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis-direct-multivari-slow.png",
+      "sha256": "b33c8619b3d2c706cb58b023d296449f89fda23144047b1f6f7384a1dee65a09"
+    },
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis-direct-multivari.png",
+      "sha256": "1c8452a2c3aa7bb3257d90c402d78b59d8424b72693c208ea4d8edd8889f6cc2"
+    },
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis-direct-trajectories.png",
+      "sha256": "837bfa5083a22ca313fe7a46d8b170f3c5ea2b960a69ae748b4ca75cfbaa9a7f"
+    },
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis-direct.json",
+      "sha256": "2d70fc7b7cdf7faed6aae5a3974f64d2235efa147b36764473aab71b0ba515d2"
+    },
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis-direct.md",
+      "sha256": "a500fb5fb2af55338bf702e6f6017877751157b159c0379aad15afd03b00caf3"
+    },
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis.json",
+      "sha256": "22b1333d05ea3a15f5a0f99123271851e315b724913301e7908e092be51d37ad"
+    },
+    {
+      "path": "h01-e-currents/direct-contract-reanalysis.md",
+      "sha256": "92f58f3597ce46fc220f33da7753760eb97d205b3b886e925c0c83986e39ba88"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis-direct-conjugates.png",
+      "sha256": "457afda636fafcd00f5aaf83f0df7918556821eddb570367a21ee34c58d0acb0"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis-direct-multivari-slow.png",
+      "sha256": "3165a42ff84441952a1bff05c2ab0018c757bce69584d6d2d3525702b7874b6e"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis-direct-multivari.png",
+      "sha256": "4b9325897feaa2be5a88e1a9214adfbb0cf2bc32386bf6a61b81d5f83584597e"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis-direct-trajectories.png",
+      "sha256": "ad170d3f6d0cf7be0db5c5e2c30fd9bb8e86f7496f9bef79c6ce6a077d04e14a"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis-direct.json",
+      "sha256": "4ca18de1525ddd8bcf22e7bb355a6a05d6b8958157fdd41a4b791c93c5865e56"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis-direct.md",
+      "sha256": "4dcfff4b9be8aff7f5d4d7b0a064d4df8d81127c62026b9b5ec46e4dccfd654e"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis.json",
+      "sha256": "b1ec6e86d377058fd3b287d8630728d9b83c4a40e82a4c0a18bcb408ac450607"
+    },
+    {
+      "path": "h01-e-sahp/direct-contract-reanalysis.md",
+      "sha256": "e420972928c64b9fc3f15d14c33c9a8c0657ae853c41e65d1ae72a2ed5aa4cb5"
+    }
+  ],
+  "source_hashes_verified": true
+}
