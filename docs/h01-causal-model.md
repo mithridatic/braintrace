@@ -367,6 +367,36 @@ Thus, the cable load moves the low-input response by more than any tested channe
 Whether the H01 load is physical or inflated by the skeleton conversion is not established.
 A graded change of the donor cable (membrane area scaled by 1.5 and 2) is the registered way to read the upstroke's branch.
 
+**Measured: the human cell's own cable load (2026-09-12).**
+At 110 pA neither cell spikes, so the passive load is read directly from the retained traces
+([measurement](evidence/h01-e-cable-load/human-passive-load.json)).
+The human's input resistance is 80.4 MOhm and B3's is 90.9 MOhm; the onset capacitances are 128 and 124 pF; the time constants are 10.3 and 11.3 ms.
+Thus, the human cell has 1.13 times the model's membrane conductance and 1.03 times its capacitance.
+This is the observed range of this input, and a cable explanation of any response difference must work inside it.
+
+**Tested (SP15 stages 2 to 4, 2026-09-12).** The dendritic and apical membrane area was scaled at fixed geometry, which changes the cable load and nothing else.
+The doses act on the load as intended and monotonically: input resistance 95, 75, 60 and 45 MOhm at x1, x1.5, x2 and x3.
+At 200 pA every dose silenced the cell, because B3 sits just above its rheobase there
+([stage 2](evidence/h01-e-cable-load/stage-2-decision.json)).
+At 310 pA, where the model and the human both fire ten spikes, the spike-1 rise fell with the dose: 639.1, 569.5 and 512.5 V/s, with the x3 dose silent
+([stage 4](evidence/h01-e-cable-load/stage-4-decision.json)).
+Thus, the cable load does change the upstroke, at about -254 V/s for each unit of conductance ratio.
+At the human's own load of 1.13 times, that slope predicts 606 V/s against the human's 347.7 V/s.
+The cable therefore accounts for about one tenth of the upstroke difference, and the remainder is in the function.
+Higher doses grow the threshold climb the human shows, but they destroy the protected spike count while doing it.
+
+**Method corrections in the same tests.** Two measurement errors were found and fixed.
+First, a control at a coarser mesh reproduced the spike-1 rise within 9 percent but fired 72 times at 310 pA against the reference 10; a control must reproduce the response, not one summary value, and the scorer now requires the reference spike count
+([stage 3](evidence/h01-e-cable-load/stage-3-decision.json)).
+Second, every rise had been measured on the solver's adaptive grid, which is dense through the upstroke and inflates the value; all rises are now measured after resampling to a uniform 0.02 ms grid.
+With that correction a fresh fine-mesh control reproduces the retained fine-mesh reference to 0.1 V/s.
+
+**Registered (SP16).** The sodium mechanisms of both fits are the same Colbert and Pan 2002 template, which has fast inactivation only.
+A slow inactivation gate was added to both, with a depth of zero as the default so that the unchanged model is unchanged
+([specification](specs/2026-09-12-h01-sodium-slow-inactivation.md), [mechanisms](evidence/h01-l2-mechanisms/slow-inactivation-provenance.json)).
+The registered signature is cyclical: the gate must leave the first spike unchanged, because it is open at rest, and it must grow the threshold along the train.
+It is not predicted to change the spike-1 rise, which is the separate elemental contrast.
+
 The human threshold also climbs along the train (-56.4 to -52.8 mV at 310 pA); the model's stays at -57.2 mV at every input.
 This is a response difference the recorded soma currents do not explain.
 
