@@ -7,6 +7,9 @@ The [spatial assembly phase](spine-phase/README.md) now connects explicit spines
 to the H01 builder and session factory, including fresh-session checkpoint replay.
 The [neuron-glia phase](neuroglial-phase/README.md) connects actual neuronal
 spikes to GABA/glutamate release, dynamic Kir cables and mapped astrocyte calcium.
+The [measured glial assembly phase](glia-assembly-phase/README.md) reconstructs
+one complete selected source fragment with all other fragments accounted for,
+and verifies its 148-compartment Kir cable with exact fresh reconstruction.
 
 ## What is executable
 
@@ -18,7 +21,8 @@ spikes to GABA/glutamate release, dynamic Kir cables and mapped astrocyte calciu
 | Potassium feedback | Dynamic intracellular/extracellular K and Nernst reversal, actual cable K-current exchange | Small initialized cable/network fixtures; membrane current sampled at step start; coupled time refinement at population scale pending |
 | GABA | Actual inhibitory population spikes drive site selection, molecule delivery, uptake/diffusion and source Hill tonic receptor | Small coupled cable fixture; measured H01 site assembly pending |
 | Astrocyte calcium | 25 states per segment, four radial shells, buffers, IP3, fixed ER reservoir, pump and coupled spatial solve | Local and three-segment independent NEURON fixtures; no demonstrated long-range calcium wave in measured H01 anatomy |
-| Astrocyte K | Dynamic Kir4.1 cable, shared intracellular/extracellular K and conservative exchange with neuronal pools | Synthetic coupled fixture and independent fixed-pool NEURON cable reference; complete glial channel repertoire and measured H01 assembly pending |
+| Astrocyte K | Dynamic Kir4.1 cable, shared intracellular/extracellular K and conservative exchange with neuronal pools | Synthetic coupled fixture and independent fixed-pool NEURON cable reference; complete glial channel repertoire and measured H01 coupled assembly pending |
+| Measured glial geometry | Source-pinned complete component selection, tapered paths, explicit exclusions and dynamic Kir cable construction | One 571-vertex H01 fragment, 148 CVs, 0.1 ms fixed-pool replay; tapered calcium mapping and complete session integration pending |
 | Neuron-to-glia glutamate | Actual excitatory spikes drive explicitly dosed sites, extracellular transport and mapped IP3/calcium | Synthetic diagnostic dose, short calcium response against no-glutamate control; no physiological vesicle-dose or long-wave qualification |
 | Myelin K | Explicit axon/sheath pools, radial transport, node bath boundaries, source pump laws | Conservative physical discretization; not exact source RxD equivalence, no coupled sheath electrical model |
 | Learning | Finite-window pp-prop chemical-feedback test, finite nonzero updates and diagnostic descent | Small chemical model only; not joint full-cable/glia/myelin training |

@@ -177,3 +177,37 @@ modules. Numerical probe, independent Kir cable reference and qualification
 boundaries are recorded in `docs/biology/neuroglial-phase/README.md`. The six
 existing session readout-state warnings remain visible. This completes the
 bounded coupling phase, not the complete biological H01 implementation.
+
+## Measured glial fragment assembly phase
+
+Introduce an immutable source-pinned glial fragment manifest. Select a complete
+connected component by an explicit original vertex anchor, never by proximity
+alone or by silently joining fragments. Pin the source artifact, identity,
+physical coordinate frame, selection rationale and maximum selected size.
+Validate finite positive radii, nonzero edge lengths, valid unique undirected
+edges and a forest topology. Preserve all source coordinates and tapered radii
+under the established nm-to-um conversion. Record original vertex and edge
+identities and an inventory of every excluded component.
+
+Construct a BrainCell morphology from complete source paths between junctions;
+retain every source segment and do not create soma geometry for a fragment.
+Build a Kir-only dynamic cable with explicitly declared electrical settings.
+Pin reconstructed geometry and settings for deterministic rebuild, while keeping
+glia outside the neuronal ARC domain. Source-skeleton anatomy is measured;
+electrical rates and sealed fragment boundaries are modeling assumptions.
+
+Test source tampering, malformed geometry, cycles/duplicates, disconnected
+selection, size limits, preservation of taper/coordinates/edge identities,
+compiled cable evolution and deterministic fresh reconstruction. Execute a
+bounded probe on the previously acquired candidate's explicitly chosen local
+fragment, retaining all exclusions and the prior proximity-audit identity.
+This phase does not infer synapses or extracellular neighborhoods, approximate
+tapered calcium volumes as cylinders, or qualify a complete astrocyte/session.
+
+Phase result (2026-09-12): 97 affected CPU tests and a separate axial-current
+test passed; both new modules reached 100% statement coverage. Source astrocyte
+63900941936's selected 571-vertex component was preserved in a 148-CV cable,
+with 256 other components explicitly excluded. A 0.1 ms fixed-pool trajectory
+matched fresh reconstruction exactly. Evidence and unresolved tapered-calcium,
+extracellular mapping and session integration are in
+`docs/biology/glia-assembly-phase/README.md`.
