@@ -1,6 +1,6 @@
 {
   "purpose": "SP15 stage 1 (Q2 for the E upstroke): hold the function (B3 genome and flags), change the input (the cable: H01 skeleton 955432427 with the B3 soma held) at the same mesh. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 1 addendum).",
-  "cap": 1,
+  "cap": 2,
   "prior_evaluations": 0,
   "max_concurrent": 2,
   "abort_seconds": 5400,
@@ -13,8 +13,22 @@
   "driver": "h01_l2_neuron_reference.py",
   "output_dir": "h01-e-morphology",
   "inputs": {
-    "sweep56": ["--cache", "/work", "--sweep", "56", "--include-recorded-bias"],
-    "sweep56-h01": ["--cache", "/work", "--sweep", "56", "--include-recorded-bias", "--donor-json", "/evidence/h01-e-morphology/donor.json"]
+    "sweep56": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "56",
+      "--include-recorded-bias"
+    ],
+    "sweep56-h01": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "56",
+      "--include-recorded-bias",
+      "--donor-json",
+      "/evidence/h01-e-morphology/donor.json"
+    ]
   },
   "holdout": "Sweep 54 (330 pA) is sealed and is not an input. Only sweep 56 (200 pA) is used; the upstroke is read from spike 1.",
   "evaluation": "One parameter set at both inputs (donor anatomy as the mesh control, H01 anatomy as the test) = one evaluation.",
@@ -27,7 +41,7 @@
       "title": "Stage 1: B3 genome on the donor anatomy and on the H01 anatomy at nseg factor 1, sweep 56",
       "prediction": "Mesh control: the donor-anatomy run at nseg 1 has a spike-1 maximum rise within 10 percent of the nseg-9 value 597.7 V/s. Test: if the upstroke is the function (somatic sodium), the H01-anatomy run stays within max(3 x mesh deviation, 10 percent) of the control; if it is the input (cable load), it moves by more than that. Reported, not banded: count, first spike, threshold and the post-spike level on the H01 anatomy.",
       "rejection": "The mesh control fails its 10 percent band (no reading; the mesh, not the anatomy, moved the upstroke), or the H01 anatomy does not spike at 200 pA (no upstroke to compare; recorded as a count contrast of the input).",
-      "unchanged": "All B3 flags of m0-b3-currents.candidate.json; CVode 1e-10; recorded command plus bias; stop 2100 ms; record_soma_currents; the B3 soma sphere (13.73 um) is held on the H01 skeleton.",
+      "unchanged": "All B3 flags of m0-b3-currents.candidate.json; CVode 1e-10; recorded command plus bias; stop 2100 ms; the B3 soma sphere (13.73 um) is held on the H01 skeleton.",
       "decision_file": "stage-1-decision.json"
     }
   },
@@ -40,10 +54,14 @@
         "calcium_decay_factor": 1.0,
         "distribute_ih": true,
         "ih_density_factor": 75.0,
-        "insert_density": ["NaTs:axon:3.814"],
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
         "kv3_closing_factor": 0.9,
         "leak_reversal_shift_mv": -4.0,
-        "regional_density": ["SK:soma:0.35"],
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
         "sodium_density_factor": 0.9,
         "sodium_opening_factor": 2.0,
         "sodium_recovery_factor": 1.0,
@@ -52,8 +70,9 @@
       "settings": {
         "nseg_factor": 1,
         "cvode_atol": 1e-10,
-        "record_soma_currents": true
+        "record_soma_currents": false
       }
     }
-  ]
+  ],
+  "cap_note": "Evaluation 1 failed before model construction on both inputs (record_soma_currents asserts soma nseg >= 3, which nseg factor 1 cannot give); it is not a model evaluation. Cap raised to 2 for the rerun without soma-current probes; the upstroke is read from the voltage trace."
 }
