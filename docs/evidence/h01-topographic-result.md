@@ -58,3 +58,17 @@ cells. The difference is in time after a spike, not in voltage.
 E upstroke, Q2: hold the function, change the input (the B3 genome on the H01 morphology,
 one run). Prediction if function: the 600 V/s upstroke persists; if inputs: it falls toward
 332 V/s. Causal model Y3 and Y4 updated in the same commit.
+
+## Stage 1 (executed 2026-09-12): the upstroke's branch, no reading
+
+The B3 genome on the H01 skeleton 955432427 (2460 um of cable, B3 soma held) beside the
+donor anatomy at nseg 1 ([decision](h01-e-morphology/stage-1-decision.json)). Mesh
+control held: 653 V/s at nseg 1 against 598 at nseg 9 (9 percent), count 4, first spike
+127 ms, threshold -57.4 mV. The H01 anatomy did not spike at 200 pA: plateau -78 mV,
+onset capacitance 785 pF against 125 pF, input resistance about 38 MOhm against 98. The
+registered rejection applies: a count contrast of the input is recorded, the upstroke is
+unread. The cable load moves the low-input response by more than any channel lever tested,
+but the change was too large to keep Y observable. Next registrations: a graded cable
+change on the donor anatomy (membrane area x1.5 and x2) and a check of the skeleton
+conversion's membrane area against the H01 surface mesh. Two evaluations spent of two
+(the first failed before construction: soma-current probes need nseg 3).

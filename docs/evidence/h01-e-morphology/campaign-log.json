@@ -1,0 +1,140 @@
+[
+  {
+    "name": "q2-nseg1",
+    "candidate_sha256": "34f31f820049343174503a66e052ff34622d74aa5fef13333cffd2b58b557346",
+    "evaluation_index": 1,
+    "abort_seconds": 5400,
+    "inputs": {
+      "sweep56": "failed",
+      "sweep56-h01": "failed"
+    },
+    "runs": [
+      {
+        "name": "q2-nseg1",
+        "input": "sweep56",
+        "seconds": 0.5971208112314343,
+        "returncode": 1,
+        "aborted": false,
+        "stderr_tail": [
+          "Traceback (most recent call last):",
+          "  File \"/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py\", line 463, in <module>",
+          "    main()",
+          "  File \"/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py\", line 368, in main",
+          "    balance_geometry = axial_probes(h.soma[0], vectors, observation_units)",
+          "                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "  File \"/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py\", line 46, in axial_probes",
+          "    assert section.nseg >= 3 and section.nseg % 2 == 1, \"soma nseg must be odd and at least 3\"",
+          "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "AssertionError: soma nseg must be odd and at least 3"
+        ],
+        "stderr_log": "h01-e-morphology/q2-nseg1-sweep56.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "56",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1-sweep56"
+        ]
+      },
+      {
+        "name": "q2-nseg1",
+        "input": "sweep56-h01",
+        "seconds": 1.5420535868033767,
+        "returncode": 1,
+        "aborted": false,
+        "stderr_tail": [
+          "Traceback (most recent call last):",
+          "  File \"/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py\", line 463, in <module>",
+          "    main()",
+          "  File \"/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py\", line 368, in main",
+          "    balance_geometry = axial_probes(h.soma[0], vectors, observation_units)",
+          "                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "  File \"/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py\", line 46, in axial_probes",
+          "    assert section.nseg >= 3 and section.nseg % 2 == 1, \"soma nseg must be odd and at least 3\"",
+          "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "AssertionError: soma nseg must be odd and at least 3"
+        ],
+        "stderr_log": "h01-e-morphology/q2-nseg1-sweep56-h01.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "56",
+          "--include-recorded-bias",
+          "--donor-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/donor.json",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1-sweep56-h01"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "q2-nseg1",
+    "candidate_sha256": "a7e74ea0a37a3e180b7f2014cd2ca7c824adcda5428f475c1c8af316efaf7f0d",
+    "evaluation_index": 2,
+    "abort_seconds": 5400,
+    "inputs": {
+      "sweep56": "completed",
+      "sweep56-h01": "completed"
+    },
+    "runs": [
+      {
+        "name": "q2-nseg1",
+        "input": "sweep56",
+        "seconds": 102.2154897749424,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-morphology/q2-nseg1-sweep56.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "56",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1-sweep56"
+        ]
+      },
+      {
+        "name": "q2-nseg1",
+        "input": "sweep56-h01",
+        "seconds": 1900.6060598352924,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-morphology/q2-nseg1-sweep56-h01.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "56",
+          "--include-recorded-bias",
+          "--donor-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/donor.json",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-morphology/q2-nseg1-sweep56-h01"
+        ]
+      }
+    ]
+  }
+]

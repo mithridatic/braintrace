@@ -81,8 +81,8 @@ def build_nodes():
         # next test
         n("next", T, "Next (after Q1-Q3): one 2x2 dissection {E, I} x {kinetics as fitted, kinetics with slow sodium inactivation}. The signature follows the function if it moves toward both humans with one change.",
           "Registered prediction and rejection to be written before the run; SP14 (brake plus gain lever) deferred.", [STRATEGY], "unverified"),
-        n("q2_upstroke", T, "Next split (E upstroke, 177 sigma): hold the function, change the input (B3 genome on the H01 morphology, one run). If 600 V/s persists it is somatic sodium in the function; if it falls it is the cable load in the inputs.",
-          "Registered before it runs; stage 1 of SP15.", [SP15_S0, STRATEGY], "unverified"),
+        n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
+          "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
         # policies
         n("policy", P, "Policies: contrasts > 3 sigma of the repeat envelope; samples of three; Y only; every split written before its data; fail fast under the cap; both tiers; sweeps 54 and 48 sealed.",
           "From Hartshorne chapters 1-5 and the campaign's own AGENTS rules.", [STRATEGY], "supported"),

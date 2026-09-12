@@ -1,5 +1,5 @@
 {
-  "id": "doc_17522e87-d2f",
+  "id": "doc_05f30c51-c1e",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -623,26 +623,34 @@
       },
       {
         "id": "q2_upstroke",
-        "type": "Next test",
-        "text": "Next split (E upstroke, 177 sigma): hold the function, change the input (B3 genome on the H01 morphology, one run). If 600 V/s persists it is somatic sodium in the function; if it falls it is the cable load in the inputs.",
-        "status": "unverified",
+        "type": "Branch open",
+        "text": "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
+        "status": "supported",
         "confidence": null,
-        "notes": "Registered before it runs; stage 1 of SP15.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.\n\nEvidence: docs/evidence/h01-topographic/stage-0-decision.json; docs/evidence/h01-e-morphology/stage-1-decision.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
         "evidence": [
           {
             "id": "q2_upstroke_ev0",
             "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-0-decision.json",
-            "stance": "context",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "q2_upstroke_ev1",
+            "title": "docs/evidence/h01-e-morphology/stage-1-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-morphology/stage-1-decision.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q2_upstroke_ev2",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
-            "stance": "context",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
         ],

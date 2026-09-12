@@ -1,0 +1,40 @@
+{
+  "control": {
+    "count": 4,
+    "max_rise_v_s": 653.3181002770843,
+    "first_spike_ms": 126.50715093333793,
+    "threshold_mv": -57.37200484283731
+  },
+  "test": {
+    "count": 0,
+    "max_rise_v_s": null,
+    "first_spike_ms": null,
+    "threshold_mv": null
+  },
+  "reference_nseg9_v_s": 597.7,
+  "mesh_deviation": 0.09305353902808146,
+  "mesh_ok": true,
+  "delta_v_s": null,
+  "verdict": "H01 anatomy did not spike; no upstroke to compare",
+  "stage": "1",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md (stage 1 addendum)",
+  "manifest": "docs/evidence/h01-e-morphology-manifest.json",
+  "closed_utc": "2026-09-12T04:15:00Z",
+  "executor": "Vast box worktree /workspace/braintrace-q2 (clean checkout; the main box checkout carries another session's edits), NEURON 9.0.2, local executor",
+  "evaluations": {
+    "spent": 2,
+    "cap": 2,
+    "note": "evaluation 1 failed before model construction (soma-current probes need nseg >= 3); evaluation 2 is the reading"
+  },
+  "wall_seconds": {
+    "donor anatomy (91 sections)": 99,
+    "H01 anatomy (8551 sections)": 1897
+  },
+  "decision": "Registered rejection met: the H01 anatomy does not spike at 200 pA, so there is no upstroke reading. Recorded as a count contrast of the input.",
+  "reading": {
+    "mesh_control": "nseg 1 gives 653 V/s against 598 at nseg 9 (9.3 percent, inside the 10 percent band); count 4, first spike 126.5 ms, threshold -57.4 mV: the mesh moves the upstroke but nothing else.",
+    "h01_anatomy": "No spike. Rest -85.8 mV (donor -84.0); plateau -78.2 mV at 200 pA against the donor's -64 to -65 mV; onset capacitance 785 pF against 125 pF; input resistance about 38 MOhm from the plateau (donor about 98). The converted skeleton (2460 um of cable, 9975 nodes, 8551 sections) is a far larger load than the Allen reconstruction.",
+    "interpretation": "The input branch (cable load) can move the 200 pA response by far more than any function lever tested, but this change was too large to read the upstroke: an isolation split needs a change that keeps the Y observable (Hartshorne: contrasts must stay within the observable range). Whether the H01 load is physical or inflated by the conversion (skeleton radii as cable radii, spine-corrected cm 2.3 on 2460 um) is not established here."
+  },
+  "next": "A graded input change on the donor anatomy that keeps spiking: scale the dendritic membrane area (cm and g_pas together, i.e. the cable load) by 1.5 and 2, read the upstroke and the 200 pA count; and separately check the H01 conversion's membrane area against the H01 surface mesh before using that skeleton again. Each is a new registration."
+}

@@ -359,6 +359,14 @@ After the last spike at 250 and 310 pA the two curves converge.
 Thus, the post-spike difference is in time after a spike, not in voltage: a use-dependent branch of the function, as SP13 found by intervention.
 The upstroke is a separate elemental contrast whose branch (somatic sodium in the function, or cable load in the inputs) is the first split to run.
 
+**Tested (SP15 stage 1, 2026-09-12).** The B3 genome was run on an H01 L2 pyramidal skeleton (955432427, 2460 um of cable, the B3 soma held) beside the donor anatomy at the same mesh
+([decision](evidence/h01-e-morphology/stage-1-decision.json)).
+The mesh control held: 653 V/s at nseg 1 against 598 at nseg 9, with count, first spike and threshold unchanged.
+The H01 anatomy did not spike at 200 pA: the plateau sat at -78 mV, the onset capacitance was 785 pF against 125 pF, and the input resistance about 38 MOhm against 98.
+Thus, the cable load moves the low-input response by more than any tested channel change, but this change was too large to read the upstroke; the registered no-reading outcome applies.
+Whether the H01 load is physical or inflated by the skeleton conversion is not established.
+A graded change of the donor cable (membrane area scaled by 1.5 and 2) is the registered way to read the upstroke's branch.
+
 The human threshold also climbs along the train (-56.4 to -52.8 mV at 310 pA); the model's stays at -57.2 mV at every input.
 This is a response difference the recorded soma currents do not explain.
 
