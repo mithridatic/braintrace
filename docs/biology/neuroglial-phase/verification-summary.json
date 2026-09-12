@@ -1,0 +1,68 @@
+{
+  "status": "NEURON_GLIA_COUPLING_PHASE_PASS",
+  "full_biology_status": "INCOMPLETE",
+  "base_commit": "647d24b",
+  "date": "2026-09-12",
+  "scope": "Synthetic two-neuron dynamic Kir cable, spike-driven GABA/glutamate and mapped calcium; no complete glial H01 session factory or all-104 simulation",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "185",
+    "time": "190.163",
+    "timestamp": "2026-09-12T11:50:06.856027-07:00",
+    "hostname": "KYOSHI"
+  },
+  "warnings": 6,
+  "new_production_modules": {
+    "braintrace/biophysics/cable_kir.py": {
+      "covered_lines": 10,
+      "num_statements": 10,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/neuroglial.py": {
+      "covered_lines": 81,
+      "num_statements": 81,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/transmitter.py": {
+      "covered_lines": 36,
+      "num_statements": 36,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    }
+  },
+  "implementation_sha256": {
+    "braintrace/biophysics/cable_kir.py": "6d0beb08ee72734a460590d239617697a506594bdfcd67713710a41169851757",
+    "braintrace/biophysics/neuroglial.py": "ffa6695427c2d87bed3c290bb061c1f0e4f8f23e4bfa0a080c7cd1e977c892e5",
+    "braintrace/biophysics/transmitter.py": "b4d2fdd33a7f8d8573acc593e343b34c82dbce2c66dd647223648747520d5416"
+  },
+  "artifact_sha256": {
+    "kir-reference.json": "629901b9207e26162b2168c6b435b13ad76d0dacdbb3e2c4e5176432840f1e8c",
+    "coupled-probe.json": "82ff84bda997dbaf7a9f61c322f751542956ff30ea782e78e48b3b38698b04be",
+    "verification.xml": "6c945237a94771a2b3f2330e26a858797f799a8db238927aeb2d1cdf1d2af9e8",
+    "coverage.json": "6913c8091ba6f58ce10f454ceac37240221c4950d52f4048c64b169bc6e6aaa6"
+  },
+  "qualification": {
+    "numerical": "Small-system conservation, controls, continuous derivative and fixed-pool NEURON voltage comparison pass",
+    "replay": "All packed physical states match after fresh-model restore and continuation",
+    "learning": "Joint sparse pp-prop with cable/glia unqualified",
+    "anatomy": "Synthetic diagnostic only; measured glial spatial assembly pending",
+    "runtime": "Bounded CPU probes only; no full population or long biological waits"
+  }
+}

@@ -138,3 +138,42 @@ preservation, an initialized compiled cable step, and an actual H01 session
 save/rebuild/restore replay with explicit spines and stochastic release. This
 phase does not promote the fragmented astrocyte candidate, generate unverified
 myelin, or claim full 104-neuron biological qualification.
+
+## Neuron-glia coupling phase
+
+Own neuronal and glial intracellular K pools in one shared environment, with
+disjoint, complete membrane bindings. Implement the pinned Kir4.1 law as a real
+BrainCell potassium channel, so the glial cable voltage and its axial current
+evolve rather than treating the astrocyte as an unlabelled voltage clamp.
+The initial supported glial electrical model is explicitly Kir-only; no claim
+of a complete astrocyte channel repertoire or electrogenic calcium feedback.
+
+Read the network's actual end-of-step population spikes, using separately
+declared inhibitory GABA and excitatory glutamate source maps. GABA sites retain
+their source settings; glutamate site dose and transport must be explicitly
+supplied, since the source calcium experiment's bath concentration does not
+determine a neuronal vesicle dose. This bridge is a declared modeling addition.
+Account for molecule release, uptake and bath exchange. Sample neuronal/glial K
+currents before either advances, apply them exactly once after cable dynamics,
+then advance transmitter diffusion and mapped astrocyte calcium. New chemistry
+affects the next neuronal cable tick. Freeze all geometry and biological rates.
+
+The coupled driver must own glial cable, chemical, calcium and RNG states for
+checkpoint/reset; the neuronal population remains the ARC input/output domain.
+Require explicit basis metadata, source ownership, consistent clocks, valid
+pool coverage and exact extracellular volume agreement. Reject overlapping
+bindings and ambiguous or missing source/astrocyte maps before compilation.
+
+Gate on actual evoked neuronal release, glial K uptake with opposite pool debit,
+neuronal receptor feedback, nonzero glutamate-to-calcium response, conservation,
+compiled gradients where mathematically applicable, reset and fresh-model
+checkpoint replay. Run bounded small coupled systems first, within 15 minutes.
+Measured glial-fragment selection, full coupled H01 factory construction,
+myelin electrophysiology and all-104 training remain separate qualification work.
+
+Phase result (2026-09-12): the small-system coupling gate passed, with 185
+affected CPU tests and 100% statement coverage of the three new production
+modules. Numerical probe, independent Kir cable reference and qualification
+boundaries are recorded in `docs/biology/neuroglial-phase/README.md`. The six
+existing session readout-state warnings remain visible. This completes the
+bounded coupling phase, not the complete biological H01 implementation.

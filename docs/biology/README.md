@@ -5,6 +5,8 @@ Worktree branch: `feat/h01-braincell-biology`, based on `e21e22c`.
 The accepted contract is in [the specification](../specs/2026-09-11-h01-braincell-biology.md).
 The [spatial assembly phase](spine-phase/README.md) now connects explicit spines
 to the H01 builder and session factory, including fresh-session checkpoint replay.
+The [neuron-glia phase](neuroglial-phase/README.md) connects actual neuronal
+spikes to GABA/glutamate release, dynamic Kir cables and mapped astrocyte calcium.
 
 ## What is executable
 
@@ -14,9 +16,10 @@ to the H01 builder and session factory, including fresh-session checkpoint repla
 | Stochastic release | Fixed Pr, uniform/linear/bell profiles, BrainState random streams, reset/replay, H01 contact-event masking | H01 session opt-in `h01-biology-release-v1`; no fitting of Pr |
 | Extracellular transport | Matrix-free implicit finite-volume diffusion, uptake, fixed-bath and source accounting | Analytic, conservation, refinement and derivative fixtures; source-history erfc is a separate concentration-boundary mode |
 | Potassium feedback | Dynamic intracellular/extracellular K and Nernst reversal, actual cable K-current exchange | Small initialized cable/network fixtures; membrane current sampled at step start; coupled time refinement at population scale pending |
-| GABA | Site selection without replacement, molecule delivery, uptake/diffusion and source Hill tonic receptor | Tested release-site owner and actual cable receptor; endogenous network-spike-to-site plumbing pending |
+| GABA | Actual inhibitory population spikes drive site selection, molecule delivery, uptake/diffusion and source Hill tonic receptor | Small coupled cable fixture; measured H01 site assembly pending |
 | Astrocyte calcium | 25 states per segment, four radial shells, buffers, IP3, fixed ER reservoir, pump and coupled spatial solve | Local and three-segment independent NEURON fixtures; no demonstrated long-range calcium wave in measured H01 anatomy |
-| Astrocyte K | Source Kir4.1 law and reusable conservative exchange machinery | Full astrocyte electrical/cellular K-buffering system is not assembled |
+| Astrocyte K | Dynamic Kir4.1 cable, shared intracellular/extracellular K and conservative exchange with neuronal pools | Synthetic coupled fixture and independent fixed-pool NEURON cable reference; complete glial channel repertoire and measured H01 assembly pending |
+| Neuron-to-glia glutamate | Actual excitatory spikes drive explicitly dosed sites, extracellular transport and mapped IP3/calcium | Synthetic diagnostic dose, short calcium response against no-glutamate control; no physiological vesicle-dose or long-wave qualification |
 | Myelin K | Explicit axon/sheath pools, radial transport, node bath boundaries, source pump laws | Conservative physical discretization; not exact source RxD equivalence, no coupled sheath electrical model |
 | Learning | Finite-window pp-prop chemical-feedback test, finite nonzero updates and diagnostic descent | Small chemical model only; not joint full-cable/glia/myelin training |
 | Physical waits | Exact .1 ms silent events, bounded compiled chunks, optional eligibility evolution, padding does not advance | Tiny durations exercised; 0/1/10/20-second counts tested, full-duration biological runs not performed |
@@ -149,9 +152,9 @@ represented as warning-free joint-biological learning evidence.
    coordinate/proximity audit, preserving all exclusions and synthetic fallbacks.
    Spine contact, probe and electrical-region remapping is now executable;
    general biological topology mutation and optimizer transport remain pending.
-2. Connect real presynaptic spikes to GABA release sites and neuron-derived
-   glutamate inputs to astrocytes. Assemble astrocyte electrical K buffering
-   and myelin/sheath membrane dynamics with species and reservoir accounting.
+2. Extend the now-executable neuronal spike/release, astrocyte electrical K
+   buffering and glutamate/calcium coupling to the complete spatial H01 factory.
+   Assemble myelin/sheath membrane dynamics with species and reservoir accounting.
 3. Resolve source myelin discretization with independent NEURON experiments;
    test long calcium-wave propagation, coupled timing and spatial refinement.
 4. Optimize and measure the assembled 4/12/40-cell progression before estimating
