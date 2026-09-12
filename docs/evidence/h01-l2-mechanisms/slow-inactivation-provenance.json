@@ -1,0 +1,27 @@
+{
+  "spec": "docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
+  "generator": "docs/evidence/h01_sodium_slow_inactivation.py",
+  "defaults": {
+    "slow_inactivation": 0,
+    "s_vhalf": -60,
+    "s_slope": 6,
+    "s_tau_ms": 1000
+  },
+  "note": "The library on the box installs these in place of the source mechanisms, keeping the SUFFIX so that no candidate flag changes and the unchanged candidate stays comparable.",
+  "mechanisms": {
+    "NaTs": {
+      "source": ".cache/worktree-recovery-2026-09-09/h01/.cache/human-pyramidal-l2/kv3-closing-source/NaTs.mod",
+      "source_sha256": "6ba797bada310a6b880f4ab2a86e915894cc205d411474c0ce78f806af532a1f",
+      "patched": "docs/evidence/h01-l2-mechanisms/NaTs.slow.mod",
+      "patched_sha256": "90b8b013cdc8c59ab33ea8d81ae079444c071fcc8c4b8d5da1dea8263cbaf761",
+      "bytes": 1797
+    },
+    "NaTg": {
+      "source": ".cache/worktree-recovery-2026-09-09/h01/.cache/human-pv/kv3-phase-reference/mod/NaTg.mod",
+      "source_sha256": "fef2809e8f3edbeec5a1433e426925d5a9fe3ef82e8ebd2ee328d810a9a10dfe",
+      "patched": "docs/evidence/h01-l2-mechanisms/NaTg.slow.mod",
+      "patched_sha256": "bb4de7d55c4c64a9236ab9d5641c50f34e370e50091f67c766447e4e67341904",
+      "bytes": 1924
+    }
+  }
+}
