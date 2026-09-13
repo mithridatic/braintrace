@@ -1,14 +1,14 @@
 {
   "executor": "local",
   "python": "/workspace/h01-neuron/venv312/bin/python",
-  "executor_note": "Runs on the Vast.ai box from /workspace/braintrace-q2; the PV driver mounts the Toronto library at /work and its compiled x86_64 is used as is. The Allen human morphology was copied unchanged from the L2 cache (source-model/morphology.swc) to source/morphologies/allen-541563728.swc, sha256 956784deb7062d7067d19537c45bb93c35aace56fe41e0152b487b62abfa7ea9. First launch spent one evaluation on a --cache flag the PV driver does not accept (the runner mounts the library itself); recorded.",
+  "executor_note": "Runs on the Vast.ai box from /workspace/braintrace-q2; the PV driver mounts the Toronto library at /work and its compiled x86_64 is used as is. The Allen human morphology was copied unchanged from the L2 cache (source-model/morphology.swc) to source/morphologies/allen-541563728.swc, sha256 956784deb7062d7067d19537c45bb93c35aace56fe41e0152b487b62abfa7ea9. First launch spent one evaluation on a --cache flag the PV driver does not accept (the runner mounts the library itself); recorded. Second launch failed inside biophys_HL23PYR: the Toronto delete_axon_BPO deletes every axonal section, and with the Allen cell's full 3780-point reconstructed axon the stale references left in the template's `all` list made distribute_channels raise 'section in the object was deleted'. Recorded; one evaluation spent. The morphology is therefore supplied without its axon (allen-541563728-noaxon.swc, sha256 bae9101a..., types 1/3/4 kept, 6870 points), which is the nsec==0 branch of delete_axon_BPO: the Toronto model discards the real axon in every case and substitutes a 30+30 um stub, so this changes nothing the model would have used, except that the stub diameter defaults to 1 um -- the same stub diameter the Allen/B3 model of this cell uses. Qualification on the reading, recorded before the run.",
   "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
   "cache_dir": "../h01-neuron/cache/human-pv/hl23-source",
   "library": ".",
   "driver": "h01_pv_neuron_reference.py",
   "purpose": "Stage 15 arm B (climb): the second half of the stage-13 Dissection. The Toronto human-fitted biophysics (biophys_HL23PYR.hoc, unchanged) is run on the Allen human morphology of the recorded cell (541563728), driven at 0.31 nA as the recording is driven. Registered for the first-interval threshold step: if the step survives the anatomy swap it is a property of the human sodium, not of the Toronto anatomy. See docs/specs/2026-09-12-h01-topographic-strategy.md, stage 15 arm B.",
-  "cap": 3,
-  "prior_evaluations": 1,
+  "cap": 4,
+  "prior_evaluations": 2,
   "max_concurrent": 1,
   "abort_seconds": 1800,
   "output_dir": "h01-e-anatomy",
@@ -28,7 +28,7 @@
       "--biophys",
       "/work/source/biophys_HL23PYR.hoc",
       "--morphology",
-      "/work/source/morphologies/allen-541563728.swc"
+      "/work/source/morphologies/allen-541563728-noaxon.swc"
     ]
   },
   "holdout": "No holdout is touched; 0.31 nA is a recorded input of this cell.",
