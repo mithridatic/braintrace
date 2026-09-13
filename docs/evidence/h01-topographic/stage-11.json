@@ -1,0 +1,213 @@
+{
+  "stage": "11",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "limits": {
+    "take_off_move_mv": 0.5,
+    "count_310": [
+      8,
+      12
+    ],
+    "step_mv": 1.9,
+    "residual_growth_mv": 0.75
+  },
+  "rise": {
+    "doses": {
+      "0.9": {
+        "status": "read",
+        "count": 9,
+        "rise_v_s": 655.2576712190078,
+        "take_off_mv": -55.46257744390027,
+        "span_mv": 4.102428740549421,
+        "approach_mv_per_ms": 0.6263182665484095,
+        "rise_by_spike_v_s": [
+          655.2576712190078,
+          671.167784107937,
+          629.7923431855514,
+          623.9544805612802,
+          624.6565416719793,
+          624.1137464190567,
+          621.947289005026,
+          621.1759917527049,
+          625.4486596141821
+        ]
+      },
+      "0.7": {
+        "status": "read",
+        "count": 9,
+        "rise_v_s": 585.8962820092829,
+        "take_off_mv": -55.35699570188886,
+        "span_mv": 4.981594939392686,
+        "approach_mv_per_ms": 0.6092050626779536,
+        "rise_by_spike_v_s": [
+          585.8962820092829,
+          599.8137374287325,
+          553.8567505025732,
+          551.272559713378,
+          544.2589981561406,
+          552.6822712722537,
+          548.5629873616568,
+          550.4782663362957,
+          550.645485032129
+        ],
+        "move": {
+          "raw_mv": 0.10558174201140957,
+          "approach_decades": -0.012031574270819717,
+          "corrected_mv": 0.07189333405311438
+        }
+      },
+      "0.5": {
+        "status": "read",
+        "count": 9,
+        "rise_v_s": 505.24893908956653,
+        "take_off_mv": -55.323238348057025,
+        "span_mv": 5.447223106929236,
+        "approach_mv_per_ms": 0.5882130567170877,
+        "rise_by_spike_v_s": [
+          505.24893908956653,
+          515.6149752117702,
+          478.8563244201768,
+          474.1438491629829,
+          472.21339825814925,
+          474.5463637420523,
+          470.47504200355195,
+          471.7619093879068,
+          470.84978878144875
+        ],
+        "move": {
+          "raw_mv": 0.13933909584324766,
+          "approach_decades": -0.02726041764326584,
+          "corrected_mv": 0.06300992644210332
+        }
+      }
+    },
+    "recorded_rise_v_s": 347.6562604194875
+  },
+  "short_squares": {
+    "rows": [
+      {
+        "sweep": 27,
+        "since_last_spike_s": 30.72100019454956,
+        "approach_mv_per_ms": 7.183994987675239,
+        "take_off_mv": -61.87500202655792,
+        "minus_unprimed_mv": 0.0
+      },
+      {
+        "sweep": 28,
+        "since_last_spike_s": 4.1539998054504395,
+        "approach_mv_per_ms": 7.199270926123338,
+        "take_off_mv": -62.03125187754631,
+        "minus_unprimed_mv": -0.15624985098838806
+      },
+      {
+        "sweep": 29,
+        "since_last_spike_s": 4.177000045776367,
+        "approach_mv_per_ms": 7.297011997990838,
+        "take_off_mv": -61.312501817941666,
+        "minus_unprimed_mv": 0.5625002086162567
+      },
+      {
+        "sweep": 30,
+        "since_last_spike_s": 2.7220001220703125,
+        "approach_mv_per_ms": 7.254891611869738,
+        "take_off_mv": -61.562502324581146,
+        "minus_unprimed_mv": 0.3124997019767761
+      },
+      {
+        "sweep": 31,
+        "since_last_spike_s": 15.76800012588501,
+        "approach_mv_per_ms": 7.2284712916117675,
+        "take_off_mv": -61.65625298023224,
+        "minus_unprimed_mv": 0.2187490463256836
+      }
+    ],
+    "sigma_mv": 0.27863362813341586,
+    "primed_median_mv": 0.26562437415122986,
+    "primed_range_mv": [
+      -0.15624985098838806,
+      0.5625002086162567
+    ],
+    "primed_seconds_range": [
+      2.7220001220703125,
+      15.76800012588501
+    ]
+  },
+  "residual_by_spike": {
+    "n": 41,
+    "bands": {
+      "spike_2": {
+        "n": 6,
+        "median_mv": 1.8279938308469426
+      },
+      "spikes_3_to_5": {
+        "n": 16,
+        "median_mv": 1.6307490398578715
+      },
+      "spikes_6_plus": {
+        "n": 19,
+        "median_mv": 2.2315106663710864
+      }
+    },
+    "growth_mv": 0.40351683552414386,
+    "slope_mv_per_spike": 0.0909071786503804
+  },
+  "reading": [
+    "(a) On the x2 density-held geometry at 310 pA the spike-1 rise follows the somatic NaTs density monotonically: 655, 586 and 505 V/s at 0.9, 0.7 and 0.5, about 375 V/s per unit of the factor over the range read, and the somatic take-off holds: -55.46, -55.36 and -55.32 mV at 0.63, 0.61 and 0.59 mV/ms (corrected for the approach +0.07 and +0.06 mV; limit 0.5). The count is 9 at every dose, so the somatic density is a rise lever that touches neither the take-off nor the count here. The onset span widens with the dose, 4.1, 5.0 and 5.4 mV, still inside the recorded 3.5 to 5.7. Every registered prediction holds and no rejection fired.",
+    "(a) qualified: the slope is read between 0.5 and 0.9 only. The recorded 348 V/s lies 157 V/s below the lowest dose; carried outside the range at the same slope it would need a factor near 0.1, which is not a reading, only a statement that the somatic density alone does not reach the recorded rise inside the range read while the span stays in band.",
+    "(b) The step does not outlast seconds. Sweep 27 fires unprimed (30.7 s after the last spike, five silent sweeps between); sweeps 28, 29 and 30 each fire 4.2, 4.2 and 2.7 s after one spike and sweep 31 15.8 s after one, all at 7.2 to 7.3 mV/ms; their take-offs sit -0.16, +0.56, +0.31 and +0.22 mV from the unprimed one, median +0.27, where a persisting step would read +1.9. The yardstick is the independent long-square repeat sigma, 0.25 mV (3 sigma 0.75): every primed deviation is inside it; the spread of the five short squares themselves (0.28 mV) only agrees with it and is not the test, since a step present in the primed four would widen it. Inside a train the step is full-sized after one spike (spike 2 residual +1.83 mV, n 6) and does not grow with the count (spikes 3 to 5 +1.63, spikes 6 and later +2.23; 6+ minus 2 is +0.40 mV, limit 0.75; +0.09 mV per spike over 41). So it is a per-spike step, present in full after one spike, not recovering measurably within 0.73 s (stage 9) and gone within 2.7 s.",
+    "(b) limits: the read does not reach inside the first 2.7 s after a spike, and it assumes the step is as visible at 7 mV/ms as at 0.2 to 0.75 (it is read here at -62 mV, where the recorded relation has slid 6 mV from the long-square regime). The registered next-long-square read was not taken: the first spiking long square starts 173 s after sweep 31."
+  ],
+  "decision": {
+    "checks": [
+      {
+        "reading": "a",
+        "prediction": "spike-1 rise falls monotonically over 0.9, 0.7, 0.5",
+        "value": 150.00873212944123,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "reading": "a",
+        "prediction": "take-off at 0.7, corrected for the approach, moves less than 0.5 mV from 0.9",
+        "value": 0.07189333405311438,
+        "pass": true,
+        "note": "raw +0.11 mV over -0.01 decades of approach"
+      },
+      {
+        "reading": "a",
+        "prediction": "count at 0.7 within 8 to 12",
+        "value": 9.0,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "reading": "a",
+        "prediction": "take-off at 0.5, corrected for the approach, moves less than 0.5 mV from 0.9",
+        "value": 0.06300992644210332,
+        "pass": true,
+        "note": "raw +0.14 mV over -0.03 decades of approach"
+      },
+      {
+        "reading": "a",
+        "prediction": "count at 0.5 within 8 to 12",
+        "value": 9.0,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "reading": "b",
+        "prediction": "primed short-square take-offs sit within 3 sigma (0.75 mV, the long-square repeat sigma) of the unprimed one (the step does not outlast seconds)",
+        "value": 0.26562437415122986,
+        "pass": true,
+        "note": "the five short squares' own 3 sigma is 0.84 mV; a persisting step would read about +1.9"
+      },
+      {
+        "reading": "b",
+        "prediction": "later-spike residual does not grow with the count (spikes 6+ against spike 2 within 3 sigma, 0.75 mV)",
+        "value": 0.40351683552414386,
+        "pass": true,
+        "note": ""
+      }
+    ],
+    "verdict": "PASS"
+  }
+}

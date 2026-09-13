@@ -30,7 +30,7 @@ without supplying a complete explanation of a human-model difference.
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
 | PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (the recording's span rests on the ratio to the fit, its repeat set not resolving 1 mV; the fit's whole-cell turnover was confirmed at five points). See Y3. |
-| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; in every dose tested the coupling also took the onset outside the recorded band, least at twice the stub's diameter with the density held, so the split did not separate the reading of the spike from the spike itself. Every lever that only changes the somatic inward current is a rise lever in this fit. What a spike leaves behind, +1.9 mV that does not recover measurably inside the pulse, has no counterpart at either site. See Y4. |
+| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; in every dose tested the coupling also took the onset outside the recorded band, least at twice the stub's diameter with the density held, so the split did not separate the reading of the spike from the spike itself. Every lever that only changes the somatic inward current is a rise lever in this fit: on the thickened geometry the somatic sodium density moves the rise (655 to 505 V/s from 0.9 to 0.5) without moving the take-off or the count, but the recorded rise lies below the range read. What a spike leaves behind is a per-spike step: +1.9 mV in full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s, with no counterpart at either site. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -430,8 +430,27 @@ take-off holds at -55.1 to -55.5 mV in that arm where the recording steps up 1.9
 +1.5 mV after intervals under 30, 30 to 100 and over 100 ms, not monotone, so a fixed step
 and a slow recovery are not resolved; recovered by the next sweep) and has no counterpart
 at either site of the fit: along the retained trains the fit's axonal take-off is a
-function of the approach alone. That element still needs its own split, and so does the rise; both are registered
-as [stage 11](specs/2026-09-12-h01-topographic-strategy.md).
+function of the approach alone. [Stage 11](evidence/h01-topographic/stage-11.md) asked one Y question of each. The
+rise: on the x2 density-held geometry the somatic NaTs density moves the spike-1 rise
+monotonically, 655, 586 and 505 V/s at 0.9, 0.7 and 0.5, while the somatic take-off holds
+within 0.1 mV at the same approach and the 310 pA count stays at 9; so on this geometry the
+somatic density is a rise lever and nothing else, which is what the causal model predicted,
+and it does not reach the recorded 348 V/s inside the range read (the recorded rise lies
+157 V/s below the 0.5 dose, and the slope is not carried past its range; the onset span
+widens with the dose, 4.1 to 5.4 mV, still in band). What a spike leaves behind: the
+recording's short squares fix its timescale. Sweep 27 fires after five silent sweeps
+(30.7 s after the last spike) and sweeps 28 to 30 each fire 2.7 to 4.2 s after one spike,
+at the same approach, with take-offs within 0.6 mV of the unprimed one (inside 3 sigma of
+the long-square repeat, 0.75 mV) where a persisting step would read +1.9; inside a train the step is full-sized after one spike (+1.83 mV at
+spike 2) and does not grow with the count (+2.23 at spikes 6 and later, difference +0.40
+mV, under the 0.75 limit). So it is a per-spike step of about +1.9 mV, present in full
+after one spike, not recovering measurably within 0.73 s and gone within 2.7 s; it does
+not accumulate. Its counterpart in the fit is nothing: the fit's take-off is a function of
+the approach alone at every spike, and the SP16 slow inactivation that was tried for it
+recovers on the wrong timescale and costs rise the recording keeps. The element that
+remains to be given a mechanism is therefore a process that a single spike starts, that
+holds for about a second and clears within three, and that raises the take-off without
+lowering the rise by more than the recording's few percent.
 
 **Consequence.** Matching the model's cable to the recorded cell will have little effect on
 the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
@@ -476,9 +495,12 @@ its availability; the recording moves 2.2 mV with the approach alone and 1.9 mV 
 one spike, which is more than availability at such a site gives. Stage 9 read the take-off's own
 variables: in the fit the approach moves the take-off at the site by the recorded amount
 and the soma hides it; in the recording the post-spike step does not recover measurably inside the pulse. Stage 10
-changed only the coupling and the somatic take-off followed it. Two recorded elements
-remain without a counterpart, the rise and the post-spike step; stage 11 asks one Y
-question of each before any lever.
+changed only the coupling and the somatic take-off followed it. Stage 11 asked one Y
+question of each remaining element: the somatic sodium density is a rise lever on the
+thickened geometry that touches neither the take-off nor the count, but the recorded rise
+lies below the range it was read over; and the post-spike step is a per-spike process
+that holds for about a second and clears within three, which no element of the fit
+produces.
 
 Evidence: [soma currents and their erratum](evidence/h01-e-currents/stage-close-decision.json),
 [direct trace audit](evidence/h01-causal-direct-trace-audit-2026-09-11.md),

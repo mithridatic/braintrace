@@ -38,6 +38,7 @@ TAKEOFF = "docs/evidence/h01-topographic/threshold-approach.json"
 ONSET = "docs/evidence/h01-topographic/onset-shape.json"
 STAGE9 = "docs/evidence/h01-topographic/stage-9.json"
 STAGE10 = "docs/evidence/h01-topographic/stage-10.json"
+STAGE11 = "docs/evidence/h01-topographic/stage-11.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -117,8 +118,14 @@ def build_nodes():
           "Prediction: the somatic take-off slides in the recorded direction with the coupling. Both registered rejections fired by the letter (x2 arms differ by 0.8 mV; onset span leaves 3.5-5.7 mV in every arm).", [STAGE10, STRATEGY], "supported"),
         n("q8_e", R, "The somatic take-off slides with the approach once the stub is thicker: control -0.07, x2 total -2.9, x2 density -2.1, x4 -3.4 mV (recorded -2.2); axon lead 0.30 -> 0.16/0.20/0.04 ms; 310 pA counts 10 and 9. The x2 density-held arm is the campaign's closest run to the recorded take-off AS A SLOPE (-2.8 mV per decade of approach vs the recording's -3.8; ranges overlap only at 0.45-0.75 mV/ms where the arm sits ~1 mV above; span 4.1-6.0 vs 3.5-5.7). No arm moves the rise (579/655 vs 639; recorded 348) or produces the post-spike +1.9 mV.",
           "The approach signature is an input (soma-site coupling), not a channel; the coupling also reshapes the onset (total-held arms merge the site into the soma, 6-11 mV spans). Sufficient for the approach signature under these conditions, but every dose also took the onset out of the recorded band: the split did not separate the reading from the spike. Does not name the recorded geometry.", [STAGE10, CM], "supported"),
-        n("next", T, "Next (SP15 stage 11, registered, not run): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs density 0.7 and 0.5 at 310 pA (2 runs; a two-dose slope, no retained slope transfers; prediction: rise falls monotonically, take-off at onset moves < 0.5 mV, count 8-12). Post-spike step: retained traces only - is the +1.9 mV present after a single short-square spike, and does it grow with the spike count?",
-          "One Y question per element before any lever.", [STRATEGY], "unverified"),
+        n("q9", Q, "Q9 (SP15 stage 11, executed, 2 runs + retained traces, PASS): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs density 0.9/0.7/0.5 at 310 pA. Post-spike step: the recording's short squares 27-31 (27 unprimed after five silent sweeps, 28-30 each 2.7-4.2 s after one spike, 31 15.8 s after) and the later-spike residual by spike index.",
+          "The registered next-long-square read could not fire (173 s to the first spiking long square; recorded as a fired no-reading before the traces were opened) and was replaced by the primed/unprimed short-square series.", [STAGE11, STRATEGY], "supported"),
+        n("q9_rise", R, "Rise follows the somatic density monotonically: 655/586/505 V/s at 0.9/0.7/0.5 (about 375 V/s per unit, read over 0.5-0.9 only); the somatic take-off holds (-55.46/-55.36/-55.32 mV at 0.63/0.61/0.59 mV/ms, corrected moves +0.07/+0.06); count 9 at every dose; onset span 4.1/5.0/5.4 mV, in band. The recorded 348 V/s lies 157 V/s below the lowest dose.",
+          "On this geometry the somatic density is a rise lever and nothing else, as the causal model predicted; the slope is not carried past its range.", [STAGE11, CM], "supported"),
+        n("q9_step", R, "The post-spike step is a per-spike step of +1.9 mV: full after one spike (spike 2 residual +1.83 mV, n 6), not growing with the count (spikes 6+ +2.23, difference +0.40 mV, limit 0.75), not recovering measurably within 0.73 s (stage 9) and gone within 2.7 s (primed short squares -0.16 to +0.56 mV from the unprimed, inside the independent 3 sigma of 0.75). Limits: nothing inside the first 2.7 s; assumes the step is as visible at 7 mV/ms as at 0.2-0.75.",
+          "A process a single spike starts, holding about a second and clearing within three, raising the take-off without costing more than a few percent of rise; no element of the fit produces it (SP16 slow inactivation recovers on the wrong timescale and costs rise).", [STAGE11, CM], "supported"),
+        n("next", T, "Next: not registered. The rise needs a lever that reaches 348 V/s with the take-off held and the span in band, which the somatic density alone did not inside 0.5-0.9; the post-spike step needs a mechanism with a 1-3 s clearance started by one spike. Each is a new split to write before any run.",
+          "Y before levers; register the outcome cells first.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
         # policies
@@ -161,7 +168,11 @@ def build_edges():
         cm.edge("q7", "q7_i", "describes", "I"),
         cm.edge("q7_e", "q8", "describes", "change the coupling only"),
         cm.edge("q8", "q8_e", "describes", "E"),
-        cm.edge("q8_e", "next", "describes", "rise and post-spike step, apart"),
+        cm.edge("q8_e", "q9", "describes", "rise and post-spike step, apart"),
+        cm.edge("q9", "q9_rise", "describes", "rise"),
+        cm.edge("q9", "q9_step", "describes", "post-spike step"),
+        cm.edge("q9_rise", "next", "describes", "a lever that reaches 348 with the take-off held"),
+        cm.edge("q9_step", "next", "describes", "a 1-3 s per-spike process"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),
     ]

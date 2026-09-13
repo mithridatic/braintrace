@@ -1,5 +1,5 @@
 {
-  "id": "doc_01a763e2-601",
+  "id": "doc_e65f39ba-754",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -261,11 +261,39 @@
         "label": "E"
       },
       {
-        "id": "q8_e__next",
+        "id": "q8_e__q9",
         "source": "q8_e",
-        "target": "next",
+        "target": "q9",
         "relation": "describes",
         "label": "rise and post-spike step, apart"
+      },
+      {
+        "id": "q9__q9_rise",
+        "source": "q9",
+        "target": "q9_rise",
+        "relation": "describes",
+        "label": "rise"
+      },
+      {
+        "id": "q9__q9_step",
+        "source": "q9",
+        "target": "q9_step",
+        "relation": "describes",
+        "label": "post-spike step"
+      },
+      {
+        "id": "q9_rise__next",
+        "source": "q9_rise",
+        "target": "next",
+        "relation": "describes",
+        "label": "a lever that reaches 348 with the take-off held"
+      },
+      {
+        "id": "q9_step__next",
+        "source": "q9_step",
+        "target": "next",
+        "relation": "describes",
+        "label": "a 1-3 s per-spike process"
       },
       {
         "id": "levers__q3",
@@ -322,6 +350,9 @@
           "q7_i",
           "q8",
           "q8_e",
+          "q9",
+          "q9_rise",
+          "q9_step",
           "next",
           "q2_upstroke",
           "policy"
@@ -1125,12 +1156,93 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q9",
+        "type": "Search question",
+        "text": "Q9 (SP15 stage 11, executed, 2 runs + retained traces, PASS): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs density 0.9/0.7/0.5 at 310 pA. Post-spike step: the recording's short squares 27-31 (27 unprimed after five silent sweeps, 28-30 each 2.7-4.2 s after one spike, 31 15.8 s after) and the later-spike residual by spike index.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The registered next-long-square read could not fire (173 s to the first spiking long square; recorded as a fired no-reading before the traces were opened) and was replaced by the primed/unprimed short-square series.\n\nEvidence: docs/evidence/h01-topographic/stage-11.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q9_ev0",
+            "title": "docs/evidence/h01-topographic/stage-11.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-11.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q9_ev1",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q9_rise",
+        "type": "Branch retained",
+        "text": "Rise follows the somatic density monotonically: 655/586/505 V/s at 0.9/0.7/0.5 (about 375 V/s per unit, read over 0.5-0.9 only); the somatic take-off holds (-55.46/-55.36/-55.32 mV at 0.63/0.61/0.59 mV/ms, corrected moves +0.07/+0.06); count 9 at every dose; onset span 4.1/5.0/5.4 mV, in band. The recorded 348 V/s lies 157 V/s below the lowest dose.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "On this geometry the somatic density is a rise lever and nothing else, as the causal model predicted; the slope is not carried past its range.\n\nEvidence: docs/evidence/h01-topographic/stage-11.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q9_rise_ev0",
+            "title": "docs/evidence/h01-topographic/stage-11.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-11.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q9_rise_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q9_step",
+        "type": "Branch retained",
+        "text": "The post-spike step is a per-spike step of +1.9 mV: full after one spike (spike 2 residual +1.83 mV, n 6), not growing with the count (spikes 6+ +2.23, difference +0.40 mV, limit 0.75), not recovering measurably within 0.73 s (stage 9) and gone within 2.7 s (primed short squares -0.16 to +0.56 mV from the unprimed, inside the independent 3 sigma of 0.75). Limits: nothing inside the first 2.7 s; assumes the step is as visible at 7 mV/ms as at 0.2-0.75.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "A process a single spike starts, holding about a second and clearing within three, raising the take-off without costing more than a few percent of rise; no element of the fit produces it (SP16 slow inactivation recovers on the wrong timescale and costs rise).\n\nEvidence: docs/evidence/h01-topographic/stage-11.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q9_step_ev0",
+            "title": "docs/evidence/h01-topographic/stage-11.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-11.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q9_step_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next (SP15 stage 11, registered, not run): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs density 0.7 and 0.5 at 310 pA (2 runs; a two-dose slope, no retained slope transfers; prediction: rise falls monotonically, take-off at onset moves < 0.5 mV, count 8-12). Post-spike step: retained traces only - is the +1.9 mV present after a single short-square spike, and does it grow with the spike count?",
+        "text": "Next: not registered. The rise needs a lever that reaches 348 V/s with the take-off held and the span in band, which the somatic density alone did not inside 0.5-0.9; the post-spike step needs a mechanism with a 1-3 s clearance started by one spike. Each is a new split to write before any run.",
         "status": "unverified",
         "confidence": null,
-        "notes": "One Y question per element before any lever.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "Y before levers; register the outcome cells first.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
         "evidence": [
           {
             "id": "next_ev0",
@@ -1728,13 +1840,77 @@
         ]
       },
       {
-        "id": "review_q8_e__next",
-        "edgeId": "q8_e__next",
+        "id": "review_q8_e__q9",
+        "edgeId": "q8_e__q9",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q8_e__next",
+            "id": "reservation_q8_e__q9",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q9__q9_rise",
+        "edgeId": "q9__q9_rise",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q9__q9_rise",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q9__q9_step",
+        "edgeId": "q9__q9_step",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q9__q9_step",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q9_rise__next",
+        "edgeId": "q9_rise__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q9_rise__next",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q9_step__next",
+        "edgeId": "q9_step__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q9_step__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

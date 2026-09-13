@@ -496,7 +496,7 @@ sweep"; and the short-square spikes sit at an approach of 7.2 mV/ms with the tak
 -61.3 to -62.0 mV, where the recorded relation has slid 6 mV from the long-square regime, so
 a next-long-square read would compare across regimes as well as across 173 s. The adjacent
 read from the same traces, registered here in its place: sweep 27 fires after five sweeps
-that did not spike (26 s after the last spike, sweep 21), so it is the unprimed baseline;
+that did not spike (30.7 s after the last spike, sweep 21), so it is the unprimed baseline;
 sweeps 28, 29 and 30 each follow a single spike by 4.15, 4.18 and 2.72 s, and sweep 31
 follows one by 15.8 s, all at the same approach (7.18 to 7.30 mV/ms) and the same 1260 pA.
 Prediction if the step outlasts seconds: the primed take-offs sit above the unprimed one by
@@ -506,3 +506,19 @@ exists). The read does not reach inside the first 2.7 s, and it assumes the step
 visible at 7 mV/ms as at 0.2 to 0.75; both limits are recorded with the result. The
 second half, does the residual grow with the count, reads the stage-7 tables as registered:
 residual by spike index, spike 2 against spikes 6 and later.
+
+Stage 11 result (2026-09-13, `docs/evidence/h01-topographic/stage-11.md`, two runs, PASS).
+Rise: 655, 586 and 505 V/s at somatic NaTs density 0.9, 0.7 and 0.5 (about 375 V/s per
+unit of the factor, read between 0.5 and 0.9 only); the somatic take-off holds at -55.46,
+-55.36 and -55.32 mV with the approach at 0.63, 0.61 and 0.59 mV/ms (corrected moves +0.07
+and +0.06 mV); the count is 9 at every dose; the onset span widens 4.1, 5.0, 5.4 mV, inside
+the band. No rejection fired. The recorded 348 V/s lies 157 V/s below the lowest dose; the
+slope is not carried outside its range. What a spike leaves behind: the primed short
+squares sit -0.16 to +0.56 mV from the unprimed one (median +0.27; inside 3 sigma of the
+long-square repeat, 0.75 mV, the independent yardstick; the five's own sigma 0.28 agrees)
+at 2.7 to 15.8 s after one spike, so the +1.9 mV step is gone within 2.7 s; inside a
+train it is full-sized after one spike (spike 2 residual +1.83 mV, n 6) and does not grow
+(spikes 6 and later +2.23, difference +0.40 mV, limit 0.75). A per-spike step, present in
+full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s. Limits:
+the read does not reach inside the first 2.7 s, and it assumes the step is as visible at
+7 mV/ms as at 0.2 to 0.75.

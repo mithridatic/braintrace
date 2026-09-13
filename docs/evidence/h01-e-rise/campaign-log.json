@@ -1,0 +1,68 @@
+[
+  {
+    "name": "s11-na07",
+    "candidate_sha256": "0afe238471966fc300a3da4683690305c5577587fd94a9d13243a74dd59f9eca",
+    "evaluation_index": 1,
+    "abort_seconds": 2400,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s11-na07",
+        "input": "sweep53",
+        "seconds": 984.8392322845757,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-rise/s11-na07-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-rise/s11-na07.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-rise/s11-na07-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s11-na05",
+    "candidate_sha256": "67e4288ce30bdbdcb0da80847e4cc975b1ea739171adf44431d2a70f28d4d57a",
+    "evaluation_index": 2,
+    "abort_seconds": 2400,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s11-na05",
+        "input": "sweep53",
+        "seconds": 984.1202948112041,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-rise/s11-na05-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-rise/s11-na05.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-rise/s11-na05-sweep53"
+        ]
+      }
+    ]
+  }
+]
