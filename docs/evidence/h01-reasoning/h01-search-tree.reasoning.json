@@ -1,5 +1,5 @@
 {
-  "id": "doc_7ddac74a-191",
+  "id": "doc_8e792851-4db",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -324,11 +324,25 @@
         "label": "decompose the shared rise by observation point"
       },
       {
-        "id": "q12__next",
+        "id": "q12__q13",
         "source": "q12",
+        "target": "q13",
+        "relation": "describes",
+        "label": "dose or swap the sodium equations"
+      },
+      {
+        "id": "q13__q14",
+        "source": "q13",
+        "target": "q14",
+        "relation": "describes",
+        "label": "lineage refuted; the climb is where the accuracy is"
+      },
+      {
+        "id": "q14__next",
+        "source": "q14",
         "target": "next",
         "relation": "describes",
-        "label": "the soma's own sodium above -40 mV; the dose is the finish"
+        "label": "no somatic lever; dose the site"
       },
       {
         "id": "q11_climb__next",
@@ -408,6 +422,8 @@
           "q11_rise",
           "q12",
           "q11_climb",
+          "q13",
+          "q14",
           "next",
           "q2_upstroke",
           "policy"
@@ -1454,9 +1470,63 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q13",
+        "type": "Branch retained",
+        "text": "Q13 (SP15 stage 15, executed, 7 runs): the rodent-vs-human KINETIC LINEAGE, the last unquestioned input in the frame. B3's somatic rodent NaTs (gbar 2.641) zeroed and the Toronto human NaTg inserted with HL23PYR's human voltage shifts (vshiftm 13, vshifth 15, slopem 7), on this cell's own anatomy and densities, dosed 0.068 to 5.282 S/cm2 (78-fold).",
+        "status": "supported",
+        "confidence": null,
+        "notes": "REFUTED. Below B3's own conductance the cell is SILENT (plateau -49 mV, ABOVE its own -57 mV take-off; 8x density moves it 0.8 mV): the +13 mV activation shift is fitted against the Toronto K set and never activates against Allen's, which was fitted to a sodium activating 13 mV lower. Kinetics are fitted as a SET, not interchangeable parts. At matched conductance the rise goes UP (625, then 921 V/s) against the recorded 348. Accuracy: B3 71.8, best human-sodium arm 62.0, fully human-fitted HL23PYR 72.3 - 'human rather than mouse' is worth half a point.\n\nEvidence: docs/evidence/h01-topographic/stage-15.json; docs/evidence/h01-topographic/human-vs-rodent-accuracy.json",
+        "evidence": [
+          {
+            "id": "q13_ev0",
+            "title": "docs/evidence/h01-topographic/stage-15.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-15.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q13_ev1",
+            "title": "docs/evidence/h01-topographic/human-vs-rodent-accuracy.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/human-vs-rodent-accuracy.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q14",
+        "type": "Branch retained",
+        "text": "Q14 (SP15 stage 16 part 1, observation on retained traces, no run): can ANY somatic conductance move the threshold? Somatic outward current at a common subthreshold voltage before each spike, against the take-off along the train.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "NO, and the registered somatic dose was REFUSED before it ran (4 evaluations saved). Outward current accumulates (+22.5 percent by spike 2, doubling by spike 4) while the take-off does not move at all (-57.20, -57.42, -57.16, -57.20, -57.20 mV). At the take-off the axon[0] leg delivers +0.33 nA against a total accumulated somatic brake of ~0.012 nA - 3 percent of the trigger. Carriers at take-off: leak 69 percent, Kv3_1 30 percent, Im 0.4 percent. B3's somatic threshold is the ARRIVAL TIME of the axonal spike.\n\nEvidence: docs/evidence/h01-topographic/stage-16-observation.json; docs/evidence/h01-topographic/stage-14.json",
+        "evidence": [
+          {
+            "id": "q14_ev0",
+            "title": "docs/evidence/h01-topographic/stage-16-observation.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-16-observation.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q14_ev1",
+            "title": "docs/evidence/h01-topographic/stage-14.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-14.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next: not registered. Stage 14 has localised the rise to the soma's own sodium above -40 mV and earned the naming, so the finishing step (1) is: swap or dose the shared NaTs/Nap equations as a characteristic curve of the rise through the chain, count and take-off held, with the somatic-phase deficit (recorded 0.74/0.64/0.51 of the fit at -20/0/+20 mV) as the target. (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the first-interval step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
+        "text": "Next: stage 16 part 2 RUNNING - the climb as accommodation at the INITIATION SITE, read through a coupling wide enough for the soma to see it. Axonal sodium recovery dosed 0.5/0.25/0.125 on the stage-10 thickened-stub arm, plus the strongest dose on the default 1 um stub as the coupling control. Target: at least half the recorded first-interval step (+0.69 of +1.38 mV) with the count in 5-15 and the spike-1 rise within 15 percent of the arm's control. Then: spend the sealed holdout (sweep 54), then the second human cell, then the population. Accuracy ledger: climb 19.4 points, rise 6.4, all else 2.4.",
         "status": "unverified",
         "confidence": null,
         "notes": "Y before levers; register the outcome cells first.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
@@ -2201,13 +2271,45 @@
         ]
       },
       {
-        "id": "review_q12__next",
-        "edgeId": "q12__next",
+        "id": "review_q12__q13",
+        "edgeId": "q12__q13",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q12__next",
+            "id": "reservation_q12__q13",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q13__q14",
+        "edgeId": "q13__q14",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q13__q14",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q14__next",
+        "edgeId": "q14__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q14__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

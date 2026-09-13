@@ -42,6 +42,9 @@ STAGE11 = "docs/evidence/h01-topographic/stage-11.json"
 STAGE12 = "docs/evidence/h01-topographic/stage-12.json"
 STAGE13 = "docs/evidence/h01-topographic/stage-13.json"
 STAGE14 = "docs/evidence/h01-topographic/stage-14.json"
+STAGE15 = "docs/evidence/h01-topographic/stage-15.json"
+ACCJSON = "docs/evidence/h01-topographic/human-vs-rodent-accuracy.json"
+OBS16 = "docs/evidence/h01-topographic/stage-16-observation.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -139,7 +142,11 @@ def build_nodes():
           "The rise excess is the soma's own sodium above -40 mV, not the site-delivered leg; the shared sodium is named by the carrying current, not merely by what the bases share. The dose is justified as the finishing step; had axon[0] been the majority it would be refused for the coupling.", [STAGE14, CM], "supported"),
         n("q11_climb", R, "Climb has a positive control: HL23PYR +1.38 mV at spike 2 (the recorded step exactly) / +1.78 at spike 5 at 0.31 nA, rise kept 0.95; B3 -0.02 / +0.24; recording +1.38 / +3.63 at 0.86. Shape: HL23PYR steps in the first interval then holds; the recording steps then accumulates +2.2 mV more. Excitability is the wrong cell's: rest -74 vs -84, counts 16/18/20/24 vs 1/5/10 (cell e fired). Take-off relation read over 1.1-1.9 mV/ms, disjoint from 0.2-0.75, not compared; 0.4 nA take-off is a reader failure (excluded).",
           "A human-fitted sodium reproduces the step, neither base the accumulation.", [STAGE13, CM], "supported"),
-        n("next", T, "Next: not registered. Stage 14 has localised the rise to the soma's own sodium above -40 mV and earned the naming, so the finishing step (1) is: swap or dose the shared NaTs/Nap equations as a characteristic curve of the rise through the chain, count and take-off held, with the somatic-phase deficit (recorded 0.74/0.64/0.51 of the fit at -20/0/+20 mV) as the target. (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the first-interval step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
+        n("q13", R, "Q13 (SP15 stage 15, executed, 7 runs): the rodent-vs-human KINETIC LINEAGE, the last unquestioned input in the frame. B3's somatic rodent NaTs (gbar 2.641) zeroed and the Toronto human NaTg inserted with HL23PYR's human voltage shifts (vshiftm 13, vshifth 15, slopem 7), on this cell's own anatomy and densities, dosed 0.068 to 5.282 S/cm2 (78-fold).",
+          "REFUTED. Below B3's own conductance the cell is SILENT (plateau -49 mV, ABOVE its own -57 mV take-off; 8x density moves it 0.8 mV): the +13 mV activation shift is fitted against the Toronto K set and never activates against Allen's, which was fitted to a sodium activating 13 mV lower. Kinetics are fitted as a SET, not interchangeable parts. At matched conductance the rise goes UP (625, then 921 V/s) against the recorded 348. Accuracy: B3 71.8, best human-sodium arm 62.0, fully human-fitted HL23PYR 72.3 - 'human rather than mouse' is worth half a point.", [STAGE15, ACCJSON], "supported"),
+        n("q14", R, "Q14 (SP15 stage 16 part 1, observation on retained traces, no run): can ANY somatic conductance move the threshold? Somatic outward current at a common subthreshold voltage before each spike, against the take-off along the train.",
+          "NO, and the registered somatic dose was REFUSED before it ran (4 evaluations saved). Outward current accumulates (+22.5 percent by spike 2, doubling by spike 4) while the take-off does not move at all (-57.20, -57.42, -57.16, -57.20, -57.20 mV). At the take-off the axon[0] leg delivers +0.33 nA against a total accumulated somatic brake of ~0.012 nA - 3 percent of the trigger. Carriers at take-off: leak 69 percent, Kv3_1 30 percent, Im 0.4 percent. B3's somatic threshold is the ARRIVAL TIME of the axonal spike.", [OBS16, STAGE14], "supported"),
+        n("next", T, "Next: stage 16 part 2 RUNNING - the climb as accommodation at the INITIATION SITE, read through a coupling wide enough for the soma to see it. Axonal sodium recovery dosed 0.5/0.25/0.125 on the stage-10 thickened-stub arm, plus the strongest dose on the default 1 um stub as the coupling control. Target: at least half the recorded first-interval step (+0.69 of +1.38 mV) with the count in 5-15 and the spike-1 rise within 15 percent of the arm's control. Then: spend the sealed holdout (sweep 54), then the second human cell, then the population. Accuracy ledger: climb 19.4 points, rise 6.4, all else 2.4.",
           "Y before levers; register the outcome cells first.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
@@ -192,7 +199,9 @@ def build_edges():
         cm.edge("q11", "q11_rise", "describes", "rise"),
         cm.edge("q11", "q11_climb", "describes", "climb"),
         cm.edge("q11_rise", "q12", "describes", "decompose the shared rise by observation point"),
-        cm.edge("q12", "next", "describes", "the soma's own sodium above -40 mV; the dose is the finish"),
+        cm.edge("q12", "q13", "describes", "dose or swap the sodium equations"),
+        cm.edge("q13", "q14", "describes", "lineage refuted; the climb is where the accuracy is"),
+        cm.edge("q14", "next", "describes", "no somatic lever; dose the site"),
         cm.edge("q11_climb", "next", "describes", "the step has a control; the accumulation has none"),
         cm.edge("q9_step", "next", "describes", "a 1-3 s per-spike process"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
