@@ -40,6 +40,7 @@ STAGE9 = "docs/evidence/h01-topographic/stage-9.json"
 STAGE10 = "docs/evidence/h01-topographic/stage-10.json"
 STAGE11 = "docs/evidence/h01-topographic/stage-11.json"
 STAGE12 = "docs/evidence/h01-topographic/stage-12.json"
+STAGE13 = "docs/evidence/h01-topographic/stage-13.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -129,7 +130,13 @@ def build_nodes():
           "First pass with the corner free returned 2.65 kHz and would have read the whole rise gap as the chain; refuted by the flat noise floor and the two-sample edge jump (the step carries the command's own pole). Recorded, then amended.", [STAGE12, STRATEGY], "supported"),
         n("q10_chain", R, "Chain: pipette pole 5 us (E) / 2 us (I) at best, bound 30 us; neutralisation live in practice (a live 5 pF pole would put 9 mV at every edge, none is there); bridge mismatch +0.24 / -0.96 MOhm; corner >= 20 kHz if the noise floor is pipette noise; an assumed 10 kHz applied as the conservative case (no filter setting in the file). E fit rise 655 -> 609 (10 kHz) / 638 (20 kHz), control 639 -> 570 / 615: 5-15 percent of the gap to 348; residual 260-290 V/s real. Peak bound would cover 55 percent (fired by the letter at a bound an order of magnitude above the measured pole). Fall: recording -104 vs fit -91/-95 while rising slower - no chain does that.",
           "Slow set holds (take-off constant 0.13 mV shift, slide to 0.01 mV; approach 1 percent; lead 0.02 ms; count): stages 7-11 stand. The 10-100 V/s onset span is chain-fragile (E 4.1 -> 5.5/5.7, non-monotone across ramps): stage-8 E cell qualified; I span survives (12.8 vs 1.9). I fit rise 592 -> 530 through its chain: the raw equality with the recording's 597 was a coincidence of observation points.", [STAGE12, CM], "supported"),
-        n("next", T, "Next: not registered. With the chain measured, the rise contrast is re-sized (135-162 sigma), not retired. The book's order from here: (1) the elemental picture - full spike-cycle conjugate loops (dV/dt vs V, I_inj - C dV/dt vs V) recording vs fit through the chain, spike 1 and 2, to place the fit's excess rise below or above -40 mV; (2) decompose the fit's rise by observation point (branch currents at the soma, one run); (3) only then a somatic-density series read as a characteristic curve; the post-spike step's energetic Y from stage 0's early-after-spike load curves.",
+        n("q11", Q, "Q11 (SP15 stage 13, executed, 4 runs): the BASE as a sub-system, a Dissection half-split. J: every stage dosed one Allen fit inside a frame never questioned; the two largest contrasts are sodium-kinetic signatures. Facts: B3 is Allen 626170538, the perisomatic fit of THIS human cell (541563728) under the rodent-lineage kinetic set; the I base HL5BN1 is already human-fitted and misses the climb too. System B: Toronto HL23PYR (ModelDB 267595), driven as the recording is driven, read through the chain.",
+          "Registered cells: rise within 15 percent of 348; climb at least half the recorded; count 5-15 at 0.31; the second half (HL23PYR biophysics on this anatomy) only if the first passes.", [STAGE13, STRATEGY], "supported"),
+        n("q11_rise", R, "Rise is NOT the fitting pipeline: HL23PYR 592-600 V/s through the chain at every drive (B3 545-570, recorded 332-351). Two independently fitted human L2/3 models on different anatomy agree; they share the sodium equation family, the ideal clamp and 34 C. Elemental picture: the three spike-1 loops coincide to about -40 mV and separate above it - the excess is in the somatic phase, not the site-delivered one. Fall: HL23PYR -80, B3 -94, recorded -104.",
+          "Base stays B3 for the rise; the shared sodium equations are the sub-system the next split swaps or doses as a characteristic curve.", [STAGE13, CM], "supported"),
+        n("q11_climb", R, "Climb has a positive control: HL23PYR +1.38 mV at spike 2 (the recorded step exactly) / +1.78 at spike 5 at 0.31 nA, rise kept 0.95; B3 -0.02 / +0.24; recording +1.38 / +3.63 at 0.86. Shape: HL23PYR steps in the first interval then holds; the recording steps then accumulates +2.2 mV more. Excitability is the wrong cell's: rest -74 vs -84, counts 16/18/20/24 vs 1/5/10 (cell e fired). Take-off relation read over 1.1-1.9 mV/ms, disjoint from 0.2-0.75, not compared; 0.4 nA take-off is a reader failure (excluded).",
+          "A human-fitted sodium reproduces the step, neither base the accumulation.", [STAGE13, CM], "supported"),
+        n("next", T, "Next: not registered. (1) The rise: swap or dose the sodium equations both bases share, as a characteristic curve of the rise through the chain with the count and take-off held, and decompose the somatic phase by branch currents (one run). (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
           "Y before levers; register the outcome cells first.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
@@ -178,7 +185,11 @@ def build_edges():
         cm.edge("q9", "q9_step", "describes", "post-spike step"),
         cm.edge("q9_rise", "q10", "describes", "measure the chain before sizing the rise"),
         cm.edge("q10", "q10_chain", "describes", "the chain"),
-        cm.edge("q10_chain", "next", "describes", "the rise re-sized, the order restored"),
+        cm.edge("q10_chain", "q11", "describes", "the frame itself as a sub-system"),
+        cm.edge("q11", "q11_rise", "describes", "rise"),
+        cm.edge("q11", "q11_climb", "describes", "climb"),
+        cm.edge("q11_rise", "next", "describes", "the shared sodium equations"),
+        cm.edge("q11_climb", "next", "describes", "the step has a control; the accumulation has none"),
         cm.edge("q9_step", "next", "describes", "a 1-3 s per-spike process"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),

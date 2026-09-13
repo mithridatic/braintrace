@@ -678,3 +678,27 @@ anatomy (the anatomy sub-system swapped), so that the base is replaced on a 2x2 
 on a leap.
 
 Unchanged: the E recording, its chain, the readers, B3 and its retained runs.
+
+Stage 13 result (2026-09-13, `docs/evidence/h01-topographic/stage-13.md`, four runs of
+54 to 73 s plus one evaluation spent on a path error; verdict FAIL, three cells fired).
+Through the chain HL23PYR's spike-1 rise is 592, 594, 600 and 600 V/s at 0.2, 0.25, 0.31
+and 0.4 nA (B3 545 to 570; recorded 332 to 351): cell (a) fired at the lowest firing
+drive and at the matched drive alike. The rise is not the fitting pipeline; two
+independently fitted human L2/3 models on different anatomy agree on it, and what they
+share is the sodium equation family. The threshold climbs: +0.77 / +0.90 mV (spike 2 /
+spike 5) at 0.2 nA, +1.38 / +1.78 at 0.31, +2.24 / +2.36 at 0.4, with the rise kept at 0.95
+(recorded +1.38 / +3.63 at 0.86; B3 -0.02 / +0.24); cell (b) fired on the lowest firing
+drive by the letter and sits at the limit at the matched drive. The shape: a step in the
+first interval that then holds, where the recording adds +2.2 mV more over spikes 2 to 5.
+So a human-fitted base gives the step and not the accumulation, and the registered
+rejection "climb missing as in B3" did not fire in its strong form. Excitability is the
+wrong cell's: rest -74 mV against -84 under the same bias, counts 16 / 18 / 20 / 24
+against 1 / 5 / 10 (cell (e) fired); fall -80 V/s against B3's -94 and the recorded -104.
+The take-off relation is read over 1.1 to 1.9 mV/ms, disjoint from the recorded 0.2 to
+0.75, and is not compared as a value; the 0.4 nA take-off reading is a reader failure at a
+2.6 mV/ms approach and is excluded. The elemental picture came free: the three spike-1
+loops coincide from take-off to about -40 mV and separate above it, so the fits' excess
+rise is in the somatic phase, not the site-delivered one. Consequence: the base stays B3;
+the second half (HL23PYR biophysics on the 541563728 anatomy) is worth one run for the
+climb only; the rise now has the same value on two bases that differ in everything but
+their sodium equations, and that is the sub-system the next split addresses.

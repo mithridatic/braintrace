@@ -1,5 +1,5 @@
 {
-  "id": "doc_1fb46125-bbc",
+  "id": "doc_4c098ae4-159",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -296,11 +296,39 @@
         "label": "the chain"
       },
       {
-        "id": "q10_chain__next",
+        "id": "q10_chain__q11",
         "source": "q10_chain",
+        "target": "q11",
+        "relation": "describes",
+        "label": "the frame itself as a sub-system"
+      },
+      {
+        "id": "q11__q11_rise",
+        "source": "q11",
+        "target": "q11_rise",
+        "relation": "describes",
+        "label": "rise"
+      },
+      {
+        "id": "q11__q11_climb",
+        "source": "q11",
+        "target": "q11_climb",
+        "relation": "describes",
+        "label": "climb"
+      },
+      {
+        "id": "q11_rise__next",
+        "source": "q11_rise",
         "target": "next",
         "relation": "describes",
-        "label": "the rise re-sized, the order restored"
+        "label": "the shared sodium equations"
+      },
+      {
+        "id": "q11_climb__next",
+        "source": "q11_climb",
+        "target": "next",
+        "relation": "describes",
+        "label": "the step has a control; the accumulation has none"
       },
       {
         "id": "q9_step__next",
@@ -369,6 +397,9 @@
           "q9_step",
           "q10",
           "q10_chain",
+          "q11",
+          "q11_rise",
+          "q11_climb",
           "next",
           "q2_upstroke",
           "policy"
@@ -1307,9 +1338,90 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q11",
+        "type": "Search question",
+        "text": "Q11 (SP15 stage 13, executed, 4 runs): the BASE as a sub-system, a Dissection half-split. J: every stage dosed one Allen fit inside a frame never questioned; the two largest contrasts are sodium-kinetic signatures. Facts: B3 is Allen 626170538, the perisomatic fit of THIS human cell (541563728) under the rodent-lineage kinetic set; the I base HL5BN1 is already human-fitted and misses the climb too. System B: Toronto HL23PYR (ModelDB 267595), driven as the recording is driven, read through the chain.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Registered cells: rise within 15 percent of 348; climb at least half the recorded; count 5-15 at 0.31; the second half (HL23PYR biophysics on this anatomy) only if the first passes.\n\nEvidence: docs/evidence/h01-topographic/stage-13.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q11_ev0",
+            "title": "docs/evidence/h01-topographic/stage-13.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-13.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q11_ev1",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q11_rise",
+        "type": "Branch retained",
+        "text": "Rise is NOT the fitting pipeline: HL23PYR 592-600 V/s through the chain at every drive (B3 545-570, recorded 332-351). Two independently fitted human L2/3 models on different anatomy agree; they share the sodium equation family, the ideal clamp and 34 C. Elemental picture: the three spike-1 loops coincide to about -40 mV and separate above it - the excess is in the somatic phase, not the site-delivered one. Fall: HL23PYR -80, B3 -94, recorded -104.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Base stays B3 for the rise; the shared sodium equations are the sub-system the next split swaps or doses as a characteristic curve.\n\nEvidence: docs/evidence/h01-topographic/stage-13.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q11_rise_ev0",
+            "title": "docs/evidence/h01-topographic/stage-13.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-13.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q11_rise_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q11_climb",
+        "type": "Branch retained",
+        "text": "Climb has a positive control: HL23PYR +1.38 mV at spike 2 (the recorded step exactly) / +1.78 at spike 5 at 0.31 nA, rise kept 0.95; B3 -0.02 / +0.24; recording +1.38 / +3.63 at 0.86. Shape: HL23PYR steps in the first interval then holds; the recording steps then accumulates +2.2 mV more. Excitability is the wrong cell's: rest -74 vs -84, counts 16/18/20/24 vs 1/5/10 (cell e fired). Take-off relation read over 1.1-1.9 mV/ms, disjoint from 0.2-0.75, not compared; 0.4 nA take-off is a reader failure (excluded).",
+        "status": "supported",
+        "confidence": null,
+        "notes": "A human-fitted sodium reproduces the step, neither base the accumulation.\n\nEvidence: docs/evidence/h01-topographic/stage-13.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q11_climb_ev0",
+            "title": "docs/evidence/h01-topographic/stage-13.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-13.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q11_climb_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next: not registered. With the chain measured, the rise contrast is re-sized (135-162 sigma), not retired. The book's order from here: (1) the elemental picture - full spike-cycle conjugate loops (dV/dt vs V, I_inj - C dV/dt vs V) recording vs fit through the chain, spike 1 and 2, to place the fit's excess rise below or above -40 mV; (2) decompose the fit's rise by observation point (branch currents at the soma, one run); (3) only then a somatic-density series read as a characteristic curve; the post-spike step's energetic Y from stage 0's early-after-spike load curves.",
+        "text": "Next: not registered. (1) The rise: swap or dose the sodium equations both bases share, as a characteristic curve of the rise through the chain with the count and take-off held, and decompose the somatic phase by branch currents (one run). (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
         "status": "unverified",
         "confidence": null,
         "notes": "Y before levers; register the outcome cells first.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
@@ -1990,13 +2102,77 @@
         ]
       },
       {
-        "id": "review_q10_chain__next",
-        "edgeId": "q10_chain__next",
+        "id": "review_q10_chain__q11",
+        "edgeId": "q10_chain__q11",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q10_chain__next",
+            "id": "reservation_q10_chain__q11",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q11__q11_rise",
+        "edgeId": "q11__q11_rise",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q11__q11_rise",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q11__q11_climb",
+        "edgeId": "q11__q11_climb",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q11__q11_climb",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q11_rise__next",
+        "edgeId": "q11_rise__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q11_rise__next",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q11_climb__next",
+        "edgeId": "q11_climb__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q11_climb__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

@@ -1,0 +1,270 @@
+[
+  {
+    "name": "s13-hl23pyr",
+    "candidate_sha256": "ab0d1617f56bf1d89687a92dddcceb789956d7f2b9abb0ee65238f8615067e1d",
+    "evaluation_index": 1,
+    "abort_seconds": 2400,
+    "inputs": {
+      "step200": "failed",
+      "step250": "failed",
+      "step310": "failed",
+      "step400": "failed"
+    },
+    "runs": [
+      {
+        "name": "s13-hl23pyr",
+        "input": "step200",
+        "seconds": 0.8582614064216614,
+        "returncode": 1,
+        "aborted": false,
+        "stderr_tail": [
+          "Donor file not found: /work/source/biophys_HL23PYR.hoc"
+        ],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step200.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.2",
+          "--bias-na",
+          "0.0025",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step200"
+        ]
+      },
+      {
+        "name": "s13-hl23pyr",
+        "input": "step250",
+        "seconds": 0.7298360681161284,
+        "returncode": 1,
+        "aborted": false,
+        "stderr_tail": [
+          "Donor file not found: /work/source/biophys_HL23PYR.hoc"
+        ],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step250.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.25",
+          "--bias-na",
+          "-0.0037",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step250"
+        ]
+      },
+      {
+        "name": "s13-hl23pyr",
+        "input": "step310",
+        "seconds": 0.7595364591106772,
+        "returncode": 1,
+        "aborted": false,
+        "stderr_tail": [
+          "Donor file not found: /work/source/biophys_HL23PYR.hoc"
+        ],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step310.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.31",
+          "--bias-na",
+          "-0.0037",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step310"
+        ]
+      },
+      {
+        "name": "s13-hl23pyr",
+        "input": "step400",
+        "seconds": 0.7404092652723193,
+        "returncode": 1,
+        "aborted": false,
+        "stderr_tail": [
+          "Donor file not found: /work/source/biophys_HL23PYR.hoc"
+        ],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step400.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.4",
+          "--bias-na",
+          "-0.0037",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step400"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s13-hl23pyr",
+    "candidate_sha256": "6b64a8d2a811472d776caa6b86ea79bdd5266ee1dc9d4774024acf3282cfe4d4",
+    "evaluation_index": 2,
+    "abort_seconds": 2400,
+    "inputs": {
+      "step200": "completed",
+      "step250": "completed",
+      "step310": "completed",
+      "step400": "completed"
+    },
+    "runs": [
+      {
+        "name": "s13-hl23pyr",
+        "input": "step200",
+        "seconds": 53.97531783487648,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step200.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.2",
+          "--bias-na",
+          "0.0025",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--template",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/NeuronTemplate.hoc",
+          "--biophys",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/biophys_HL23PYR.hoc",
+          "--morphology",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/morphologies/HL23PYR.swc",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step200"
+        ]
+      },
+      {
+        "name": "s13-hl23pyr",
+        "input": "step250",
+        "seconds": 59.04752491693944,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step250.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.25",
+          "--bias-na",
+          "-0.0037",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--template",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/NeuronTemplate.hoc",
+          "--biophys",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/biophys_HL23PYR.hoc",
+          "--morphology",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/morphologies/HL23PYR.swc",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step250"
+        ]
+      },
+      {
+        "name": "s13-hl23pyr",
+        "input": "step310",
+        "seconds": 64.06040802411735,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step310.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.31",
+          "--bias-na",
+          "-0.0037",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--template",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/NeuronTemplate.hoc",
+          "--biophys",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/biophys_HL23PYR.hoc",
+          "--morphology",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/morphologies/HL23PYR.swc",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step310"
+        ]
+      },
+      {
+        "name": "s13-hl23pyr",
+        "input": "step400",
+        "seconds": 72.65685794688761,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-donor/s13-hl23pyr-step400.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr.candidate.json",
+          "--current-na",
+          "0.4",
+          "--bias-na",
+          "-0.0037",
+          "--stimulus-on-ms",
+          "1020",
+          "--duration-ms",
+          "2100",
+          "--record-axon-probes",
+          "--template",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/NeuronTemplate.hoc",
+          "--biophys",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/biophys_HL23PYR.hoc",
+          "--morphology",
+          "/workspace/h01-neuron/cache/human-pv/hl23-source/source/morphologies/HL23PYR.swc",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-donor/s13-hl23pyr-step400"
+        ]
+      }
+    ]
+  }
+]

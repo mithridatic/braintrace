@@ -30,7 +30,7 @@ without supplying a complete explanation of a human-model difference.
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
 | PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (the recording's span rests on the ratio to the fit, its repeat set not resolving 1 mV; the fit's whole-cell turnover was confirmed at five points and survives the recording's measurement chain). The first spikes' equal rise, 597 against 592 V/s, held only because the two were read at different points: through the recording's chain the finalist rises about a tenth too slowly. See Y3. |
-| B3 fires too often at low input and rises too fast at every input | The recording is read at a pipette through a bridge, a neutralisation and an acquisition filter, the model at its membrane; measured from the recording's own step edges and noise floor, that chain takes 3 to 11 percent off a rise and a tenth of a millivolt off a threshold, so the fit's spike-1 rise of 639 V/s reads 570 to 615 against the recorded 348 and the rise stays the largest element, 135 to 162 repeat spreads. Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; in every dose tested the coupling also took the onset outside the recorded band, least at twice the stub's diameter with the density held, so the split did not separate the reading of the spike from the spike itself. Every lever that only changes the somatic inward current is a rise lever in this fit: on the thickened geometry the somatic sodium density moves the rise (655 to 505 V/s from 0.9 to 0.5) without moving the take-off or the count, but the recorded rise lies below the range read. What a spike leaves behind is a per-spike step: +1.9 mV in full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s, with no counterpart at either site. See Y4. |
+| B3 fires too often at low input and rises too fast at every input | The recording is read at a pipette through a bridge, a neutralisation and an acquisition filter, the model at its membrane; measured from the recording's own step edges and noise floor, that chain takes 3 to 11 percent off a rise and a tenth of a millivolt off a threshold, so the fit's spike-1 rise of 639 V/s reads 570 to 615 against the recorded 348 and the rise stays the largest element, 135 to 162 repeat spreads. Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; in every dose tested the coupling also took the onset outside the recorded band, least at twice the stub's diameter with the density held, so the split did not separate the reading of the spike from the spike itself. Every lever that only changes the somatic inward current is a rise lever in this fit: on the thickened geometry the somatic sodium density moves the rise (655 to 505 V/s from 0.9 to 0.5) without moving the take-off or the count, but the recorded rise lies below the range read. What a spike leaves behind is a per-spike step: +1.9 mV in full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s, with no counterpart at either site. The base is not the family for the rise: a second, independently fitted human L2/3 model (Toronto HL23PYR) rises at 600 V/s through the chain like B3, and the two share only their sodium equations; it does produce the first-interval threshold step (+1.4 mV) that B3 lacks, though not the accumulation that follows it. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -324,6 +324,23 @@ with a faster fall, so the rise difference is a property of the cell and not of 
 reading. The rise is therefore the steepest element in this table by an order of
 magnitude, and it is the element the search must explain first; the take-off's approach
 signature and the post-spike step, at 9 and 8 spreads, are second-order beside it.
+[Stage 13](evidence/h01-topographic/stage-13.md) put the base itself on one side of a
+split: Toronto HL23PYR, a human L2/3 pyramidal model fitted by a different group to
+different human cells on a different anatomy, with human-shifted sodium voltage
+dependence and a fitted initial segment, driven exactly as this recording is driven. It
+rises at 592 to 600 V/s through the chain at every drive. Two bases that differ in
+densities, shifts, anatomy and fitting pipeline agree on the rise and both miss the
+recording by 250 V/s; what they share is the sodium equation family (Colbert and Pan
+2002, re-dosed and shifted), the ideal current clamp and 34 degrees. The elemental
+picture, the spike-1 loops of dV/dt against V through the chain, shows where: the three
+loops coincide from take-off to about -40 mV and separate above it, so the excess is in
+the phase the soma's own sodium carries, not in the phase the initiation site delivers.
+The same base does what B3 cannot on the threshold: it climbs +1.38 mV in the first
+interval at 0.31 nA, the recorded step exactly, with the rise kept at 0.95, and then
+holds, where the recording climbs +2.2 mV more over the next three spikes. So the
+recorded climb is a first-interval step, which a human-fitted sodium reproduces, plus an
+accumulation, which neither base has; and HL23PYR is the wrong cell in excitability,
+resting 10 mV depolarised and firing twice the count at every drive.
 The model's first spike is also early, by less than four spreads of the recording's own
 first-spike scatter, which is too small to treat as a separate effect. The 200 pA count is
 not in the table: the recorded cell fires once in five of seven repeats and not at all in
@@ -498,16 +515,15 @@ separates a somatic take-off from an imposed one and it did not, and stage 12 ha
 shown the 10 to 100 V/s span to be a fragile reading (it moves by more than a millivolt
 under a chain that moves the rise by a few percent), so that question is closed on that Y.
 With the chain measured the order is the one the search should have kept from the start:
-the rise, the steepest element, before the take-off and the step. The next observation is
-the elemental one, the whole spike cycle as its conjugate pair, the rate of rise against
-the voltage and the net membrane current against the voltage, spike 1 and spike 2 at
-310 pA, recording and fit read through the same chain on shared axes, to place the fit's
-excess rise on the voltage axis: below about -40 mV it is delivered by the initiation site
-through the coupling that stage 10 thickened, above it by the soma's own sodium. Then the
-fit's rise is decomposed by observation point, the axial current from the axon, the
-somatic sodium and potassium currents and the axial current into the dendrites during
-spike 1, which the model gives and the recording cannot; only then is a somatic density
-series read as a characteristic curve through the chain.
+the rise, the steepest element, before the take-off and the step. Stage 13 placed the
+excess on the voltage axis: above -40 mV, in the somatic phase, on both bases. Replacing
+the base does not close the rise, so the base stays B3, and the sub-system the two bases
+share, the sodium equations, is what the next split swaps or doses, as a characteristic
+curve of the rise read through the chain with the count and the take-off held. The
+climb's first-interval step now has a positive control in HL23PYR's sodium; the second
+half of the stage-13 split, that biophysics on this cell's anatomy, is worth one run for
+the step alone, and the accumulation that follows the step remains without a counterpart
+on any base.
 
 **Limit.** No sufficient repair is established, and B3 stays unpromoted. The measured facts
 are that the recorded take-off slides with the approach and rises after a spike while the
