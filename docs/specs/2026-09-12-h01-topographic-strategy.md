@@ -360,3 +360,9 @@ ramps. I (c) no probe crosses 10 V/s more than 0.1 ms before the soma and every 
 8 mV. Rejections: a ramp that produces no spike inside the pulse (no reading at that rate);
 a probe reading in which the earliest point is `axon[1]` (the initiation lies beyond the
 recorded points; the run is a no-reading and the probes move outward). Four evaluations.
+
+Stage 9 amendment (registered before any ramp was read): the first E launch ramped to the
+2 nA cap across the whole second and the 1.1 pA/ms run had not finished in 30 minutes, since
+every spike under CVode at nseg 9 costs about a minute; the reading is spike 1, so each ramp
+now stops shortly after its expected first spike (`--stop-ms` 1400, 1120 and 1060 ms; ramp
+maxima 0.42, 1.1 and 2 nA). The killed run is not counted against the cap.

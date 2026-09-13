@@ -10,7 +10,7 @@
   "cap": 3,
   "prior_evaluations": 0,
   "max_concurrent": 2,
-  "abort_seconds": 1800,
+  "abort_seconds": 2400,
   "output_dir": "h01-e-takeoff",
   "inputs": {
     "ramp01": [
@@ -20,7 +20,9 @@
       "53",
       "--include-recorded-bias",
       "--ramp-pa-per-ms",
-      "1.1"
+      "1.1",
+      "--stop-ms",
+      "1400"
     ],
     "ramp1": [
       "--cache",
@@ -29,7 +31,9 @@
       "53",
       "--include-recorded-bias",
       "--ramp-pa-per-ms",
-      "11.0"
+      "11.0",
+      "--stop-ms",
+      "1120"
     ],
     "ramp10": [
       "--cache",
@@ -38,7 +42,9 @@
       "53",
       "--include-recorded-bias",
       "--ramp-pa-per-ms",
-      "110.0"
+      "110.0",
+      "--stop-ms",
+      "1060"
     ]
   },
   "holdout": "Sweep 54 (330 pA) is sealed and is not an input; sweep 53 supplies the time base and bias only.",
@@ -64,7 +70,8 @@
       "title": "Stage 9 (E): take-off at the soma, axon[0] and axon[1] under ramps of 1.1, 11 and 110 pA/ms",
       "prediction": "The fit's take-off at every recorded point moves less than 1 mV across the three ramps; the approach that results is measured and reported.",
       "rejection": "A ramp that produces no spike inside the pulse is a no-reading at that rate.",
-      "unchanged": "Everything but the command waveform."
+      "unchanged": "Everything but the command waveform.",
+      "amendment": "Registered before any ramp was read: the first launch ramped to the 2 nA cap over the whole second and the 1.1 pA/ms run had not finished in 30 minutes (every spike under CVode at nseg 9 costs about a minute); the reading is spike 1, so each input now stops shortly after the expected first spike (--stop-ms 1400, 1120, 1060: ramp maxima 0.42, 1.1 and 2 nA). The aborted run is not counted."
     }
   },
   "candidates": [
