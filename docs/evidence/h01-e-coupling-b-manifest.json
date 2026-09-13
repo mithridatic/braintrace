@@ -6,12 +6,12 @@
   "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
   "library": "kv3-closing-source",
   "driver": "h01_l2_neuron_reference.py",
-  "purpose": "SP15 stage 10 (E): the coupling between the soma and the initiation site, every channel held. The Allen replacement stub (2 x 30 um, 1 um) is thickened with --axon-stub-diameter-um; three arms: x2 with the total axonal NaTs held (density 3.814/2), x2 with the density held (total x2), x4 with the total held (3.814/4). Same three ramps as stage 9 (b) for every arm; the 310 pA step for the two x2 arms. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 10). Split for parallel execution: this manifest carries the x2 total-held arm; -b carries x2 density-held; -c carries x4 total-held (ramps only).",
+  "purpose": "Stage 10 arm s10-d2-density run in parallel with the others on the 255-core box; a separate output directory keeps the campaign logs apart. See h01-e-coupling-manifest.json.",
   "cap": 4,
   "prior_evaluations": 0,
   "max_concurrent": 2,
   "abort_seconds": 2400,
-  "output_dir": "h01-e-coupling",
+  "output_dir": "h01-e-coupling-b",
   "inputs": {
     "ramp01": [
       "--cache",
@@ -101,15 +101,15 @@
   },
   "candidates": [
     {
-      "name": "s10-d2-total",
+      "name": "s10-d2-density",
       "stage": "10",
-      "arm": "x2 diameter, total axonal NaTs held",
+      "arm": "x2 diameter, NaTs density held",
       "flags": {
         "calcium_decay_factor": 1.0,
         "distribute_ih": true,
         "ih_density_factor": 75.0,
         "insert_density": [
-          "NaTs:axon:1.907"
+          "NaTs:axon:3.814"
         ],
         "kv3_closing_factor": 0.9,
         "leak_reversal_shift_mv": -4.0,
