@@ -899,3 +899,48 @@ through that carrier).
 stage 15, for B3 and for the best climb dose, reported side by side.
 
 Unchanged: the E recording, its chain, the readers, the sealed holdouts.
+
+### Stage 16 part 1 result and the corrected part 2 (2026-09-13, recorded before the runs)
+
+**Part 1 fired the registered alternative outcome, and the somatic dose is refused.** On the
+retained B3 currents run at 310 pA, read on the solver's native grid at a common subthreshold
+voltage (-60 mV) on the ascending limb before each spike, the outward ionic current does
+accumulate: 0.0108 nA before spike 1, 0.0133 before spike 2 (+22.5 percent, past the registered
+10 percent), 0.0209 before spike 3 and 0.0229 before spike 4, carried mostly by Kv3_1 deactivation
+tail and the intra-soma axial legs. And the take-off does not move at all: -57.20, -57.42, -57.16,
+-57.20, -57.20 mV across spikes 1 to 5. The reason is in the same balance: at the take-off the
+axon[0] leg delivers +0.33 nA while the whole accumulated somatic brake is about 0.012 nA, some
+3 percent of the trigger. Cell (b) confirms the carriers at take-off are leak (69 percent) and
+Kv3_1 (30 percent), with Im at 0.4 percent, so no somatic slow carrier is available to dose
+either. B3's somatic threshold is the arrival time of the axonal spike, as stages 9, 10 and 14
+found; no somatic conductance can move it. **The registered part-2 dose (a somatic slow outward
+carrier) is refused and not run.** Four evaluations saved.
+
+**Corrected part 2: accommodation at the initiation site, on a geometry where the soma can see
+it.** The climb, if it is an availability effect, must act where the spike starts. Stage 10
+established that the soma's take-off tracks the site only when the Allen 1 um stub is thickened:
+the x2 density-held arm `s10-d2-density` slides -2.1 mV with the approach where the default stub
+gives -0.07. So the dose is the axonal sodium's recovery from inactivation,
+`--mechanism-parameter NaTs:axon:h_recovery_factor:X` (a RANGE parameter of the
+`kv3-closing-source` NaTs), on that arm's geometry and flags, at 310 pA, sweep 53 only. Doses
+0.5, 0.25 and 0.125 against the retained control at 1.0. One further run puts the strongest dose
+on the **default 1 um stub** instead, as the coupling control. Manifest
+`h01-e-climb-manifest.json`, output `h01-e-climb`, cap 5. No holdout is touched.
+(c) *The climb.* Threshold at spike 2 minus spike 1 and at spike 5 minus spike 1, through the
+chain, against the recorded +1.38 and +3.63 mV. Prediction if the climb is site accommodation
+read through the coupling: the climb grows monotonically as the recovery factor falls, and some
+dose reaches at least half the recorded first-interval step (+0.69 mV).
+(d) *Not bought with the count or the rise.* At that dose the 310 pA count stays within 5 to 15
+and the spike-1 rise stays within 15 percent of this arm's own control (s10-d2-density), so the
+climb is not obtained by crippling the cell. Rise of spike 5 over spike 1 reported against 0.86.
+(f) *The coupling control.* The same strongest dose on the default 1 um stub. Prediction from
+stage 9: the somatic climb there is at most a fraction of the coupled arm's, because the soma
+cannot see the site. If instead it is the same, the coupling is not required and stage 10's
+account of the take-off is wrong.
+(e) *Rejection.* No dose reaches half the recorded step (site accommodation is not the climb's
+mechanism, reported not repaired); or every dose that does also leaves the count or rise band; or
+the climb is not monotone in the dose.
+
+**Accuracy caveat, stated now.** This arm's baseline rise is further from the recording than plain
+B3's, so a climb won here need not raise the ten-element mean above B3's 71.8; the stage tests the
+climb's mechanism, and the accuracy of the resulting model is reported honestly either way.
