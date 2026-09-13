@@ -303,10 +303,14 @@ under the SP16 gate at depth 0.6 it climbs 2.1 mV by spike 10 while the soma's c
 lead unchanged; the fit's take-off is set at the axon point and answers to availability by
 2 mV per 40 percent. I: the recording's onset is sharp, 2.7 mV (rapidness 52 per ms), the
 fit's a 14.2 mV turnover (5 per ms), 20 sigma of the four-repeat spread and ten times its
-range (the registered "repeat range over 1 mV" rejection is met by the letter, at a contrast
-ten times that range); the fit's soma and first axon section rise together (spike 1 within
-0.06 ms; later spikes soma first by up to 0.18 ms), so the fit has no sharp initiation; the
-earlier axon-first readings were -20 mV crossings and describe the upstroke.
+range. The registered rejection fired for I (repeat span range 1.16 mV over 1 mV), so the I
+reading is PROVISIONAL: it stands on the ratio of the spans (5.2) rather than on the absolute
+bands, which were written for the E cell and are not applied to I, and stage 9's I probe run
+is its confirmation. Under that caveat: the fit's soma and first axon section rise together
+(spike 1 within 0.06 ms; later spikes soma first by up to 0.18 ms), so the fit has no sharp
+initiation; the earlier axon-first readings were -20 mV crossings and describe the upstroke.
+The E axon point is 45 um out on the stub, so "set at the axon point" means at or proximal
+to it.
 [onset-shape.md](../evidence/h01-topographic/onset-shape.md).
 
 ## Stage 9 (registered, not run): the take-off's own variables
@@ -318,7 +322,8 @@ Two Y questions before any lever, both from retained traces or one cheap run eac
   and later against the preceding interval at the same approach, across the staircase. In
   the fit, does the axon point's take-off move when the approach is varied at fixed
   availability, i.e. under ramps of 0.1 to 10 mV/ms (one run per ramp family, three
-  evaluations, recorded soma and axon)? Prediction: the fit's axon take-off moves under
+  evaluations, recorded at the soma, at `axon[0](0.5)` proximal and at `axon[1](0.5)`, so
+  that the initiation site is bracketed rather than assumed at the distal point)? Prediction: the fit's axon take-off moves under
   1 mV across ramps; the recording's moved 2.2 mV under the retained step pulses alone.
 * **I.** Where does the fit's spike begin? Record the axon at three points (first section
   proximal, middle, distal) and the soma under 0.19 nA (one evaluation) and read the order

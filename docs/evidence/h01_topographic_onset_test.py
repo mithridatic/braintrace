@@ -80,7 +80,9 @@ def test_decide_refutes_a_gradual_fit_and_reads_both_classes():
               "axon_lead": {"E fit": {"min_ms": .28, "axon_first_every_spike": True}, "I fit": {"min_ms": -.18, "axon_first_every_spike": False}},
               "sigma": {"E": {"span_mv": .26, "span_range_mv": .59}, "I": {"span_mv": .57, "span_range_mv": 1.16}}}
     d = ons.decide(result)
-    assert d["classes"] == {"E": "recording gradual, fit gradual", "I": "recording gradual, fit gradual"}
+    assert d["classes"]["E"].startswith("recording gradual (5.0 mV), fit gradual (5.1 mV), fit/recording 1.0")
+    assert "not applied to I" in d["classes"]["I"] and "fit/recording 5.2" in d["classes"]["I"]
+    assert d["rejection"] == {"E": "not fired", "I": "fired: repeat span range 1.16 mV over 1 mV; the reading is provisional"}
     assert d["verdict"] == {"E": "FAIL", "I": "FAIL"}
     assert [c["pass"] for c in d["checks"] if c["cell"] == "E"] == [False, True, True, False, True]
     assert all(isinstance(c["pass"], bool) for c in d["checks"])
@@ -94,7 +96,7 @@ def test_markdown_lists_tables_with_and_without_an_axon_column():
               "axon_lead": {"E fit": {"n": 1, "median_ms": .28, "min_ms": .28, "axon_first_every_spike": True, "axon_mv_at_soma_10_median": -40., "spike_1": [{"lead_ms": .28, "axon_mv_at_soma_10": -40.}]}},
               "sigma": {"E": {"n": 5, "span_mv": .26, "span_range_mv": .59, "rapidness_per_ms": 1.2}},
               "sp16_ais": {"depth 0": [{"spike": 1, "soma_10_mv": -57.2, "axon_10_mv": -55.1, "axon_lead_ms": .3}], "depth 0.6": None},
-              "decision": {"checks": [{"cell": "E", "pass": False, "prediction": "p", "value": 5., "sigmas": .4}], "classes": {"E": "x", "I": "y"}, "verdict": {"E": "FAIL", "I": "FAIL"}},
+              "decision": {"checks": [{"cell": "E", "pass": False, "prediction": "p", "value": 5., "sigmas": .4}], "classes": {"E": "x", "I": "y"}, "rejection": {"E": "not fired", "I": "fired"}, "verdict": {"E": "FAIL", "I": "FAIL"}},
               "reading": ["r"]}
     md = ons.markdown(result)
     for piece in ("| sweep 48 | 1 | -55.0 | 5.00 | 30 |", "| 200 pA | 1 | -57.0 | 5.00 | 30 | 5.00 | 0.280 | -40.0 |", "- E FAIL: p (+5.00, 0.4 sigma)", "Verdict: E FAIL, I FAIL", "| depth 0 | 1 | -57.2 | -55.1 | 0.30 |", "trace not retained"):

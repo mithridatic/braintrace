@@ -1,5 +1,5 @@
 {
-  "id": "doc_f3e48aac-fe4",
+  "id": "doc_7e3867e9-059",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -898,7 +898,7 @@
       {
         "id": "q6_e",
         "type": "Branch retained",
-        "text": "E: recording and fit have the SAME somatic onset (5.0 vs 5.1 mV span, 0.4 sigma; rapidness 34 vs 41/ms), both gradual, although the fit's axon point fires 0.28 ms first and is at -40 mV when the soma starts. No discrimination by shape. The fit's take-off is set at the axon point (-54.3 to -55.2 mV at every spike); under the SP16 gate at depth 0.6 it climbs only 2.1 mV by spike 10 for 40 percent availability lost.",
+        "text": "E: recording and fit have the SAME somatic onset (5.0 vs 5.1 mV span, 0.4 sigma; rapidness 34 vs 41/ms), both gradual, although the fit's axon point fires 0.28 ms first and is at -40 mV when the soma starts. No discrimination by shape. The fit's take-off is set at or proximal to the axon point, 45 um out (-54.3 to -55.2 mV there at every spike); under the SP16 gate at depth 0.6 it climbs only 2.1 mV by spike 10 for 40 percent availability lost.",
         "status": "supported",
         "confidence": null,
         "notes": "A dense fast site crosses its own threshold at nearly the same voltage whatever its availability; the recording moves 2.2 mV with approach and 1.9 mV more after one spike: more than availability at such a site gives.\n\nEvidence: docs/evidence/h01-topographic/onset-shape.json; docs/h01-causal-model.md",
@@ -925,7 +925,7 @@
       {
         "id": "q6_i",
         "type": "Branch retained",
-        "text": "I: the recorded onset is sharp (2.7 mV, 52/ms); the fit's is a 14.2 mV whole-cell turnover (5/ms), 20 sigma; the fit's soma and first axon section rise together (spike 1 within 0.06 ms, later spikes soma first). The finalist has NO sharp initiation site; the earlier axon-first readings were -20 mV crossings (upstroke). Largest elemental contrast after the count; a contrast of the initiation site, an input.",
+        "text": "I (PROVISIONAL: the registered rejection fired, the four repeats spread 1.16 mV in span; read as the ratio of spans, 5.2, not the absolute bands): the recorded onset covers 2.7 mV (52/ms); the fit's is a 14.2 mV whole-cell turnover (5/ms), 20 sigma; the fit's soma and first axon section rise together (spike 1 within 0.06 ms, later spikes soma first). The finalist has NO sharp initiation site; the earlier axon-first readings were -20 mV crossings (upstroke). Largest elemental contrast after the count; a contrast of the initiation site, an input.",
         "status": "supported",
         "confidence": null,
         "notes": "Also why the I fit's take-off answers to the approach at a fifth of the recorded rate: no site whose own threshold the approach can move.\n\nEvidence: docs/evidence/h01-topographic/onset-shape.json; docs/h01-causal-model.md",
@@ -952,7 +952,7 @@
       {
         "id": "next",
         "type": "Next test",
-        "text": "Next (SP15 stage 9, registered, not run): the take-off's own variables. E: in the recording, is the post-spike +1.9 mV a function of time since the spike (retained traces); in the fit, does the axon take-off move under ramps 0.1-10 mV/ms at fixed availability (3 evaluations)? I: where does the fit's spike begin - record three axon points plus soma at 0.19 nA (1 evaluation); prediction: no point leads by more than 0.1 ms and every span exceeds 8 mV.",
+        "text": "Next (SP15 stage 9, registered, not run): the take-off's own variables. E: in the recording, is the post-spike +1.9 mV a function of time since the spike (retained traces); in the fit, does the axon take-off move under ramps 0.1-10 mV/ms at fixed availability, probed at axon[0] and axon[1] (3 evaluations)? I: where does the fit's spike begin - record three axon points plus soma at 0.19 nA (1 evaluation); prediction: no point leads by more than 0.1 ms and every span exceeds 8 mV.",
         "status": "unverified",
         "confidence": null,
         "notes": "No lever until these are read; a change to the I initiation site is registered as a 2x2 with E only if the E question also lands on the site.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",

@@ -172,10 +172,16 @@ def decide(result):
             checks.append({"cell": cell, "prediction": "E recording spike-1 onset is gradual (span over 2 mV)", "value": human_span, "pass": human_span > GRADUAL_SPAN_MV})
     for c in checks:
         c["pass"] = bool(c["pass"]); c["value"] = float(c["value"])
-    reading = {cell: f"recording {classify(result['summary'][f'{cell} human']['soma']['spike_1']['span_mv']['median'])}, "
-                     f"fit {classify(result['summary'][f'{cell} fit']['soma']['spike_1']['span_mv']['median'])}" for cell in ("E", "I")}
+    reading, rejection = {}, {}
+    for cell in ("E", "I"):
+        h, f = result["summary"][f"{cell} human"]["soma"]["spike_1"]["span_mv"]["median"], result["summary"][f"{cell} fit"]["soma"]["spike_1"]["span_mv"]["median"]
+        reading[cell] = f"recording {classify(h)} ({h:.1f} mV), fit {classify(f)} ({f:.1f} mV), fit/recording {f/h:.1f}"
+        if cell == "I":
+            reading[cell] += "; the absolute bands were registered for the E cell and are not applied to I, which is read as the ratio"
+        rng = result["sigma"][cell]["span_range_mv"]
+        rejection[cell] = f"fired: repeat span range {rng:.2f} mV over 1 mV; the reading is provisional" if rng > 1. else "not fired"
     verdict = {cell: "PASS" if all(c["pass"] for c in checks if c["cell"] == cell) else "FAIL" for cell in ("E", "I")}
-    return {"checks": checks, "classes": reading, "verdict": verdict}
+    return {"checks": checks, "classes": reading, "rejection": rejection, "verdict": verdict}
 
 
 def markdown(result):
@@ -217,7 +223,8 @@ def markdown(result):
     lines += [f"- {cell}: n {s['n']}; span sd {s['span_mv']:.2f} mV (range {s['span_range_mv']:.2f}); rapidness sd {s['rapidness_per_ms']:.1f}/ms" for cell, s in result["sigma"].items()]
     d = result["decision"]
     lines += ["", "## Decision", ""]+[f"- {c['cell']} {'PASS' if c['pass'] else 'FAIL'}: {c['prediction']} ({c['value']:+.2f}" + (f", {c['sigmas']:.1f} sigma)" if "sigmas" in c else ")") for c in d["checks"]]
-    lines += ["", f"Classes: E {d['classes']['E']}; I {d['classes']['I']}", f"Verdict: E {d['verdict']['E']}, I {d['verdict']['I']}", "", "## Reading", ""]+result["reading"]
+    lines += ["", f"Classes: E {d['classes']['E']}; I {d['classes']['I']}", f"Registered rejection: E {d['rejection']['E']}; I {d['rejection']['I']}",
+              f"Verdict: E {d['verdict']['E']}, I {d['verdict']['I']}", "", "## Reading", ""]+result["reading"]
     return "\n".join(lines)+"\n"
 
 
@@ -266,16 +273,18 @@ READING = [
     "by an axonal spike that has already fired, and it still turns over as gradually as the recording. Prediction 1 is refuted: an "
     "imposed take-off does not show as a kink at this soma. The onset shape therefore does not discriminate the two take-off mechanisms "
     "that stage 7 separated; what differs is the voltage at which the turnover begins, fixed in the fit, trajectory-set in the recording.",
-    "I: the recording's onset is sharp, 2.7 mV from 10 to 100 V/s (1.9 to 3.8; rapidness 52 per ms), and the fit's is a slow turnover "
-    "over 14.2 mV (rapidness 5 per ms), 20 sigma of the four-repeat spread and ten times its range; the registered rejection (repeat "
-    "range over 1 mV) is met by the letter, at a contrast ten times that range. In the fit the soma and the first axon section rise "
+    "I (provisional: the registered rejection fired, the four repeats spread 1.16 mV in span). The recording's onset covers 2.7 mV "
+    "from 10 to 100 V/s (1.9 to 3.8; rapidness 52 per ms), gradual by the absolute band registered for the E cell but a fifth of its "
+    "fit's, which turns over across 14.2 mV (rapidness 5 per ms): 20 sigma of the repeat spread and ten times its range. The reading "
+    "stands on that ratio, not on the band, until a repeat set resolves the span; stage 9's I probe run serves as that confirmation. In the fit the soma and the first axon section rise "
     "together, the soma crossing 10 V/s 0.18 ms before the axon point and the axon point overtaking it only above 50 V/s; the earlier "
     "axon-first readings were taken at a high fixed voltage and describe the peak, not the onset. The I fit has no sharp initiation: "
-    "its spike begins as a whole-cell turnover, where the recorded cell's begins abruptly, as a spike arriving from a site that fires "
-    "first. This is the largest elemental contrast in the I cell after the count, and it is a contrast of the initiation site, an input.",
+    "its spike begins as a whole-cell turnover, where the recorded cell's begins five times more abruptly, as a spike arriving from a "
+    "site that fires first. This is the largest elemental contrast in the I cell after the count, and it is a contrast of the initiation site, an input.",
     "E fit, the take-off at the axon point: -54.3 to -55.2 mV across every spike and drive, sliding 0.9 mV from 0.25 to 1.16 mV/ms while "
     "the soma holds at -57.2; under the SP16 gate at depth 0.6 the axon point's take-off climbs 2.1 mV by spike 10 (-55.0 to -52.9) and the "
-    "soma's 1.5 mV, together, with the lead unchanged at 0.3 ms. So the fit's take-off is set at the axon point, and there it answers to a "
+    "soma's 1.5 mV, together, with the lead unchanged at 0.3 ms. So the fit's take-off is set at or proximal to the axon point (45 um out; the point fires first, so initiation is at or "
+    "before it), and there it answers to a "
     "40 percent loss of sodium availability by only 2 mV: a dense insertion with fast kinetics crosses its own threshold at nearly the same "
     "voltage whatever its availability. The recording moves 2.2 mV with the approach alone and 1.9 mV more after one spike, which is more "
     "than availability at such a site can give.",
