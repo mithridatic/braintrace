@@ -29,8 +29,8 @@ without supplying a complete explanation of a human-model difference.
 | --- | --- |
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
-| PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (the recording's span rests on the ratio to the fit, its repeat set not resolving 1 mV; the fit's whole-cell turnover was confirmed at five points). See Y3. |
-| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; in every dose tested the coupling also took the onset outside the recorded band, least at twice the stub's diameter with the density held, so the split did not separate the reading of the spike from the spike itself. Every lever that only changes the somatic inward current is a rise lever in this fit: on the thickened geometry the somatic sodium density moves the rise (655 to 505 V/s from 0.9 to 0.5) without moving the take-off or the count, but the recorded rise lies below the range read. What a spike leaves behind is a per-spike step: +1.9 mV in full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s, with no counterpart at either site. See Y4. |
+| PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (the recording's span rests on the ratio to the fit, its repeat set not resolving 1 mV; the fit's whole-cell turnover was confirmed at five points and survives the recording's measurement chain). The first spikes' equal rise, 597 against 592 V/s, held only because the two were read at different points: through the recording's chain the finalist rises about a tenth too slowly. See Y3. |
+| B3 fires too often at low input and rises too fast at every input | The recording is read at a pipette through a bridge, a neutralisation and an acquisition filter, the model at its membrane; measured from the recording's own step edges and noise floor, that chain takes 3 to 11 percent off a rise and a tenth of a millivolt off a threshold, so the fit's spike-1 rise of 639 V/s reads 570 to 615 against the recorded 348 and the rise stays the largest element, 135 to 162 repeat spreads. Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; in every dose tested the coupling also took the onset outside the recorded band, least at twice the stub's diameter with the density held, so the split did not separate the reading of the spike from the spike itself. Every lever that only changes the somatic inward current is a rise lever in this fit: on the thickened geometry the somatic sodium density moves the rise (655 to 505 V/s from 0.9 to 0.5) without moving the take-off or the count, but the recorded rise lies below the range read. What a spike leaves behind is a per-spike step: +1.9 mV in full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s, with no counterpart at either site. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -285,6 +285,19 @@ measured on a uniform time grid, and every difference is stated against the repe
 of that recording, which is 0.3 mV in level, 0.25 mV in threshold and 1.5 V/s in rise.
 The [manifest](evidence/h01-e-currents-manifest.json) and
 [candidate](evidence/h01-e-currents/m0-b3-currents.candidate.json) fix the settings.
+The two are not read at the same point. The recording is the voltage at the top of a
+patch pipette, access resistance 7.7 MOhm, bridge 7.9 to 10.3 MOhm, through the
+amplifier's capacitance neutralisation and its acquisition filter; the model is the
+membrane voltage. [Stage 12](evidence/h01-topographic/stage-12.md) measured that chain
+from the recording itself: the subthreshold short-square edges at 1.2 nA carry a jump two
+samples wide and no transient above 0.4 mV where a live 5 pF pipette pole would put 9 mV,
+so the neutralisation is live whatever the file's metadata field holds and the pipette pole
+is a few microseconds; the unstimulated noise floor is flat to Nyquist, which puts the
+acquisition corner at or above 20 kHz if that floor is pipette noise and says nothing if it
+is the digitiser's, so a 10 kHz corner is applied as the conservative case. From here on
+every fast quantity of the model, the rise, the peak, the fall and the onset span, is
+quoted through that chain, and a repeat spread measured through it qualifies the
+recording's repeatability, not the bias between the two points of reading.
 
 **Response to explain.** B3 initiates in the axon at every active input and still produces
 the wrong response. It fires 4, 8, 10 and 12 times at 200, 250, 310 and 350 pA against the
@@ -301,6 +314,16 @@ offset describes it. Three further differences are large against the recording's
 | later spikes above the spike-1 take-off at the same approach | +1.9 mV | +0.0 mV | 8 |
 | steady level at 200 pA, spike or no spike | -67.0 mV | -65.0 mV | 7 |
 
+Read through the recording's chain the fit's rise is 570 V/s at a 10 kHz corner and 615 at
+20 kHz, so the chain accounts for 5 to 15 percent of the gap to the recorded 348 and the
+residual, 220 to 270 V/s, is the recorded cell's; the pole at which a filtered fit would
+reach the recorded peak of 35.3 mV is an order of magnitude longer than the measured one
+and would still leave half the gap. The recording also repolarises faster than the fit,
+-104 against -91 to -95 V/s, while rising slower, and no low-pass produces a slower rise
+with a faster fall, so the rise difference is a property of the cell and not of the
+reading. The rise is therefore the steepest element in this table by an order of
+magnitude, and it is the element the search must explain first; the take-off's approach
+signature and the post-spike step, at 9 and 8 spreads, are second-order beside it.
 The model's first spike is also early, by less than four spreads of the recording's own
 first-spike scatter, which is too small to treat as a separate effect. The 200 pA count is
 not in the table: the recorded cell fires once in five of seven repeats and not at all in
@@ -439,8 +462,13 @@ monotonically, 655, 586 and 505 V/s at 0.9, 0.7 and 0.5, while the somatic take-
 within 0.1 mV at the same approach and the 310 pA count stays at 9; so on this geometry the
 somatic density is a rise lever and nothing else, which is what the causal model predicted,
 and it does not reach the recorded 348 V/s inside the range read (the recorded rise lies
-157 V/s below the 0.5 dose, and the slope is not carried past its range; the onset span
-widens with the dose, 4.1 to 5.4 mV, still in band). What a spike leaves behind: the
+157 V/s below the 0.5 dose read at the membrane, about 120 V/s below it read through the
+chain, and the slope is not carried past its range; the onset span widens with the dose,
+4.1 to 5.4 mV, still in band). The series' intercept at zero somatic sodium, about 320 V/s,
+is outside the range read and is not a reading, but it says where to look: most of this
+soma's rise at this geometry is delivered by the axial current from the initiation site,
+not by its own sodium, so the branch of the rise that the density dose moves is the smaller
+one. What a spike leaves behind: the
 recording's short squares fix its timescale. Sweep 27 fires after five silent sweeps
 (30.7 s after the last spike) and sweeps 28 to 30 each fire 2.7 to 4.2 s after one spike,
 at the same approach, with take-offs within 0.6 mV of the unprimed one (inside 3 sigma of
@@ -465,14 +493,21 @@ this fit, not a threshold lever, and the same is true of the interneuron fit, wh
 initiation is not a dense axonal insertion
 ([stage 2](evidence/h01-i-sodium-slow/stage-2-decision.json)); so the insensitivity is not
 this fit's geometry alone, and the take-off relation above says why: neither fit's take-off
-is a function of the approach, and a gate on the somatic sodium does not make it one. The next split is
-an isolation, not a lever: at the onset of each spike, does the somatic phase plane show a
-gradual take-off, the local membrane turning over, or a kink, a current arriving from
-elsewhere; in both recordings, and in the fits at the soma and at the axon initial segment
-([stage 8](specs/2026-09-12-h01-topographic-strategy.md)). If the recorded onset is gradual
-and the fit's is a kink, the recorded take-off is somatic and the fit's initiation site is
-the input that has to change; if both are kinks, the recorded initiation site itself must
-answer to the approach, and the axonal sodium and its neighbours are the family to split.
+is a function of the approach, and a gate on the somatic sodium does not make it one. Stage 8 asked whether the onset shape
+separates a somatic take-off from an imposed one and it did not, and stage 12 has since
+shown the 10 to 100 V/s span to be a fragile reading (it moves by more than a millivolt
+under a chain that moves the rise by a few percent), so that question is closed on that Y.
+With the chain measured the order is the one the search should have kept from the start:
+the rise, the steepest element, before the take-off and the step. The next observation is
+the elemental one, the whole spike cycle as its conjugate pair, the rate of rise against
+the voltage and the net membrane current against the voltage, spike 1 and spike 2 at
+310 pA, recording and fit read through the same chain on shared axes, to place the fit's
+excess rise on the voltage axis: below about -40 mV it is delivered by the initiation site
+through the coupling that stage 10 thickened, above it by the soma's own sodium. Then the
+fit's rise is decomposed by observation point, the axial current from the axon, the
+somatic sodium and potassium currents and the axial current into the dendrites during
+spike 1, which the model gives and the recording cannot; only then is a somatic density
+series read as a characteristic curve through the chain.
 
 **Limit.** No sufficient repair is established, and B3 stays unpromoted. The measured facts
 are that the recorded take-off slides with the approach and rises after a spike while the
@@ -486,7 +521,9 @@ a response cannot name a channel. The membrane area of an H01 skeleton, converte
 skeleton radii, is not established as physical, so that anatomy's failure to spike says
 nothing about the recorded cell.
 Stage 8 read the onset shape and it does not discriminate: the fit's soma turns over as
-gradually as the recording's, 5.1 against 5.0 mV from 10 to 100 V/s, even though its axon
+gradually as the recording's, 5.1 against 5.0 mV from 10 to 100 V/s read at the membrane
+(the same span moves to 4.8 or 5.5 through the chain, so the agreement is within the
+reading's own fragility), even though its axon
 point has fired 0.28 ms earlier and is at -40 mV when the soma starts
 ([onset shape](evidence/h01-topographic/onset-shape.md)). The imposed take-off does not show
 as a kink at this soma. What the same traces do show is where the fit's take-off is set: at
@@ -853,6 +890,14 @@ conditions and mechanism, diagnosis from behavior, and the distinction between
 understanding a mechanism and choosing a repair. Chapter 2, printed pp. 65-67,
 explains the information lost in performance aggregates. Chapter 3, printed
 pp. 110-111, requires tightly connected observations within a cycle.
+Chapter 4, printed pp. 157-159 and Table 3, separates the product being measured
+from the measurement function and requires that separation before any other split;
+chapter 6, printed pp. 230-233, shows that a quantity changes with the point at which it
+is observed. The book was read in full a second time on 2026-09-13 against the campaign;
+the audit is in the [strategy spec](specs/2026-09-12-h01-topographic-strategy.md) at
+stage 12: the steepest element was parked for four stages while flatter ones were
+chased, the measurement function was never isolated, and the elemental picture was
+never laid side by side.
 The [review record](evidence/h01-causal-model-review-2026-09-09.md) maps those concepts to the source files and corrections.
 The [chart data](evidence/h01-multivari-data.json) retain the per-cycle values behind the E and I response charts.
 
