@@ -1,0 +1,604 @@
+{
+  "stage": "12",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "limits": {
+    "tau_profile_ratio": 1.2,
+    "take_off_mv": 0.1,
+    "approach_fraction": 0.05,
+    "lead_ms": 0.02,
+    "e_span_mv": 1.0,
+    "i_span_mv": 8.0,
+    "rise_sigma_v_s": 4.5
+  },
+  "reading": [
+    "The chain is measured where it can be and bounded where it cannot. The onset edges show a jump of at most two samples and no transient larger than 0.4 mV at 1.2 nA, where a live 5 pF pipette pole would put 9 mV: the capacitance neutralisation is live in practice whatever the metadata field holds, and the pipette pole reads 5 us (E) and 2 us (I) at best, profile flat to 30 us because the edge measures the round trip and the command's own pole (E 150 us, I 44 us) absorbs it. The unstimulated noise floor is flat to Nyquist in both files (E -0.7 dB per octave between 10 and 20 kHz, I +0.1, against -24 for a 4-pole corner below 10 kHz), which reads as a corner at or above 20 kHz if the floor is pipette noise and says nothing if it is the digitiser's; the chain is therefore applied at an assumed 10 kHz corner as the conservative case, with the 20 kHz reading beside it.",
+    "Through the chain the E fit's spike-1 rise moves from 655 to 610 V/s at 10 kHz and 638 at 20 kHz (the control 639 to 570 and 615): 5 to 15 percent of the gap to the recorded 348, 17 to 45 V/s, which is 11 to 30 sigma of the within-chain repeat and changes no decision. The residual gap, 260 to 290 V/s, is real. The bound independent of the edges, the pole at which the filtered peak meets the recorded 35.3 mV, would cover about half of the gap; the registered 'less than half' fired by the letter at that bound, not at the measurement, which is an order of magnitude smaller. A third leg: the recording repolarises faster than the fit (-104 against -91 and -95 V/s) while it rises slower; a chain that halved the rise would have halved the fall.",
+    "The slow set holds through the chain: the take-off shifts by a constant 0.13 mV at 10 kHz (the registered 0.1 fired by the letter; the slide across the ramps, the quantity stage 10 decided on, holds to 0.01 mV), approach within 1 percent, axon lead within 0.02 ms, count unchanged; stages 7 to 11 stand. The I fit's rise, equal to the recording's when read raw (592 against 597), reads 530 through the 10 kHz chain: that match was a coincidence of observation points, and the I fit rises about a tenth too slowly when both are read through the chain. The E onset span does not hold: it moves by more than 1 mV and non-monotonically across the ramps under a chain that moves the rise by a few percent; the 10 to 100 V/s span is a fragile reading at a 0.6 mV/ms approach and the stage-8 E cell (no discrimination) gains that qualification. The I fit's span survives its chain (13.5 against the recorded 1.9 mV), so the stage-8 I reading stands.",
+    "First execution, recorded: with the acquisition corner free the registered edge fit returned 2.65 kHz (I 3.3), which applied to the fit gave a rise of 384 V/s against the recorded 348 and would have read the whole gap as the chain. The noise floor refutes that corner; the low value was the command's own pole, which a step edge cannot separate from the output filter. The registration is amended: the pipette pole from the transient's area, the corner from the noise floor where it is pipette noise and from an assumed conservative 10 kHz otherwise.",
+    "Rule, independent of the outcome and now in the causal model: a fast model quantity is comparable to a recorded one only through the recording's own chain (here a 3 to 7 percent correction to every rise), and a repeat sigma bounds repeatability, not bias between the two chains."
+  ],
+  "E": {
+    "noise": {
+      "n_sweeps": 16,
+      "rms_mv": 0.07806169126754062,
+      "db_vs_1_2_khz": {
+        "1": 0.968497217938845,
+        "2": -0.7630521940879278,
+        "5": -2.7908525849087384,
+        "10": -3.457837518645519,
+        "15": -3.8465034721118374,
+        "20": -4.142880449280626,
+        "24": -3.9916415121361446
+      },
+      "slope_10_to_20_khz_db_per_octave": -0.6850429306351069,
+      "flat_to_nyquist": true,
+      "fc_khz": 20.0
+    },
+    "chain": {
+      "tau_p_us": 4.665855831988264,
+      "fc_khz": 10.0,
+      "tau_cmd_us": 119.89217863373761,
+      "t0_ms": -0.02000001775152521,
+      "delta_r_mohm": 0.24013187852839507,
+      "slopes_mv_ms": [
+        8.741185566116467,
+        9.76004391952757,
+        11.007167923109773,
+        11.867022637787363,
+        12.392112084079658,
+        12.41596737273341,
+        12.949193171723564,
+        13.020797713059608,
+        12.987569961313975
+      ],
+      "rms_mv": 0.09718650391247055
+    },
+    "chain_floor": {
+      "tau_p_us": 5.096607728798468,
+      "fc_khz": 20.0,
+      "tau_cmd_us": 153.53685072970367,
+      "t0_ms": 0.019999547161312105,
+      "delta_r_mohm": 0.6481521442065004,
+      "slopes_mv_ms": [
+        8.854223997318366,
+        9.890231494578623,
+        11.198799803409425,
+        12.052719904578527,
+        12.645615817040245,
+        12.65889913501744,
+        13.255632695955837,
+        13.328214090113951,
+        13.275090160194274
+      ],
+      "rms_mv": 0.09634691188043008
+    },
+    "profile": {
+      "rows": [
+        {
+          "tau_p_us": 0.0,
+          "tau_cmd_us": 97.0454151865416,
+          "rms_mv": 0.09963106921556904
+        },
+        {
+          "tau_p_us": 1.0,
+          "tau_cmd_us": 99.37623284702823,
+          "rms_mv": 0.0996191838274512
+        },
+        {
+          "tau_p_us": 2.0,
+          "tau_cmd_us": 84.82755660235277,
+          "rms_mv": 0.09821695070975389
+        },
+        {
+          "tau_p_us": 5.0,
+          "tau_cmd_us": 127.3952530001751,
+          "rms_mv": 0.09718095158791243
+        },
+        {
+          "tau_p_us": 10.0,
+          "tau_cmd_us": 249.05262601184154,
+          "rms_mv": 0.09818471829261952
+        },
+        {
+          "tau_p_us": 20.0,
+          "tau_cmd_us": 499.6540727288208,
+          "rms_mv": 0.09980317035194898
+        },
+        {
+          "tau_p_us": 30.0,
+          "tau_cmd_us": 499.99999999999994,
+          "rms_mv": 0.10493921519509856
+        },
+        {
+          "tau_p_us": 50.0,
+          "tau_cmd_us": 499.99999999999994,
+          "rms_mv": 0.1381456145273402
+        },
+        {
+          "tau_p_us": 75.0,
+          "tau_cmd_us": 499.99999999999994,
+          "rms_mv": 0.20737927785415317
+        },
+        {
+          "tau_p_us": 100.0,
+          "tau_cmd_us": 499.99999999999994,
+          "rms_mv": 0.29075481154564226
+        }
+      ],
+      "min_rms_mv": 0.09718095158791243,
+      "tau_p_bound_us": 30.0,
+      "tau_p_best_us": 5.0
+    },
+    "human": {
+      "count": 10,
+      "rise_v_s": 347.6562604194875,
+      "peak_mv": 35.34375360608101,
+      "fall_v_s": -103.90626266608152,
+      "span_mv": 4.500001668930054,
+      "rapidness_per_ms": 38.70974943527622,
+      "take_off_mv": -56.40625351667404,
+      "approach_mv_per_ms": 0.6297292621235026
+    },
+    "edges": [
+      {
+        "sweep": 15,
+        "i0_na": 0.900000018955183,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 16,
+        "i0_na": 0.999999971718069,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 17,
+        "i0_na": 1.09999997999211,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 18,
+        "i0_na": 1.19999998826614,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 22,
+        "i0_na": 1.20999998909355,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 23,
+        "i0_na": 1.21999998992095,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 24,
+        "i0_na": 1.22999999074835,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 25,
+        "i0_na": 1.23999999157576,
+        "rb_mohm": 7.936508
+      },
+      {
+        "sweep": 26,
+        "i0_na": 1.24999999240316,
+        "rb_mohm": 7.936508
+      }
+    ],
+    "fit_step": {
+      "status": "read",
+      "raw": {
+        "count": 9,
+        "rise_v_s": 655.2576712190078,
+        "peak_mv": 39.23394047310859,
+        "fall_v_s": -91.38231773541276,
+        "span_mv": 4.102428740549421,
+        "rapidness_per_ms": 16.219612825789646,
+        "take_off_mv": -55.46257744390027,
+        "approach_mv_per_ms": 0.6263182665484095
+      },
+      "chain": {
+        "count": 9,
+        "rise_v_s": 609.3884305042917,
+        "peak_mv": 38.95777818001471,
+        "fall_v_s": -91.0376370290129,
+        "span_mv": 5.45308956770009,
+        "rapidness_per_ms": 16.708460615989512,
+        "take_off_mv": -55.37514217319962,
+        "approach_mv_per_ms": 0.6270951639911987
+      },
+      "chain_floor": {
+        "count": 9,
+        "rise_v_s": 638.4116254520682,
+        "peak_mv": 39.07364397678575,
+        "fall_v_s": -91.23178464651261,
+        "span_mv": 5.744569698604529,
+        "rapidness_per_ms": 15.37710933952365,
+        "take_off_mv": -55.53422994251629,
+        "approach_mv_per_ms": 0.6276861066982725
+      }
+    },
+    "control_step": {
+      "status": "read",
+      "raw": {
+        "count": 10,
+        "rise_v_s": 639.0752464279614,
+        "peak_mv": 38.48773610578589,
+        "fall_v_s": -94.55977529093718,
+        "span_mv": 3.391516511790499,
+        "rapidness_per_ms": 40.65603748217187,
+        "take_off_mv": -57.19655955446489,
+        "approach_mv_per_ms": 0.5786704742960149
+      },
+      "chain": {
+        "count": 10,
+        "rise_v_s": 570.4170280334747,
+        "peak_mv": 38.17346145153743,
+        "fall_v_s": -94.15629780225777,
+        "span_mv": 4.796176756274377,
+        "rapidness_per_ms": 34.01312248985794,
+        "take_off_mv": -57.29420769821471,
+        "approach_mv_per_ms": 0.5778945083146961
+      },
+      "chain_floor": {
+        "count": 10,
+        "rise_v_s": 614.8042771751557,
+        "peak_mv": 38.386607315266026,
+        "fall_v_s": -94.39494270823656,
+        "span_mv": 5.2423503434258265,
+        "rapidness_per_ms": 38.07449371516973,
+        "take_off_mv": -57.26099805307993,
+        "approach_mv_per_ms": 0.5782163669698909
+      }
+    },
+    "peak_bound": {
+      "tau_p_us": 60.0,
+      "count": 9,
+      "rise_v_s": 486.40984480053544,
+      "peak_mv": 35.231408004498725,
+      "fall_v_s": -87.72330012610547,
+      "span_mv": 4.283903086436602,
+      "rapidness_per_ms": 21.606877697291623,
+      "take_off_mv": -55.447628547590554,
+      "approach_mv_per_ms": 0.6256480010571673
+    },
+    "arm": {
+      "raw": {
+        "soma_slide": {
+          "n": 3,
+          "approach_range": [
+            0.45240746321344344,
+            2.4955336077662373
+          ],
+          "take_off_mv": [
+            -55.18668837084495,
+            -55.74051030257985,
+            -57.26790298034702
+          ],
+          "slide_mv": -2.0812146095020694,
+          "range_mv": 2.0812146095020694
+        },
+        "approach": [
+          0.45240746321344344,
+          0.9936292992678336,
+          2.4955336077662373
+        ],
+        "axon1_lead_ms": [
+          0.1999999999998181,
+          0.20000000000004547,
+          0.18000000000006366
+        ],
+        "soma_span_mv": [
+          5.283701389818262,
+          4.100240147831187,
+          6.00768298110475
+        ]
+      },
+      "chain": {
+        "soma_slide": {
+          "n": 3,
+          "approach_range": [
+            0.45091743377755356,
+            2.4824644251012975
+          ],
+          "take_off_mv": [
+            -55.3114905540465,
+            -55.86478471840313,
+            -57.3958093773304
+          ],
+          "slide_mv": -2.084318823283901,
+          "range_mv": 2.084318823283901
+        },
+        "approach": [
+          0.45091743377755356,
+          0.9920276013552538,
+          2.4824644251012975
+        ],
+        "axon1_lead_ms": [
+          0.18000000000006366,
+          0.18000000000006366,
+          0.16000000000008185
+        ],
+        "soma_span_mv": [
+          4.751343007765591,
+          5.673023687591176,
+          5.594815762176218
+        ]
+      }
+    }
+  },
+  "I": {
+    "noise": {
+      "n_sweeps": 17,
+      "rms_mv": 0.20284529815927355,
+      "db_vs_1_2_khz": {
+        "1": 1.3671755572291113,
+        "2": -0.8981630491097135,
+        "5": -2.5827881964074653,
+        "10": -3.8673844499413534,
+        "15": -3.4498409280608877,
+        "20": -3.794317898043675,
+        "24": -4.5383205695198665
+      },
+      "slope_10_to_20_khz_db_per_octave": 0.07306655189767852,
+      "flat_to_nyquist": true,
+      "fc_khz": 20.0
+    },
+    "chain": {
+      "tau_p_us": 0.3605404962927253,
+      "fc_khz": 10.0,
+      "tau_cmd_us": 35.79059583776042,
+      "t0_ms": 0.01489457882979822,
+      "delta_r_mohm": -0.96453935580992,
+      "slopes_mv_ms": [
+        1.7993088816851768,
+        3.7248497320774914,
+        5.53334713598875,
+        9.04120895014464,
+        10.799825586703967,
+        12.285888993332662
+      ],
+      "rms_mv": 0.050406874551932726
+    },
+    "chain_floor": {
+      "tau_p_us": 0.2822208534227973,
+      "fc_khz": 20.0,
+      "tau_cmd_us": 43.94670256241012,
+      "t0_ms": 0.03269565879991314,
+      "delta_r_mohm": -0.9892648577675585,
+      "slopes_mv_ms": [
+        1.806544238922539,
+        3.739711905673817,
+        5.555919899490619,
+        9.078707281554182,
+        10.844864994653213,
+        12.338220634016336
+      ],
+      "rms_mv": 0.05087033417060711
+    },
+    "profile": {
+      "rows": [
+        {
+          "tau_p_us": 0.0,
+          "tau_cmd_us": 0.1650055805044559,
+          "rms_mv": 0.05251904280543153
+        },
+        {
+          "tau_p_us": 1.0,
+          "tau_cmd_us": 0.16480171462949045,
+          "rms_mv": 0.05252019041944913
+        },
+        {
+          "tau_p_us": 2.0,
+          "tau_cmd_us": 0.18293952017563697,
+          "rms_mv": 0.05097987752004816
+        },
+        {
+          "tau_p_us": 5.0,
+          "tau_cmd_us": 48.04790235281234,
+          "rms_mv": 0.05353577250675458
+        },
+        {
+          "tau_p_us": 10.0,
+          "tau_cmd_us": 157.06220353549475,
+          "rms_mv": 0.04998838213278605
+        },
+        {
+          "tau_p_us": 20.0,
+          "tau_cmd_us": 203.2193979629142,
+          "rms_mv": 0.05158722863939265
+        },
+        {
+          "tau_p_us": 30.0,
+          "tau_cmd_us": 240.2822241521449,
+          "rms_mv": 0.054622475326595324
+        },
+        {
+          "tau_p_us": 50.0,
+          "tau_cmd_us": 409.59216171281935,
+          "rms_mv": 0.08252701844350092
+        },
+        {
+          "tau_p_us": 75.0,
+          "tau_cmd_us": 499.99999999999875,
+          "rms_mv": 0.11010541724660038
+        },
+        {
+          "tau_p_us": 100.0,
+          "tau_cmd_us": 499.9999999999982,
+          "rms_mv": 0.14545193642121593
+        }
+      ],
+      "min_rms_mv": 0.04998838213278605,
+      "tau_p_bound_us": 30.0,
+      "tau_p_best_us": 10.0
+    },
+    "human": {
+      "count": 12,
+      "rise_v_s": 596.8750119205615,
+      "peak_mv": 19.5625,
+      "fall_v_s": -335.93749999935073,
+      "span_mv": 1.8750038146972656,
+      "rapidness_per_ms": 50.956156018236086,
+      "take_off_mv": -60.312503814697266,
+      "approach_mv_per_ms": 1.1291790307938485
+    },
+    "edges": [
+      {
+        "sweep": 7,
+        "i0_na": 0.100000001335143,
+        "rb_mohm": 10.01221
+      },
+      {
+        "sweep": 8,
+        "i0_na": 0.200000002670286,
+        "rb_mohm": 10.01221
+      },
+      {
+        "sweep": 9,
+        "i0_na": 0.299999997066536,
+        "rb_mohm": 10.01221
+      },
+      {
+        "sweep": 11,
+        "i0_na": 0.499999985859034,
+        "rb_mohm": 10.01221
+      },
+      {
+        "sweep": 12,
+        "i0_na": 0.599999994133071,
+        "rb_mohm": 10.01221
+      },
+      {
+        "sweep": 13,
+        "i0_na": 0.700000002407108,
+        "rb_mohm": 10.01221
+      }
+    ],
+    "fit_step": {
+      "status": "read",
+      "raw": {
+        "count": 14,
+        "rise_v_s": 591.7736987922362,
+        "peak_mv": 17.163880531928537,
+        "fall_v_s": -338.0842011857513,
+        "span_mv": 13.537870593071816,
+        "rapidness_per_ms": 5.22827156422422,
+        "take_off_mv": -60.53741769081786,
+        "approach_mv_per_ms": 0.6053072033033519
+      },
+      "chain": {
+        "count": 14,
+        "rise_v_s": 529.5183162461369,
+        "peak_mv": 15.136761411305965,
+        "fall_v_s": -326.1772986781738,
+        "span_mv": 12.798644865451429,
+        "rapidness_per_ms": 5.42569375498742,
+        "take_off_mv": -60.63993028978079,
+        "approach_mv_per_ms": 0.6034691561919919
+      }
+    }
+  },
+  "decision": {
+    "checks": [
+      {
+        "cell": "E",
+        "reading": "a",
+        "prediction": "the noise floor bounds the acquisition corner (slope 10 to 20 kHz flatter than half a 4-pole roll-off)",
+        "value": -0.6850429306351069,
+        "pass": true,
+        "note": "noise-floor corner 20 kHz, chain applied at the conservative 10 kHz; baseline rms 0.078 mV over 16 sweeps"
+      },
+      {
+        "cell": "E",
+        "reading": "a",
+        "prediction": "the edges bound tau_p to within a factor of two of the acquisition corner",
+        "value": 30.0,
+        "pass": true,
+        "note": "best tau_p 5 us (joint fit 4.7), command pole 120 us, rms 0.097 mV, R_s - R_b +0.24 MOhm"
+      },
+      {
+        "cell": "I",
+        "reading": "a",
+        "prediction": "the noise floor bounds the acquisition corner (slope 10 to 20 kHz flatter than half a 4-pole roll-off)",
+        "value": 0.07306655189767852,
+        "pass": true,
+        "note": "noise-floor corner 20 kHz, chain applied at the conservative 10 kHz; baseline rms 0.203 mV over 17 sweeps"
+      },
+      {
+        "cell": "I",
+        "reading": "a",
+        "prediction": "the edges bound tau_p to within a factor of two of the acquisition corner",
+        "value": 30.0,
+        "pass": true,
+        "note": "best tau_p 10 us (joint fit 0.4), command pole 36 us, rms 0.050 mV, R_s - R_b -0.96 MOhm"
+      },
+      {
+        "cell": "E",
+        "reading": "b",
+        "prediction": "the chain accounts for less than half of the rise gap under the peak bound",
+        "value": 0.5489175942971185,
+        "pass": false,
+        "note": "measured chain accounts for 15 percent at 10 kHz (rise 609) and 5 percent at the noise floor (rise 638) against the recorded 348; peak bound at tau_p 60 us gives rise 486"
+      },
+      {
+        "cell": "E",
+        "reading": "b",
+        "prediction": "the residual rise gap exceeds 3 sigma of the within-chain repeat (4.5 V/s)",
+        "value": 261.7321700848042,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "cell": "E",
+        "reading": "d",
+        "prediction": "E fit onset span through the chain within 1 mV of the recording's",
+        "value": 0.9530878987700362,
+        "pass": true,
+        "note": "raw 4.10, chain 5.45, recorded 4.50; rapidness 16 / 17 / 39 per ms"
+      },
+      {
+        "cell": "E",
+        "reading": "c",
+        "prediction": "slow set held: take-off moves less than 0.1 mV",
+        "value": 0.12790639698338424,
+        "pass": false,
+        "note": ""
+      },
+      {
+        "cell": "E",
+        "reading": "c",
+        "prediction": "slow set held: approach within 5 percent",
+        "value": 0.0052370293168033585,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "cell": "E",
+        "reading": "c",
+        "prediction": "slow set held: axon lead within 0.02 ms",
+        "value": 0.01999999999998181,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "cell": "E",
+        "reading": "c",
+        "prediction": "slow set held: 310 pA count unchanged",
+        "value": 0.0,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "cell": "I",
+        "reading": "d",
+        "prediction": "I fit onset span through the chain stays above 8 mV (stage-8 reading survives its chain)",
+        "value": 12.798644865451429,
+        "pass": true,
+        "note": "raw 13.5, recorded 1.9 mV; rapidness 5 / 5 / 51 per ms"
+      }
+    ],
+    "verdict": "FAIL"
+  }
+}

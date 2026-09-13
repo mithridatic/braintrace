@@ -216,8 +216,11 @@ The recording's own repeat spread, 0.17 mV in level, 0.38 mV in threshold, 5 V/s
 It qualifies the first spike near rheobase. No repeat exists at 0.19 or 0.27 nA, so the
 along-train differences below are stated in millivolts and volts per second without a sigma;
 they are large, but their repeatability is not measured.
-The first spike of the two cells rises at the same rate, 597 against 592 V/s, so no
-difference in sodium density or in near-soma charging is available to explain the train.
+The first spike of the two cells rises at the same rate when the finalist is read at the
+membrane, 597 against 592 V/s; read through the recording's own chain
+([stage 12](evidence/h01-topographic/stage-12.md)) the finalist reads 530 at an
+assumed 10 kHz corner, about a tenth slow, so the equality was a coincidence of
+observation points. It is still not a difference that explains the train.
 Along the train the two separate in the threshold and in the rise, and the shape of the
 separation depends on the drive. At 0.27 nA the recorded threshold rises 4 mV over the first
 five spikes, inside 43 ms, and then holds near -58.4 mV for forty more spikes while the
@@ -290,7 +293,7 @@ offset describes it. Three further differences are large against the recording's
 
 | difference | human | model | spreads |
 | --- | ---: | ---: | ---: |
-| spike rise, every cycle and input | 347.7 V/s | 639.1 V/s | 177 |
+| spike rise, every cycle and input (model read at the membrane; through the recording's chain 570 to 615) | 347.7 V/s | 639.1 V/s | 177 (135 to 162 through the chain) |
 | threshold step from spike 1 to spike 2, 310 pA train | +1.4 mV | +0.0 mV | 6 |
 | threshold at spike 5 against spike 1, 310 pA train | +3.6 mV | +0.0 mV | 14 |
 | rise of spike 2 against spike 1, 310 pA train | 0.86 | 1.04 | 40 |
@@ -830,6 +833,7 @@ A response along a train is qualified only cycle by cycle. One number per train,
 A count is qualified only at a drive where the recording's own repeats agree on it. At the recorded cell's rheobase the repeats give 0 or 1, so a count there is inside the spread and is not scored; the information at that drive is the rheobase itself and the level, and the level is read from the repeats with and without a spike before it is called a post-spike effect.
 A repeat spread qualifies only the quantity, the drive and the cycle it was measured on. The I recording's spread comes from single-spike 120 pA sweeps and qualifies spike 1; an along-train I contrast has no sigma and is reported without one.
 A threshold is qualified only with the approach that reached it, and under two definitions. A take-off that moves with the approach is not a threshold error of the model; it is a different mechanism of take-off, and a lever that does not make the take-off a function of the approach cannot reproduce it.
+A fast model quantity is comparable to a recorded one only through the recording's own measurement chain, and a repeat sigma bounds repeatability, not bias. The recording is read at the pipette through the bridge, the neutralisation and the acquisition filter; the model at the membrane. [Stage 12](evidence/h01-topographic/stage-12.md) measured the chain from the recording's own step edges and noise floor (pipette pole a few microseconds, corner at or above 20 kHz if the floor is pipette noise, an assumed 10 kHz applied as the conservative case): it moves a rise by 3 to 11 percent (11 to 45 sigma of the within-chain repeat) and a threshold by a tenth of a millivolt, so every rise, peak and onset-span contrast in this document is quoted through the chain from here on, and a first pass that read the whole rise gap as the chain (a 2.65 kHz corner fitted to a step edge that also carries the command's own pole) is on record as refuted by the noise floor. A repeat sigma measured through one chain (1.5 V/s in rise) says the electrode is repeatable, not that it is unbiased against the model. The 10 to 100 V/s onset span moves by more than 1 mV under a chain that moves the rise by a few percent and is a fragile reading at a slow approach.
 A take-off is qualified at the site that makes the spike. A somatic take-off in a model whose initiation site is down a thin stub reads the arrival of the spike, not the take-off; the site's own take-off must be read at the site before the somatic reading is compared with a recording whose soma may be its own site.
 Numerical qualification needs the same physical model at the compared numerical settings.
 Transfer qualification needs the same donor, input, state, mesh, and parameter laws across implementations.

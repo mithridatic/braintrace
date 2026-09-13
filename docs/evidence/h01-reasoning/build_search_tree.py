@@ -39,6 +39,7 @@ ONSET = "docs/evidence/h01-topographic/onset-shape.json"
 STAGE9 = "docs/evidence/h01-topographic/stage-9.json"
 STAGE10 = "docs/evidence/h01-topographic/stage-10.json"
 STAGE11 = "docs/evidence/h01-topographic/stage-11.json"
+STAGE12 = "docs/evidence/h01-topographic/stage-12.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -124,7 +125,11 @@ def build_nodes():
           "On this geometry the somatic density is a rise lever and nothing else, as the causal model predicted; the slope is not carried past its range.", [STAGE11, CM], "supported"),
         n("q9_step", R, "The post-spike step is a per-spike step of +1.9 mV: full after one spike (spike 2 residual +1.83 mV, n 6), not growing with the count (spikes 6+ +2.23, difference +0.40 mV, limit 0.75), not recovering measurably within 0.73 s (stage 9) and gone within 2.7 s (primed short squares -0.16 to +0.56 mV from the unprimed, inside the independent 3 sigma of 0.75). Limits: nothing inside the first 2.7 s; assumes the step is as visible at 7 mV/ms as at 0.2-0.75.",
           "A process a single spike starts, holding about a second and clearing within three, raising the take-off without costing more than a few percent of rise; no element of the fit produces it (SP16 slow inactivation recovers on the wrong timescale and costs rise).", [STAGE11, CM], "supported"),
-        n("next", T, "Next: not registered. The rise needs a lever that reaches 348 V/s with the take-off held and the span in band, which the somatic density alone did not inside 0.5-0.9; the post-spike step needs a mechanism with a 1-3 s clearance started by one spike. Each is a new split to write before any run.",
+        n("q10", Q, "Q10 (SP15 stage 12, executed, retained traces only): the recording's MEASUREMENT CHAIN, the split the book (ch. 4 Table 3, ch. 6 observation point) says comes first and the campaign never made. Pipette pole from the short-square step edges (transient area), corner from the noise floor and an assumed conservative 10 kHz; applied to the model traces; every quantity re-read.",
+          "First pass with the corner free returned 2.65 kHz and would have read the whole rise gap as the chain; refuted by the flat noise floor and the two-sample edge jump (the step carries the command's own pole). Recorded, then amended.", [STAGE12, STRATEGY], "supported"),
+        n("q10_chain", R, "Chain: pipette pole 5 us (E) / 2 us (I) at best, bound 30 us; neutralisation live in practice (a live 5 pF pole would put 9 mV at every edge, none is there); bridge mismatch +0.24 / -0.96 MOhm; corner >= 20 kHz if the noise floor is pipette noise; an assumed 10 kHz applied as the conservative case (no filter setting in the file). E fit rise 655 -> 609 (10 kHz) / 638 (20 kHz), control 639 -> 570 / 615: 5-15 percent of the gap to 348; residual 260-290 V/s real. Peak bound would cover 55 percent (fired by the letter at a bound an order of magnitude above the measured pole). Fall: recording -104 vs fit -91/-95 while rising slower - no chain does that.",
+          "Slow set holds (take-off constant 0.13 mV shift, slide to 0.01 mV; approach 1 percent; lead 0.02 ms; count): stages 7-11 stand. The 10-100 V/s onset span is chain-fragile (E 4.1 -> 5.5/5.7, non-monotone across ramps): stage-8 E cell qualified; I span survives (12.8 vs 1.9). I fit rise 592 -> 530 through its chain: the raw equality with the recording's 597 was a coincidence of observation points.", [STAGE12, CM], "supported"),
+        n("next", T, "Next: not registered. With the chain measured, the rise contrast is re-sized (135-162 sigma), not retired. The book's order from here: (1) the elemental picture - full spike-cycle conjugate loops (dV/dt vs V, I_inj - C dV/dt vs V) recording vs fit through the chain, spike 1 and 2, to place the fit's excess rise below or above -40 mV; (2) decompose the fit's rise by observation point (branch currents at the soma, one run); (3) only then a somatic-density series read as a characteristic curve; the post-spike step's energetic Y from stage 0's early-after-spike load curves.",
           "Y before levers; register the outcome cells first.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
@@ -171,7 +176,9 @@ def build_edges():
         cm.edge("q8_e", "q9", "describes", "rise and post-spike step, apart"),
         cm.edge("q9", "q9_rise", "describes", "rise"),
         cm.edge("q9", "q9_step", "describes", "post-spike step"),
-        cm.edge("q9_rise", "next", "describes", "a lever that reaches 348 with the take-off held"),
+        cm.edge("q9_rise", "q10", "describes", "measure the chain before sizing the rise"),
+        cm.edge("q10", "q10_chain", "describes", "the chain"),
+        cm.edge("q10_chain", "next", "describes", "the rise re-sized, the order restored"),
         cm.edge("q9_step", "next", "describes", "a 1-3 s per-spike process"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),

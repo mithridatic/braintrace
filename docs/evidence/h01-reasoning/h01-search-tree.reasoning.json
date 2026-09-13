@@ -1,5 +1,5 @@
 {
-  "id": "doc_e65f39ba-754",
+  "id": "doc_1fb46125-bbc",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -282,11 +282,25 @@
         "label": "post-spike step"
       },
       {
-        "id": "q9_rise__next",
+        "id": "q9_rise__q10",
         "source": "q9_rise",
+        "target": "q10",
+        "relation": "describes",
+        "label": "measure the chain before sizing the rise"
+      },
+      {
+        "id": "q10__q10_chain",
+        "source": "q10",
+        "target": "q10_chain",
+        "relation": "describes",
+        "label": "the chain"
+      },
+      {
+        "id": "q10_chain__next",
+        "source": "q10_chain",
         "target": "next",
         "relation": "describes",
-        "label": "a lever that reaches 348 with the take-off held"
+        "label": "the rise re-sized, the order restored"
       },
       {
         "id": "q9_step__next",
@@ -353,6 +367,8 @@
           "q9",
           "q9_rise",
           "q9_step",
+          "q10",
+          "q10_chain",
           "next",
           "q2_upstroke",
           "policy"
@@ -1237,9 +1253,63 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q10",
+        "type": "Search question",
+        "text": "Q10 (SP15 stage 12, executed, retained traces only): the recording's MEASUREMENT CHAIN, the split the book (ch. 4 Table 3, ch. 6 observation point) says comes first and the campaign never made. Pipette pole from the short-square step edges (transient area), corner from the noise floor and an assumed conservative 10 kHz; applied to the model traces; every quantity re-read.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "First pass with the corner free returned 2.65 kHz and would have read the whole rise gap as the chain; refuted by the flat noise floor and the two-sample edge jump (the step carries the command's own pole). Recorded, then amended.\n\nEvidence: docs/evidence/h01-topographic/stage-12.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q10_ev0",
+            "title": "docs/evidence/h01-topographic/stage-12.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-12.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q10_ev1",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q10_chain",
+        "type": "Branch retained",
+        "text": "Chain: pipette pole 5 us (E) / 2 us (I) at best, bound 30 us; neutralisation live in practice (a live 5 pF pole would put 9 mV at every edge, none is there); bridge mismatch +0.24 / -0.96 MOhm; corner >= 20 kHz if the noise floor is pipette noise; an assumed 10 kHz applied as the conservative case (no filter setting in the file). E fit rise 655 -> 609 (10 kHz) / 638 (20 kHz), control 639 -> 570 / 615: 5-15 percent of the gap to 348; residual 260-290 V/s real. Peak bound would cover 55 percent (fired by the letter at a bound an order of magnitude above the measured pole). Fall: recording -104 vs fit -91/-95 while rising slower - no chain does that.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Slow set holds (take-off constant 0.13 mV shift, slide to 0.01 mV; approach 1 percent; lead 0.02 ms; count): stages 7-11 stand. The 10-100 V/s onset span is chain-fragile (E 4.1 -> 5.5/5.7, non-monotone across ramps): stage-8 E cell qualified; I span survives (12.8 vs 1.9). I fit rise 592 -> 530 through its chain: the raw equality with the recording's 597 was a coincidence of observation points.\n\nEvidence: docs/evidence/h01-topographic/stage-12.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q10_chain_ev0",
+            "title": "docs/evidence/h01-topographic/stage-12.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-12.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q10_chain_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next: not registered. The rise needs a lever that reaches 348 V/s with the take-off held and the span in band, which the somatic density alone did not inside 0.5-0.9; the post-spike step needs a mechanism with a 1-3 s clearance started by one spike. Each is a new split to write before any run.",
+        "text": "Next: not registered. With the chain measured, the rise contrast is re-sized (135-162 sigma), not retired. The book's order from here: (1) the elemental picture - full spike-cycle conjugate loops (dV/dt vs V, I_inj - C dV/dt vs V) recording vs fit through the chain, spike 1 and 2, to place the fit's excess rise below or above -40 mV; (2) decompose the fit's rise by observation point (branch currents at the soma, one run); (3) only then a somatic-density series read as a characteristic curve; the post-spike step's energetic Y from stage 0's early-after-spike load curves.",
         "status": "unverified",
         "confidence": null,
         "notes": "Y before levers; register the outcome cells first.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
@@ -1888,13 +1958,45 @@
         ]
       },
       {
-        "id": "review_q9_rise__next",
-        "edgeId": "q9_rise__next",
+        "id": "review_q9_rise__q10",
+        "edgeId": "q9_rise__q10",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q9_rise__next",
+            "id": "reservation_q9_rise__q10",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q10__q10_chain",
+        "edgeId": "q10__q10_chain",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q10__q10_chain",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q10_chain__next",
+        "edgeId": "q10_chain__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q10_chain__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

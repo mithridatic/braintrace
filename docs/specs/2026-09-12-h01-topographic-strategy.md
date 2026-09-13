@@ -577,3 +577,41 @@ sigma bounds repeatability, not bias.
 Unchanged: no run, no lever, holdouts sealed; the model traces are the retained ones
 (`h01-e-coupling-b/s10-d2-density-*`, `h01-e-cable-load/c10-area-310-n9-sweep53`,
 `h01-i-takeoff/s9-finalist-probes-019-probes`).
+
+### Stage 12 execution addendum (2026-09-13, recorded before the second pass)
+
+The first execution as registered, with the acquisition corner free in the edge fit,
+returned f_c 2.65 kHz (E) and 3.3 kHz (I); applied to the fit that corner gave a spike-1
+rise of 384 V/s against the recorded 348 and would have read the whole gap as the chain.
+Two facts refute it before it is believed: the unstimulated baseline's noise floor is flat
+to Nyquist in both files (-0.7 and +0.1 dB per octave between 10 and 20 kHz, against -24
+for a 4-pole corner below 10 kHz), and the edge's own jump is two samples wide where a
+2.65 kHz corner would spread it over seven. The step edge measures the round trip, the
+command's own pole included, and a step cannot separate that pole from the output filter.
+Amendment: the pipette pole is read from the transient's area (invariant to the command
+pole) with the corner held; the corner is bounded from the noise floor (a reading only if
+the floor is pipette noise, which cannot be told from the digitiser's floor here) and the
+chain is applied at an assumed 10 kHz corner as the conservative case (no filter setting
+is recorded in the file), with the 20 kHz case beside it. Cell (a) gains the noise-floor slope; the other cells stand.
+
+Stage 12 result (2026-09-13, `docs/evidence/h01-topographic/stage-12.md`, no run,
+verdict FAIL by the letter on two cells, both recorded). Chain: pipette pole 5 us (E) and
+2 us (I) at best, bound 30 us (the command pole 120 / 36 us absorbs the profile); the
+neutralisation is live in practice whatever the metadata field holds, since a live 5 pF
+pole would put a 9 mV transient at every edge and none is there; bridge mismatch +0.24 /
+-0.96 MOhm; corner at or above 20 kHz if the noise floor is pipette noise, 10 kHz applied.
+Rise: the E fit's 655 V/s reads 609 at 10 kHz and 638 at 20 kHz (the control 639 reads 570
+and 615), 5 to 15 percent of the gap to the recorded 348; the residual 260 to 290 V/s is
+real. The peak bound (the pole at which the filtered peak meets the recorded 35.3 mV, 60 us)
+would cover 55 percent: the registered "less than half" fired by the letter at that bound,
+an order of magnitude above the measured pole. Third leg: the recording repolarises faster
+than the fit (-104 against -91/-95 V/s) while rising slower, which no chain produces.
+Slow set: the take-off shifts by a constant 0.13 mV at 10 kHz (the registered 0.1 fired by
+the letter) while the slide across the ramps holds to 0.01 mV; approach within 1 percent,
+axon lead within 0.02 ms, count unchanged: stages 7 to 11 stand. Onset: the E span moves
+4.10 to 5.45 (10 kHz) and 5.74 (20 kHz) and non-monotonically across the ramps, so the 10
+to 100 V/s span is a fragile reading at a 0.6 mV/ms approach and the stage-8 E cell gains
+that qualification; the I fit's span survives its chain (12.8 against the recorded 1.9),
+the stage-8 I reading stands. New: the I fit's rise, equal to the recording's when read
+raw (592 against 597), reads 530 through the 10 kHz chain, so that match was a
+coincidence of observation points. The qualification rule (e) is adopted.
