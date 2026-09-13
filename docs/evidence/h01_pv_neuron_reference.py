@@ -113,6 +113,8 @@ parser.add_argument("--nseg-factor", type=int, default=1)
 parser.add_argument("--unselected-nseg-factor", type=int, default=1)
 parser.add_argument("--refine-region", choices=("all", "soma", "axon", "dendrites"), default="all")
 parser.add_argument("--duration-ms", type=float, default=1500.)
+parser.add_argument("--stimulus-on-ms", type=float, default=270.,
+                    help="pulse onset; the 1000 ms pulse, the spike window and the 70 ms baseline follow it")
 parser.add_argument("--output", required=True)
 parser.add_argument("--template", default=DEFAULT_TEMPLATE, help="in-container NeuronTemplate.hoc path")
 parser.add_argument("--biophys", default=DEFAULT_BIOPHYS,
@@ -163,6 +165,8 @@ if not np.isfinite([args.current_na, args.bias_na, args.dt_ms, args.initial_mv])
     parser.error("Current must be finite and time step must be positive.")
 if not np.isfinite(args.duration_ms) or args.duration_ms <= 0:
     parser.error("Duration must be positive and finite.")
+if not np.isfinite(args.stimulus_on_ms) or args.stimulus_on_ms < 70. or args.stimulus_on_ms >= args.duration_ms:
+    parser.error("Stimulus onset must leave a 70 ms baseline before it and lie inside the duration.")
 if args.cvode_atol is not None and (not np.isfinite(args.cvode_atol) or args.cvode_atol <= 0):
     parser.error("CVode absolute tolerance must be positive and finite.")
 try:
@@ -272,7 +276,7 @@ if args.cvode_atol is not None:
     h.CVode().atol(args.cvode_atol)
     h.CVode().active(1)
 clamp = h.IClamp(cell.soma[0](.5))
-clamp.delay = 270.
+clamp.delay = args.stimulus_on_ms
 clamp.dur = 1000.
 clamp.amp = args.current_na
 bias = h.IClamp(cell.soma[0](.5))
@@ -350,7 +354,7 @@ h.continuerun(args.duration_ms)
 times, voltage, applied, axon = map(np.asarray, (t, v, current, axon_v))
 assert np.isfinite(voltage).all() and np.isfinite(axon).all()
 peaks, _ = find_peaks(voltage, height=0., prominence=40.)
-peaks = peaks[(times[peaks] >= 270.) & (times[peaks] < 1270.)]
+peaks = peaks[(times[peaks] >= args.stimulus_on_ms) & (times[peaks] < args.stimulus_on_ms+1000.)]
 output = Path(args.output)
 output.parent.mkdir(parents=True, exist_ok=True)
 np.savez_compressed(output.with_suffix(".npz"), time_ms=times, voltage_mv=voltage,
@@ -394,14 +398,14 @@ report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942
           "integration": {"method": "CVode" if args.cvode_atol is not None else "fixed step",
                           "cvode_atol": args.cvode_atol},
           "candidate_json": candidate_record,
-          "initial_voltage_mv": args.initial_mv, "stimulus_on_ms": 270., "stimulus_off_ms": 1270.,
+          "initial_voltage_mv": args.initial_mv, "stimulus_on_ms": args.stimulus_on_ms, "stimulus_off_ms": args.stimulus_on_ms+1000.,
           "duration_ms": args.duration_ms, "synaptic_background": "none",
           "mechanism_library": {str(f): hashlib.sha256(f.read_bytes()).hexdigest()
                                 for f in sorted(Path.cwd().glob("mod/*.mod"))+sorted(Path.cwd().glob("x86_64/libnrnmech.so"))},
           "sample_convention": "NEURON recorded time, includes initial state at t=0",
           "spike_times_ms": times[peaks].tolist(), "spike_peaks_mv": voltage[peaks].tolist(),
-          "baseline_mean_mv": _time_average(times, voltage, 200., 270.),
-          "baseline_mean_convention": "time integral of piecewise-linear voltage over 200-270 ms, divided by 70 ms",
+          "baseline_mean_mv": _time_average(times, voltage, args.stimulus_on_ms-70., args.stimulus_on_ms),
+          "baseline_mean_convention": "time integral of piecewise-linear voltage over the 70 ms before the pulse, divided by 70 ms",
           "geometry": geometry,
           "qualification": "independent reference response; comparison with human data and BrainCell transfer pending"}
 output.with_suffix(".json").write_text(json.dumps(report, indent=2))

@@ -14,7 +14,7 @@ import pytest
                                     np.arange(0., 1501.)])
 def test_baseline_mean_is_time_weighted_for_adaptive_samples(times):
     tree = ast.parse(Path(__file__).with_name("h01_pv_neuron_reference.py").read_text())
-    scope = {"np": np, "times": times, "voltage": times.copy()}
+    scope = {"np": np, "times": times, "voltage": times.copy(), "args": argparse.Namespace(stimulus_on_ms=270.)}
     for node in tree.body:
         if isinstance(node, ast.FunctionDef) and node.name.startswith("_"):
             exec(compile(ast.Module(body=[node], type_ignores=[]), "reference_helpers", "exec"), scope)
@@ -130,6 +130,32 @@ def test_duration_cli_boundary(monkeypatch, value):
     else:
         exec(code, scope)
         assert scope["args"].duration_ms == (1500. if value is None else float(value))
+
+
+@pytest.mark.parametrize("value", [None, "1020", "60", "1600", "nan"])
+def test_stimulus_onset_cli_boundary(monkeypatch, value):
+    """Default 270; reject an onset without a 70 ms baseline or beyond the duration."""
+    nodes = []
+    for node in ast.parse(SOURCE.read_text()).body:
+        if isinstance(node, ast.Expr) and ast.unparse(node).startswith("h.load_file"):
+            break
+        if not isinstance(node, (ast.Import, ast.ImportFrom)):
+            nodes.append(node)
+    argv = ["reference", "--current-na", ".27", "--output", "unused"]
+    if value is not None:
+        argv += ["--stimulus-on-ms", value]
+        if value == "1020":
+            argv += ["--duration-ms", "2100"]
+    monkeypatch.setattr("sys.argv", argv)
+    scope = {"np": np, "argparse": argparse, "Path": Path, "hashlib": hashlib, "json": json, "__doc__": "CLI test"}
+    code = compile(ast.Module(body=nodes, type_ignores=[]), "onset_cli", "exec")
+    if value in ("60", "1600", "nan"):
+        with pytest.raises(SystemExit) as error:
+            exec(code, scope)
+        assert error.value.code == 2
+    else:
+        exec(code, scope)
+        assert scope["args"].stimulus_on_ms == (270. if value is None else float(value))
 
 
 def test_simulation_and_bias_follow_the_requested_duration():

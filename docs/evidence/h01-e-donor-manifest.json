@@ -1,0 +1,120 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv). The library /workspace/h01-neuron/cache/human-pv/hl23-source holds the pristine ModelDB 267595 mod files compiled with nrnivmodl, NeuronTemplate.hoc, biophys_HL23PYR.hoc and morphologies/HL23PYR.swc (sha256 in source/sha256.txt).",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pv/hl23-source",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "purpose": "SP15 stage 13: the base as a sub-system (Dissection half-split). Toronto HL23PYR (Yao et al. 2022 human L2/3 pyramidal, ModelDB 267595) unchanged, driven as the E recording is driven: 1000 ms steps at 1020 ms with the recorded bias. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md, stage 13.",
+  "cap": 4,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 2400,
+  "output_dir": "h01-e-donor",
+  "inputs": {
+    "step200": [
+      "--current-na",
+      "0.2",
+      "--bias-na",
+      "0.0025",
+      "--stimulus-on-ms",
+      "1020",
+      "--duration-ms",
+      "2100",
+      "--record-axon-probes"
+    ],
+    "step250": [
+      "--current-na",
+      "0.25",
+      "--bias-na",
+      "-0.0037",
+      "--stimulus-on-ms",
+      "1020",
+      "--duration-ms",
+      "2100",
+      "--record-axon-probes"
+    ],
+    "step310": [
+      "--current-na",
+      "0.31",
+      "--bias-na",
+      "-0.0037",
+      "--stimulus-on-ms",
+      "1020",
+      "--duration-ms",
+      "2100",
+      "--record-axon-probes"
+    ],
+    "step400": [
+      "--current-na",
+      "0.4",
+      "--bias-na",
+      "-0.0037",
+      "--stimulus-on-ms",
+      "1020",
+      "--duration-ms",
+      "2100",
+      "--record-axon-probes"
+    ]
+  },
+  "holdout": "Sweep 54 (0.33 nA) stays sealed; 0.4 nA is not a recorded input of this cell.",
+  "evaluation": "One candidate at four inputs = four evaluations.",
+  "base_candidate": {
+    "file": "h01-e-cable-load/c10-area-310-n9-sweep53",
+    "note": "System A: B3 (Allen 626170538) on its own anatomy at 310 pA: rise 639 (570-615 through the chain), count 10, take-off flat, no climb."
+  },
+  "reference": {
+    "recorded_rise_v_s": 348,
+    "recorded_rise_band_v_s": [
+      336,
+      351
+    ],
+    "recorded_fall_v_s": -104,
+    "recorded_counts": {
+      "200": 1,
+      "250": 5,
+      "310": 10
+    },
+    "recorded_climb_mv": {
+      "spike2_minus_1": 1.4,
+      "spike5_minus_1": 3.6
+    },
+    "recorded_rise_5_over_1": 0.86,
+    "recorded_take_off_slope_mv_per_mv_ms": -4.3
+  },
+  "decision_limits": {
+    "rise_fraction": 0.15,
+    "climb_fraction": 0.5,
+    "rise_5_over_1_min": 0.8,
+    "count_310": [
+      5,
+      15
+    ]
+  },
+  "stages": {
+    "13": {
+      "title": "Stage 13: HL23PYR unchanged at 0.2/0.25/0.31/0.4 nA with the recorded bias",
+      "prediction": "If kinetics are the family: spike-1 rise through the chain within 15 percent of 348 V/s; along a train of at least five spikes the threshold climbs by at least half the recorded +1.4 (spike 2) and +3.6 mV (spike 5) with the rise of spike 5 above 0.8 of spike 1; fall near -104 V/s.",
+      "rejection": "No spike at any drive: no reading. Climb missing as in B3 and HL5BN1: the family is not the fitting pipeline; the base stays B3. Rise inside the band with the 0.31 nA count outside 5 to 15: the rise is not bought with the count.",
+      "unchanged": "The published HL23PYR biophysics, template and morphology; the recording, its chain and the readers."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s13-hl23pyr",
+      "stage": "13",
+      "arm": "system B: human-fitted L2/3 base",
+      "flags": {
+        "biophys": "/work/source/biophys_HL23PYR.hoc",
+        "morphology": "/work/source/morphologies/HL23PYR.swc"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "inputs_note": "stage 13: four inputs"
+    }
+  ]
+}

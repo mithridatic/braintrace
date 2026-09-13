@@ -615,3 +615,66 @@ that qualification; the I fit's span survives its chain (12.8 against the record
 the stage-8 I reading stands. New: the I fit's rise, equal to the recording's when read
 raw (592 against 597), reads 530 through the 10 kHz chain, so that match was a
 coincidence of observation points. The qualification rule (e) is adopted.
+
+## Stage 13 (registered 2026-09-13): the base as a sub-system, a Dissection half-split
+
+**The frame that was never split.** Every stage so far dosed densities and geometry on
+one base and asked why it does not behave like the recorded cell. The base is an input
+carried into every stage. Facts: the E recording is Allen human specimen 541563728
+(Homo sapiens, 28 y, L2/3 spiny); B3 is Allen model 626170538, the perisomatic fit of
+that same cell, whose densities were optimised to its own sweeps under a kinetic set
+(NaTs from Colbert and Pan 2002 rat, Kv3_1, K_T, K_P, SK, Ih, Im, Ca) that is fixed across
+every Allen mouse and human perisomatic model, and whose optimiser never saw the rise. The
+I base is Toronto HL5BN1 (ModelDB 267587), a human-fitted model with Hay-2011-lineage
+kinetics and human-refit densities, and it shows the same missing threshold climb. The
+three elements now on the table, the rise, the threshold climbing along a train with the
+rise kept, and a repolarisation faster in the recording than in the fit, are all
+kinetic-family signatures. Ch. 5: two systems with a large contrast, swap the sub-system.
+
+**Systems.** A: B3 on its own anatomy (in hand: `h01-e-cable-load/c10-area-310-n9-sweep53`
+and the stage-7 tables). B: Toronto HL23PYR, the human L2/3 pyramidal model of Yao et al.
+2022 (ModelDB 267595 `biophys_HL23PYR.hoc`, byte-identical to the GPL-3.0 267587
+`biophys_HL23PN1.hoc` but for the procedure name; morphology `HL23PYR.swc` from 267595;
+the eleven mod files identical to the imported HL5BN1 set). Its NaTg carries human-fitted
+voltage shifts (soma vshiftm 13, vshifth 15, slope 7; axon vshifth 10, slope 9), a
+20 + 30 um tapered initial segment and a 1000 um myelin; it was fitted at the population
+level to Krembil human L2/3 recordings, not to this cell, so it is a different cell's
+model of the same class and layer, which is what the split needs.
+
+**Execution.** The PV driver runs the Toronto template unchanged (pristine 267595 mods
+compiled on the box in `human-pv/hl23-source`); one flag is added, `--stimulus-on-ms`,
+so the pulse sits at 1020 to 2020 ms as in the recording and the campaign readers apply
+without change. Inputs: the recorded long squares as steps, 0.2 nA with the recorded
++2.5 pA bias, 0.25 and 0.31 nA with -3.7 pA, and 0.4 nA with -3.7 pA in case the model's
+rheobase lies above the recorded cell's; nseg factor 9, CVode 1e-10, 2100 ms; cap 4,
+`h01-e-donor-manifest.json`, output `h01-e-donor`. No holdout is touched (sweep 54 is
+0.33 nA; 0.4 is not a recorded input of this cell).
+
+**Cells, registered before the runs.** Every fast quantity is read through the recording's
+chain (stage 12, 10 kHz conservative).
+(a) *Rise.* HL23PYR spike-1 rise at the lowest drive that fires, through the chain, against
+the recorded 348 V/s; within 15 percent is inside the recorded band (short squares and
+long squares give 336 to 351); B3 reads 570 to 615. Prediction if kinetics are the family:
+inside the band.
+(b) *Threshold climb.* Along a train of at least five spikes: threshold at spike 2 minus
+spike 1 and spike 5 minus spike 1, cycle by cycle, against the recorded +1.4 and +3.6 mV
+(B3 0.0 and 0.0); the rise of spike 5 against spike 1 against the recorded 0.86. Prediction
+if kinetics are the family: climb at least half the recorded and the rise kept above 0.8.
+(c) *Fall.* Spike-1 maximum fall through the chain against the recorded -104 V/s (B3 -91 to
+-95).
+(d) *Take-off with its approach.* Spike-1 take-off against approach across the drives that
+fire, on the stage-7 relation (recording -4.3 mV per mV/ms of approach; B3 flat); read at
+the soma with the qualification that the site may be tightly coupled here (a 1.75 um AIS,
+not a 1 um stub).
+(e) *Count and rheobase.* Counts at 0.2, 0.25, 0.31 nA against the recorded 1, 5, 10 and
+B3's 4, 8, 10; a model that does not fire at 0.31 nA is read at 0.4 and its rheobase
+recorded as above the cell's.
+Rejections: no spike at any drive (no reading, the model is not comparable at this
+cell's drives); HL23PYR missing the climb the way B3 and HL5BN1 do (then the family is not
+the fitting pipeline but something both lack, and the base stays B3); HL23PYR inside the
+rise band but with the count at 0.31 nA outside 5 to 15 (the rise is not bought with the
+count). Second half, only if (a) and (b) hold: HL23PYR biophysics on the 541563728
+anatomy (the anatomy sub-system swapped), so that the base is replaced on a 2x2 and not
+on a leap.
+
+Unchanged: the E recording, its chain, the readers, B3 and its retained runs.
