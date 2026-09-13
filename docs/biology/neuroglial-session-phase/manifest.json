@@ -1,0 +1,171 @@
+{
+  "schema": "h01-biology-neuroglia-v1",
+  "spines": {
+    "schema": "h01-biology-spines-v1",
+    "topology_sha256": "d0f0867cef6c2ee5cc13baac2d3660f99edfecb380650b991183d02763f4192d",
+    "coordinate_frame": "h01-swc-um",
+    "cells": {
+      "12": {
+        "source_sha256": "52dfbd4f6e6ff7001d334a2e8af544830e24e1c8963a0a7f4b4071721ac3a37c",
+        "spines": []
+      }
+    },
+    "contact_heads": {},
+    "release_probability": {}
+  },
+  "glia": {
+    "selection": {
+      "schema": "h01-glial-fragment-v1",
+      "source_sha256": "10f0ca1d6c8b41d2e8a1fba299a06a6899cf70deb957dea152d39988de1310fc",
+      "identity": "synthetic-tree",
+      "source": "fixture",
+      "attribution": "Synthetic test geometry",
+      "coordinate_frame": "h01-c3-nm",
+      "anchor_vertex": 0,
+      "max_vertices": 5,
+      "selection_basis": "Complete fixture component"
+    },
+    "electrical": {
+      "initial_mv": -100.0,
+      "inside_k_mm": 140.0,
+      "outside_k_mm": 10.0,
+      "temperature_c": 34.0,
+      "gkir_ms_cm2": 0.4,
+      "cm_uf_cm2": 1.0,
+      "ra_ohm_cm": 100.0,
+      "max_cv_length_um": 10.0,
+      "basis": "Synthetic diagnostic glial cable"
+    }
+  },
+  "extracellular": {
+    "centers_um": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "volumes_um3": [
+      100.0,
+      100.0
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ]
+    ],
+    "origin": "synthetic",
+    "basis": "Explicit two-volume diagnostic domain; centers do not infer contacts",
+    "k": {
+      "conductance_um3_ms": [
+        1.0
+      ],
+      "boundary_um3_ms": [
+        0.0,
+        0.0
+      ],
+      "uptake_per_ms": [
+        0.0,
+        0.0
+      ]
+    },
+    "gaba": {
+      "conductance_um3_ms": [
+        1.0
+      ],
+      "boundary_um3_ms": [
+        0.0,
+        0.0
+      ],
+      "uptake_per_ms": [
+        0.01,
+        0.01
+      ]
+    },
+    "glutamate": {
+      "conductance_um3_ms": [
+        1.0
+      ],
+      "boundary_um3_ms": [
+        0.0,
+        0.0
+      ],
+      "uptake_per_ms": [
+        0.01,
+        0.01
+      ]
+    }
+  },
+  "membranes": {
+    "12": {
+      "geometry_sha256": "3a879a863a451724c97f537d0c79bbed94fcd6c4e5ad9e30e8b4d71004b6f3a8",
+      "outside_indices": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "@glia": {
+      "geometry_sha256": "a7a2e91e7bdf10f426bfa01d45b518e45de43c6da3f0846f2e949e4dc1667513",
+      "outside_indices": [
+        1
+      ]
+    }
+  },
+  "releases": {
+    "gaba": null,
+    "glutamate": {
+      "sources": [
+        "12"
+      ],
+      "volume_indices": [
+        [
+          0,
+          1
+        ]
+      ],
+      "active_sites": 1,
+      "molecules_per_site": 3000.0,
+      "seed": 22,
+      "basis": "Explicit synthetic diagnostic glutamate dose"
+    }
+  },
+  "potassium": {
+    "inside_mm": 140.0,
+    "outside_mm": 10.0,
+    "temperature_c": 34.0
+  },
+  "tonic_gaba": {
+    "g_max_ms_cm2": 0.1,
+    "reversal_mv": -70.0,
+    "ec50_mm": 0.0001,
+    "hill": 1.0
+  },
+  "calcium": {
+    "parameters": {
+      "stationary_mm": 0.07,
+      "mobile_mm": 0.0075,
+      "resting_mm": 5e-05,
+      "ip3_resting_mm": 5e-05,
+      "diffusion_um2_ms": 0.3,
+      "mobile_diffusion_um2_ms": 0.05,
+      "pump_threshold_mm": 2e-05,
+      "pump_velocity_um_ms": 0.008,
+      "er_mm": 0.4,
+      "alpha": 1.0
+    },
+    "substeps": 4
+  },
+  "dt_ms": 0.005,
+  "basis": "Synthetic coupled-session fixture"
+}

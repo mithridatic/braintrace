@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from importlib.metadata import version
 import hashlib
+import json
 from pathlib import Path
 
 import brainstate
@@ -36,6 +37,7 @@ def _numerical_settings_cached():
         'examples/pp_prop/h01_muon.py', 'examples/pp_prop/21-braincell-arc.py',
         'examples/pp_prop/h01_session.py')]
     paths.append(root/'examples/pp_prop/h01_runtime.py')
+    paths.append(root/'examples/pp_prop/h01_neuroglial.py')
     implementation = {str(path.relative_to(root)).replace('\\', '/'): hashlib.sha256(path.read_bytes()).hexdigest()
                       for path in paths if not path.name.endswith('_test.py')}
     return dict(optimizer_policy=POLICY, dt_ms=.005, event_ms=.1, substeps=20, precision=64,
@@ -81,7 +83,7 @@ class H01Session:
 
     @classmethod
     def build(cls, topology, archive, trainer_type, *, settings=None, assets=(),
-              parameters=None, input_pattern=None, progress=None, optimizer_slots=None):
+              parameters=None, input_pattern=None, progress=None, optimizer_slots=None, biology_assets=None):
         """Construct, initialize and compile the full active H01 model.
 
         Parameters
@@ -104,6 +106,8 @@ class H01Session:
             Construction and initialization progress callback.
         optimizer_slots : mapping, optional
             Inherited parallel-contact plane assignments during mutation.
+        biology_assets : mapping, optional
+            Glial source SHA256 to local asset path for neuroglial construction.
 
         Returns
         -------
@@ -122,7 +126,16 @@ class H01Session:
             raise ValueError('H01 sessions require an enclosing 64-bit precision context')
         biology = settings.get('biology')
         spatial = None
-        if isinstance(biology, dict) and biology.get('schema') == 'h01-biology-spines-v1':
+        neuroglial = None
+        if isinstance(biology, dict) and biology.get('schema') == 'h01-biology-neuroglia-v1':
+            from braintrace.datasets.h01_neuroglia import H01NeuroglialManifest
+            neuroglial = H01NeuroglialManifest(biology, topology.to_dict())
+            biology = settings['biology'] = neuroglial.to_dict()
+            if biology['dt_ms'] != settings['dt_ms']:
+                raise ValueError('Neuroglial and cable clocks differ')
+            spatial = H01SpatialManifest(biology['spines'], topology.to_dict())
+            probabilities = [biology['spines']['release_probability'][key] for key in topology.to_dict()['active_contacts']]
+        elif isinstance(biology, dict) and biology.get('schema') == 'h01-biology-spines-v1':
             spatial = H01SpatialManifest(biology, topology.to_dict())
             # Persist the same canonical arrays validated by the manifest.
             # Python tuple directions otherwise become lists only on save,
@@ -136,13 +149,19 @@ class H01Session:
         else:
             probabilities = None
         network, records = build_network(topology, archive, solver=settings['solver'],
-            max_cv_length_um=settings['max_cv_length_um'], progress=progress, biology=spatial)
+            max_cv_length_um=settings['max_cv_length_um'], progress=progress, biology=spatial,
+            environment_potassium=neuroglial is not None)
         del records
+        if neuroglial is not None:
+            from .h01_neuroglial import prepare_neuroglia, attach_neuroglia
+            glia = prepare_neuroglia(network, neuroglial, biology_assets)
         init_h01_network_states(network, progress=progress)
         model = H01ArcModel(network, topology.to_dict()['active_cells'], seed=settings['seed'],
                             dt_ms=settings['dt_ms'], input_pattern=input_pattern,
                             checkpoint_substeps=settings['checkpoint_substeps'],
                             release_probability=probabilities)
+        if neuroglial is not None:
+            attach_neuroglia(model, topology.to_dict(), neuroglial, glia)
         states = dict(input=model.input_weight, recurrent=model.recurrent_weight,
                       readout_weight=model.readout_weight, readout_bias=model.readout_bias)
         if parameters is not None:
@@ -198,6 +217,15 @@ class H01Session:
     def _physical_context(self, wait, biology_manifest):
         if wait.model is not self.model or wait.learner is not None and wait.learner is not self.learner:
             raise ValueError('Physical wait belongs to a different H01 session')
+        configured = self.settings.get('biology')
+        if isinstance(configured, dict) and configured.get('schema') == 'h01-biology-neuroglia-v1':
+            identity = hashlib.sha256(json.dumps(configured, sort_keys=True,
+                separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+            if identity != getattr(self.model.stepper.chemistry, 'biology_sha256', None):
+                raise ValueError('Session biology differs from constructed chemistry')
+            if biology_manifest is not None and biology_manifest != configured:
+                raise ValueError('Physical biology manifest differs from constructed session')
+            biology_manifest = configured
         if self.model.stepper.chemistry is not None and not biology_manifest:
             raise ValueError('Spatial physical snapshots require an explicit immutable biology manifest')
         roots = dict(model=self.model, learner=self.learner, wait=wait)

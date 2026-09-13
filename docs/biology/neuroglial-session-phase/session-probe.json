@@ -1,0 +1,19 @@
+{
+  "status": "SYNTHETIC_NEUROGLIAL_SESSION_PASS",
+  "neurons": 1,
+  "neuronal_compartments": 7,
+  "glial_compartments": 1,
+  "dt_ms": 0.005,
+  "event_ms": 0.1,
+  "total_physical_ticks": 60,
+  "driven_events": 1,
+  "wait_events": 2,
+  "nonzero_eligibility_entries_after_drive": 119,
+  "packed_arrays": 100,
+  "all_finite": true,
+  "chemistry_valid": true,
+  "exact_fresh_session_replay": true,
+  "biology_sha256": "b25be02e137a159b845bbe5a8e814557fce40603e5ffb82f54aceaf45e8830a9",
+  "elapsed_seconds": 27.160303599986946,
+  "qualification": "Synthetic diagnostic assembly, compiler and physical/eligibility replay only; no learning accuracy or physiology qualification"
+}

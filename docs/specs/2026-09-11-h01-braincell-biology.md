@@ -249,3 +249,38 @@ K and ER/pump-accounted calcium ledgers, and exactly replayed all physical state
 after fresh snapshot restoration and reset. The 0.015 ms diagnostic and explicit
 taper/extracellular assumptions are recorded in
 `docs/biology/tapered-chemistry-phase/README.md`. Full session assembly remains next.
+
+## Explicit neuroglial session assembly phase
+
+Add h01-biology-neuroglia-v1 with nested topology-pinned spine declarations,
+one explicitly selected glial fragment and electrical settings, exact CV geometry
+digests and membrane-to-volume indices, extracellular centers/accessible volumes
+and species-specific transport/clearance/boundary rates. Require origin/basis
+declarations and explicit neuronal release destinations, doses, seeds and E/I
+source identities. No nearest-neighbor assignment or release-site inference.
+
+Construct neurons with environment K and tonic GABA before initialization; keep
+the glia outside ARC populations. Reconstruct all physical volumes and reject
+stale geometry maps before attaching chemistry. Bind the complete driver before
+learner compilation, with the same fixed physical clock. Resolve glial source
+assets by digest through caller-supplied local paths; paths are not biological
+identity and missing assets must fail explicitly.
+
+Canonical session biology must pin physical snapshots automatically and reject
+conflicting supplied manifests. Preserve legacy release/spine behavior and the
+existing biological-mutation prohibition. Gate strict manifest validation,
+compiled small-system construction, forward operation, full-state fresh-session
+checkpoint replay and learner compiler acceptance separately. Do not bypass a
+failed learner gate or call a forward-only assembly a qualified training session.
+One glial fragment is the initial supported schema; myelin, multiple-glia schema
+extensions, measured extracellular anatomy and all-104 qualification remain open.
+
+Phase result (2026-09-13): complete synthetic neuroglial session construction,
+learner compilation, driven nonzero eligibility and fresh-session physical
+replay passed. The 80-test affected gate covers existing session compatibility
+and a corrected axial-resistivity cache: bare object-ID reuse had substituted
+another quantity's resistivity. The bounded cache now retains and checks owners;
+the chemical/electrical agreement gate was not relaxed. New validator/factory
+coverage is 100%/97.06%. The diagnostic captures 100 finite arrays after 60
+physical ticks and exactly replays them, including eligibility. Evidence and
+remaining qualification are in `docs/biology/neuroglial-session-phase/README.md`.

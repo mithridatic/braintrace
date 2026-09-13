@@ -1,6 +1,6 @@
 # BRAINCELL biology implementation evidence
 
-Status on 2026-09-12: **partial implementation, not full H01/Example 21 completion**.
+Status on 2026-09-13: **partial implementation, not full H01/Example 21 completion**.
 Worktree branch: `feat/h01-braincell-biology`, based on `e21e22c`.
 The accepted contract is in [the specification](../specs/2026-09-11-h01-braincell-biology.md).
 The [spatial assembly phase](spine-phase/README.md) now connects explicit spines
@@ -13,6 +13,9 @@ and verifies its 148-compartment Kir cable with exact fresh reconstruction.
 The [tapered chemistry phase](tapered-chemistry-phase/README.md) maps that cable
 to matching calcium/K volumes and conservative branch-junction diffusion,
 including a bounded measured-fragment physical checkpoint replay.
+The [neuroglial session phase](neuroglial-session-phase/README.md) adds explicit
+extracellular/release manifests and builds the coupled model before learner
+compilation, with active-eligibility fresh-session replay on a small fixture.
 
 ## What is executable
 
@@ -35,8 +38,10 @@ including a bounded measured-fragment physical checkpoint replay.
 
 The existing baseline remains opt-in compatible. `H01Session.build` accepts
 the release-only schema and `h01-biology-spines-v1`, including explicit contact
-head targets and probabilities keyed by contact identity. A complete coupled
-glia/myelin factory is **not** available. Unsupported spatial manifests, legacy
+head targets and probabilities keyed by contact identity. The new
+`h01-biology-neuroglia-v1` schema also constructs one selected glial fragment,
+explicit extracellular fields and release maps. Multiple-glia and myelin
+factory support remains pending. Unsupported spatial manifests, legacy
 biological saves and biological topology mutation fail explicitly instead of
 dropping/reusing unmapped state. Contact identity remapping is needed even when
 counts agree.
@@ -155,13 +160,13 @@ represented as warning-free joint-biological learning evidence.
 
 ## Remaining implementation sequence
 
-1. Extend the implemented immutable spine assembly manifest and H01 session
-   factory to glia and myelin. Select and qualify local structures using the
+1. Extend the implemented spine/neuroglial manifest and H01 session
+   factory to multiple glial fragments and myelin. Select and qualify local structures using the
    coordinate/proximity audit, preserving all exclusions and synthetic fallbacks.
    Spine contact, probe and electrical-region remapping is now executable;
    general biological topology mutation and optimizer transport remain pending.
-2. Extend the now-executable neuronal spike/release, astrocyte electrical K
-   buffering and glutamate/calcium coupling to the complete spatial H01 factory.
+2. Qualify the now-executable neuronal spike/release, astrocyte electrical K
+   buffering and glutamate/calcium session factory on measured source/domain placements.
    Assemble myelin/sheath membrane dynamics with species and reservoir accounting.
 3. Resolve source myelin discretization with independent NEURON experiments;
    test long calcium-wave propagation, coupled timing and spatial refinement.

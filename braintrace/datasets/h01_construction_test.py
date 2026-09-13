@@ -12,6 +12,24 @@ from .h01_ei_circuit_test import arguments
 from .h01_construction import H01Cell, _indexed_morphology, build_dhs_static_source_1d
 
 
+def test_axial_resistivity_cache_cannot_reuse_another_quantity_identity(monkeypatch):
+    from . import h01_construction as subject
+    monkeypatch.setattr(subject,'_RA_CACHE',{})
+    # Deterministically simulate reuse of an expired object's memory address.
+    monkeypatch.setattr(subject,'id',lambda value:123,raising=False)
+    assert subject._get_ra_ohm_cm(100.*u.ohm*u.cm)==100.
+    assert subject._get_ra_ohm_cm(150.*u.ohm*u.cm)==150.
+
+
+def test_axial_resistivity_cache_bounds_retained_owners(monkeypatch):
+    from . import h01_construction as subject
+    monkeypatch.setattr(subject,'_RA_CACHE',{i:(object(),0.) for i in range(1024)})
+    quantity=120.*u.ohm*u.cm
+    assert subject._get_ra_ohm_cm(quantity)==120.
+    assert len(subject._RA_CACHE)==1
+    assert subject._get_ra_ohm_cm(quantity)==120.
+
+
 def test_h01_cell_does_not_rebuild_index_map_per_edge(imported, monkeypatch):
     owner = type(imported.morphology)
     original = owner._branch_index_map
