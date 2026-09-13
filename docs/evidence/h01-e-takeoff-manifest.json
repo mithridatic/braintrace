@@ -1,0 +1,100 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2) from the clean worktree /workspace/braintrace-q2; the library is recompiled with nrnivmodl after the patched NaTs.mod is installed, and the provenance digest (docs/evidence/h01-l2-mechanisms/slow-inactivation-provenance.json) is checked against the installed file before stage 0.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "purpose": "SP15 stage 9 (E): the fit's take-off against the approach at fixed availability. The recorded command from 1020 to 2020 ms is replaced by a current ramp (--ramp-pa-per-ms) at three rates; the driver records the soma, axon[0](0.5) and axon[1](0.5). Base candidate: the nseg-9 B3 reproduction of SP16 stage 0, unchanged. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 9 execution addendum).",
+  "cap": 3,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 1800,
+  "output_dir": "h01-e-takeoff",
+  "inputs": {
+    "ramp01": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--ramp-pa-per-ms",
+      "1.1"
+    ],
+    "ramp1": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--ramp-pa-per-ms",
+      "11.0"
+    ],
+    "ramp10": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--ramp-pa-per-ms",
+      "110.0"
+    ]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed and is not an input; sweep 53 supplies the time base and bias only.",
+  "evaluation": "One candidate at one ramp = one evaluation; three in all.",
+  "base_candidate": {
+    "file": "h01-e-sodium-slow-manifest.json#s0-repro-n9",
+    "note": "B3 at nseg 9, CVode 1e-10; reproduced the retained 310 pA reference exactly at SP16 stage 0."
+  },
+  "reference": {
+    "take_off_soma_mv": -57.2,
+    "take_off_axon1_mv": [
+      -55.2,
+      -54.3
+    ],
+    "note": "retained step-pulse trains: soma 10 V/s crossing -57.0 to -57.2 mV, axon[1](0.5) -54.3 to -55.2 mV, across 0.23 to 1.16 mV/ms (onset-shape.md)"
+  },
+  "decision_limits": {
+    "take_off_mv": 1.0,
+    "note": "4 sigma of the E recording's 0.25 mV threshold spread"
+  },
+  "stages": {
+    "9": {
+      "title": "Stage 9 (E): take-off at the soma, axon[0] and axon[1] under ramps of 1.1, 11 and 110 pA/ms",
+      "prediction": "The fit's take-off at every recorded point moves less than 1 mV across the three ramps; the approach that results is measured and reported.",
+      "rejection": "A ramp that produces no spike inside the pulse is a no-reading at that rate.",
+      "unchanged": "Everything but the command waveform."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s9-b3-n9",
+      "stage": "9",
+      "arm": "ramps",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 9: all three ramps"
+    }
+  ]
+}

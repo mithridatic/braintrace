@@ -1,0 +1,76 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv, mechanisms compiled with nrnivmodl from the same mod files as image braintrace-h01-neuron:9.0.2). The PV driver's default template/biophys/morphology paths are /work/source/*, served by a /work symlink to the library on that host.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pv/kv3-phase-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "purpose": "SP15 stage 9 (I): where does the finalist's spike begin? The unchanged PV finalist at 0.19 nA with --record-axon-probes (axon[0] at 0.1, 0.5, 0.9 and axon[1](0.5) when present). Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 9 execution addendum).",
+  "cap": 1,
+  "prior_evaluations": 0,
+  "max_concurrent": 1,
+  "abort_seconds": 1800,
+  "output_dir": "h01-i-takeoff",
+  "inputs": {
+    "019-probes": [
+      "--current-na",
+      "0.19",
+      "--duration-ms",
+      "1500",
+      "--record-axon-probes"
+    ]
+  },
+  "holdout": "0.23 nA is SPENT; sweep 48 stays sealed.",
+  "evaluation": "One evaluation.",
+  "base_candidate": {
+    "file": "h01-i-sodium-slow-manifest.json#s0-repro",
+    "note": "The PV finalist; reproduced the retained 0.19 nA reference exactly at SP16 stage 0."
+  },
+  "reference": {
+    "count": 14,
+    "soma_take_off_mv": -60.5,
+    "axon0_0.5_take_off_mv": -61.3,
+    "note": "onset-shape.md: at spike 1 the soma and axon[0](0.5) cross 10 V/s within 0.06 ms; soma span 14.2 mV"
+  },
+  "decision_limits": {
+    "lead_ms": 0.1,
+    "span_mv": 8.0
+  },
+  "stages": {
+    "9": {
+      "title": "Stage 9 (I): the order of the 10 V/s crossings at five points and the span at each, 0.19 nA",
+      "prediction": "No probe crosses 10 V/s more than 0.1 ms before the soma and every span exceeds 8 mV: the finalist has no sharp initiation site among the recorded points.",
+      "rejection": "The earliest point is axon[1](0.5): the initiation lies beyond the recorded points; no reading, the probes move outward.",
+      "unchanged": "Everything but the added probes."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s9-finalist-probes",
+      "stage": "9",
+      "arm": "probes",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      },
+      "inputs_note": "stage 9: one input"
+    }
+  ]
+}

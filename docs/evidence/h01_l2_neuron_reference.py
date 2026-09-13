@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import neuron
 from neuron import h
-from h01_l2_input import stimulus_current
+from h01_l2_input import ramp_command, stimulus_current
 from h01_l2_mesh import section_segments
 from h01_l2_calcium import calcium_removal_fit
 from h01_l2_sodium_density import sodium_density_fit
@@ -157,6 +157,8 @@ def main():
                         help=f"L2 recording sweep, one of {DRIVER_SWEEPS}; with --donor-json one of the donor's sweeps")
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--include-recorded-bias", action="store_true")
+    parser.add_argument("--ramp-pa-per-ms", type=float,
+                        help="replace the recorded command from 1020 to 2020 ms by a current ramp at this rate, capped at 2 nA")
     parser.add_argument("--nseg-factor", type=int, default=1)
     parser.add_argument("--calcium-decay-factor", type=float, default=1.)
     parser.add_argument("--stop-ms", type=float)
@@ -280,6 +282,8 @@ def main():
     source = np.load(waveform_path)
     time = source["time_ms"]
     command = source["command_current_na"]
+    if args.ramp_pa_per_ms is not None:
+        command = ramp_command(time, args.ramp_pa_per_ms)
     applied_command = stimulus_current(command, source["bias_current_na"],
                                        include_bias=args.include_recorded_bias)
     assert time.shape == command.shape and np.isfinite(command).all()
@@ -386,6 +390,8 @@ def main():
     observation_units = {}
     vectors["axon_voltage_mv"] = h.Vector().record(h.axon[1](.5)._ref_v)
     observation_units["axon_voltage_mv"] = "mV; axon[1](0.5), distal half of the 60 um stub"
+    vectors["axon0_voltage_mv"] = h.Vector().record(h.axon[0](.5)._ref_v)
+    observation_units["axon0_voltage_mv"] = "mV; axon[0](0.5), proximal half of the 60 um stub"
     balance_geometry = None
     if args.record_soma_currents:
         soma = h.soma[0](.5)
@@ -441,6 +447,7 @@ def main():
               "cvode_atol": args.cvode_atol, "integration_seconds": integration_seconds,
               "input": ("command plus recorded bias" if args.include_recorded_bias
                                                    else "source command only; bias not added"),
+              "ramp_pa_per_ms": args.ramp_pa_per_ms,
               "added_bias_na": float(source["bias_current_na"]) if args.include_recorded_bias else 0.,
               "nseg_factor": args.nseg_factor,
               "requested_stop_ms": stop_ms, "observed_stop_ms": float(arrays["time_ms"][-1]),

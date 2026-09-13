@@ -87,6 +87,8 @@ parser.add_argument("--axon-calcium-decay-ms", type=float)
 parser.add_argument("--axon-calcium-gamma", type=float)
 parser.add_argument("--observe-spike-currents", action="store_true")
 parser.add_argument("--observe-charge-balance", action="store_true")
+parser.add_argument("--record-axon-probes", action="store_true",
+                    help="also record axon[0] at 0.1, 0.5 and 0.9 and axon[1](0.5) when present")
 parser.add_argument("--sodium-h-tau-factor", type=float, default=1.)
 parser.add_argument("--sodium-h-recovery-factor", type=float)
 parser.add_argument("--sodium-h-slope-mv", type=float)
@@ -288,6 +290,11 @@ ih = h.Vector().record(cell.soma[0](.5).Ih._ref_m) if not args.passive else []
 nap_h = (h.Vector().record(cell.soma[0](.5).Nap._ref_h)
          if not args.passive and "Nap" in cell.soma[0].psection()["density_mechs"] else [])
 spike_probes = {}
+if args.record_axon_probes:
+    for position in (.1, .5, .9):
+        spike_probes[f"axon0_{position:.1f}_voltage_mv"] = h.Vector().record(cell.axon[0](position)._ref_v)
+    if len(list(cell.axon)) > 1:
+        spike_probes["axon1_0.5_voltage_mv"] = h.Vector().record(cell.axon[1](.5)._ref_v)
 balance_geometry = None
 if (args.observe_spike_currents or args.observe_charge_balance) and not args.passive:
     soma = cell.soma[0](.5)

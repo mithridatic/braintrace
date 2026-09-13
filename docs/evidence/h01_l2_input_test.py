@@ -38,3 +38,14 @@ def test_bias_applies_to_baseline_and_every_pulse(bias):
 def test_invalid_inputs_are_rejected(command, bias, selected):
     with pytest.raises(ValueError):
         stimulus_current(command, bias, include_bias=selected)
+
+
+def test_ramp_command_is_zero_outside_the_window_linear_inside_and_capped():
+    from docs.evidence.h01_l2_input import ramp_command
+    time = np.array([0., 1019.98, 1020., 1120., 1520., 2019.98, 2020., 3000.])
+    ramp = ramp_command(time, 11.)          # 11 pA/ms
+    np.testing.assert_allclose(ramp, [0., 0., 0., 1.1, 2., 2., 0., 0.])
+    with pytest.raises(ValueError):
+        ramp_command(time, 0.)
+    with pytest.raises(ValueError):
+        ramp_command(np.array([[0.]]), 1.)

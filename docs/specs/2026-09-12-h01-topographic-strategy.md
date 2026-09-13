@@ -331,3 +331,32 @@ Two Y questions before any lever, both from retained traces or one cheap run eac
   than 0.1 ms before the soma and every span exceeds 8 mV; the fit's initiation site is
   the input to change, and the change is registered as a 2x2 with the E cell only if the E
   question above also lands on the initiation site.
+
+## Stage 9 execution addendum (registered 2026-09-12 before the runs)
+
+Driver changes, both additive: the L2 driver gains `--ramp-pa-per-ms RATE`, which replaces
+the recorded command from 1020 to 2020 ms by a linear current ramp `RATE x (t - 1020 ms)`
+capped at 2 nA (the bias is handled as before; the sweep supplies the time base only), and
+always records `axon0_voltage_mv` at `axon[0](0.5)` beside the existing `axon[1](0.5)`; the
+PV driver gains `--record-axon-probes`, which records `axon[0]` at 0.1, 0.5 and 0.9 and
+`axon[1](0.5)` when present. Neither changes a default output.
+
+Ramp rates: 1.1, 11 and 110 pA/ms, chosen so that with the fit's 91 MOhm and 124 pF the
+quasi-steady approach is about 0.1, 1 and 10 mV/ms; the approach that results is measured,
+not assumed. Base candidate: the nseg-9 B3 reproduction of SP16 stage 0 (`s0-repro-n9`),
+unchanged. E manifest `h01-e-takeoff-manifest.json` (cap 3, three inputs); I manifest
+`h01-i-takeoff-manifest.json` (cap 1, the finalist at 0.19 nA with probes). Scorer
+`h01_topographic_stage9.py`: (a) the retained-trace E reading (later-spike take-off residual
+against the preceding interval, from the stage-7 tables); (b) the ramp runs: take-off (first
+10 V/s crossing) at the soma, at `axon[0]` and at `axon[1]` against the measured approach,
+and the onset span at each; (c) the I probe run: the order of the 10 V/s crossings at the
+five points and the span at each.
+
+Predictions: E (a) if the post-spike step recovers with the interval, the residual falls
+with interval at fixed approach by more than 3 sigma (0.75 mV) across the retained
+intervals (7 to 200 ms); if it is a fixed step, the residual is flat within 3 sigma.
+E (b) the fit's take-off at every point moves less than 1 mV (4 sigma) across the three
+ramps. I (c) no probe crosses 10 V/s more than 0.1 ms before the soma and every span exceeds
+8 mV. Rejections: a ramp that produces no spike inside the pulse (no reading at that rate);
+a probe reading in which the earliest point is `axon[1]` (the initiation lies beyond the
+recorded points; the run is a no-reading and the probes move outward). Four evaluations.
