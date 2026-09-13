@@ -7,7 +7,7 @@
   "library": "human-sodium-source",
   "driver": "h01_l2_neuron_reference.py",
   "purpose": "Stage 15 arm A (rise): swap the somatic sodium equations, human for rodent, on the human cell. The somatic rodent NaTs (gbar 2.641 S/cm2) is zeroed and the Toronto human NaTg is inserted on the soma with HL23PYR's human voltage shifts (vshiftm 13, vshifth 15, slopem 7), dosed across four densities to give the characteristic curve of the spike-1 rise. Everything else is held: the human anatomy, the human-fitted densities elsewhere, the recorded command, nseg 9, CVode 1e-10, 34 C. See docs/specs/2026-09-12-h01-topographic-strategy.md, stage 15.",
-  "cap": 5,
+  "cap": 8,
   "prior_evaluations": 0,
   "max_concurrent": 2,
   "abort_seconds": 3000,
@@ -131,14 +131,78 @@
       },
       "stage": "15",
       "arm": "arm A: human sodium equations on the human cell"
+    },
+    {
+      "name": "s15-natg-1320",
+      "stage": "15",
+      "arm": "arm A (amended bracket): human sodium equations at B3's own somatic conductance",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "regional_density": [
+          "NaTs:soma:0"
+        ],
+        "insert_density": [
+          "NaTg:soma:1.320"
+        ],
+        "mechanism_parameter": [
+          "NaTg:soma:vshiftm:13",
+          "NaTg:soma:vshifth:15",
+          "NaTg:soma:slopem:7"
+        ]
+      }
+    },
+    {
+      "name": "s15-natg-2641",
+      "stage": "15",
+      "arm": "arm A (amended bracket): human sodium equations at B3's own somatic conductance",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "regional_density": [
+          "NaTs:soma:0"
+        ],
+        "insert_density": [
+          "NaTg:soma:2.641"
+        ],
+        "mechanism_parameter": [
+          "NaTg:soma:vshiftm:13",
+          "NaTg:soma:vshifth:15",
+          "NaTg:soma:slopem:7"
+        ]
+      }
+    },
+    {
+      "name": "s15-natg-5282",
+      "stage": "15",
+      "arm": "arm A (amended bracket): human sodium equations at B3's own somatic conductance",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "regional_density": [
+          "NaTs:soma:0"
+        ],
+        "insert_density": [
+          "NaTg:soma:5.282"
+        ],
+        "mechanism_parameter": [
+          "NaTg:soma:vshiftm:13",
+          "NaTg:soma:vshifth:15",
+          "NaTg:soma:slopem:7"
+        ]
+      }
     }
   ],
   "stages": {
     "15": {
       "title": "Stage 15 arm A: the somatic sodium equations swapped human for rodent on the human cell, dosed for the characteristic curve of the rise at 310 pA",
-      "prediction": "The spike-1 rise through the stage-12 chain falls monotonically with the inserted human NaTg density, giving the characteristic curve; if the equation lineage is the rise's remaining input, some dose in 0.068 to 0.544 S/cm2 puts the rise within 15 percent of the recorded 348 V/s while the 310 pA count stays within 5 to 15 (recorded 10) and the spike-1 take-off stays in the recorded band. The dose at which the curve crosses 348 is reported by interpolation and flagged inside or outside the series. Reported, not banded: fall, peak, threshold, the first-interval threshold step and the rise ratio spike 5 over spike 1.",
+      "prediction": "The spike-1 rise through the stage-12 chain falls monotonically with the inserted human NaTg density, giving the characteristic curve; if the equation lineage is the rise's remaining input, some dose in 0.068 to 0.544 S/cm2 puts the rise within 15 percent of the recorded 348 V/s while the 310 pA count stays within 5 to 15 (recorded 10) and the spike-1 take-off stays in the recorded band. The dose at which the curve crosses 348 is reported by interpolation and flagged inside or outside the series. Reported, not banded: fall, peak, threshold, the first-interval threshold step and the rise ratio spike 5 over spike 1. Amended bracket: at B3's own somatic conductance 2.641 S/cm2 the equations alone are swapped, and the curve is read across 1.320 / 2.641 / 5.282 together with the four retained lower doses.",
       "rejection": "No dose brings the rise within 15 percent of 348 (the equation lineage is not the remaining input; the residual belongs elsewhere and is reported, not repaired); or every dose that does also leaves the count band (the rise is bought with the count); or the rise does not move monotonically with the dose (the dose is not acting through the somatic sodium).",
       "unchanged": "The human anatomy of Allen 541563728 and every non-somatic-sodium density of the B3 fit; the recorded command plus the recorded bias; sweep 53 only; nseg factor 9; CVode 1e-10; 34 degrees; stop 2100 ms; the recording, its chain and the readers. Only the somatic sodium equations change: rodent NaTs zeroed, human NaTg inserted with HL23PYR's voltage shifts."
     }
-  }
+  },
+  "amendment": "Recorded 2026-09-13 after the first four runs, before the second bracket. The first series (0.068 / 0.136 / 0.272 / 0.544 S/cm2) was bracketed on HL23PYR's own somatic NaTg value 0.272, which does not transfer to this cell: at 0.068 and 0.136 the cell is silent at 310 pA (no spike, rest -84.5 mV), because B3's soma carries 2.641 S/cm2 of sodium and the human NaTg's +13 mV activation shift needs at least as much. The corrected bracket holds B3's OWN somatic sodium conductance and changes only the equations, which is the cleaner isolation the split wanted: 1.320 (0.5x), 2.641 (1x, the matched-density equation swap) and 5.282 (2x). The silent runs are retained and reported as the low end of the characteristic curve, not discarded."
 }
