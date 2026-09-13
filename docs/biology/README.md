@@ -16,6 +16,9 @@ including a bounded measured-fragment physical checkpoint replay.
 The [neuroglial session phase](neuroglial-session-phase/README.md) adds explicit
 extracellular/release manifests and builds the coupled model before learner
 compilation, with active-eligibility fresh-session replay on a small fixture.
+The [neuroglial learning phase](neuroglial-learning-phase/README.md) tests
+finite-window encoder gradients through that session, BPTT/finite-difference
+agreement and bounded diagnostic descent with independent input patterns.
 
 ## What is executable
 
@@ -32,7 +35,7 @@ compilation, with active-eligibility fresh-session replay on a small fixture.
 | Tapered calcium/K map | Integrated CV volumes and areas, four source shell fractions, conservative shared-junction diffusion | 148-CV calcium/K ledger and physical replay at 0.015 ms; diagnostic extracellular pools, no 3-D taper or long-wave qualification |
 | Neuron-to-glia glutamate | Actual excitatory spikes drive explicitly dosed sites, extracellular transport and mapped IP3/calcium | Synthetic diagnostic dose, short calcium response against no-glutamate control; no physiological vesicle-dose or long-wave qualification |
 | Myelin K | Explicit axon/sheath pools, radial transport, node bath boundaries, source pump laws | Conservative physical discretization; not exact source RxD equivalence, no coupled sheath electrical model |
-| Learning | Finite-window pp-prop chemical-feedback test, finite nonzero updates and diagnostic descent | Small chemical model only; not joint full-cable/glia/myelin training |
+| Learning | Finite-window chemical-feedback and synthetic full neuroglial session encoder diagnostics, BPTT directional checks and bounded descent | No recurrent contacts in the session fixture; ARC, stochastic-release gradients and joint myelin training remain unqualified |
 | Physical waits | Exact .1 ms silent events, bounded compiled chunks, optional eligibility evolution, padding does not advance | Tiny durations exercised; 0/1/10/20-second counts tested, full-duration biological runs not performed |
 | Physical checkpoints | v2 model/learner/chemistry/RNG/queue/cursor/optimizer capture, identity checks, atomic save and replay | Whole-event wait boundaries and already constructed matching sessions; no inside-cable-substep resume or automatic spatial reconstruction |
 

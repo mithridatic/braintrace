@@ -284,3 +284,37 @@ the chemical/electrical agreement gate was not relaxed. New validator/factory
 coverage is 100%/97.06%. The diagnostic captures 100 finite arrays after 60
 physical ticks and exactly replays them, including eligibility. Evidence and
 remaining qualification are in `docs/biology/neuroglial-session-phase/README.md`.
+
+## Bounded neuroglial session learning qualification
+
+Use the existing explicit synthetic seven-CV neuron / one-CV glia session,
+with three 0.1 ms input events and the fixed 0.005 ms cable clock. Evaluate
+the squared soma-voltage diagnostic objective, not ARC accuracy. Compare sparse
+pp-prop gradients from `chunked_online_param_gradients` with chunk_size=1 and
+compiled_scan=True at two decay settings. Require finite nonzero encoder
+gradients and a measurable decay dependence. Do not assert exact BPTT equality
+for this approximate rule.
+
+Use three linearly independent feature patterns (opposed ramps and an
+alternating pattern), and require input rank three. Require positive BPTT
+alignment and relative gradient error below one for this bounded diagnostic.
+
+Independently differentiate the full physical trajectory using BPTT and check
+its projection against a centered finite difference from identical reset states.
+Report approximate/reference alignment and relative error and test a small
+normalized encoder update for objective descent. Preserve deterministic physical
+and RNG resets for every comparison. Gate physical validity and record chemical
+state changes, while making no gradient claim across discrete release events.
+
+Save source identities, settings, numerical metrics and qualification boundaries.
+Each local run remains below 15 minutes. This phase does not establish measured
+extracellular anatomy, recurrent-contact learning, ARC optimizer performance,
+long calcium waves or full-population runtime.
+
+Phase result (2026-09-13): 18 affected CPU tests passed with 98.91% diagnostic
+module coverage. Independent input patterns produced an 8.17% decay-dependent
+gradient difference, 2.79% relative error against BPTT and a successful bounded
+encoder descent step. The BPTT directional derivative matched finite differences
+to 9.24e-10 relative error. The 60-tick synthetic trajectory released no glutamate;
+event-triggered transmitter gradients and recurrent contacts remain unqualified.
+Evidence and source identities are in `docs/biology/neuroglial-learning-phase/README.md`.
