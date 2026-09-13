@@ -348,3 +348,34 @@ BPTT despite cosine 0.999528. This qualifies direction/descent only; gradient
 magnitude and configured-decay (0.99) contact accuracy remain unqualified. Next
 is an analytic queue-credit reference to distinguish expected attenuation from
 an implementation defect. See `docs/biology/neuroglial-contact-phase/README.md`.
+
+## Analytic delayed-credit diagnosis
+
+Use a linear shift-register model with the same weight-only element-wise ETP
+operation as H01 contact magnitude. For an impulse at event s arriving at
+t=s+d, the exact squared-output gradient is 2*w (unit impulse). With d>0,
+the implemented normalized output trace predicts its ratio to BPTT as
+(1-a)*a**(d-1)/(1-a**t), where a is the output-trace decay and t counts
+completed events before the loss event. Direct zero-delay credit stays exact.
+Compare this closed form against one-event compiled finite-window gradients,
+BPTT and finite differences, including zero decay, delayed emission, negative
+weights away from the absolute-value kink, and configured decay 0.99.
+
+Run the unchanged full synthetic two-contact neuroglial fixture at decay 0.99
+from a matching reset, with fresh BPTT, finite-difference and descent checks.
+Keep the earlier 0.2/0.8 evidence historical. Distinguish verified trace-law
+attenuation from a demonstrated implementation defect; do not silently rescale
+gradients or alter the production algorithm from this diagnostic alone.
+Record source identities and affected tests; each local run stays below
+15 minutes. High-accuracy contact learning and endogenous recurrent firing
+remain unqualified unless independently demonstrated.
+
+Phase result (2026-09-13): 20 affected tests passed with 100% new diagnostic
+module coverage. All 16 analytic cases match the derived normalized trace law;
+the controls show attenuation without a queue-index or autodiff defect in this
+model. The unchanged full contact fixture at configured decay 0.99 has 86.37%
+relative gradient error and 13.64% of BPTT's gradient norm. Fresh BPTT and forward
+trajectories match prior evidence; finite differences and normalized descent
+pass. Production pp-prop is unchanged. The next candidate is a separately
+specified exact accumulator for weight-only operations with mixed-operation
+regressions. Evidence: `docs/biology/delayed-credit-phase/README.md`.

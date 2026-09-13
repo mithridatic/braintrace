@@ -1,0 +1,115 @@
+{
+  "status": "TRACE_LAW_VERIFIED_CONTACT_MAGNITUDE_UNQUALIFIED",
+  "full_biology_status": "INCOMPLETE",
+  "date": "2026-09-13",
+  "base_commit": "4e7a65c",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "20",
+    "time": "117.135",
+    "timestamp": "2026-09-13T12:32:40.242524-07:00",
+    "hostname": "KYOSHI"
+  },
+  "warnings": 4,
+  "coverage": {
+    "covered_lines": 111,
+    "num_statements": 111,
+    "percent_covered": 100.0,
+    "percent_covered_display": "100",
+    "missing_lines": 0,
+    "excluded_lines": 2,
+    "percent_statements_covered": 100.0,
+    "percent_statements_covered_display": "100"
+  },
+  "implementation_sha256": {
+    "docs/biology/default_contact_probe.py": "01f35f74212037503c721c87060ce076400267afc207b6ac90d611afda5a810b",
+    "docs/biology/default_contact_probe_test.py": "7565cbee2f619bb03c7d6e477d63463bed77cacbf492ca2603a46cf0810bd3b8",
+    "docs/biology/delayed_credit_probe.py": "8f7de6317c40559b34e840a287b8ce3e65a1defe761b36963ab259424d0b2e4f",
+    "docs/biology/delayed_credit_probe_test.py": "1c3b6482a177c475cc172a0e677b94a4061ca659fe0f2ab07016af30b07c8ef7",
+    "docs/biology/neuroglial_contact_probe.py": "3538fdf944f6d6ad45ae1aeb78757598d27438ff97a67d0d2da6f52e24bf345d",
+    "braintrace/_testing/oracle.py": "0e82e4429d49cb6fa785f09ac467a1c056e1b2f05ac8d1e9095b69b96e9e9c7f",
+    "examples/pp_prop/h01_neuroglial_test.py": "2135dde369a37069eb23ce8f027149ff67246ae7e53ee41376fad4e7dc2ddd46",
+    "examples/pp_prop/h01_runtime_test.py": "e7e4c29ce893840db41d2928558f707462cb25c27600a313c68d645547764cf9",
+    "braintrace/datasets/h01_test.py": "9f21b92fbf3539b603a460caa617b5331a9813e9e04595b9e556a197da61b0fc",
+    "braintrace/datasets/h01_anatomy_test.py": "a38f51fc759694e7f8cfadd24f664e96a7223dc1cb4f96cd32dc2f33b18fc753",
+    "braintrace/datasets/h01_glia_test.py": "041ccd4b18ac8a778014b36f8cb3c56682a9e3340d9c434e5de7fcb9f9b7fdd6"
+  },
+  "artifact_sha256": {
+    "docs/biology/delayed-credit-phase/default-contact.json": "43877dcc3d0b908daecc4b2a852e3bb7ce670e567c11cdb612a6cc1bac57eb81",
+    "docs/biology/delayed-credit-phase/analytic-sweep.json": "e9eff89b0d590d1a6a6ef07260e61c9682823ba482350114788a9795a34b9f64",
+    "docs/biology/delayed-credit-phase/settings.json": "9e34e1b8309921c79f1f5ab208f80ee30a6eca22de291c0f20c3db2fd7b07b2e",
+    "docs/biology/delayed-credit-phase/coverage.json": "04a0696f7ea6c5156864daca2558b8f086740424064ded68005696c51f936849",
+    "docs/biology/delayed-credit-phase/verification.xml": "0f77a628671c4a4b6fbc4b803629a96a939ed4ac81adca482f5ac455cbbad409"
+  },
+  "reference_artifact_sha256": {
+    "docs/biology/neuroglial-contact-phase/contact-probe.json": "1a283b9e0727a21a9bbd8779cd622ad5983569db7cbfeada25561169198c9dd6"
+  },
+  "production_algorithm_changed": false,
+  "diagnostic": {
+    "decay": 0.99,
+    "chunk_size": 1,
+    "physical_ticks": 180,
+    "online_gradient": [
+      -1079639.4750238138,
+      -380566.60447467095
+    ],
+    "bptt_gradient": [
+      -7866518.268547518,
+      -2932949.186657081
+    ],
+    "relative_error": 0.8636726072515419,
+    "norm_ratio": 0.13635291202407532,
+    "cosine": 0.9998383608141277,
+    "bptt_projection": 8394135.833576422,
+    "finite_difference": 8394135.835987981,
+    "objective_before": 106990.0885490308,
+    "objective_after": 106989.24915044023,
+    "trajectory_mv": [
+      [
+        -84.03742240320936,
+        -84.08280901077426
+      ],
+      [
+        -84.07789616024631,
+        -84.21246876107658
+      ],
+      [
+        -84.10230496498747,
+        -84.3686847777262
+      ],
+      [
+        -84.11108351533878,
+        -84.55074672397399
+      ],
+      [
+        -84.10465364955398,
+        -84.75796340800765
+      ],
+      [
+        -84.08342480375487,
+        -84.98966218942478
+      ],
+      [
+        -84.04779442261604,
+        -69.31964566965092
+      ],
+      [
+        -55.56191122013387,
+        -57.46990222552089
+      ],
+      [
+        -35.06496286386759,
+        -47.35811088445249
+      ]
+    ],
+    "chemistry_valid": true,
+    "status": "TRACE_LAW_VERIFIED_DEFAULT_CONTACT_MAGNITUDE_UNQUALIFIED",
+    "previous_probe_sha256": "1a283b9e0727a21a9bbd8779cd622ad5983569db7cbfeada25561169198c9dd6",
+    "probe_sha256": "01f35f74212037503c721c87060ce076400267afc207b6ac90d611afda5a810b",
+    "elapsed_seconds": 106.12677570001688
+  },
+  "qualification": "Analytic current-trace attenuation verified; configured-decay fixed-impulse contact direction/descent pass but magnitude remains unqualified. No endogenous recurrent firing, ARC, measured anatomy, GPU or all-104 qualification."
+}

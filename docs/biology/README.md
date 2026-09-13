@@ -24,6 +24,10 @@ contacts with fixed presynaptic impulses and native delays. Its direction and
 normalized-descent gates pass, but **93.38% relative gradient error at decay 0.8**
 leaves contact-gradient magnitude unqualified; the earlier encoder error is
 not a general accuracy bound.
+The [analytic delayed-credit phase](delayed-credit-phase/README.md) verifies
+attenuation from the implemented weight-only output-trace law. The full contact
+error is still **86.37% at the configured decay 0.99**. An exact weight-only
+influence accumulator is the next candidate; production pp-prop is unchanged.
 
 ## What is executable
 
@@ -40,7 +44,7 @@ not a general accuracy bound.
 | Tapered calcium/K map | Integrated CV volumes and areas, four source shell fractions, conservative shared-junction diffusion | 148-CV calcium/K ledger and physical replay at 0.015 ms; diagnostic extracellular pools, no 3-D taper or long-wave qualification |
 | Neuron-to-glia glutamate | Actual excitatory spikes drive explicitly dosed sites, extracellular transport and mapped IP3/calcium | Synthetic diagnostic dose, short calcium response against no-glutamate control; no physiological vesicle-dose or long-wave qualification |
 | Myelin K | Explicit axon/sheath pools, radial transport, node bath boundaries, source pump laws | Conservative physical discretization; not exact source RxD equivalence, no coupled sheath electrical model |
-| Learning | Finite-window encoder and fixed-impulse reciprocal-contact diagnostics, independent directional checks and normalized descent | Contact magnitude remains unqualified (93.38% error at decay 0.8); no endogenous recurrent-learning, ARC, stochastic-release-gradient or joint myelin qualification |
+| Learning | Finite-window encoder/contact diagnostics, analytic queue-credit law, independent references and normalized descent | Contact magnitude remains unqualified (86.37% error at default decay 0.99); no endogenous recurrent-learning, ARC, stochastic-release-gradient or joint myelin qualification |
 | Physical waits | Exact .1 ms silent events, bounded compiled chunks, optional eligibility evolution, padding does not advance | Tiny durations exercised; 0/1/10/20-second counts tested, full-duration biological runs not performed |
 | Physical checkpoints | v2 model/learner/chemistry/RNG/queue/cursor/optimizer capture, identity checks, atomic save and replay | Whole-event wait boundaries and already constructed matching sessions; no inside-cable-substep resume or automatic spatial reconstruction |
 

@@ -1,0 +1,386 @@
+[
+  {
+    "delay": 0,
+    "emission": 0,
+    "decay": 0.0,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 0,
+    "emission": 0,
+    "decay": 0.2,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 0,
+    "emission": 0,
+    "decay": 0.8,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 0,
+    "emission": 0,
+    "decay": 0.99,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 1,
+    "emission": 0,
+    "decay": 0.0,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 1,
+    "emission": 0,
+    "decay": 0.2,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 1,
+    "emission": 0,
+    "decay": 0.8,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 1,
+    "emission": 0,
+    "decay": 0.99,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 1.0,
+    "predicted_gradient": [
+      1.0,
+      -1.4
+    ],
+    "online_gradient": [
+      1.0,
+      -1.4
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 0,
+    "decay": 0.0,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.0,
+    "predicted_gradient": [
+      0.0,
+      -0.0
+    ],
+    "online_gradient": [
+      0.0,
+      0.0
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 0,
+    "decay": 0.2,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.0012804097311139568,
+    "predicted_gradient": [
+      0.0012804097311139568,
+      -0.0017925736235595395
+    ],
+    "online_gradient": [
+      0.001280409731113957,
+      -0.00179257362355954
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 0,
+    "decay": 0.8,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.12184673964778678,
+    "predicted_gradient": [
+      0.12184673964778678,
+      -0.17058543550690147
+    ],
+    "online_gradient": [
+      0.12184673964778676,
+      -0.17058543550690147
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 0,
+    "decay": 0.99,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.1960002015998786,
+    "predicted_gradient": [
+      0.1960002015998786,
+      -0.27440028223983004
+    ],
+    "online_gradient": [
+      0.1960002015998788,
+      -0.2744002822398303
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 2,
+    "decay": 0.0,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.0,
+    "predicted_gradient": [
+      0.0,
+      -0.0
+    ],
+    "online_gradient": [
+      0.0,
+      0.0
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 2,
+    "decay": 0.2,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.0012800163842097182,
+    "predicted_gradient": [
+      0.0012800163842097182,
+      -0.0017920229378936053
+    ],
+    "online_gradient": [
+      0.0012800163842097187,
+      -0.0017920229378936058
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 2,
+    "decay": 0.8,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.1036588328663287,
+    "predicted_gradient": [
+      0.1036588328663287,
+      -0.14512236601286016
+    ],
+    "online_gradient": [
+      0.1036588328663287,
+      -0.14512236601286016
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  },
+  {
+    "delay": 5,
+    "emission": 2,
+    "decay": 0.99,
+    "exact_gradient": [
+      1.0,
+      -1.4
+    ],
+    "predicted_ratio": 0.1414000043284005,
+    "predicted_gradient": [
+      0.1414000043284005,
+      -0.1979600060597607
+    ],
+    "online_gradient": [
+      0.14140000432840055,
+      -0.19796000605976077
+    ],
+    "bptt_gradient": [
+      1.0,
+      -1.4
+    ],
+    "finite_difference": 1.7199999999939484,
+    "exact_projection": 1.7199999999999998
+  }
+]
