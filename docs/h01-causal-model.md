@@ -533,10 +533,33 @@ what the two bases merely share but by the current that carries the excess: the 
 is the soma's own sodium above -40 mV, and dosing or swapping its equations as a
 characteristic curve of the rise through the chain, with the count and the take-off held, is
 the finishing step, not the start. Had the axon[0] leg been the majority above -40 mV the
-dose would have been refused for the coupling. The climb's first-interval step has a positive
-control in HL23PYR's sodium; the second half of the stage-13 split, that biophysics on this
-cell's anatomy, is worth one run for the step alone, and the accumulation that follows the
-step remains without a counterpart on any base.
+dose would have been refused for the coupling.
+[Stage 15](evidence/h01-topographic/stage-15.md) ran that finishing step and it refuted the
+equation lineage as the rise's remaining input. The somatic rodent NaTs was zeroed and the
+Toronto human NaTg inserted in its place with HL23PYR's human voltage shifts, on this cell's
+own anatomy and densities, dosed over a 78-fold range. Below B3's own somatic conductance the
+cell does not fire at all: 0.068 to 1.320 S/cm2 are silent at 310 pA, resting on a
+subthreshold plateau near -49 mV -- above B3's own -57 mV take-off -- which an eight-fold
+density change moves by 0.8 mV. The human sodium's +13 mV activation shift is fitted to work
+against the Toronto potassium set; against Allen's rodent-lineage potassium, itself fitted to
+a sodium that activates 13 mV lower, it never activates. Kinetics are fitted as a set, not as
+interchangeable parts. At the matched conductance the cell fires six spikes and rises at
+625 V/s through the chain, against B3's 570 and the recorded 348: the human equations rise
+faster, not slower. The registered rejection fired and the residual is reported, not repaired.
+Nor is the fully human-fitted model closer to this human cell: over ten elements at 310 pA
+HL23PYR scores 72.3 percent against B3's 71.8, the two failing in complementary ways --
+HL23PYR wins the first-interval threshold step (99.7 against 0.0) and loses the excitability
+(count 20 against 10). So the rodent kinetic lineage, which the search treated as the last
+unquestioned input, is worth about half a point; it is not what separates either model from
+this recording. What separates them is concentrated: of the 28.2 points B3 is missing, the two
+threshold-climb elements carry 19.4 and the rise 6.4, and every other element is already
+between 90 and 100 percent. The climb's first-interval step has a positive control in
+HL23PYR's sodium while B3 holds the excitability, so the one split left worth running is what
+gives HL23PYR its climb, placed in B3 without breaking the count. The second half of the
+stage-13 split cannot supply it: the published Toronto template will not construct on this
+cell's morphology, and editing it would break the split's unchanged condition, so that arm is
+closed as a no-reading. The accumulation that follows the step remains without a counterpart
+on any base.
 
 **Limit.** No sufficient repair is established, and B3 stays unpromoted. The measured facts
 are that the recorded take-off slides with the approach and rises after a spike while the

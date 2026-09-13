@@ -1,0 +1,164 @@
+[
+  {
+    "name": "s15-natg-0068",
+    "candidate_sha256": "975bed7236cd9a692d32b57ee96a87be04cf427b953627b830afe3df3f26ac8b",
+    "evaluation_index": 1,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s15-natg-0068",
+        "input": "sweep53",
+        "seconds": 509.83217187039554,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-human-sodium/s15-natg-0068-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0068.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0068-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s15-natg-0136",
+    "candidate_sha256": "0b949e57cb11d4316d420d2b488c5001175ec78d01760d6765f1918d410cb6b7",
+    "evaluation_index": 2,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s15-natg-0136",
+        "input": "sweep53",
+        "seconds": 506.1739968592301,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-human-sodium/s15-natg-0136-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0136.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0136-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s15-natg-0272",
+    "candidate_sha256": "75a465eb57806d2bc3633633a52fd6437746317339d2d06b9e78bb91b9a432e2",
+    "evaluation_index": 3,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s15-natg-0272",
+        "input": "sweep53",
+        "seconds": 515.7556556425989,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-human-sodium/s15-natg-0272-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0272.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0272-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s15-natg-0544",
+    "candidate_sha256": "e4fd6837562fdba2a2be8afe8392c5d83a74f9fb5c177b5f77ecc744df838c11",
+    "evaluation_index": 4,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s15-natg-0544",
+        "input": "sweep53",
+        "seconds": 512.6892534112558,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-human-sodium/s15-natg-0544-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0544.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-human-sodium/s15-natg-0544-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s15-natg-1320",
+    "candidate_sha256": "d00bed39ae731cae6b3e02430cbb614bf1000b777504b0932d1ee4aa272bc142",
+    "evaluation_index": 5,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "untested"
+    },
+    "runs": []
+  },
+  {
+    "name": "s15-natg-2641",
+    "candidate_sha256": "ead7cc642d80f14097ce372d8e95819bcd1fa2a67bd987145ec79a39437e07fe",
+    "evaluation_index": 6,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "untested"
+    },
+    "runs": []
+  },
+  {
+    "name": "s15-natg-5282",
+    "candidate_sha256": "8e50c6bf6a0a33c0ddd195a529150bfa93acb8bf11fcb1a058589c7b33171192",
+    "evaluation_index": 7,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "untested"
+    },
+    "runs": []
+  }
+]

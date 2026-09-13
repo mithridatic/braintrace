@@ -28,7 +28,11 @@ from h01_topographic_threshold import E_NWB
 DOSES = {"0.068": "h01-e-human-sodium/s15-natg-0068-sweep53",
          "0.136": "h01-e-human-sodium/s15-natg-0136-sweep53",
          "0.272": "h01-e-human-sodium/s15-natg-0272-sweep53",
-         "0.544": "h01-e-human-sodium/s15-natg-0544-sweep53"}
+         "0.544": "h01-e-human-sodium/s15-natg-0544-sweep53",
+         "1.320": "h01-e-human-sodium/s15-natg-1320-sweep53",
+         "2.641": "h01-e-human-sodium/s15-natg-2641-sweep53",
+         "5.282": "h01-e-human-sodium/s15-natg-5282-sweep53"}
+HL23PYR_RUN = "h01-e-donor/s13-hl23pyr-step310"   # the fully human-fitted model, for the accuracy comparison
 B3_RUN = "h01-e-currents/m0-b3-currents-sweep53"
 RECORDED_SWEEP = 53
 RISE_FRACTION = .15                      # registered band around the recorded rise
@@ -66,15 +70,24 @@ def recorded(chain):
 
 
 def curve(runs):
-    """The characteristic curve: spike-1 rise against the inserted human sodium density."""
-    points = [{"dose_s_cm2": float(d), "rise_v_s": r["spikes"][0]["rise_v_s"], "count": r["count"]}
-              for d, r in runs.items() if r.get("status") == "read"]
+    """The characteristic curve: spike-1 rise against the inserted human sodium density.
+
+    Silent doses are kept with rise None and count 0: where the cell stops firing is part of the
+    curve, and the low end of this series is silent at every dose below B3's own conductance.
+    """
+    points = []
+    for d, r in runs.items():
+        if r.get("status") == "read":
+            points.append({"dose_s_cm2": float(d), "rise_v_s": r["spikes"][0]["rise_v_s"], "count": r["count"]})
+        elif r.get("status") in ("no spike",):
+            points.append({"dose_s_cm2": float(d), "rise_v_s": None, "count": 0})
     points.sort(key=lambda p: p["dose_s_cm2"])
     return points
 
 
 def crossing(points, target):
     """Dose at which the curve crosses the recorded rise, by linear interpolation; None if outside."""
+    points = [p for p in points if p.get("rise_v_s") is not None]
     for a, b in zip(points, points[1:]):
         lo, hi = sorted((a["rise_v_s"], b["rise_v_s"]))
         if lo <= target <= hi and a["rise_v_s"] != b["rise_v_s"]:
@@ -124,16 +137,17 @@ def decide(result):
     def add(reading, prediction, value, passed, note=""):
         checks.append({"reading": reading, "prediction": prediction, "value": value, "pass": passed, "note": note})
     pts = result["curve"]
-    if len(pts) < 2:
+    if len([p for p in pts if p["rise_v_s"] is not None]) < 1:
         add("a", "characteristic curve of the rise against the human sodium density", None, None, "fewer than two doses read")
         return {"verdict": "no reading", "checks": checks}
-    rises = [p["rise_v_s"] for p in pts]
+    firing = [p for p in pts if p["rise_v_s"] is not None]
+    rises = [p["rise_v_s"] for p in firing]
     monotone = all(b >= a-1e-9 for a, b in zip(rises, rises[1:]))
     add("a", "the rise rises monotonically with the inserted human sodium density (the dose acts through the somatic sodium)",
-        {p["dose_s_cm2"]: round(p["rise_v_s"], 1) for p in pts}, monotone,
+        {p["dose_s_cm2"]: (round(p["rise_v_s"], 1) if p["rise_v_s"] is not None else "silent") for p in pts}, monotone,
         f"crossing of the recorded 348 V/s: {result['crossing']}")
     target = result["recorded_reference"]["rise_v_s"]
-    inband = [p for p in pts if abs(p["rise_v_s"]-target) < RISE_FRACTION*target]
+    inband = [p for p in firing if abs(p["rise_v_s"]-target) < RISE_FRACTION*target]
     holds = [p for p in inband if COUNT_BAND[0] <= p["count"] <= COUNT_BAND[1]]
     add("b", "some dose puts the rise within 15 percent of the recorded 348 V/s with the 310 pA count still within 5 to 15",
         {"in_rise_band": [p["dose_s_cm2"] for p in inband], "and_count_holds": [p["dose_s_cm2"] for p in holds]},
@@ -162,7 +176,8 @@ def markdown(result):
              "## The characteristic curve (spike-1 rise against the inserted human sodium density)", "",
              "| NaTg soma (S/cm2) | rise through chain (V/s) | count at 310 pA |", "|---|---|---|"]
     for p in result["curve"]:
-        lines.append(f"| {p['dose_s_cm2']:.3f} | {p['rise_v_s']:.0f} | {p['count']} |")
+        rise = "silent (no spike)" if p["rise_v_s"] is None else f"{p['rise_v_s']:.0f}"
+        lines.append(f"| {p['dose_s_cm2']:.3f} | {rise} | {p['count']} |")
     lines += ["", f"Recorded 348 V/s; B3 with the rodent equations 570 V/s at gbar 2.641, count 10.",
               f"Crossing of the recorded rise: {result['crossing']}.", "",
               "## Percent accuracy over the ten registered elements at 310 pA", "",
@@ -195,7 +210,13 @@ def plot(result, path):
     import matplotlib.pyplot as plt
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.2))
     pts = result["curve"]
-    ax1.plot([p["dose_s_cm2"] for p in pts], [p["rise_v_s"] for p in pts], "o-", color="C0", label="human NaTg on the human cell")
+    firing = [p for p in pts if p["rise_v_s"] is not None]
+    silent = [p for p in pts if p["rise_v_s"] is None]
+    ax1.plot([p["dose_s_cm2"] for p in firing], [p["rise_v_s"] for p in firing], "o-", color="C0", label="human NaTg on the human cell")
+    for p in silent:
+        ax1.plot(p["dose_s_cm2"], 0., "x", color="0.5")
+    if silent:
+        ax1.plot([], [], "x", color="0.5", label="silent (no spike)")
     ax1.axhline(result["recorded_reference"]["rise_v_s"], color="k", ls="--", lw=1, label="recording 348 V/s")
     if result["b3"].get("status") == "read":
         ax1.axhline(result["b3"]["spikes"][0]["rise_v_s"], color="C3", ls=":", lw=1.2, label="B3 rodent NaTs 570 V/s")
@@ -217,7 +238,32 @@ def plot(result, path):
     plt.close(fig)
 
 
-READING = []
+READING = [
+    "The rise is NOT the sodium equations' lineage. Swapping the somatic rodent NaTs for the Toronto "
+    "human NaTg with its human voltage shifts, on the human cell, with everything else held, does not "
+    "bring the rise down: at B3's own somatic conductance the human equations rise at 625 V/s through "
+    "the chain against B3's 570 and the recorded 348. The registered rejection (d) fired; the residual "
+    "belongs elsewhere and is reported, not repaired.",
+    "Below B3's own conductance the human sodium does not fire this cell at all: 0.068 to 1.320 S/cm2 "
+    "are silent at 310 pA, sitting at a subthreshold plateau near -49 mV, which is ABOVE B3's own "
+    "-57 mV take-off, while an eight-fold density change moves that plateau by 0.8 mV. The human "
+    "NaTg's +13 mV activation shift is fitted to work against the Toronto potassium set; against "
+    "Allen's rodent-lineage potassium, fitted to a sodium that activates 13 mV lower, it never "
+    "activates. Kinetics are fitted as a set, not as interchangeable parts.",
+    "Percent accuracy over the ten registered elements: B3 with the rodent equations 71.8, the best "
+    "human-sodium arm 62.0. The swap costs 9.8 points, mostly on the threshold (-39.1 against the "
+    "recorded -56.4), the count (6 against 10) and the fall (-129 against -104).",
+    "The fully human-fitted model is not more accurate on this human cell either: HL23PYR scores 72.3 "
+    "against B3's 71.8, a difference of half a point. They fail in complementary ways - HL23PYR wins "
+    "the first-interval threshold step (99.7 against 0.0) and loses the excitability (count 20 against "
+    "10, 0.0 against 100.0). So 'human rather than mouse' is worth about half a point as posed; the "
+    "kinetic lineage is not what separates either model from this recording.",
+    "Where the accuracy actually lives: of the 28.2 points B3 is missing, the two threshold-climb "
+    "elements carry 19.4 and the rise carries 6.4; every other element is at 90 to 100 percent and "
+    "carries 2.4 between them. HL23PYR proves the climb is reachable with a human sodium while B3 "
+    "holds the excitability, so the one remaining split worth running is what gives HL23PYR its climb, "
+    "put into B3 without breaking the count.",
+]
 
 
 def main():
@@ -236,6 +282,7 @@ def main():
             best, best_dose = a, d
     acc["best_human"] = best
     acc["per_dose"] = {d: accuracy(r, rec) for d, r in runs.items()}
+    acc["hl23pyr_fully_human"] = accuracy(read(HL23PYR_RUN, chain), rec)
     result = {"stage": "15", "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md", "chain": chain,
               "recorded_reference": {"rise_v_s": target, "count": rec["count"]},
               "runs": runs, "b3": b3, "recorded": rec, "curve": pts,

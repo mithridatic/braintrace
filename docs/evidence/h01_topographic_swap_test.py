@@ -17,11 +17,16 @@ def _run(rise, count=10, fall=-100., peak=30., thr=-55., take_off=-55., rest=-84
     return {"status": "read", "count": count, "spikes": spikes, "rest_mv": rest}
 
 
-def test_curve_sorts_by_dose_and_skips_unread():
-    runs = {"0.272": _run(500.), "0.068": _run(300.), "0.544": {"status": "no spike", "count": 0}}
+def test_curve_sorts_by_dose_keeps_silent_doses_and_skips_unrun():
+    """Silent doses stay on the curve with rise None: where the cell stops firing is part of the reading."""
+    runs = {"0.272": _run(500.), "0.068": _run(300.), "0.544": {"status": "no spike", "count": 0},
+            "1.320": {"status": "not run"}}
     pts = sw.curve(runs)
-    assert [p["dose_s_cm2"] for p in pts] == [0.068, 0.272]
+    assert [p["dose_s_cm2"] for p in pts] == [0.068, 0.272, 0.544]
     assert pts[0]["rise_v_s"] == 300.
+    assert pts[2]["rise_v_s"] is None and pts[2]["count"] == 0
+    # a silent dose must not enter the crossing interpolation
+    assert sw.crossing(pts, 400.)["inside_series"] is True
 
 
 def test_crossing_interpolates_inside_and_reports_outside():

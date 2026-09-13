@@ -1,0 +1,114 @@
+{
+  "b3": {
+    "elements": {
+      "rise_v_s": {
+        "model": 570.4170280334747,
+        "recorded": 347.6562604194875,
+        "accuracy_pct": 35.924994606684045
+      },
+      "fall_v_s": {
+        "model": -94.15629780225777,
+        "recorded": -103.90626266608152,
+        "accuracy_pct": 90.61657631248201
+      },
+      "peak_mv": {
+        "model": 38.17346145153743,
+        "recorded": 35.34375360608101,
+        "accuracy_pct": 97.17029215454357
+      },
+      "threshold_mv": {
+        "model": -57.29420769821471,
+        "recorded": -56.40625351667404,
+        "accuracy_pct": 99.11204581845932
+      },
+      "take_off_mv": {
+        "model": -57.29420769821471,
+        "recorded": -56.40625351667404,
+        "accuracy_pct": 99.11204581845932
+      },
+      "count": {
+        "model": 10.0,
+        "recorded": 10.0,
+        "accuracy_pct": 100.0
+      },
+      "rest_mv": {
+        "model": -83.96942160173832,
+        "recorded": -83.90624964237213,
+        "accuracy_pct": 99.93682804063381
+      },
+      "climb_2_mv": {
+        "model": -0.023088407131098165,
+        "recorded": 1.375000923871994,
+        "accuracy_pct": 0.0
+      },
+      "climb_5_mv": {
+        "model": 0.2357794881297508,
+        "recorded": 3.625001758337021,
+        "accuracy_pct": 6.504258586564527
+      },
+      "rise_5_over_1": {
+        "model": 0.9514585975277483,
+        "recorded": 0.8606742014274366,
+        "accuracy_pct": 89.45194407480265
+      }
+    },
+    "mean_pct": 71.78289854126294,
+    "n_elements": 10
+  },
+  "hl23pyr": {
+    "elements": {
+      "rise_v_s": {
+        "model": 599.7967208547835,
+        "recorded": 347.6562604194875,
+        "accuracy_pct": 27.474206812482148
+      },
+      "fall_v_s": {
+        "model": -80.15254931961624,
+        "recorded": -103.90626266608152,
+        "accuracy_pct": 77.13928618258417
+      },
+      "peak_mv": {
+        "model": 32.12886336326373,
+        "recorded": 35.34375360608101,
+        "accuracy_pct": 96.78510975718272
+      },
+      "threshold_mv": {
+        "model": -60.068396259297316,
+        "recorded": -56.40625351667404,
+        "accuracy_pct": 96.33785725737673
+      },
+      "take_off_mv": {
+        "model": -60.068396259297316,
+        "recorded": -56.40625351667404,
+        "accuracy_pct": 96.33785725737673
+      },
+      "count": {
+        "model": 20.0,
+        "recorded": 10.0,
+        "accuracy_pct": 0.0
+      },
+      "rest_mv": {
+        "model": -74.48998168805598,
+        "recorded": -83.90624964237213,
+        "accuracy_pct": 90.58373204568385
+      },
+      "climb_2_mv": {
+        "model": 1.3796574217204096,
+        "recorded": 1.375000923871994,
+        "accuracy_pct": 99.6613458385684
+      },
+      "climb_5_mv": {
+        "model": 1.7803574574691368,
+        "recorded": 3.625001758337021,
+        "accuracy_pct": 49.11328534874644
+      },
+      "rise_5_over_1": {
+        "model": 0.9500202841137179,
+        "recorded": 0.8606742014274366,
+        "accuracy_pct": 89.61905881016301
+      }
+    },
+    "mean_pct": 72.30517393101641,
+    "n_elements": 10
+  }
+}

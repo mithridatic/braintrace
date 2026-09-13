@@ -1,0 +1,689 @@
+{
+  "stage": "15",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "chain": {
+    "tau_p_us": 4.665855831988264,
+    "fc_khz": 10.0
+  },
+  "recorded_reference": {
+    "rise_v_s": 347.6562604194875,
+    "count": 10
+  },
+  "runs": {
+    "0.068": {
+      "status": "no spike",
+      "count": 0,
+      "spikes": [],
+      "rest_mv": -84.51519682017184
+    },
+    "0.136": {
+      "status": "no spike",
+      "count": 0,
+      "spikes": [],
+      "rest_mv": -84.51519664836657
+    },
+    "0.272": {
+      "status": "no spike",
+      "count": 0,
+      "spikes": [],
+      "rest_mv": -84.51519630474976
+    },
+    "0.544": {
+      "status": "no spike",
+      "count": 0,
+      "spikes": [],
+      "rest_mv": -84.51519561750979
+    },
+    "1.320": {
+      "status": "no spike",
+      "count": 0,
+      "spikes": [],
+      "rest_mv": -84.5151936568693
+    },
+    "2.641": {
+      "status": "read",
+      "count": 6,
+      "spikes": [
+        {
+          "spike": 1,
+          "t_ms": 1108.74,
+          "threshold_mv": -39.101714736203384,
+          "take_off_mv": -39.101714736203384,
+          "span_mv": 9.093491983369244,
+          "rise_v_s": 625.1379178956689,
+          "fall_v_s": -129.05755284108682,
+          "peak_mv": 38.42941311449406,
+          "approach_mv_per_ms": 0.5517549977356264
+        },
+        {
+          "spike": 2,
+          "t_ms": 1179.3,
+          "threshold_mv": -39.025713612732496,
+          "take_off_mv": -39.025713612732496,
+          "span_mv": 8.89901045835412,
+          "rise_v_s": 626.5735493305737,
+          "fall_v_s": -128.660397351273,
+          "peak_mv": 38.1093534823129,
+          "approach_mv_per_ms": 0.5099801501749122
+        },
+        {
+          "spike": 3,
+          "t_ms": 1300.64,
+          "threshold_mv": -38.7714381247595,
+          "take_off_mv": -38.7714381247595,
+          "span_mv": 9.674750671819648,
+          "rise_v_s": 618.4526165931517,
+          "fall_v_s": -127.55056863037464,
+          "peak_mv": 37.69370697073564,
+          "approach_mv_per_ms": 0.4430023065052487
+        },
+        {
+          "spike": 4,
+          "t_ms": 1512.22,
+          "threshold_mv": -38.82861041418741,
+          "take_off_mv": -38.82861041418741,
+          "span_mv": 10.822798546783474,
+          "rise_v_s": 617.3515214011704,
+          "fall_v_s": -127.32529912753114,
+          "peak_mv": 37.48587334508234,
+          "approach_mv_per_ms": 0.41819025071373417
+        },
+        {
+          "spike": 5,
+          "t_ms": 1733.06,
+          "threshold_mv": -38.70666104136035,
+          "take_off_mv": -38.70666104136035,
+          "span_mv": 9.621250454306978,
+          "rise_v_s": 611.9373320781888,
+          "fall_v_s": -127.89509514275176,
+          "peak_mv": 37.468728713288236,
+          "approach_mv_per_ms": 0.4143937656456913
+        },
+        {
+          "spike": 6,
+          "t_ms": 1947.6000000000001,
+          "threshold_mv": -38.833868809865024,
+          "take_off_mv": -38.833868809865024,
+          "span_mv": 10.506189164054636,
+          "rise_v_s": 617.9108632211448,
+          "fall_v_s": -127.83039997142407,
+          "peak_mv": 37.44568145719532,
+          "approach_mv_per_ms": 0.40835563874670733
+        }
+      ],
+      "rest_mv": -84.5151903192262
+    },
+    "5.282": {
+      "status": "not run"
+    }
+  },
+  "b3": {
+    "status": "read",
+    "count": 10,
+    "spikes": [
+      {
+        "spike": 1,
+        "t_ms": 1054.26,
+        "threshold_mv": -57.29420769821471,
+        "take_off_mv": -57.29420769821471,
+        "span_mv": 4.796176756274377,
+        "rise_v_s": 570.4170280334747,
+        "fall_v_s": -94.15629780225777,
+        "peak_mv": 38.17346145153743,
+        "approach_mv_per_ms": 0.5778945083146961
+      },
+      {
+        "spike": 2,
+        "t_ms": 1067.8,
+        "threshold_mv": -57.31729610534581,
+        "take_off_mv": -57.31729610534581,
+        "span_mv": 3.4452172018844536,
+        "rise_v_s": 575.0510073330416,
+        "fall_v_s": -94.29689877770801,
+        "peak_mv": 38.799962810072635,
+        "approach_mv_per_ms": 1.1569068359259114
+      },
+      {
+        "spike": 3,
+        "t_ms": 1092.02,
+        "threshold_mv": -57.260835673691446,
+        "take_off_mv": -57.260835673691446,
+        "span_mv": 5.152859386562504,
+        "rise_v_s": 541.9076586669141,
+        "fall_v_s": -94.01723565746761,
+        "peak_mv": 37.15581304554071,
+        "approach_mv_per_ms": 0.3590706967472091
+      },
+      {
+        "spike": 4,
+        "t_ms": 1212.7,
+        "threshold_mv": -57.06280034501919,
+        "take_off_mv": -57.29143328572908,
+        "span_mv": 4.565831155261634,
+        "rise_v_s": 542.7402416443858,
+        "fall_v_s": -93.94415456123949,
+        "peak_mv": 36.760514486891516,
+        "approach_mv_per_ms": 0.26405638277684446
+      },
+      {
+        "spike": 5,
+        "t_ms": 1347.42,
+        "threshold_mv": -57.05842821008496,
+        "take_off_mv": -57.288724948467774,
+        "span_mv": 4.6038777735556025,
+        "rise_v_s": 542.7281854986761,
+        "fall_v_s": -93.97099642543225,
+        "peak_mv": 36.77872166517772,
+        "approach_mv_per_ms": 0.2671767044789103
+      },
+      {
+        "spike": 6,
+        "t_ms": 1473.98,
+        "threshold_mv": -57.07230135323589,
+        "take_off_mv": -57.298019690261455,
+        "span_mv": 4.501935036291044,
+        "rise_v_s": 543.1982124514304,
+        "fall_v_s": -94.00041869194405,
+        "peak_mv": 36.76178409696168,
+        "approach_mv_per_ms": 0.26574567657794124
+      },
+      {
+        "spike": 7,
+        "t_ms": 1596.78,
+        "threshold_mv": -57.1539448996069,
+        "take_off_mv": -57.1539448996069,
+        "span_mv": 3.669066646636537,
+        "rise_v_s": 541.7482269292485,
+        "fall_v_s": -94.05773367408938,
+        "peak_mv": 36.74736920949179,
+        "approach_mv_per_ms": 0.26459105163009494
+      },
+      {
+        "spike": 8,
+        "t_ms": 1716.6200000000001,
+        "threshold_mv": -57.182275063561754,
+        "take_off_mv": -57.182275063561754,
+        "span_mv": 5.779905140105306,
+        "rise_v_s": 538.9080864656423,
+        "fall_v_s": -94.067702963258,
+        "peak_mv": 36.763587413490626,
+        "approach_mv_per_ms": 0.2637589151676309
+      },
+      {
+        "spike": 9,
+        "t_ms": 1834.24,
+        "threshold_mv": -57.247458045599416,
+        "take_off_mv": -57.247458045599416,
+        "span_mv": 5.082675976316885,
+        "rise_v_s": 537.5580464641052,
+        "fall_v_s": -94.03219695050831,
+        "peak_mv": 36.77717206626688,
+        "approach_mv_per_ms": 0.26285302376780456
+      },
+      {
+        "spike": 10,
+        "t_ms": 1950.18,
+        "threshold_mv": -57.21441171897332,
+        "take_off_mv": -57.21441171897332,
+        "span_mv": 5.446359254241969,
+        "rise_v_s": 533.9450192068158,
+        "fall_v_s": -94.06900411897021,
+        "peak_mv": 36.77160100908726,
+        "approach_mv_per_ms": 0.2625328007488215
+      }
+    ],
+    "rest_mv": -83.96942160173832
+  },
+  "recorded": {
+    "status": "read",
+    "count": 10,
+    "spikes": [
+      {
+        "spike": 1,
+        "t_ms": 1055.74,
+        "threshold_mv": -56.40625351667404,
+        "take_off_mv": -56.40625351667404,
+        "span_mv": 4.500001668930054,
+        "rise_v_s": 347.6562604194875,
+        "fall_v_s": -103.90626266608152,
+        "peak_mv": 35.34375360608101,
+        "approach_mv_per_ms": 0.6297292621235026
+      },
+      {
+        "spike": 2,
+        "t_ms": 1067.06,
+        "threshold_mv": -55.03125259280205,
+        "take_off_mv": -55.03125259280205,
+        "span_mv": 5.499999970197678,
+        "rise_v_s": 300.7812774742895,
+        "fall_v_s": -75.78125223524307,
+        "peak_mv": 33.562502324581146,
+        "approach_mv_per_ms": 1.5590119331257832
+      },
+      {
+        "spike": 3,
+        "t_ms": 1128.22,
+        "threshold_mv": -53.87500071525574,
+        "take_off_mv": -53.87500071525574,
+        "span_mv": 4.499997943639755,
+        "rise_v_s": 303.90627216575365,
+        "fall_v_s": -89.84373416759786,
+        "peak_mv": 34.625003546476364,
+        "approach_mv_per_ms": 0.2204725500859381
+      },
+      {
+        "spike": 4,
+        "t_ms": 1238.22,
+        "threshold_mv": -53.250001311302185,
+        "take_off_mv": -53.46875035762787,
+        "span_mv": 4.812497645616531,
+        "rise_v_s": 303.90628380728583,
+        "fall_v_s": -97.65625000008882,
+        "peak_mv": 33.90625348687172,
+        "approach_mv_per_ms": 0.2876721421642965
+      },
+      {
+        "spike": 5,
+        "t_ms": 1353.42,
+        "threshold_mv": -52.78125175833702,
+        "take_off_mv": -53.0312522649765,
+        "span_mv": 5.1875002682209015,
+        "rise_v_s": 299.21877430779136,
+        "fall_v_s": -99.9999931083039,
+        "peak_mv": 33.65625298023224,
+        "approach_mv_per_ms": 0.3069123939339604
+      },
+      {
+        "spike": 6,
+        "t_ms": 1472.66,
+        "threshold_mv": -52.93750160932541,
+        "take_off_mv": -52.93750160932541,
+        "span_mv": 5.562499165534973,
+        "rise_v_s": 293.7500248665799,
+        "fall_v_s": -99.21872988291423,
+        "peak_mv": 33.34375327825546,
+        "approach_mv_per_ms": 0.32509949316557685
+      },
+      {
+        "spike": 7,
+        "t_ms": 1594.7,
+        "threshold_mv": -53.43750262260437,
+        "take_off_mv": -53.43750262260437,
+        "span_mv": 5.3437501192092896,
+        "rise_v_s": 296.09374469173065,
+        "fall_v_s": -97.65625000008882,
+        "peak_mv": 33.34375327825546,
+        "approach_mv_per_ms": 0.2893256717836183
+      },
+      {
+        "spike": 8,
+        "t_ms": 1710.96,
+        "threshold_mv": -52.87500241398811,
+        "take_off_mv": -53.0625,
+        "span_mv": 4.531249403953552,
+        "rise_v_s": 289.0625153670854,
+        "fall_v_s": -98.43753650793445,
+        "peak_mv": 33.00000211596489,
+        "approach_mv_per_ms": 0.32572641448034245
+      },
+      {
+        "spike": 9,
+        "t_ms": 1834.54,
+        "threshold_mv": -53.18750211596489,
+        "take_off_mv": -53.40625116229057,
+        "span_mv": 5.125001072883606,
+        "rise_v_s": 289.0624920823601,
+        "fall_v_s": -103.12499944130025,
+        "peak_mv": 32.75000160932541,
+        "approach_mv_per_ms": 0.3184771323128893
+      },
+      {
+        "spike": 10,
+        "t_ms": 1955.3,
+        "threshold_mv": -54.281251072883606,
+        "take_off_mv": -54.281251072883606,
+        "span_mv": 5.718749016523361,
+        "rise_v_s": 287.5000005574563,
+        "fall_v_s": -101.56249627480207,
+        "peak_mv": 32.68750241398811,
+        "approach_mv_per_ms": 0.2259119062638126
+      }
+    ],
+    "rest_mv": -83.90624964237213
+  },
+  "curve": [
+    {
+      "dose_s_cm2": 0.068,
+      "rise_v_s": null,
+      "count": 0
+    },
+    {
+      "dose_s_cm2": 0.136,
+      "rise_v_s": null,
+      "count": 0
+    },
+    {
+      "dose_s_cm2": 0.272,
+      "rise_v_s": null,
+      "count": 0
+    },
+    {
+      "dose_s_cm2": 0.544,
+      "rise_v_s": null,
+      "count": 0
+    },
+    {
+      "dose_s_cm2": 1.32,
+      "rise_v_s": null,
+      "count": 0
+    },
+    {
+      "dose_s_cm2": 2.641,
+      "rise_v_s": 625.1379178956689,
+      "count": 6
+    }
+  ],
+  "crossing": {
+    "dose_s_cm2": null,
+    "inside_series": false
+  },
+  "accuracy": {
+    "b3": {
+      "elements": {
+        "rise_v_s": {
+          "model": 570.4170280334747,
+          "recorded": 347.6562604194875,
+          "accuracy_pct": 35.924994606684045
+        },
+        "fall_v_s": {
+          "model": -94.15629780225777,
+          "recorded": -103.90626266608152,
+          "accuracy_pct": 90.61657631248201
+        },
+        "peak_mv": {
+          "model": 38.17346145153743,
+          "recorded": 35.34375360608101,
+          "accuracy_pct": 97.17029215454357
+        },
+        "threshold_mv": {
+          "model": -57.29420769821471,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 99.11204581845932
+        },
+        "take_off_mv": {
+          "model": -57.29420769821471,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 99.11204581845932
+        },
+        "count": {
+          "model": 10.0,
+          "recorded": 10.0,
+          "accuracy_pct": 100.0
+        },
+        "rest_mv": {
+          "model": -83.96942160173832,
+          "recorded": -83.90624964237213,
+          "accuracy_pct": 99.93682804063381
+        },
+        "climb_2_mv": {
+          "model": -0.023088407131098165,
+          "recorded": 1.375000923871994,
+          "accuracy_pct": 0.0
+        },
+        "climb_5_mv": {
+          "model": 0.2357794881297508,
+          "recorded": 3.625001758337021,
+          "accuracy_pct": 6.504258586564527
+        },
+        "rise_5_over_1": {
+          "model": 0.9514585975277483,
+          "recorded": 0.8606742014274366,
+          "accuracy_pct": 89.45194407480265
+        }
+      },
+      "mean_pct": 71.78289854126294,
+      "n_elements": 10
+    },
+    "best_human": {
+      "elements": {
+        "rise_v_s": {
+          "model": 625.1379178956689,
+          "recorded": 347.6562604194875,
+          "accuracy_pct": 20.18505372480057
+        },
+        "fall_v_s": {
+          "model": -129.05755284108682,
+          "recorded": -103.90626266608152,
+          "accuracy_pct": 75.79425000027884
+        },
+        "peak_mv": {
+          "model": 38.42941311449406,
+          "recorded": 35.34375360608101,
+          "accuracy_pct": 96.91434049158694
+        },
+        "threshold_mv": {
+          "model": -39.101714736203384,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 82.69546121952935
+        },
+        "take_off_mv": {
+          "model": -39.101714736203384,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 82.69546121952935
+        },
+        "count": {
+          "model": 6.0,
+          "recorded": 10.0,
+          "accuracy_pct": 60.0
+        },
+        "rest_mv": {
+          "model": -84.5151903192262,
+          "recorded": -83.90624964237213,
+          "accuracy_pct": 99.39105932314592
+        },
+        "climb_2_mv": {
+          "model": 0.07600112347088839,
+          "recorded": 1.375000923871994,
+          "accuracy_pct": 5.527350720381319
+        },
+        "climb_5_mv": {
+          "model": 0.39505369484303543,
+          "recorded": 3.625001758337021,
+          "accuracy_pct": 10.89802767500635
+        },
+        "rise_5_over_1": {
+          "model": 0.978883722392147,
+          "recorded": 0.8606742014274366,
+          "accuracy_pct": 86.26547411684248
+        }
+      },
+      "mean_pct": 62.03664784911011,
+      "n_elements": 10
+    },
+    "per_dose": {
+      "0.068": null,
+      "0.136": null,
+      "0.272": null,
+      "0.544": null,
+      "1.320": null,
+      "2.641": {
+        "elements": {
+          "rise_v_s": {
+            "model": 625.1379178956689,
+            "recorded": 347.6562604194875,
+            "accuracy_pct": 20.18505372480057
+          },
+          "fall_v_s": {
+            "model": -129.05755284108682,
+            "recorded": -103.90626266608152,
+            "accuracy_pct": 75.79425000027884
+          },
+          "peak_mv": {
+            "model": 38.42941311449406,
+            "recorded": 35.34375360608101,
+            "accuracy_pct": 96.91434049158694
+          },
+          "threshold_mv": {
+            "model": -39.101714736203384,
+            "recorded": -56.40625351667404,
+            "accuracy_pct": 82.69546121952935
+          },
+          "take_off_mv": {
+            "model": -39.101714736203384,
+            "recorded": -56.40625351667404,
+            "accuracy_pct": 82.69546121952935
+          },
+          "count": {
+            "model": 6.0,
+            "recorded": 10.0,
+            "accuracy_pct": 60.0
+          },
+          "rest_mv": {
+            "model": -84.5151903192262,
+            "recorded": -83.90624964237213,
+            "accuracy_pct": 99.39105932314592
+          },
+          "climb_2_mv": {
+            "model": 0.07600112347088839,
+            "recorded": 1.375000923871994,
+            "accuracy_pct": 5.527350720381319
+          },
+          "climb_5_mv": {
+            "model": 0.39505369484303543,
+            "recorded": 3.625001758337021,
+            "accuracy_pct": 10.89802767500635
+          },
+          "rise_5_over_1": {
+            "model": 0.978883722392147,
+            "recorded": 0.8606742014274366,
+            "accuracy_pct": 86.26547411684248
+          }
+        },
+        "mean_pct": 62.03664784911011,
+        "n_elements": 10
+      },
+      "5.282": null
+    },
+    "hl23pyr_fully_human": {
+      "elements": {
+        "rise_v_s": {
+          "model": 599.7967208547835,
+          "recorded": 347.6562604194875,
+          "accuracy_pct": 27.474206812482148
+        },
+        "fall_v_s": {
+          "model": -80.15254931961624,
+          "recorded": -103.90626266608152,
+          "accuracy_pct": 77.13928618258417
+        },
+        "peak_mv": {
+          "model": 32.12886336326373,
+          "recorded": 35.34375360608101,
+          "accuracy_pct": 96.78510975718272
+        },
+        "threshold_mv": {
+          "model": -60.068396259297316,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 96.33785725737673
+        },
+        "take_off_mv": {
+          "model": -60.068396259297316,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 96.33785725737673
+        },
+        "count": {
+          "model": 20.0,
+          "recorded": 10.0,
+          "accuracy_pct": 0.0
+        },
+        "rest_mv": {
+          "model": -74.48998168805598,
+          "recorded": -83.90624964237213,
+          "accuracy_pct": 90.58373204568385
+        },
+        "climb_2_mv": {
+          "model": 1.3796574217204096,
+          "recorded": 1.375000923871994,
+          "accuracy_pct": 99.6613458385684
+        },
+        "climb_5_mv": {
+          "model": 1.7803574574691368,
+          "recorded": 3.625001758337021,
+          "accuracy_pct": 49.11328534874644
+        },
+        "rise_5_over_1": {
+          "model": 0.9500202841137179,
+          "recorded": 0.8606742014274366,
+          "accuracy_pct": 89.61905881016301
+        }
+      },
+      "mean_pct": 72.30517393101641,
+      "n_elements": 10
+    }
+  },
+  "best_dose": "2.641",
+  "arm_b": {
+    "status": "no reading",
+    "cause": "the published HL23PYR template cannot construct on the 541563728 morphology: biophys_HL23PYR raises 'section in the object was deleted' at distribute_channels, with the full reconstructed axon and again with the axon removed. Editing the published template would break the split's unchanged condition, so the arm is closed as a no-reading. Three of four evaluations spent; the fourth is unspent.",
+    "registered_cells": {
+      "e": "step (spike 2 - spike 1) against the recorded +1.38 mV",
+      "f": "accumulation (spike 5 - spike 1) against the recorded +3.63 mV"
+    }
+  },
+  "reading": [
+    "The rise is NOT the sodium equations' lineage. Swapping the somatic rodent NaTs for the Toronto human NaTg with its human voltage shifts, on the human cell, with everything else held, does not bring the rise down: at B3's own somatic conductance the human equations rise at 625 V/s through the chain against B3's 570 and the recorded 348. The registered rejection (d) fired; the residual belongs elsewhere and is reported, not repaired.",
+    "Below B3's own conductance the human sodium does not fire this cell at all: 0.068 to 1.320 S/cm2 are silent at 310 pA, sitting at a subthreshold plateau near -49 mV, which is ABOVE B3's own -57 mV take-off, while an eight-fold density change moves that plateau by 0.8 mV. The human NaTg's +13 mV activation shift is fitted to work against the Toronto potassium set; against Allen's rodent-lineage potassium, fitted to a sodium that activates 13 mV lower, it never activates. Kinetics are fitted as a set, not as interchangeable parts.",
+    "Percent accuracy over the ten registered elements: B3 with the rodent equations 71.8, the best human-sodium arm 62.0. The swap costs 9.8 points, mostly on the threshold (-39.1 against the recorded -56.4), the count (6 against 10) and the fall (-129 against -104).",
+    "The fully human-fitted model is not more accurate on this human cell either: HL23PYR scores 72.3 against B3's 71.8, a difference of half a point. They fail in complementary ways - HL23PYR wins the first-interval threshold step (99.7 against 0.0) and loses the excitability (count 20 against 10, 0.0 against 100.0). So 'human rather than mouse' is worth about half a point as posed; the kinetic lineage is not what separates either model from this recording.",
+    "Where the accuracy actually lives: of the 28.2 points B3 is missing, the two threshold-climb elements carry 19.4 and the rise carries 6.4; every other element is at 90 to 100 percent and carries 2.4 between them. HL23PYR proves the climb is reachable with a human sodium while B3 holds the excitability, so the one remaining split worth running is what gives HL23PYR its climb, put into B3 without breaking the count."
+  ],
+  "decision": {
+    "verdict": "MIXED",
+    "checks": [
+      {
+        "reading": "a",
+        "prediction": "the rise rises monotonically with the inserted human sodium density (the dose acts through the somatic sodium)",
+        "value": {
+          "0.068": "silent",
+          "0.136": "silent",
+          "0.272": "silent",
+          "0.544": "silent",
+          "1.32": "silent",
+          "2.641": 625.1
+        },
+        "pass": true,
+        "note": "crossing of the recorded 348 V/s: {'dose_s_cm2': None, 'inside_series': False}"
+      },
+      {
+        "reading": "b",
+        "prediction": "some dose puts the rise within 15 percent of the recorded 348 V/s with the 310 pA count still within 5 to 15",
+        "value": {
+          "in_rise_band": [],
+          "and_count_holds": []
+        },
+        "pass": false,
+        "note": "the rise must not be bought with the count"
+      },
+      {
+        "reading": "c",
+        "prediction": "the human sodium equations reach the recorded rise where the rodent equations reach it only by removing nearly all somatic sodium (stage-11 intercept ~320 V/s)",
+        "value": {
+          "b3_rodent_rise_v_s": 570.4,
+          "best_human_dose": "2.641"
+        },
+        "pass": null,
+        "note": "reported beside the stage-11 rodent series 655/586/505"
+      },
+      {
+        "reading": "d",
+        "prediction": "percent accuracy over the ten registered elements improves against B3",
+        "value": {
+          "b3_pct": 71.8,
+          "human_pct": 62.0
+        },
+        "pass": false,
+        "note": "lossy summary; the per-element table is the reading"
+      }
+    ]
+  }
+}

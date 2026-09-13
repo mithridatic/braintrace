@@ -1,0 +1,15 @@
+{
+  "cvode_atol": 1e-10,
+  "insert_density": [
+    "NaTg:soma:5.282"
+  ],
+  "mechanism_parameter": [
+    "NaTg:soma:vshiftm:13",
+    "NaTg:soma:vshifth:15",
+    "NaTg:soma:slopem:7"
+  ],
+  "nseg_factor": 9,
+  "regional_density": [
+    "NaTs:soma:0"
+  ]
+}
