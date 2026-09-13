@@ -1,0 +1,191 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2) from the clean worktree /workspace/braintrace-q2; the library is recompiled with nrnivmodl after the patched NaTs.mod is installed, and the provenance digest (docs/evidence/h01-l2-mechanisms/slow-inactivation-provenance.json) is checked against the installed file before stage 0.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "purpose": "SP15 stage 10 (E): the coupling between the soma and the initiation site, every channel held. The Allen replacement stub (2 x 30 um, 1 um) is thickened with --axon-stub-diameter-um; three arms: x2 with the total axonal NaTs held (density 3.814/2), x2 with the density held (total x2), x4 with the total held (3.814/4). Same three ramps as stage 9 (b) for every arm; the 310 pA step for the two x2 arms. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 10).",
+  "cap": 11,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 2400,
+  "output_dir": "h01-e-coupling",
+  "inputs": {
+    "ramp01": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--ramp-pa-per-ms",
+      "1.1",
+      "--ramp-end-ms",
+      "1400"
+    ],
+    "ramp1": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--ramp-pa-per-ms",
+      "11.0",
+      "--ramp-end-ms",
+      "1120"
+    ],
+    "ramp10": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--ramp-pa-per-ms",
+      "110.0",
+      "--ramp-end-ms",
+      "1060"
+    ],
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed and is not an input.",
+  "evaluation": "One candidate at one input = one evaluation; x2 arms four each, x4 arm three ramps (launched with --only-input): eleven.",
+  "base_candidate": {
+    "file": "h01-e-takeoff-manifest.json#s9-b3-n9",
+    "note": "Stage 9 control at 1 um: soma take-off -57.1/-57.2/-57.2 mV, axon[1] -54.7/-55.8/-58.8 mV, axon lead 0.30 ms, soma span 3.9/3.4/3.2 mV across ramps 1.1/11/110 pA/ms; 310 pA count 10."
+  },
+  "reference": {
+    "control_diameter_um": 1.0,
+    "soma_take_off_mv": [
+      -57.1,
+      -57.2,
+      -57.2
+    ],
+    "axon1_take_off_mv": [
+      -54.7,
+      -55.8,
+      -58.8
+    ],
+    "axon_lead_ms": 0.3,
+    "soma_span_mv": [
+      3.9,
+      3.4,
+      3.2
+    ],
+    "count_310": 10
+  },
+  "decision_limits": {
+    "soma_slide_x4_mv": 1.0,
+    "soma_slide_x2_mv": 0.5,
+    "x2_arms_agree_mv": 0.5,
+    "axon_lead_x4_ms": 0.15,
+    "span_range_mv": [
+      3.5,
+      5.7
+    ],
+    "count_310_within": 2
+  },
+  "stages": {
+    "10": {
+      "title": "Stage 10: stub diameter x2 (total held), x2 (density held), x4 (total held); ramps 1.1/11/110 pA/ms and the 310 pA step",
+      "prediction": "x4: the somatic spike-1 take-off falls by more than 1 mV from the slowest to the fastest ramp and the axon[1] lead is below 0.15 ms. x2, both arms: the somatic take-off falls by more than 0.5 mV and the two arms agree within 0.5 mV (the slide follows the coupling, not the density). Somatic onset span stays within 3.5 to 5.7 mV; the 310 pA count stays within 2 of 10.",
+      "rejection": "No spike on a ramp or on the step at a dose: no reading at that dose. A slide with the onset span outside 3.5 to 5.7 mV: the coupling changed the spike, not only its reading. The x2 arms disagreeing by more than 0.5 mV: density, not coupling, is acting.",
+      "unchanged": "Every channel density and kinetic parameter except the axonal NaTs density in the total-held arms; the segment count (nseg 9 per 30 um, finer than the d-lambda requirement at every diameter tested)."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s10-d2-total",
+      "stage": "10",
+      "arm": "x2 diameter, total axonal NaTs held",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:1.907"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 2.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 10"
+    },
+    {
+      "name": "s10-d2-density",
+      "stage": "10",
+      "arm": "x2 diameter, NaTs density held",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 2.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 10"
+    },
+    {
+      "name": "s10-d4-total",
+      "stage": "10",
+      "arm": "x4 diameter, total axonal NaTs held",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:0.9535"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 4.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 10"
+    }
+  ]
+}

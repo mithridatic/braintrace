@@ -404,9 +404,11 @@ density is held, the total axonal sodium; so the split has three arms: x2 diamet
 axonal NaTs density divided by the area factor (total sodium held; `NaTs:axon:3.814` becomes
 1.907), x2 diameter with the density held (total sodium x2), and x4 diameter with the total
 held (density 0.954). Every other flag of `s9-b3-n9` unchanged. Driver flag
-`--axon-stub-diameter-um`, to be implemented with the stub's segment count set by the
-d-lambda rule at the new diameter and checked against the nseg-9 control (stage 3's lesson:
-a control must reproduce the response). The same three ramps, read as in stage 9 (b), for
+`--axon-stub-diameter-um`; the stub's segment count is held at the nseg-9 value (nine per
+30 um), which is finer than the d-lambda requirement at every diameter tested, since a
+thicker stub is electrotonically shorter; the stage-9 runs at 1 um are the control (stage
+3's lesson: a control must reproduce the response, and these reproduce the retained
+step-pulse take-offs). The same three ramps, read as in stage 9 (b), for
 each arm, plus the 310 pA step (sweep 53) for the two x2 arms: eleven evaluations, manifest
 `h01-e-coupling-manifest.json`.
 

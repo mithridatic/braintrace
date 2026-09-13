@@ -159,6 +159,8 @@ def main():
     parser.add_argument("--include-recorded-bias", action="store_true")
     parser.add_argument("--ramp-pa-per-ms", type=float,
                         help="replace the recorded command from 1020 ms by a current ramp at this rate, capped at 2 nA")
+    parser.add_argument("--axon-stub-diameter-um", type=float, default=1.,
+                        help="diameter of the two 30 um axon stub sections (source 1 um); the segment count is unchanged")
     parser.add_argument("--ramp-end-ms", type=float, default=2020.,
                         help="the ramp returns to zero here (at most 2020 ms); the run still observes to --stop-ms")
     parser.add_argument("--nseg-factor", type=int, default=1)
@@ -254,6 +256,8 @@ def main():
         section_segments(30., args.nseg_factor)
     except ValueError as error:
         parser.error(str(error))
+    if not np.isfinite(args.axon_stub_diameter_um) or args.axon_stub_diameter_um <= 0:
+        parser.error("Axon stub diameter must be positive and finite.")
     if donor is None:
         fit_path = args.cache / "541563728_fit.json"
         fit_expected = "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
@@ -312,7 +316,7 @@ def main():
             h.delete_section(sec=sec)
     h("create axon[2]")
     for sec in h.axon:
-        sec.L, sec.diam, sec.nseg = 30., 1., section_segments(30., args.nseg_factor)
+        sec.L, sec.diam, sec.nseg = 30., args.axon_stub_diameter_um, section_segments(30., args.nseg_factor)
     h.axon[0].connect(h.soma[0], .5, 0.)
     h.axon[1].connect(h.axon[0], 1., 0.)
     h.define_shape()
@@ -451,6 +455,7 @@ def main():
               "cvode_atol": args.cvode_atol, "integration_seconds": integration_seconds,
               "input": ("command plus recorded bias" if args.include_recorded_bias
                                                    else "source command only; bias not added"),
+              "axon_stub_diameter_um": args.axon_stub_diameter_um,
               "ramp_pa_per_ms": args.ramp_pa_per_ms, "ramp_end_ms": args.ramp_end_ms if args.ramp_pa_per_ms is not None else None,
               "added_bias_na": float(source["bias_current_na"]) if args.include_recorded_bias else 0.,
               "nseg_factor": args.nseg_factor,

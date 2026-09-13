@@ -29,6 +29,7 @@ import pytest
     ("--regional-density", "NaTs:axon:-1"), ("--regional-density", "NaTs:all:nan"),
     ("--insert-density", "NaTs:axon"), ("--insert-density", "NaTs:all:1"),
     ("--insert-density", "NaTs:axon:-1"), ("--insert-density", "NaTs:axon:nan"),
+    ("--axon-stub-diameter-um", "0"), ("--axon-stub-diameter-um", "nan"), ("--axon-stub-diameter-um", "-2"),
 ])
 def test_invalid_settings_stop_before_model_setup(monkeypatch, tmp_path, capsys, flag, value):
     """Invalid CLI values must fail before the absent cache is read."""
