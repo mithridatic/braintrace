@@ -2149,7 +2149,7 @@
     "E human, later spikes: all 41 sit above the spike-1 relation, by 1.9 mV in the median (8 sigma), so what a spike leaves behind raises the take-off beyond what the trajectory alone gives; the fit's later spikes sit on its fixed voltage.",
     "I human, spike 1: -57.7 to -58.5 mV at 0.7 mV/ms (120 pA), -60.5 mV at 1.1 (0.19 nA), -61.7 mV at 1.7 (0.27 nA): a 4.0 mV slide (10 sigma of the spike-1 spread) under both definitions. The I fit slides 0.7 mV over 0.44 to 1.72 mV/ms and holds within 0.3 mV along each train: not fixed to 1 sigma, but a fifth of the recorded slide. The I later spikes sit 1.0 mV above the relation in the median, inside 3 sigma, with five fast-burst spikes below it; the I along-train rows have no repeat spread of their own.",
     "Twins: the 200 pA sweeps with one spike (56, 59 to 62) and without (57, 58) have the same steady level 800 ms later (+0.16 mV, 0.5 sigma) and the same recovery after the pulse, so a spike leaves nothing in the level; the Y4 level row was a steady-state difference between the cells at 200 pA, not a post-spike effect.",
-    "The recorded cell's rheobase sits at 200 pA, where its own repeats give 0 or 1 spike; a count at that drive is inside the recording's spread and is not scored. Its input resistance is 75 MOhm below 70 pA and 91 MOhm from 90 to 190 pA, the steady level bending upward and the post-pulse undershoot deepening as the drive approaches rheobase."
+    "The recorded cell's rheobase sits at 200 pA, where its own repeats give 0 or 1 spike; a count at that drive is inside the recording's spread and is not scored. Its input resistance is 75 MOhm over -110 to 70 pA and 91 MOhm over 90 to 190 pA, fitted separately because the holding current differs by 6.2 pA between the two groups; the post-pulse undershoot deepens with the drive."
   ],
   "decision": {
     "checks": [
@@ -2169,7 +2169,7 @@
       },
       {
         "cell": "E",
-        "prediction": "fit take-off moves less than 1 sigma across every spike of every train",
+        "prediction": "fit take-off moves less than 1 sigma across every spike of every train, over a wider approach range than the human's long pulses",
         "value_mv": 0.20389015281270417,
         "sigmas": 0.8155606112508167,
         "pass": true
@@ -2197,7 +2197,7 @@
       },
       {
         "cell": "I",
-        "prediction": "fit take-off moves less than 1 sigma across every spike of every train",
+        "prediction": "fit take-off moves less than 1 sigma across every spike of every train, over a wider approach range than the human's long pulses",
         "value_mv": 0.9334999043978911,
         "sigmas": 2.4565786957839237,
         "pass": false

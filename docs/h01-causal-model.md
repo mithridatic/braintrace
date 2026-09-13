@@ -310,8 +310,9 @@ level 800 ms later, -66.3 to -67.0 mV, and recover along the same path after the
 ([twins](evidence/h01-topographic/threshold-approach.md)). A spike therefore leaves nothing
 in the level, and the 2 mV by which the fit sits above the recording at 200 pA is a
 steady-state difference of the two cells at that current, continuous with the recorded
-cell's subthreshold staircase, whose input resistance is 75 MOhm below 70 pA and 91 MOhm from
-90 to 190 pA. Where neither cell spikes the two agree within 1 mV; the net membrane currents
+cell's subthreshold staircase, whose input resistance is 75 MOhm over -110 to 70 pA and
+91 MOhm over 90 to 190 pA, fitted separately because the holding current differs by 6.2 pA
+between the two groups. Where neither cell spikes the two agree within 1 mV; the net membrane currents
 after a spike differ by time since the spike and meet again after the last spike of a train.
 A conductance that opens with a spike and stays open for seconds is sufficient to reproduce
 the single-spike response at 200 pA, with the pre-spike trace and the first spike unchanged,
@@ -343,8 +344,9 @@ in this fit nothing that lowers sodium availability raises the threshold by that
 **Where the take-off is set.** The recorded cell's first spike takes off at -54.5 to -55.2 mV
 when the pulse approaches it at 0.17 to 0.22 mV/ms (200 pA), at -57.2 mV when it approaches
 at 0.75 mV/ms (350 pA), and at -61.9 mV under a 3 ms, 1260 pA pulse that approaches at
-7 mV/ms. Over the long pulses that is a 2.2 mV slide, nine spreads, the same under the
-campaign's threshold definition and under a fixed 10 V/s crossing. Its later spikes take off
+7 mV/ms (campaign definition only; a ramp faster than 10 V/s has no crossing reading). Over
+the long pulses that is a 2.2 mV slide, nine spreads, the same under the campaign's
+threshold definition and under a fixed 10 V/s crossing. Its later spikes take off
 1.9 mV above that relation at the same approach, all 41 of them. The fit takes off at -57.0
 to -57.2 mV at every spike of every train, from 0.23 to 1.16 mV/ms, under both definitions
 ([stage 7](evidence/h01-topographic/threshold-approach.md)). Two different things set the
@@ -379,7 +381,11 @@ and the fit's is a kink, the recorded take-off is somatic and the fit's initiati
 the input that has to change; if both are kinks, the recorded initiation site itself must
 answer to the approach, and the axonal sodium and its neighbours are the family to split.
 
-**Limit.** No sufficient repair is established, and B3 stays unpromoted. Slow inactivation
+**Limit.** No sufficient repair is established, and B3 stays unpromoted. The measured facts
+are that the recorded take-off slides with the approach and rises after a spike while the
+fit's does not move; the account of where the fit's take-off is imposed, a current arriving
+from the axonal initiation site, is the hypothesis that stage 8 is registered to test, and
+the account of what the slow approach removes in the recorded cell names no channel. Slow inactivation
 of the fitted sodium is refuted as the shared-function element for this fit at depths up to
 0.6 with the registered time course; other time courses and other carriers of what a spike
 leaves behind are not excluded. A gate fitted to

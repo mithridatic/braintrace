@@ -320,11 +320,11 @@ Steady level with a spike minus without: +0.16 mV, 0.5 sigma.
 
 - E PASS: human spike-1 take-off slides more than 3 sigma across its approach range (-6.34 mV, 25.4 sigma)
 - E PASS: the slide has the same sign under both threshold definitions (where the second applies) (-2.19 mV, 8.7 sigma)
-- E PASS: fit take-off moves less than 1 sigma across every spike of every train (+0.20 mV, 0.8 sigma)
+- E PASS: fit take-off moves less than 1 sigma across every spike of every train, over a wider approach range than the human's long pulses (+0.20 mV, 0.8 sigma)
 - E PASS: human later spikes sit above the spike-1 relation by more than 3 sigma (median) (+1.92 mV, 7.7 sigma)
 - I PASS: human spike-1 take-off slides more than 3 sigma across its approach range (-4.00 mV, 10.5 sigma)
 - I PASS: the slide has the same sign under both threshold definitions (where the second applies) (-4.00 mV, 10.5 sigma)
-- I FAIL: fit take-off moves less than 1 sigma across every spike of every train (+0.93 mV, 2.5 sigma)
+- I FAIL: fit take-off moves less than 1 sigma across every spike of every train, over a wider approach range than the human's long pulses (+0.93 mV, 2.5 sigma)
 - I FAIL: human later spikes sit above the spike-1 relation by more than 3 sigma (median) (+1.01 mV, 2.6 sigma)
 - E PASS: the twins' steady levels agree within 3 sigma of the level spread (+0.16 mV, 0.5 sigma)
 
@@ -336,4 +336,4 @@ E human, spike 1: the take-off is -54.5 to -55.2 mV when the approach is 0.17 to
 E human, later spikes: all 41 sit above the spike-1 relation, by 1.9 mV in the median (8 sigma), so what a spike leaves behind raises the take-off beyond what the trajectory alone gives; the fit's later spikes sit on its fixed voltage.
 I human, spike 1: -57.7 to -58.5 mV at 0.7 mV/ms (120 pA), -60.5 mV at 1.1 (0.19 nA), -61.7 mV at 1.7 (0.27 nA): a 4.0 mV slide (10 sigma of the spike-1 spread) under both definitions. The I fit slides 0.7 mV over 0.44 to 1.72 mV/ms and holds within 0.3 mV along each train: not fixed to 1 sigma, but a fifth of the recorded slide. The I later spikes sit 1.0 mV above the relation in the median, inside 3 sigma, with five fast-burst spikes below it; the I along-train rows have no repeat spread of their own.
 Twins: the 200 pA sweeps with one spike (56, 59 to 62) and without (57, 58) have the same steady level 800 ms later (+0.16 mV, 0.5 sigma) and the same recovery after the pulse, so a spike leaves nothing in the level; the Y4 level row was a steady-state difference between the cells at 200 pA, not a post-spike effect.
-The recorded cell's rheobase sits at 200 pA, where its own repeats give 0 or 1 spike; a count at that drive is inside the recording's spread and is not scored. Its input resistance is 75 MOhm below 70 pA and 91 MOhm from 90 to 190 pA, the steady level bending upward and the post-pulse undershoot deepening as the drive approaches rheobase.
+The recorded cell's rheobase sits at 200 pA, where its own repeats give 0 or 1 spike; a count at that drive is inside the recording's spread and is not scored. Its input resistance is 75 MOhm over -110 to 70 pA and 91 MOhm over 90 to 190 pA, fitted separately because the holding current differs by 6.2 pA between the two groups; the post-pulse undershoot deepens with the drive.

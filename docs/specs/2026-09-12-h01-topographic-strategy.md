@@ -238,7 +238,9 @@ pulse onset; the first-10 V/s-crossing definition is not applicable where the ap
 itself exceeds 5 V/s (the short squares), and the sign check uses the long pulses; the fits
 are read across every spike of every train (two trains give two spike-1 points); prediction
 3 is read on the median residual with the minimum and the count below the relation
-reported beside it; the verdict is per cell.
+reported beside it; prediction 2's "wider range of approach rates" is judged against the
+human's long-pulse range (the short squares have no second-definition reading and no model
+counterpart); the verdict is per cell.
 
 Result: E PASS on every check (slide -2.2 mV, 9 sigma, both definitions; short squares
 -61.9 mV at 7 mV/ms; fit 0.2 mV over 0.23 to 1.16 mV/ms; later spikes +1.9 mV median,

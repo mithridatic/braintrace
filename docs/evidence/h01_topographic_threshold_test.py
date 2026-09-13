@@ -86,15 +86,17 @@ def test_twins_contrast_and_input_resistance():
 
 
 def test_decide_is_per_cell_and_fails_a_sliding_fit():
-    def rel(slide, lo, hi):
-        return {"threshold_mv": {"slide_mv": slide, "threshold_range": [lo, hi], "approach_range": [.2, 1.]},
-                "crossing_mv": {"slide_mv": slide, "threshold_range": [lo, hi], "approach_range": [.2, 1.]}}
-    result = {"relations": {"E human": rel(-2., -57., -55.), "E fit": rel(-.1, -57.2, -57.1),
-                            "I human": rel(-4., -62., -58.), "I fit": rel(-.7, -61.1, -60.2)},
+    def rel(slide, lo, hi, approach=(.2, 1.)):
+        return {"threshold_mv": {"slide_mv": slide, "threshold_range": [lo, hi], "approach_range": list(approach)},
+                "crossing_mv": {"slide_mv": slide, "threshold_range": [lo, hi], "approach_range": [.2, .8]}}
+    result = {"relations": {"E human": rel(-2., -57., -55., (.2, 7.)), "E fit": rel(-.1, -57.2, -57.1, (.2, 1.2)),
+                            "I human": rel(-4., -62., -58.), "I fit": rel(-.7, -61.1, -60.2, (.4, 1.7))},
               "later_spikes": {"E human": {"median_residual_mv": 1.9}, "I human": {"median_residual_mv": 1.}},
               "twins_contrast": {"diff_mv": .16, "sigmas": .5}}
     d = thr.decide(result)
     assert d["verdict"] == {"E": "PASS", "I": "FAIL"}
+    result["relations"]["E fit"] = rel(-.1, -57.2, -57.1, (.2, .5))      # flat over a narrower range is not a fixed take-off
+    assert thr.decide(result)["verdict"]["E"] == "FAIL"
     assert all(isinstance(c["pass"], bool) for c in d["checks"])
     assert len(d["checks"]) == 9
 

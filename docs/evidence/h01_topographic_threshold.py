@@ -206,8 +206,9 @@ def decide(result):
         checks.append(_check(cell, "the slide has the same sign under both threshold definitions (where the second applies)",
                              human["crossing_mv"]["slide_mv"], sig,
                              np.sign(human["crossing_mv"]["slide_mv"]) == np.sign(human["threshold_mv"]["slide_mv"])))
-        checks.append(_check(cell, "fit take-off moves less than 1 sigma across every spike of every train",
-                             np.ptp(fit["threshold_mv"]["threshold_range"]), sig, np.ptp(fit["threshold_mv"]["threshold_range"]) < sig))
+        wider = np.ptp(fit["threshold_mv"]["approach_range"]) > np.ptp(human["crossing_mv"]["approach_range"])   # long pulses only
+        checks.append(_check(cell, "fit take-off moves less than 1 sigma across every spike of every train, over a wider approach range than the human's long pulses",
+                             np.ptp(fit["threshold_mv"]["threshold_range"]), sig, np.ptp(fit["threshold_mv"]["threshold_range"]) < sig and wider))
         checks.append(_check(cell, "human later spikes sit above the spike-1 relation by more than 3 sigma (median)",
                              later[f"{cell} human"]["median_residual_mv"], sig, later[f"{cell} human"]["median_residual_mv"] > 3*sig))
     checks.append(_check("E", "the twins' steady levels agree within 3 sigma of the level spread", tw["diff_mv"], SIGMA["E"]["level_mv"], tw["sigmas"] < 3.))
@@ -290,8 +291,8 @@ READING = [
     "0.5 sigma) and the same recovery after the pulse, so a spike leaves nothing in the level; the Y4 level row was a steady-state "
     "difference between the cells at 200 pA, not a post-spike effect.",
     "The recorded cell's rheobase sits at 200 pA, where its own repeats give 0 or 1 spike; a count at that drive is inside the "
-    "recording's spread and is not scored. Its input resistance is 75 MOhm below 70 pA and 91 MOhm from 90 to 190 pA, the steady "
-    "level bending upward and the post-pulse undershoot deepening as the drive approaches rheobase.",
+    "recording's spread and is not scored. Its input resistance is 75 MOhm over -110 to 70 pA and 91 MOhm over 90 to 190 pA, fitted "
+    "separately because the holding current differs by 6.2 pA between the two groups; the post-pulse undershoot deepens with the drive.",
 ]
 
 
