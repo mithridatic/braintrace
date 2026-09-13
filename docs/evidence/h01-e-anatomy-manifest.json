@@ -50,7 +50,17 @@
         "nseg_factor": 9,
         "cvode_atol": 1e-10,
         "refine_region": "all"
-      }
+      },
+      "stage": "15",
+      "arm": "arm B: human biophysics on this cell's anatomy"
     }
-  ]
+  ],
+  "stages": {
+    "15": {
+      "title": "Stage 15 arm B: HL23PYR biophysics unchanged on the Allen human morphology of the recorded cell, 0.31 nA",
+      "prediction": "If the first-interval threshold step is a property of the human sodium rather than of the Toronto anatomy, the threshold at spike 2 minus spike 1 stays near the recorded +1.38 mV (HL23PYR on its own anatomy gave +1.38; B3 gives -0.02). The accumulation, spike 5 minus spike 1, is still expected to fall short of the recorded +3.63 mV. Reported, not banded: count, rest, spike-1 rise and fall.",
+      "rejection": "No spike at 0.31 nA, or fewer than five spikes (no reading for the step and the accumulation); or the step disappears on this anatomy (the step was a property of the Toronto anatomy, not of the human sodium).",
+      "unchanged": "The published HL23PYR biophysics and template; the recording, its chain and the readers; the drive and the recorded bias. Only the morphology changes, to the recorded cell's own reconstruction."
+    }
+  }
 }

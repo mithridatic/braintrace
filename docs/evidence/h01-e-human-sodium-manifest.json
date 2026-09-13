@@ -33,12 +33,19 @@
     "b3_rodent_rise_through_chain_v_s": 570.4,
     "hl23pyr_soma_NaTg_s_cm2": 0.272,
     "b3_soma_NaTs_s_cm2": 2.6406641498523276,
-    "stage_11_rodent_dose_series_v_s": [655.0, 586.0, 505.0],
+    "stage_11_rodent_dose_series_v_s": [
+      655.0,
+      586.0,
+      505.0
+    ],
     "stage_11_zero_sodium_intercept_v_s": 320.0
   },
   "decision_limits": {
     "rise_fraction_of_recorded": 0.15,
-    "count_310": [5, 15]
+    "count_310": [
+      5,
+      15
+    ]
   },
   "candidates": [
     {
@@ -47,10 +54,20 @@
       "settings": {
         "nseg_factor": 9,
         "cvode_atol": 1e-10,
-        "regional_density": ["NaTs:soma:0"],
-        "insert_density": ["NaTg:soma:0.068"],
-        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
-      }
+        "regional_density": [
+          "NaTs:soma:0"
+        ],
+        "insert_density": [
+          "NaTg:soma:0.068"
+        ],
+        "mechanism_parameter": [
+          "NaTg:soma:vshiftm:13",
+          "NaTg:soma:vshifth:15",
+          "NaTg:soma:slopem:7"
+        ]
+      },
+      "stage": "15",
+      "arm": "arm A: human sodium equations on the human cell"
     },
     {
       "name": "s15-natg-0136",
@@ -58,10 +75,20 @@
       "settings": {
         "nseg_factor": 9,
         "cvode_atol": 1e-10,
-        "regional_density": ["NaTs:soma:0"],
-        "insert_density": ["NaTg:soma:0.136"],
-        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
-      }
+        "regional_density": [
+          "NaTs:soma:0"
+        ],
+        "insert_density": [
+          "NaTg:soma:0.136"
+        ],
+        "mechanism_parameter": [
+          "NaTg:soma:vshiftm:13",
+          "NaTg:soma:vshifth:15",
+          "NaTg:soma:slopem:7"
+        ]
+      },
+      "stage": "15",
+      "arm": "arm A: human sodium equations on the human cell"
     },
     {
       "name": "s15-natg-0272",
@@ -69,10 +96,20 @@
       "settings": {
         "nseg_factor": 9,
         "cvode_atol": 1e-10,
-        "regional_density": ["NaTs:soma:0"],
-        "insert_density": ["NaTg:soma:0.272"],
-        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
-      }
+        "regional_density": [
+          "NaTs:soma:0"
+        ],
+        "insert_density": [
+          "NaTg:soma:0.272"
+        ],
+        "mechanism_parameter": [
+          "NaTg:soma:vshiftm:13",
+          "NaTg:soma:vshifth:15",
+          "NaTg:soma:slopem:7"
+        ]
+      },
+      "stage": "15",
+      "arm": "arm A: human sodium equations on the human cell"
     },
     {
       "name": "s15-natg-0544",
@@ -80,10 +117,28 @@
       "settings": {
         "nseg_factor": 9,
         "cvode_atol": 1e-10,
-        "regional_density": ["NaTs:soma:0"],
-        "insert_density": ["NaTg:soma:0.544"],
-        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
-      }
+        "regional_density": [
+          "NaTs:soma:0"
+        ],
+        "insert_density": [
+          "NaTg:soma:0.544"
+        ],
+        "mechanism_parameter": [
+          "NaTg:soma:vshiftm:13",
+          "NaTg:soma:vshifth:15",
+          "NaTg:soma:slopem:7"
+        ]
+      },
+      "stage": "15",
+      "arm": "arm A: human sodium equations on the human cell"
     }
-  ]
+  ],
+  "stages": {
+    "15": {
+      "title": "Stage 15 arm A: the somatic sodium equations swapped human for rodent on the human cell, dosed for the characteristic curve of the rise at 310 pA",
+      "prediction": "The spike-1 rise through the stage-12 chain falls monotonically with the inserted human NaTg density, giving the characteristic curve; if the equation lineage is the rise's remaining input, some dose in 0.068 to 0.544 S/cm2 puts the rise within 15 percent of the recorded 348 V/s while the 310 pA count stays within 5 to 15 (recorded 10) and the spike-1 take-off stays in the recorded band. The dose at which the curve crosses 348 is reported by interpolation and flagged inside or outside the series. Reported, not banded: fall, peak, threshold, the first-interval threshold step and the rise ratio spike 5 over spike 1.",
+      "rejection": "No dose brings the rise within 15 percent of 348 (the equation lineage is not the remaining input; the residual belongs elsewhere and is reported, not repaired); or every dose that does also leaves the count band (the rise is bought with the count); or the rise does not move monotonically with the dose (the dose is not acting through the somatic sodium).",
+      "unchanged": "The human anatomy of Allen 541563728 and every non-somatic-sodium density of the B3 fit; the recorded command plus the recorded bias; sweep 53 only; nseg factor 9; CVode 1e-10; 34 degrees; stop 2100 ms; the recording, its chain and the readers. Only the somatic sodium equations change: rodent NaTs zeroed, human NaTg inserted with HL23PYR's voltage shifts."
+    }
+  }
 }
