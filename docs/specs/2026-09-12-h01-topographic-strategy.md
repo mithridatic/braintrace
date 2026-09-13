@@ -473,3 +473,36 @@ gone by the next sweep). Before either is given a lever, one Y question for each
   tables)? Retained traces only; no run. If it is present after one spike and does not
   grow with the count, it is a per-spike step with a time constant longer than a second;
   if it grows, it accumulates.
+
+### Stage 11 execution addendum (2026-09-13, before the runs)
+
+**Rise.** The doses are absolute values of the driver's `--sodium-density-factor` (B3 runs
+at 0.9): 0.7 and 0.5 replace 0.9, everything else copied from `s10-d2-density`
+(`h01-e-rise-manifest.json`, output `h01-e-rise`, two candidates at the one 310 pA input, cap
+2). The retained `s10-d2-density-sweep53` run is the third point of the same series at 0.9,
+so monotonicity is judged over 0.9, 0.7, 0.5 and the take-off is compared against that run's
+spike 1. Lowering the somatic sodium moves the rheobase, so at a fixed 310 pA the approach of
+spike 1 will move too; the take-off is therefore read with its approach, and the 0.5 mV limit
+is applied to the take-off corrected for the approach difference by this geometry's own
+ramp slope (stage 10, x2 density held: -2.8 mV per decade), with the raw difference and both
+approaches recorded beside it. The rise is `max_rise_v_s` of spike 1 from the campaign
+landmarks on the soma trace, the same reading at all three doses and for the recording.
+
+**What a spike leaves behind.** The read as registered cannot fire, and this is recorded as
+a fired "no reading" before any trace is opened: the five short squares (sweeps 27 to 31)
+are followed by sixteen subthreshold long squares, and the first long square that spikes
+(48) starts 173 s after sweep 31, in the regime already established as "gone by the next
+sweep"; and the short-square spikes sit at an approach of 7.2 mV/ms with the take-off at
+-61.3 to -62.0 mV, where the recorded relation has slid 6 mV from the long-square regime, so
+a next-long-square read would compare across regimes as well as across 173 s. The adjacent
+read from the same traces, registered here in its place: sweep 27 fires after five sweeps
+that did not spike (26 s after the last spike, sweep 21), so it is the unprimed baseline;
+sweeps 28, 29 and 30 each follow a single spike by 4.15, 4.18 and 2.72 s, and sweep 31
+follows one by 15.8 s, all at the same approach (7.18 to 7.30 mV/ms) and the same 1260 pA.
+Prediction if the step outlasts seconds: the primed take-offs sit above the unprimed one by
+about +1.9 mV. Prediction if it does not: they sit within 3 sigma of it (the sigma is the
+spread of the five short squares themselves, since no other repeat at this approach
+exists). The read does not reach inside the first 2.7 s, and it assumes the step is as
+visible at 7 mV/ms as at 0.2 to 0.75; both limits are recorded with the result. The
+second half, does the residual grow with the count, reads the stage-7 tables as registered:
+residual by spike index, spike 2 against spikes 6 and later.

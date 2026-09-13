@@ -1,0 +1,113 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2) from the clean worktree /workspace/braintrace-q2; the library is recompiled with nrnivmodl after the patched NaTs.mod is installed, and the provenance digest (docs/evidence/h01-l2-mechanisms/slow-inactivation-provenance.json) is checked against the installed file before stage 0.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "purpose": "Stage 11 (rise): somatic NaTs density 0.7 and 0.5 on the x2 density-held geometry of s10-d2-density, 310 pA only; the retained s10-d2-density-sweep53 run is the third point at 0.9. See docs/specs/2026-09-12-h01-topographic-strategy.md, stage 11 and its execution addendum.",
+  "cap": 2,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 2400,
+  "output_dir": "h01-e-rise",
+  "inputs": {
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed and is not an input.",
+  "evaluation": "One candidate at one input = one evaluation; two candidates at sweep53: two.",
+  "base_candidate": {
+    "file": "h01-e-coupling-b-manifest.json#s10-d2-density",
+    "note": "Stage 10 x2 density-held arm at 310 pA: 9 spikes, spike-1 soma take-off -55.1 to -55.5 mV along the train, spike-1 rise 655 V/s; read again by the stage-11 scorer with the same landmarks as the new doses."
+  },
+  "reference": {
+    "sodium_density_factor": 0.9,
+    "run": "h01-e-coupling-b/s10-d2-density-sweep53",
+    "count_310": 9,
+    "spike_1_rise_v_s": 655.0,
+    "take_off_slope_mv_per_decade": -2.8,
+    "recorded_spike_1_rise_v_s": 348.0
+  },
+  "decision_limits": {
+    "take_off_move_mv": 0.5,
+    "count_310": [
+      8,
+      12
+    ]
+  },
+  "stages": {
+    "11": {
+      "title": "Stage 11 (rise): somatic NaTs density 0.7 and 0.5 at 310 pA on the x2 density-held geometry",
+      "prediction": "The spike-1 rise falls monotonically over 0.9, 0.7, 0.5. The somatic take-off at the 310 pA onset, corrected for the approach difference by this geometry's ramp slope (-2.8 mV per decade), moves less than 0.5 mV from the 0.9 run. Count within 8 to 12. No pass band on the value of the rise.",
+      "rejection": "No spike at a dose; count outside 8 to 12; the corrected take-off moving more than 0.5 mV (the density is a take-off lever at this geometry, and the rise cannot be dosed through it without moving what stage 10 placed).",
+      "unchanged": "Everything of s10-d2-density except --sodium-density-factor: the x2 stub, the axonal NaTs at 3.814 S/cm2, every other density and kinetic parameter, nseg 9, atol 1e-10."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s11-na07",
+      "stage": "11",
+      "arm": "somatic NaTs density 0.7",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.7,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 2.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 11"
+    },
+    {
+      "name": "s11-na05",
+      "stage": "11",
+      "arm": "somatic NaTs density 0.5",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": [
+          "SK:soma:0.35"
+        ],
+        "sodium_density_factor": 0.5,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 2.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "record_soma_currents": false
+      },
+      "inputs_note": "stage 11"
+    }
+  ]
+}
