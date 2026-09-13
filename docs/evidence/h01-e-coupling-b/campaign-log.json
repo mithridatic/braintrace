@@ -1,0 +1,15 @@
+[
+  {
+    "name": "s10-d2-density",
+    "candidate_sha256": "3a062ad6fb957f6adb4c69419fe21693cee78b5680633106554c69a7c0ca9a14",
+    "evaluation_index": 1,
+    "abort_seconds": 2400,
+    "inputs": {
+      "ramp01": "untested",
+      "ramp1": "untested",
+      "ramp10": "untested",
+      "sweep53": "untested"
+    },
+    "runs": []
+  }
+]

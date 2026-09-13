@@ -30,7 +30,7 @@ without supplying a complete explanation of a human-model difference.
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
 | PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (the recording's span rests on the ratio to the fit, its repeat set not resolving 1 mV; the fit's whole-cell turnover was confirmed at five points). See Y3. |
-| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. So every lever that only changes the somatic inward current is a rise lever in this fit, and the approach signature is a question of the coupling between the soma and the site, not of the channels. What a spike leaves behind, +1.9 mV that does not recover measurably inside the pulse, has no counterpart at either site. See Y4. |
+| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; the coupling also reshapes the onset, least at twice the stub's diameter with the density held. Every lever that only changes the somatic inward current is a rise lever in this fit. What a spike leaves behind, +1.9 mV that does not recover measurably inside the pulse, has no counterpart at either site. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -403,14 +403,31 @@ fit's soma cannot show it because it is a load 45 um down a 1 um stub that reads
 arrival of the axonal spike at one voltage, whatever the site's own voltage was. The
 recorded soma shows it, which says that the recorded soma reads its initiation site
 directly, through a coupling tighter than the fit's stub. This is a difference of an
-input, the geometry between the soma and the site, and not of a channel; it is registered
-as [stage 10](specs/2026-09-12-h01-topographic-strategy.md), which changes only that
-coupling with the axonal sodium total held. The other recorded element, the take-off
+input, the geometry between the soma and the site, and not of a channel.
+[Stage 10](evidence/h01-topographic/stage-10.md) tested it by changing only that coupling:
+with the stub at twice its diameter and the total axonal sodium held the somatic take-off
+slides -2.9 mV from 0.5 to 2.6 mV/ms, with the density held -2.1 mV, at four times the
+diameter -3.4 mV, against -0.07 mV in the control and -2.2 mV in the recording; the axon
+lead falls from 0.30 ms to 0.16, 0.20 and 0.04 ms. The mechanism is the one the ramps
+showed: when the site is tightly coupled, the soma is carried over by the site's own inward
+current before the spike arrives, so the somatic crossing happens at the site's take-off,
+which the source-load relation sets; with a thin stub the soma waits for the arriving
+spike. The coupling also reshapes the onset, 6 to 11 mV from 10 to 100 V/s in the
+total-held arms where the site merges into the soma, and 4.1 to 6.0 mV with the density
+held at twice the diameter, against the recorded 3.5 to 5.7; that arm is the closest run of
+the campaign to the recorded take-off, -55.2 to -57.3 mV against -54.5 to -57.2, with nine
+spikes at 310 pA against ten. The two x2 arms differ by 0.8 mV, so the site's density
+modulates a slide that the coupling makes. Sufficient for the approach signature under
+these conditions; it does not name the recorded cell's geometry, only that its soma reads
+its site more directly than through the Allen stub. It moves neither the rise, 579 and 655
+V/s against 639 (recorded 348), nor what a spike leaves behind: along the 310 pA train the
+take-off holds at -55.1 to -55.5 mV in that arm where the recording steps up 1.9 mV. The other recorded element, the take-off
 +1.9 mV higher after a spike, does not recover measurably inside the pulse (+2.0, +2.2 and
 +1.5 mV after intervals under 30, 30 to 100 and over 100 ms, not monotone, so a fixed step
 and a slow recovery are not resolved; recovered by the next sweep) and has no counterpart
 at either site of the fit: along the retained trains the fit's axonal take-off is a
-function of the approach alone. That element still needs its own split.
+function of the approach alone. That element still needs its own split, and so does the rise; both are registered
+as [stage 11](specs/2026-09-12-h01-topographic-strategy.md).
 
 **Consequence.** Matching the model's cable to the recorded cell will have little effect on
 the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
@@ -454,9 +471,10 @@ insertion with fast kinetics crosses its own threshold at nearly the same voltag
 its availability; the recording moves 2.2 mV with the approach alone and 1.9 mV more after
 one spike, which is more than availability at such a site gives. Stage 9 read the take-off's own
 variables: in the fit the approach moves the take-off at the site by the recorded amount
-and the soma hides it; in the recording the post-spike step does not recover measurably inside the pulse. The
-next split, [stage 10](specs/2026-09-12-h01-topographic-strategy.md), changes only the
-coupling between the soma and the site.
+and the soma hides it; in the recording the post-spike step does not recover measurably inside the pulse. Stage 10
+changed only the coupling and the somatic take-off followed it. Two recorded elements
+remain without a counterpart, the rise and the post-spike step; stage 11 asks one Y
+question of each before any lever.
 
 Evidence: [soma currents and their erratum](evidence/h01-e-currents/stage-close-decision.json),
 [direct trace audit](evidence/h01-causal-direct-trace-audit-2026-09-11.md),

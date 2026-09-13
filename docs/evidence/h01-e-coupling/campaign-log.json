@@ -1,0 +1,116 @@
+[
+  {
+    "name": "s10-d2-total",
+    "candidate_sha256": "33b79c60408db0aa1d77059f222d5cc09187efe112c32c1946c2b125a8cc95d8",
+    "evaluation_index": 1,
+    "abort_seconds": 2400,
+    "inputs": {
+      "ramp01": "completed",
+      "ramp1": "completed",
+      "ramp10": "completed",
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s10-d2-total",
+        "input": "ramp01",
+        "seconds": 1487.2557205082849,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-coupling/s10-d2-total-ramp01.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--ramp-pa-per-ms",
+          "1.1",
+          "--ramp-end-ms",
+          "1400",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total-ramp01"
+        ]
+      },
+      {
+        "name": "s10-d2-total",
+        "input": "ramp1",
+        "seconds": 980.2035934859887,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-coupling/s10-d2-total-ramp1.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--ramp-pa-per-ms",
+          "11.0",
+          "--ramp-end-ms",
+          "1120",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total-ramp1"
+        ]
+      },
+      {
+        "name": "s10-d2-total",
+        "input": "ramp10",
+        "seconds": 600.1478519141674,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-coupling/s10-d2-total-ramp10.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--ramp-pa-per-ms",
+          "110.0",
+          "--ramp-end-ms",
+          "1060",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total-ramp10"
+        ]
+      },
+      {
+        "name": "s10-d2-total",
+        "input": "sweep53",
+        "seconds": 1006.130743178539,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-coupling/s10-d2-total-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-coupling/s10-d2-total-sweep53"
+        ]
+      }
+    ]
+  }
+]

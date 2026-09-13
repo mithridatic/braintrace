@@ -1,0 +1,866 @@
+{
+  "stage": "10",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "limits": {
+    "soma_slide_x4_mv": 1.0,
+    "soma_slide_x2_mv": 0.5,
+    "x2_arms_agree_mv": 0.5,
+    "axon_lead_x4_ms": 0.15,
+    "span_mv": [
+      3.5,
+      5.7
+    ],
+    "count_310": [
+      8,
+      12
+    ]
+  },
+  "arms": {
+    "control 1 um": {
+      "ramps": {
+        "ramp01": {
+          "rate_pa_per_ms": 1.1,
+          "status": "read",
+          "count": 6,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 0.36574185959709904,
+            "points": {
+              "soma": {
+                "take_off_mv": -57.111411776861985,
+                "span_mv": 3.944845048608478,
+                "t_ms": 1241.98,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -55.72732042413626,
+                "span_mv": 5.153599220900496,
+                "t_ms": 1241.82,
+                "lead_ms": 0.16000000000008185
+              },
+              "axon1": {
+                "take_off_mv": -54.68989474121699,
+                "span_mv": 8.370589601064474,
+                "t_ms": 1241.68,
+                "lead_ms": 0.2999999999999545
+              }
+            }
+          }
+        },
+        "ramp1": {
+          "rate_pa_per_ms": 11.0,
+          "status": "read",
+          "count": 8,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 0.9605672036432118,
+            "points": {
+              "soma": {
+                "take_off_mv": -57.156476909523725,
+                "span_mv": 3.4090964520038867,
+                "t_ms": 1061.0,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -56.47218479452756,
+                "span_mv": 4.805882678097355,
+                "t_ms": 1060.82,
+                "lead_ms": 0.18000000000006366
+              },
+              "axon1": {
+                "take_off_mv": -55.83035772177503,
+                "span_mv": 7.605037498221087,
+                "t_ms": 1060.7,
+                "lead_ms": 0.2999999999999545
+              }
+            }
+          }
+        },
+        "ramp10": {
+          "rate_pa_per_ms": 110.0,
+          "status": "read",
+          "count": 3,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 2.527061667001107,
+            "points": {
+              "soma": {
+                "take_off_mv": -57.18364622867188,
+                "span_mv": 3.222539925107313,
+                "t_ms": 1029.82,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -58.10128371041806,
+                "span_mv": 6.94817672206581,
+                "t_ms": 1029.6200000000001,
+                "lead_ms": 0.1999999999998181
+              },
+              "axon1": {
+                "take_off_mv": -58.763992981695665,
+                "span_mv": 9.35855727675358,
+                "t_ms": 1029.5,
+                "lead_ms": 0.31999999999993634
+              }
+            }
+          }
+        }
+      },
+      "step": {
+        "status": "not run"
+      },
+      "summary": {
+        "soma": {
+          "n": 3,
+          "approach_range": [
+            0.36574185959709904,
+            2.527061667001107
+          ],
+          "take_off_mv": [
+            -57.111411776861985,
+            -57.156476909523725,
+            -57.18364622867188
+          ],
+          "slide_mv": -0.07223445180989785,
+          "range_mv": 0.07223445180989785
+        },
+        "axon0": {
+          "n": 3,
+          "approach_range": [
+            0.36574185959709904,
+            2.527061667001107
+          ],
+          "take_off_mv": [
+            -55.72732042413626,
+            -56.47218479452756,
+            -58.10128371041806
+          ],
+          "slide_mv": -2.3739632862818,
+          "range_mv": 2.3739632862818
+        },
+        "axon1": {
+          "n": 3,
+          "approach_range": [
+            0.36574185959709904,
+            2.527061667001107
+          ],
+          "take_off_mv": [
+            -54.68989474121699,
+            -55.83035772177503,
+            -58.763992981695665
+          ],
+          "slide_mv": -4.074098240478676,
+          "range_mv": 4.074098240478676
+        },
+        "soma_span_range_mv": [
+          3.222539925107313,
+          3.944845048608478
+        ],
+        "axon1_lead_range_ms": [
+          0.2999999999999545,
+          0.31999999999993634
+        ],
+        "count_310": null
+      }
+    },
+    "x2 total held": {
+      "ramps": {
+        "ramp01": {
+          "rate_pa_per_ms": 1.1,
+          "status": "read",
+          "count": 6,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 0.5115559302325412,
+            "points": {
+              "soma": {
+                "take_off_mv": -53.14557172445522,
+                "span_mv": 6.089633437895259,
+                "t_ms": 1255.48,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -53.091028005650706,
+                "span_mv": 8.195674176175714,
+                "t_ms": 1255.38,
+                "lead_ms": 0.09999999999990905
+              },
+              "axon1": {
+                "take_off_mv": -52.66460119900524,
+                "span_mv": 9.029651825156606,
+                "t_ms": 1255.32,
+                "lead_ms": 0.16000000000008185
+              }
+            }
+          }
+        },
+        "ramp1": {
+          "rate_pa_per_ms": 11.0,
+          "status": "read",
+          "count": 8,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 1.0442129353123415,
+            "points": {
+              "soma": {
+                "take_off_mv": -53.83464673725136,
+                "span_mv": 7.4851981763291064,
+                "t_ms": 1062.98,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -53.99419844136823,
+                "span_mv": 9.522011130957132,
+                "t_ms": 1062.88,
+                "lead_ms": 0.09999999999990905
+              },
+              "axon1": {
+                "take_off_mv": -54.004760756592525,
+                "span_mv": 10.26596338905528,
+                "t_ms": 1062.8,
+                "lead_ms": 0.18000000000006366
+              }
+            }
+          }
+        },
+        "ramp10": {
+          "rate_pa_per_ms": 110.0,
+          "status": "read",
+          "count": 3,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 2.5693635770396064,
+            "points": {
+              "soma": {
+                "take_off_mv": -56.01582529770501,
+                "span_mv": 8.93136386671025,
+                "t_ms": 1030.14,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -56.52846313088372,
+                "span_mv": 10.267007536253345,
+                "t_ms": 1030.06,
+                "lead_ms": 0.08000000000015461
+              },
+              "axon1": {
+                "take_off_mv": -56.90386905181525,
+                "span_mv": 10.353237502518695,
+                "t_ms": 1030.0,
+                "lead_ms": 0.14000000000010004
+              }
+            }
+          }
+        }
+      },
+      "step": {
+        "status": "read",
+        "count": 10,
+        "cycles": [
+          {
+            "spike": 1,
+            "approach_mv_per_ms": 0.6566654075404866,
+            "soma_take_off_mv": -53.42800665583496,
+            "axon0_take_off_mv": -53.21630346668522,
+            "axon1_take_off_mv": -53.04865429540818,
+            "soma_span_mv": 6.975284067483415,
+            "axon1_lead_ms": 0.15999999999985448
+          },
+          {
+            "spike": 2,
+            "approach_mv_per_ms": 1.0389875758022835,
+            "soma_take_off_mv": -53.48104172046201,
+            "axon0_take_off_mv": -53.265988955454034,
+            "axon1_take_off_mv": -53.09806958083188,
+            "soma_span_mv": 7.680571998780806,
+            "axon1_lead_ms": 0.15999999999985448
+          },
+          {
+            "spike": 3,
+            "approach_mv_per_ms": 0.5011864893219271,
+            "soma_take_off_mv": -53.15821168444356,
+            "axon0_take_off_mv": -52.859507797794386,
+            "axon1_take_off_mv": -52.59885236031681,
+            "soma_span_mv": 7.642799155124905,
+            "axon1_lead_ms": 0.16000000000008185
+          },
+          {
+            "spike": 4,
+            "approach_mv_per_ms": 0.42381126568537797,
+            "soma_take_off_mv": -52.961391046955654,
+            "axon0_take_off_mv": -52.84127381894504,
+            "axon1_take_off_mv": -52.55047962711731,
+            "soma_span_mv": 6.525083260515558,
+            "axon1_lead_ms": 0.18000000000006366
+          },
+          {
+            "spike": 5,
+            "approach_mv_per_ms": 0.42649911326470563,
+            "soma_take_off_mv": -53.04091665606943,
+            "axon0_take_off_mv": -52.71475341606289,
+            "axon1_take_off_mv": -52.42546184202941,
+            "soma_span_mv": 5.929081904248477,
+            "axon1_lead_ms": 0.16000000000008185
+          },
+          {
+            "spike": 6,
+            "approach_mv_per_ms": 0.42561866630629613,
+            "soma_take_off_mv": -52.979168811661076,
+            "axon0_take_off_mv": -52.85763960000087,
+            "axon1_take_off_mv": -52.56646428012355,
+            "soma_span_mv": 6.39086992488145,
+            "axon1_lead_ms": 0.18000000000006366
+          },
+          {
+            "spike": 7,
+            "approach_mv_per_ms": 0.4243834230464395,
+            "soma_take_off_mv": -53.00630772109454,
+            "axon0_take_off_mv": -52.676031216283235,
+            "axon1_take_off_mv": -52.38380548981243,
+            "soma_span_mv": 6.160372275895668,
+            "axon1_lead_ms": 0.15999999999985448
+          },
+          {
+            "spike": 8,
+            "approach_mv_per_ms": 0.4243306694277298,
+            "soma_take_off_mv": -52.95077942611832,
+            "axon0_take_off_mv": -52.828031782677385,
+            "axon1_take_off_mv": -52.53442072378806,
+            "soma_span_mv": 6.60793419461244,
+            "axon1_lead_ms": 0.18000000000006366
+          },
+          {
+            "spike": 9,
+            "approach_mv_per_ms": 0.42438009483357325,
+            "soma_take_off_mv": -52.89776720859839,
+            "axon0_take_off_mv": -52.7765706848086,
+            "axon1_take_off_mv": -52.48190098560512,
+            "soma_span_mv": 7.084743434365635,
+            "axon1_lead_ms": 0.1799999999998363
+          },
+          {
+            "spike": 10,
+            "approach_mv_per_ms": 0.4215400953893687,
+            "soma_take_off_mv": -53.07148707904711,
+            "axon0_take_off_mv": -52.74088527904014,
+            "axon1_take_off_mv": -52.44532293680781,
+            "soma_span_mv": 7.65293647248032,
+            "axon1_lead_ms": 0.16000000000008185
+          }
+        ]
+      },
+      "summary": {
+        "soma": {
+          "n": 3,
+          "approach_range": [
+            0.5115559302325412,
+            2.5693635770396064
+          ],
+          "take_off_mv": [
+            -53.14557172445522,
+            -53.83464673725136,
+            -56.01582529770501
+          ],
+          "slide_mv": -2.8702535732497836,
+          "range_mv": 2.8702535732497836
+        },
+        "axon0": {
+          "n": 3,
+          "approach_range": [
+            0.5115559302325412,
+            2.5693635770396064
+          ],
+          "take_off_mv": [
+            -53.091028005650706,
+            -53.99419844136823,
+            -56.52846313088372
+          ],
+          "slide_mv": -3.4374351252330158,
+          "range_mv": 3.4374351252330158
+        },
+        "axon1": {
+          "n": 3,
+          "approach_range": [
+            0.5115559302325412,
+            2.5693635770396064
+          ],
+          "take_off_mv": [
+            -52.66460119900524,
+            -54.004760756592525,
+            -56.90386905181525
+          ],
+          "slide_mv": -4.239267852810009,
+          "range_mv": 4.239267852810009
+        },
+        "soma_span_range_mv": [
+          6.089633437895259,
+          8.93136386671025
+        ],
+        "axon1_lead_range_ms": [
+          0.14000000000010004,
+          0.18000000000006366
+        ],
+        "count_310": 10
+      }
+    },
+    "x2 density held": {
+      "ramps": {
+        "ramp01": {
+          "rate_pa_per_ms": 1.1,
+          "status": "read",
+          "count": 5,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 0.45240746321344344,
+            "points": {
+              "soma": {
+                "take_off_mv": -55.18668837084495,
+                "span_mv": 5.283701389818262,
+                "t_ms": 1248.06,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -54.77105661940865,
+                "span_mv": 7.2884989356322265,
+                "t_ms": 1247.96,
+                "lead_ms": 0.09999999999990905
+              },
+              "axon1": {
+                "take_off_mv": -54.419302193957165,
+                "span_mv": 8.508635938506934,
+                "t_ms": 1247.8600000000001,
+                "lead_ms": 0.1999999999998181
+              }
+            }
+          }
+        },
+        "ramp1": {
+          "rate_pa_per_ms": 11.0,
+          "status": "read",
+          "count": 8,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 0.9936292992678336,
+            "points": {
+              "soma": {
+                "take_off_mv": -55.74051030257985,
+                "span_mv": 4.100240147831187,
+                "t_ms": 1061.74,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -55.5702633854427,
+                "span_mv": 5.987142664612833,
+                "t_ms": 1061.64,
+                "lead_ms": 0.09999999999990905
+              },
+              "axon1": {
+                "take_off_mv": -55.50102221985587,
+                "span_mv": 9.110073939785536,
+                "t_ms": 1061.54,
+                "lead_ms": 0.20000000000004547
+              }
+            }
+          }
+        },
+        "ramp10": {
+          "rate_pa_per_ms": 110.0,
+          "status": "read",
+          "count": 3,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 2.4955336077662373,
+            "points": {
+              "soma": {
+                "take_off_mv": -57.26790298034702,
+                "span_mv": 6.00768298110475,
+                "t_ms": 1029.88,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -57.772926419267826,
+                "span_mv": 7.800201402490757,
+                "t_ms": 1029.78,
+                "lead_ms": 0.10000000000013642
+              },
+              "axon1": {
+                "take_off_mv": -58.193380189344644,
+                "span_mv": 10.4864059382775,
+                "t_ms": 1029.7,
+                "lead_ms": 0.18000000000006366
+              }
+            }
+          }
+        }
+      },
+      "step": {
+        "status": "read",
+        "count": 9,
+        "cycles": [
+          {
+            "spike": 1,
+            "approach_mv_per_ms": 0.6263182665484095,
+            "soma_take_off_mv": -55.46257744390027,
+            "axon0_take_off_mv": -55.10938168177686,
+            "axon1_take_off_mv": -54.62676209304777,
+            "soma_span_mv": 4.102428740549421,
+            "axon1_lead_ms": 0.18000000000006366
+          },
+          {
+            "spike": 2,
+            "approach_mv_per_ms": 1.1387628914135246,
+            "soma_take_off_mv": -55.537473786560184,
+            "axon0_take_off_mv": -55.1883551071964,
+            "axon1_take_off_mv": -54.70961259989855,
+            "soma_span_mv": 4.4729991268834794,
+            "axon1_lead_ms": 0.1799999999998363
+          },
+          {
+            "spike": 3,
+            "approach_mv_per_ms": 0.40588695717572354,
+            "soma_take_off_mv": -55.13400064494937,
+            "axon0_take_off_mv": -54.66026805985216,
+            "axon1_take_off_mv": -54.24325487017833,
+            "soma_span_mv": 5.378134281822298,
+            "axon1_lead_ms": 0.20000000000004547
+          },
+          {
+            "spike": 4,
+            "approach_mv_per_ms": 0.36543120371584853,
+            "soma_take_off_mv": -55.24564171220712,
+            "axon0_take_off_mv": -54.75589144887825,
+            "axon1_take_off_mv": -54.11760955892112,
+            "soma_span_mv": 4.170085049709606,
+            "axon1_lead_ms": 0.1799999999998363
+          },
+          {
+            "spike": 5,
+            "approach_mv_per_ms": 0.36644845631753986,
+            "soma_take_off_mv": -55.11202689777751,
+            "axon0_take_off_mv": -54.62347089064475,
+            "axon1_take_off_mv": -54.188956786704246,
+            "soma_span_mv": 5.31661486821497,
+            "axon1_lead_ms": 0.20000000000004547
+          },
+          {
+            "spike": 6,
+            "approach_mv_per_ms": 0.36546638120296104,
+            "soma_take_off_mv": -55.11536418527685,
+            "axon0_take_off_mv": -54.62549109586725,
+            "axon1_take_off_mv": -54.18945509700199,
+            "soma_span_mv": 5.275398915097739,
+            "axon1_lead_ms": 0.20000000000004547
+          },
+          {
+            "spike": 7,
+            "approach_mv_per_ms": 0.36454870903904113,
+            "soma_take_off_mv": -55.133112481940344,
+            "axon0_take_off_mv": -54.64178199638354,
+            "axon1_take_off_mv": -54.20367105230982,
+            "soma_span_mv": 5.093467358186395,
+            "axon1_lead_ms": 0.20000000000004547
+          },
+          {
+            "spike": 8,
+            "approach_mv_per_ms": 0.36389211682879824,
+            "soma_take_off_mv": -55.13736801136556,
+            "axon0_take_off_mv": -54.6450104346426,
+            "axon1_take_off_mv": -53.99853613739639,
+            "soma_span_mv": 5.048396466246494,
+            "axon1_lead_ms": 0.18000000000006366
+          },
+          {
+            "spike": 9,
+            "approach_mv_per_ms": 0.3641265453250598,
+            "soma_take_off_mv": -55.06351934686541,
+            "axon0_take_off_mv": -54.572194153064174,
+            "axon1_take_off_mv": -54.13599430716951,
+            "soma_span_mv": 3.757618101102615,
+            "axon1_lead_ms": 0.20000000000004547
+          }
+        ]
+      },
+      "summary": {
+        "soma": {
+          "n": 3,
+          "approach_range": [
+            0.45240746321344344,
+            2.4955336077662373
+          ],
+          "take_off_mv": [
+            -55.18668837084495,
+            -55.74051030257985,
+            -57.26790298034702
+          ],
+          "slide_mv": -2.0812146095020694,
+          "range_mv": 2.0812146095020694
+        },
+        "axon0": {
+          "n": 3,
+          "approach_range": [
+            0.45240746321344344,
+            2.4955336077662373
+          ],
+          "take_off_mv": [
+            -54.77105661940865,
+            -55.5702633854427,
+            -57.772926419267826
+          ],
+          "slide_mv": -3.001869799859179,
+          "range_mv": 3.001869799859179
+        },
+        "axon1": {
+          "n": 3,
+          "approach_range": [
+            0.45240746321344344,
+            2.4955336077662373
+          ],
+          "take_off_mv": [
+            -54.419302193957165,
+            -55.50102221985587,
+            -58.193380189344644
+          ],
+          "slide_mv": -3.7740779953874792,
+          "range_mv": 3.7740779953874792
+        },
+        "soma_span_range_mv": [
+          4.100240147831187,
+          6.00768298110475
+        ],
+        "axon1_lead_range_ms": [
+          0.18000000000006366,
+          0.20000000000004547
+        ],
+        "count_310": 9
+      }
+    },
+    "x4 total held": {
+      "ramps": {
+        "ramp01": {
+          "rate_pa_per_ms": 1.1,
+          "status": "read",
+          "count": 5,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 0.5361207442281829,
+            "points": {
+              "soma": {
+                "take_off_mv": -52.24343269131935,
+                "span_mv": 11.266556971502517,
+                "t_ms": 1278.4,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -52.24776498655494,
+                "span_mv": 10.805579936237706,
+                "t_ms": 1278.38,
+                "lead_ms": 0.01999999999998181
+              },
+              "axon1": {
+                "take_off_mv": -52.23353889926423,
+                "span_mv": 12.543888339499567,
+                "t_ms": 1278.3600000000001,
+                "lead_ms": 0.03999999999996362
+              }
+            }
+          }
+        },
+        "ramp1": {
+          "rate_pa_per_ms": 11.0,
+          "status": "read",
+          "count": 7,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 1.0406025515096713,
+            "points": {
+              "soma": {
+                "take_off_mv": -53.045044750282166,
+                "span_mv": 11.487492718690618,
+                "t_ms": 1065.22,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -53.09342779344514,
+                "span_mv": 10.961969614601529,
+                "t_ms": 1065.2,
+                "lead_ms": 0.01999999999998181
+              },
+              "axon1": {
+                "take_off_mv": -53.12939682933703,
+                "span_mv": 10.547451837346621,
+                "t_ms": 1065.18,
+                "lead_ms": 0.03999999999996362
+              }
+            }
+          }
+        },
+        "ramp10": {
+          "rate_pa_per_ms": 110.0,
+          "status": "read",
+          "count": 3,
+          "spike_1": {
+            "spike": 1,
+            "approach_mv_per_ms": 2.5961746712185927,
+            "points": {
+              "soma": {
+                "take_off_mv": -55.685805200400715,
+                "span_mv": 10.718571288558834,
+                "t_ms": 1030.5,
+                "lead_ms": 0.0
+              },
+              "axon0": {
+                "take_off_mv": -55.86324884355894,
+                "span_mv": 12.173452595386927,
+                "t_ms": 1030.48,
+                "lead_ms": 0.01999999999998181
+              },
+              "axon1": {
+                "take_off_mv": -56.04508807559781,
+                "span_mv": 11.579559428263899,
+                "t_ms": 1030.46,
+                "lead_ms": 0.03999999999996362
+              }
+            }
+          }
+        }
+      },
+      "step": {
+        "status": "not registered"
+      },
+      "summary": {
+        "soma": {
+          "n": 3,
+          "approach_range": [
+            0.5361207442281829,
+            2.5961746712185927
+          ],
+          "take_off_mv": [
+            -52.24343269131935,
+            -53.045044750282166,
+            -55.685805200400715
+          ],
+          "slide_mv": -3.442372509081366,
+          "range_mv": 3.442372509081366
+        },
+        "axon0": {
+          "n": 3,
+          "approach_range": [
+            0.5361207442281829,
+            2.5961746712185927
+          ],
+          "take_off_mv": [
+            -52.24776498655494,
+            -53.09342779344514,
+            -55.86324884355894
+          ],
+          "slide_mv": -3.6154838570040013,
+          "range_mv": 3.6154838570040013
+        },
+        "axon1": {
+          "n": 3,
+          "approach_range": [
+            0.5361207442281829,
+            2.5961746712185927
+          ],
+          "take_off_mv": [
+            -52.23353889926423,
+            -53.12939682933703,
+            -56.04508807559781
+          ],
+          "slide_mv": -3.8115491763335783,
+          "range_mv": 3.8115491763335783
+        },
+        "soma_span_range_mv": [
+          10.718571288558834,
+          11.487492718690618
+        ],
+        "axon1_lead_range_ms": [
+          0.03999999999996362,
+          0.03999999999996362
+        ],
+        "count_310": null
+      }
+    }
+  },
+  "reading": [
+    "The coupling makes the somatic take-off a function of the approach. Slowest to fastest ramp (about 0.4 to 2.6 mV/ms): control -0.07 mV; x2 with the total axonal sodium held -2.9 mV; x2 with the density held -2.1 mV; x4 with the total held -3.4 mV. The recorded soma slides -2.2 mV from 0.2 to 0.75 mV/ms. The axon lead falls from 0.30 ms to 0.16, 0.20 and 0.04 ms.",
+    "Two registered rejections fire by the letter. The two x2 arms differ by 0.8 mV (limit 0.5): the density modulates the slide, but both arms slide by thirty times the control's, so the coupling is the main effect and the density a secondary one. The somatic onset span leaves the recorded 3.5 to 5.7 mV band in every arm: 6.1 to 8.9 mV at x2 with the total held, 10.7 to 11.5 at x4, where the site has merged into the soma and the spike is becoming the whole-cell turnover of the I fit; at x2 with the density held the span is 4.1, 5.3 and 6.0 mV under the ramps and 3.8 to 5.4 along the 310 pA train, outside the band by 0.3 mV at one ramp only. The coupling therefore changes the spike as well as its reading, least in the density-held x2 arm.",
+    "The density-held x2 arm is the closest of anything this campaign has run to the recorded take-off: -55.2, -55.7 and -57.3 mV at 0.45, 0.99 and 2.50 mV/ms against the recording's -54.5 to -55.2 at 0.2 mV/ms and -57.2 at 0.75; span 4.1 to 6.0 against 3.5 to 5.7; 310 pA count 9 against 10. It does not reproduce the two other recorded elements: along the train the take-off holds at -55.1 to -55.5 mV (the recording steps up 1.9 mV after the first spike), and the spike-1 rise is 655 V/s against 348 (the x2 total-held arm 579), so the coupling is not the rise lever either.",
+    "Reading: the recorded soma reads its initiation site through a coupling tighter than the Allen stub, and the approach signature of the take-off follows that input and not a channel. What remains of the recorded take-off is what a spike leaves behind, +1.9 mV that no arm produces, and the rise, which no coupling touches."
+  ],
+  "decision": {
+    "checks": [
+      {
+        "arm": "x4 total held",
+        "prediction": "somatic take-off falls by more than 1 mV from the slowest to the fastest ramp",
+        "value": -3.442372509081366,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "arm": "x4 total held",
+        "prediction": "axon[1] lead below 0.15 ms",
+        "value": 0.03999999999996362,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "arm": "x2 total held",
+        "prediction": "somatic take-off falls by more than 0.5 mV",
+        "value": -2.8702535732497836,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "arm": "x2 density held",
+        "prediction": "somatic take-off falls by more than 0.5 mV",
+        "value": -2.0812146095020694,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "arm": "x2 arms",
+        "prediction": "the two x2 slides agree within 0.5 mV (coupling, not density)",
+        "value": -0.7890389637477142,
+        "pass": false,
+        "note": ""
+      },
+      {
+        "arm": "x2 total held",
+        "prediction": "somatic onset span stays within 3.5 to 5.7 mV",
+        "value": 8.93136386671025,
+        "pass": false,
+        "note": ""
+      },
+      {
+        "arm": "x2 total held",
+        "prediction": "310 pA count within 2 of 10",
+        "value": 10.0,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "arm": "x2 density held",
+        "prediction": "somatic onset span stays within 3.5 to 5.7 mV",
+        "value": 6.00768298110475,
+        "pass": false,
+        "note": ""
+      },
+      {
+        "arm": "x2 density held",
+        "prediction": "310 pA count within 2 of 10",
+        "value": 9.0,
+        "pass": true,
+        "note": ""
+      },
+      {
+        "arm": "x4 total held",
+        "prediction": "somatic onset span stays within 3.5 to 5.7 mV",
+        "value": 11.487492718690618,
+        "pass": false,
+        "note": ""
+      }
+    ],
+    "verdict": "FAIL"
+  }
+}

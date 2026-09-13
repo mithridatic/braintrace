@@ -154,7 +154,25 @@ def plot(result, path):
     fig.tight_layout(); fig.savefig(path, dpi=120); plt.close(fig)
 
 
-READING = []
+READING = [
+    "The coupling makes the somatic take-off a function of the approach. Slowest to fastest ramp (about 0.4 to 2.6 mV/ms): control "
+    "-0.07 mV; x2 with the total axonal sodium held -2.9 mV; x2 with the density held -2.1 mV; x4 with the total held -3.4 mV. The "
+    "recorded soma slides -2.2 mV from 0.2 to 0.75 mV/ms. The axon lead falls from 0.30 ms to 0.16, 0.20 and 0.04 ms.",
+    "Two registered rejections fire by the letter. The two x2 arms differ by 0.8 mV (limit 0.5): the density modulates the slide, "
+    "but both arms slide by thirty times the control's, so the coupling is the main effect and the density a secondary one. The "
+    "somatic onset span leaves the recorded 3.5 to 5.7 mV band in every arm: 6.1 to 8.9 mV at x2 with the total held, 10.7 to 11.5 "
+    "at x4, where the site has merged into the soma and the spike is becoming the whole-cell turnover of the I fit; at x2 with the "
+    "density held the span is 4.1, 5.3 and 6.0 mV under the ramps and 3.8 to 5.4 along the 310 pA train, outside the band by 0.3 mV "
+    "at one ramp only. The coupling therefore changes the spike as well as its reading, least in the density-held x2 arm.",
+    "The density-held x2 arm is the closest of anything this campaign has run to the recorded take-off: -55.2, -55.7 and -57.3 mV at "
+    "0.45, 0.99 and 2.50 mV/ms against the recording's -54.5 to -55.2 at 0.2 mV/ms and -57.2 at 0.75; span 4.1 to 6.0 against 3.5 to "
+    "5.7; 310 pA count 9 against 10. It does not reproduce the two other recorded elements: along the train the take-off holds at "
+    "-55.1 to -55.5 mV (the recording steps up 1.9 mV after the first spike), and the spike-1 rise is 655 V/s against 348 (the "
+    "x2 total-held arm 579), so the coupling is not the rise lever either.",
+    "Reading: the recorded soma reads its initiation site through a coupling tighter than the Allen stub, and the approach signature "
+    "of the take-off follows that input and not a channel. What remains of the recorded take-off is what a spike leaves behind, "
+    "+1.9 mV that no arm produces, and the rise, which no coupling touches.",
+]
 
 
 def main():

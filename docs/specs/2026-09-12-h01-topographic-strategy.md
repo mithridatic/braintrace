@@ -425,3 +425,44 @@ span range (the coupling changed the spike, not only its reading). If the x4 pre
 holds, the input branch is confirmed for the approach signature: the recorded soma reads
 its initiation site directly, and the fit's does not; the remaining recorded element is
 the fixed +1.9 mV after a spike, which needs its own split.
+
+Execution note: the three arms ran as three runner invocations with separate output
+directories (`h01-e-coupling`, `-b`, `-c`; manifests split accordingly) so that they could
+run in parallel on the 255-core box; nothing else differs between the manifests.
+
+Stage 10 result (2026-09-13, `docs/evidence/h01-topographic/stage-10.md`, eleven runs).
+The somatic take-off slides with the approach in every thickened arm: control -0.07 mV,
+x2 total held -2.9, x2 density held -2.1, x4 total held -3.4 mV from about 0.4 to 2.6 mV/ms
+(recorded -2.2 from 0.2 to 0.75); the axon lead falls to 0.16, 0.20 and 0.04 ms; the 310 pA
+counts are 10 and 9. Both registered rejections fire by the letter: the x2 arms differ by
+0.8 mV (density modulates a slide that is thirty times the control's in both), and the
+somatic onset span leaves 3.5 to 5.7 mV in every arm, by 0.3 mV at one ramp in the
+density-held x2 arm and by 3 to 6 mV in the total-held arms, where the site merges into the
+soma. The input branch is confirmed for the approach signature with the qualification that
+the coupling also changes the onset, least at x2 with the density held, which is the
+closest run of the campaign to the recorded take-off (-55.2 to -57.3 mV, span 4.1 to 6.0,
+count 9). No arm produces the post-spike +1.9 mV, and no arm moves the rise (579 and 655
+against 639 V/s; recorded 348).
+
+## Stage 11 (registered 2026-09-13, not run): two elements remain, split apart
+
+The take-off's approach signature is now an input matter. Two recorded elements have no
+counterpart in any run: the rise (348 against 579 to 664 V/s, 177 sigma, established at
+SP15 stage 0 as somatic-sodium territory and not a cable matter at the recorded load) and
+what a spike leaves in the take-off (+1.9 mV, not recovering measurably inside the pulse,
+gone by the next sweep). Before either is given a lever, one Y question for each:
+
+* **Rise.** On the x2 density-held geometry, does the rise follow the somatic sodium
+  density alone? Read the retained SP15 stage-0 load curves and the SP16 traces (rise
+  against availability, 12 to 19 percent per mV) at the new geometry: one run at 310 pA with
+  the somatic NaTs density at 0.5 (the dose that the stage-0 slope puts at the recorded rise),
+  everything else as the x2 density-held arm. Prediction: spike-1 rise within 15 percent of
+  348 V/s with the count within 2 of 10 and the take-off slide (from the retained ramps'
+  relation) unchanged within 0.5 mV; rejection: no spike, or count outside 8 to 12.
+* **What a spike leaves behind.** In the recording, is the +1.9 mV present after the 3 ms
+  short-square spikes as well (sweeps 27 to 31 fire one spike each; the next long-square
+  sweep's spike 1 is the read), and does it depend on the number of spikes in the train
+  (spike 2 residual against spike 10 residual at the same approach, from the stage-7
+  tables)? Retained traces only; no run. If it is present after one spike and does not
+  grow with the count, it is a per-spike step with a time constant longer than a second;
+  if it grows, it accumulates.

@@ -1,5 +1,5 @@
 {
-  "id": "doc_ab081c6f-617",
+  "id": "doc_15420f10-711",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -247,11 +247,25 @@
         "label": "I"
       },
       {
-        "id": "q7_e__next",
+        "id": "q7_e__q8",
         "source": "q7_e",
-        "target": "next",
+        "target": "q8",
         "relation": "describes",
         "label": "change the coupling only"
+      },
+      {
+        "id": "q8__q8_e",
+        "source": "q8",
+        "target": "q8_e",
+        "relation": "describes",
+        "label": "E"
+      },
+      {
+        "id": "q8_e__next",
+        "source": "q8_e",
+        "target": "next",
+        "relation": "describes",
+        "label": "rise and post-spike step, apart"
       },
       {
         "id": "levers__q3",
@@ -306,6 +320,8 @@
           "q7",
           "q7_e",
           "q7_i",
+          "q8",
+          "q8_e",
           "next",
           "q2_upstroke",
           "policy"
@@ -1055,12 +1071,66 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q8",
+        "type": "Search question",
+        "text": "Q8 (SP15 stage 10, executed, 11 runs): an INPUT split - the coupling between the soma and the site, every channel held. Stub diameter x2 (total NaTs held), x2 (density held), x4 (total held); ramps 1.1/11/110 pA/ms and the 310 pA step.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Prediction: the somatic take-off slides in the recorded direction with the coupling. Both registered rejections fired by the letter (x2 arms differ by 0.8 mV; onset span leaves 3.5-5.7 mV in every arm).\n\nEvidence: docs/evidence/h01-topographic/stage-10.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q8_ev0",
+            "title": "docs/evidence/h01-topographic/stage-10.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-10.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q8_ev1",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q8_e",
+        "type": "Branch retained",
+        "text": "The somatic take-off slides with the approach once the stub is thicker: control -0.07, x2 total -2.9, x2 density -2.1, x4 -3.4 mV (recorded -2.2); axon lead 0.30 -> 0.16/0.20/0.04 ms; 310 pA counts 10 and 9. The x2 density-held arm is the campaign's closest run to the recorded take-off (-55.2..-57.3 mV vs -54.5..-57.2; span 4.1-6.0 vs 3.5-5.7). No arm moves the rise (579/655 vs 639; recorded 348) or produces the post-spike +1.9 mV.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The approach signature is an input (soma-site coupling), not a channel; the coupling also reshapes the onset (total-held arms merge the site into the soma, 6-11 mV spans). Sufficient under these conditions; does not name the recorded geometry.\n\nEvidence: docs/evidence/h01-topographic/stage-10.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q8_e_ev0",
+            "title": "docs/evidence/h01-topographic/stage-10.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-10.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q8_e_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next (SP15 stage 10, registered, not run): the coupling between the soma and the site. E fit, every channel held: three arms - x2 diameter with total axonal sodium held, x2 with density held (the control that separates coupling from density), x4 with total held; the same three ramps each, plus the 310 pA step for the x2 arms; eleven evaluations; nseg by d-lambda at the new diameter, control checked against the nseg-9 response. Prediction: at x4 the SOMATIC take-off slides > 1 mV in the recorded direction and the axon lead falls below 0.15 ms; both x2 arms slide > 0.5 mV and agree within 0.5 mV; onset span stays 3.5-5.7 mV; 310 pA count within 2 of 10. The post-spike step is not expected to appear.",
+        "text": "Next (SP15 stage 11, registered, not run): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs at 0.5 at 310 pA (1 run; prediction rise within 15 percent of 348 V/s, count 8-12, take-off slide unchanged). Post-spike step: retained traces only - is the +1.9 mV present after a single short-square spike, and does it grow with the spike count?",
         "status": "unverified",
         "confidence": null,
-        "notes": "Input split (geometry), not a channel. The fixed +1.9 mV post-spike step remains a separate open element needing its own split.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "One Y question per element before any lever.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
         "evidence": [
           {
             "id": "next_ev0",
@@ -1626,13 +1696,45 @@
         ]
       },
       {
-        "id": "review_q7_e__next",
-        "edgeId": "q7_e__next",
+        "id": "review_q7_e__q8",
+        "edgeId": "q7_e__q8",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q7_e__next",
+            "id": "reservation_q7_e__q8",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q8__q8_e",
+        "edgeId": "q8__q8_e",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q8__q8_e",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q8_e__next",
+        "edgeId": "q8_e__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q8_e__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

@@ -37,6 +37,7 @@ SP16_I = "docs/evidence/h01-i-sodium-slow/stage-2-decision.json"
 TAKEOFF = "docs/evidence/h01-topographic/threshold-approach.json"
 ONSET = "docs/evidence/h01-topographic/onset-shape.json"
 STAGE9 = "docs/evidence/h01-topographic/stage-9.json"
+STAGE10 = "docs/evidence/h01-topographic/stage-10.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -112,8 +113,12 @@ def build_nodes():
           "The recorded approach signature exists in the fit AT THE SITE and is hidden from the soma by the 45 um x 1 um stub: the soma reads the arrival of the axonal spike at one voltage. Along trains the fit's axon take-off is a function of approach only: the recorded post-spike step has no counterpart at either site.", [STAGE9, CM], "supported"),
         n("q7_i", R, "I: confirmed at five points - no probe leads the soma by more than 0.08 ms, every span >= 8.9 mV; the model's axon ends at axon[1] (registered rejection fired by the letter: earliest point axon[1] by four samples, nothing beyond it). The finalist's spike is a whole-cell turnover; it has no initiation site.",
           "The stage-8 provisional I reading is now confirmed on a second run.", [STAGE9, CM], "supported"),
-        n("next", T, "Next (SP15 stage 10, registered, not run): the coupling between the soma and the site. E fit, every channel held: three arms - x2 diameter with total axonal sodium held, x2 with density held (the control that separates coupling from density), x4 with total held; the same three ramps each, plus the 310 pA step for the x2 arms; eleven evaluations; nseg by d-lambda at the new diameter, control checked against the nseg-9 response. Prediction: at x4 the SOMATIC take-off slides > 1 mV in the recorded direction and the axon lead falls below 0.15 ms; both x2 arms slide > 0.5 mV and agree within 0.5 mV; onset span stays 3.5-5.7 mV; 310 pA count within 2 of 10. The post-spike step is not expected to appear.",
-          "Input split (geometry), not a channel. The fixed +1.9 mV post-spike step remains a separate open element needing its own split.", [STRATEGY], "unverified"),
+        n("q8", Q, "Q8 (SP15 stage 10, executed, 11 runs): an INPUT split - the coupling between the soma and the site, every channel held. Stub diameter x2 (total NaTs held), x2 (density held), x4 (total held); ramps 1.1/11/110 pA/ms and the 310 pA step.",
+          "Prediction: the somatic take-off slides in the recorded direction with the coupling. Both registered rejections fired by the letter (x2 arms differ by 0.8 mV; onset span leaves 3.5-5.7 mV in every arm).", [STAGE10, STRATEGY], "supported"),
+        n("q8_e", R, "The somatic take-off slides with the approach once the stub is thicker: control -0.07, x2 total -2.9, x2 density -2.1, x4 -3.4 mV (recorded -2.2); axon lead 0.30 -> 0.16/0.20/0.04 ms; 310 pA counts 10 and 9. The x2 density-held arm is the campaign's closest run to the recorded take-off (-55.2..-57.3 mV vs -54.5..-57.2; span 4.1-6.0 vs 3.5-5.7). No arm moves the rise (579/655 vs 639; recorded 348) or produces the post-spike +1.9 mV.",
+          "The approach signature is an input (soma-site coupling), not a channel; the coupling also reshapes the onset (total-held arms merge the site into the soma, 6-11 mV spans). Sufficient under these conditions; does not name the recorded geometry.", [STAGE10, CM], "supported"),
+        n("next", T, "Next (SP15 stage 11, registered, not run): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs at 0.5 at 310 pA (1 run; prediction rise within 15 percent of 348 V/s, count 8-12, take-off slide unchanged). Post-spike step: retained traces only - is the +1.9 mV present after a single short-square spike, and does it grow with the spike count?",
+          "One Y question per element before any lever.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
         # policies
@@ -154,7 +159,9 @@ def build_edges():
         cm.edge("q6_i", "q7", "describes", "locate the initiation"),
         cm.edge("q7", "q7_e", "describes", "E"),
         cm.edge("q7", "q7_i", "describes", "I"),
-        cm.edge("q7_e", "next", "describes", "change the coupling only"),
+        cm.edge("q7_e", "q8", "describes", "change the coupling only"),
+        cm.edge("q8", "q8_e", "describes", "E"),
+        cm.edge("q8_e", "next", "describes", "rise and post-spike step, apart"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),
     ]
