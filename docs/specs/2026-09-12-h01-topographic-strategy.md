@@ -440,8 +440,11 @@ somatic onset span leaves 3.5 to 5.7 mV in every arm, by 0.3 mV at one ramp in t
 density-held x2 arm and by 3 to 6 mV in the total-held arms, where the site merges into the
 soma. The input branch is confirmed for the approach signature with the qualification that
 the coupling also changes the onset, least at x2 with the density held, which is the
-closest run of the campaign to the recorded take-off (-55.2 to -57.3 mV, span 4.1 to 6.0,
-count 9). No arm produces the post-spike +1.9 mV, and no arm moves the rise (579 and 655
+closest run of the campaign to the recorded take-off as a slope (-2.8 mV per decade of
+approach against the recording's -3.8; the ramp and long-square ranges overlap only
+between 0.45 and 0.75 mV/ms, where the arm sits about 1 mV above the recording; span 4.1
+to 6.0, count 9). The split is sufficient for the approach signature but did not separate
+the reading of the spike from the spike itself. No arm produces the post-spike +1.9 mV, and no arm moves the rise (579 and 655
 against 639 V/s; recorded 348).
 
 ## Stage 11 (registered 2026-09-13, not run): two elements remain, split apart
@@ -453,12 +456,16 @@ what a spike leaves in the take-off (+1.9 mV, not recovering measurably inside t
 gone by the next sweep). Before either is given a lever, one Y question for each:
 
 * **Rise.** On the x2 density-held geometry, does the rise follow the somatic sodium
-  density alone? Read the retained SP15 stage-0 load curves and the SP16 traces (rise
-  against availability, 12 to 19 percent per mV) at the new geometry: one run at 310 pA with
-  the somatic NaTs density at 0.5 (the dose that the stage-0 slope puts at the recorded rise),
-  everything else as the x2 density-held arm. Prediction: spike-1 rise within 15 percent of
-  348 V/s with the count within 2 of 10 and the take-off slide (from the retained ramps'
-  relation) unchanged within 0.5 mV; rejection: no spike, or count outside 8 to 12.
+  density, and does the take-off slide survive the dose? No retained slope transfers: the
+  stage-4 slope (254 V/s per unit of whole-cell conductance) is a cable-load slope, the SP16
+  slope (12 to 19 percent per mV) is against availability, and stage 10 has just shown the
+  geometry moves the rise on its own (579 and 655 against 639). So the read is a two-dose
+  slope, not an interpolation: somatic NaTs density factors 0.7 and 0.5 at 310 pA, everything
+  else as the x2 density-held arm (two runs). Prediction: the rise falls monotonically with
+  the density and the somatic take-off at the 310 pA onset moves less than 0.5 mV; no pass
+  band on the value of the rise. Rejection: no spike, count outside 8 to 12, or the take-off
+  moving more than 0.5 mV (the density is a take-off lever at this geometry, and the rise
+  cannot be dosed through it without moving what stage 10 placed).
 * **What a spike leaves behind.** In the recording, is the +1.9 mV present after the 3 ms
   short-square spikes as well (sweeps 27 to 31 fire one spike each; the next long-square
   sweep's spike 1 is the read), and does it depend on the number of spikes in the train

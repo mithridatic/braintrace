@@ -1,5 +1,5 @@
 {
-  "id": "doc_15420f10-711",
+  "id": "doc_01a763e2-601",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -1100,10 +1100,10 @@
       {
         "id": "q8_e",
         "type": "Branch retained",
-        "text": "The somatic take-off slides with the approach once the stub is thicker: control -0.07, x2 total -2.9, x2 density -2.1, x4 -3.4 mV (recorded -2.2); axon lead 0.30 -> 0.16/0.20/0.04 ms; 310 pA counts 10 and 9. The x2 density-held arm is the campaign's closest run to the recorded take-off (-55.2..-57.3 mV vs -54.5..-57.2; span 4.1-6.0 vs 3.5-5.7). No arm moves the rise (579/655 vs 639; recorded 348) or produces the post-spike +1.9 mV.",
+        "text": "The somatic take-off slides with the approach once the stub is thicker: control -0.07, x2 total -2.9, x2 density -2.1, x4 -3.4 mV (recorded -2.2); axon lead 0.30 -> 0.16/0.20/0.04 ms; 310 pA counts 10 and 9. The x2 density-held arm is the campaign's closest run to the recorded take-off AS A SLOPE (-2.8 mV per decade of approach vs the recording's -3.8; ranges overlap only at 0.45-0.75 mV/ms where the arm sits ~1 mV above; span 4.1-6.0 vs 3.5-5.7). No arm moves the rise (579/655 vs 639; recorded 348) or produces the post-spike +1.9 mV.",
         "status": "supported",
         "confidence": null,
-        "notes": "The approach signature is an input (soma-site coupling), not a channel; the coupling also reshapes the onset (total-held arms merge the site into the soma, 6-11 mV spans). Sufficient under these conditions; does not name the recorded geometry.\n\nEvidence: docs/evidence/h01-topographic/stage-10.json; docs/h01-causal-model.md",
+        "notes": "The approach signature is an input (soma-site coupling), not a channel; the coupling also reshapes the onset (total-held arms merge the site into the soma, 6-11 mV spans). Sufficient for the approach signature under these conditions, but every dose also took the onset out of the recorded band: the split did not separate the reading from the spike. Does not name the recorded geometry.\n\nEvidence: docs/evidence/h01-topographic/stage-10.json; docs/h01-causal-model.md",
         "evidence": [
           {
             "id": "q8_e_ev0",
@@ -1127,7 +1127,7 @@
       {
         "id": "next",
         "type": "Next test",
-        "text": "Next (SP15 stage 11, registered, not run): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs at 0.5 at 310 pA (1 run; prediction rise within 15 percent of 348 V/s, count 8-12, take-off slide unchanged). Post-spike step: retained traces only - is the +1.9 mV present after a single short-square spike, and does it grow with the spike count?",
+        "text": "Next (SP15 stage 11, registered, not run): the two remaining elements split apart. Rise: on the x2 density-held geometry, somatic NaTs density 0.7 and 0.5 at 310 pA (2 runs; a two-dose slope, no retained slope transfers; prediction: rise falls monotonically, take-off at onset moves < 0.5 mV, count 8-12). Post-spike step: retained traces only - is the +1.9 mV present after a single short-square spike, and does it grow with the spike count?",
         "status": "unverified",
         "confidence": null,
         "notes": "One Y question per element before any lever.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",

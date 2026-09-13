@@ -164,8 +164,10 @@ READING = [
     "at x4, where the site has merged into the soma and the spike is becoming the whole-cell turnover of the I fit; at x2 with the "
     "density held the span is 4.1, 5.3 and 6.0 mV under the ramps and 3.8 to 5.4 along the 310 pA train, outside the band by 0.3 mV "
     "at one ramp only. The coupling therefore changes the spike as well as its reading, least in the density-held x2 arm.",
-    "The density-held x2 arm is the closest of anything this campaign has run to the recorded take-off: -55.2, -55.7 and -57.3 mV at "
-    "0.45, 0.99 and 2.50 mV/ms against the recording's -54.5 to -55.2 at 0.2 mV/ms and -57.2 at 0.75; span 4.1 to 6.0 against 3.5 to "
+    "The density-held x2 arm is the closest of anything this campaign has run to the recorded take-off, as a slope and not as a value: "
+    "the ramps reach 0.45 to 2.5 mV/ms and the recording's long squares 0.2 to 0.75, so the ranges overlap only between 0.45 and 0.75; "
+    "per decade of approach the recording slides -3.8 mV, this arm -2.8 (x2 total held -4.1, x4 -5.0, control -0.1), and inside the "
+    "overlap the arm takes off about 1 mV above the recording (-55.2 at 0.45 against -56.4 at 0.58). Span 4.1 to 6.0 against 3.5 to "
     "5.7; 310 pA count 9 against 10. It does not reproduce the two other recorded elements: along the train the take-off holds at "
     "-55.1 to -55.5 mV (the recording steps up 1.9 mV after the first spike), and the spike-1 rise is 655 V/s against 348 (the "
     "x2 total-held arm 579), so the coupling is not the rise lever either.",
