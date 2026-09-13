@@ -1,0 +1,35 @@
+[
+  {
+    "name": "s9-finalist-probes",
+    "candidate_sha256": "921cc6d45178848b724b6cbd04f21a201e59ec66d157d9b80f4b1727c4f0f0b1",
+    "evaluation_index": 1,
+    "abort_seconds": 1800,
+    "inputs": {
+      "019-probes": "completed"
+    },
+    "runs": [
+      {
+        "name": "s9-finalist-probes",
+        "input": "019-probes",
+        "seconds": 18.551393944770098,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-i-takeoff/s9-finalist-probes-019-probes.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_pv_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-i-takeoff/s9-finalist-probes.candidate.json",
+          "--current-na",
+          "0.19",
+          "--duration-ms",
+          "1500",
+          "--record-axon-probes",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-i-takeoff/s9-finalist-probes-019-probes"
+        ]
+      }
+    ]
+  }
+]

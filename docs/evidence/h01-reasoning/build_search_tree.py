@@ -36,6 +36,7 @@ SP16_E = "docs/evidence/h01-e-sodium-slow/stage-1-decision.json"
 SP16_I = "docs/evidence/h01-i-sodium-slow/stage-2-decision.json"
 TAKEOFF = "docs/evidence/h01-topographic/threshold-approach.json"
 ONSET = "docs/evidence/h01-topographic/onset-shape.json"
+STAGE9 = "docs/evidence/h01-topographic/stage-9.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -105,8 +106,14 @@ def build_nodes():
           "A dense fast site crosses its own threshold at nearly the same voltage whatever its availability; the recording moves 2.2 mV with approach and 1.9 mV more after one spike: more than availability at such a site gives.", [ONSET, CM], "supported"),
         n("q6_i", R, "I (PROVISIONAL: the registered rejection fired, the four repeats spread 1.16 mV in span; read as the ratio of spans, 5.2, not the absolute bands): the recorded onset covers 2.7 mV (52/ms); the fit's is a 14.2 mV whole-cell turnover (5/ms), 20 sigma; the fit's soma and first axon section rise together (spike 1 within 0.06 ms, later spikes soma first). The finalist has NO sharp initiation site; the earlier axon-first readings were -20 mV crossings (upstroke). Largest elemental contrast after the count; a contrast of the initiation site, an input.",
           "Also why the I fit's take-off answers to the approach at a fifth of the recorded rate: no site whose own threshold the approach can move.", [ONSET, CM], "supported"),
-        n("next", T, "Next (SP15 stage 9, registered, not run): the take-off's own variables. E: in the recording, is the post-spike +1.9 mV a function of time since the spike (retained traces); in the fit, does the axon take-off move under ramps 0.1-10 mV/ms at fixed availability, probed at axon[0] and axon[1] (3 evaluations)? I: where does the fit's spike begin - record three axon points plus soma at 0.19 nA (1 evaluation); prediction: no point leads by more than 0.1 ms and every span exceeds 8 mV.",
-          "No lever until these are read; a change to the I initiation site is registered as a 2x2 with E only if the E question also lands on the site.", [STRATEGY], "unverified"),
+        n("q7", Q, "Q7 (SP15 stage 9, executed: 3 E ramps + 1 I probe run, plus retained traces): the take-off's own variables. E recording: is the post-spike +1.9 mV a function of time since the spike? E fit: does the take-off move under ramps 0.37-2.53 mV/ms at fixed availability, read at soma, axon[0], axon[1]? I fit: where does the spike begin (five points)?",
+          "Registered before the runs; the first E launch (2 nA ramp over the whole second) was killed unread after 30 min and the ramps were re-registered to end after the first spike.", [STAGE9, STRATEGY], "supported"),
+        n("q7_e", R, "E: (a) the recorded post-spike step is FIXED inside the pulse (+2.0/+2.2/+1.5 mV after intervals <30/30-100/>100 ms; spread 0.69 < 0.75 limit; recovered by the next sweep). (b) The fit's SOMATIC take-off is fixed under ramps (0.07 mV, 0.37-2.53 mV/ms) but its AXONAL take-off slides 4.1 mV (axon[1]) / 2.4 mV (axon[0]) in the recorded direction and size; the axon leads by 0.30 ms at every rate and sits 3.6/2.8/0.7 mV above the soma at its own take-off.",
+          "The recorded approach signature exists in the fit AT THE SITE and is hidden from the soma by the 45 um x 1 um stub: the soma reads the arrival of the axonal spike at one voltage. Along trains the fit's axon take-off is a function of approach only: the recorded post-spike step has no counterpart at either site.", [STAGE9, CM], "supported"),
+        n("q7_i", R, "I: confirmed at five points - no probe leads the soma by more than 0.08 ms, every span >= 8.9 mV; the model's axon ends at axon[1] (registered rejection fired by the letter: earliest point axon[1] by four samples, nothing beyond it). The finalist's spike is a whole-cell turnover; it has no initiation site.",
+          "The stage-8 provisional I reading is now confirmed on a second run.", [STAGE9, CM], "supported"),
+        n("next", T, "Next (SP15 stage 10, registered, not run): the coupling between the soma and the site. E fit, every channel held: stub diameter x2 and x4 with axonal NaTs density divided by the area factor (total axonal sodium held); the same three ramps plus the 310 pA step; eight evaluations. Prediction: at x4 the SOMATIC take-off slides > 1 mV in the recorded direction and the axon lead falls below 0.15 ms; onset span stays 3.5-5.7 mV; 310 pA count within 2 of 10. The post-spike step is not expected to appear.",
+          "Input split (geometry), not a channel. The fixed +1.9 mV post-spike step remains a separate open element needing its own split.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
         # policies
@@ -143,8 +150,11 @@ def build_edges():
         cm.edge("q5_i", "q6", "describes", "isolation before any lever"),
         cm.edge("q6", "q6_e", "describes", "E"),
         cm.edge("q6", "q6_i", "describes", "I"),
-        cm.edge("q6_e", "next", "describes", "the take-off's variables"),
-        cm.edge("q6_i", "next", "describes", "locate the initiation"),
+        cm.edge("q6_e", "q7", "describes", "the take-off's variables"),
+        cm.edge("q6_i", "q7", "describes", "locate the initiation"),
+        cm.edge("q7", "q7_e", "describes", "E"),
+        cm.edge("q7", "q7_i", "describes", "I"),
+        cm.edge("q7_e", "next", "describes", "change the coupling only"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),
     ]

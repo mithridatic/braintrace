@@ -29,8 +29,8 @@ without supplying a complete explanation of a human-model difference.
 | --- | --- |
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
-| PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (provisional: the I repeat set does not resolve the span). See Y3. |
-| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's take-off is one voltage at every approach and every spike, because it is imposed by the axonal initiation; so every lever that only changes the somatic inward current is a rise lever in this fit, and neither the cable nor slow inactivation of the fitted sodium will produce the recorded response. See Y4. |
+| PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (the recording's span rests on the ratio to the fit, its repeat set not resolving 1 mV; the fit's whole-cell turnover was confirmed at five points). See Y3. |
+| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. So every lever that only changes the somatic inward current is a rise lever in this fit, and the approach signature is a question of the coupling between the soma and the site, not of the channels. What a spike leaves behind, +1.9 mV that does not recover inside the pulse, has no counterpart at either site. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -187,8 +187,10 @@ than the finalist's: from 10 to 100 V/s it covers 2.7 mV (1.9 to 3.8 over six tr
 rapidness 52 per ms), the finalist's 14.2 mV (rapidness 5 per ms), twenty spreads of the
 four-repeat spread and ten times its range. The registered rejection for this reading fired,
 because those four repeats spread 1.16 mV in span, so the contrast stands on the ratio of
-the spans and is provisional until a repeat set resolves the span; stage 9's probe run is
-its confirmation. The finalist's soma and first axon section rise together, crossing 10 V/s within
+the spans. Stage 9 recorded the finalist at five points, the soma and `axon[0]` at 0.1, 0.5
+and 0.9 and `axon[1](0.5)`: no point leads the soma by more than 0.08 ms and every span is
+8.9 mV or more ([stage 9](evidence/h01-topographic/stage-9.md)); the model's axon ends at
+`axon[1]`, so there is no site beyond the recorded points. The finalist's soma and first axon section rise together, crossing 10 V/s within
 0.06 ms of each other at spike 1 and soma first by up to 0.18 ms later in a train; the axon
 point overtakes only above 50 V/s ([onset shape](evidence/h01-topographic/onset-shape.md)).
 The earlier axon-first readings were -20 mV crossings and describe the upstroke, not the
@@ -380,6 +382,29 @@ take-off, and a lever that changes the initiation site's availability moves both
 at the site's own ratio. A candidate can now be rejected on paper if it acts only on the
 somatic inward current, or if it does not make the take-off a function of the approach.
 
+**Where the approach acts, and where the soma cannot see it.** Under current ramps of 1.1,
+11 and 110 pA/ms, which reach the first spike at 0.37, 0.96 and 2.53 mV/ms, this fit's
+somatic take-off stays at -57.1 to -57.2 mV, but the take-off at its axon points does not:
+`axon[1](0.5)` falls from -54.7 to -58.8 mV and `axon[0](0.5)` from -55.7 to -58.1 mV as
+the approach quickens, the axon leading the soma by 0.30 ms at every rate
+([stage 9](evidence/h01-topographic/stage-9.md)). At the moment the axon takes off the soma
+sits at -58.3, -58.6 and -59.5 mV while the axon is 3.6, 2.8 and 0.7 mV above it: under a
+slow approach the site's own inward current carries it ahead of the soma before it fires;
+under a fast one the electrode drives the soma and the site lags. The recorded soma slides
+the same way and by the same order, -2.2 mV from 0.2 to 0.75 mV/ms and -7 mV to the 7 mV/ms
+short square. The signature is therefore in this fit, at the site that makes the spike; the
+fit's soma cannot show it because it is a load 45 um down a 1 um stub that reads the
+arrival of the axonal spike at one voltage, whatever the site's own voltage was. The
+recorded soma shows it, which says that the recorded soma reads its initiation site
+directly, through a coupling tighter than the fit's stub. This is a difference of an
+input, the geometry between the soma and the site, and not of a channel; it is registered
+as [stage 10](specs/2026-09-12-h01-topographic-strategy.md), which changes only that
+coupling with the axonal sodium total held. The other recorded element, the take-off
++1.9 mV higher after a spike, is a fixed step inside the pulse (+2.0, +2.2 and +1.5 mV
+after intervals under 30, 30 to 100 and over 100 ms; recovered by the next sweep) and has
+no counterpart at either site of the fit: along the retained trains the fit's axonal
+take-off is a function of the approach alone. That element still needs its own split.
+
 **Consequence.** Matching the model's cable to the recorded cell will have little effect on
 the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
 Doses of the soma channels this fit already carries cannot supply the low-input count.
@@ -420,10 +445,11 @@ the axon point, 45 um out and firing first, so at or proximal to it, the take-of
 it climbs 2.1 mV by spike 10 with the soma's climbing 1.5 and the lead unchanged. A dense
 insertion with fast kinetics crosses its own threshold at nearly the same voltage whatever
 its availability; the recording moves 2.2 mV with the approach alone and 1.9 mV more after
-one spike, which is more than availability at such a site gives. The next split
-([stage 9](specs/2026-09-12-h01-topographic-strategy.md)) reads the take-off's own
-variables, time since the last spike in the recording and the approach at fixed
-availability in the fit, before any family is named.
+one spike, which is more than availability at such a site gives. Stage 9 read the take-off's own
+variables: in the fit the approach moves the take-off at the site by the recorded amount
+and the soma hides it; in the recording the post-spike step is fixed inside the pulse. The
+next split, [stage 10](specs/2026-09-12-h01-topographic-strategy.md), changes only the
+coupling between the soma and the site.
 
 Evidence: [soma currents and their erratum](evidence/h01-e-currents/stage-close-decision.json),
 [direct trace audit](evidence/h01-causal-direct-trace-audit-2026-09-11.md),
@@ -753,6 +779,7 @@ A response along a train is qualified only cycle by cycle. One number per train,
 A count is qualified only at a drive where the recording's own repeats agree on it. At the recorded cell's rheobase the repeats give 0 or 1, so a count there is inside the spread and is not scored; the information at that drive is the rheobase itself and the level, and the level is read from the repeats with and without a spike before it is called a post-spike effect.
 A repeat spread qualifies only the quantity, the drive and the cycle it was measured on. The I recording's spread comes from single-spike 120 pA sweeps and qualifies spike 1; an along-train I contrast has no sigma and is reported without one.
 A threshold is qualified only with the approach that reached it, and under two definitions. A take-off that moves with the approach is not a threshold error of the model; it is a different mechanism of take-off, and a lever that does not make the take-off a function of the approach cannot reproduce it.
+A take-off is qualified at the site that makes the spike. A somatic take-off in a model whose initiation site is down a thin stub reads the arrival of the spike, not the take-off; the site's own take-off must be read at the site before the somatic reading is compared with a recording whose soma may be its own site.
 Numerical qualification needs the same physical model at the compared numerical settings.
 Transfer qualification needs the same donor, input, state, mesh, and parameter laws across implementations.
 Human qualification needs agreement with the specified recording.

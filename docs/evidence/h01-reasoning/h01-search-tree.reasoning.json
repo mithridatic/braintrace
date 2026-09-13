@@ -1,5 +1,5 @@
 {
-  "id": "doc_7e3867e9-059",
+  "id": "doc_811dd380-ff5",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -219,18 +219,39 @@
         "label": "I"
       },
       {
-        "id": "q6_e__next",
+        "id": "q6_e__q7",
         "source": "q6_e",
-        "target": "next",
+        "target": "q7",
         "relation": "describes",
         "label": "the take-off's variables"
       },
       {
-        "id": "q6_i__next",
+        "id": "q6_i__q7",
         "source": "q6_i",
-        "target": "next",
+        "target": "q7",
         "relation": "describes",
         "label": "locate the initiation"
+      },
+      {
+        "id": "q7__q7_e",
+        "source": "q7",
+        "target": "q7_e",
+        "relation": "describes",
+        "label": "E"
+      },
+      {
+        "id": "q7__q7_i",
+        "source": "q7",
+        "target": "q7_i",
+        "relation": "describes",
+        "label": "I"
+      },
+      {
+        "id": "q7_e__next",
+        "source": "q7_e",
+        "target": "next",
+        "relation": "describes",
+        "label": "change the coupling only"
       },
       {
         "id": "levers__q3",
@@ -282,6 +303,9 @@
           "q6",
           "q6_e",
           "q6_i",
+          "q7",
+          "q7_e",
+          "q7_i",
           "next",
           "q2_upstroke",
           "policy"
@@ -950,12 +974,93 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q7",
+        "type": "Search question",
+        "text": "Q7 (SP15 stage 9, executed: 3 E ramps + 1 I probe run, plus retained traces): the take-off's own variables. E recording: is the post-spike +1.9 mV a function of time since the spike? E fit: does the take-off move under ramps 0.37-2.53 mV/ms at fixed availability, read at soma, axon[0], axon[1]? I fit: where does the spike begin (five points)?",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Registered before the runs; the first E launch (2 nA ramp over the whole second) was killed unread after 30 min and the ramps were re-registered to end after the first spike.\n\nEvidence: docs/evidence/h01-topographic/stage-9.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q7_ev0",
+            "title": "docs/evidence/h01-topographic/stage-9.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-9.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q7_ev1",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q7_e",
+        "type": "Branch retained",
+        "text": "E: (a) the recorded post-spike step is FIXED inside the pulse (+2.0/+2.2/+1.5 mV after intervals <30/30-100/>100 ms; spread 0.69 < 0.75 limit; recovered by the next sweep). (b) The fit's SOMATIC take-off is fixed under ramps (0.07 mV, 0.37-2.53 mV/ms) but its AXONAL take-off slides 4.1 mV (axon[1]) / 2.4 mV (axon[0]) in the recorded direction and size; the axon leads by 0.30 ms at every rate and sits 3.6/2.8/0.7 mV above the soma at its own take-off.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The recorded approach signature exists in the fit AT THE SITE and is hidden from the soma by the 45 um x 1 um stub: the soma reads the arrival of the axonal spike at one voltage. Along trains the fit's axon take-off is a function of approach only: the recorded post-spike step has no counterpart at either site.\n\nEvidence: docs/evidence/h01-topographic/stage-9.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q7_e_ev0",
+            "title": "docs/evidence/h01-topographic/stage-9.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-9.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q7_e_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q7_i",
+        "type": "Branch retained",
+        "text": "I: confirmed at five points - no probe leads the soma by more than 0.08 ms, every span >= 8.9 mV; the model's axon ends at axon[1] (registered rejection fired by the letter: earliest point axon[1] by four samples, nothing beyond it). The finalist's spike is a whole-cell turnover; it has no initiation site.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The stage-8 provisional I reading is now confirmed on a second run.\n\nEvidence: docs/evidence/h01-topographic/stage-9.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q7_i_ev0",
+            "title": "docs/evidence/h01-topographic/stage-9.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-9.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q7_i_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next (SP15 stage 9, registered, not run): the take-off's own variables. E: in the recording, is the post-spike +1.9 mV a function of time since the spike (retained traces); in the fit, does the axon take-off move under ramps 0.1-10 mV/ms at fixed availability, probed at axon[0] and axon[1] (3 evaluations)? I: where does the fit's spike begin - record three axon points plus soma at 0.19 nA (1 evaluation); prediction: no point leads by more than 0.1 ms and every span exceeds 8 mV.",
+        "text": "Next (SP15 stage 10, registered, not run): the coupling between the soma and the site. E fit, every channel held: stub diameter x2 and x4 with axonal NaTs density divided by the area factor (total axonal sodium held); the same three ramps plus the 310 pA step; eight evaluations. Prediction: at x4 the SOMATIC take-off slides > 1 mV in the recorded direction and the axon lead falls below 0.15 ms; onset span stays 3.5-5.7 mV; 310 pA count within 2 of 10. The post-spike step is not expected to appear.",
         "status": "unverified",
         "confidence": null,
-        "notes": "No lever until these are read; a change to the I initiation site is registered as a 2x2 with E only if the E question also lands on the site.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "Input split (geometry), not a channel. The fixed +1.9 mV post-spike step remains a separate open element needing its own split.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
         "evidence": [
           {
             "id": "next_ev0",
@@ -1457,13 +1562,13 @@
         ]
       },
       {
-        "id": "review_q6_e__next",
-        "edgeId": "q6_e__next",
+        "id": "review_q6_e__q7",
+        "edgeId": "q6_e__q7",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q6_e__next",
+            "id": "reservation_q6_e__q7",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",
@@ -1473,13 +1578,61 @@
         ]
       },
       {
-        "id": "review_q6_i__next",
-        "edgeId": "q6_i__next",
+        "id": "review_q6_i__q7",
+        "edgeId": "q6_i__q7",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q6_i__next",
+            "id": "reservation_q6_i__q7",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q7__q7_e",
+        "edgeId": "q7__q7_e",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q7__q7_e",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q7__q7_i",
+        "edgeId": "q7__q7_i",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q7__q7_i",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q7_e__next",
+        "edgeId": "q7_e__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q7_e__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

@@ -1,0 +1,1006 @@
+{
+  "stage": "9",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "limits": {
+    "e_residual_mv": 0.75,
+    "e_ramp_take_off_mv": 1.0,
+    "i_lead_ms": 0.1,
+    "i_span_mv": 8.0
+  },
+  "e_interval": {
+    "rows": [
+      {
+        "train": "sweep 49",
+        "spike": 2,
+        "interval_ms": 174.05999999999995,
+        "approach_mv_per_ms": 0.17857287194419363,
+        "residual_mv": 0.8848935107547007
+      },
+      {
+        "train": "sweep 49",
+        "spike": 3,
+        "interval_ms": 733.6600000000001,
+        "approach_mv_per_ms": 0.1928817226435477,
+        "residual_mv": 0.9286239777199157
+      },
+      {
+        "train": "sweep 50",
+        "spike": 2,
+        "interval_ms": 33.840000000000146,
+        "approach_mv_per_ms": 0.1444267013520578,
+        "residual_mv": 0.9176043252294335
+      },
+      {
+        "train": "sweep 50",
+        "spike": 3,
+        "interval_ms": 220.41999999999985,
+        "approach_mv_per_ms": 0.2045409806979589,
+        "residual_mv": 1.157548033947812
+      },
+      {
+        "train": "sweep 50",
+        "spike": 4,
+        "interval_ms": 307.4000000000001,
+        "approach_mv_per_ms": 0.18046998653880247,
+        "residual_mv": 1.5115479164581984
+      },
+      {
+        "train": "sweep 50",
+        "spike": 5,
+        "interval_ms": 273.3399999999999,
+        "approach_mv_per_ms": 0.19984705697507762,
+        "residual_mv": 1.2784515470659414
+      },
+      {
+        "train": "sweep 51",
+        "spike": 2,
+        "interval_ms": 22.220000000000027,
+        "approach_mv_per_ms": 0.2953449870999019,
+        "residual_mv": 1.9867612802544627
+      },
+      {
+        "train": "sweep 51",
+        "spike": 3,
+        "interval_ms": 131.79999999999995,
+        "approach_mv_per_ms": 0.21769288587935962,
+        "residual_mv": 1.2940198623115506
+      },
+      {
+        "train": "sweep 51",
+        "spike": 4,
+        "interval_ms": 156.66000000000008,
+        "approach_mv_per_ms": 0.21441598231226391,
+        "residual_mv": 1.5099102088236478
+      },
+      {
+        "train": "sweep 51",
+        "spike": 5,
+        "interval_ms": 169.57999999999993,
+        "approach_mv_per_ms": 0.18322833590138882,
+        "residual_mv": 0.7952041811921262
+      },
+      {
+        "train": "sweep 51",
+        "spike": 6,
+        "interval_ms": 184.07999999999993,
+        "approach_mv_per_ms": 0.21167895570020717,
+        "residual_mv": 1.2887734396658814
+      },
+      {
+        "train": "sweep 51",
+        "spike": 7,
+        "interval_ms": 184.86000000000013,
+        "approach_mv_per_ms": 0.2287232800741815,
+        "residual_mv": 1.897394208620696
+      },
+      {
+        "train": "sweep 52",
+        "spike": 2,
+        "interval_ms": 17.059999999999945,
+        "approach_mv_per_ms": 0.5319010202208723,
+        "residual_mv": 2.380628959666055
+      },
+      {
+        "train": "sweep 52",
+        "spike": 3,
+        "interval_ms": 87.70000000000005,
+        "approach_mv_per_ms": 0.2542396022804704,
+        "residual_mv": 1.919654096359551
+      },
+      {
+        "train": "sweep 52",
+        "spike": 4,
+        "interval_ms": 126.75999999999999,
+        "approach_mv_per_ms": 0.265433451414669,
+        "residual_mv": 2.0544177589678654
+      },
+      {
+        "train": "sweep 52",
+        "spike": 5,
+        "interval_ms": 128.80000000000018,
+        "approach_mv_per_ms": 0.23463802376572462,
+        "residual_mv": 1.5275514805149655
+      },
+      {
+        "train": "sweep 52",
+        "spike": 6,
+        "interval_ms": 122.07999999999993,
+        "approach_mv_per_ms": 0.2523062398679501,
+        "residual_mv": 1.5429648501926891
+      },
+      {
+        "train": "sweep 52",
+        "spike": 7,
+        "interval_ms": 131.29999999999995,
+        "approach_mv_per_ms": 0.23130277757587225,
+        "residual_mv": 1.8683930461494356
+      },
+      {
+        "train": "sweep 52",
+        "spike": 8,
+        "interval_ms": 132.05999999999995,
+        "approach_mv_per_ms": 0.2542533824111241,
+        "residual_mv": 1.7946640018826656
+      },
+      {
+        "train": "sweep 52",
+        "spike": 9,
+        "interval_ms": 144.98000000000002,
+        "approach_mv_per_ms": 0.21982499766233535,
+        "residual_mv": 1.5771318374804366
+      },
+      {
+        "train": "sweep 53",
+        "spike": 2,
+        "interval_ms": 11.319999999999936,
+        "approach_mv_per_ms": 1.5590119331257832,
+        "residual_mv": 1.745407535421883
+      },
+      {
+        "train": "sweep 53",
+        "spike": 3,
+        "interval_ms": 61.16000000000008,
+        "approach_mv_per_ms": 0.2204725500859381,
+        "residual_mv": 1.7339465992007774
+      },
+      {
+        "train": "sweep 53",
+        "spike": 4,
+        "interval_ms": 110.0,
+        "approach_mv_per_ms": 0.2876721421642965,
+        "residual_mv": 2.417569474188582
+      },
+      {
+        "train": "sweep 53",
+        "spike": 5,
+        "interval_ms": 115.20000000000005,
+        "approach_mv_per_ms": 0.3069123939339604,
+        "residual_mv": 2.9031038067547215
+      },
+      {
+        "train": "sweep 53",
+        "spike": 6,
+        "interval_ms": 119.24000000000001,
+        "approach_mv_per_ms": 0.32509949316557685,
+        "residual_mv": 2.762719987866028
+      },
+      {
+        "train": "sweep 53",
+        "spike": 7,
+        "interval_ms": 122.03999999999996,
+        "approach_mv_per_ms": 0.2893256717836183,
+        "residual_mv": 2.2315106663710864
+      },
+      {
+        "train": "sweep 53",
+        "spike": 8,
+        "interval_ms": 116.25999999999999,
+        "approach_mv_per_ms": 0.32572641448034245,
+        "residual_mv": 2.8257660958020523
+      },
+      {
+        "train": "sweep 53",
+        "spike": 9,
+        "interval_ms": 123.57999999999993,
+        "approach_mv_per_ms": 0.3184771323128893,
+        "residual_mv": 2.506942276817732
+      },
+      {
+        "train": "sweep 53",
+        "spike": 10,
+        "interval_ms": 120.75999999999999,
+        "approach_mv_per_ms": 0.2259119062638126,
+        "residual_mv": 1.3324414182842048
+      },
+      {
+        "train": "sweep 55",
+        "spike": 2,
+        "interval_ms": 11.279999999999973,
+        "approach_mv_per_ms": 1.6408822970968482,
+        "residual_mv": 1.9105801262720021
+      },
+      {
+        "train": "sweep 55",
+        "spike": 3,
+        "interval_ms": 22.220000000000027,
+        "approach_mv_per_ms": 0.2708251049362383,
+        "residual_mv": 3.059123347471221
+      },
+      {
+        "train": "sweep 55",
+        "spike": 4,
+        "interval_ms": 78.31999999999994,
+        "approach_mv_per_ms": 0.30068999275892017,
+        "residual_mv": 2.0226756079270984
+      },
+      {
+        "train": "sweep 55",
+        "spike": 5,
+        "interval_ms": 80.29999999999995,
+        "approach_mv_per_ms": 0.29519067076344496,
+        "residual_mv": 2.2053794296353857
+      },
+      {
+        "train": "sweep 55",
+        "spike": 6,
+        "interval_ms": 86.0,
+        "approach_mv_per_ms": 0.269950444847877,
+        "residual_mv": 2.120857481702778
+      },
+      {
+        "train": "sweep 55",
+        "spike": 7,
+        "interval_ms": 86.70000000000005,
+        "approach_mv_per_ms": 0.32342145400046757,
+        "residual_mv": 2.230007354481124
+      },
+      {
+        "train": "sweep 55",
+        "spike": 8,
+        "interval_ms": 87.18000000000006,
+        "approach_mv_per_ms": 0.2893169682895994,
+        "residual_mv": 2.2940022689683985
+      },
+      {
+        "train": "sweep 55",
+        "spike": 9,
+        "interval_ms": 85.43999999999983,
+        "approach_mv_per_ms": 0.2964134902496719,
+        "residual_mv": 2.39394377692534
+      },
+      {
+        "train": "sweep 55",
+        "spike": 10,
+        "interval_ms": 93.44000000000005,
+        "approach_mv_per_ms": 0.3238786860774325,
+        "residual_mv": 3.1366538794746077
+      },
+      {
+        "train": "sweep 55",
+        "spike": 11,
+        "interval_ms": 89.51999999999998,
+        "approach_mv_per_ms": 0.3592685246999201,
+        "residual_mv": 2.855027507457528
+      },
+      {
+        "train": "sweep 55",
+        "spike": 12,
+        "interval_ms": 90.75999999999999,
+        "approach_mv_per_ms": 0.29220263151726056,
+        "residual_mv": 2.234020463832586
+      },
+      {
+        "train": "sweep 55",
+        "spike": 13,
+        "interval_ms": 92.96000000000004,
+        "approach_mv_per_ms": 0.28775523722864194,
+        "residual_mv": 2.761393126816479
+      }
+    ],
+    "relation": {
+      "n": 41,
+      "interval_range_ms": [
+        11.279999999999973,
+        733.6600000000001
+      ],
+      "slope_mv_per_decade": -0.5739499508329163,
+      "bands": {
+        "short_under_30_ms": {
+          "n": 5,
+          "median_mv": 1.9867612802544627
+        },
+        "middle": {
+          "n": 13,
+          "median_mv": 2.230007354481124
+        },
+        "long_over_100_ms": {
+          "n": 23,
+          "median_mv": 1.5429648501926891
+        }
+      },
+      "band_spread_mv": 0.6870425042884349
+    }
+  },
+  "e_ramps": {
+    "runs": {
+      "ramp01": {
+        "rate_pa_per_ms": 1.1,
+        "status": "read",
+        "count": 6,
+        "spike_1": {
+          "spike": 1,
+          "approach_mv_per_ms": 0.36574185959709904,
+          "points": {
+            "soma": {
+              "take_off_mv": -57.111411776861985,
+              "span_mv": 3.944845048608478,
+              "t_ms": 1241.98,
+              "lead_ms": 0.0
+            },
+            "axon0": {
+              "take_off_mv": -55.72732042413626,
+              "span_mv": 5.153599220900496,
+              "t_ms": 1241.82,
+              "lead_ms": 0.16000000000008185
+            },
+            "axon1": {
+              "take_off_mv": -54.68989474121699,
+              "span_mv": 8.370589601064474,
+              "t_ms": 1241.68,
+              "lead_ms": 0.2999999999999545
+            }
+          }
+        }
+      },
+      "ramp1": {
+        "rate_pa_per_ms": 11.0,
+        "status": "read",
+        "count": 8,
+        "spike_1": {
+          "spike": 1,
+          "approach_mv_per_ms": 0.9605672036432118,
+          "points": {
+            "soma": {
+              "take_off_mv": -57.156476909523725,
+              "span_mv": 3.4090964520038867,
+              "t_ms": 1061.0,
+              "lead_ms": 0.0
+            },
+            "axon0": {
+              "take_off_mv": -56.47218479452756,
+              "span_mv": 4.805882678097355,
+              "t_ms": 1060.82,
+              "lead_ms": 0.18000000000006366
+            },
+            "axon1": {
+              "take_off_mv": -55.83035772177503,
+              "span_mv": 7.605037498221087,
+              "t_ms": 1060.7,
+              "lead_ms": 0.2999999999999545
+            }
+          }
+        }
+      },
+      "ramp10": {
+        "rate_pa_per_ms": 110.0,
+        "status": "read",
+        "count": 3,
+        "spike_1": {
+          "spike": 1,
+          "approach_mv_per_ms": 2.527061667001107,
+          "points": {
+            "soma": {
+              "take_off_mv": -57.18364622867188,
+              "span_mv": 3.222539925107313,
+              "t_ms": 1029.82,
+              "lead_ms": 0.0
+            },
+            "axon0": {
+              "take_off_mv": -58.10128371041806,
+              "span_mv": 6.94817672206581,
+              "t_ms": 1029.6200000000001,
+              "lead_ms": 0.1999999999998181
+            },
+            "axon1": {
+              "take_off_mv": -58.763992981695665,
+              "span_mv": 9.35855727675358,
+              "t_ms": 1029.5,
+              "lead_ms": 0.31999999999993634
+            }
+          }
+        }
+      }
+    },
+    "contrast": {
+      "n_ramps": 3,
+      "approach_range_mv_per_ms": [
+        0.36574185959709904,
+        2.527061667001107
+      ],
+      "soma": {
+        "take_off_mv": [
+          -57.111411776861985,
+          -57.156476909523725,
+          -57.18364622867188
+        ],
+        "range_mv": 0.07223445180989785
+      },
+      "axon0": {
+        "take_off_mv": [
+          -55.72732042413626,
+          -56.47218479452756,
+          -58.10128371041806
+        ],
+        "range_mv": 2.3739632862818
+      },
+      "axon1": {
+        "take_off_mv": [
+          -54.68989474121699,
+          -55.83035772177503,
+          -58.763992981695665
+        ],
+        "range_mv": 4.074098240478676
+      }
+    }
+  },
+  "i_probes": {
+    "status": "read",
+    "count": 14,
+    "rows": [
+      {
+        "spike": 1,
+        "approach_mv_per_ms": 0.6053072033033519,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.53741769081786,
+            "span_mv": 13.537870593071816,
+            "t_ms": 297.92,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.753911104158604,
+            "span_mv": 14.531670780898054,
+            "t_ms": 297.90000000000003,
+            "lead_ms": 0.01999999999998181
+          },
+          "axon0_0.5": {
+            "take_off_mv": -61.34339184881157,
+            "span_mv": 14.022707119361407,
+            "t_ms": 297.86,
+            "lead_ms": 0.060000000000002274
+          },
+          "axon0_0.9": {
+            "take_off_mv": -61.55530297264145,
+            "span_mv": 13.311510808914328,
+            "t_ms": 297.86,
+            "lead_ms": 0.060000000000002274
+          },
+          "axon1_0.5": {
+            "take_off_mv": -62.28105948336883,
+            "span_mv": 12.80641735532624,
+            "t_ms": 297.84000000000003,
+            "lead_ms": 0.07999999999998408
+          }
+        }
+      },
+      {
+        "spike": 2,
+        "approach_mv_per_ms": 0.5722572164617957,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.46992318964812,
+            "span_mv": 13.576932117900839,
+            "t_ms": 332.64,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.61104014880137,
+            "span_mv": 13.704120100815608,
+            "t_ms": 332.64,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -61.624016234704406,
+            "span_mv": 13.815615044411402,
+            "t_ms": 332.64,
+            "lead_ms": 0.0
+          },
+          "axon0_0.9": {
+            "take_off_mv": -62.36543236039572,
+            "span_mv": 13.192038103182028,
+            "t_ms": 332.64,
+            "lead_ms": 0.0
+          },
+          "axon1_0.5": {
+            "take_off_mv": -63.358337156752036,
+            "span_mv": 12.485289016504971,
+            "t_ms": 332.68,
+            "lead_ms": -0.040000000000020464
+          }
+        }
+      },
+      {
+        "spike": 3,
+        "approach_mv_per_ms": 0.53578268801448,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.49925313350996,
+            "span_mv": 12.918354865102877,
+            "t_ms": 371.76,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.75455285101145,
+            "span_mv": 12.814175970471922,
+            "t_ms": 371.76,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -62.045414404403154,
+            "span_mv": 12.979703912758879,
+            "t_ms": 371.8,
+            "lead_ms": -0.040000000000020464
+          },
+          "axon0_0.9": {
+            "take_off_mv": -62.99884777270746,
+            "span_mv": 13.19182661229707,
+            "t_ms": 371.82,
+            "lead_ms": -0.060000000000002274
+          },
+          "axon1_0.5": {
+            "take_off_mv": -64.44004679217319,
+            "span_mv": 12.272153902937255,
+            "t_ms": 371.88,
+            "lead_ms": -0.12000000000000455
+          }
+        }
+      },
+      {
+        "spike": 4,
+        "approach_mv_per_ms": 0.5014973877875537,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.476614229259795,
+            "span_mv": 12.790488438036618,
+            "t_ms": 416.8,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.83824060213749,
+            "span_mv": 12.554428747941984,
+            "t_ms": 416.8,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -62.53968647544881,
+            "span_mv": 11.520642636728745,
+            "t_ms": 416.86,
+            "lead_ms": -0.060000000000002274
+          },
+          "axon0_0.9": {
+            "take_off_mv": -63.63605803518305,
+            "span_mv": 12.936242444637443,
+            "t_ms": 416.90000000000003,
+            "lead_ms": -0.10000000000002274
+          },
+          "axon1_0.5": {
+            "take_off_mv": -65.38763455084808,
+            "span_mv": 10.596997278789509,
+            "t_ms": 416.98,
+            "lead_ms": -0.18000000000000682
+          }
+        }
+      },
+      {
+        "spike": 5,
+        "approach_mv_per_ms": 0.4733060170880452,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.450787135534355,
+            "span_mv": 12.76668279170498,
+            "t_ms": 470.40000000000003,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.69182011869993,
+            "span_mv": 12.243641253856516,
+            "t_ms": 470.42,
+            "lead_ms": -0.01999999999998181
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.06677213185603,
+            "span_mv": 12.883444462232973,
+            "t_ms": 470.46000000000004,
+            "lead_ms": -0.060000000000002274
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.21441080520452,
+            "span_mv": 11.515054621473567,
+            "t_ms": 470.52,
+            "lead_ms": -0.1199999999999477
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.32357262317883,
+            "span_mv": 10.829542448585435,
+            "t_ms": 470.6,
+            "lead_ms": -0.19999999999998863
+          }
+        }
+      },
+      {
+        "spike": 6,
+        "approach_mv_per_ms": 0.4575913645233589,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.3154832959898,
+            "span_mv": 13.86246141974815,
+            "t_ms": 534.78,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.81223023941155,
+            "span_mv": 13.466013062653204,
+            "t_ms": 534.78,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.241444097553284,
+            "span_mv": 11.522480271013393,
+            "t_ms": 534.84,
+            "lead_ms": -0.06000000000005912
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.52955690646174,
+            "span_mv": 12.130594744957016,
+            "t_ms": 534.9,
+            "lead_ms": -0.12000000000000455
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.62658028855716,
+            "span_mv": 8.859120926507508,
+            "t_ms": 535.0,
+            "lead_ms": -0.22000000000002728
+          }
+        }
+      },
+      {
+        "spike": 7,
+        "approach_mv_per_ms": 0.448366913580714,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.37428634575231,
+            "span_mv": 13.249586246180243,
+            "t_ms": 608.7,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.88350146802192,
+            "span_mv": 12.861835665834107,
+            "t_ms": 608.7,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.182459400723914,
+            "span_mv": 12.76319324223244,
+            "t_ms": 608.78,
+            "lead_ms": -0.07999999999992724
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.72245183286616,
+            "span_mv": 11.335640817228843,
+            "t_ms": 608.82,
+            "lead_ms": -0.12000000000000455
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.88443719717714,
+            "span_mv": 10.112176250507531,
+            "t_ms": 608.92,
+            "lead_ms": -0.2199999999999136
+          }
+        }
+      },
+      {
+        "spike": 8,
+        "approach_mv_per_ms": 0.4438529358070119,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.471435538525476,
+            "span_mv": 14.507595642532493,
+            "t_ms": 687.98,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.77310234935145,
+            "span_mv": 13.881354691309816,
+            "t_ms": 688.0,
+            "lead_ms": -0.01999999999998181
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.256939006889496,
+            "span_mv": 11.837470492666341,
+            "t_ms": 688.0600000000001,
+            "lead_ms": -0.08000000000004093
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.5825339071699,
+            "span_mv": 10.298852154923331,
+            "t_ms": 688.12,
+            "lead_ms": -0.13999999999998636
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.7427608040429,
+            "span_mv": 9.05494953416786,
+            "t_ms": 688.22,
+            "lead_ms": -0.2400000000000091
+          }
+        }
+      },
+      {
+        "spike": 9,
+        "approach_mv_per_ms": 0.44379673012718424,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.43052186097933,
+            "span_mv": 12.760605717206154,
+            "t_ms": 769.5,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.720441326273736,
+            "span_mv": 12.197548816492429,
+            "t_ms": 769.52,
+            "lead_ms": -0.01999999999998181
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.15310803545792,
+            "span_mv": 12.312157902920326,
+            "t_ms": 769.58,
+            "lead_ms": -0.08000000000004093
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.66287950079523,
+            "span_mv": 10.969591963253535,
+            "t_ms": 769.62,
+            "lead_ms": -0.12000000000000455
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.79833881747297,
+            "span_mv": 9.772277290439462,
+            "t_ms": 769.72,
+            "lead_ms": -0.22000000000002728
+          }
+        }
+      },
+      {
+        "spike": 10,
+        "approach_mv_per_ms": 0.44440272531418806,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.38440573560835,
+            "span_mv": 13.19263002650019,
+            "t_ms": 851.98,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.86822290996409,
+            "span_mv": 12.82822792627696,
+            "t_ms": 851.98,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.24405398372427,
+            "span_mv": 13.084242238184501,
+            "t_ms": 852.04,
+            "lead_ms": -0.05999999999994543
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.52256471393687,
+            "span_mv": 11.529122442042386,
+            "t_ms": 852.1,
+            "lead_ms": -0.12000000000000455
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.62688284734591,
+            "span_mv": 10.401905756960957,
+            "t_ms": 852.2,
+            "lead_ms": -0.22000000000002728
+          }
+        }
+      },
+      {
+        "spike": 11,
+        "approach_mv_per_ms": 0.4449556077667443,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.34967602707747,
+            "span_mv": 13.538041707837422,
+            "t_ms": 935.02,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.823894298176505,
+            "span_mv": 13.17164667901568,
+            "t_ms": 935.02,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.14599097420754,
+            "span_mv": 11.373545493933875,
+            "t_ms": 935.08,
+            "lead_ms": -0.06000000000005912
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.39624698039452,
+            "span_mv": 12.010323910171088,
+            "t_ms": 935.14,
+            "lead_ms": -0.12000000000000455
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.4683004114756,
+            "span_mv": 10.963303001938414,
+            "t_ms": 935.24,
+            "lead_ms": -0.22000000000002728
+          }
+        }
+      },
+      {
+        "spike": 12,
+        "approach_mv_per_ms": 0.445279304224628,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.32930572594905,
+            "span_mv": 13.75010259146255,
+            "t_ms": 1018.5,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.794464116628674,
+            "span_mv": 13.38574156949138,
+            "t_ms": 1018.5,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -63.06713367151109,
+            "span_mv": 11.622144923425992,
+            "t_ms": 1018.5600000000001,
+            "lead_ms": -0.06000000000005912
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.49836497629165,
+            "span_mv": 12.56020072692187,
+            "t_ms": 1018.6,
+            "lead_ms": -0.10000000000002274
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.54158781657003,
+            "span_mv": 9.341776821318867,
+            "t_ms": 1018.7,
+            "lead_ms": -0.20000000000004547
+          }
+        }
+      },
+      {
+        "spike": 13,
+        "approach_mv_per_ms": 0.4455318991367219,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.31326910592874,
+            "span_mv": 13.924585617105187,
+            "t_ms": 1102.38,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.77016037551718,
+            "span_mv": 13.562989715799048,
+            "t_ms": 1102.38,
+            "lead_ms": 0.0
+          },
+          "axon0_0.5": {
+            "take_off_mv": -62.99746211415589,
+            "span_mv": 11.83494500992731,
+            "t_ms": 1102.44,
+            "lead_ms": -0.05999999999994543
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.40665022353028,
+            "span_mv": 10.67047162071649,
+            "t_ms": 1102.48,
+            "lead_ms": -0.09999999999990905
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.42094378359445,
+            "span_mv": 9.615437595046586,
+            "t_ms": 1102.58,
+            "lead_ms": -0.1999999999998181
+          }
+        }
+      },
+      {
+        "spike": 14,
+        "approach_mv_per_ms": 0.44588792958702156,
+        "points": {
+          "soma": {
+            "take_off_mv": -60.49637838069727,
+            "span_mv": 14.366520016289158,
+            "t_ms": 1186.6200000000001,
+            "lead_ms": 0.0
+          },
+          "axon0_0.1": {
+            "take_off_mv": -60.74067945371412,
+            "span_mv": 13.80006749284987,
+            "t_ms": 1186.64,
+            "lead_ms": -0.01999999999998181
+          },
+          "axon0_0.5": {
+            "take_off_mv": -62.92668502793145,
+            "span_mv": 12.101889015455058,
+            "t_ms": 1186.7,
+            "lead_ms": -0.07999999999992724
+          },
+          "axon0_0.9": {
+            "take_off_mv": -64.3154513777016,
+            "span_mv": 10.948163914955643,
+            "t_ms": 1186.74,
+            "lead_ms": -0.11999999999989086
+          },
+          "axon1_0.5": {
+            "take_off_mv": -66.30213292693104,
+            "span_mv": 9.943477097070591,
+            "t_ms": 1186.84,
+            "lead_ms": -0.2199999999997999
+          }
+        }
+      }
+    ],
+    "max_lead_ms": {
+      "axon0_0.1": 0.01999999999998181,
+      "axon0_0.5": 0.060000000000002274,
+      "axon0_0.9": 0.060000000000002274,
+      "axon1_0.5": 0.07999999999998408
+    },
+    "min_span_mv": {
+      "soma": 12.760605717206154,
+      "axon0_0.1": 12.197548816492429,
+      "axon0_0.5": 11.373545493933875,
+      "axon0_0.9": 10.298852154923331,
+      "axon1_0.5": 8.859120926507508
+    },
+    "earliest_point_spike_1": "axon1_0.5",
+    "earliest_lead_spike_1_ms": 0.07999999999998408
+  },
+  "reading": [
+    "(a) E recording: the later spikes sit above the spike-1 relation by +2.0 mV after intervals under 30 ms, +2.2 mV at 30 to 100 ms and +1.5 mV after intervals over 100 ms (up to 734 ms), a band spread of 0.69 mV against the 0.75 mV limit: a fixed step within the limit, with a downward trend of 0.6 mV per decade of interval that the limit does not resolve. What a spike leaves in the recorded take-off does not recover inside the pulse; stage 6 read that it has recovered by the next sweep.",
+    "(b) E fit under ramps, spike 1: the somatic take-off is -57.1 to -57.2 mV from 0.37 to 2.53 mV/ms (0.07 mV), as in the step pulses. The take-off at the axon points is not fixed: axon[1](0.5) falls from -54.7 to -58.8 mV (4.1 mV) and axon[0](0.5) from -55.7 to -58.1 mV (2.4 mV) as the approach quickens, the axon leading the soma by 0.30 ms at every rate. At the axon's take-off the soma sits at -58.3, -58.6 and -59.5 mV (1.2 mV range) while the axon is 3.6, 2.8 and 0.7 mV above it: under a slow approach the axon's own inward current carries it ahead of the soma before it takes off; under a fast one the electrode drives the soma and the axon lags. Prediction (b) fails at both axon points and holds at the soma.",
+    "So the fit does contain a take-off that slides with the approach, of the recorded sign and size (recorded soma: -2.2 mV from 0.2 to 0.75 mV/ms, -7 mV to the 7 mV/ms short square; fit axon: -4.1 mV from 0.37 to 2.53 mV/ms), at its initiation site; its soma does not show it because the soma is a load 45 um down a 1 um stub that reads the arrival of the axonal spike at one voltage. Along the retained trains the fit's axon take-off is a function of the approach only (-55.1 at the 310 pA onset, -54.3 at every later spike and at the slow 200 pA onset); the recorded +1.9 mV after a spike has no counterpart at either site.",
+    "(c) I fit with probes: no probe leads the soma by more than 0.08 ms (axon[1](0.5) at spike 1; later spikes soma first) and every span is 8.9 mV or more (soma 12.8 to 14.4): the whole 60 um axon and the soma turn over together. The registered rejection names axon[1](0.5) as the earliest point at spike 1, by 0.08 ms, four samples; the model's axon ends there, so there is no point to move outward to. The finalist's spike is a whole-cell turnover because its axon is a 60 um stub with no site that fires first; the stage-8 I reading is confirmed on a second run with five points.",
+    "Reading of the stage: in the E fit the recorded take-off signature lives at the initiation site and is hidden from the soma by the coupling between them; in the recording the soma shows it. The next split is an input split, registered as stage 10: hold every channel and change the coupling between the soma and the site."
+  ],
+  "decision": {
+    "checks": [
+      {
+        "cell": "E",
+        "reading": "a",
+        "prediction": "recovering step: residual falls with interval by more than 3 sigma (0.75 mV) between short and long intervals",
+        "value": 0.6870425042884349,
+        "recovering": false,
+        "fixed": true
+      },
+      {
+        "cell": "E",
+        "reading": "b",
+        "prediction": "fit take-off at every point moves less than 1 mV across the ramps",
+        "value": 4.074098240478676,
+        "pass": false
+      },
+      {
+        "cell": "I",
+        "reading": "c",
+        "prediction": "no probe leads the soma by more than 0.1 ms and every span exceeds 8 mV",
+        "value": 0.07999999999998408,
+        "pass": true,
+        "min_span_mv": 8.859120926507508,
+        "rejection": "fired by the letter: the earliest point at spike 1 is axon1_0.5 (lead +0.080 ms); the model's axon ends at axon[1], there is no point beyond it"
+      }
+    ]
+  }
+}
