@@ -17,6 +17,7 @@ Verdict: **MIXED**
 | 0.544 | silent (no spike) | 0 |
 | 1.320 | silent (no spike) | 0 |
 | 2.641 | 625 | 6 |
+| 5.282 | 921 | 6 |
 
 Recorded 348 V/s; B3 with the rodent equations 570 V/s at gbar 2.641, count 10.
 Crossing of the recorded rise: {'dose_s_cm2': None, 'inside_series': False}.
@@ -49,7 +50,7 @@ the published HL23PYR template cannot construct on the 541563728 morphology: bio
 
 ## Cells
 
-- (a) PASS: the rise rises monotonically with the inserted human sodium density (the dose acts through the somatic sodium) -> {0.068: 'silent', 0.136: 'silent', 0.272: 'silent', 0.544: 'silent', 1.32: 'silent', 2.641: 625.1}. crossing of the recorded 348 V/s: {'dose_s_cm2': None, 'inside_series': False}
+- (a) PASS: the rise rises monotonically with the inserted human sodium density (the dose acts through the somatic sodium) -> {0.068: 'silent', 0.136: 'silent', 0.272: 'silent', 0.544: 'silent', 1.32: 'silent', 2.641: 625.1, 5.282: 920.9}. crossing of the recorded 348 V/s: {'dose_s_cm2': None, 'inside_series': False}
 - (b) FAIL: some dose puts the rise within 15 percent of the recorded 348 V/s with the 310 pA count still within 5 to 15 -> {'in_rise_band': [], 'and_count_holds': []}. the rise must not be bought with the count
 - (c) --: the human sodium equations reach the recorded rise where the rodent equations reach it only by removing nearly all somatic sodium (stage-11 intercept ~320 V/s) -> {'b3_rodent_rise_v_s': 570.4, 'best_human_dose': '2.641'}. reported beside the stage-11 rodent series 655/586/505
 - (d) FAIL: percent accuracy over the ten registered elements improves against B3 -> {'b3_pct': 71.8, 'human_pct': 62.0}. lossy summary; the per-element table is the reading

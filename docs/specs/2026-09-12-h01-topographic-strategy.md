@@ -846,3 +846,56 @@ lossy transform of the kind chapter 2 warns about -- it is a summary for the rea
 per-element table beside it is the reading that carries the information.
 
 Unchanged: the E recording, its chain, the readers, the sealed holdouts.
+
+## Stage 16 (registered 2026-09-13, before the observation and before the runs): the threshold climb
+
+**Why the climb and why now.** Stage 15 closed the rise: the sodium equation lineage is not its
+remaining input, and the fully human-fitted base is no closer to this cell than B3 (72.3 against
+71.8 percent over the ten registered elements). The accuracy that remains is concentrated in one
+place: of the 28.2 points B3 is missing at 310 pA, the two threshold-climb elements carry 19.4
+and the rise 6.4, and every other element is already between 90 and 100 percent. The recording
+climbs +1.38 mV in the first interspike interval and +3.63 mV by spike 5 with the rise kept at
+0.86; B3 climbs -0.02 and +0.24. HL23PYR reproduces the first-interval step exactly (+1.38) with
+its rise kept, so the step is reachable by a human L2/3 model; B3 holds the excitability that
+HL23PYR loses. The split is therefore: what does B3 lack that lets a threshold move between one
+spike and the next.
+
+**Part 1, an observation on retained traces (no run): what sets B3's threshold, and what changes.**
+The stage-14 machinery is re-pointed from the peak of the upstroke to the take-off. On
+`h01-e-currents/m0-b3-currents-sweep53` (the retained B3 run at 310 pA carrying every somatic
+current on the solver's native grid), the somatic current balance is read at the take-off of
+spike 1 and again at the take-off of spike 2, at the same membrane voltage, and decomposed by
+carrier.
+(a) *Why B3's threshold cannot move.* The net outward current at the take-off of spike 2, read at
+spike 1's take-off voltage, against the same quantity at spike 1. Prediction if B3 lacks an
+accumulating brake: the two agree within 10 percent, so nothing has accumulated between the
+spikes and the threshold has no reason to move. Registered alternative outcome: they differ by
+more than 10 percent and the threshold still does not move, in which case the threshold is set by
+something other than the outward current at take-off and the dose below is refused.
+(b) *Which carrier holds the outward charge at take-off.* Kv3_1, Im, K_P, K_T, SK, Ih and leak
+ranked by their share at the take-off. Prediction from the fitted densities (soma Kv3_1 0.369,
+Im 3.0e-4, K_P 2.3e-4, K_T 1.1e-8 S/cm2): the fast Kv3_1 dominates and the slow, accumulating
+carriers are negligible. This names the carrier to dose; it is an observation, not pass/fail.
+
+**Part 2, the dose (runs): a characteristic curve of the climb.** The slow outward carrier that
+part 1 identifies is dosed on the soma of B3 across four densities, at 310 pA, sweep 53 only,
+everything else held (the human anatomy, every other fitted density, the recorded command plus
+bias, nseg 9, CVode 1e-10, 34 degrees). Manifest `h01-e-climb-manifest.json`, output
+`h01-e-climb`, cap 5. No holdout is touched. All fast quantities through the stage-12 chain.
+(c) *The climb.* Threshold at spike 2 minus spike 1, and at spike 5 minus spike 1, against the
+recorded +1.38 and +3.63 mV. Prediction if the climb is a somatic slow-outward deficit: some dose
+reaches at least half the recorded first-interval step (+0.69 mV) and the curve is monotone in the
+dose.
+(d) *It must not be bought with the count or the rise.* At that dose the 310 pA count stays within
+5 to 15 (recorded 10) and the spike-1 rise stays within 15 percent of B3's own 570 V/s, so the
+climb is not obtained by crippling the cell. The rise of spike 5 over spike 1 is reported against
+the recorded 0.86.
+(e) *Rejection.* No dose reaches half the recorded step (the climb is not a somatic slow-outward
+deficit and the residual is reported, not repaired); or every dose that does also leaves the count
+or the rise band; or the climb does not move monotonically with the dose (the dose is not acting
+through that carrier).
+
+**Percent accuracy.** Recomputed on the ten elements and the definition already registered at
+stage 15, for B3 and for the best climb dose, reported side by side.
+
+Unchanged: the E recording, its chain, the readers, the sealed holdouts.
