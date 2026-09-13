@@ -1,7 +1,7 @@
 {
   "executor": "local",
   "python": "/workspace/h01-neuron/venv312/bin/python",
-  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv). The library /workspace/h01-neuron/cache/human-pv/hl23-source holds the pristine ModelDB 267595 mod files compiled with nrnivmodl, NeuronTemplate.hoc, biophys_HL23PYR.hoc and morphologies/HL23PYR.swc (sha256 in source/sha256.txt).",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2, Python 3.12 venv). The library /workspace/h01-neuron/cache/human-pv/hl23-source holds the pristine ModelDB 267595 mod files compiled with nrnivmodl, NeuronTemplate.hoc, biophys_HL23PYR.hoc and morphologies/HL23PYR.swc (sha256 in source/sha256.txt). The donor file paths travel as input flags because the runner maps /work onto the cache only in input argv, not in candidate JSON values (first launch failed on that, 1 evaluation spent).",
   "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
   "cache_dir": "../h01-neuron/cache/human-pv/hl23-source",
   "library": ".",
@@ -22,7 +22,13 @@
       "1020",
       "--duration-ms",
       "2100",
-      "--record-axon-probes"
+      "--record-axon-probes",
+      "--template",
+      "/work/source/NeuronTemplate.hoc",
+      "--biophys",
+      "/work/source/biophys_HL23PYR.hoc",
+      "--morphology",
+      "/work/source/morphologies/HL23PYR.swc"
     ],
     "step250": [
       "--current-na",
@@ -33,7 +39,13 @@
       "1020",
       "--duration-ms",
       "2100",
-      "--record-axon-probes"
+      "--record-axon-probes",
+      "--template",
+      "/work/source/NeuronTemplate.hoc",
+      "--biophys",
+      "/work/source/biophys_HL23PYR.hoc",
+      "--morphology",
+      "/work/source/morphologies/HL23PYR.swc"
     ],
     "step310": [
       "--current-na",
@@ -44,7 +56,13 @@
       "1020",
       "--duration-ms",
       "2100",
-      "--record-axon-probes"
+      "--record-axon-probes",
+      "--template",
+      "/work/source/NeuronTemplate.hoc",
+      "--biophys",
+      "/work/source/biophys_HL23PYR.hoc",
+      "--morphology",
+      "/work/source/morphologies/HL23PYR.swc"
     ],
     "step400": [
       "--current-na",
@@ -55,7 +73,13 @@
       "1020",
       "--duration-ms",
       "2100",
-      "--record-axon-probes"
+      "--record-axon-probes",
+      "--template",
+      "/work/source/NeuronTemplate.hoc",
+      "--biophys",
+      "/work/source/biophys_HL23PYR.hoc",
+      "--morphology",
+      "/work/source/morphologies/HL23PYR.swc"
     ]
   },
   "holdout": "Sweep 54 (0.33 nA) stays sealed; 0.4 nA is not a recorded input of this cell.",
@@ -105,10 +129,7 @@
       "name": "s13-hl23pyr",
       "stage": "13",
       "arm": "system B: human-fitted L2/3 base",
-      "flags": {
-        "biophys": "/work/source/biophys_HL23PYR.hoc",
-        "morphology": "/work/source/morphologies/HL23PYR.swc"
-      },
+      "flags": {},
       "settings": {
         "nseg_factor": 9,
         "cvode_atol": 1e-10,
