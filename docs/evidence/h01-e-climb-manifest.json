@@ -1,0 +1,139 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2) from the clean worktree /workspace/braintrace-q2. The library kv3-closing-source is already compiled and its NaTs.mod declares h_recovery_factor as a RANGE parameter, so the axonal sodium's recovery from inactivation can be set per region with --mechanism-parameter.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "purpose": "Stage 16 part 2 (corrected): the threshold climb as accommodation at the initiation site, read at the soma through a coupling that lets the soma see it. Part 1 refused the somatic dose (the take-off does not move while somatic outward current accumulates; the axon delivers 0.33 nA against a 0.012 nA somatic brake). The axonal sodium's recovery from inactivation is dosed on the stage-10 x2 density-held geometry, whose somatic take-off tracks the site, with one run of the strongest dose on the default 1 um stub as the coupling control. See docs/specs/2026-09-12-h01-topographic-strategy.md, stage 16.",
+  "cap": 5,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 3000,
+  "output_dir": "h01-e-climb",
+  "inputs": {
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed and is not an input. Sweep 53 (310 pA) only.",
+  "evaluation": "One candidate at one input = one evaluation; four candidates at sweep53: four.",
+  "base_candidate": {
+    "file": "h01-e-coupling-b-manifest.json#s10-d2-density",
+    "note": "The stage-10 x2 diameter, NaTs-density-held arm at 310 pA: 9 spikes, spike-1 rise 655 V/s at the membrane, somatic take-off -55.1 to -55.5 mV along the train, take-off sliding -2.1 mV with the approach. Retained as h01-e-coupling-b/s10-d2-density-sweep53 and read again by the stage-16 scorer as the h_recovery_factor = 1.0 control; not rerun."
+  },
+  "reference": {
+    "recorded_climb_2_mv": 1.38,
+    "recorded_climb_5_mv": 3.63,
+    "recorded_rise_5_over_1": 0.86,
+    "recorded_count_310": 10,
+    "b3_climb_2_mv": -0.02,
+    "b3_climb_5_mv": 0.24,
+    "hl23pyr_climb_2_mv": 1.38,
+    "control_arm_rise_v_s_membrane": 655.0
+  },
+  "decision_limits": {
+    "climb_2_at_least_mv": 0.69,
+    "count_310": [5, 15],
+    "rise_fraction_of_control": 0.15
+  },
+  "stages": {
+    "16": {
+      "title": "Stage 16 part 2: axonal sodium recovery dosed on the coupled geometry, with a 1 um stub coupling control, at 310 pA",
+      "prediction": "If the threshold climb is accommodation at the initiation site read through the soma-site coupling, then on the x2 density-held geometry the first-interval threshold step grows monotonically as the axonal h_recovery_factor falls from 1.0 through 0.5, 0.25 and 0.125, and some dose reaches at least half the recorded +1.38 mV (that is +0.69 mV) while the 310 pA count stays within 5 to 15 and the spike-1 rise stays within 15 percent of the arm's own control. The same strongest dose on the default 1 um stub gives at most a fraction of that climb, because the soma cannot see the site (stage 9). Reported, not banded: the spike-5 step against the recorded +3.63 mV, the rise ratio spike 5 over spike 1 against 0.86, the fall, and the ten-element percent accuracy of the best dose beside B3's 71.8.",
+      "rejection": "No dose reaches +0.69 mV at spike 2 (site accommodation is not the climb's mechanism; reported, not repaired); or every dose that does also leaves the count band or moves the spike-1 rise by more than 15 percent of the control (the climb is bought by crippling the cell); or the climb is not monotone in the dose (the dose is not acting through the axonal sodium's recovery); or the 1 um stub control climbs as much as the coupled arm (the coupling is not required and stage 10's account of the take-off is wrong).",
+      "unchanged": "Every flag of the stage-10 s10-d2-density arm (axon stub 2 um, NaTs:axon 3.814, sodium density 0.9, sodium opening 2.0, kv3 closing 0.9, Ih 75x distributed, leak reversal -4 mV, SK:soma 0.35, stop 2100 ms) except the axonal h_recovery_factor; and for the coupling control the same except the stub returns to 1 um. The human anatomy, the recorded command plus bias, sweep 53, nseg 9, CVode 1e-10, 34 degrees, the recording, its chain and the readers."
+    }
+  },
+  "candidates": [
+    {
+      "name": "s16-axrec-050",
+      "stage": "16",
+      "arm": "coupled geometry (2 um stub), axonal sodium recovery 0.5",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 2.0,
+        "mechanism_parameter": ["NaTs:axon:h_recovery_factor:0.5"]
+      },
+      "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "record_soma_currents": false}
+    },
+    {
+      "name": "s16-axrec-025",
+      "stage": "16",
+      "arm": "coupled geometry (2 um stub), axonal sodium recovery 0.25",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 2.0,
+        "mechanism_parameter": ["NaTs:axon:h_recovery_factor:0.25"]
+      },
+      "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "record_soma_currents": false}
+    },
+    {
+      "name": "s16-axrec-0125",
+      "stage": "16",
+      "arm": "coupled geometry (2 um stub), axonal sodium recovery 0.125",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 2.0,
+        "mechanism_parameter": ["NaTs:axon:h_recovery_factor:0.125"]
+      },
+      "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "record_soma_currents": false}
+    },
+    {
+      "name": "s16-axrec-0125-stub1",
+      "stage": "16",
+      "arm": "coupling control: default 1 um stub, same strongest dose",
+      "flags": {
+        "calcium_decay_factor": 1.0,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "insert_density": ["NaTs:axon:3.814"],
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "regional_density": ["SK:soma:0.35"],
+        "sodium_density_factor": 0.9,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "stop_ms": 2100.0,
+        "axon_stub_diameter_um": 1.0,
+        "mechanism_parameter": ["NaTs:axon:h_recovery_factor:0.125"]
+      },
+      "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "record_soma_currents": false}
+    }
+  ]
+}
