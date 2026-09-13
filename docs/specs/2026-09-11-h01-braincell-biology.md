@@ -318,3 +318,33 @@ encoder descent step. The BPTT directional derivative matched finite differences
 to 9.24e-10 relative error. The 60-tick synthetic trajectory released no glutamate;
 event-triggered transmitter gradients and recurrent contacts remain unqualified.
 Evidence and source identities are in `docs/biology/neuroglial-learning-phase/README.md`.
+
+## Delayed neuroglial contact learning qualification
+
+Extend the synthetic session to two instances with reciprocal excitatory
+contacts and one glial fragment. Recompute exact neuronal CV maps and pin the
+new topology/biology. Retain the 0.5 ms contact delay and 0.005 ms cable clock.
+Use deterministic, explicitly scheduled presynaptic impulses through native
+delivery at event boundaries; these are imposed diagnostic stimuli, not
+spontaneous neuronal spikes or a physiological recurrent firing result.
+
+Differentiate only contact weights on a short soma-voltage SSE trajectory using
+one-event compiled finite-window pp-prop at two decays. Require nonzero finite
+gradients, decay discrimination, positive BPTT alignment and relative error
+below one. Check BPTT with centered finite differences and small contact-weight
+descent without crossing the absolute-weight kink at zero. Require no-impulse
+controls to have zero contact gradient and a matched pre-arrival trajectory;
+record actual delayed receptor activation and chemical validity. Fixed impulses
+must be reproduced under every reset and perturbation. All repeated evolution
+uses BrainState transforms. Each run stays below 15 minutes. This gate does not
+qualify endogenous recurrent spiking, stochastic-release derivatives, measured
+extracellular placement, ARC learning or population-scale runtime.
+
+Phase result (2026-09-13): 10 affected CPU tests passed with 99.22% probe
+coverage. The two-contact, 180-tick diagnostic passed delayed arrival controls,
+zero-gradient no-impulse control, BPTT/finite-difference agreement and normalized
+descent. However, decay-0.8 contact gradients have 93.38% relative error against
+BPTT despite cosine 0.999528. This qualifies direction/descent only; gradient
+magnitude and configured-decay (0.99) contact accuracy remain unqualified. Next
+is an analytic queue-credit reference to distinguish expected attenuation from
+an implementation defect. See `docs/biology/neuroglial-contact-phase/README.md`.

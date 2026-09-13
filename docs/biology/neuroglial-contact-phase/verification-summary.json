@@ -1,0 +1,179 @@
+{
+  "status": "DIRECTION_DESCENT_PASS_MAGNITUDE_UNQUALIFIED",
+  "full_biology_status": "INCOMPLETE",
+  "date": "2026-09-13",
+  "base_commit": "2b5ddaa",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "10",
+    "time": "236.118",
+    "timestamp": "2026-09-13T12:13:46.146195-07:00",
+    "hostname": "KYOSHI"
+  },
+  "warnings": 4,
+  "coverage": {
+    "covered_lines": 127,
+    "num_statements": 128,
+    "percent_covered": 99.21875,
+    "percent_covered_display": "99",
+    "missing_lines": 1,
+    "excluded_lines": 2,
+    "percent_statements_covered": 99.21875,
+    "percent_statements_covered_display": "99"
+  },
+  "implementation_sha256": {
+    "docs/biology/neuroglial_contact_probe.py": "3538fdf944f6d6ad45ae1aeb78757598d27438ff97a67d0d2da6f52e24bf345d",
+    "docs/biology/neuroglial_contact_probe_test.py": "719a146d690549b9955521e540842d01baa4b1460540e700eb98bd73a2bd2c6f",
+    "braintrace/_testing/oracle.py": "0e82e4429d49cb6fa785f09ac467a1c056e1b2f05ac8d1e9095b69b96e9e9c7f",
+    "examples/pp_prop/h01_neuroglial_test.py": "2135dde369a37069eb23ce8f027149ff67246ae7e53ee41376fad4e7dc2ddd46",
+    "examples/pp_prop/h01_runtime_test.py": "e7e4c29ce893840db41d2928558f707462cb25c27600a313c68d645547764cf9",
+    "braintrace/datasets/h01_test.py": "9f21b92fbf3539b603a460caa617b5331a9813e9e04595b9e556a197da61b0fc",
+    "braintrace/datasets/h01_anatomy_test.py": "a38f51fc759694e7f8cfadd24f664e96a7223dc1cb4f96cd32dc2f33b18fc753",
+    "braintrace/datasets/h01_glia_test.py": "041ccd4b18ac8a778014b36f8cb3c56682a9e3340d9c434e5de7fcb9f9b7fdd6"
+  },
+  "artifact_sha256": {
+    "docs/biology/neuroglial-contact-phase/contact-probe.json": "1a283b9e0727a21a9bbd8779cd622ad5983569db7cbfeada25561169198c9dd6",
+    "docs/biology/neuroglial-contact-phase/settings.json": "9e34e1b8309921c79f1f5ab208f80ee30a6eca22de291c0f20c3db2fd7b07b2e",
+    "docs/biology/neuroglial-contact-phase/topology.json": "ef1112e4ce34b85fa9b7e1546c86e1c6ca76c8fee81d4e09649e0f2bb52d8aa1",
+    "docs/biology/neuroglial-contact-phase/coverage.json": "85a999db252fbc64af3b28c65510112c482b8ac91ea6b14ee3b543ab2a654c37",
+    "docs/biology/neuroglial-contact-phase/verification.xml": "e80907492d6998cc21d02b69615f7c20f0ff789778b39137c23cfcd03ceea821"
+  },
+  "oracle_contract": {
+    "chunk_size": 1,
+    "compiled_scan": true,
+    "decays": [
+      0.2,
+      0.8
+    ],
+    "finite_difference_epsilon_us": 1e-08,
+    "parameter_group": "recurrent_weight",
+    "loss": "sum squared soma voltages",
+    "default_decay_accuracy": "UNTESTED"
+  },
+  "diagnostic": {
+    "events": 9,
+    "physical_ticks": 180,
+    "dt_ms": 0.005,
+    "contact_count": 2,
+    "contact_delay_ms": 0.5,
+    "imposed_impulse_times_ms": [
+      0.1,
+      0.2
+    ],
+    "low_gradient": [
+      -675.3608584873982,
+      -411.7059244934435
+    ],
+    "high_gradient": [
+      -514906.1492774496,
+      -210220.04965668797
+    ],
+    "bptt_gradient": [
+      -7866518.268547518,
+      -2932949.186657081
+    ],
+    "no_impulse_gradient": [
+      0.0,
+      0.0
+    ],
+    "decay_relative_difference": 0.99859599371575,
+    "bptt_relative_error": 0.9337877106661615,
+    "cosine": 0.9995275966907351,
+    "finite_difference": 8391526.80709958,
+    "bptt_projection": 8391526.815592922,
+    "directional_relative_error": 1.0121330351641592e-09,
+    "objective_before": 106990.0885490308,
+    "objective_after": 106989.24941082725,
+    "contact_update_norm_us": 1e-07,
+    "positive_weights": true,
+    "final_conductances_us": [
+      0.0008607079764250577,
+      0.0018096748360719188
+    ],
+    "trajectory_mv": [
+      [
+        -84.03742240320936,
+        -84.08280901077426
+      ],
+      [
+        -84.07789616024631,
+        -84.21246876107658
+      ],
+      [
+        -84.10230496498747,
+        -84.3686847777262
+      ],
+      [
+        -84.11108351533878,
+        -84.55074672397399
+      ],
+      [
+        -84.10465364955398,
+        -84.75796340800765
+      ],
+      [
+        -84.08342480375487,
+        -84.98966218942478
+      ],
+      [
+        -84.04779442261604,
+        -69.31964566965092
+      ],
+      [
+        -55.56191122013387,
+        -57.46990222552089
+      ],
+      [
+        -35.06496286386759,
+        -47.35811088445249
+      ]
+    ],
+    "no_impulse_trajectory_mv": [
+      [
+        -84.03742240320936,
+        -84.08280901077426
+      ],
+      [
+        -84.07789616024631,
+        -84.21246876107658
+      ],
+      [
+        -84.10230496498747,
+        -84.3686847777262
+      ],
+      [
+        -84.11108351533878,
+        -84.55074672397399
+      ],
+      [
+        -84.10465364955398,
+        -84.75796340800765
+      ],
+      [
+        -84.08342480375487,
+        -84.98966218942478
+      ],
+      [
+        -84.04779442277149,
+        -85.2451884262458
+      ],
+      [
+        -83.9981483049417,
+        -85.52390496777818
+      ],
+      [
+        -83.93486116170409,
+        -85.82519168761729
+      ]
+    ],
+    "chemistry_valid": true,
+    "status": "SYNTHETIC_FIXED_IMPULSE_CONTACT_LEARNING_PASS",
+    "elapsed_seconds": 216.0621286999958,
+    "probe_sha256": "3538fdf944f6d6ad45ae1aeb78757598d27438ff97a67d0d2da6f52e24bf345d",
+    "qualification": "Fixed-impulse synthetic contact-weight credit only; no endogenous recurrent firing, ARC or physiology qualification"
+  },
+  "qualification": "Fixed-impulse contact-gradient direction and normalized descent only. Magnitude has 93.38 percent error at decay 0.8; no endogenous recurrent firing, ARC, measured anatomy, GPU or all-104 qualification."
+}
