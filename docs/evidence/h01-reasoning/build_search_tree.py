@@ -35,6 +35,7 @@ CYCLES = "docs/evidence/h01-topographic/cycle-tables.json"
 SP16_E = "docs/evidence/h01-e-sodium-slow/stage-1-decision.json"
 SP16_I = "docs/evidence/h01-i-sodium-slow/stage-2-decision.json"
 TAKEOFF = "docs/evidence/h01-topographic/threshold-approach.json"
+ONSET = "docs/evidence/h01-topographic/onset-shape.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -98,8 +99,14 @@ def build_nodes():
           "The recorded take-off is set locally by the trajectory; the fit's is imposed from the axonal initiation. The Y4 'level after a spike' row was a steady-state I-V difference (recorded Rin 75 MOhm below 70 pA, 91 MOhm from 90 to 190 pA). This is the relation that made SP16 predictable on paper.", [TAKEOFF, CM], "supported"),
         n("q5_i", R, "I human: spike 1 at -58 mV (120 pA, 0.7 mV/ms), -60.5 (0.19 nA, 1.1), -61.7 (0.27 nA, 1.7): 4 mV slide, 10 sigma of the spike-1 spread, both definitions. I fit: slides 0.7 mV over 0.44 to 1.72 mV/ms and holds within 0.3 mV along each train: not fixed to 1 sigma, a fifth of the recorded slide. Later spikes +1.0 mV median (inside 3 sigma); the I along-train rows have no repeat spread (the four repeats are single-spike 120 pA sweeps).",
           "Registered prediction 2 fails for the I fit; the reading for I is partial.", [TAKEOFF], "supported"),
-        n("next", T, "Next (SP15 stage 8, registered, not run): soft or hard take-off. At each spike onset, does the somatic phase plane show a gradual take-off (local membrane turning over) or a kink (a current arriving from elsewhere)? Both recordings; both fits at the soma and at the axon initial segment (observation point moved). No lever until this is read.",
-          "If the recorded onset is gradual and the fit's is a kink, the fit's initiation site is the input that has to change; if both are kinks, the initiation site itself must answer to the approach and the axonal sodium and its neighbours are the family to split.", [STRATEGY], "unverified"),
+        n("q6", Q, "Q6 (SP15 stage 8, retained traces, no run): soft or hard take-off. Onset span from 10 to 100 V/s and phase-plane rapidness at every spike; both recordings at the soma, both fits at the soma and at their retained axon point.",
+          "Registered prediction: each fit's somatic onset is a kink because its take-off is imposed from the axon. Refuted in both.", [ONSET, STRATEGY], "supported"),
+        n("q6_e", R, "E: recording and fit have the SAME somatic onset (5.0 vs 5.1 mV span, 0.4 sigma; rapidness 34 vs 41/ms), both gradual, although the fit's axon point fires 0.28 ms first and is at -40 mV when the soma starts. No discrimination by shape. The fit's take-off is set at the axon point (-54.3 to -55.2 mV at every spike); under the SP16 gate at depth 0.6 it climbs only 2.1 mV by spike 10 for 40 percent availability lost.",
+          "A dense fast site crosses its own threshold at nearly the same voltage whatever its availability; the recording moves 2.2 mV with approach and 1.9 mV more after one spike: more than availability at such a site gives.", [ONSET, CM], "supported"),
+        n("q6_i", R, "I: the recorded onset is sharp (2.7 mV, 52/ms); the fit's is a 14.2 mV whole-cell turnover (5/ms), 20 sigma; the fit's soma and first axon section rise together (spike 1 within 0.06 ms, later spikes soma first). The finalist has NO sharp initiation site; the earlier axon-first readings were -20 mV crossings (upstroke). Largest elemental contrast after the count; a contrast of the initiation site, an input.",
+          "Also why the I fit's take-off answers to the approach at a fifth of the recorded rate: no site whose own threshold the approach can move.", [ONSET, CM], "supported"),
+        n("next", T, "Next (SP15 stage 9, registered, not run): the take-off's own variables. E: in the recording, is the post-spike +1.9 mV a function of time since the spike (retained traces); in the fit, does the axon take-off move under ramps 0.1-10 mV/ms at fixed availability (3 evaluations)? I: where does the fit's spike begin - record three axon points plus soma at 0.19 nA (1 evaluation); prediction: no point leads by more than 0.1 ms and every span exceeds 8 mV.",
+          "No lever until these are read; a change to the I initiation site is registered as a 2x2 with E only if the E question also lands on the site.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
         # policies
@@ -132,8 +139,12 @@ def build_edges():
         cm.edge("sp16", "q5", "describes", "back to Y: where is the take-off set"),
         cm.edge("q5", "q5_e", "describes", "E"),
         cm.edge("q5", "q5_i", "describes", "I"),
-        cm.edge("q5_e", "next", "describes", "isolation before any lever"),
-        cm.edge("q5_i", "next", "describes", "isolation before any lever"),
+        cm.edge("q5_e", "q6", "describes", "isolation before any lever"),
+        cm.edge("q5_i", "q6", "describes", "isolation before any lever"),
+        cm.edge("q6", "q6_e", "describes", "E"),
+        cm.edge("q6", "q6_i", "describes", "I"),
+        cm.edge("q6_e", "next", "describes", "the take-off's variables"),
+        cm.edge("q6_i", "next", "describes", "locate the initiation"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),
     ]

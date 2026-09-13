@@ -257,3 +257,72 @@ somatic phase plane show a gradual take-off (the local membrane turning over) or
 (a current arriving from elsewhere)? Both recordings, both fits, at the fit's soma and at
 its axon initial segment (the observation point moved, book chapter 6). No lever until
 this is read.
+
+## Stage 8 addendum (registered 2026-09-12 before the module is run; no simulation)
+
+Both fits' retained traces already carry an axonal observation point (E: `axon[1](0.5)`,
+45 um out on the 60 um stub; I: `axon[0](0.5)`, the first axon section), so stage 8 needs
+no run. Definitions, fixed here: every trace on the uniform 0.02 ms grid; the rate of rise
+is a central difference over 0.1 ms (five samples), the same for recording and model, so the
+recording's 5 V/s sample noise does not set the crossing; for each spike the onset is read
+between the first 10 V/s crossing on the way up and the 100 V/s crossing:
+
+* **span**: the voltage covered from 10 to 100 V/s, mV. A kink covers under 1 mV; a
+  gradual, locally regenerative take-off covers more than 2 mV; between is unresolved.
+* **rapidness**: the least-squares slope of dV/dt against V from 10 to 50 V/s, per ms
+  (the phase-plane onset slope).
+* **axon lead** (fits only): the axonal 10 V/s crossing minus the somatic one, ms, and the
+  axonal voltage at the moment the soma crosses 10 V/s.
+
+Spike 1 of every retained train and every later spike; both recordings at the soma; both
+fits at the soma and at the axon point. Repeat spread from the E 200 pA repeats (56, 59 to
+62) and the I 120 pA repeats (40 to 43), spike 1.
+
+Predictions: (1) each fit's somatic onset is a kink (span under 1 mV) at every spike, and
+its axon point crosses 10 V/s before the soma at every spike; (2) the E recording's spike-1
+onset covers more than 2 mV, i.e. is gradual, and differs from the E fit's by more than
+3 sigma of the repeat spread; (3) the I recording's spike-1 onset also differs from its
+fit's by more than 3 sigma. Readings, written before the numbers: recording gradual and fit
+kink means the recorded take-off is made locally and the fit's initiation site is the input
+that has to change (the next split is the AIS as input: its sodium density, its distance,
+its coupling); recording kink and fit kink means the recorded take-off is also imposed from
+an initiation site, and that site itself answers to the approach, so the axonal sodium and
+its neighbours are the family to split; recording kink and fit gradual is not expected and
+would be a no-reading. Rejections: the span is unresolved (1 to 2 mV) in either recording;
+or the recording's own repeats spread by more than 1 mV in span (the metric cannot resolve
+the contrast). Module `h01_topographic_onset.py` and its test; outputs
+`docs/evidence/h01-topographic/onset-shape.{json,md,png}`. Cost: one script; hours.
+
+Result (2026-09-12): prediction 1 is refuted for both fits. E: recording and fit have the
+same somatic onset, 5.0 against 5.1 mV from 10 to 100 V/s (0.4 sigma; rapidness 34 against
+41 per ms), both gradual, although the fit's axon point crosses 10 V/s 0.28 ms before the
+soma at all 22 spikes and is at -40 mV when the soma starts. Both-gradual was not a
+registered reading: recorded as no discrimination by onset shape. Added from the same
+traces: the E fit's take-off at the axon point is -54.3 to -55.2 mV at every spike, and
+under the SP16 gate at depth 0.6 it climbs 2.1 mV by spike 10 while the soma's climbs 1.5,
+lead unchanged; the fit's take-off is set at the axon point and answers to availability by
+2 mV per 40 percent. I: the recording's onset is sharp, 2.7 mV (rapidness 52 per ms), the
+fit's a 14.2 mV turnover (5 per ms), 20 sigma of the four-repeat spread and ten times its
+range (the registered "repeat range over 1 mV" rejection is met by the letter, at a contrast
+ten times that range); the fit's soma and first axon section rise together (spike 1 within
+0.06 ms; later spikes soma first by up to 0.18 ms), so the fit has no sharp initiation; the
+earlier axon-first readings were -20 mV crossings and describe the upstroke.
+[onset-shape.md](../evidence/h01-topographic/onset-shape.md).
+
+## Stage 9 (registered, not run): the take-off's own variables
+
+Two Y questions before any lever, both from retained traces or one cheap run each:
+
+* **E.** In the recording, is the extra 1.9 mV after a spike a function of the time since
+  the spike (recovering along the interval) or a fixed step? Read the take-off of spikes 2
+  and later against the preceding interval at the same approach, across the staircase. In
+  the fit, does the axon point's take-off move when the approach is varied at fixed
+  availability, i.e. under ramps of 0.1 to 10 mV/ms (one run per ramp family, three
+  evaluations, recorded soma and axon)? Prediction: the fit's axon take-off moves under
+  1 mV across ramps; the recording's moved 2.2 mV under the retained step pulses alone.
+* **I.** Where does the fit's spike begin? Record the axon at three points (first section
+  proximal, middle, distal) and the soma under 0.19 nA (one evaluation) and read the order
+  of the 10 V/s crossings and the span at each point. Prediction: no point crosses more
+  than 0.1 ms before the soma and every span exceeds 8 mV; the fit's initiation site is
+  the input to change, and the change is registered as a 2x2 with the E cell only if the E
+  question above also lands on the initiation site.

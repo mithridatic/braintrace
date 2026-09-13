@@ -29,7 +29,7 @@ without supplying a complete explanation of a human-model difference.
 | --- | --- |
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
-| PV finalist's recovery interval grows along a train | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. See Y3. |
+| PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins abruptly, over 2.7 mV, as a spike arriving from a site that fires first; the finalist's soma and first axon section turn over together over 14 mV, so it has no sharp initiation site. See Y3. |
 | B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's take-off is one voltage at every approach and every spike, because it is imposed by the axonal initiation; so every lever that only changes the somatic inward current is a rise lever in this fit, and neither the cable nor slow inactivation of the fitted sodium will produce the recorded response. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
@@ -181,6 +181,21 @@ and away at the other. This does not prove that every intermediate SK dose or
 interaction fails: there is no measured dose-response surface supporting that claim.
 Nor does calcium growth alone predict the ordering of intervals between inputs;
 applied current, voltage, and other conductances change that balance too.
+
+**The onset.** The recorded cell's spike begins abruptly: from 10 to 100 V/s it covers
+2.7 mV (1.9 to 3.8 over six trains; rapidness 52 per ms). The finalist's begins as a slow
+turnover over 14.2 mV (rapidness 5 per ms), twenty spreads of the four-repeat spread and ten
+times its range, and its soma and first axon section rise together, crossing 10 V/s within
+0.06 ms of each other at spike 1 and soma first by up to 0.18 ms later in a train; the axon
+point overtakes only above 50 V/s ([onset shape](evidence/h01-topographic/onset-shape.md)).
+The earlier axon-first readings were -20 mV crossings and describe the upstroke, not the
+onset. The finalist therefore has no sharp initiation: nowhere in it does a site fire first
+and drive the soma, as the recorded onset says a site does in the recorded cell. That is a
+contrast of the initiation site, an input, and it is the largest elemental contrast in this
+cell after the count. It is also the reason this fit's take-off answers to the approach at
+a fifth of the recorded rate: a whole-cell turnover has no site whose own threshold the
+approach can move. [Stage 9](specs/2026-09-12-h01-topographic-strategy.md) locates where
+the fit's spike begins before any change to the site is registered.
 
 **Unexplained response contrasts.** At 0.19 nA the human early cycles 2-3 are
 about 7.6 and 10.2 ms, compared with model 34.8 and 39.2 ms. At 0.27 nA the human
@@ -392,6 +407,19 @@ leaves behind are not excluded. A gate fitted to
 a response cannot name a channel. The membrane area of an H01 skeleton, converted from
 skeleton radii, is not established as physical, so that anatomy's failure to spike says
 nothing about the recorded cell.
+Stage 8 read the onset shape and it does not discriminate: the fit's soma turns over as
+gradually as the recording's, 5.1 against 5.0 mV from 10 to 100 V/s, even though its axon
+point has fired 0.28 ms earlier and is at -40 mV when the soma starts
+([onset shape](evidence/h01-topographic/onset-shape.md)). The imposed take-off does not show
+as a kink at this soma. What the same traces do show is where the fit's take-off is set: at
+the axon point it is -54.3 to -55.2 mV at every spike, and under the SP16 gate at depth 0.6
+it climbs 2.1 mV by spike 10 with the soma's climbing 1.5 and the lead unchanged. A dense
+insertion with fast kinetics crosses its own threshold at nearly the same voltage whatever
+its availability; the recording moves 2.2 mV with the approach alone and 1.9 mV more after
+one spike, which is more than availability at such a site gives. The next split
+([stage 9](specs/2026-09-12-h01-topographic-strategy.md)) reads the take-off's own
+variables, time since the last spike in the recording and the approach at fixed
+availability in the fit, before any family is named.
 
 Evidence: [soma currents and their erratum](evidence/h01-e-currents/stage-close-decision.json),
 [direct trace audit](evidence/h01-causal-direct-trace-audit-2026-09-11.md),

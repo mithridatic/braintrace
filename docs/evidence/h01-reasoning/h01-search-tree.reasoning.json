@@ -1,5 +1,5 @@
 {
-  "id": "doc_a5a57043-04c",
+  "id": "doc_f3e48aac-fe4",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -191,18 +191,46 @@
         "label": "I"
       },
       {
-        "id": "q5_e__next",
+        "id": "q5_e__q6",
         "source": "q5_e",
-        "target": "next",
+        "target": "q6",
         "relation": "describes",
         "label": "isolation before any lever"
       },
       {
-        "id": "q5_i__next",
+        "id": "q5_i__q6",
         "source": "q5_i",
-        "target": "next",
+        "target": "q6",
         "relation": "describes",
         "label": "isolation before any lever"
+      },
+      {
+        "id": "q6__q6_e",
+        "source": "q6",
+        "target": "q6_e",
+        "relation": "describes",
+        "label": "E"
+      },
+      {
+        "id": "q6__q6_i",
+        "source": "q6",
+        "target": "q6_i",
+        "relation": "describes",
+        "label": "I"
+      },
+      {
+        "id": "q6_e__next",
+        "source": "q6_e",
+        "target": "next",
+        "relation": "describes",
+        "label": "the take-off's variables"
+      },
+      {
+        "id": "q6_i__next",
+        "source": "q6_i",
+        "target": "next",
+        "relation": "describes",
+        "label": "locate the initiation"
       },
       {
         "id": "levers__q3",
@@ -251,6 +279,9 @@
           "q5",
           "q5_e",
           "q5_i",
+          "q6",
+          "q6_e",
+          "q6_i",
           "next",
           "q2_upstroke",
           "policy"
@@ -838,12 +869,93 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q6",
+        "type": "Search question",
+        "text": "Q6 (SP15 stage 8, retained traces, no run): soft or hard take-off. Onset span from 10 to 100 V/s and phase-plane rapidness at every spike; both recordings at the soma, both fits at the soma and at their retained axon point.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Registered prediction: each fit's somatic onset is a kink because its take-off is imposed from the axon. Refuted in both.\n\nEvidence: docs/evidence/h01-topographic/onset-shape.json; docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "evidence": [
+          {
+            "id": "q6_ev0",
+            "title": "docs/evidence/h01-topographic/onset-shape.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/onset-shape.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q6_ev1",
+            "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q6_e",
+        "type": "Branch retained",
+        "text": "E: recording and fit have the SAME somatic onset (5.0 vs 5.1 mV span, 0.4 sigma; rapidness 34 vs 41/ms), both gradual, although the fit's axon point fires 0.28 ms first and is at -40 mV when the soma starts. No discrimination by shape. The fit's take-off is set at the axon point (-54.3 to -55.2 mV at every spike); under the SP16 gate at depth 0.6 it climbs only 2.1 mV by spike 10 for 40 percent availability lost.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "A dense fast site crosses its own threshold at nearly the same voltage whatever its availability; the recording moves 2.2 mV with approach and 1.9 mV more after one spike: more than availability at such a site gives.\n\nEvidence: docs/evidence/h01-topographic/onset-shape.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q6_e_ev0",
+            "title": "docs/evidence/h01-topographic/onset-shape.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/onset-shape.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q6_e_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
+        "id": "q6_i",
+        "type": "Branch retained",
+        "text": "I: the recorded onset is sharp (2.7 mV, 52/ms); the fit's is a 14.2 mV whole-cell turnover (5/ms), 20 sigma; the fit's soma and first axon section rise together (spike 1 within 0.06 ms, later spikes soma first). The finalist has NO sharp initiation site; the earlier axon-first readings were -20 mV crossings (upstroke). Largest elemental contrast after the count; a contrast of the initiation site, an input.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Also why the I fit's take-off answers to the approach at a fifth of the recorded rate: no site whose own threshold the approach can move.\n\nEvidence: docs/evidence/h01-topographic/onset-shape.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q6_i_ev0",
+            "title": "docs/evidence/h01-topographic/onset-shape.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/onset-shape.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q6_i_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next (SP15 stage 8, registered, not run): soft or hard take-off. At each spike onset, does the somatic phase plane show a gradual take-off (local membrane turning over) or a kink (a current arriving from elsewhere)? Both recordings; both fits at the soma and at the axon initial segment (observation point moved). No lever until this is read.",
+        "text": "Next (SP15 stage 9, registered, not run): the take-off's own variables. E: in the recording, is the post-spike +1.9 mV a function of time since the spike (retained traces); in the fit, does the axon take-off move under ramps 0.1-10 mV/ms at fixed availability (3 evaluations)? I: where does the fit's spike begin - record three axon points plus soma at 0.19 nA (1 evaluation); prediction: no point leads by more than 0.1 ms and every span exceeds 8 mV.",
         "status": "unverified",
         "confidence": null,
-        "notes": "If the recorded onset is gradual and the fit's is a kink, the fit's initiation site is the input that has to change; if both are kinks, the initiation site itself must answer to the approach and the axonal sodium and its neighbours are the family to split.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
+        "notes": "No lever until these are read; a change to the I initiation site is registered as a 2x2 with E only if the E question also lands on the site.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
         "evidence": [
           {
             "id": "next_ev0",
@@ -1281,13 +1393,13 @@
         ]
       },
       {
-        "id": "review_q5_e__next",
-        "edgeId": "q5_e__next",
+        "id": "review_q5_e__q6",
+        "edgeId": "q5_e__q6",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q5_e__next",
+            "id": "reservation_q5_e__q6",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",
@@ -1297,13 +1409,77 @@
         ]
       },
       {
-        "id": "review_q5_i__next",
-        "edgeId": "q5_i__next",
+        "id": "review_q5_i__q6",
+        "edgeId": "q5_i__q6",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q5_i__next",
+            "id": "reservation_q5_i__q6",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q6__q6_e",
+        "edgeId": "q6__q6_e",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q6__q6_e",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q6__q6_i",
+        "edgeId": "q6__q6_i",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q6__q6_i",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q6_e__next",
+        "edgeId": "q6_e__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q6_e__next",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q6_i__next",
+        "edgeId": "q6_i__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q6_i__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",
