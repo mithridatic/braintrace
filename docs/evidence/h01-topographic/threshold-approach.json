@@ -1,0 +1,2225 @@
+{
+  "stage": "7",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "sealed": [
+    54
+  ],
+  "sigma": {
+    "E": {
+      "threshold_mv": 0.25,
+      "level_mv": 0.3
+    },
+    "I": {
+      "threshold_mv": 0.38,
+      "level_mv": 0.17
+    }
+  },
+  "tables": {
+    "E human": {
+      "sweep 48": {
+        "amplitude_pa": 210.00000349769,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -55.56250134110451,
+            "crossing_mv": -55.56250134110451,
+            "approach_mv_per_ms": 0.3398067355795939,
+            "max_rise_v_s": 345.31253622678156,
+            "t_ms": 101.81999999999994
+          }
+        ]
+      },
+      "sweep 49": {
+        "amplitude_pa": 230.000005152498,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -56.18750074505806,
+            "crossing_mv": -56.18750074505806,
+            "approach_mv_per_ms": 0.3307143514906732,
+            "max_rise_v_s": 344.5312591796615,
+            "t_ms": 73.66000000000008
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -54.687501430511475,
+            "crossing_mv": -54.687501430511475,
+            "approach_mv_per_ms": 0.17857287194419363,
+            "max_rise_v_s": 318.750028964422,
+            "t_ms": 247.72000000000003
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -54.656253695487976,
+            "crossing_mv": -54.656253695487976,
+            "approach_mv_per_ms": 0.1928817226435477,
+            "max_rise_v_s": 319.53126890613885,
+            "t_ms": 981.3800000000001
+          }
+        ]
+      },
+      "sweep 50": {
+        "amplitude_pa": 249.999992929517,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -55.843753308057785,
+            "crossing_mv": -55.843753308057785,
+            "approach_mv_per_ms": 0.43675326356036365,
+            "max_rise_v_s": 350.7812623849064,
+            "t_ms": 57.559999999999945
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -54.62500223517418,
+            "crossing_mv": -54.62500223517418,
+            "approach_mv_per_ms": 0.1444267013520578,
+            "max_rise_v_s": 314.84378268970875,
+            "t_ms": 91.40000000000009
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -54.437500923871994,
+            "crossing_mv": -54.437500923871994,
+            "approach_mv_per_ms": 0.2045409806979589,
+            "max_rise_v_s": 314.06249618004233,
+            "t_ms": 311.81999999999994
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -54.06250202655792,
+            "crossing_mv": -54.06250202655792,
+            "approach_mv_per_ms": 0.18046998653880247,
+            "max_rise_v_s": 311.7187647151802,
+            "t_ms": 619.22
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -54.3125025331974,
+            "crossing_mv": -54.3125025331974,
+            "approach_mv_per_ms": 0.19984705697507762,
+            "max_rise_v_s": 307.8125184387527,
+            "t_ms": 892.56
+          }
+        ]
+      },
+      "sweep 51": {
+        "amplitude_pa": 269.999994584325,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -57.25000196695328,
+            "crossing_mv": -57.25000196695328,
+            "approach_mv_per_ms": 0.4443053266424986,
+            "max_rise_v_s": 347.6562676954451,
+            "t_ms": 45.0
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -53.68750312924385,
+            "crossing_mv": -53.68750312924385,
+            "approach_mv_per_ms": 0.2953449870999019,
+            "max_rise_v_s": 313.2812795232105,
+            "t_ms": 67.22000000000003
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -54.3125025331974,
+            "crossing_mv": -54.3125025331974,
+            "approach_mv_per_ms": 0.21769288587935962,
+            "max_rise_v_s": 311.7187647151802,
+            "t_ms": 199.01999999999998
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -54.09375348687172,
+            "crossing_mv": -54.09375348687172,
+            "approach_mv_per_ms": 0.21441598231226391,
+            "max_rise_v_s": 306.2500385570331,
+            "t_ms": 355.68000000000006
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -54.78125208616257,
+            "crossing_mv": -54.78125208616257,
+            "approach_mv_per_ms": 0.18322833590138882,
+            "max_rise_v_s": 305.4687695114858,
+            "t_ms": 525.26
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -54.3125025331974,
+            "crossing_mv": -54.3125025331974,
+            "approach_mv_per_ms": 0.21167895570020717,
+            "max_rise_v_s": 301.56250577447423,
+            "t_ms": 709.3399999999999
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -53.71875086426735,
+            "crossing_mv": -53.71875086426735,
+            "approach_mv_per_ms": 0.2287232800741815,
+            "max_rise_v_s": 300.0000375325726,
+            "t_ms": 894.2
+          }
+        ]
+      },
+      "sweep 52": {
+        "amplitude_pa": 289.999996239132,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -56.59375110268593,
+            "crossing_mv": -56.59375110268593,
+            "approach_mv_per_ms": 0.5447437318514193,
+            "max_rise_v_s": 351.56250232668106,
+            "t_ms": 40.059999999999945
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -53.500001817941666,
+            "crossing_mv": -53.500001817941666,
+            "approach_mv_per_ms": 0.5319010202208723,
+            "max_rise_v_s": 306.25001527396876,
+            "t_ms": 57.11999999999989
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -53.71875086426735,
+            "crossing_mv": -53.71875086426735,
+            "approach_mv_per_ms": 0.2542396022804704,
+            "max_rise_v_s": 303.9062488810062,
+            "t_ms": 144.81999999999994
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -53.59375247359276,
+            "crossing_mv": -53.59375247359276,
+            "approach_mv_per_ms": 0.265433451414669,
+            "max_rise_v_s": 303.1250205825046,
+            "t_ms": 271.5799999999999
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -54.09375348687172,
+            "crossing_mv": -54.09375348687172,
+            "approach_mv_per_ms": 0.23463802376572462,
+            "max_rise_v_s": 298.4374994414779,
+            "t_ms": 400.3800000000001
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -54.09375348687172,
+            "crossing_mv": -54.09375348687172,
+            "approach_mv_per_ms": 0.2523062398679501,
+            "max_rise_v_s": 296.8749962749797,
+            "t_ms": 522.46
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -53.750002324581146,
+            "crossing_mv": -53.750002324581146,
+            "approach_mv_per_ms": 0.23130277757587225,
+            "max_rise_v_s": 291.40625265453434,
+            "t_ms": 653.76
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -53.84375298023224,
+            "crossing_mv": -53.84375298023224,
+            "approach_mv_per_ms": 0.2542533824111241,
+            "max_rise_v_s": 292.9687500002665,
+            "t_ms": 785.8199999999999
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -54.031250566244125,
+            "crossing_mv": -54.031250566244125,
+            "approach_mv_per_ms": 0.21982499766233535,
+            "max_rise_v_s": 290.6250418149426,
+            "t_ms": 930.8
+          }
+        ]
+      },
+      "sweep 53": {
+        "amplitude_pa": 309.999997893939,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -56.40625351667404,
+            "crossing_mv": -56.40625351667404,
+            "approach_mv_per_ms": 0.6297292621235026,
+            "max_rise_v_s": 347.6562604194875,
+            "t_ms": 35.74000000000001
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -55.03125259280205,
+            "crossing_mv": -55.03125259280205,
+            "approach_mv_per_ms": 1.5590119331257832,
+            "max_rise_v_s": 300.7812774742895,
+            "t_ms": 47.059999999999945
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -53.87500071525574,
+            "crossing_mv": -53.87500071525574,
+            "approach_mv_per_ms": 0.2204725500859381,
+            "max_rise_v_s": 303.90627216575365,
+            "t_ms": 108.22000000000003
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -53.250001311302185,
+            "crossing_mv": -53.250001311302185,
+            "approach_mv_per_ms": 0.2876721421642965,
+            "max_rise_v_s": 303.90628380728583,
+            "t_ms": 218.22000000000003
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -52.78125175833702,
+            "crossing_mv": -52.78125175833702,
+            "approach_mv_per_ms": 0.3069123939339604,
+            "max_rise_v_s": 299.21877430779136,
+            "t_ms": 333.4200000000001
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -52.93750160932541,
+            "crossing_mv": -52.93750160932541,
+            "approach_mv_per_ms": 0.32509949316557685,
+            "max_rise_v_s": 293.7500248665799,
+            "t_ms": 452.6600000000001
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -53.43750262260437,
+            "crossing_mv": -53.43750262260437,
+            "approach_mv_per_ms": 0.2893256717836183,
+            "max_rise_v_s": 296.09374469173065,
+            "t_ms": 574.7
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -52.87500241398811,
+            "crossing_mv": -52.87500241398811,
+            "approach_mv_per_ms": 0.32572641448034245,
+            "max_rise_v_s": 289.0625153670854,
+            "t_ms": 690.96
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -53.18750211596489,
+            "crossing_mv": -53.18750211596489,
+            "approach_mv_per_ms": 0.3184771323128893,
+            "max_rise_v_s": 289.0624920823601,
+            "t_ms": 814.54
+          },
+          {
+            "spike": 10,
+            "threshold_mv": -54.281251072883606,
+            "crossing_mv": -54.281251072883606,
+            "approach_mv_per_ms": 0.2259119062638126,
+            "max_rise_v_s": 287.5000005574563,
+            "t_ms": 935.3
+          }
+        ]
+      },
+      "sweep 55": {
+        "amplitude_pa": 350.000001203554,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -57.156251311302185,
+            "crossing_mv": -57.156251311302185,
+            "approach_mv_per_ms": 0.7470357400638827,
+            "max_rise_v_s": 350.0000195348093,
+            "t_ms": 28.180000000000064
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -54.937501937150955,
+            "crossing_mv": -54.937501937150955,
+            "approach_mv_per_ms": 1.6408822970968482,
+            "max_rise_v_s": 296.093767974795,
+            "t_ms": 39.460000000000036
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -52.593750447034836,
+            "crossing_mv": -52.593750447034836,
+            "approach_mv_per_ms": 0.2708251049362383,
+            "max_rise_v_s": 282.81252016339096,
+            "t_ms": 61.680000000000064
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -53.656251668930054,
+            "crossing_mv": -53.656251668930054,
+            "approach_mv_per_ms": 0.30068999275892017,
+            "max_rise_v_s": 296.8750079165119,
+            "t_ms": 140.0
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -53.46875035762787,
+            "crossing_mv": -53.46875035762787,
+            "approach_mv_per_ms": 0.29519067076344496,
+            "max_rise_v_s": 291.40625847363515,
+            "t_ms": 220.29999999999995
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -53.53125327825546,
+            "crossing_mv": -53.53125327825546,
+            "approach_mv_per_ms": 0.269950444847877,
+            "max_rise_v_s": 290.6249952488672,
+            "t_ms": 306.29999999999995
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -53.46875035762787,
+            "crossing_mv": -53.46875035762787,
+            "approach_mv_per_ms": 0.32342145400046757,
+            "max_rise_v_s": 287.5000122005872,
+            "t_ms": 393.0
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -53.375003427267075,
+            "crossing_mv": -53.375003427267075,
+            "approach_mv_per_ms": 0.2893169682895994,
+            "max_rise_v_s": 287.5000354836516,
+            "t_ms": 480.18000000000006
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -53.28125277161598,
+            "crossing_mv": -53.28125277161598,
+            "approach_mv_per_ms": 0.2964134902496719,
+            "max_rise_v_s": 282.8124910595605,
+            "t_ms": 565.6199999999999
+          },
+          {
+            "spike": 10,
+            "threshold_mv": -52.56250271201134,
+            "crossing_mv": -52.56250271201134,
+            "approach_mv_per_ms": 0.3238786860774325,
+            "max_rise_v_s": 279.6875196511607,
+            "t_ms": 659.06
+          },
+          {
+            "spike": 11,
+            "threshold_mv": -52.87500241398811,
+            "crossing_mv": -52.87500241398811,
+            "approach_mv_per_ms": 0.3592685246999201,
+            "max_rise_v_s": 283.5937426428096,
+            "t_ms": 748.5799999999999
+          },
+          {
+            "spike": 12,
+            "threshold_mv": -53.43750262260437,
+            "crossing_mv": -53.43750262260437,
+            "approach_mv_per_ms": 0.29220263151726056,
+            "max_rise_v_s": 275.7812850179796,
+            "t_ms": 839.3399999999999
+          },
+          {
+            "spike": 13,
+            "threshold_mv": -52.90625014901161,
+            "crossing_mv": -52.90625014901161,
+            "approach_mv_per_ms": 0.28775523722864194,
+            "max_rise_v_s": 278.9062564247674,
+            "t_ms": 932.3
+          }
+        ]
+      },
+      "sweep 56": {
+        "amplitude_pa": 200.000002670286,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -54.71875289082527,
+            "crossing_mv": -54.71875289082527,
+            "approach_mv_per_ms": 0.22375721193621562,
+            "max_rise_v_s": 332.0312476719955,
+            "t_ms": 205.22000000000003
+          }
+        ]
+      },
+      "sweep 59": {
+        "amplitude_pa": 200.000002670286,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -55.15625098347664,
+            "crossing_mv": -55.15625098347664,
+            "approach_mv_per_ms": 0.18591131756125248,
+            "max_rise_v_s": 328.12503632187884,
+            "t_ms": 208.1400000000001
+          }
+        ]
+      },
+      "sweep 60": {
+        "amplitude_pa": 200.000002670286,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -54.75000062584877,
+            "crossing_mv": -54.75000062584877,
+            "approach_mv_per_ms": 0.21545240081011086,
+            "max_rise_v_s": 329.6875223898766,
+            "t_ms": 152.0
+          }
+        ]
+      },
+      "sweep 61": {
+        "amplitude_pa": 200.000002670286,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -54.50000011920929,
+            "crossing_mv": -54.50000011920929,
+            "approach_mv_per_ms": 0.20365203193134906,
+            "max_rise_v_s": 328.9062879051279,
+            "t_ms": 198.5
+          }
+        ]
+      },
+      "sweep 62": {
+        "amplitude_pa": 200.000002670286,
+        "bias_pa": -3.711858945210089,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -54.96875339746475,
+            "crossing_mv": -54.96875339746475,
+            "approach_mv_per_ms": 0.16925240548813666,
+            "max_rise_v_s": 328.9062646201851,
+            "t_ms": 203.31999999999994
+          }
+        ]
+      },
+      "short sweep 27": {
+        "amplitude_pa": 1259.99999323056,
+        "bias_pa": 2.4536017748794103,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -61.87500202655792,
+            "crossing_mv": NaN,
+            "approach_mv_per_ms": 7.183994987675239,
+            "max_rise_v_s": 336.7187717234053,
+            "t_ms": 3.2999999999999545
+          }
+        ]
+      },
+      "short sweep 28": {
+        "amplitude_pa": 1259.99999323056,
+        "bias_pa": 2.4536017748794103,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -62.03125187754631,
+            "crossing_mv": NaN,
+            "approach_mv_per_ms": 7.199270926123338,
+            "max_rise_v_s": 339.0625060995431,
+            "t_ms": 3.2799999999999727
+          }
+        ]
+      },
+      "short sweep 29": {
+        "amplitude_pa": 1259.99999323056,
+        "bias_pa": 2.4536017748794103,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -61.312501817941666,
+            "crossing_mv": NaN,
+            "approach_mv_per_ms": 7.297011997990838,
+            "max_rise_v_s": 337.50000875473916,
+            "t_ms": 3.2000000000000455
+          }
+        ]
+      },
+      "short sweep 30": {
+        "amplitude_pa": 1259.99999323056,
+        "bias_pa": 2.4536017748794103,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -61.562502324581146,
+            "crossing_mv": NaN,
+            "approach_mv_per_ms": 7.254891611869738,
+            "max_rise_v_s": 335.9375346911522,
+            "t_ms": 3.240000000000009
+          }
+        ]
+      },
+      "short sweep 31": {
+        "amplitude_pa": 1259.99999323056,
+        "bias_pa": 2.4536017748794103,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -61.65625298023224,
+            "crossing_mv": NaN,
+            "approach_mv_per_ms": 7.2284712916117675,
+            "max_rise_v_s": 335.9375405119005,
+            "t_ms": 3.240000000000009
+          }
+        ]
+      }
+    },
+    "E fit": {
+      "200 pA": {
+        "amplitude_pa": 200.0,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -57.20969741649829,
+            "crossing_mv": -57.20969741649829,
+            "approach_mv_per_ms": 0.2541622026184112,
+            "max_rise_v_s": 597.6780326696378,
+            "t_ms": 126.92000000000007
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -57.03070597651028,
+            "crossing_mv": -57.03070597651028,
+            "approach_mv_per_ms": 0.238418336302517,
+            "max_rise_v_s": 603.1629614208064,
+            "t_ms": 196.03999999999996
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -57.10229572364745,
+            "crossing_mv": -57.10229572364745,
+            "approach_mv_per_ms": 0.2288485210374596,
+            "max_rise_v_s": 608.3039874946934,
+            "t_ms": 455.8800000000001
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -57.00660881157164,
+            "crossing_mv": -57.00660881157164,
+            "approach_mv_per_ms": 0.22879108727073286,
+            "max_rise_v_s": 598.5820931965382,
+            "t_ms": 751.56
+          }
+        ]
+      },
+      "250 pA": {
+        "amplitude_pa": 250.0,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -57.02859588841696,
+            "crossing_mv": -57.02859588841696,
+            "approach_mv_per_ms": 0.40071101594775993,
+            "max_rise_v_s": 619.1417285428481,
+            "t_ms": 54.98000000000002
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -57.13919822653353,
+            "crossing_mv": -57.13919822653353,
+            "approach_mv_per_ms": 0.44354236348183124,
+            "max_rise_v_s": 620.3058429927041,
+            "t_ms": 75.92000000000007
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -57.00700955398724,
+            "crossing_mv": -57.00700955398724,
+            "approach_mv_per_ms": 0.2639769501912023,
+            "max_rise_v_s": 597.0458812637921,
+            "t_ms": 122.16000000000008
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -57.10117121775293,
+            "crossing_mv": -57.10117121775293,
+            "approach_mv_per_ms": 0.2604478451089048,
+            "max_rise_v_s": 610.788634163931,
+            "t_ms": 306.5
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -57.14521133644868,
+            "crossing_mv": -57.14521133644868,
+            "approach_mv_per_ms": 0.2591836157214794,
+            "max_rise_v_s": 609.950642253099,
+            "t_ms": 478.02
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -57.18812735817147,
+            "crossing_mv": -57.18812735817147,
+            "approach_mv_per_ms": 0.25813420441454,
+            "max_rise_v_s": 603.6861627518499,
+            "t_ms": 642.96
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -57.07755630094868,
+            "crossing_mv": -57.07755630094868,
+            "approach_mv_per_ms": 0.2579638038740905,
+            "max_rise_v_s": 608.8218696479305,
+            "t_ms": 803.44
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -57.20571647053993,
+            "crossing_mv": -57.20571647053993,
+            "approach_mv_per_ms": 0.2567636703759254,
+            "max_rise_v_s": 599.2703618752703,
+            "t_ms": 960.8199999999999
+          }
+        ]
+      },
+      "310 pA": {
+        "amplitude_pa": 310.0,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -57.19655955446489,
+            "crossing_mv": -57.19655955446489,
+            "approach_mv_per_ms": 0.5786704742960149,
+            "max_rise_v_s": 639.0752464279614,
+            "t_ms": 34.22000000000003
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -57.21049896438434,
+            "crossing_mv": -57.21049896438434,
+            "approach_mv_per_ms": 1.1568417255222951,
+            "max_rise_v_s": 664.2524450093497,
+            "t_ms": 47.75999999999999
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -57.16267884889971,
+            "crossing_mv": -57.16267884889971,
+            "approach_mv_per_ms": 0.3596870769466079,
+            "max_rise_v_s": 619.4482529589471,
+            "t_ms": 71.98000000000002
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -57.199652268590675,
+            "crossing_mv": -57.199652268590675,
+            "approach_mv_per_ms": 0.2636734312102691,
+            "max_rise_v_s": 601.3337844463127,
+            "t_ms": 192.6400000000001
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -57.19654469531262,
+            "crossing_mv": -57.19654469531262,
+            "approach_mv_per_ms": 0.2667929489714415,
+            "max_rise_v_s": 602.7906330015177,
+            "t_ms": 327.3600000000001
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -57.206900095720485,
+            "crossing_mv": -57.206900095720485,
+            "approach_mv_per_ms": 0.26536306375367547,
+            "max_rise_v_s": 600.0894462307656,
+            "t_ms": 453.9200000000001
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -57.04622467151408,
+            "crossing_mv": -57.04622467151408,
+            "approach_mv_per_ms": 0.2652947129108141,
+            "max_rise_v_s": 603.3329496658741,
+            "t_ms": 576.74
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -57.07777354884161,
+            "crossing_mv": -57.07777354884161,
+            "approach_mv_per_ms": 0.2644601939683718,
+            "max_rise_v_s": 607.6300008796329,
+            "t_ms": 696.5799999999999
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -57.15045102840791,
+            "crossing_mv": -57.15045102840791,
+            "approach_mv_per_ms": 0.26355003416374956,
+            "max_rise_v_s": 608.9196457101119,
+            "t_ms": 814.2
+          },
+          {
+            "spike": 10,
+            "threshold_mv": -57.11356922907289,
+            "crossing_mv": -57.11356922907289,
+            "approach_mv_per_ms": 0.2632307232953747,
+            "max_rise_v_s": 609.8254076114641,
+            "t_ms": 930.1400000000001
+          }
+        ]
+      }
+    },
+    "I human": {
+      "0.19 nA": {
+        "amplitude_pa": 190.0,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -60.5,
+            "crossing_mv": -60.5,
+            "approach_mv_per_ms": 1.1291790307938485,
+            "max_rise_v_s": 596.8750119205615,
+            "t_ms": 20.600000000000023
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -59.875,
+            "crossing_mv": -60.5,
+            "approach_mv_per_ms": 2.4767837152546543,
+            "max_rise_v_s": 575.7812738407451,
+            "t_ms": 28.220000000000027
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -58.531253814697266,
+            "crossing_mv": -58.531253814697266,
+            "approach_mv_per_ms": 1.7962354623463603,
+            "max_rise_v_s": 567.1874999997675,
+            "t_ms": 38.420000000000016
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -56.65625,
+            "crossing_mv": -56.65625,
+            "approach_mv_per_ms": 0.48632173126309697,
+            "max_rise_v_s": 539.8437738415483,
+            "t_ms": 81.16000000000003
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -54.656253814697266,
+            "crossing_mv": -54.656253814697266,
+            "approach_mv_per_ms": 0.5869318066110398,
+            "max_rise_v_s": 505.46875000045975,
+            "t_ms": 148.7
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -53.687503814697266,
+            "crossing_mv": -53.687503814697266,
+            "approach_mv_per_ms": 0.529968838010226,
+            "max_rise_v_s": 496.874999999808,
+            "t_ms": 226.64000000000004
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -53.71875,
+            "crossing_mv": -53.71875,
+            "approach_mv_per_ms": 0.36884042053120064,
+            "max_rise_v_s": 493.750023842307,
+            "t_ms": 310.6
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -54.312503814697266,
+            "crossing_mv": -54.312503814697266,
+            "approach_mv_per_ms": 0.18371968742883943,
+            "max_rise_v_s": 491.406273840886,
+            "t_ms": 406.5000000000001
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -54.156253814697266,
+            "crossing_mv": -54.156253814697266,
+            "approach_mv_per_ms": 0.33600044480071994,
+            "max_rise_v_s": 482.81252384378473,
+            "t_ms": 509.88
+          },
+          {
+            "spike": 10,
+            "threshold_mv": -51.71875,
+            "crossing_mv": -51.71875,
+            "approach_mv_per_ms": 0.5044903222893063,
+            "max_rise_v_s": 445.31252384095285,
+            "t_ms": 706.8800000000001
+          },
+          {
+            "spike": 11,
+            "threshold_mv": -53.031253814697266,
+            "crossing_mv": -53.031253814697266,
+            "approach_mv_per_ms": 0.09918310543748307,
+            "max_rise_v_s": 452.34374999767147,
+            "t_ms": 824.06
+          },
+          {
+            "spike": 12,
+            "threshold_mv": -52.03125,
+            "crossing_mv": -52.03125,
+            "approach_mv_per_ms": 0.3884618021250781,
+            "max_rise_v_s": 452.3437499978312,
+            "t_ms": 922.8000000000002
+          }
+        ]
+      },
+      "0.27 nA": {
+        "amplitude_pa": 270.0,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -61.656253814697266,
+            "crossing_mv": -61.656253814697266,
+            "approach_mv_per_ms": 1.6746400189653992,
+            "max_rise_v_s": 602.3437499997563,
+            "t_ms": 11.639999999999986
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -60.000003814697266,
+            "crossing_mv": -61.656253814697266,
+            "approach_mv_per_ms": 3.2619560799380336,
+            "max_rise_v_s": 570.3124999988978,
+            "t_ms": 17.880000000000052
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -59.656253814697266,
+            "crossing_mv": -60.000003814697266,
+            "approach_mv_per_ms": 3.54720843845696,
+            "max_rise_v_s": 550.000023842216,
+            "t_ms": 23.840000000000032
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -59.593753814697266,
+            "crossing_mv": -59.656253814697266,
+            "approach_mv_per_ms": 2.9372957560947683,
+            "max_rise_v_s": 553.9062500003661,
+            "t_ms": 30.720000000000027
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -57.500003814697266,
+            "crossing_mv": -57.500003814697266,
+            "approach_mv_per_ms": 1.3624883470192544,
+            "max_rise_v_s": 549.9999999996654,
+            "t_ms": 42.82000000000005
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -58.406253814697266,
+            "crossing_mv": -58.406253814697266,
+            "approach_mv_per_ms": 0.743376783443445,
+            "max_rise_v_s": 557.8125238416347,
+            "t_ms": 64.86000000000007
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -58.156253814697266,
+            "crossing_mv": -58.156253814697266,
+            "approach_mv_per_ms": 0.8177804708705626,
+            "max_rise_v_s": 559.3750000005086,
+            "t_ms": 87.51999999999998
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -58.406253814697266,
+            "crossing_mv": -58.406253814697266,
+            "approach_mv_per_ms": 0.8154961445711185,
+            "max_rise_v_s": 554.6875000006378,
+            "t_ms": 110.04000000000002
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -58.28125,
+            "crossing_mv": -58.28125,
+            "approach_mv_per_ms": 0.850559927145133,
+            "max_rise_v_s": 552.3437499989325,
+            "t_ms": 132.76
+          },
+          {
+            "spike": 10,
+            "threshold_mv": -59.0,
+            "crossing_mv": -59.0,
+            "approach_mv_per_ms": 0.7610462147199228,
+            "max_rise_v_s": 561.7187499997459,
+            "t_ms": 155.08000000000004
+          },
+          {
+            "spike": 11,
+            "threshold_mv": -58.687503814697266,
+            "crossing_mv": -58.687503814697266,
+            "approach_mv_per_ms": 0.7983814725057498,
+            "max_rise_v_s": 554.6875000005045,
+            "t_ms": 178.24
+          },
+          {
+            "spike": 12,
+            "threshold_mv": -58.000003814697266,
+            "crossing_mv": -58.000003814697266,
+            "approach_mv_per_ms": 0.8502241501699062,
+            "max_rise_v_s": 554.6874999997473,
+            "t_ms": 201.78000000000003
+          },
+          {
+            "spike": 13,
+            "threshold_mv": -58.28125,
+            "crossing_mv": -58.28125,
+            "approach_mv_per_ms": 0.8355686726185722,
+            "max_rise_v_s": 560.1562738415647,
+            "t_ms": 225.52000000000004
+          },
+          {
+            "spike": 14,
+            "threshold_mv": -58.531253814697266,
+            "crossing_mv": -58.531253814697266,
+            "approach_mv_per_ms": 0.8299471330682425,
+            "max_rise_v_s": 557.0312738423645,
+            "t_ms": 247.74000000000012
+          },
+          {
+            "spike": 15,
+            "threshold_mv": -57.968753814697266,
+            "crossing_mv": -57.968753814697266,
+            "approach_mv_per_ms": 0.8571824626442054,
+            "max_rise_v_s": 543.7499999987892,
+            "t_ms": 270.6600000000001
+          },
+          {
+            "spike": 16,
+            "threshold_mv": -58.125,
+            "crossing_mv": -58.125,
+            "approach_mv_per_ms": 0.8433417130149953,
+            "max_rise_v_s": 546.0937738406383,
+            "t_ms": 293.68000000000006
+          },
+          {
+            "spike": 17,
+            "threshold_mv": -57.3125,
+            "crossing_mv": -57.687503814697266,
+            "approach_mv_per_ms": 0.8751589541022029,
+            "max_rise_v_s": 546.8750238425861,
+            "t_ms": 317.72
+          },
+          {
+            "spike": 18,
+            "threshold_mv": -57.343753814697266,
+            "crossing_mv": -57.343753814697266,
+            "approach_mv_per_ms": 0.8602752112335332,
+            "max_rise_v_s": 549.2187738423575,
+            "t_ms": 342.14
+          },
+          {
+            "spike": 19,
+            "threshold_mv": -58.28125,
+            "crossing_mv": -58.28125,
+            "approach_mv_per_ms": 0.8087371593214695,
+            "max_rise_v_s": 539.0625238423482,
+            "t_ms": 366.6
+          },
+          {
+            "spike": 20,
+            "threshold_mv": -58.375003814697266,
+            "crossing_mv": -58.375003814697266,
+            "approach_mv_per_ms": 0.7889768400469713,
+            "max_rise_v_s": 543.7500000004945,
+            "t_ms": 391.0
+          },
+          {
+            "spike": 21,
+            "threshold_mv": -57.625,
+            "crossing_mv": -58.156253814697266,
+            "approach_mv_per_ms": 0.7909919105503138,
+            "max_rise_v_s": 546.0937738420614,
+            "t_ms": 416.4
+          },
+          {
+            "spike": 22,
+            "threshold_mv": -56.84375,
+            "crossing_mv": -56.84375,
+            "approach_mv_per_ms": 0.8272150273165848,
+            "max_rise_v_s": 535.9375476828222,
+            "t_ms": 442.2400000000001
+          },
+          {
+            "spike": 23,
+            "threshold_mv": -57.40625,
+            "crossing_mv": -57.71875,
+            "approach_mv_per_ms": 0.7858873687623001,
+            "max_rise_v_s": 545.3124999990082,
+            "t_ms": 467.7600000000001
+          },
+          {
+            "spike": 24,
+            "threshold_mv": -56.718753814697266,
+            "crossing_mv": -56.718753814697266,
+            "approach_mv_per_ms": 0.8613844489723502,
+            "max_rise_v_s": 539.8437619197923,
+            "t_ms": 493.9
+          },
+          {
+            "spike": 25,
+            "threshold_mv": -57.656253814697266,
+            "crossing_mv": -57.656253814697266,
+            "approach_mv_per_ms": 0.7864397773633295,
+            "max_rise_v_s": 546.8749999988986,
+            "t_ms": 519.5000000000001
+          },
+          {
+            "spike": 26,
+            "threshold_mv": -57.906253814697266,
+            "crossing_mv": -57.906253814697266,
+            "approach_mv_per_ms": 0.7867471608788917,
+            "max_rise_v_s": 542.9687738409373,
+            "t_ms": 545.5400000000001
+          },
+          {
+            "spike": 27,
+            "threshold_mv": -57.21875,
+            "crossing_mv": -57.21875,
+            "approach_mv_per_ms": 0.8203673635319028,
+            "max_rise_v_s": 542.968749999026,
+            "t_ms": 571.44
+          },
+          {
+            "spike": 28,
+            "threshold_mv": -57.0,
+            "crossing_mv": -57.0,
+            "approach_mv_per_ms": 0.7804852801977696,
+            "max_rise_v_s": 539.8437499988545,
+            "t_ms": 597.7600000000001
+          },
+          {
+            "spike": 29,
+            "threshold_mv": -57.906253814697266,
+            "crossing_mv": -57.906253814697266,
+            "approach_mv_per_ms": 0.7842560277736419,
+            "max_rise_v_s": 539.843750000269,
+            "t_ms": 623.1000000000001
+          },
+          {
+            "spike": 30,
+            "threshold_mv": -57.71875,
+            "crossing_mv": -57.71875,
+            "approach_mv_per_ms": 0.8113990586048139,
+            "max_rise_v_s": 541.4062738423504,
+            "t_ms": 649.0600000000001
+          },
+          {
+            "spike": 31,
+            "threshold_mv": -57.5625,
+            "crossing_mv": -57.5625,
+            "approach_mv_per_ms": 0.8600852559392304,
+            "max_rise_v_s": 549.2187738408008,
+            "t_ms": 673.7800000000001
+          },
+          {
+            "spike": 32,
+            "threshold_mv": -58.5,
+            "crossing_mv": -58.5,
+            "approach_mv_per_ms": 0.8033457724173158,
+            "max_rise_v_s": 554.6874999989369,
+            "t_ms": 698.1
+          },
+          {
+            "spike": 33,
+            "threshold_mv": -57.53125,
+            "crossing_mv": -57.53125,
+            "approach_mv_per_ms": 0.8422744645204685,
+            "max_rise_v_s": 546.0937500019821,
+            "t_ms": 723.1600000000001
+          },
+          {
+            "spike": 34,
+            "threshold_mv": -57.78125,
+            "crossing_mv": -57.78125,
+            "approach_mv_per_ms": 0.805012197158515,
+            "max_rise_v_s": 542.9687500007336,
+            "t_ms": 747.9599999999999
+          },
+          {
+            "spike": 35,
+            "threshold_mv": -57.46875,
+            "crossing_mv": -57.46875,
+            "approach_mv_per_ms": 0.8102950937326447,
+            "max_rise_v_s": 542.1875000004932,
+            "t_ms": 773.2400000000002
+          },
+          {
+            "spike": 36,
+            "threshold_mv": -57.031253814697266,
+            "crossing_mv": -57.031253814697266,
+            "approach_mv_per_ms": 0.8291222171535652,
+            "max_rise_v_s": 538.2812619185986,
+            "t_ms": 798.6800000000001
+          },
+          {
+            "spike": 37,
+            "threshold_mv": -57.843753814697266,
+            "crossing_mv": -57.843753814697266,
+            "approach_mv_per_ms": 0.7820953543863788,
+            "max_rise_v_s": 539.0624999977281,
+            "t_ms": 824.0400000000002
+          },
+          {
+            "spike": 38,
+            "threshold_mv": -61.21875,
+            "crossing_mv": -61.21875,
+            "approach_mv_per_ms": 0.6903742092748674,
+            "max_rise_v_s": 558.5937619217746,
+            "t_ms": 847.0200000000002
+          },
+          {
+            "spike": 39,
+            "threshold_mv": -57.906253814697266,
+            "crossing_mv": -57.906253814697266,
+            "approach_mv_per_ms": 0.8068304798212259,
+            "max_rise_v_s": 550.0000238423581,
+            "t_ms": 871.22
+          },
+          {
+            "spike": 40,
+            "threshold_mv": -57.281253814697266,
+            "crossing_mv": -57.281253814697266,
+            "approach_mv_per_ms": 0.802517569351358,
+            "max_rise_v_s": 542.9687738427247,
+            "t_ms": 896.3600000000001
+          },
+          {
+            "spike": 41,
+            "threshold_mv": -57.031253814697266,
+            "crossing_mv": -57.031253814697266,
+            "approach_mv_per_ms": 0.8784961881837156,
+            "max_rise_v_s": 542.1875000004931,
+            "t_ms": 922.3600000000001
+          },
+          {
+            "spike": 42,
+            "threshold_mv": -57.71875,
+            "crossing_mv": -57.71875,
+            "approach_mv_per_ms": 0.7846640554645611,
+            "max_rise_v_s": 532.8125238423424,
+            "t_ms": 947.44
+          },
+          {
+            "spike": 43,
+            "threshold_mv": -56.90625,
+            "crossing_mv": -56.90625,
+            "approach_mv_per_ms": 0.8510536501103916,
+            "max_rise_v_s": 529.6875238428726,
+            "t_ms": 974.1400000000001
+          }
+        ]
+      },
+      "repeat sweep 40": {
+        "amplitude_pa": 119.999996051057,
+        "bias_pa": 31.445374082395006,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -58.53125223517418,
+            "crossing_mv": -58.53125223517418,
+            "approach_mv_per_ms": 0.7634632407085661,
+            "max_rise_v_s": 576.5625275676725,
+            "t_ms": 67.20000000000005
+          }
+        ]
+      },
+      "repeat sweep 41": {
+        "amplitude_pa": 119.999996051057,
+        "bias_pa": 31.445374082395006,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -57.937500566244125,
+            "crossing_mv": -57.937500566244125,
+            "approach_mv_per_ms": 0.7550263925231747,
+            "max_rise_v_s": 565.6250286818213,
+            "t_ms": 84.18000000000006
+          }
+        ]
+      },
+      "repeat sweep 42": {
+        "amplitude_pa": 119.999996051057,
+        "bias_pa": 31.445374082395006,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -58.2812517285347,
+            "crossing_mv": -58.2812517285347,
+            "approach_mv_per_ms": 0.7488265365568669,
+            "max_rise_v_s": 576.5625275676725,
+            "t_ms": 68.42000000000007
+          }
+        ]
+      },
+      "repeat sweep 43": {
+        "amplitude_pa": 119.999996051057,
+        "bias_pa": 27.79325380952713,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -57.656252324581146,
+            "crossing_mv": -57.656252324581146,
+            "approach_mv_per_ms": 0.7073850082942577,
+            "max_rise_v_s": 570.31251490168,
+            "t_ms": 78.48000000000002
+          }
+        ]
+      }
+    },
+    "I fit": {
+      "0.19 nA": {
+        "amplitude_pa": 190.0,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -60.537485284280024,
+            "crossing_mv": -60.537485284280024,
+            "approach_mv_per_ms": 0.6053070751177103,
+            "max_rise_v_s": 591.7795365392661,
+            "t_ms": 27.920000000000016
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -60.46987399317973,
+            "crossing_mv": -60.46987399317973,
+            "approach_mv_per_ms": 0.5722570523139654,
+            "max_rise_v_s": 586.503501156247,
+            "t_ms": 62.639999999999986
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -60.499211350607716,
+            "crossing_mv": -60.499211350607716,
+            "approach_mv_per_ms": 0.5357822429764428,
+            "max_rise_v_s": 596.9283857994127,
+            "t_ms": 101.75999999999999
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -60.476704524806216,
+            "crossing_mv": -60.476704524806216,
+            "approach_mv_per_ms": 0.5014973798169764,
+            "max_rise_v_s": 596.5103437384769,
+            "t_ms": 146.8
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -60.45077503503131,
+            "crossing_mv": -60.45077503503131,
+            "approach_mv_per_ms": 0.4733057029939169,
+            "max_rise_v_s": 595.2368153133249,
+            "t_ms": 200.40000000000003
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -60.31556580537174,
+            "crossing_mv": -60.31556580537174,
+            "approach_mv_per_ms": 0.4575913971113882,
+            "max_rise_v_s": 588.0927068786583,
+            "t_ms": 264.78
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -60.374324589206665,
+            "crossing_mv": -60.374324589206665,
+            "approach_mv_per_ms": 0.4483671347502928,
+            "max_rise_v_s": 583.2514632634445,
+            "t_ms": 338.70000000000005
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -60.471439424297444,
+            "crossing_mv": -60.471439424297444,
+            "approach_mv_per_ms": 0.4438531208907673,
+            "max_rise_v_s": 594.4748579069657,
+            "t_ms": 417.98
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -60.43041832180409,
+            "crossing_mv": -60.43041832180409,
+            "approach_mv_per_ms": 0.4437974597659317,
+            "max_rise_v_s": 594.3718186581527,
+            "t_ms": 499.5
+          },
+          {
+            "spike": 10,
+            "threshold_mv": -60.38449532541845,
+            "crossing_mv": -60.38449532541845,
+            "approach_mv_per_ms": 0.4444044949086472,
+            "max_rise_v_s": 585.3915433584548,
+            "t_ms": 581.98
+          },
+          {
+            "spike": 11,
+            "threshold_mv": -60.34948994342454,
+            "crossing_mv": -60.34948994342454,
+            "approach_mv_per_ms": 0.444956712418029,
+            "max_rise_v_s": 579.2249185550337,
+            "t_ms": 665.02
+          },
+          {
+            "spike": 12,
+            "threshold_mv": -60.32920700573152,
+            "crossing_mv": -60.32920700573152,
+            "approach_mv_per_ms": 0.4452812588645232,
+            "max_rise_v_s": 585.7343260696887,
+            "t_ms": 748.5
+          },
+          {
+            "spike": 13,
+            "threshold_mv": -60.31317664910438,
+            "crossing_mv": -60.31317664910438,
+            "approach_mv_per_ms": 0.44553240670973404,
+            "max_rise_v_s": 589.9046880877268,
+            "t_ms": 832.3800000000001
+          },
+          {
+            "spike": 14,
+            "threshold_mv": -60.29106509583681,
+            "crossing_mv": -60.29106509583681,
+            "approach_mv_per_ms": 0.44588862495920256,
+            "max_rise_v_s": 593.841071544005,
+            "t_ms": 916.6400000000001
+          }
+        ]
+      },
+      "0.27 nA": {
+        "amplitude_pa": 270.0,
+        "spikes": [
+          {
+            "spike": 1,
+            "threshold_mv": -61.11014489064409,
+            "crossing_mv": -61.11014489064409,
+            "approach_mv_per_ms": 1.7184742405620221,
+            "max_rise_v_s": 613.2897512027405,
+            "t_ms": 10.639999999999986
+          },
+          {
+            "spike": 2,
+            "threshold_mv": -61.04584267229846,
+            "crossing_mv": -61.04584267229846,
+            "approach_mv_per_ms": 1.1931906017351819,
+            "max_rise_v_s": 607.6873356744672,
+            "t_ms": 27.0
+          },
+          {
+            "spike": 3,
+            "threshold_mv": -60.9590712351721,
+            "crossing_mv": -60.9590712351721,
+            "approach_mv_per_ms": 1.1670265588872168,
+            "max_rise_v_s": 604.5614037921559,
+            "t_ms": 44.04000000000002
+          },
+          {
+            "spike": 4,
+            "threshold_mv": -60.92355495111346,
+            "crossing_mv": -60.92355495111346,
+            "approach_mv_per_ms": 1.1295035224612673,
+            "max_rise_v_s": 602.6370871248826,
+            "t_ms": 61.879999999999995
+          },
+          {
+            "spike": 5,
+            "threshold_mv": -60.682237509202906,
+            "crossing_mv": -60.682237509202906,
+            "approach_mv_per_ms": 1.0789269084673836,
+            "max_rise_v_s": 599.7891373680977,
+            "t_ms": 80.57999999999998
+          },
+          {
+            "spike": 6,
+            "threshold_mv": -60.73230122617778,
+            "crossing_mv": -60.73230122617778,
+            "approach_mv_per_ms": 1.0124270985950787,
+            "max_rise_v_s": 583.4410563074093,
+            "t_ms": 100.19999999999999
+          },
+          {
+            "spike": 7,
+            "threshold_mv": -60.680670814750194,
+            "crossing_mv": -60.680670814750194,
+            "approach_mv_per_ms": 0.9410758259598441,
+            "max_rise_v_s": 582.3602139412956,
+            "t_ms": 120.92000000000002
+          },
+          {
+            "spike": 8,
+            "threshold_mv": -60.47034800098739,
+            "crossing_mv": -60.47034800098739,
+            "approach_mv_per_ms": 0.8719483897514276,
+            "max_rise_v_s": 590.9115799631404,
+            "t_ms": 142.88
+          },
+          {
+            "spike": 9,
+            "threshold_mv": -60.42956776031312,
+            "crossing_mv": -60.42956776031312,
+            "approach_mv_per_ms": 0.8060127355896949,
+            "max_rise_v_s": 589.4773757378367,
+            "t_ms": 166.14
+          },
+          {
+            "spike": 10,
+            "threshold_mv": -60.36322027623726,
+            "crossing_mv": -60.36322027623726,
+            "approach_mv_per_ms": 0.7500629151329106,
+            "max_rise_v_s": 581.8639771514872,
+            "t_ms": 190.74
+          },
+          {
+            "spike": 11,
+            "threshold_mv": -60.41400517977563,
+            "crossing_mv": -60.41400517977563,
+            "approach_mv_per_ms": 0.7036891149477988,
+            "max_rise_v_s": 589.1584585804038,
+            "t_ms": 216.60000000000002
+          },
+          {
+            "spike": 12,
+            "threshold_mv": -60.31171792982014,
+            "crossing_mv": -60.31171792982014,
+            "approach_mv_per_ms": 0.6708956805751428,
+            "max_rise_v_s": 578.8070710273065,
+            "t_ms": 243.60000000000002
+          },
+          {
+            "spike": 13,
+            "threshold_mv": -60.28891910236018,
+            "crossing_mv": -60.28891910236018,
+            "approach_mv_per_ms": 0.6465290047160359,
+            "max_rise_v_s": 575.6729562001796,
+            "t_ms": 271.52
+          },
+          {
+            "spike": 14,
+            "threshold_mv": -60.249367596014366,
+            "crossing_mv": -60.249367596014366,
+            "approach_mv_per_ms": 0.6300478522373986,
+            "max_rise_v_s": 572.115544623184,
+            "t_ms": 300.15999999999997
+          },
+          {
+            "spike": 15,
+            "threshold_mv": -60.297338879248706,
+            "crossing_mv": -60.297338879248706,
+            "approach_mv_per_ms": 0.6177480896248733,
+            "max_rise_v_s": 581.3829204090284,
+            "t_ms": 329.32000000000005
+          },
+          {
+            "spike": 16,
+            "threshold_mv": -60.28593399853255,
+            "crossing_mv": -60.28593399853255,
+            "approach_mv_per_ms": 0.6103193193992081,
+            "max_rise_v_s": 579.4380932316456,
+            "t_ms": 358.86
+          },
+          {
+            "spike": 17,
+            "threshold_mv": -60.25675075993993,
+            "crossing_mv": -60.25675075993993,
+            "approach_mv_per_ms": 0.605831166327911,
+            "max_rise_v_s": 571.2304190977433,
+            "t_ms": 388.65999999999997
+          },
+          {
+            "spike": 18,
+            "threshold_mv": -60.18067973167461,
+            "crossing_mv": -60.18067973167461,
+            "approach_mv_per_ms": 0.6038669146776657,
+            "max_rise_v_s": 584.2358017940622,
+            "t_ms": 418.64
+          },
+          {
+            "spike": 19,
+            "threshold_mv": -60.29627642416683,
+            "crossing_mv": -60.29627642416683,
+            "approach_mv_per_ms": 0.5999344423805445,
+            "max_rise_v_s": 582.4230076187648,
+            "t_ms": 448.72
+          },
+          {
+            "spike": 20,
+            "threshold_mv": -60.203159743471204,
+            "crossing_mv": -60.203159743471204,
+            "approach_mv_per_ms": 0.6001626773477359,
+            "max_rise_v_s": 580.1921077207579,
+            "t_ms": 478.9
+          },
+          {
+            "spike": 21,
+            "threshold_mv": -60.256285943007214,
+            "crossing_mv": -60.256285943007214,
+            "approach_mv_per_ms": 0.5984916872602303,
+            "max_rise_v_s": 571.5093008522421,
+            "t_ms": 509.12
+          },
+          {
+            "spike": 22,
+            "threshold_mv": -60.277939450024085,
+            "crossing_mv": -60.277939450024085,
+            "approach_mv_per_ms": 0.5976488697806772,
+            "max_rise_v_s": 578.1269933260805,
+            "t_ms": 539.38
+          },
+          {
+            "spike": 23,
+            "threshold_mv": -60.35683385686817,
+            "crossing_mv": -60.35683385686817,
+            "approach_mv_per_ms": 0.5960604933551663,
+            "max_rise_v_s": 587.0510090681755,
+            "t_ms": 569.66
+          },
+          {
+            "spike": 24,
+            "threshold_mv": -60.21280676171712,
+            "crossing_mv": -60.21280676171712,
+            "approach_mv_per_ms": 0.5982878774022239,
+            "max_rise_v_s": 578.5192594001312,
+            "t_ms": 599.98
+          },
+          {
+            "spike": 25,
+            "threshold_mv": -60.20383856037634,
+            "crossing_mv": -60.20383856037634,
+            "approach_mv_per_ms": 0.5983738995715098,
+            "max_rise_v_s": 580.6700538510315,
+            "t_ms": 630.3000000000001
+          },
+          {
+            "spike": 26,
+            "threshold_mv": -60.29731269893973,
+            "crossing_mv": -60.29731269893973,
+            "approach_mv_per_ms": 0.59683322203928,
+            "max_rise_v_s": 582.2746927020652,
+            "t_ms": 660.62
+          },
+          {
+            "spike": 27,
+            "threshold_mv": -60.264275380148575,
+            "crossing_mv": -60.264275380148575,
+            "approach_mv_per_ms": 0.5974034148158942,
+            "max_rise_v_s": 573.370384384279,
+            "t_ms": 690.96
+          },
+          {
+            "spike": 28,
+            "threshold_mv": -60.296257098066896,
+            "crossing_mv": -60.296257098066896,
+            "approach_mv_per_ms": 0.5969240475672964,
+            "max_rise_v_s": 581.8807839237556,
+            "t_ms": 721.3000000000001
+          },
+          {
+            "spike": 29,
+            "threshold_mv": -60.176644986246195,
+            "crossing_mv": -60.176644986246195,
+            "approach_mv_per_ms": 0.5989375175078783,
+            "max_rise_v_s": 585.5018428586405,
+            "t_ms": 751.66
+          },
+          {
+            "spike": 30,
+            "threshold_mv": -60.314794643714585,
+            "crossing_mv": -60.314794643714585,
+            "approach_mv_per_ms": 0.5967375093568406,
+            "max_rise_v_s": 584.993270676369,
+            "t_ms": 782.0
+          },
+          {
+            "spike": 31,
+            "threshold_mv": -60.29246294871349,
+            "crossing_mv": -60.29246294871349,
+            "approach_mv_per_ms": 0.5971708289150371,
+            "max_rise_v_s": 580.7900643349724,
+            "t_ms": 812.3600000000001
+          },
+          {
+            "spike": 32,
+            "threshold_mv": -60.31397015978824,
+            "crossing_mv": -60.31397015978824,
+            "approach_mv_per_ms": 0.5968764233958674,
+            "max_rise_v_s": 584.7772697929212,
+            "t_ms": 842.72
+          },
+          {
+            "spike": 33,
+            "threshold_mv": -60.377786589265014,
+            "crossing_mv": -60.377786589265014,
+            "approach_mv_per_ms": 0.5958707529262827,
+            "max_rise_v_s": 586.3159077262073,
+            "t_ms": 873.0799999999999
+          },
+          {
+            "spike": 34,
+            "threshold_mv": -60.28202345261568,
+            "crossing_mv": -60.28202345261568,
+            "approach_mv_per_ms": 0.5975152751899914,
+            "max_rise_v_s": 577.8318806761287,
+            "t_ms": 903.46
+          },
+          {
+            "spike": 35,
+            "threshold_mv": -60.22799009679192,
+            "crossing_mv": -60.22799009679192,
+            "approach_mv_per_ms": 0.5984498306248162,
+            "max_rise_v_s": 576.4838429544377,
+            "t_ms": 933.8399999999999
+          },
+          {
+            "spike": 36,
+            "threshold_mv": -60.21863302674676,
+            "crossing_mv": -60.21863302674676,
+            "approach_mv_per_ms": 0.5986444609063846,
+            "max_rise_v_s": 578.9622623699712,
+            "t_ms": 964.22
+          },
+          {
+            "spike": 37,
+            "threshold_mv": -60.25508804429163,
+            "crossing_mv": -60.25508804429163,
+            "approach_mv_per_ms": 0.5980824664012104,
+            "max_rise_v_s": 568.6454894711429,
+            "t_ms": 994.6000000000001
+          }
+        ]
+      }
+    }
+  },
+  "relations": {
+    "E human": {
+      "threshold_mv": {
+        "n": 17,
+        "approach_range": [
+          0.16925240548813666,
+          7.297011997990838
+        ],
+        "threshold_range": [
+          -62.03125187754631,
+          -54.50000011920929
+        ],
+        "slide_mv": -6.3437484204769135,
+        "slope_mv_per_mv_ms": -0.8723783764326158
+      },
+      "crossing_mv": {
+        "n": 12,
+        "approach_range": [
+          0.16925240548813666,
+          0.7470357400638827
+        ],
+        "threshold_range": [
+          -57.25000196695328,
+          -54.50000011920929
+        ],
+        "slide_mv": -2.187497913837433,
+        "slope_mv_per_mv_ms": -4.337651925951958
+      }
+    },
+    "E fit": {
+      "threshold_mv": {
+        "n": 22,
+        "approach_range": [
+          0.22879108727073286,
+          1.1568417255222951
+        ],
+        "threshold_range": [
+          -57.21049896438434,
+          -57.00660881157164
+        ],
+        "slide_mv": -0.20389015281270417,
+        "slope_mv_per_mv_ms": -0.10980136986605346
+      },
+      "crossing_mv": {
+        "n": 22,
+        "approach_range": [
+          0.22879108727073286,
+          1.1568417255222951
+        ],
+        "threshold_range": [
+          -57.21049896438434,
+          -57.00660881157164
+        ],
+        "slide_mv": -0.20389015281270417,
+        "slope_mv_per_mv_ms": -0.10980136986605346
+      }
+    },
+    "I human": {
+      "threshold_mv": {
+        "n": 6,
+        "approach_range": [
+          0.7073850082942577,
+          1.6746400189653992
+        ],
+        "threshold_range": [
+          -61.656253814697266,
+          -57.656252324581146
+        ],
+        "slide_mv": -4.000001490116119,
+        "slope_mv_per_mv_ms": -4.0523704775375124
+      },
+      "crossing_mv": {
+        "n": 6,
+        "approach_range": [
+          0.7073850082942577,
+          1.6746400189653992
+        ],
+        "threshold_range": [
+          -61.656253814697266,
+          -57.656252324581146
+        ],
+        "slide_mv": -4.000001490116119,
+        "slope_mv_per_mv_ms": -4.0523704775375124
+      }
+    },
+    "I fit": {
+      "threshold_mv": {
+        "n": 51,
+        "approach_range": [
+          0.4437974597659317,
+          1.7184742405620221
+        ],
+        "threshold_range": [
+          -61.11014489064409,
+          -60.176644986246195
+        ],
+        "slide_mv": -0.679726568839996,
+        "slope_mv_per_mv_ms": -0.7431338584626773
+      },
+      "crossing_mv": {
+        "n": 51,
+        "approach_range": [
+          0.4437974597659317,
+          1.7184742405620221
+        ],
+        "threshold_range": [
+          -61.11014489064409,
+          -60.176644986246195
+        ],
+        "slide_mv": -0.679726568839996,
+        "slope_mv_per_mv_ms": -0.7431338584626773
+      }
+    }
+  },
+  "later_spikes": {
+    "E human": {
+      "n": 41,
+      "median_residual_mv": 1.919654096359551,
+      "min_residual_mv": 0.7952041811921262,
+      "below_relation": 0
+    },
+    "E fit": {
+      "n": 19,
+      "median_residual_mv": 0.015136555640516747,
+      "min_residual_mv": -0.07796017710373349,
+      "below_relation": 8
+    },
+    "I human": {
+      "n": 53,
+      "median_residual_mv": 1.0058335649474444,
+      "min_residual_mv": -3.2301302868694393,
+      "below_relation": 5
+    },
+    "I fit": {
+      "n": 49,
+      "median_residual_mv": 0.10658907600281253,
+      "min_residual_mv": -0.19876753675981718,
+      "below_relation": 17
+    }
+  },
+  "twins": {
+    "sweep 56": {
+      "amplitude_pa": 200.000002670286,
+      "bias_pa": -3.711858945210089,
+      "count": 1,
+      "rest": -83.87500190734863,
+      "steady": -67.03125083446503,
+      "post_100": -84.18750160932541,
+      "post_300": -85.5937539935112,
+      "post_1000": -83.90624964237213
+    },
+    "sweep 57": {
+      "amplitude_pa": 200.000002670286,
+      "bias_pa": -3.711858945210089,
+      "count": 0,
+      "rest": -83.90624964237213,
+      "steady": -66.75000259280205,
+      "post_100": -84.09375095367432,
+      "post_300": -85.78125530481339,
+      "post_1000": -84.03125548362732
+    },
+    "sweep 58": {
+      "amplitude_pa": 200.000002670286,
+      "bias_pa": -3.711858945210089,
+      "count": 0,
+      "rest": -83.93750482797623,
+      "steady": -66.93750390410423,
+      "post_100": -84.3437551856041,
+      "post_300": -85.6250017285347,
+      "post_1000": -84.12500613927841
+    },
+    "sweep 59": {
+      "amplitude_pa": 200.000002670286,
+      "bias_pa": -3.711858945210089,
+      "count": 1,
+      "rest": -84.00000029802322,
+      "steady": -66.81250178813934,
+      "post_100": -84.3750029206276,
+      "post_300": -85.84375077486038,
+      "post_1000": -84.15625387430191
+    },
+    "sweep 60": {
+      "amplitude_pa": 200.000002670286,
+      "bias_pa": -3.711858945210089,
+      "count": 1,
+      "rest": -83.68750059604645,
+      "steady": -66.78125405311584,
+      "post_100": -83.93750482797623,
+      "post_300": -85.6562569141388,
+      "post_1000": -83.93750482797623
+    },
+    "sweep 61": {
+      "amplitude_pa": 200.000002670286,
+      "bias_pa": -3.711858945210089,
+      "count": 1,
+      "rest": -83.62500512599945,
+      "steady": -66.31250077486038,
+      "post_100": -83.90624964237213,
+      "post_300": -85.28125429153442,
+      "post_1000": -83.75000351667404
+    },
+    "sweep 62": {
+      "amplitude_pa": 200.000002670286,
+      "bias_pa": -3.711858945210089,
+      "count": 1,
+      "rest": -83.78125125169754,
+      "steady": -66.50000208616257,
+      "post_100": -84.15625387430191,
+      "post_300": -85.5312510728836,
+      "post_1000": -83.87500190734863
+    }
+  },
+  "twins_contrast": {
+    "with_spike_mv": [
+      -67.03125083446503,
+      -66.81250178813934,
+      -66.78125405311584,
+      -66.31250077486038,
+      -66.50000208616257
+    ],
+    "without_mv": [
+      -66.75000259280205,
+      -66.93750390410423
+    ],
+    "diff_mv": 0.15625134110450745,
+    "sigmas": 0.5208378036816915
+  },
+  "staircase": {
+    "sweep 32": {
+      "amplitude_pa": -110.000002162547,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.71875578165054,
+      "steady": -91.75000482797623,
+      "post_100": -84.06250321865082,
+      "post_300": -83.0000057220459,
+      "post_1000": -83.62500512599945,
+      "early_extreme_mv": -92.84375005960464,
+      "post_extreme_mv": -82.53125244379044,
+      "sag_mv": 1.093745231628418
+    },
+    "sweep 33": {
+      "amplitude_pa": -90.0000005077395,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.75000351667404,
+      "steady": -90.31250470876694,
+      "post_100": -84.06250321865082,
+      "post_300": -83.0625011920929,
+      "post_1000": -83.59374994039536,
+      "early_extreme_mv": -91.18750089406967,
+      "post_extreme_mv": -82.81250441074371,
+      "sag_mv": 0.8749961853027344
+    },
+    "sweep 34": {
+      "amplitude_pa": -69.9999988529321,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.68750059604645,
+      "steady": -88.87500458955765,
+      "post_100": -83.96875256299973,
+      "post_300": -83.12500411272049,
+      "post_1000": -83.71875578165054,
+      "early_extreme_mv": -89.5625069141388,
+      "post_extreme_mv": -82.9062550663948,
+      "sag_mv": 0.6875023245811462
+    },
+    "sweep 35": {
+      "amplitude_pa": -50.0000006675716,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.78125125169754,
+      "steady": -87.49999994039536,
+      "post_100": -84.03125548362732,
+      "post_300": -83.43750381469727,
+      "post_1000": -83.71875578165054,
+      "early_extreme_mv": -88.09375160932541,
+      "post_extreme_mv": -83.25000250339508,
+      "sag_mv": 0.5937516689300537
+    },
+    "sweep 36": {
+      "amplitude_pa": -29.9999990127642,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.81250643730164,
+      "steady": -86.03125208616257,
+      "post_100": -83.96875256299973,
+      "post_300": -83.59374994039536,
+      "post_1000": -83.81250643730164,
+      "early_extreme_mv": -86.56250083446503,
+      "post_extreme_mv": -83.43750381469727,
+      "sag_mv": 0.5312487483024597
+    },
+    "sweep 37": {
+      "amplitude_pa": -9.99999996004197,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.93750482797623,
+      "steady": -84.65625488758087,
+      "post_100": -83.90624964237213,
+      "post_300": -83.84375417232513,
+      "post_1000": -83.90624964237213,
+      "early_extreme_mv": -84.87500393390656,
+      "post_extreme_mv": -83.59374994039536,
+      "sag_mv": 0.2187490463256836
+    },
+    "sweep 38": {
+      "amplitude_pa": 9.99999996004197,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.84375417232513,
+      "steady": -83.0000057220459,
+      "post_100": -83.75000351667404,
+      "post_300": -83.81250643730164,
+      "post_1000": -83.78125125169754,
+      "early_extreme_mv": -82.15624982118607,
+      "post_extreme_mv": -84.03125548362732,
+      "sag_mv": 0.8437559008598328
+    },
+    "sweep 39": {
+      "amplitude_pa": 29.9999990127642,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.78125125169754,
+      "steady": -81.43749976158142,
+      "post_100": -83.71875578165054,
+      "post_300": -83.96875256299973,
+      "post_1000": -83.78125125169754,
+      "early_extreme_mv": -80.96875393390656,
+      "post_extreme_mv": -84.250004529953,
+      "sag_mv": 0.4687458276748657
+    },
+    "sweep 40": {
+      "amplitude_pa": 50.0000006675716,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.81250643730164,
+      "steady": -80.03125482797623,
+      "post_100": -83.81250643730164,
+      "post_300": -84.3125,
+      "post_1000": -83.84375417232513,
+      "early_extreme_mv": -79.18750637769699,
+      "post_extreme_mv": -84.53125649690628,
+      "sag_mv": 0.8437484502792358
+    },
+    "sweep 41": {
+      "amplitude_pa": 69.9999988529321,
+      "bias_pa": 2.4536017748794103,
+      "rest": -83.87500190734863,
+      "steady": -78.40625339746475,
+      "post_100": -83.75000351667404,
+      "post_300": -84.43750584125519,
+      "post_1000": -83.87500190734863,
+      "early_extreme_mv": -77.37500363588333,
+      "post_extreme_mv": -84.81250101327896,
+      "sag_mv": 1.031249761581421
+    },
+    "sweep 42": {
+      "amplitude_pa": 90.0000005077395,
+      "bias_pa": -3.711858945210089,
+      "rest": -84.3125,
+      "steady": -77.12499940395355,
+      "post_100": -84.2812522649765,
+      "post_300": -85.03125005960464,
+      "post_1000": -84.46875357627869,
+      "early_extreme_mv": -76.06250190734863,
+      "post_extreme_mv": -85.71875238418579,
+      "sag_mv": 1.0624974966049194
+    },
+    "sweep 43": {
+      "amplitude_pa": 110.000002162547,
+      "bias_pa": -3.711858945210089,
+      "rest": -84.46875357627869,
+      "steady": -75.62500381469727,
+      "post_100": -84.40625065565109,
+      "post_300": -85.50000333786011,
+      "post_1000": -84.50000131130219,
+      "early_extreme_mv": -74.09375303983688,
+      "post_extreme_mv": -86.03125208616257,
+      "sag_mv": 1.531250774860382
+    },
+    "sweep 44": {
+      "amplitude_pa": 129.99999687846,
+      "bias_pa": -3.711858945210089,
+      "rest": -84.53125649690628,
+      "steady": -74.03125384449959,
+      "post_100": -84.46875357627869,
+      "post_300": -85.5312510728836,
+      "post_1000": -84.50000131130219,
+      "early_extreme_mv": -71.87500366568565,
+      "post_extreme_mv": -86.43750244379044,
+      "sag_mv": 2.1562501788139343
+    },
+    "sweep 45": {
+      "amplitude_pa": 149.999998533268,
+      "bias_pa": -3.711858945210089,
+      "rest": -84.53125649690628,
+      "steady": -72.46875160932541,
+      "post_100": -84.71875035762787,
+      "post_300": -85.78125530481339,
+      "post_1000": -84.62499970197678,
+      "early_extreme_mv": -70.0000017285347,
+      "post_extreme_mv": -86.9687511920929,
+      "sag_mv": 2.4687498807907104
+    },
+    "sweep 46": {
+      "amplitude_pa": 170.000000188075,
+      "bias_pa": -3.711858945210089,
+      "rest": -84.56250423192978,
+      "steady": -70.34375289082527,
+      "post_100": -84.59375196695328,
+      "post_300": -86.12500274181366,
+      "post_1000": -84.62499970197678,
+      "early_extreme_mv": -67.09375375509262,
+      "post_extreme_mv": -87.28125089406967,
+      "sag_mv": 3.2499991357326508
+    },
+    "sweep 47": {
+      "amplitude_pa": 190.000001842883,
+      "bias_pa": -3.711858945210089,
+      "rest": -84.3125,
+      "steady": -67.87500301003456,
+      "post_100": -84.56250423192978,
+      "post_300": -86.09375500679016,
+      "post_1000": -84.46875357627869,
+      "early_extreme_mv": -63.281250685453415,
+      "post_extreme_mv": -87.56250286102295,
+      "sag_mv": 4.593752324581146
+    }
+  },
+  "input_resistance": {
+    "bias +2.5 pA": {
+      "n": 10,
+      "amplitude_range_pa": [
+        -110.000002162547,
+        69.9999988529321
+      ],
+      "megaohm": 74.77273073237896
+    },
+    "bias -3.7 pA": {
+      "n": 6,
+      "amplitude_range_pa": [
+        90.0000005077395,
+        190.000001842883
+      ],
+      "megaohm": 91.33926985779377
+    }
+  },
+  "reading": [
+    "E human, spike 1: the take-off is -54.5 to -55.2 mV when the approach is 0.17 to 0.22 mV/ms (200 pA), -57.2 mV at 0.75 mV/ms (350 pA), and -61.9 mV under the 3 ms short squares that approach at 7.2 mV/ms; the slide over the long squares is 2.2 mV (9 sigma) under both threshold definitions. The E fit takes off at -57.0 to -57.2 mV at every spike of every train, from 0.23 to 1.16 mV/ms (0.8 sigma). The recorded take-off is set by the trajectory that reaches it; the fit's is a fixed voltage.",
+    "E human, later spikes: all 41 sit above the spike-1 relation, by 1.9 mV in the median (8 sigma), so what a spike leaves behind raises the take-off beyond what the trajectory alone gives; the fit's later spikes sit on its fixed voltage.",
+    "I human, spike 1: -57.7 to -58.5 mV at 0.7 mV/ms (120 pA), -60.5 mV at 1.1 (0.19 nA), -61.7 mV at 1.7 (0.27 nA): a 4.0 mV slide (10 sigma of the spike-1 spread) under both definitions. The I fit slides 0.7 mV over 0.44 to 1.72 mV/ms and holds within 0.3 mV along each train: not fixed to 1 sigma, but a fifth of the recorded slide. The I later spikes sit 1.0 mV above the relation in the median, inside 3 sigma, with five fast-burst spikes below it; the I along-train rows have no repeat spread of their own.",
+    "Twins: the 200 pA sweeps with one spike (56, 59 to 62) and without (57, 58) have the same steady level 800 ms later (+0.16 mV, 0.5 sigma) and the same recovery after the pulse, so a spike leaves nothing in the level; the Y4 level row was a steady-state difference between the cells at 200 pA, not a post-spike effect.",
+    "The recorded cell's rheobase sits at 200 pA, where its own repeats give 0 or 1 spike; a count at that drive is inside the recording's spread and is not scored. Its input resistance is 75 MOhm below 70 pA and 91 MOhm from 90 to 190 pA, the steady level bending upward and the post-pulse undershoot deepening as the drive approaches rheobase."
+  ],
+  "decision": {
+    "checks": [
+      {
+        "cell": "E",
+        "prediction": "human spike-1 take-off slides more than 3 sigma across its approach range",
+        "value_mv": -6.3437484204769135,
+        "sigmas": 25.374993681907654,
+        "pass": true
+      },
+      {
+        "cell": "E",
+        "prediction": "the slide has the same sign under both threshold definitions (where the second applies)",
+        "value_mv": -2.187497913837433,
+        "sigmas": 8.749991655349731,
+        "pass": true
+      },
+      {
+        "cell": "E",
+        "prediction": "fit take-off moves less than 1 sigma across every spike of every train",
+        "value_mv": 0.20389015281270417,
+        "sigmas": 0.8155606112508167,
+        "pass": true
+      },
+      {
+        "cell": "E",
+        "prediction": "human later spikes sit above the spike-1 relation by more than 3 sigma (median)",
+        "value_mv": 1.919654096359551,
+        "sigmas": 7.678616385438204,
+        "pass": true
+      },
+      {
+        "cell": "I",
+        "prediction": "human spike-1 take-off slides more than 3 sigma across its approach range",
+        "value_mv": -4.000001490116119,
+        "sigmas": 10.526319710831894,
+        "pass": true
+      },
+      {
+        "cell": "I",
+        "prediction": "the slide has the same sign under both threshold definitions (where the second applies)",
+        "value_mv": -4.000001490116119,
+        "sigmas": 10.526319710831894,
+        "pass": true
+      },
+      {
+        "cell": "I",
+        "prediction": "fit take-off moves less than 1 sigma across every spike of every train",
+        "value_mv": 0.9334999043978911,
+        "sigmas": 2.4565786957839237,
+        "pass": false
+      },
+      {
+        "cell": "I",
+        "prediction": "human later spikes sit above the spike-1 relation by more than 3 sigma (median)",
+        "value_mv": 1.0058335649474444,
+        "sigmas": 2.646930434072222,
+        "pass": false
+      },
+      {
+        "cell": "E",
+        "prediction": "the twins' steady levels agree within 3 sigma of the level spread",
+        "value_mv": 0.15625134110450745,
+        "sigmas": 0.5208378036816915,
+        "pass": true
+      }
+    ],
+    "verdict": {
+      "E": "PASS",
+      "I": "FAIL"
+    }
+  }
+}

@@ -30,7 +30,7 @@ without supplying a complete explanation of a human-model difference.
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
 | PV finalist's recovery interval grows along a train | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. See Y3. |
-| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. What remains is use-dependent: after a spike the recorded threshold steps up with a modest loss of rise, while in this fit a loss of sodium availability lowers the rise and leaves the threshold, because the threshold is set by the axonal initiation. Neither the cable nor slow inactivation of the fitted sodium will produce the recorded response. See Y4. |
+| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's take-off is one voltage at every approach and every spike, because it is imposed by the axonal initiation; so every lever that only changes the somatic inward current is a rise lever in this fit, and neither the cable nor slow inactivation of the fitted sodium will produce the recorded response. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -190,9 +190,12 @@ The mechanism that slows the human's late cycle at low input more than at high i
 The finalist remains experimental.
 
 **Mechanism: what the recorded cell does along a train that the finalist does not.**
-Differences here are stated against the recording's own repeat spread, which is 0.17 mV in
-level, 0.38 mV in threshold, 5 V/s in rise and 8 ms in first-spike latency
+The recording's own repeat spread, 0.17 mV in level, 0.38 mV in threshold, 5 V/s in rise and
+8 ms in first-spike latency, comes from four 120 pA sweeps that each fire one spike
 ([decision](evidence/h01-topographic/stage-0-decision.json), [figures](evidence/h01-topographic/)).
+It qualifies the first spike near rheobase. No repeat exists at 0.19 or 0.27 nA, so the
+along-train differences below are stated in millivolts and volts per second without a sigma;
+they are large, but their repeatability is not measured.
 The first spike of the two cells rises at the same rate, 597 against 592 V/s, so no
 difference in sodium density or in near-soma charging is available to explain the train.
 Along the train the two separate in the threshold and in the rise, and the shape of the
@@ -231,6 +234,15 @@ is present in both cells. Changing the axonal SK dose will not
 produce it, because that conductance is calcium-driven and grows with input, while the
 recorded cell's late slowing shrinks with input.
 
+The recorded cell's first spike also takes off lower the faster it is approached: -58 mV
+when the 120 pA sweeps reach it at 0.7 mV/ms, -60.5 mV at 1.1 mV/ms under 0.19 nA and
+-61.7 mV at 1.7 mV/ms under 0.27 nA, a 4 mV slide, ten times the spike-1 spread, under two
+threshold definitions. The finalist slides 0.7 mV over a wider range of approach rates and
+holds within 0.3 mV along each train
+([stage 7](evidence/h01-topographic/threshold-approach.md)). Its take-off is therefore not
+as fixed as the pyramidal fit's, but it answers to the approach at a fifth of the recorded
+rate, and it does not rise after a spike as the recorded cell's does.
+
 The [I response chart](evidence/h01-multivari-i.png) shows model widths approximately 0.06 ms below the human values.
 It also shows different changes in rise rate along the train.
 A repeated difference does not establish one unique mechanism.
@@ -262,10 +274,16 @@ offset describes it. Three further differences are large against the recording's
 | threshold step from spike 1 to spike 2, 310 pA train | +1.4 mV | +0.0 mV | 6 |
 | threshold at spike 5 against spike 1, 310 pA train | +3.6 mV | +0.0 mV | 14 |
 | rise of spike 2 against spike 1, 310 pA train | 0.86 | 1.04 | 40 |
-| level after a spike at 200 pA | -67.06 mV | -65.00 mV | 7 |
+| spike-1 take-off, approach 0.2 against 0.75 mV/ms | -54.7 against -57.2 mV | -57.2 against -57.2 mV | 9 |
+| later spikes above the spike-1 take-off at the same approach | +1.9 mV | +0.0 mV | 8 |
+| steady level at 200 pA, spike or no spike | -67.0 mV | -65.0 mV | 7 |
 
 The model's first spike is also early, by less than four spreads of the recording's own
-first-spike scatter, which is too small to treat as a separate effect.
+first-spike scatter, which is too small to treat as a separate effect. The 200 pA count is
+not in the table: the recorded cell fires once in five of seven repeats and not at all in
+the other two, so 200 pA is its rheobase and a count there lies inside its own spread. The
+fit's four spikes at 200 pA say that its rheobase is lower, which the load curves already
+say; they are not a fourth count error.
 
 **Mechanism.** The rate of rise falls as membrane load rises, at about 254 volts per second
 for each unit of whole-cell conductance ratio, and the spike count collapses once the load
@@ -286,14 +304,20 @@ soma candidate is the persistent sodium current at 0.012 nA. Removing all of it 
 200 pA rather than reducing the count to the recorded one, so that current is necessary for
 the first spike and not an explanation of the count.
 
-What remains is use-dependent and lives in the sodium equations the fits share. Where
-neither cell spikes the two agree within 1 mV; after a spike they separate by time since
-the spike and not by voltage, and their net membrane currents meet again after the last
-spike of a train. A conductance that opens with a spike and stays open for seconds is
-sufficient to reproduce the single-spike response at 200 pA, with the pre-spike trace and
-the first spike unchanged, and it is not sufficient for the trains, because the dose that
-holds the 200 pA level accumulates along the faster trains and removes spikes the recording
-keeps. Read spike by spike, the recorded change has one shape at every drive from 230 to
+What remains is use-dependent, and the 200 pA level is not part of it. The seven 200 pA
+repeats are twins: the five that fire one spike and the two that fire none sit at the same
+level 800 ms later, -66.3 to -67.0 mV, and recover along the same path after the pulse
+([twins](evidence/h01-topographic/threshold-approach.md)). A spike therefore leaves nothing
+in the level, and the 2 mV by which the fit sits above the recording at 200 pA is a
+steady-state difference of the two cells at that current, continuous with the recorded
+cell's subthreshold staircase, whose input resistance is 75 MOhm below 70 pA and 91 MOhm from
+90 to 190 pA. Where neither cell spikes the two agree within 1 mV; the net membrane currents
+after a spike differ by time since the spike and meet again after the last spike of a train.
+A conductance that opens with a spike and stays open for seconds is sufficient to reproduce
+the single-spike response at 200 pA, with the pre-spike trace and the first spike unchanged,
+and it is not sufficient for the trains, because the dose that holds the 200 pA level
+accumulates along the faster trains and removes spikes the recording keeps; the twins now
+say that what it was holding was never a post-spike level. Read spike by spike, the recorded change has one shape at every drive from 230 to
 350 pA: the threshold steps up and the rise steps down between spike 1 and spike 2, inside
 the first interval, keep moving through spike 5, and then hold for the rest of the second;
 spike 1 is the same in every sweep, so the change has recovered by the next sweep; and at
@@ -305,8 +329,9 @@ enters during a spike and recovers at rest, added to the sodium this fit carries
 the first spike alone and lowers the rise of the later spikes, but it does not move the
 threshold: removing 40 percent of the sodium availability by spike 10 takes the rise to
 0.72 of spike 1 and the threshold up 1.5 mV, and at spike 2 it gives +0.4 mV where the
-recording gives +1.4 with the rise at 0.86; at 200 pA the count stays 4 and the level after
-the spikes does not move ([stage 1](evidence/h01-e-sodium-slow/stage-1-decision.json)). In
+recording gives +1.4 with the rise at 0.86 ([stage 1](evidence/h01-e-sodium-slow/stage-1-decision.json));
+the stage's 200 pA rows, count 4 and level, are below the discrimination line and carry no
+information. In
 this fit the rise answers to sodium availability at about 19 percent per millivolt of
 threshold; in the recorded cells the two move together at 4 to 10 percent per millivolt.
 The fit's threshold is therefore set by its axonal initiation and not by the availability
@@ -315,19 +340,44 @@ that would move the threshold would take the rise far below the recording. What 
 leaves behind in the recorded cell raises its threshold with only a modest loss of rise;
 in this fit nothing that lowers sodium availability raises the threshold by that much.
 
+**Where the take-off is set.** The recorded cell's first spike takes off at -54.5 to -55.2 mV
+when the pulse approaches it at 0.17 to 0.22 mV/ms (200 pA), at -57.2 mV when it approaches
+at 0.75 mV/ms (350 pA), and at -61.9 mV under a 3 ms, 1260 pA pulse that approaches at
+7 mV/ms. Over the long pulses that is a 2.2 mV slide, nine spreads, the same under the
+campaign's threshold definition and under a fixed 10 V/s crossing. Its later spikes take off
+1.9 mV above that relation at the same approach, all 41 of them. The fit takes off at -57.0
+to -57.2 mV at every spike of every train, from 0.23 to 1.16 mV/ms, under both definitions
+([stage 7](evidence/h01-topographic/threshold-approach.md)). Two different things set the
+take-off in the two cells. In the recording it is set locally by the trajectory: a slow
+approach lets whatever the depolarisation itself removes from the inward current, or adds
+to the outward current, act before the crossing, so the crossing comes later and higher;
+a spike leaves more of that behind; and a fast pulse arrives before it acts. In the fit the
+soma is carried over by a current arriving from the axonal initiation site, whose own
+crossing is reached at one somatic voltage whatever the approach. This is the relation that
+made SP16 predictable before it was run: in a cell whose take-off is imposed from elsewhere,
+any lever that only changes the somatic inward current changes the rise and not the
+take-off, and a lever that changes the initiation site's availability moves both together
+at the site's own ratio. A candidate can now be rejected on paper if it acts only on the
+somatic inward current, or if it does not make the take-off a function of the approach.
+
 **Consequence.** Matching the model's cable to the recorded cell will have little effect on
 the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
 Doses of the soma channels this fit already carries cannot supply the low-input count.
 Slow inactivation of the sodium this fit carries will not produce the recorded threshold
-step or the 200 pA count at any depth
+step at any depth
 ([SP16 stage 1](evidence/h01-e-sodium-slow/stage-1-decision.json)); it is a rise lever in
 this fit, not a threshold lever, and the same is true of the interneuron fit, whose
 initiation is not a dense axonal insertion
 ([stage 2](evidence/h01-i-sodium-slow/stage-2-decision.json)); so the insensitivity is not
-this fit's geometry. What remains to be read, from the retained traces and before any
-mechanism is named, is the recorded approach to threshold cycle by cycle: whether the net
-current at a fixed voltage just below threshold grows more outward from spike to spike, or
-whether the take-off itself moves while the approach does not.
+this fit's geometry alone, and the take-off relation above says why: neither fit's take-off
+is a function of the approach, and a gate on the somatic sodium does not make it one. The next split is
+an isolation, not a lever: at the onset of each spike, does the somatic phase plane show a
+gradual take-off, the local membrane turning over, or a kink, a current arriving from
+elsewhere; in both recordings, and in the fits at the soma and at the axon initial segment
+([stage 8](specs/2026-09-12-h01-topographic-strategy.md)). If the recorded onset is gradual
+and the fit's is a kink, the recorded take-off is somatic and the fit's initiation site is
+the input that has to change; if both are kinks, the recorded initiation site itself must
+answer to the approach, and the axonal sodium and its neighbours are the family to split.
 
 **Limit.** No sufficient repair is established, and B3 stays unpromoted. Slow inactivation
 of the fitted sodium is refuted as the shared-function element for this fit at depths up to
@@ -662,6 +712,9 @@ A control qualifies only if it reproduces the compared response, not one summary
 A rate of change is qualified only on a uniform time grid. The variable-step solver samples densely through a spike upstroke, which inflates a sampled maximum rise; every rise in this document is measured after resampling.
 A slope is qualified only over the observed range of its own variable. A dose outside the range the recorded cell occupies measures the model, not the difference from the recording.
 A response along a train is qualified only cycle by cycle. One number per train, such as the threshold first to last, hides whether the change is a step inside one interval or an accumulation over the second, and those two shapes name different time constants.
+A count is qualified only at a drive where the recording's own repeats agree on it. At the recorded cell's rheobase the repeats give 0 or 1, so a count there is inside the spread and is not scored; the information at that drive is the rheobase itself and the level, and the level is read from the repeats with and without a spike before it is called a post-spike effect.
+A repeat spread qualifies only the quantity, the drive and the cycle it was measured on. The I recording's spread comes from single-spike 120 pA sweeps and qualifies spike 1; an along-train I contrast has no sigma and is reported without one.
+A threshold is qualified only with the approach that reached it, and under two definitions. A take-off that moves with the approach is not a threshold error of the model; it is a different mechanism of take-off, and a lever that does not make the take-off a function of the approach cannot reproduce it.
 Numerical qualification needs the same physical model at the compared numerical settings.
 Transfer qualification needs the same donor, input, state, mesh, and parameter laws across implementations.
 Human qualification needs agreement with the specified recording.

@@ -80,25 +80,6 @@ step at spike 2: +3.1 mV, rise x0.87, 17 ms after spike 1; last spike +2.6 mV, r
 
 step at spike 2: +1.4 mV, rise x0.87, 11 ms after spike 1; last spike +2.1 mV, rise x0.83
 
-**sweep 54** (12 spikes)
-
-| spike | threshold | rise | t |
-| ---: | ---: | ---: | ---: |
-| 1 | -56.7 | 351 | 32 |
-| 2 | -55.0 | 300 | 44 |
-| 3 | -52.7 | 292 | 81 |
-| 4 | -53.3 | 300 | 177 |
-| 5 | -53.8 | 295 | 271 |
-| 6 | -53.1 | 293 | 371 |
-| 7 | -52.4 | 292 | 475 |
-| 8 | -52.8 | 290 | 574 |
-| 9 | -53.6 | 285 | 672 |
-| 10 | -53.5 | 288 | 776 |
-| 11 | -53.6 | 286 | 885 |
-| 12 | -52.9 | 283 | 987 |
-
-step at spike 2: +1.6 mV, rise x0.86, 12 ms after spike 1; last spike +3.8 mV, rise x0.81
-
 **sweep 55** (13 spikes)
 
 | spike | threshold | rise | t |
@@ -312,7 +293,7 @@ step at spike 2: +0.1 mV, rise x0.99, 16 ms after spike 1; last spike +0.9 mV, r
 
 ## Spike 1 across sweeps (recovery between sweeps)
 
-- E human staircase: 8 sweeps; threshold -57.3 to -55.6 mV (sd 0.59); rise 345 to 352 V/s (sd 2.7)
+- E human staircase: 7 sweeps; threshold -57.3 to -55.6 mV (sd 0.63); rise 345 to 352 V/s (sd 2.7)
 - E human 200 pA repeats: 5 sweeps; threshold -55.2 to -54.5 mV (sd 0.25); rise 328 to 332 V/s (sd 1.5)
 - I human repeats: 4 sweeps; threshold -58.5 to -57.7 mV (sd 0.38); rise 566 to 577 V/s (sd 5.3)
 

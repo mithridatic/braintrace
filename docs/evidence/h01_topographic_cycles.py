@@ -22,7 +22,7 @@ from h01_isolation_report import human_trace, nwb_sweep
 from h01_spike_cycle_energetics import landmarks
 from h01_topographic_stage0 import CELLS, OUT, ROOT, model_trace
 
-E_STAIRCASE = (48, 49, 50, 51, 52, 53, 54, 55)          # 210 to 350 pA in 20 pA steps, one sweep each
+E_STAIRCASE = (48, 49, 50, 51, 52, 53, 55)             # 210 to 350 pA, one sweep each; 54 (330 pA) is a sealed holdout
 E_REPEATS = (56, 57, 58, 59, 60, 61, 62)                # 200 pA, every repeat including the two with no spike
 E_PULSE = (1020., 2020.)
 

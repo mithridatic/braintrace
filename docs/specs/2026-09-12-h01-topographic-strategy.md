@@ -182,3 +182,76 @@ I_net(V) load curves of Q3; and the Matryoshka table naming the family that carr
 largest contrast in units of the repeat sigma. Decision rule: the family and the branch
 (input or function) with the largest contrast are named; no lever is named. Cost: one
 analysis script and its test; hours.
+
+## Stage 6 erratum and stage 7 addendum (registered 2026-09-12, no simulation)
+
+Stage 6 tabulated the E staircase as sweeps 48 to 55. Sweep 54 (330 pA) is a sealed
+holdout; its rows were tabulated and are withdrawn from every reading below and from the
+regenerated cycle tables. Stage 6's readings do not change without it.
+
+Stage 7 asks the elemental question the cycle tables raised: is the take-off a fixed
+voltage, or is it set by the trajectory that reaches it? Y only, no lever. From the
+retained traces:
+
+* **Take-off against approach.** For every spike of every retained train, the threshold
+  (campaign definition, last 10 V/s crossing before the maximum rise, on the recording's
+  own 0.02 ms grid) and the approach rate (least-squares slope of the voltage over the
+  window 10 to 2 ms before that threshold). A second threshold definition, the first 10 V/s
+  crossing on the way up, is tabulated beside it so that the reading cannot depend on the
+  definition. Both humans and both fits; E spike 1 across the staircase (48 to 53, 55) and
+  the 200 pA repeats (56, 59 to 62); the 1260 pA, 3 ms short squares (27 to 31) as a
+  second, fast approach; I spike 1 at 0.19 and 0.27 nA and the 120 pA repeats (40 to 43).
+* **The twins.** The seven 200 pA repeats (56 to 62), five with one spike and two with
+  none, compared on the level in 1820 to 2020 ms and after the pulse, as the registered
+  reading of what a spike leaves in the level 800 ms later.
+* **The state space.** The subthreshold staircase (sweeps 32 to 47, -110 to +190 pA):
+  rest, steady level, sag or overshoot extreme in the first 300 ms, post-pulse extreme,
+  and the input resistance fitted within each holding-current group (sweeps 32 to 41 at
+  +2.5 pA, 42 to 47 at -3.7 pA; the 6.2 pA step between the groups is 0.5 mV at 80 MOhm
+  and is not fitted across). Reported as an observation; no decision rule.
+
+Decision limits are the E recording's repeat spread of 0.25 mV in threshold (3 sigma =
+0.75 mV) for E; the I repeat spread of 0.38 mV comes from single-spike 120 pA sweeps and
+qualifies spike 1 only, so the I along-train rows are reported without a sigma.
+
+Predictions, registered before the module is run: (1) the E human spike-1 take-off moves
+by more than 3 sigma across the staircase's range of approach rates, in the same direction
+under both threshold definitions; (2) each fit's take-off moves by less than 1 sigma across
+a wider range of approach rates; (3) the human's later spikes sit above the spike-1
+relation at the same approach rate by more than 3 sigma; (4) the twins' 1820 to 2020 ms
+levels agree within 3 sigma of the level spread (0.9 mV) between the sweeps with and
+without a spike. Rejections: the two threshold definitions disagree in the sign of the
+slide (no reading; the definition, not the cell, is being measured); the human spike-1
+slide is below 3 sigma (the trajectory reading is withdrawn); the twins differ by more
+than 3 sigma (a spike does leave something in the level, and the Y4 level row stands as
+written). Module `h01_topographic_threshold.py` and its test; outputs under
+`docs/evidence/h01-topographic/threshold-approach.{json,md,png}`. Cost: one script; hours.
+
+The slide and the twins were first seen in scratch scripts during the SP16 close-out;
+stage 7 fixes the definitions, the limits and the record before those readings are used.
+
+Definition amendments made while the module was written, before any reading was used: the
+10 to 2 ms window contained the previous spike in cycles shorter than 12 ms and lay before
+the pulse under the 3 ms short squares, so the approach is the slope over at most 10 ms
+before the threshold, ending 0.5 ms before it and never before the previous trough or the
+pulse onset; the first-10 V/s-crossing definition is not applicable where the approach
+itself exceeds 5 V/s (the short squares), and the sign check uses the long pulses; the fits
+are read across every spike of every train (two trains give two spike-1 points); prediction
+3 is read on the median residual with the minimum and the count below the relation
+reported beside it; the verdict is per cell.
+
+Result: E PASS on every check (slide -2.2 mV, 9 sigma, both definitions; short squares
+-61.9 mV at 7 mV/ms; fit 0.2 mV over 0.23 to 1.16 mV/ms; later spikes +1.9 mV median,
+none below; twins +0.16 mV, 0.5 sigma). I: the human slides -4.0 mV (10 sigma, both
+definitions), but the fit moves 0.9 mV across its trains (2.5 sigma, not fixed to 1 sigma)
+and the later spikes sit +1.0 mV above the relation (2.6 sigma), so prediction 2 and 3 fail
+for I and the I reading is partial. [threshold-approach.md](../evidence/h01-topographic/threshold-approach.md).
+
+## Stage 8 (registered, not run): soft or hard take-off
+
+If stage 7 reads a trajectory-set take-off in the recording and a fixed one in the fits,
+the next split is an isolation, phrased in Y: at the onset of each spike, does the
+somatic phase plane show a gradual take-off (the local membrane turning over) or a kink
+(a current arriving from elsewhere)? Both recordings, both fits, at the fit's soma and at
+its axon initial segment (the observation point moved, book chapter 6). No lever until
+this is read.

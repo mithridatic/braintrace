@@ -32,6 +32,9 @@ E_CLOSE = "docs/evidence/h01-e-gain/stage-close-decision.json"
 CM = "docs/h01-causal-model.md"
 SP16 = "docs/specs/2026-09-12-h01-sodium-slow-inactivation.md"
 CYCLES = "docs/evidence/h01-topographic/cycle-tables.json"
+SP16_E = "docs/evidence/h01-e-sodium-slow/stage-1-decision.json"
+SP16_I = "docs/evidence/h01-i-sodium-slow/stage-2-decision.json"
+TAKEOFF = "docs/evidence/h01-topographic/threshold-approach.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -87,8 +90,16 @@ def build_nodes():
           "Recovery bracket: longer than 800 ms, shorter than the inter-sweep gap.", [CYCLES], "supported"),
         n("q4_i", R, "I human: at 0.27 nA the threshold steps +4 mV over the first 5 spikes (43 ms) then holds near -58.4 for 40 more spikes; rise 602 to 550 then holds. At 0.19 nA the climb is gradual across the whole second (-60.5 to -52, rise 597 to 452) as the intervals lengthen. Both fits: flat.",
           "Two shapes in one cell: fast-then-flat at high drive, gradual at low drive.", [CYCLES], "supported"),
-        n("next", T, "Next (SP16, amended): one sodium gate with fast entry above its half-point and slow recovery below, applied to both fits; predictions per cycle with decision limits (E 1.0 mV, I 1.5 mV; spike-1 rise within 3.5 percent); E at 310 and 200 pA, I at 0.19 and 0.27 nA; eight evaluations.",
-          "The first draft's single 1 s time constant and -60 mV half-point were withdrawn before any run: the constant time constant cannot make the step, and the half-point removed 12 percent of sodium at the 200 pA plateau. SP14 (brake plus gain lever) deferred.", [SP16], "unverified"),
+        n("sp16", X, "SP16 (executed, 2x2 dissection {E, I} x {fitted sodium, slow-inactivating sodium}): REFUTED in both cells. Removing 40 percent of sodium availability along the train takes the rise to 0.69-0.72 of spike 1 and moves the threshold +0.4 mV at spike 2 (E) and +1.9 mV (I), where the recordings move +1.4 and +4 mV with the rise at 0.86-0.91. Sodium availability is a rise lever in both fits, 12-19 percent of rise per mV; the recorded cells move threshold at 2-10 percent per mV.",
+          "Stage 0 reproduced both libraries exactly. The 200 pA rows (count 4, level) are below the discrimination line: the recorded cell's own repeats give 0 or 1 there. A gate fitted to a response cannot name a channel.", [SP16, SP16_E, SP16_I], "supported"),
+        n("q5", Q, "Q5 (elemental, retained traces, no run). Is the take-off a fixed voltage, or is it set by the trajectory that reaches it? Threshold under two definitions against the approach rate (up to 10 ms before it), every spike, both humans and both fits; the 200 pA twins; the subthreshold staircase. Sweep 54 withdrawn from the stage-6 tables.",
+          "Hartshorne ch.6: sweep the state space you already hold before buying a new observation; ch.3: tightly connected pairs (approach, take-off) constrain everything that is not the difference.", [TAKEOFF, STRATEGY], "supported"),
+        n("q5_e", R, "E human: spike 1 takes off at -54.5 to -55.2 mV at 0.2 mV/ms (200 pA), -57.2 at 0.75 (350 pA), -61.9 under the 3 ms short squares at 7 mV/ms; 2.2 mV slide over the long pulses (9 sigma) under both definitions; all 41 later spikes sit 1.9 mV (median, 8 sigma) above the spike-1 relation. E fit: -57.0 to -57.2 mV at every spike of every train, 0.23 to 1.16 mV/ms (0.8 sigma). Twins: one spike or none at 200 pA, same level 800 ms later (+0.16 mV, 0.5 sigma).",
+          "The recorded take-off is set locally by the trajectory; the fit's is imposed from the axonal initiation. The Y4 'level after a spike' row was a steady-state I-V difference (recorded Rin 75 MOhm below 70 pA, 91 MOhm from 90 to 190 pA). This is the relation that made SP16 predictable on paper.", [TAKEOFF, CM], "supported"),
+        n("q5_i", R, "I human: spike 1 at -58 mV (120 pA, 0.7 mV/ms), -60.5 (0.19 nA, 1.1), -61.7 (0.27 nA, 1.7): 4 mV slide, 10 sigma of the spike-1 spread, both definitions. I fit: slides 0.7 mV over 0.44 to 1.72 mV/ms and holds within 0.3 mV along each train: not fixed to 1 sigma, a fifth of the recorded slide. Later spikes +1.0 mV median (inside 3 sigma); the I along-train rows have no repeat spread (the four repeats are single-spike 120 pA sweeps).",
+          "Registered prediction 2 fails for the I fit; the reading for I is partial.", [TAKEOFF], "supported"),
+        n("next", T, "Next (SP15 stage 8, registered, not run): soft or hard take-off. At each spike onset, does the somatic phase plane show a gradual take-off (local membrane turning over) or a kink (a current arriving from elsewhere)? Both recordings; both fits at the soma and at the axon initial segment (observation point moved). No lever until this is read.",
+          "If the recorded onset is gradual and the fit's is a kink, the fit's initiation site is the input that has to change; if both are kinks, the initiation site itself must answer to the approach and the axonal sodium and its neighbours are the family to split.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
         # policies
@@ -116,8 +127,13 @@ def build_edges():
         cm.edge("q3_t", "q4", "describes", "characterise the cycle before naming"),
         cm.edge("q4", "q4_e", "describes", "E"),
         cm.edge("q4", "q4_i", "describes", "I"),
-        cm.edge("q4_e", "next", "describes", "fixes entry and recovery separately"),
-        cm.edge("q4_i", "next", "describes", "fixes entry and recovery separately"),
+        cm.edge("q4_e", "sp16", "describes", "one gate, both fits"),
+        cm.edge("q4_i", "sp16", "describes", "one gate, both fits"),
+        cm.edge("sp16", "q5", "describes", "back to Y: where is the take-off set"),
+        cm.edge("q5", "q5_e", "describes", "E"),
+        cm.edge("q5", "q5_i", "describes", "I"),
+        cm.edge("q5_e", "next", "describes", "isolation before any lever"),
+        cm.edge("q5_i", "next", "describes", "isolation before any lever"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),
     ]
