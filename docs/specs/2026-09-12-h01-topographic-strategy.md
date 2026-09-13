@@ -371,17 +371,24 @@ the cap; the intermediate launch with `--stop-ms`, refused by the driver before 
 spent one evaluation by the runner's rule (prior_evaluations 1, cap 4).
 
 Stage 9 result (2026-09-13, `docs/evidence/h01-topographic/stage-9.md`; four evaluations
-spent, one refused launch counted). (a) E recording: the post-spike step is fixed within
-the limit (+2.0, +2.2, +1.5 mV after intervals under 30, 30 to 100 and over 100 ms; spread
-0.69 against 0.75), with a 0.6 mV per decade trend the limit does not resolve; it does not
-recover inside the pulse. (b) E fit under ramps: the somatic take-off is fixed (0.07 mV from
+spent, one refused launch counted). (a) E recording: unresolved. The post-spike residual is +2.0, +2.2 and +1.5 mV after
+intervals under 30, 30 to 100 and over 100 ms, a spread of 0.69 against the 0.75 limit and
+not monotone, so the metric cannot tell a fixed step from one recovering at 0.6 mV per
+decade; it does say the step does not recover measurably inside the pulse. (b) E fit under ramps: the somatic take-off is fixed (0.07 mV from
 0.37 to 2.53 mV/ms) but the take-off at the axon points is not: `axon[1](0.5)` falls 4.1 mV
 and `axon[0](0.5)` 2.4 mV as the approach quickens, the axon leading by 0.30 ms at every
-rate and sitting 3.6, 2.8 and 0.7 mV above the soma at its own take-off. Prediction (b) is
-refuted at the axon points. The fit therefore carries a trajectory-set take-off of the
-recorded sign and size at its initiation site, hidden from its soma by the coupling; along
-the retained trains that axonal take-off is a function of the approach only, so the
-recorded post-spike step has no counterpart at either site. (c) I fit: no probe leads the
+rate and sitting 3.6, 2.8 and 0.7 mV above the soma at its own take-off. One millisecond before the
+axon's take-off the soma-to-axon gradient is +1.2, +0.5 and -0.5 mV: under the slow ramp
+the site leads and fires from above the soma, under the fast one it is driven and fires
+from below. Prediction (b) is refuted at the axon points. The ramps confound approach with
+current (0.24, 0.45 and 1.08 nA at the soma's take-off, a factor 4.4, against the
+recording's factor 1.75 across its steps), so the slide is as much a function of how hard
+the soma drives the site as of the approach; both readings say the same thing, that the
+site's take-off depends on the source-load relation between it and the soma. The fit
+therefore carries a trajectory-set take-off of the recorded sign and size at its
+initiation site, hidden from its soma by the coupling; along the retained trains that
+axonal take-off is a function of the approach only, so the recorded post-spike step has no
+counterpart at either site. (c) I fit: no probe leads the
 soma by more than 0.08 ms, every span is 8.9 mV or more; the registered rejection names
 `axon[1](0.5)` as the earliest point at spike 1 by four samples, and the model's axon ends
 there: the finalist's spike is a whole-cell turnover; the stage-8 I reading is confirmed on
@@ -391,19 +398,25 @@ a second run with five points.
 
 An input split on the E fit, every channel held. The fit's axon is the Allen replacement
 stub, two sections of 30 um at 1 um diameter; the recorded L2/3 pyramidal cell's initial
-segment starts on a hillock several micrometres wide. Change only the coupling: stub
-diameter x2 and x4 (axial conductance x4 and x16) with the axonal NaTs density divided by
-the same area factor so that the total axonal sodium conductance is held (`--insert-density
-NaTs:axon:3.814` becomes 0.954 and 0.238); every other flag of `s9-b3-n9` unchanged. Driver
-flag `--axon-stub-diameter-um`. The same three ramps, read as in stage 9 (b), plus the
-310 pA step (sweep 53) so the train is read cycle by cycle at the new coupling: eight
-evaluations, manifest `h01-e-coupling-manifest.json`.
+segment starts on a hillock several micrometres wide. A thicker stub changes three things
+at once, axial conductance (as diameter squared), membrane area (as diameter) and, if the
+density is held, the total axonal sodium; so the split has three arms: x2 diameter with the
+axonal NaTs density divided by the area factor (total sodium held; `NaTs:axon:3.814` becomes
+1.907), x2 diameter with the density held (total sodium x2), and x4 diameter with the total
+held (density 0.954). Every other flag of `s9-b3-n9` unchanged. Driver flag
+`--axon-stub-diameter-um`, to be implemented with the stub's segment count set by the
+d-lambda rule at the new diameter and checked against the nseg-9 control (stage 3's lesson:
+a control must reproduce the response). The same three ramps, read as in stage 9 (b), for
+each arm, plus the 310 pA step (sweep 53) for the two x2 arms: eleven evaluations, manifest
+`h01-e-coupling-manifest.json`.
 
 Predictions: with the x4 diameter the somatic take-off slides by more than 1 mV (4 sigma)
 across the three ramps in the recorded direction (lower at the faster approach) and the
-axon lead falls below 0.15 ms; with x2 it slides by more than 0.5 mV; the somatic onset
-span stays within 3.5 to 5.7 mV (the recorded range); the 310 pA count stays within 2 of
-10. The post-spike step is not expected to appear: nothing in the fit carries history.
+axon lead falls below 0.15 ms; with x2 it slides by more than 0.5 mV in both x2 arms, so
+that the slide follows the coupling and not the density; the somatic onset span stays
+within 3.5 to 5.7 mV (the recorded range); the 310 pA count stays within 2 of 10. If the
+two x2 arms disagree by more than 0.5 mV, the density and not the coupling is acting and
+the input branch is not confirmed. The post-spike step is not expected to appear: nothing in the fit carries history.
 Rejections: a ramp or the step without a spike at a dose (the thicker stub loads the site;
 no reading at that dose); the somatic take-off slides but the onset leaves the recorded
 span range (the coupling changed the spike, not only its reading). If the x4 prediction

@@ -73,13 +73,16 @@ def test_e_ramp_contrast_needs_two_read_ramps_and_reports_ranges():
 
 
 def test_decide_reads_fixed_step_no_ramp_reading_and_probe_pass_with_rejection():
-    result = {"e_interval": {"relation": {"band_spread_mv": .69, "slope_mv_per_decade": -.57}},
+    result = {"e_interval": {"relation": {"band_spread_mv": .69, "slope_mv_per_decade": -.57, "bands": {"short_under_30_ms": {"n": 5, "median_mv": 2.2}, "middle": {"n": 13, "median_mv": 2.}, "long_over_100_ms": {"n": 23, "median_mv": 1.5}}}},
               "e_ramps": {"runs": {"ramp01": {"status": "not run"}}, "contrast": None},
               "i_probes": {"status": "read", "max_lead_ms": {"axon0_0.5": .06, "axon1_0.5": .08}, "min_span_mv": {"soma": 12.8, "axon1_0.5": 8.9},
                            "earliest_point_spike_1": "axon1_0.5", "earliest_lead_spike_1_ms": .08}}
     d = s9.decide(result)
     a, b, c = d["checks"]
     assert a["fixed"] and not a["recovering"]
+    result["e_interval"]["relation"]["bands"] = {"short_under_30_ms": {"n": 5, "median_mv": 2.}, "middle": {"n": 13, "median_mv": 2.2}, "long_over_100_ms": {"n": 23, "median_mv": 1.5}}
+    a2 = s9.decide(result)["checks"][0]
+    assert not a2["fixed"] and not a2["recovering"] and "not monotone" in a2["note"]
     assert b["pass"] is None and "not run" in b["note"]
     assert c["pass"] and c["rejection"].startswith("fired by the letter")
     result["i_probes"]["max_lead_ms"]["axon1_0.5"] = .3

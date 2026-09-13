@@ -30,7 +30,7 @@ without supplying a complete explanation of a human-model difference.
 | Historical H01 I candidate does not cross positive soma voltage | Accelerated sodium inactivation cuts off regenerative inward current. Restoring the source closing time restores a positive excursion and recovery. This explains a tested model failure, not human physiology. See Y1. |
 | Donor response changes between implementations | Mesh mismatch and fixed-step integration error account for different, separately tested transfer discrepancies. The two-input numerical requirement remains unmet. See Y2. |
 | PV finalist's recovery interval grows along a train, and its spike begins as a slow whole-cell turnover | Calcium-dependent axonal SK supplies an outward path; removing it alone preferentially shortens late recovery while early waveform bands hold. This isolates a contributor to model adaptation, not the complete cause of human timing errors. The recorded spike begins over 2.7 mV, the finalist's soma and first axon section turn over together over 14 mV, so the finalist has no sharp initiation site (the recording's span rests on the ratio to the fit, its repeat set not resolving 1 mV; the fit's whole-cell turnover was confirmed at five points). See Y3. |
-| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. So every lever that only changes the somatic inward current is a rise lever in this fit, and the approach signature is a question of the coupling between the soma and the site, not of the channels. What a spike leaves behind, +1.9 mV that does not recover inside the pulse, has no counterpart at either site. See Y4. |
+| B3 fires too often at low input and rises too fast at every input | Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. So every lever that only changes the somatic inward current is a rise lever in this fit, and the approach signature is a question of the coupling between the soma and the site, not of the channels. What a spike leaves behind, +1.9 mV that does not recover measurably inside the pulse, has no counterpart at either site. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
 
@@ -387,10 +387,16 @@ somatic inward current, or if it does not make the take-off a function of the ap
 somatic take-off stays at -57.1 to -57.2 mV, but the take-off at its axon points does not:
 `axon[1](0.5)` falls from -54.7 to -58.8 mV and `axon[0](0.5)` from -55.7 to -58.1 mV as
 the approach quickens, the axon leading the soma by 0.30 ms at every rate
-([stage 9](evidence/h01-topographic/stage-9.md)). At the moment the axon takes off the soma
-sits at -58.3, -58.6 and -59.5 mV while the axon is 3.6, 2.8 and 0.7 mV above it: under a
-slow approach the site's own inward current carries it ahead of the soma before it fires;
-under a fast one the electrode drives the soma and the site lags. The recorded soma slides
+([stage 9](evidence/h01-topographic/stage-9.md)). One millisecond before the axon takes off it
+sits 1.2 mV above the soma under the slow ramp, 0.5 mV above under the middle one and
+0.5 mV below under the fast one, and at its take-off 3.6, 2.8 and 0.7 mV above: under a
+slow approach the site's own inward current carries it ahead of the soma and it fires from
+above; under a fast one the electrode drives the soma and the site is pushed, firing from
+below. The ramps confound the approach with the current, 0.24, 0.45 and 1.08 nA at the
+soma's take-off, so the slide is as much a function of how hard the soma drives the site
+as of the approach; the recording's slide came from steps whose current spans only a
+factor 1.75. Both say that the site's take-off depends on the source-load relation between
+the site and the soma at the moment of firing. The recorded soma slides
 the same way and by the same order, -2.2 mV from 0.2 to 0.75 mV/ms and -7 mV to the 7 mV/ms
 short square. The signature is therefore in this fit, at the site that makes the spike; the
 fit's soma cannot show it because it is a load 45 um down a 1 um stub that reads the
@@ -400,10 +406,11 @@ directly, through a coupling tighter than the fit's stub. This is a difference o
 input, the geometry between the soma and the site, and not of a channel; it is registered
 as [stage 10](specs/2026-09-12-h01-topographic-strategy.md), which changes only that
 coupling with the axonal sodium total held. The other recorded element, the take-off
-+1.9 mV higher after a spike, is a fixed step inside the pulse (+2.0, +2.2 and +1.5 mV
-after intervals under 30, 30 to 100 and over 100 ms; recovered by the next sweep) and has
-no counterpart at either site of the fit: along the retained trains the fit's axonal
-take-off is a function of the approach alone. That element still needs its own split.
++1.9 mV higher after a spike, does not recover measurably inside the pulse (+2.0, +2.2 and
++1.5 mV after intervals under 30, 30 to 100 and over 100 ms, not monotone, so a fixed step
+and a slow recovery are not resolved; recovered by the next sweep) and has no counterpart
+at either site of the fit: along the retained trains the fit's axonal take-off is a
+function of the approach alone. That element still needs its own split.
 
 **Consequence.** Matching the model's cable to the recorded cell will have little effect on
 the rise, and enlarging the cable enough to move it removes the spikes the recording keeps.
@@ -447,7 +454,7 @@ insertion with fast kinetics crosses its own threshold at nearly the same voltag
 its availability; the recording moves 2.2 mV with the approach alone and 1.9 mV more after
 one spike, which is more than availability at such a site gives. Stage 9 read the take-off's own
 variables: in the fit the approach moves the take-off at the site by the recorded amount
-and the soma hides it; in the recording the post-spike step is fixed inside the pulse. The
+and the soma hides it; in the recording the post-spike step does not recover measurably inside the pulse. The
 next split, [stage 10](specs/2026-09-12-h01-topographic-strategy.md), changes only the
 coupling between the soma and the site.
 

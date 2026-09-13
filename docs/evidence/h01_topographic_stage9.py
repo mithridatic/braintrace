@@ -140,9 +140,12 @@ def decide(result):
     checks = []
     a = result["e_interval"]["relation"]
     if a:
+        medians = [m["median_mv"] for m in a["bands"].values() if m]
+        monotone = all(x >= y for x, y in zip(medians, medians[1:])) or all(x <= y for x, y in zip(medians, medians[1:]))
         checks.append({"cell": "E", "reading": "a", "prediction": "recovering step: residual falls with interval by more than 3 sigma (0.75 mV) between short and long intervals",
-                       "value": a["band_spread_mv"], "recovering": bool(a["band_spread_mv"] > LIMITS["e_residual_mv"] and a["slope_mv_per_decade"] < 0.),
-                       "fixed": bool(a["band_spread_mv"] <= LIMITS["e_residual_mv"])})
+                       "value": a["band_spread_mv"], "recovering": bool(a["band_spread_mv"] > LIMITS["e_residual_mv"] and a["slope_mv_per_decade"] < 0. and monotone),
+                       "fixed": bool(a["band_spread_mv"] <= LIMITS["e_residual_mv"] and monotone),
+                       "note": "bands not monotone: the metric does not resolve a fixed step from a slowly recovering one; the step does not recover measurably inside the pulse" if not monotone else ""})
     b = result["e_ramps"]["contrast"]
     if b:
         worst = max(b[n]["range_mv"] for n in E_POINTS if n in b)
@@ -197,8 +200,8 @@ def markdown(result):
         lines.append("not run")
     lines += ["", "## Decision", ""]
     for ch in result["decision"]["checks"]:
-        verdict = ("recovering" if ch.get("recovering") else "fixed" if ch.get("fixed") else "neither") if ch["reading"] == "a" else ("PASS" if ch.get("pass") else "no reading" if ch.get("pass") is None else "FAIL")
-        extra = f"; {ch['note']}" if "note" in ch else (f"; rejection {ch['rejection']}" if "rejection" in ch else "")
+        verdict = ("recovering" if ch.get("recovering") else "fixed" if ch.get("fixed") else "unresolved") if ch["reading"] == "a" else ("PASS" if ch.get("pass") else "no reading" if ch.get("pass") is None else "FAIL")
+        extra = f"; {ch['note']}" if ch.get("note") else (f"; rejection {ch['rejection']}" if "rejection" in ch else "")
         val = f"{ch['value']:+.2f}" if ch["value"] is not None else "n/a"
         lines.append(f"- {ch['cell']} ({ch['reading']}) {verdict}: {ch['prediction']} ({val}{extra})")
     lines += ["", "## Reading", ""]+result["reading"]
@@ -207,15 +210,19 @@ def markdown(result):
 
 READING = [
     "(a) E recording: the later spikes sit above the spike-1 relation by +2.0 mV after intervals under 30 ms, +2.2 mV at 30 to 100 ms "
-    "and +1.5 mV after intervals over 100 ms (up to 734 ms), a band spread of 0.69 mV against the 0.75 mV limit: a fixed step within "
-    "the limit, with a downward trend of 0.6 mV per decade of interval that the limit does not resolve. What a spike leaves in the "
-    "recorded take-off does not recover inside the pulse; stage 6 read that it has recovered by the next sweep.",
+    "and +1.5 mV after intervals over 100 ms (up to 734 ms), a band spread of 0.69 mV against the 0.75 mV limit and not monotone: "
+    "unresolved. The metric cannot tell a fixed step from one recovering at 0.6 mV per decade; what it does say is that the step does "
+    "not recover measurably inside the pulse, and stage 6 read that it has recovered by the next sweep.",
     "(b) E fit under ramps, spike 1: the somatic take-off is -57.1 to -57.2 mV from 0.37 to 2.53 mV/ms (0.07 mV), as in the step "
     "pulses. The take-off at the axon points is not fixed: axon[1](0.5) falls from -54.7 to -58.8 mV (4.1 mV) and axon[0](0.5) from "
-    "-55.7 to -58.1 mV (2.4 mV) as the approach quickens, the axon leading the soma by 0.30 ms at every rate. At the axon's take-off "
-    "the soma sits at -58.3, -58.6 and -59.5 mV (1.2 mV range) while the axon is 3.6, 2.8 and 0.7 mV above it: under a slow approach "
-    "the axon's own inward current carries it ahead of the soma before it takes off; under a fast one the electrode drives the soma "
-    "and the axon lags. Prediction (b) fails at both axon points and holds at the soma.",
+    "-55.7 to -58.1 mV (2.4 mV) as the approach quickens, the axon leading the soma by 0.30 ms at every rate. The load-bearing "
+    "reading is the gradient: one millisecond before the axon takes off it is 1.2 mV above the soma under the slow ramp, 0.5 mV "
+    "above under the middle one and 0.5 mV BELOW under the fast one, and at its take-off 3.6, 2.8 and 0.7 mV above. Under a slow "
+    "approach the site's own inward current carries it ahead of the soma and it fires from above; under a fast one the electrode "
+    "drives the soma and the site is pushed, firing from below. The ramps confound approach with current: at the soma's take-off "
+    "the injected current is 0.24, 0.45 and 1.08 nA (a factor 4.4 for a factor 6.8 in approach), so the slide is equally a "
+    "function of how hard the soma drives the site; the recording's slide came from steps of 200 to 350 pA, a factor 1.75 in current "
+    "for a factor 4 in approach, and is far less confounded. Prediction (b) fails at both axon points and holds at the soma.",
     "So the fit does contain a take-off that slides with the approach, of the recorded sign and size (recorded soma: -2.2 mV from "
     "0.2 to 0.75 mV/ms, -7 mV to the 7 mV/ms short square; fit axon: -4.1 mV from 0.37 to 2.53 mV/ms), at its initiation site; its "
     "soma does not show it because the soma is a load 45 um down a 1 um stub that reads the arrival of the axonal spike at one "
