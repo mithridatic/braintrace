@@ -784,3 +784,65 @@ dose is refused and the coupling/geometry is the sub-system. Either way the clim
 half (HL23PYR biophysics on the 541563728 anatomy, one run) remains available and untouched.
 
 Unchanged: the E recording, its chain, the readers, B3 and its retained runs; no holdout.
+
+## Stage 15 (registered 2026-09-13, before the runs): the human-for-rodent sodium swap, and the climb on this cell's anatomy
+
+**What stage 14 earned.** The rise's excess is the soma's own sodium above -40 mV, on a human
+cell, under a human-fitted set of densities -- but under Allen's fixed **rodent-lineage**
+kinetic equations (NaTs, Colbert and Pan 2002 rat). That equation lineage is the last
+mouse-derived component in the E model and it is exactly where stage 14 put the defect. Ch. 6
+says the dose comes last, once the mechanism is localised; it is now localised, so this is the
+finishing step.
+
+**Arm A (rise): swap the sodium equations, human for rodent, and read the characteristic
+curve.** System: B3 on its own human anatomy (Allen 541563728) with its own human-fitted
+densities, the recorded command, nseg 9, CVode 1e-10, 34 degrees -- everything held except the
+somatic sodium equations. The somatic rodent NaTs is zeroed
+(`--regional-density NaTs:soma:0`, from gbar 2.641 S/cm2) and the Toronto human sodium NaTg is
+inserted on the soma (`--insert-density NaTg:soma:D`) carrying HL23PYR's human voltage shifts
+(`vshiftm 13`, `vshifth 15`, `slopem 7`, from `biophys_HL23PYR.hoc`). A new mechanism library
+`human-sodium-source` carries the Allen mods plus `NaTg.mod` (sha256 24ad0563...) compiled
+together. Dose series D = 0.068, 0.136, 0.272, 0.544 S/cm2, that is 0.25x, 0.5x, 1x and 2x
+HL23PYR's own somatic value 0.272; sweep 53 (310 pA) only. Cap 5, manifest
+`h01-e-human-sodium-manifest.json`, output `h01-e-human-sodium`. No holdout is touched.
+
+**Cells, registered before the runs.** All fast quantities through the stage-12 chain.
+(a) *Characteristic curve.* Spike-1 rise against the dose, monotone, with the dose at which the
+curve crosses the recorded 348 V/s reported by interpolation and flagged as inside or outside
+the series. This is the curve, not a pass/fail.
+(b) *The rise is not bought with the count or the threshold.* At the crossing dose (or the
+closest dose), the 310 pA count is within 5 to 15 (recorded 10) and the spike-1 take-off is
+within the recorded band. Prediction if the equation lineage is the rise's remaining input:
+some dose in the series puts the rise within 15 percent of 348 while the count holds.
+(c) *Against the rodent curve.* The same reading for the rodent equations is already in hand
+(stage 11: 655 / 586 / 505 V/s at somatic NaTs 0.9 / 0.7 / 0.5 with count 9; the stage-11
+intercept at zero somatic sodium is about 320 V/s). The question is whether the human equations
+reach 348 at a dose that holds the count, where the rodent equations reach it only by removing
+nearly all somatic sodium.
+(d) *Rejection.* If no dose brings the rise within 15 percent of 348, or every dose that does
+also leaves the count band, then the equation lineage is not the remaining input for the rise
+and the residual belongs elsewhere; that is reported as the result, not repaired.
+
+**Arm B (climb): HL23PYR biophysics on this cell's anatomy.** The second half of the stage-13
+split, one run: the Toronto human-fitted biophysics (`biophys_HL23PYR.hoc`, unchanged) on the
+Allen human morphology of the recorded cell (`allen-541563728.swc`, sha256 956784de..., copied
+from the L2 `source-model/morphology.swc`), driven at 0.31 nA as the recording is driven.
+(e) *The step.* Threshold at spike 2 minus spike 1 against the recorded +1.38 mV (HL23PYR on
+its own anatomy gave +1.38; B3 gives -0.02). If the step survives the anatomy swap it is a
+property of the human sodium, not of the Toronto anatomy.
+(f) *The accumulation.* Spike 5 minus spike 1 against the recorded +3.63 mV (HL23PYR on its own
+anatomy gave +1.78). Registered outcome: the accumulation is still expected to be missing.
+(g) Count, rest and spike-1 rise reported, not banded (this arm is registered for the step).
+
+**Percent accuracy, defined before the numbers exist.** So that the summary is not chosen after
+the fact: at 310 pA, ten elements are scored against the recording, each through the chain --
+spike-1 rise, fall, peak, threshold, take-off, the 310 pA count, rest, the first-interval
+threshold step, the spike-5 step, and the rise ratio spike 5 over spike 1. Per element the
+accuracy is `max(0, 1 - |model - recorded| / |recorded|)` for quantities with a meaningful
+zero, and for the two threshold steps and the rest (which do not) the denominator is the
+recorded element's own scale stated in the scorer. The overall figure is the unweighted mean,
+reported for B3 (rodent equations) and for the best human-sodium arm side by side. This is a
+lossy transform of the kind chapter 2 warns about -- it is a summary for the reader, and the
+per-element table beside it is the reading that carries the information.
+
+Unchanged: the E recording, its chain, the readers, the sealed holdouts.

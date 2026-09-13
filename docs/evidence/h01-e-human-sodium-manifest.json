@@ -1,0 +1,89 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box (NEURON 9.0.2) from the clean worktree /workspace/braintrace-q2. The library human-sodium-source was built by copying the Allen source-model mods and the Toronto NaTg.mod (sha256 24ad05639111953f27367df1b3ae6e7a7dd1d9055a79773fae325f37becf7de2) into one directory and compiling with venv312/bin/nrnivmodl.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pyramidal-l2",
+  "library": "human-sodium-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "purpose": "Stage 15 arm A (rise): swap the somatic sodium equations, human for rodent, on the human cell. The somatic rodent NaTs (gbar 2.641 S/cm2) is zeroed and the Toronto human NaTg is inserted on the soma with HL23PYR's human voltage shifts (vshiftm 13, vshifth 15, slopem 7), dosed across four densities to give the characteristic curve of the spike-1 rise. Everything else is held: the human anatomy, the human-fitted densities elsewhere, the recorded command, nseg 9, CVode 1e-10, 34 C. See docs/specs/2026-09-12-h01-topographic-strategy.md, stage 15.",
+  "cap": 5,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 3000,
+  "output_dir": "h01-e-human-sodium",
+  "inputs": {
+    "sweep53": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 54 (330 pA) is sealed and is not an input. Sweep 53 (310 pA) only.",
+  "evaluation": "One candidate at one input = one evaluation; four candidates at sweep53: four.",
+  "base_candidate": {
+    "file": "h01-e-currents-manifest.json#m0-b3-currents",
+    "note": "B3 unchanged at 310 pA with the rodent somatic NaTs at gbar 2.641: spike-1 rise 570.4 V/s through the stage-12 chain, count 10, fall -94.2, take-off -57.29 mV. Retained as h01-e-currents/m0-b3-currents-sweep53; not rerun."
+  },
+  "reference": {
+    "recorded_spike_1_rise_v_s": 348.0,
+    "recorded_count_310": 10,
+    "b3_rodent_rise_through_chain_v_s": 570.4,
+    "hl23pyr_soma_NaTg_s_cm2": 0.272,
+    "b3_soma_NaTs_s_cm2": 2.6406641498523276,
+    "stage_11_rodent_dose_series_v_s": [655.0, 586.0, 505.0],
+    "stage_11_zero_sodium_intercept_v_s": 320.0
+  },
+  "decision_limits": {
+    "rise_fraction_of_recorded": 0.15,
+    "count_310": [5, 15]
+  },
+  "candidates": [
+    {
+      "name": "s15-natg-0068",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "regional_density": ["NaTs:soma:0"],
+        "insert_density": ["NaTg:soma:0.068"],
+        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
+      }
+    },
+    {
+      "name": "s15-natg-0136",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "regional_density": ["NaTs:soma:0"],
+        "insert_density": ["NaTg:soma:0.136"],
+        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
+      }
+    },
+    {
+      "name": "s15-natg-0272",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "regional_density": ["NaTs:soma:0"],
+        "insert_density": ["NaTg:soma:0.272"],
+        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
+      }
+    },
+    {
+      "name": "s15-natg-0544",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "regional_density": ["NaTs:soma:0"],
+        "insert_density": ["NaTg:soma:0.544"],
+        "mechanism_parameter": ["NaTg:soma:vshiftm:13", "NaTg:soma:vshifth:15", "NaTg:soma:slopem:7"]
+      }
+    }
+  ]
+}

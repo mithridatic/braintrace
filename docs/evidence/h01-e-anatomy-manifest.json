@@ -1,0 +1,56 @@
+{
+  "executor": "local",
+  "python": "/workspace/h01-neuron/venv312/bin/python",
+  "executor_note": "Runs on the Vast.ai box from /workspace/braintrace-q2; the PV driver mounts the Toronto library at /work and its compiled x86_64 is used as is. The Allen human morphology was copied unchanged from the L2 cache (source-model/morphology.swc) to source/morphologies/allen-541563728.swc, sha256 956784deb7062d7067d19537c45bb93c35aace56fe41e0152b487b62abfa7ea9.",
+  "image": "braintrace-h01-neuron:9.0.2 (reference image; not used by the local executor)",
+  "cache_dir": "../h01-neuron/cache/human-pv/hl23-source",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "purpose": "Stage 15 arm B (climb): the second half of the stage-13 Dissection. The Toronto human-fitted biophysics (biophys_HL23PYR.hoc, unchanged) is run on the Allen human morphology of the recorded cell (541563728), driven at 0.31 nA as the recording is driven. Registered for the first-interval threshold step: if the step survives the anatomy swap it is a property of the human sodium, not of the Toronto anatomy. See docs/specs/2026-09-12-h01-topographic-strategy.md, stage 15 arm B.",
+  "cap": 2,
+  "prior_evaluations": 0,
+  "max_concurrent": 1,
+  "abort_seconds": 1800,
+  "output_dir": "h01-e-anatomy",
+  "inputs": {
+    "step310": [
+      "--cache",
+      "/work",
+      "--current-na",
+      "0.31",
+      "--bias-na",
+      "-0.0037",
+      "--stimulus-on-ms",
+      "1020",
+      "--duration-ms",
+      "2100",
+      "--template",
+      "/work/source/NeuronTemplate.hoc",
+      "--biophys",
+      "/work/source/biophys_HL23PYR.hoc",
+      "--morphology",
+      "/work/source/morphologies/allen-541563728.swc"
+    ]
+  },
+  "holdout": "No holdout is touched; 0.31 nA is a recorded input of this cell.",
+  "evaluation": "One candidate at one input = one evaluation.",
+  "reference": {
+    "recorded_climb_2_mv": 1.38,
+    "recorded_climb_5_mv": 3.63,
+    "hl23pyr_own_anatomy_climb_2_mv": 1.38,
+    "hl23pyr_own_anatomy_climb_5_mv": 1.78,
+    "b3_climb_2_mv": -0.02,
+    "b3_climb_5_mv": 0.24
+  },
+  "candidates": [
+    {
+      "name": "s15-hl23pyr-on-allen",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      }
+    }
+  ]
+}
