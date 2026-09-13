@@ -158,7 +158,9 @@ def main():
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--include-recorded-bias", action="store_true")
     parser.add_argument("--ramp-pa-per-ms", type=float,
-                        help="replace the recorded command from 1020 to 2020 ms by a current ramp at this rate, capped at 2 nA")
+                        help="replace the recorded command from 1020 ms by a current ramp at this rate, capped at 2 nA")
+    parser.add_argument("--ramp-end-ms", type=float, default=2020.,
+                        help="the ramp returns to zero here (at most 2020 ms); the run still observes to --stop-ms")
     parser.add_argument("--nseg-factor", type=int, default=1)
     parser.add_argument("--calcium-decay-factor", type=float, default=1.)
     parser.add_argument("--stop-ms", type=float)
@@ -283,7 +285,9 @@ def main():
     time = source["time_ms"]
     command = source["command_current_na"]
     if args.ramp_pa_per_ms is not None:
-        command = ramp_command(time, args.ramp_pa_per_ms)
+        if not 1020. < args.ramp_end_ms <= 2020.:
+            parser.error("Ramp end must lie inside the pulse window.")
+        command = ramp_command(time, args.ramp_pa_per_ms, end_ms=args.ramp_end_ms)
     applied_command = stimulus_current(command, source["bias_current_na"],
                                        include_bias=args.include_recorded_bias)
     assert time.shape == command.shape and np.isfinite(command).all()
@@ -447,7 +451,7 @@ def main():
               "cvode_atol": args.cvode_atol, "integration_seconds": integration_seconds,
               "input": ("command plus recorded bias" if args.include_recorded_bias
                                                    else "source command only; bias not added"),
-              "ramp_pa_per_ms": args.ramp_pa_per_ms,
+              "ramp_pa_per_ms": args.ramp_pa_per_ms, "ramp_end_ms": args.ramp_end_ms if args.ramp_pa_per_ms is not None else None,
               "added_bias_na": float(source["bias_current_na"]) if args.include_recorded_bias else 0.,
               "nseg_factor": args.nseg_factor,
               "requested_stop_ms": stop_ms, "observed_stop_ms": float(arrays["time_ms"][-1]),

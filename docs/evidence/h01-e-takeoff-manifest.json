@@ -7,8 +7,8 @@
   "library": "kv3-closing-source",
   "driver": "h01_l2_neuron_reference.py",
   "purpose": "SP15 stage 9 (E): the fit's take-off against the approach at fixed availability. The recorded command from 1020 to 2020 ms is replaced by a current ramp (--ramp-pa-per-ms) at three rates; the driver records the soma, axon[0](0.5) and axon[1](0.5). Base candidate: the nseg-9 B3 reproduction of SP16 stage 0, unchanged. Specification: docs/specs/2026-09-12-h01-topographic-strategy.md (stage 9 execution addendum).",
-  "cap": 3,
-  "prior_evaluations": 0,
+  "cap": 4,
+  "prior_evaluations": 1,
   "max_concurrent": 2,
   "abort_seconds": 2400,
   "output_dir": "h01-e-takeoff",
@@ -21,7 +21,7 @@
       "--include-recorded-bias",
       "--ramp-pa-per-ms",
       "1.1",
-      "--stop-ms",
+      "--ramp-end-ms",
       "1400"
     ],
     "ramp1": [
@@ -32,7 +32,7 @@
       "--include-recorded-bias",
       "--ramp-pa-per-ms",
       "11.0",
-      "--stop-ms",
+      "--ramp-end-ms",
       "1120"
     ],
     "ramp10": [
@@ -43,7 +43,7 @@
       "--include-recorded-bias",
       "--ramp-pa-per-ms",
       "110.0",
-      "--stop-ms",
+      "--ramp-end-ms",
       "1060"
     ]
   },
@@ -71,7 +71,7 @@
       "prediction": "The fit's take-off at every recorded point moves less than 1 mV across the three ramps; the approach that results is measured and reported.",
       "rejection": "A ramp that produces no spike inside the pulse is a no-reading at that rate.",
       "unchanged": "Everything but the command waveform.",
-      "amendment": "Registered before any ramp was read: the first launch ramped to the 2 nA cap over the whole second and the 1.1 pA/ms run had not finished in 30 minutes (every spike under CVode at nseg 9 costs about a minute); the reading is spike 1, so each input now stops shortly after the expected first spike (--stop-ms 1400, 1120, 1060: ramp maxima 0.42, 1.1 and 2 nA). The aborted run is not counted."
+      "amendment": "Registered before any ramp was read: the first launch ramped to the 2 nA cap over the whole second and the 1.1 pA/ms run had not finished in 30 minutes (every spike under CVode at nseg 9 costs about a minute); the reading is spike 1, so each ramp now returns to zero shortly after the expected first spike (--ramp-end-ms 1400, 1120, 1060: ramp maxima 0.42, 1.1 and 2 nA) and the run observes to the usual 2100 ms at rest. The killed run is not counted; a launch that failed on the driver's 2020 ms endpoint rule (rc 2, no construction) spent one evaluation by the runner's rule and is recorded as prior_evaluations 1."
     }
   },
   "candidates": [

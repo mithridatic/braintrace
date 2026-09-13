@@ -364,5 +364,8 @@ recorded points; the run is a no-reading and the probes move outward). Four eval
 Stage 9 amendment (registered before any ramp was read): the first E launch ramped to the
 2 nA cap across the whole second and the 1.1 pA/ms run had not finished in 30 minutes, since
 every spike under CVode at nseg 9 costs about a minute; the reading is spike 1, so each ramp
-now stops shortly after its expected first spike (`--stop-ms` 1400, 1120 and 1060 ms; ramp
-maxima 0.42, 1.1 and 2 nA). The killed run is not counted against the cap.
+now returns to zero shortly after its expected first spike (`--ramp-end-ms` 1400, 1120 and
+1060 ms; ramp maxima 0.42, 1.1 and 2 nA) and the run observes to 2100 ms at rest, because
+the driver requires the observation to reach 2020 ms. The killed run is not counted against
+the cap; the intermediate launch with `--stop-ms`, refused by the driver before construction,
+spent one evaluation by the runner's rule (prior_evaluations 1, cap 4).
