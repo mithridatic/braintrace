@@ -8,7 +8,7 @@ import h01_topographic_swap as sw
 
 def _run(rise, count=10, fall=-100., peak=30., thr=-55., take_off=-55., rest=-84., c2=1.3, c5=3.4, r5=.86):
     spikes = []
-    n = max(count, 5)
+    n = max(count, 1)                       # the fixture fires exactly the count it reports
     for i in range(n):
         t = thr + (c2 if i == 1 else c5 if i == 4 else 0.)
         spikes.append({"spike": i+1, "threshold_mv": t, "take_off_mv": take_off, "span_mv": 4.,
@@ -47,6 +47,20 @@ def test_accuracy_is_perfect_on_an_identical_run_and_uses_the_stated_scales():
     # a 10 mV level error is scored against the stated 100 mV span
     lvl = sw.accuracy(_run(348., rest=-74.), rec)
     assert lvl["elements"]["rest_mv"]["accuracy_pct"] == pytest.approx(90., abs=.5)
+
+
+def test_a_short_train_scores_zero_on_elements_it_cannot_exhibit_and_keeps_ten():
+    """A model that fires too few spikes must not have the climb elements dropped: dropping them
+    would quietly raise the mean of exactly the models that fire least."""
+    rec = _run(348., count=10)
+    short = _run(348., count=3)                                # only three spikes
+    a = sw.accuracy(short, rec)
+    assert a["n_elements"] == 10                               # same element set as the recording
+    assert a["elements"]["climb_5_mv"]["accuracy_pct"] == 0.
+    assert a["elements"]["climb_5_mv"]["model"] is None
+    assert a["elements"]["rise_5_over_1"]["accuracy_pct"] == 0.
+    assert a["elements"]["climb_2_mv"]["model"] is not None     # two spikes is enough for the first step
+    assert a["mean_pct"] < sw.accuracy(_run(348., count=10), rec)["mean_pct"]
 
 
 def test_accuracy_floors_at_zero_and_handles_an_unread_run():

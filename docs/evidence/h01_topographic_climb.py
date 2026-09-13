@@ -31,21 +31,30 @@ COUNT_BAND = (5, 15)
 RISE_FRACTION = .15                                           # of this arm's own control
 
 
+def row_of(r):
+    """Climb and the guard quantities of one run.
+
+    The registered cell (c) is the FIRST-INTERVAL step, which needs only two spikes, so climb_2 is
+    read directly from the first two spikes; the campaign's climb() helper is used for the spike-5
+    step and the rise ratio and returns nothing on trains shorter than five.
+    """
+    row = {"status": r.get("status"), "count": r.get("count", 0)}
+    if r.get("status") != "read" or not r["spikes"]:
+        return row
+    sp = r["spikes"]
+    row.update({"rise_v_s": sp[0]["rise_v_s"], "take_off_mv": sp[0]["take_off_mv"],
+                "fall_v_s": sp[0]["fall_v_s"], "rest_mv": r.get("rest_mv")})
+    if len(sp) >= 2:
+        row["climb_2_mv"] = sp[1]["threshold_mv"]-sp[0]["threshold_mv"]
+    c = climb(sp)
+    if c:
+        row.update({"climb_5_mv": c["climb_5_mv"], "rise_5_over_1": c["rise_5_over_1"]})
+    return row
+
+
 def series(chain):
     """Climb and the guard quantities at each dose, through the recording's chain."""
-    out = {}
-    for dose, base in DOSES.items():
-        r = read(base, chain)
-        row = {"status": r.get("status"), "count": r.get("count", 0)}
-        if r.get("status") == "read" and r["spikes"]:
-            c = climb(r["spikes"])
-            row.update({"rise_v_s": r["spikes"][0]["rise_v_s"], "take_off_mv": r["spikes"][0]["take_off_mv"],
-                        "fall_v_s": r["spikes"][0]["fall_v_s"], "rest_mv": r.get("rest_mv")})
-            if c:
-                row.update({"climb_2_mv": c["climb_2_mv"], "climb_5_mv": c["climb_5_mv"],
-                            "rise_5_over_1": c["rise_5_over_1"]})
-        out[dose] = row
-    return out
+    return {dose: row_of(read(base, chain)) for dose, base in DOSES.items()}
 
 
 def monotone_up(values):
@@ -193,13 +202,7 @@ def main():
     chain = {"tau_p_us": s12["E"]["chain"]["tau_p_us"], "fc_khz": s12["E"]["chain"]["fc_khz"]}
     rec = recorded(chain)
     s = series(chain)
-    stub = read(STUB1, chain)
-    stub_row = {"status": stub.get("status"), "count": stub.get("count", 0)}
-    if stub.get("status") == "read" and stub["spikes"]:
-        c = climb(stub["spikes"])
-        stub_row.update({"rise_v_s": stub["spikes"][0]["rise_v_s"]})
-        if c:
-            stub_row.update({"climb_2_mv": c["climb_2_mv"], "climb_5_mv": c["climb_5_mv"]})
+    stub_row = row_of(read(STUB1, chain))
     acc = {"b3": accuracy(read(B3_RUN, chain), rec)}
     best, best_dose = None, None
     for dose, base in DOSES.items():

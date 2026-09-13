@@ -97,11 +97,19 @@ def crossing(points, target):
 
 
 def elements(run, rec):
-    """The ten registered elements of one run beside the recording, at 310 pA."""
+    """The ten registered elements of one run beside the recording, at 310 pA.
+
+    The element set is fixed by the RECORDING, so every model is scored over the same ten. A model
+    whose train is too short to exhibit an element (fewer than five spikes for the spike-5 climb or
+    the rise ratio, fewer than two for the first-interval step) has failed to reproduce that
+    behaviour and scores zero on it; it is never dropped, because dropping it would quietly raise
+    the mean of the models that fire least.
+    """
     if run.get("status") != "read" or not run["spikes"]:
         return None
     s, rs = run["spikes"][0], rec["spikes"][0]
-    c, rc = climb(run["spikes"]), climb(rec["spikes"])
+    sp = run["spikes"]
+    c, rc = climb(sp), climb(rec["spikes"])
     out = {"rise_v_s": (s["rise_v_s"], rs["rise_v_s"], abs(rs["rise_v_s"])),
            "fall_v_s": (s["fall_v_s"], rs["fall_v_s"], abs(rs["fall_v_s"])),
            "peak_mv": (s["peak_mv"], rs["peak_mv"], LEVEL_SCALE_MV),
@@ -109,10 +117,11 @@ def elements(run, rec):
            "take_off_mv": (s["take_off_mv"], rs["take_off_mv"], LEVEL_SCALE_MV),
            "count": (float(run["count"]), float(rec["count"]), abs(float(rec["count"]))),
            "rest_mv": (run["rest_mv"], rec["rest_mv"], LEVEL_SCALE_MV)}
-    if c and rc:
-        out["climb_2_mv"] = (c["climb_2_mv"], rc["climb_2_mv"], abs(rc["climb_2_mv"]))
-        out["climb_5_mv"] = (c["climb_5_mv"], rc["climb_5_mv"], abs(rc["climb_5_mv"]))
-        out["rise_5_over_1"] = (c["rise_5_over_1"], rc["rise_5_over_1"], abs(rc["rise_5_over_1"]))
+    if rc:
+        step2 = (sp[1]["threshold_mv"]-sp[0]["threshold_mv"]) if len(sp) >= 2 else None
+        out["climb_2_mv"] = (step2, rc["climb_2_mv"], abs(rc["climb_2_mv"]))
+        out["climb_5_mv"] = ((c["climb_5_mv"] if c else None), rc["climb_5_mv"], abs(rc["climb_5_mv"]))
+        out["rise_5_over_1"] = ((c["rise_5_over_1"] if c else None), rc["rise_5_over_1"], abs(rc["rise_5_over_1"]))
     return out
 
 
@@ -123,7 +132,12 @@ def accuracy(run, rec):
         return None
     per = {}
     for name, (model, ref, scale) in el.items():
-        if not (np.isfinite(model) and np.isfinite(ref)) or not scale:
+        if ref is None or not np.isfinite(ref) or not scale:
+            continue
+        if model is None or not np.isfinite(model):
+            # the model cannot exhibit this element (train too short): a failure, scored zero
+            per[name] = {"model": None, "recorded": float(ref), "accuracy_pct": 0.,
+                         "note": "not exhibited by this model (train too short); scored zero, not dropped"}
             continue
         per[name] = {"model": float(model), "recorded": float(ref),
                      "accuracy_pct": float(max(0., 1.-abs(model-ref)/scale)*100.)}
