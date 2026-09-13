@@ -522,3 +522,58 @@ train it is full-sized after one spike (spike 2 residual +1.83 mV, n 6) and does
 full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s. Limits:
 the read does not reach inside the first 2.7 s, and it assumes the step is as visible at
 7 mV/ms as at 0.2 to 0.75.
+
+## Stage 12 (registered 2026-09-13, retained traces only, no run): the recording's measurement chain
+
+A re-read of the book (ch. 4, Table 3: "observed variation is the product being measured
+or the measurement process itself"; ch. 6: quantities compared at different observation
+points are not the same quantity) found a split the campaign never made. Every recorded
+quantity is read at the top of a patch pipette through the amplifier's bridge and
+capacitance neutralisation and the acquisition filter; every model quantity is read at the
+membrane. The two are one quantity only through the recording's own chain. The E file
+records access resistance 7.68 MOhm, bridge balance 7.94 to 10.32 MOhm, capacitance
+compensation 0 F on every long square (the I file 9.01 / 10.01 MOhm / +3.4 pF). A repeat
+sigma measured through one chain (E rise 1.5 V/s) bounds that chain's repeatability, not its
+bias against the model, so every "N sigma" that crosses the two chains (rise, peak, onset
+span, rapidness) is mis-framed until the chain is measured; sigmas within one chain
+(threshold, take-off, level) stand.
+
+**Y and the measurement.** The chain is measured, not estimated, from the recording's own
+step edges: the subthreshold 3 ms short squares (E sweeps 15 to 18 and 22 to 26 at 0.9 to
+1.25 nA; I sweeps 7 to 13 at 0.1 to 0.7 nA), pulse onset at 1020.0 ms. In the first 0.4 ms
+the membrane is linear (tau 10.3 / 6 ms), so the recorded response to the current step is the
+chain's response to a known input: V_m(t) = (I0/C)·t (C from the stage-0 onset capacitance,
+128 / 70 pF) plus the bridge term (R_s·LP[u] − R_b·u)·I0, where LP is the pipette pole
+tau_p = R_s·C_p and the bridge R_b is the recorded value; then the acquisition filter (a
+4-pole Bessel with corner f_c) and a delay t0. A live C_p shows as a negative transient of
+amplitude R_b·I0 (9.6 mV at 1.21 nA) lasting tau_p; a neutralised one leaves only the bridge
+mismatch step (R_s − R_b)·I0. Fitted jointly over every onset edge: tau_p, f_c, t0, and
+R_s − R_b; tau_p is then profiled (0 to 100 us) and its bound is the largest tau_p whose
+residual is within 20 percent of the minimum. The chain (tau_p, f_c) is then applied to the
+model traces and every quantity re-read with the campaign's own readers.
+
+**Cells, registered before the traces are opened.**
+(a) *Chain.* tau_p bound and f_c for each cell, with the residual profile; "no reading" if
+the edges do not constrain tau_p to within a factor of two of the acquisition corner.
+(b) *Rise.* The fit's spike-1 rise at 310 pA (x2 density-held arm 655 V/s; B3 control 639)
+through the fitted chain, and the fraction of the gap to the recorded 348 that the chain
+accounts for. Upper bound independent of the fit: the tau_p at which the filtered peak
+equals the recorded peak (35.3 mV) and the rise there. Prediction: the chain accounts for
+less than half of the gap under the peak bound; the residual is real at more than 3 sigma
+of the within-chain repeat (1.5 V/s).
+(c) *Slow set held.* Through the same chain, on the x2 density-held ramps and step: somatic
+take-off moves less than 0.1 mV, approach within 5 percent, axon lead within 0.02 ms, count
+unchanged; the recording-only relations (interval, short-square series) are untouched by
+construction. Rejection: any of these moving beyond its limit re-opens stages 7 to 11.
+(d) *Onset.* Span and rapidness of the E fit through the chain against the recording's; the
+I fit (finalist probes run, 0.19 nA) through the I chain against the recorded I onset (2.7
+mV span, 52 per ms). Prediction: the E span stays within 1 mV of the recording's and the I
+fit's span stays above 8 mV (the stage-8 I reading survives its chain); either failing is
+recorded as a stage-8 erratum.
+(e) *Qualification rule* for the causal model, independent of the outcome: a fast model
+quantity is comparable to a recorded one only through the recording's own chain; a repeat
+sigma bounds repeatability, not bias.
+
+Unchanged: no run, no lever, holdouts sealed; the model traces are the retained ones
+(`h01-e-coupling-b/s10-d2-density-*`, `h01-e-cable-load/c10-area-310-n9-sweep53`,
+`h01-i-takeoff/s9-finalist-probes-019-probes`).
