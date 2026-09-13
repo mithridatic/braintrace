@@ -1,5 +1,5 @@
 {
-  "id": "doc_8e792851-4db",
+  "id": "doc_d86fb8df-51d",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -338,11 +338,18 @@
         "label": "lineage refuted; the climb is where the accuracy is"
       },
       {
-        "id": "q14__next",
+        "id": "q14__q15",
         "source": "q14",
-        "target": "next",
+        "target": "q15",
         "relation": "describes",
         "label": "no somatic lever; dose the site"
+      },
+      {
+        "id": "q15__next",
+        "source": "q15",
+        "target": "next",
+        "relation": "describes",
+        "label": "site moves the threshold but takes the train with it"
       },
       {
         "id": "q11_climb__next",
@@ -424,6 +431,7 @@
           "q11_climb",
           "q13",
           "q14",
+          "q15",
           "next",
           "q2_upstroke",
           "policy"
@@ -1524,9 +1532,36 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q15",
+        "type": "Branch retained",
+        "text": "Q15 (SP15 stage 16 part 2, executed, 4 runs): the climb dosed at the INITIATION SITE. Axonal sodium recovery 0.5/0.25/0.125 on the stage-10 thickened-stub arm, plus the strongest dose on the default 1 um stub as the coupling control.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "MECHANISM CONFIRMED, NOT USABLE. The first-interval step moves -0.07 -> +0.89 -> +2.39 mV, PAST the recorded +1.38: the site can move the threshold by more than the recording asks, where no somatic conductance moved it at all. The coupling control passed: the same dose on the 1 um stub gives -2.56 mV, the OPPOSITE sign, so accommodation reaches the soma only through the thickened coupling (stage 10 confirmed, not assumed). But every dose that moves the threshold collapses the train (9 -> 3 -> 2 -> 2 spikes); the registered guard fired at every dose and the series is non-monotone. Over the same ten elements the best arm is the CONTROL at 69.1 percent, below B3's 71.8.\n\nEvidence: docs/evidence/h01-topographic/stage-16.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q15_ev0",
+            "title": "docs/evidence/h01-topographic/stage-16.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-16.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q15_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "next",
         "type": "Next test",
-        "text": "Next: stage 16 part 2 RUNNING - the climb as accommodation at the INITIATION SITE, read through a coupling wide enough for the soma to see it. Axonal sodium recovery dosed 0.5/0.25/0.125 on the stage-10 thickened-stub arm, plus the strongest dose on the default 1 um stub as the coupling control. Target: at least half the recorded first-interval step (+0.69 of +1.38 mV) with the count in 5-15 and the spike-1 rise within 15 percent of the arm's control. Then: spend the sealed holdout (sweep 54), then the second human cell, then the population. Accuracy ledger: climb 19.4 points, rise 6.4, all else 2.4.",
+        "text": "Next: not registered. The climb needs a site process SLOWER than the 13.5 ms interspike interval, able to accumulate a threshold without gating the next spike; the recovery-factor family acts on the interval's own timescale and cannot do both. Remaining: spend the sealed holdout (sweep 54), then the second human cell, then the population build. Accuracy ledger: climb 19.4 points, rise 6.4, all else 2.4; best measured model remains B3 at 71.8 percent.",
         "status": "unverified",
         "confidence": null,
         "notes": "Y before levers; register the outcome cells first.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
@@ -2303,13 +2338,29 @@
         ]
       },
       {
-        "id": "review_q14__next",
-        "edgeId": "q14__next",
+        "id": "review_q14__q15",
+        "edgeId": "q14__q15",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q14__next",
+            "id": "reservation_q14__q15",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q15__next",
+        "edgeId": "q15__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q15__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

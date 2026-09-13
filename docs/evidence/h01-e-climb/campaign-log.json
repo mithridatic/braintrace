@@ -1,0 +1,134 @@
+[
+  {
+    "name": "s16-axrec-050",
+    "candidate_sha256": "f8ee1a381f0cfc9205ab969871df36233817afe0857485ddc7828864b77b601e",
+    "evaluation_index": 1,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s16-axrec-050",
+        "input": "sweep53",
+        "seconds": 590.9752078354359,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-climb/s16-axrec-050-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-050.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-050-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s16-axrec-025",
+    "candidate_sha256": "3f76a732a411bad7a00eeeb73b0ea596ad04ccb2940c85fbf038ad01573e6798",
+    "evaluation_index": 2,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s16-axrec-025",
+        "input": "sweep53",
+        "seconds": 584.9910694314167,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-climb/s16-axrec-025-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-025.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-025-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s16-axrec-0125",
+    "candidate_sha256": "ebbb987d6f1eef2692f27e83dd766d8c73360569a542267e691fab4d7bc35c2b",
+    "evaluation_index": 3,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s16-axrec-0125",
+        "input": "sweep53",
+        "seconds": 585.5077039161697,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-climb/s16-axrec-0125-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-0125.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-0125-sweep53"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "s16-axrec-0125-stub1",
+    "candidate_sha256": "ecd35e2ed4a92ea440d043938c57add6345a0600bdffe1cc5c9d7bd1e1900cab",
+    "evaluation_index": 4,
+    "abort_seconds": 3000,
+    "inputs": {
+      "sweep53": "completed"
+    },
+    "runs": [
+      {
+        "name": "s16-axrec-0125-stub1",
+        "input": "sweep53",
+        "seconds": 615.8865147577599,
+        "returncode": 0,
+        "aborted": false,
+        "stderr_tail": [],
+        "stderr_log": "h01-e-climb/s16-axrec-0125-stub1-sweep53.stderr.log",
+        "command": [
+          "/workspace/h01-neuron/venv312/bin/python",
+          "/workspace/braintrace-q2/docs/evidence/h01_l2_neuron_reference.py",
+          "--candidate-json",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-0125-stub1.candidate.json",
+          "--cache",
+          "/workspace/h01-neuron/cache/human-pyramidal-l2",
+          "--sweep",
+          "53",
+          "--include-recorded-bias",
+          "--output",
+          "/workspace/braintrace-q2/docs/evidence/h01-e-climb/s16-axrec-0125-stub1-sweep53"
+        ]
+      }
+    ]
+  }
+]

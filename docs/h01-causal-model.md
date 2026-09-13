@@ -555,7 +555,32 @@ this recording. What separates them is concentrated: of the 28.2 points B3 is mi
 threshold-climb elements carry 19.4 and the rise 6.4, and every other element is already
 between 90 and 100 percent. The climb's first-interval step has a positive control in
 HL23PYR's sodium while B3 holds the excitability, so the one split left worth running is what
-gives HL23PYR its climb, placed in B3 without breaking the count. The second half of the
+gives HL23PYR its climb, placed in B3 without breaking the count.
+[Stage 16](evidence/h01-topographic/stage-16.md) ran that split in two parts and it is now
+answered. Part 1, on retained traces and without a run, asked whether any somatic conductance
+could move the threshold, and refused the dose that had been registered: read at a common
+subthreshold voltage on the ascending limb before each spike, the somatic outward current does
+accumulate (0.0108, 0.0133, 0.0209, 0.0229 nA before spikes 1 to 4) while the take-off does not
+move at all (-57.20, -57.42, -57.16, -57.20, -57.20 mV). The balance says why: at the take-off
+the axon[0] leg delivers +0.33 nA and the whole accumulated somatic brake is about 0.012 nA,
+some three percent of the trigger, carried by leak (69 percent) and Kv3_1 (30 percent) with Im
+at 0.4 percent. The somatic threshold is the arrival time of the axonal spike, which stages 9,
+10 and 14 had each approached from a different side; no somatic conductance can move it, and
+four evaluations were saved by asking before dosing. Part 2 therefore dosed the site. Falling
+axonal sodium recovery on the stage-10 thickened-stub geometry moves the first-interval step
+from -0.07 mV through +0.89 to +2.39 mV, past the recorded +1.38: the initiation site can move
+the threshold by more than the recording asks. The same strongest dose on the default 1 um
+Allen stub gives -2.56 mV, the opposite sign, so the accommodation reaches the soma only
+through the thickened coupling; that cell passed, and it confirms stage 10's account of the
+take-off rather than assuming it. What fails is the separation. Every dose that moves the
+threshold collapses the train, 9 spikes to 3 to 2 to 2, so the registered guard fired at every
+dose, and the series is not monotone because at recovery 0.5 the second spike arrives early and
+low before accommodation dominates. Scored over the same ten elements the best arm is the
+control at 69.1 percent, below plain B3's 71.8, because this geometry starts with a worse rise
+(609 against 570 V/s) and accommodation only adds a cost. So the climb's mechanism is located
+and demonstrated but not usable: what remains is a process at the site slower than the 13.5 ms
+interspike interval, able to accumulate a threshold without gating the next spike, and the
+recovery-factor family acts on the interval's own timescale and cannot do both. The second half of the
 stage-13 split cannot supply it: the published Toronto template will not construct on this
 cell's morphology, and editing it would break the split's unchanged condition, so that arm is
 closed as a no-reading. The accumulation that follows the step remains without a counterpart

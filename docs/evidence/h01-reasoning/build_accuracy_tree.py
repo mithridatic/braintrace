@@ -46,6 +46,7 @@ STAGE15 = "docs/evidence/h01-topographic/stage-15.json"
 ACC = "docs/evidence/h01-topographic/human-vs-rodent-accuracy.json"
 OBS16 = "docs/evidence/h01-topographic/stage-16-observation.json"
 CLIMB_MF = "docs/evidence/h01-e-climb-manifest.json"
+STAGE16 = "docs/evidence/h01-topographic/stage-16.json"
 ONSET = "docs/evidence/h01-topographic/onset-shape.json"
 SP16_E = "docs/evidence/h01-e-sodium-slow/stage-1-decision.json"
 POP = "docs/evidence/h01-population-status.md"
@@ -152,26 +153,40 @@ def build_nodes():
 
         # ---------------- what is running ----------------------------------------------
         n("open_site", OPEN,
-          "RUNNING: the climb as accommodation at the INITIATION SITE, read through a coupling that lets "
-          "the soma see it. Axonal sodium recovery dosed 0.5 / 0.25 / 0.125 on the stage-10 thickened-stub "
-          "geometry, plus the strongest dose on the default 1 um stub as the coupling control.",
-          "Stage 16 part 2, four runs at 310 pA. Target: at least half the recorded first-interval step "
-          "(+0.69 of +1.38 mV) with the count in 5-15 and the spike-1 rise within 15 percent of the arm's "
-          "control. Confidence 40 percent: the mechanism is the right place (the site sets the threshold) "
-          "and HL23PYR proves a human L2/3 model can produce the step, but SP16 showed sodium availability "
-          "is a weak threshold lever at a dense fast site, and this arm's own rise (655 V/s) starts further "
-          "from the recording than plain B3's.",
-          [CLIMB_MF, STAGE10], "unverified", 40),
+          "RESULT (stage 16 part 2): the climb IS reachable at the initiation site - and only by "
+          "crippling the cell. Axonal sodium recovery 0.25 gives a first-interval step of +0.89 mV, past "
+          "the +0.69 target that no somatic conductance could reach at all; but the train collapses from "
+          "9 spikes to 2, and the series is non-monotone (-0.07, -3.28, +0.89 mV at recovery 1.0, 0.5, 0.25).",
+          "Registered cells (c) and (d) both fail as written: not monotone, and the count leaves the 5-15 "
+          "band at every dose that moves the threshold. Scored over the same ten elements the best arm is "
+          "the CONTROL at 69.1 percent, BELOW plain B3's 71.8, because this coupled geometry starts with a "
+          "worse rise (609 against 570 V/s) and accommodation only costs more. Confidence lowered from 40 "
+          "to 15 percent: the mechanism is real and correctly located, but no dose separates the threshold "
+          "step from the spike count in this model family.",
+          [STAGE16, CLIMB_MF, STAGE10], "supported", 15),
+
+        n("coupling_confirmed", CLOSED,
+          "CONFIRMED (not eliminated): the soma-site coupling is real and load-bearing. The same axonal "
+          "accommodation dose gives +2.39 mV of threshold step through a 2 um stub and -2.56 mV - the "
+          "opposite sign - through the default 1 um Allen stub.",
+          "Stage 16 cell (f), the one cell of the stage that passed. This is the first direct test of "
+          "stage 10's account of the take-off rather than an inference from it: the site's state reaches "
+          "the soma only when the stub is thickened. It also means the Allen 1 um replacement stub, not "
+          "any channel, is what makes B3's threshold immovable.",
+          [STAGE16, STAGE10], "supported", 88),
 
         # ---------------- the plan, single cell ----------------------------------------
         n("plan_climb", PLAN,
-          "STEP 1 - close the climb on the E cell: 71.8 -> 91.1 percent. Worth 19.4 points, the largest "
-          "single gain available anywhere in the campaign.",
-          "If stage 16 part 2 lands, this is done. If it does not, the remaining candidates are a slow "
-          "process at the site with a longer time constant than SP16 tested, or the dendritic/axial route "
-          "that stage 14 showed carries most of the take-off current. Confidence 45 percent that the climb "
-          "reaches at least half the recorded step within two more stages.",
-          [STAGE15, CM], "unverified", 45),
+          "STEP 1 - close the climb on the E cell: 71.8 -> 91.1 percent. Still the largest single gain "
+          "available (19.4 points), but the direct route is now measured and costly.",
+          "Stage 16 located the mechanism (the site, not the soma) and showed it moves the threshold the "
+          "right way and by roughly the right amount, while taking the spike count with it. What is left "
+          "is to separate the two: a slower site process (longer recovery time constant than the 13.5 ms "
+          "interspike interval, which the dose family tested here does not provide), or accommodation "
+          "placed where it reaches threshold without gating the train. Confidence lowered from 45 to 25 "
+          "percent that the climb reaches at least half the recorded step with the count held, within two "
+          "more stages.",
+          [STAGE15, CM], "unverified", 25),
         n("plan_rise", PLAN,
           "STEP 2 - close the rise on the E cell: +6.4 points to ~97.5 percent. Five stages have now failed "
           "to move it.",
@@ -234,8 +249,10 @@ def build_nodes():
           "factors reported separately so no single number hides a blocker. Confidence 25 percent that the "
           "full product exceeds 80 percent within this campaign's scope: the climb is plausible, the build "
           "is fixable, but type coverage for 49 cells and the absence of H01 ground truth are the hard "
-          "limits, and the second of those cannot be removed.",
-          [POP, TYPES, STAGE15], "unverified", 25),
+          "limits, and the second of those cannot be removed. Lowered from 25 to 15 percent after stage "
+          "16: the climb, which carries two thirds of the single-cell headroom, resisted the one mechanism "
+          "that can physically reach it.",
+          [POP, TYPES, STAGE15], "unverified", 15),
         n("policy", PLAN,
           "STOPPING RULE, stated in advance: after the climb resolves, the remaining measurable gain on the "
           "E cell is 6.4 points (rise) plus 2.4 (everything else). That is the point to stop single-cell "
@@ -260,7 +277,8 @@ def build_edges():
         e("headroom", "closed_slowna", "describes", "eliminated route (climb)"),
         e("headroom", "closed_somatic_climb", "describes", "eliminated route (climb)"),
         e("closed_somatic_climb", "open_site", "describes", "so the climb must be dosed at the site"),
-        e("open_site", "plan_climb", "describes", "if it lands, +19.4 points"),
+        e("open_site", "coupling_confirmed", "describes", "the cell that passed"),
+        e("coupling_confirmed", "plan_climb", "describes", "mechanism located, not yet usable"),
         e("plan_climb", "plan_rise", "describes", "then the only element left"),
         e("plan_climb", "plan_holdout", "describes", "generalisation test"),
         e("plan_holdout", "plan_second_cell", "describes", "cross-cell test"),

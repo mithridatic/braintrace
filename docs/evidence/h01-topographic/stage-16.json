@@ -1,0 +1,236 @@
+{
+  "stage": "16",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "chain": {
+    "tau_p_us": 4.665855831988264,
+    "fc_khz": 10.0
+  },
+  "recorded_reference": {
+    "climb_2_mv": 1.38,
+    "climb_5_mv": 3.63,
+    "rise_5_over_1": 0.86,
+    "count": 10
+  },
+  "series": {
+    "1.0": {
+      "status": "read",
+      "count": 9,
+      "rise_v_s": 609.3884305042917,
+      "take_off_mv": -55.37514217319962,
+      "fall_v_s": -91.0376370290129,
+      "rest_mv": -84.13390282037223,
+      "climb_2_mv": -0.07206253300719112,
+      "climb_5_mv": 0.14078708110469762,
+      "rise_5_over_1": 0.9383808361331948
+    },
+    "0.5": {
+      "status": "read",
+      "count": 3,
+      "rise_v_s": 609.3884305432234,
+      "take_off_mv": -55.375142173055366,
+      "fall_v_s": -91.03763703106921,
+      "rest_mv": -84.13390282037888,
+      "climb_2_mv": -3.2838858469933427
+    },
+    "0.25": {
+      "status": "read",
+      "count": 2,
+      "rise_v_s": 609.3884305647796,
+      "take_off_mv": -55.37514217372936,
+      "fall_v_s": -91.03763703075339,
+      "rest_mv": -84.13390282037766,
+      "climb_2_mv": 0.8882577903690958
+    },
+    "0.125": {
+      "status": "read",
+      "count": 2,
+      "rise_v_s": 609.3884305683155,
+      "take_off_mv": -55.375142173242445,
+      "fall_v_s": -91.03763702845333,
+      "rest_mv": -84.13390282037122,
+      "climb_2_mv": 2.3914813385806113
+    }
+  },
+  "coupling_control": {
+    "status": "read",
+    "count": 7,
+    "rise_v_s": 570.4170287626077,
+    "take_off_mv": -57.29420769162198,
+    "fall_v_s": -94.15629779474312,
+    "rest_mv": -83.96942160174001,
+    "climb_2_mv": -2.5629725866663193,
+    "climb_5_mv": 2.7592882357462756,
+    "rise_5_over_1": 0.6907238020944909
+  },
+  "accuracy": {
+    "b3": {
+      "elements": {
+        "rise_v_s": {
+          "model": 570.4170280334747,
+          "recorded": 347.6562604194875,
+          "accuracy_pct": 35.924994606684045
+        },
+        "fall_v_s": {
+          "model": -94.15629780225777,
+          "recorded": -103.90626266608152,
+          "accuracy_pct": 90.61657631248201
+        },
+        "peak_mv": {
+          "model": 38.17346145153743,
+          "recorded": 35.34375360608101,
+          "accuracy_pct": 97.17029215454357
+        },
+        "threshold_mv": {
+          "model": -57.29420769821471,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 99.11204581845932
+        },
+        "take_off_mv": {
+          "model": -57.29420769821471,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 99.11204581845932
+        },
+        "count": {
+          "model": 10.0,
+          "recorded": 10.0,
+          "accuracy_pct": 100.0
+        },
+        "rest_mv": {
+          "model": -83.96942160173832,
+          "recorded": -83.90624964237213,
+          "accuracy_pct": 99.93682804063381
+        },
+        "climb_2_mv": {
+          "model": -0.023088407131098165,
+          "recorded": 1.375000923871994,
+          "accuracy_pct": 0.0
+        },
+        "climb_5_mv": {
+          "model": 0.2357794881297508,
+          "recorded": 3.625001758337021,
+          "accuracy_pct": 6.504258586564527
+        },
+        "rise_5_over_1": {
+          "model": 0.9514585975277483,
+          "recorded": 0.8606742014274366,
+          "accuracy_pct": 89.45194407480265
+        }
+      },
+      "mean_pct": 71.78289854126294,
+      "n_elements": 10
+    },
+    "best_climb": {
+      "elements": {
+        "rise_v_s": {
+          "model": 609.3884305042917,
+          "recorded": 347.6562604194875,
+          "accuracy_pct": 24.715243220704842
+        },
+        "fall_v_s": {
+          "model": -91.0376370290129,
+          "recorded": -103.90626266608152,
+          "accuracy_pct": 87.61515879131954
+        },
+        "peak_mv": {
+          "model": 38.95777818001471,
+          "recorded": 35.34375360608101,
+          "accuracy_pct": 96.38597542606631
+        },
+        "threshold_mv": {
+          "model": -55.37514217319962,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 98.96888865652558
+        },
+        "take_off_mv": {
+          "model": -55.37514217319962,
+          "recorded": -56.40625351667404,
+          "accuracy_pct": 98.96888865652558
+        },
+        "count": {
+          "model": 9.0,
+          "recorded": 10.0,
+          "accuracy_pct": 90.0
+        },
+        "rest_mv": {
+          "model": -84.13390282037223,
+          "recorded": -83.90624964237213,
+          "accuracy_pct": 99.7723468219999
+        },
+        "climb_2_mv": {
+          "model": -0.07206253300719112,
+          "recorded": 1.375000923871994,
+          "accuracy_pct": 0.0
+        },
+        "climb_5_mv": {
+          "model": 0.14078708110469762,
+          "recorded": 3.625001758337021,
+          "accuracy_pct": 3.883779663855502
+        },
+        "rise_5_over_1": {
+          "model": 0.9383808361331948,
+          "recorded": 0.8606742014274366,
+          "accuracy_pct": 90.97142280123175
+        }
+      },
+      "mean_pct": 69.1281704038229,
+      "n_elements": 10
+    },
+    "best_dose": "1.0"
+  },
+  "reading": [
+    "The climb IS reachable at the initiation site, and it is NOT reachable from the soma. Falling axonal sodium recovery moves the first-interval threshold step from -0.07 mV (control) through +0.89 to +2.39 mV, past the recorded +1.38: the site can move the threshold by more than the recording asks, where part 1 showed no somatic conductance can move it at all.",
+    "The coupling is required, and that is the cell that passed. The same strongest dose on the default 1 um Allen stub gives -2.56 mV, the opposite sign to the coupled arm's +2.39 with the 2 um stub. So the site's accommodation reaches the soma only through the thickened coupling, which confirms stage 10's account of the take-off rather than assuming it.",
+    "But the climb cannot be separated from the spike count in this model family. Every dose that moves the threshold collapses the train: 9 spikes at recovery 1.0, then 3, 2 and 2. The registered guard (d) fired at every dose, and the series is not monotone (-0.07, -3.28, +0.89, +2.39) because at recovery 0.5 the second spike arrives early and low before accommodation dominates.",
+    "Scored over the same ten elements the best arm is the CONTROL at 69.1 percent, below plain B3's 71.8: this coupled geometry starts with a worse rise (609 against 570 V/s) and accommodation only costs count on top. Dosing the site does not buy accuracy, even though it buys the mechanism.",
+    "What is left for the climb is therefore a process at the site slower than the 13.5 ms interspike interval, so that the threshold accumulates without gating the next spike; the recovery-factor family tested here acts on the same timescale as the interval and cannot do both. That is a narrower and harder target than the campaign assumed, and it is the honest reason to stop."
+  ],
+  "decision": {
+    "verdict": "MIXED",
+    "checks": [
+      {
+        "reading": "c",
+        "prediction": "some dose reaches at least half the recorded first-interval step (+0.69 of +1.38 mV), and the climb is monotone as the recovery factor falls",
+        "value": {
+          "1.0": -0.07,
+          "0.5": -3.28,
+          "0.25": 0.89,
+          "0.125": 2.39
+        },
+        "pass": false,
+        "note": "recorded +1.38; B3 -0.02; HL23PYR +1.38"
+      },
+      {
+        "reading": "d",
+        "prediction": "at the best dose the count stays within 5 to 15 and the spike-1 rise within 15 percent of the arm's control",
+        "value": {
+          "dose": "0.125",
+          "count": 2,
+          "rise_v_s": 609.3884305683155,
+          "control_rise_v_s": 609.3884305042917
+        },
+        "pass": false,
+        "note": "the climb must not be bought by crippling the cell"
+      },
+      {
+        "reading": "f",
+        "prediction": "the same strongest dose on the default 1 um stub gives at most a fraction of the coupled arm's climb",
+        "value": {
+          "coupled_2um": 2.39,
+          "stub_1um": -2.56
+        },
+        "pass": true,
+        "note": "if they are equal the coupling is not required and stage 10's account of the take-off is wrong"
+      },
+      {
+        "reading": "g",
+        "prediction": "percent accuracy of the best climb dose beside B3's 71.8",
+        "value": {
+          "b3_pct": 71.8,
+          "best_climb_pct": 69.1
+        },
+        "pass": null,
+        "note": "reported; this arm's baseline rise is further from the recording than plain B3's"
+      }
+    ]
+  }
+}

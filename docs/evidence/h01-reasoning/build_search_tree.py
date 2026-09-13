@@ -45,6 +45,7 @@ STAGE14 = "docs/evidence/h01-topographic/stage-14.json"
 STAGE15 = "docs/evidence/h01-topographic/stage-15.json"
 ACCJSON = "docs/evidence/h01-topographic/human-vs-rodent-accuracy.json"
 OBS16 = "docs/evidence/h01-topographic/stage-16-observation.json"
+STAGE16 = "docs/evidence/h01-topographic/stage-16.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -146,7 +147,10 @@ def build_nodes():
           "REFUTED. Below B3's own conductance the cell is SILENT (plateau -49 mV, ABOVE its own -57 mV take-off; 8x density moves it 0.8 mV): the +13 mV activation shift is fitted against the Toronto K set and never activates against Allen's, which was fitted to a sodium activating 13 mV lower. Kinetics are fitted as a SET, not interchangeable parts. At matched conductance the rise goes UP (625, then 921 V/s) against the recorded 348. Accuracy: B3 71.8, best human-sodium arm 62.0, fully human-fitted HL23PYR 72.3 - 'human rather than mouse' is worth half a point.", [STAGE15, ACCJSON], "supported"),
         n("q14", R, "Q14 (SP15 stage 16 part 1, observation on retained traces, no run): can ANY somatic conductance move the threshold? Somatic outward current at a common subthreshold voltage before each spike, against the take-off along the train.",
           "NO, and the registered somatic dose was REFUSED before it ran (4 evaluations saved). Outward current accumulates (+22.5 percent by spike 2, doubling by spike 4) while the take-off does not move at all (-57.20, -57.42, -57.16, -57.20, -57.20 mV). At the take-off the axon[0] leg delivers +0.33 nA against a total accumulated somatic brake of ~0.012 nA - 3 percent of the trigger. Carriers at take-off: leak 69 percent, Kv3_1 30 percent, Im 0.4 percent. B3's somatic threshold is the ARRIVAL TIME of the axonal spike.", [OBS16, STAGE14], "supported"),
-        n("next", T, "Next: stage 16 part 2 RUNNING - the climb as accommodation at the INITIATION SITE, read through a coupling wide enough for the soma to see it. Axonal sodium recovery dosed 0.5/0.25/0.125 on the stage-10 thickened-stub arm, plus the strongest dose on the default 1 um stub as the coupling control. Target: at least half the recorded first-interval step (+0.69 of +1.38 mV) with the count in 5-15 and the spike-1 rise within 15 percent of the arm's control. Then: spend the sealed holdout (sweep 54), then the second human cell, then the population. Accuracy ledger: climb 19.4 points, rise 6.4, all else 2.4.",
+        n("q15", R, "Q15 (SP15 stage 16 part 2, executed, 4 runs): the climb dosed at the INITIATION SITE. Axonal sodium recovery 0.5/0.25/0.125 on the stage-10 thickened-stub arm, plus the strongest dose on the default 1 um stub as the coupling control.",
+          "MECHANISM CONFIRMED, NOT USABLE. The first-interval step moves -0.07 -> +0.89 -> +2.39 mV, PAST the recorded +1.38: the site can move the threshold by more than the recording asks, where no somatic conductance moved it at all. The coupling control passed: the same dose on the 1 um stub gives -2.56 mV, the OPPOSITE sign, so accommodation reaches the soma only through the thickened coupling (stage 10 confirmed, not assumed). But every dose that moves the threshold collapses the train (9 -> 3 -> 2 -> 2 spikes); the registered guard fired at every dose and the series is non-monotone. Over the same ten elements the best arm is the CONTROL at 69.1 percent, below B3's 71.8.",
+          [STAGE16, CM], "supported"),
+        n("next", T, "Next: not registered. The climb needs a site process SLOWER than the 13.5 ms interspike interval, able to accumulate a threshold without gating the next spike; the recovery-factor family acts on the interval's own timescale and cannot do both. Remaining: spend the sealed holdout (sweep 54), then the second human cell, then the population build. Accuracy ledger: climb 19.4 points, rise 6.4, all else 2.4; best measured model remains B3 at 71.8 percent.",
           "Y before levers; register the outcome cells first.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
@@ -201,7 +205,8 @@ def build_edges():
         cm.edge("q11_rise", "q12", "describes", "decompose the shared rise by observation point"),
         cm.edge("q12", "q13", "describes", "dose or swap the sodium equations"),
         cm.edge("q13", "q14", "describes", "lineage refuted; the climb is where the accuracy is"),
-        cm.edge("q14", "next", "describes", "no somatic lever; dose the site"),
+        cm.edge("q14", "q15", "describes", "no somatic lever; dose the site"),
+        cm.edge("q15", "next", "describes", "site moves the threshold but takes the train with it"),
         cm.edge("q11_climb", "next", "describes", "the step has a control; the accumulation has none"),
         cm.edge("q9_step", "next", "describes", "a 1-3 s per-spike process"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),

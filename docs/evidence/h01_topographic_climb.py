@@ -130,8 +130,10 @@ def markdown(result):
         if r.get("status") != "read":
             lines.append(f"| {dose} | {r.get('status', 'not run')} | - | {r.get('count', 0)} | - | - |")
             continue
-        lines.append(f"| {dose} | {r.get('climb_2_mv', float('nan')):+.2f} | {r.get('climb_5_mv', float('nan')):+.2f} | "
-                     f"{r['count']} | {r.get('rise_v_s', float('nan')):.0f} | {r.get('rise_5_over_1', float('nan')):.2f} |")
+        def f(x, spec):
+            return "-" if x is None or not np.isfinite(x) else format(x, spec)
+        lines.append(f"| {dose} | {f(r.get('climb_2_mv'), '+.2f')} | {f(r.get('climb_5_mv'), '+.2f')} | "
+                     f"{r['count']} | {f(r.get('rise_v_s'), '.0f')} | {f(r.get('rise_5_over_1'), '.2f')} |")
     st = result["coupling_control"]
     lines += ["", "## Coupling control (same strongest dose, default 1 um stub)", ""]
     if st.get("status") == "read":
@@ -194,7 +196,27 @@ def plot(result, path):
     plt.close(fig)
 
 
-READING = []
+READING = [
+    "The climb IS reachable at the initiation site, and it is NOT reachable from the soma. Falling "
+    "axonal sodium recovery moves the first-interval threshold step from -0.07 mV (control) through "
+    "+0.89 to +2.39 mV, past the recorded +1.38: the site can move the threshold by more than the "
+    "recording asks, where part 1 showed no somatic conductance can move it at all.",
+    "The coupling is required, and that is the cell that passed. The same strongest dose on the default "
+    "1 um Allen stub gives -2.56 mV, the opposite sign to the coupled arm's +2.39 with the 2 um stub. So "
+    "the site's accommodation reaches the soma only through the thickened coupling, which confirms "
+    "stage 10's account of the take-off rather than assuming it.",
+    "But the climb cannot be separated from the spike count in this model family. Every dose that moves "
+    "the threshold collapses the train: 9 spikes at recovery 1.0, then 3, 2 and 2. The registered guard "
+    "(d) fired at every dose, and the series is not monotone (-0.07, -3.28, +0.89, +2.39) because at "
+    "recovery 0.5 the second spike arrives early and low before accommodation dominates.",
+    "Scored over the same ten elements the best arm is the CONTROL at 69.1 percent, below plain B3's "
+    "71.8: this coupled geometry starts with a worse rise (609 against 570 V/s) and accommodation only "
+    "costs count on top. Dosing the site does not buy accuracy, even though it buys the mechanism.",
+    "What is left for the climb is therefore a process at the site slower than the 13.5 ms interspike "
+    "interval, so that the threshold accumulates without gating the next spike; the recovery-factor "
+    "family tested here acts on the same timescale as the interval and cannot do both. That is a "
+    "narrower and harder target than the campaign assumed, and it is the honest reason to stop.",
+]
 
 
 def main():

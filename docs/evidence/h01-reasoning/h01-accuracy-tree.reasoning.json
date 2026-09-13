@@ -1,5 +1,5 @@
 {
-  "id": "doc_d82270c1-bd3",
+  "id": "doc_f1249dfa-06c",
   "title": "H01 accuracy roadmap",
   "graph": {
     "classes": [
@@ -107,11 +107,18 @@
         "label": "so the climb must be dosed at the site"
       },
       {
-        "id": "open_site__plan_climb",
+        "id": "open_site__coupling_confirmed",
         "source": "open_site",
+        "target": "coupling_confirmed",
+        "relation": "describes",
+        "label": "the cell that passed"
+      },
+      {
+        "id": "coupling_confirmed__plan_climb",
+        "source": "coupling_confirmed",
         "target": "plan_climb",
         "relation": "describes",
-        "label": "if it lands, +19.4 points"
+        "label": "mechanism located, not yet usable"
       },
       {
         "id": "plan_climb__plan_rise",
@@ -206,6 +213,7 @@
           "closed_lineage",
           "closed_somatic_climb",
           "open_site",
+          "coupling_confirmed",
           "plan_climb",
           "plan_rise",
           "plan_holdout",
@@ -488,25 +496,60 @@
       {
         "id": "open_site",
         "type": "Open test",
-        "text": "RUNNING: the climb as accommodation at the INITIATION SITE, read through a coupling that lets the soma see it. Axonal sodium recovery dosed 0.5 / 0.25 / 0.125 on the stage-10 thickened-stub geometry, plus the strongest dose on the default 1 um stub as the coupling control.",
-        "status": "unverified",
-        "confidence": 0.4,
-        "notes": "Stage 16 part 2, four runs at 310 pA. Target: at least half the recorded first-interval step (+0.69 of +1.38 mV) with the count in 5-15 and the spike-1 rise within 15 percent of the arm's control. Confidence 40 percent: the mechanism is the right place (the site sets the threshold) and HL23PYR proves a human L2/3 model can produce the step, but SP16 showed sodium availability is a weak threshold lever at a dense fast site, and this arm's own rise (655 V/s) starts further from the recording than plain B3's.\n\nEvidence: docs/evidence/h01-e-climb-manifest.json; docs/evidence/h01-topographic/stage-10.json",
+        "text": "RESULT (stage 16 part 2): the climb IS reachable at the initiation site - and only by crippling the cell. Axonal sodium recovery 0.25 gives a first-interval step of +0.89 mV, past the +0.69 target that no somatic conductance could reach at all; but the train collapses from 9 spikes to 2, and the series is non-monotone (-0.07, -3.28, +0.89 mV at recovery 1.0, 0.5, 0.25).",
+        "status": "supported",
+        "confidence": 0.15,
+        "notes": "Registered cells (c) and (d) both fail as written: not monotone, and the count leaves the 5-15 band at every dose that moves the threshold. Scored over the same ten elements the best arm is the CONTROL at 69.1 percent, BELOW plain B3's 71.8, because this coupled geometry starts with a worse rise (609 against 570 V/s) and accommodation only costs more. Confidence lowered from 40 to 15 percent: the mechanism is real and correctly located, but no dose separates the threshold step from the spike count in this model family.\n\nEvidence: docs/evidence/h01-topographic/stage-16.json; docs/evidence/h01-e-climb-manifest.json; docs/evidence/h01-topographic/stage-10.json",
         "evidence": [
           {
             "id": "open_site_ev0",
-            "title": "docs/evidence/h01-e-climb-manifest.json",
+            "title": "docs/evidence/h01-topographic/stage-16.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-climb-manifest.json",
-            "stance": "context",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-16.json",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "open_site_ev1",
+            "title": "docs/evidence/h01-e-climb-manifest.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-e-climb-manifest.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "open_site_ev2",
             "title": "docs/evidence/h01-topographic/stage-10.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-10.json",
-            "stance": "context",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 accuracy roadmap; built 2026-09-13 from the evidence files named on each node. Confidence = probability the branch stays closed (closed nodes) or that the task hits its stated target (open/planned nodes); author's calibrated judgement, recorded to be scored later."
+      },
+      {
+        "id": "coupling_confirmed",
+        "type": "Closed branch",
+        "text": "CONFIRMED (not eliminated): the soma-site coupling is real and load-bearing. The same axonal accommodation dose gives +2.39 mV of threshold step through a 2 um stub and -2.56 mV - the opposite sign - through the default 1 um Allen stub.",
+        "status": "supported",
+        "confidence": 0.88,
+        "notes": "Stage 16 cell (f), the one cell of the stage that passed. This is the first direct test of stage 10's account of the take-off rather than an inference from it: the site's state reaches the soma only when the stub is thickened. It also means the Allen 1 um replacement stub, not any channel, is what makes B3's threshold immovable.\n\nEvidence: docs/evidence/h01-topographic/stage-16.json; docs/evidence/h01-topographic/stage-10.json",
+        "evidence": [
+          {
+            "id": "coupling_confirmed_ev0",
+            "title": "docs/evidence/h01-topographic/stage-16.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-16.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "coupling_confirmed_ev1",
+            "title": "docs/evidence/h01-topographic/stage-10.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-10.json",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
         ],
@@ -515,10 +558,10 @@
       {
         "id": "plan_climb",
         "type": "Planned step",
-        "text": "STEP 1 - close the climb on the E cell: 71.8 -> 91.1 percent. Worth 19.4 points, the largest single gain available anywhere in the campaign.",
+        "text": "STEP 1 - close the climb on the E cell: 71.8 -> 91.1 percent. Still the largest single gain available (19.4 points), but the direct route is now measured and costly.",
         "status": "unverified",
-        "confidence": 0.45,
-        "notes": "If stage 16 part 2 lands, this is done. If it does not, the remaining candidates are a slow process at the site with a longer time constant than SP16 tested, or the dendritic/axial route that stage 14 showed carries most of the take-off current. Confidence 45 percent that the climb reaches at least half the recorded step within two more stages.\n\nEvidence: docs/evidence/h01-topographic/stage-15.json; docs/h01-causal-model.md",
+        "confidence": 0.25,
+        "notes": "Stage 16 located the mechanism (the site, not the soma) and showed it moves the threshold the right way and by roughly the right amount, while taking the spike count with it. What is left is to separate the two: a slower site process (longer recovery time constant than the 13.5 ms interspike interval, which the dose family tested here does not provide), or accommodation placed where it reaches threshold without gating the train. Confidence lowered from 45 to 25 percent that the climb reaches at least half the recorded step with the count held, within two more stages.\n\nEvidence: docs/evidence/h01-topographic/stage-15.json; docs/h01-causal-model.md",
         "evidence": [
           {
             "id": "plan_climb_ev0",
@@ -706,8 +749,8 @@
         "type": "Goal",
         "text": "GOAL: a scored model set over the 104 H01 cells. Reachable form: donor accuracy x type coverage x build success. Today that product is 71.8 percent x 53 percent x 12/104 = about 4 percent of the stated goal; with the climb closed, full type coverage and a fixed build it would be ~91 percent of the reachable ceiling.",
         "status": "unverified",
-        "confidence": 0.25,
-        "notes": "The 1-to-100 scale the goal asks for is therefore best read as this product, with the three factors reported separately so no single number hides a blocker. Confidence 25 percent that the full product exceeds 80 percent within this campaign's scope: the climb is plausible, the build is fixable, but type coverage for 49 cells and the absence of H01 ground truth are the hard limits, and the second of those cannot be removed.\n\nEvidence: docs/evidence/h01-population-status.md; docs/evidence/h01-population-types.md; docs/evidence/h01-topographic/stage-15.json",
+        "confidence": 0.15,
+        "notes": "The 1-to-100 scale the goal asks for is therefore best read as this product, with the three factors reported separately so no single number hides a blocker. Confidence 25 percent that the full product exceeds 80 percent within this campaign's scope: the climb is plausible, the build is fixable, but type coverage for 49 cells and the absence of H01 ground truth are the hard limits, and the second of those cannot be removed. Lowered from 25 to 15 percent after stage 16: the climb, which carries two thirds of the single-cell headroom, resisted the one mechanism that can physically reach it.\n\nEvidence: docs/evidence/h01-population-status.md; docs/evidence/h01-population-types.md; docs/evidence/h01-topographic/stage-15.json",
         "evidence": [
           {
             "id": "goal_ev0",
@@ -942,13 +985,29 @@
         ]
       },
       {
-        "id": "review_open_site__plan_climb",
-        "edgeId": "open_site__plan_climb",
+        "id": "review_open_site__coupling_confirmed",
+        "edgeId": "open_site__coupling_confirmed",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_open_site__plan_climb",
+            "id": "reservation_open_site__coupling_confirmed",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_coupling_confirmed__plan_climb",
+        "edgeId": "coupling_confirmed__plan_climb",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_coupling_confirmed__plan_climb",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",
