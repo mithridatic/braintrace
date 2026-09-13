@@ -1,5 +1,5 @@
 {
-  "id": "doc_4c098ae4-159",
+  "id": "doc_7ddac74a-191",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -317,11 +317,18 @@
         "label": "climb"
       },
       {
-        "id": "q11_rise__next",
+        "id": "q11_rise__q12",
         "source": "q11_rise",
+        "target": "q12",
+        "relation": "describes",
+        "label": "decompose the shared rise by observation point"
+      },
+      {
+        "id": "q12__next",
+        "source": "q12",
         "target": "next",
         "relation": "describes",
-        "label": "the shared sodium equations"
+        "label": "the soma's own sodium above -40 mV; the dose is the finish"
       },
       {
         "id": "q11_climb__next",
@@ -399,6 +406,7 @@
           "q10_chain",
           "q11",
           "q11_rise",
+          "q12",
           "q11_climb",
           "next",
           "q2_upstroke",
@@ -1392,6 +1400,33 @@
         "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
       },
       {
+        "id": "q12",
+        "type": "Branch retained",
+        "text": "Q12 (SP15 stage 14, re-analysis of a retained trace, no run): the rise decomposed by observation point. On m0-b3-currents-sweep53 the soma-midpoint spike-1 upstroke divides into the currents that carry it; the balance closes on the solver's native grid (the injected clamp is one term - the resampled grid breaks the near-cancelling axial legs). Above -40 mV the somatic-total drive (local NaTs/Nap + the two 0.01 MOhm intra-soma legs that carry the rest of the soma's sodium) is the majority of dV/dt, the axon[0] site-delivered leg the minority; below -40 mV axon[0] carries it. Recorded/fit dV/dt through the chain: 0.96 at -40 (the hand-over, loops match), 0.74/0.64/0.51 at -20/0/+20 - a somatic-phase inward deficit that widens with voltage.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "The rise excess is the soma's own sodium above -40 mV, not the site-delivered leg; the shared sodium is named by the carrying current, not merely by what the bases share. The dose is justified as the finishing step; had axon[0] been the majority it would be refused for the coupling.\n\nEvidence: docs/evidence/h01-topographic/stage-14.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "q12_ev0",
+            "title": "docs/evidence/h01-topographic/stage-14.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-topographic/stage-14.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "q12_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/h01-causal-model.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 progressive search tree (Hartshorne splits); built 2026-09-12 from the evidence files named on each node"
+      },
+      {
         "id": "q11_climb",
         "type": "Branch retained",
         "text": "Climb has a positive control: HL23PYR +1.38 mV at spike 2 (the recorded step exactly) / +1.78 at spike 5 at 0.31 nA, rise kept 0.95; B3 -0.02 / +0.24; recording +1.38 / +3.63 at 0.86. Shape: HL23PYR steps in the first interval then holds; the recording steps then accumulates +2.2 mV more. Excitability is the wrong cell's: rest -74 vs -84, counts 16/18/20/24 vs 1/5/10 (cell e fired). Take-off relation read over 1.1-1.9 mV/ms, disjoint from 0.2-0.75, not compared; 0.4 nA take-off is a reader failure (excluded).",
@@ -1421,7 +1456,7 @@
       {
         "id": "next",
         "type": "Next test",
-        "text": "Next: not registered. (1) The rise: swap or dose the sodium equations both bases share, as a characteristic curve of the rise through the chain with the count and take-off held, and decompose the somatic phase by branch currents (one run). (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
+        "text": "Next: not registered. Stage 14 has localised the rise to the soma's own sodium above -40 mV and earned the naming, so the finishing step (1) is: swap or dose the shared NaTs/Nap equations as a characteristic curve of the rise through the chain, count and take-off held, with the somatic-phase deficit (recorded 0.74/0.64/0.51 of the fit at -20/0/+20 mV) as the target. (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the first-interval step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
         "status": "unverified",
         "confidence": null,
         "notes": "Y before levers; register the outcome cells first.\n\nEvidence: docs/specs/2026-09-12-h01-topographic-strategy.md",
@@ -2150,13 +2185,29 @@
         ]
       },
       {
-        "id": "review_q11_rise__next",
-        "edgeId": "q11_rise__next",
+        "id": "review_q11_rise__q12",
+        "edgeId": "q11_rise__q12",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_q11_rise__next",
+            "id": "reservation_q11_rise__q12",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_q12__next",
+        "edgeId": "q12__next",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_q12__next",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

@@ -41,6 +41,7 @@ STAGE10 = "docs/evidence/h01-topographic/stage-10.json"
 STAGE11 = "docs/evidence/h01-topographic/stage-11.json"
 STAGE12 = "docs/evidence/h01-topographic/stage-12.json"
 STAGE13 = "docs/evidence/h01-topographic/stage-13.json"
+STAGE14 = "docs/evidence/h01-topographic/stage-14.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -134,9 +135,11 @@ def build_nodes():
           "Registered cells: rise within 15 percent of 348; climb at least half the recorded; count 5-15 at 0.31; the second half (HL23PYR biophysics on this anatomy) only if the first passes.", [STAGE13, STRATEGY], "supported"),
         n("q11_rise", R, "Rise is NOT the fitting pipeline: HL23PYR 592-600 V/s through the chain at every drive (B3 545-570, recorded 332-351). Two independently fitted human L2/3 models on different anatomy agree; they share the sodium equation family, the ideal clamp and 34 C. Elemental picture: the three spike-1 loops coincide to about -40 mV and separate above it - the excess is in the somatic phase, not the site-delivered one. Fall: HL23PYR -80, B3 -94, recorded -104.",
           "Base stays B3 for the rise; the shared sodium equations are the sub-system the next split swaps or doses as a characteristic curve.", [STAGE13, CM], "supported"),
+        n("q12", R, "Q12 (SP15 stage 14, re-analysis of a retained trace, no run): the rise decomposed by observation point. On m0-b3-currents-sweep53 the soma-midpoint spike-1 upstroke divides into the currents that carry it; the balance closes on the solver's native grid (the injected clamp is one term - the resampled grid breaks the near-cancelling axial legs). Above -40 mV the somatic-total drive (local NaTs/Nap + the two 0.01 MOhm intra-soma legs that carry the rest of the soma's sodium) is the majority of dV/dt, the axon[0] site-delivered leg the minority; below -40 mV axon[0] carries it. Recorded/fit dV/dt through the chain: 0.96 at -40 (the hand-over, loops match), 0.74/0.64/0.51 at -20/0/+20 - a somatic-phase inward deficit that widens with voltage.",
+          "The rise excess is the soma's own sodium above -40 mV, not the site-delivered leg; the shared sodium is named by the carrying current, not merely by what the bases share. The dose is justified as the finishing step; had axon[0] been the majority it would be refused for the coupling.", [STAGE14, CM], "supported"),
         n("q11_climb", R, "Climb has a positive control: HL23PYR +1.38 mV at spike 2 (the recorded step exactly) / +1.78 at spike 5 at 0.31 nA, rise kept 0.95; B3 -0.02 / +0.24; recording +1.38 / +3.63 at 0.86. Shape: HL23PYR steps in the first interval then holds; the recording steps then accumulates +2.2 mV more. Excitability is the wrong cell's: rest -74 vs -84, counts 16/18/20/24 vs 1/5/10 (cell e fired). Take-off relation read over 1.1-1.9 mV/ms, disjoint from 0.2-0.75, not compared; 0.4 nA take-off is a reader failure (excluded).",
           "A human-fitted sodium reproduces the step, neither base the accumulation.", [STAGE13, CM], "supported"),
-        n("next", T, "Next: not registered. (1) The rise: swap or dose the sodium equations both bases share, as a characteristic curve of the rise through the chain with the count and take-off held, and decompose the somatic phase by branch currents (one run). (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
+        n("next", T, "Next: not registered. Stage 14 has localised the rise to the soma's own sodium above -40 mV and earned the naming, so the finishing step (1) is: swap or dose the shared NaTs/Nap equations as a characteristic curve of the rise through the chain, count and take-off held, with the somatic-phase deficit (recorded 0.74/0.64/0.51 of the fit at -20/0/+20 mV) as the target. (2) The climb: HL23PYR biophysics on the 541563728 anatomy (one run) for the first-interval step; the accumulation after the step and the post-spike step's energetic Y (stage-0 early-after-spike load curves) remain without a counterpart.",
           "Y before levers; register the outcome cells first.", [STRATEGY], "unverified"),
         n("q2_upstroke", O, "E upstroke split (SP15 stage 1, executed): B3 genome on the H01 skeleton 955432427 beside the donor anatomy at nseg 1. Mesh control held (653 vs 598 V/s, 9 percent; count, first spike, threshold unchanged). The H01 anatomy did not spike at 200 pA (plateau -78 mV, onset capacitance 785 vs 125 pF, input resistance about 38 vs 98 MOhm): registered no-reading outcome.",
           "The cable load moves the low-input response by more than any tested channel change, but the change was too large to read the upstroke. Next: a graded cable change on the donor anatomy (membrane area x1.5, x2), and a check of the H01 conversion against the surface mesh.", [SP15_S0, "docs/evidence/h01-e-morphology/stage-1-decision.json", STRATEGY], "supported"),
@@ -188,7 +191,8 @@ def build_edges():
         cm.edge("q10_chain", "q11", "describes", "the frame itself as a sub-system"),
         cm.edge("q11", "q11_rise", "describes", "rise"),
         cm.edge("q11", "q11_climb", "describes", "climb"),
-        cm.edge("q11_rise", "next", "describes", "the shared sodium equations"),
+        cm.edge("q11_rise", "q12", "describes", "decompose the shared rise by observation point"),
+        cm.edge("q12", "next", "describes", "the soma's own sodium above -40 mV; the dose is the finish"),
         cm.edge("q11_climb", "next", "describes", "the step has a control; the accumulation has none"),
         cm.edge("q9_step", "next", "describes", "a 1-3 s per-spike process"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),

@@ -517,13 +517,26 @@ under a chain that moves the rise by a few percent), so that question is closed 
 With the chain measured the order is the one the search should have kept from the start:
 the rise, the steepest element, before the take-off and the step. Stage 13 placed the
 excess on the voltage axis: above -40 mV, in the somatic phase, on both bases. Replacing
-the base does not close the rise, so the base stays B3, and the sub-system the two bases
-share, the sodium equations, is what the next split swaps or doses, as a characteristic
-curve of the rise read through the chain with the count and the take-off held. The
-climb's first-interval step now has a positive control in HL23PYR's sodium; the second
-half of the stage-13 split, that biophysics on this cell's anatomy, is worth one run for
-the step alone, and the accumulation that follows the step remains without a counterpart
-on any base.
+the base does not close the rise, so the base stays B3.
+[Stage 14](evidence/h01-topographic/stage-14.md) then decomposed that phase by observation
+point, on the retained current trace (no run): at the soma midpoint the spike-1 upstroke
+divides into the current that carries it, and its balance closes on the solver's own grid
+(the injected clamp current is one of its terms). Above -40 mV, where the loops separate,
+the somatic-total contribution -- the soma's own sodium plus the intra-soma axial legs that
+carry the rest of the soma's sodium from its other segments -- is the majority of the rate
+of rise, and the axon[0] site-delivered leg is the minority; below -40 mV the axon[0] leg
+carries the upstroke, the two legs meeting at the -40 mV hand-over. Read against the same
+chain, the recording's rate of rise matches the fit at -40 mV and falls to 0.74, 0.64 and
+0.51 of it at -20, 0 and +20 mV: the deficit is a somatic-phase inward current, not a
+site-delivered one, and it widens with voltage. So the sodium is named honestly now, not by
+what the two bases merely share but by the current that carries the excess: the sub-system
+is the soma's own sodium above -40 mV, and dosing or swapping its equations as a
+characteristic curve of the rise through the chain, with the count and the take-off held, is
+the finishing step, not the start. Had the axon[0] leg been the majority above -40 mV the
+dose would have been refused for the coupling. The climb's first-interval step has a positive
+control in HL23PYR's sodium; the second half of the stage-13 split, that biophysics on this
+cell's anatomy, is worth one run for the step alone, and the accumulation that follows the
+step remains without a counterpart on any base.
 
 **Limit.** No sufficient repair is established, and B3 stays unpromoted. The measured facts
 are that the recorded take-off slides with the approach and rises after a spike while the

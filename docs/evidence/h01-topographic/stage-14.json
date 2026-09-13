@@ -1,0 +1,239 @@
+{
+  "stage": "14",
+  "spec": "docs/specs/2026-09-12-h01-topographic-strategy.md",
+  "run": "h01-e-currents/m0-b3-currents-sweep53",
+  "chain": {
+    "tau_p_us": 4.665855831988264,
+    "fc_khz": 10.0
+  },
+  "geometry": {
+    "area_um2": 65.78437598105167,
+    "cm_uf_cm2": 1.0,
+    "c_seg_pf": 0.6578437598105167,
+    "split_mv": -40.0
+  },
+  "closure": {
+    "kcl_residual_frac": 2.5753688004835215e-14,
+    "peak_icap_na": 0.4483365432529052,
+    "tolerance": 0.05
+  },
+  "shares": {
+    "above_40": {
+      "na_drive": 7.628818609612687,
+      "k_brake": -1.0526358096841764,
+      "other_ionic": -0.11209607815967745,
+      "intrasoma": 43.408346223724344,
+      "axon0": 21.09658818700083,
+      "dend": -71.38444869919313,
+      "clamp": 1.415427566699109,
+      "somatic_total": 51.03716483333703,
+      "site_delivered": 21.09658818700083
+    },
+    "below_40": {
+      "na_drive": 0.475967208844681,
+      "k_brake": -0.06613035853542695,
+      "other_ionic": -0.14939378274634163,
+      "intrasoma": -5.914138504358821,
+      "axon0": 38.21898765288375,
+      "dend": -36.233846530954814,
+      "clamp": 4.668554314866978,
+      "somatic_total": -5.43817129551414,
+      "site_delivered": 38.21898765288375
+    }
+  },
+  "contrast": {
+    "fit_through_chain": {
+      "v_mv": [
+        -57.29420769821471,
+        -57.05839772598266,
+        -56.67404798486732,
+        -55.9470210073673,
+        -54.603725923041715,
+        -52.498030941940335,
+        -49.72554194804189,
+        -46.50569851017102,
+        -43.020258091134544,
+        -39.33280756455434,
+        -35.36210881006588,
+        -30.855442611322616,
+        -25.35303005209494,
+        -18.21529891049006,
+        -8.914809296748775,
+        2.2887667620274184,
+        13.901871824569463,
+        23.890709063464868,
+        30.993093403993516,
+        35.21724796188033,
+        37.32299018277963,
+        38.12561616215709,
+        38.17346145153743
+      ],
+      "dvdt_v_s": [
+        11.501427124019159,
+        18.944002934309356,
+        33.631022189662474,
+        57.00458480052903,
+        86.85632546031793,
+        118.01653121495343,
+        144.79334789883964,
+        164.56529221732498,
+        179.54291422470013,
+        195.62819873560508,
+        220.84035048799504,
+        263.96885817580346,
+        330.5912439164638,
+        414.30261716687545,
+        490.68627345830504,
+        526.3250996744366,
+        498.8487837592786,
+        411.60601499816136,
+        292.76397947762706,
+        177.93633873365272,
+        89.75460059429889,
+        31.734871740927417,
+        -3.853844876637691
+      ],
+      "peak_v_s": 570.4170280334747,
+      "at_bins_v_s": {
+        "-40": 192.71779219040323,
+        "-20": 393.3716271813391,
+        "0": 519.0444813742415,
+        "20": 445.58757091128825
+      }
+    },
+    "recorded_raw": {
+      "v_mv": [
+        -56.40625351667404,
+        -56.03125089406967,
+        -55.37500375509262,
+        -54.09375348687172,
+        -51.90625184774399,
+        -49.062503069639206,
+        -45.843751668930054,
+        -42.437500819563866,
+        -38.7187502682209,
+        -34.906250923871994,
+        -30.812501475214958,
+        -26.18750048428774,
+        -20.875000428408384,
+        -14.84375002188608,
+        -7.999999947845936,
+        -0.9374996051192284,
+        5.875001162290573,
+        12.125000789761543,
+        17.50000050663948,
+        22.125000566244125,
+        25.875000715255737,
+        28.906250804662704,
+        31.28125375509262,
+        33.00000211596489,
+        34.28125238418579,
+        35.03125390410423,
+        35.34375360608101
+      ],
+      "dvdt_v_s": [
+        16.406225040555,
+        30.468730255961418,
+        56.25002086162567,
+        87.10934780538082,
+        119.14065107703209,
+        145.70315834134817,
+        164.84376974403858,
+        176.95315182209015,
+        187.8906274214387,
+        203.12500419095159,
+        223.04687299765646,
+        250.78126127482392,
+        285.1562690921128,
+        315.6250109896064,
+        334.37501988373697,
+        337.1093851455953,
+        318.7500056810677,
+        288.2812521420419,
+        249.99999441206455,
+        209.76562518626451,
+        172.26566560566425,
+        135.93751937150955,
+        105.07814586162567,
+        76.5625387430191,
+        50.78124813735485,
+        28.90625037252903,
+        8.593732491135597
+      ],
+      "peak_v_s": 347.6562604194875,
+      "at_bins_v_s": {
+        "-40": 184.12225482302793,
+        "-20": 289.5766065704805,
+        "0": 334.5828663845893,
+        "20": 228.25169141014447
+      }
+    },
+    "recorded_over_fit_at_bins": {
+      "-40": 0.9553983196378516,
+      "-20": 0.7361400430565105,
+      "0": 0.6446130888411244,
+      "20": 0.5122487841017158
+    }
+  },
+  "reading": [
+    "The rise both bases share is generated by the soma's own sodium, not delivered by the site: above -40 mV, where the stage-13 loops separate, the somatic-total contribution (local NaTs/Nap plus the intra-soma axial legs that carry the rest of the soma's sodium) is the majority of dV/dt, and the axon[0] site-delivered leg is the minority.",
+    "Below -40 mV the axon[0] leg carries the upstroke, consistent in direction with the stage-11 intercept (~320 V/s site-delivered, whole-soma dose) and the phase-plane coincidence to -40 mV; the two legs meet the -40 mV hand-over.",
+    "The recording, on the same pipette axes, rises about half as fast above -40 mV and the gap widens with voltage: an inward-current deficit in the somatic phase, not the site-delivered phase.",
+    "So the shared sodium is named honestly now: the rise's excess is somatic-sodium current above -40 mV, which is the sub-system the parked dose swaps or doses as a characteristic curve, with the count and the take-off held.",
+    "Limit: the decomposition is B3's; HL23PYR runs on the Toronto driver (NaTg, no soma-current probes) and cannot be decomposed the same way. Stage 13's shared rise licenses reading the shared drive from one base."
+  ],
+  "decision": {
+    "verdict": "PASS",
+    "checks": [
+      {
+        "reading": "d",
+        "prediction": "segment KCL closes on the native grid within 5 percent of peak |i_cap| (i_cap = axial_in - ionic_out)",
+        "value": {
+          "kcl": 0.0
+        },
+        "pass": true,
+        "note": "a hard gate; if it fails the reading is void"
+      },
+      {
+        "reading": "a",
+        "prediction": "above -40 mV the somatic-total share of dV/dt exceeds the axon[0] site-delivered share (the rise is somatic-sodium-driven, the dose is justified)",
+        "value": {
+          "somatic_total": 51.04,
+          "site_delivered": 21.1
+        },
+        "pass": true,
+        "note": "if the axon[0] leg is the majority the dose is refused and the coupling/geometry is the sub-system"
+      },
+      {
+        "reading": "b",
+        "prediction": "below -40 mV the axon[0] site-delivered leg carries the majority of dV/dt (site-delivered leg; consistent in direction with the stage-11 intercept, not matched as a value)",
+        "value": {
+          "site_delivered": 38.22,
+          "somatic_total": -5.44
+        },
+        "pass": null,
+        "note": "observation, not pass/fail"
+      },
+      {
+        "reading": "c",
+        "prediction": "above -40 mV the recorded dV/dt is roughly half the fit's and the gap widens with voltage (a somatic-phase inward-current deficit; at -40 the loops still match)",
+        "value": {
+          "-40": 0.96,
+          "-20": 0.74,
+          "0": 0.64,
+          "20": 0.51
+        },
+        "pass": true,
+        "note": "recorded/fit at -40/-20/0/20 mV through the chain; the '-40' bin is the stage-13 hand-over and is excluded from the half test"
+      },
+      {
+        "reading": "e",
+        "prediction": "HL23PYR is not decomposable the same way (Toronto NaTg, no soma-current probes); the decomposition is B3's, licensed by the stage-13 shared rise",
+        "value": null,
+        "pass": null,
+        "note": "registered limit"
+      }
+    ],
+    "dose_justified": true
+  }
+}

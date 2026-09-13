@@ -702,3 +702,85 @@ rise is in the somatic phase, not the site-delivered one. Consequence: the base 
 the second half (HL23PYR biophysics on the 541563728 anatomy) is worth one run for the
 climb only; the rise now has the same value on two bases that differ in everything but
 their sodium equations, and that is the sub-system the next split addresses.
+
+## Stage 14 (registered 2026-09-13, retained trace only, no run): the rise decomposed by observation point
+
+**Why this before the dose.** Stage 13 named "the shared sodium equations" as the cause of
+the rise both bases share, but a Dissection only tells you what two sub-systems have in
+common, and B3 and HL23PYR share three unquestioned inputs, not one: the sodium equation
+family, the ideal current clamp and 34 degrees. Chapter 6 is emphatic that a dose is the
+finishing point, not the start ("Experiments should be employed sparingly, primarily to
+verify physical mechanisms once a causal explanation is at hand... DoE... is the finishing
+point", printed p. 238), and that the way to localise a source is to change the observation
+point (p. 230; ch. 7 summary p. 270, "the source impedance... is where the problem lives").
+So before the sodium dose, one observation with no lever: decompose the fit's rise into the
+currents that carry it, at the soma, and place the excess on the voltage axis. This is the
+z-strategy conjugate observation the book asks for, and it converts stage 13's structural
+naming into a mechanism-localised claim or refutes it.
+
+**No run.** The observation already exists. The stage-0 retained run
+`h01-e-currents/m0-b3-currents-sweep53` is the identical B3 fit (nseg factor 9, 34 degrees,
+CVode) whose spike-1 rise reads 570.4 V/s through the stage-12 chain in stage 13, and it was
+recorded with `--record-soma-currents`: NaTs, Nap, K_P, K_T, Kv3_1, Im, SK, Ca_HVA, Ca_LVA,
+Ih and pas as local soma(0.5) densities, i_cap, and the eleven electrical neighbours of the
+soma midpoint with their axial resistances and the segment geometry (area 65.8 um2, cm 1.0).
+Stage 14 is re-analysis of that trace: no evaluation is spent, no holdout is touched. The
+new scorer reads voltage and every current onto the campaign's 0.02 ms grid with
+`load_points`, computes dV/dt with the same `rate_of_rise` estimator that produced 570.4,
+and converts each density to a segment current in nA (i_nA = i_mA_cm2 x 65.8 x 1e-2) and each
+neighbour to an axial current in nA ((V_neighbour - V_soma) / R_mohm).
+
+**The observation point is chosen so that intra-soma sodium is not miscounted as axial.**
+The eleven neighbours are not one branch. Two are the adjacent soma segments at R = 0.01
+MOhm (near shorts): at nseg 9 the observed compartment holds about a ninth of the soma's
+sodium, and the rest arrives through these intra-soma legs, so intra-soma axial current IS
+somatic sodium, from neighbouring segments. One neighbour is `axon[0](0.056)` at R = 2.0
+MOhm: that single leg is the site-delivered current from the initiation stub. Eight are
+`apic[0]` and dendrites (R 0.15 to 4.1 MOhm): the dendritic load. The load-bearing
+dichotomy is therefore **site-delivered (the axon[0] leg) against somatic-total (this
+segment's own ionic sodium plus the two intra-soma axial legs)**, with the dendritic legs
+reported as a sink. Lumping all axial together would read "axial dominates" for a trivially
+structural reason and refuse the dose on an artefact.
+
+**Two frames, stated.** The decomposition is at the membrane, where the balance
+`i_cap = axial_in - ionic_out` holds; the contrast with the recording is through the chain,
+where the recording lives (the recording is already at the pipette, the model is chained to
+meet it). The -40 mV threshold (where the stage-13 loops separate) is applied in each frame
+on its own voltage. The stage-11 intercept (~320 V/s, from a whole-soma density dose) is
+cited as consistent in direction only, never matched as a value to these segment shares
+(different observation point).
+
+**Cells, registered before the shares are computed.** Spike 1 at 310 pA.
+(d) *Closure (a hard gate; qualification, not biology).* For the soma midpoint over the
+spike, `i_cap + sum(ionic) - sum(axial_in)` is within 5 percent of the peak inward current,
+and the recorded i_cap reproduces C_seg x dV/dt from the voltage within the same tolerance.
+If closure fails the reading is void (a unit- or sign-error detector; it lets the sign
+conventions be read empirically).
+(a) *The somatic-sodium share above -40 mV.* Of the model's positive dV/dt from -40 mV to
+the peak, the fraction carried by somatic-total (local ionic Na + intra-soma axial) against
+the fraction carried by the axon[0] site-delivered leg. Prediction if the shared sodium is
+the rise's drive: somatic-total is the majority above -40 mV. Rejection/redirect: if the
+axon[0] leg is the majority above -40 mV, the somatic phase is still site-delivered, the
+sodium equations are not the somatic-phase drive, the parked dose is refused, and the
+sub-system is the coupling/geometry (stage 10), not the channel.
+(b) *The site-delivered leg below -40 mV.* From the take-off (about -57 mV) to -40 mV, the
+axon[0] leg's share of the positive dV/dt. Prediction: the axon[0] leg dominates below
+-40 mV, consistent in direction with the stage-11 intercept and the phase-plane coincidence
+to -40 mV. This is the observation, not a pass/fail cell.
+(c) *The contrast on shared pipette axes.* The recorded spike-1 dV/dt-against-V loop
+(sweep 53, raw, already at the pipette) beside the fit's loop through the chain, from -40 mV
+to the peak. Prediction if the somatic sodium is the lever: the recorded dV/dt above -40 mV
+is roughly half the fit's and the gap widens with voltage (an inward-current deficit in the
+somatic phase, not the site-delivered phase). The recording gives only the loop; the split
+is the model's.
+(e) *Limit, registered.* HL23PYR cannot be decomposed the same way (the Toronto driver
+carries NaTg, not the L2 driver's NaTs, and no soma-current probes), so the decomposition is
+B3's alone; stage 13's shared-rise result licenses reading the shared drive from one base.
+
+**Consequence set before the run.** If (a) and (c) hold, the parked sodium dose is justified
+as the finishing stage: swap or dose the shared NaTs kinetics/density as a characteristic
+curve of the rise through the chain, with the count and the take-off held. If (a) fails, the
+dose is refused and the coupling/geometry is the sub-system. Either way the climb's second
+half (HL23PYR biophysics on the 541563728 anatomy, one run) remains available and untouched.
+
+Unchanged: the E recording, its chain, the readers, B3 and its retained runs; no holdout.
