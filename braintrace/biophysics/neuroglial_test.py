@@ -37,7 +37,7 @@ def coupled_system(tmp_path, *, gaba_enabled=True, glutamate_enabled=True):
         population.cell.paint(AllRegion(), Ion('EnvironmentPotassium', name='potassium'))
         population.cell.paint(AllRegion(), Channel('K_Leak', g_max=0.*u.mS/u.cm**2))
         population.cell.paint(AllRegion(), Channel('EnvironmentGABA', name='tonic'))
-    step = H01NetworkStep(net)
+    step = H01NetworkStep(net, dt_ms=.005)
     branch = braincell.Branch(lengths=np.array([1.])*u.um, radii_proximal=np.ones(1)*u.um,
         radii_distal=np.ones(1)*u.um, points_proximal=np.array([[0., 0., 0.]])*u.um,
         points_distal=np.array([[1., 0., 0.]])*u.um, type='dendrite')

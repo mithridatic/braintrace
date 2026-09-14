@@ -27,7 +27,7 @@ def coupled(tmp_path):
     cell = net.populations['cell'].cell
     cell.paint(AllRegion(), Ion('EnvironmentPotassium', name='potassium'))
     cell.paint(AllRegion(), Channel('K_TM1991', g_max=10*u.mS/u.cm**2))
-    step = H01NetworkStep(net)
+    step = H01NetworkStep(net, dt_ms=.005)
     count = len(cell.cvs)
     edges = np.empty((0, 2), int)
     graph = DiffusionGraph(np.ones(count)*100., edges, [], dt_ms=.005)
