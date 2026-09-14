@@ -1491,26 +1491,18 @@ def _supervised_episodes(data_root, task_ids):
 def _screen_predictions(model, learner, episodes):
     """Run direct request decoding for loaded ARC episodes."""
 
-    event_values = jnp.stack([episode["events"] for episode in episodes])
-    advance_values = jnp.stack([
-        episode.get("advance_mask", episode["loss_mask"]) for episode in episodes
-    ])
-
-    def evaluate_all(all_events, all_advances):
-        def evaluate_one(events, advances):
-            model.reset_episode(learner)
-            voltages = brainstate.transform.for_loop(
-                lambda event, advance: model.step(event, advance), events, advances
-            )
-            features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
-            return features @ model.readout_weight.value + model.readout_bias.value
-
-        return brainstate.transform.for_loop(evaluate_one, all_events, all_advances)
-
-    logits = brainstate.transform.jit(evaluate_all)(event_values, advance_values)
     records = []
-    for episode, output in zip(episodes, np.asarray(logits)):
-        prediction = decode_prediction(np.asarray(output))
+    for episode in episodes:
+        model.reset_episode(learner)
+        voltages = run_event_sequence(
+            model,
+            episode["events"],
+            episode.get("advance_mask", episode["loss_mask"]),
+        )
+        prediction = decode_prediction(np.asarray(
+            jnp.tanh((voltages[-31:] + 65.0) / 20.0) @ model.readout_weight.value
+            + model.readout_bias.value
+        ))
         target = episode["target"]
         records.append({
             "task_id": episode["task_id"],

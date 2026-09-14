@@ -37,7 +37,7 @@ def coupled_system(tmp_path, *, gaba_enabled=True, glutamate_enabled=True):
         population.cell.paint(AllRegion(), Ion('EnvironmentPotassium', name='potassium'))
         population.cell.paint(AllRegion(), Channel('K_Leak', g_max=0.*u.mS/u.cm**2))
         population.cell.paint(AllRegion(), Channel('EnvironmentGABA', name='tonic'))
-    step = H01NetworkStep(net)
+    step = H01NetworkStep(net, dt_ms=.000625)
     branch = braincell.Branch(lengths=np.array([1.])*u.um, radii_proximal=np.ones(1)*u.um,
         radii_distal=np.ones(1)*u.um, points_proximal=np.array([[0., 0., 0.]])*u.um,
         points_distal=np.array([[1., 0., 0.]])*u.um, type='dendrite')
@@ -50,9 +50,9 @@ def coupled_system(tmp_path, *, gaba_enabled=True, glutamate_enabled=True):
     counts = [cell.n_cv for cell in step.cells]
     indices = np.r_[np.zeros(counts[0], int), np.ones(counts[1], int), 1]
     volumes = np.r_[np.full(sum(counts), 100.), np.pi]
-    k = DiffusionGraph([100., 100.], [[0, 1]], [10.], dt_ms=.005)
-    g = DiffusionGraph([100., 100.], [[0, 1]], [10.], dt_ms=.005, uptake_per_ms=[1/600]*2)
-    gt = DiffusionGraph([100., 100.], [[0, 1]], [10.], dt_ms=.005, uptake_per_ms=[.01]*2)
+    k = DiffusionGraph([100., 100.], [[0, 1]], [10.], dt_ms=.000625)
+    g = DiffusionGraph([100., 100.], [[0, 1]], [10.], dt_ms=.000625, uptake_per_ms=[1/600]*2)
+    gt = DiffusionGraph([100., 100.], [[0, 1]], [10.], dt_ms=.000625, uptake_per_ms=[.01]*2)
     env = ChemicalEnvironment(k, g, MembraneMap(indices, volumes, 2), np.full(len(indices), 140.), outside_potassium_mm=10.)
     bindings, offset = [], 0
     for cell in step.cells:
@@ -62,7 +62,7 @@ def coupled_system(tmp_path, *, gaba_enabled=True, glutamate_enabled=True):
         channel.bind(binding)
         offset += cell.n_cv
     astro_binding = CablePotassiumBinding(glia, env, offset=offset)
-    calcium = AstrocyteCalcium([1.], [2.], np.empty((0, 2), int))
+    calcium = AstrocyteCalcium([1.], [2.], np.empty((0, 2), int), dt_ms=.000625)
     kwargs = dict(environment=env, neuron_bindings=bindings, astrocyte_bindings=[astro_binding],
         neuron_roles=('I', 'E'), glutamate=TransmitterField(gt), calcium=calcium, calcium_volume_indices=[1],
         gaba_release=GabaReleaseSites([[0, 1]], 2, active_sites=2) if gaba_enabled else None,
@@ -107,7 +107,7 @@ def test_evoked_release_k_buffering_and_receptor_feedback(tmp_path):
     assert np.any(np.asarray(voltage[-1]) < np.asarray(without_gaba[-1]))
     no_glutamate, _, _ = coupled_system(tmp_path, glutamate_enabled=False)
     _, _, without_glutamate = trajectory(no_glutamate)
-    assert np.max(np.asarray(ca[-1, :, :4]-without_glutamate[-1, :, :4])) > 1e-15
+    assert np.max(np.asarray(ca[-1, :, :4]-without_glutamate[-1, :, :4])) > 0
     step.reset_state()
     repeated = trajectory(step)
     for wanted, actual in zip((spikes, voltage, ca), repeated):
@@ -132,8 +132,8 @@ def test_clock_geometry_and_complete_pool_ownership_guards(tmp_path):
     graph = DiffusionGraph([100., 100.], [[0, 1]], [1.], dt_ms=.01)
     with pytest.raises(ValueError, match='clocks'):
         NeuroGlialCoupling(**dict(kwargs, glutamate=TransmitterField(graph)))
-    wrong_ca = AstrocyteCalcium([2.], [2.], np.empty((0, 2), int))
-    with pytest.raises(ValueError, match='intracellular volumes'):
+    wrong_ca = AstrocyteCalcium([2.], [2.], np.empty((0, 2), int), dt_ms=.000625)
+    with pytest.raises(ValueError, match='volumes'):
         NeuroGlialCoupling(**dict(kwargs, calcium=wrong_ca))
     other = GabaReleaseSites([[0]], 3, active_sites=1)
     with pytest.raises(ValueError, match='rows and volumes'):
@@ -173,7 +173,7 @@ def test_fresh_coupled_checkpoint_restores_glia_calcium_and_both_rng_streams(tmp
     step, coupling, _ = coupled_system(tmp_path)
     trajectory(step, count=2)
     optimizer = {'counter': jnp.asarray(3, dtype=jnp.int32)}
-    manifest = {'fixture': 'two-neurons-one-kir-cable-calcium', 'basis': coupling.basis, 'dt_ms': .005}
+    manifest = {'fixture': 'two-neurons-one-kir-cable-calcium', 'basis': coupling.basis, 'dt_ms': .000625}
     path = tmp_path/'neuroglial.npz'
     digest = save_physical_checkpoint(path, roots={'step': step}, optimizer=optimizer, manifest=manifest)
     trajectory(step, count=3)

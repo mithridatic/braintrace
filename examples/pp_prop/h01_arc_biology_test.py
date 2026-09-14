@@ -21,7 +21,7 @@ def test_probability_one_preserves_cable_forward(tmp_path):
         expected = brainstate.transform.jit(baseline.update)(event)
         actual = brainstate.transform.jit(stochastic.update)(event)
         np.testing.assert_allclose(actual, expected, atol=1e-12)
-        assert stochastic.release.tick.value == 20
+        assert stochastic.release.tick.value == stochastic.substeps
 
 
 def test_zero_probability_removes_contact_and_padding_preserves_stream(tmp_path):

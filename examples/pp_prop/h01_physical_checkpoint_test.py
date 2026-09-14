@@ -37,7 +37,7 @@ def test_midwait_fresh_runtime_replay_preserves_every_state_and_optimizer(tmp_pa
         manifest = dict(dt_ms=.005, geometry='test-cable-explicit', probability=[.36])
         path = tmp_path/'physical.npz'
         digest = save_physical_checkpoint(path, roots=roots, optimizer=optimizer, manifest=manifest)
-        assert wait.elapsed_events.value == 2 and roots['model'].stepper.tick.value == 40
+        assert wait.elapsed_events.value == 2 and roots['model'].stepper.tick.value == 2 * roots['model'].substeps
         brainstate.transform.jit(lambda: wait.update(max_events=3))()
         expected, _, _ = _pack(roots, optimizer)
         fresh, template = fixture(tmp_path)
@@ -45,7 +45,7 @@ def test_midwait_fresh_runtime_replay_preserves_every_state_and_optimizer(tmp_pa
             manifest=manifest, expected_sha256=digest)
         assert isinstance(restored_optimizer, Slots)
         assert fresh['wait'].elapsed_events.value == 2
-        assert fresh['model'].stepper.tick.value == fresh['model'].release.tick.value == 40
+        assert fresh['model'].stepper.tick.value == fresh['model'].release.tick.value == 2 * fresh['model'].substeps
         brainstate.transform.jit(lambda: fresh['wait'].update(max_events=3))()
         actual, _, _ = _pack(fresh, restored_optimizer)
         assert actual.keys() == expected.keys()

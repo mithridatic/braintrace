@@ -231,6 +231,7 @@ docs/_static/js/brainx-footer.js
 docs/evidence/**/*.npz
 docs/evidence/*.pid
 docs/evidence/*.err
+docs/evidence/**/assets/
 
 # raw simulation traces stay on disk, never in git
 docs/evidence/**/*.npz

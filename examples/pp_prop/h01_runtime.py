@@ -149,7 +149,9 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         site = source['output_site'] or source['soma_site']
         for contact in doc['active_contacts']:
             edge = doc['contacts'][contact]
-            if edge['pre'] == identity and edge['pre_site'] != site:
+            if edge['pre'] == identity and not (edge['pre_site'] == site or (
+                len(edge['pre_site']) == 2 and len(site) == 2 and edge['pre_site'][0] == site[0] and abs(edge['pre_site'][1] - site[1]) < 1e-4
+            )):
                 raise ValueError('A cell cannot have conflicting designated output sites')
         _register_cell(network, identity, cells[identity], records[identity], loaded[source_id],
                        {identity: assembled_location(records[identity], site)}, 0., emit)

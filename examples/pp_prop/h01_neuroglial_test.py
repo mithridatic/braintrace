@@ -62,7 +62,7 @@ def configured(imported,tmp_path):
             molecules_per_site=3000.,seed=22,basis='Explicit synthetic diagnostic glutamate dose')),
         potassium=dict(inside_mm=140.,outside_mm=10.,temperature_c=34.),
         tonic_gaba=dict(g_max_ms_cm2=.1,reversal_mv=-70.,ec50_mm=1e-4,hill=1.),
-        calcium=dict(parameters=asdict(CalciumParameters()),substeps=4),dt_ms=.005,basis='Synthetic coupled-session fixture')
+        calcium=dict(parameters=asdict(CalciumParameters()),substeps=4),dt_ms=numerical_settings()['dt_ms'],basis='Synthetic coupled-session fixture')
     return topology,archive,biology,{selection['source_sha256']:path}
 
 

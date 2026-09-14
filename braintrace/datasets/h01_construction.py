@@ -323,7 +323,73 @@ def _fast_build_cv_geometry(morpho, bounds_by_branch):
         b_bounds = bounds_by_branch[branch_id]
         ids = []
 
-        if arrs is not None and len(arrs[0]) == 1:
+        if arrs is not None and len(b_bounds) == 1 and b_bounds[0][0] <= 1e-9 and b_bounds[0][1] >= 1.0 - 1e-9:
+            lens, r_prox_arr, r_dist_arr, pts_prox, pts_dist, tot_len, seg_starts, seg_ends = arrs
+            if len(lens) == 1:
+                seg_len = float(lens[0])
+                rp = float(r_prox_arr[0])
+                rd = float(r_dist_arr[0])
+                rm = 0.5 * (rp + rd)
+                slant = float(np.sqrt(seg_len**2 + (rd - rp)**2))
+                area_um2 = pi * (rp + rd) * slant
+                f_tot = (seg_len / (rp * rd)) * inv_pi_1e4 if (rp > 0 and rd > 0) else 0.0
+                f_prox = ((0.5 * seg_len) / (rp * rm)) * inv_pi_1e4 if (rp > 0 and rm > 0) else 0.0
+                f_dist = ((0.5 * seg_len) / (rm * rd)) * inv_pi_1e4 if (rm > 0 and rd > 0) else 0.0
+                dm = rp + rd
+                L = seg_len
+            else:
+                diff_r = r_dist_arr - r_prox_arr
+                slants = np.sqrt(lens * lens + diff_r * diff_r)
+                area_um2 = float(np.sum(pi * (r_prox_arr + r_dist_arr) * slants))
+                f_tot = float(np.sum((lens / (r_prox_arr * r_dist_arr)) * inv_pi_1e4))
+                half_len = 0.5 * tot_len
+                mid_idx = np.searchsorted(seg_ends, half_len)
+                if mid_idx >= len(lens):
+                    mid_idx = len(lens) - 1
+                s_start = seg_starts[mid_idx]
+                s_len = lens[mid_idx]
+                t_mid = (half_len - s_start) / s_len if s_len > 0 else 0.5
+                rm = float(r_prox_arr[mid_idx] + (r_dist_arr[mid_idx] - r_prox_arr[mid_idx]) * t_mid)
+                if mid_idx == 0:
+                    L_left = half_len
+                    r_p_left = float(r_prox_arr[0])
+                    f_prox = float(((L_left) / (r_p_left * rm)) * inv_pi_1e4) if (r_p_left > 0 and rm > 0) else 0.0
+                else:
+                    f_left_prev = float(np.sum((lens[:mid_idx] / (r_prox_arr[:mid_idx] * r_dist_arr[:mid_idx])) * inv_pi_1e4))
+                    L_part = half_len - s_start
+                    r_p_part = float(r_prox_arr[mid_idx])
+                    f_left_part = float(((L_part) / (r_p_part * rm)) * inv_pi_1e4) if (r_p_part > 0 and rm > 0) else 0.0
+                    f_prox = f_left_prev + f_left_part
+                f_dist = f_tot - f_prox
+                rp = float(r_prox_arr[0])
+                rd = float(r_dist_arr[-1])
+                dm = float(np.sum((r_prox_arr + r_dist_arr) * lens) / tot_len) if tot_len > 0 else (rp + rd)
+                L = tot_len
+
+            geos.append(_geo_mod._GeoCV(
+                id=cv_id,
+                branch_id=branch_id,
+                branch_type=branch.type,
+                prox=0.0,
+                dist=1.0,
+                midpoint=0.5,
+                parent_cv=None,
+                children_cv=(),
+                length_um=L,
+                lateral_area_um2=area_um2,
+                axial_factor_total_per_cm=f_tot,
+                axial_factor_prox_per_cm=f_prox,
+                axial_factor_dist_per_cm=f_dist,
+                r_prox_um=rp,
+                r_mid_um=rm,
+                diam_arc_mean_um=dm,
+                r_dist_um=rd
+            ))
+            parent_by_cv.append(None)
+            children_by_cv.append([])
+            ids.append(cv_id)
+            cv_id += 1
+        elif arrs is not None and len(arrs[0]) == 1:
             lens, r_prox_arr, r_dist_arr = arrs[0], arrs[1], arrs[2]
             seg_len = float(lens[0])
             r0 = float(r_prox_arr[0])
@@ -422,13 +488,16 @@ def _fast_build_cv_geometry(morpho, bounds_by_branch):
     for edge in morpho.edges:
         parent_ids = branch_to_cv_ids[edge.parent.index]
         child_ids = branch_to_cv_ids[edge.child.index]
-        p_x = float(edge.parent_x)
-        if p_x >= 1.0 - 1e-9:
-            parent_cv = parent_ids[-1]
-        elif p_x <= 1e-9:
+        if len(parent_ids) == 1:
             parent_cv = parent_ids[0]
         else:
-            parent_cv = _geo_mod.locate_cv_on_branch(parent_ids, geos, x=p_x)
+            p_x = float(edge.parent_x)
+            if p_x >= 1.0 - 1e-9:
+                parent_cv = parent_ids[-1]
+            elif p_x <= 1e-9:
+                parent_cv = parent_ids[0]
+            else:
+                parent_cv = _geo_mod.locate_cv_on_branch(parent_ids, geos, x=p_x)
         child_cv = child_ids[0]
         if parent_by_cv[child_cv] is None:
             parent_by_cv[child_cv] = parent_cv
@@ -542,6 +611,13 @@ def _fast_build_cv_mechanisms(morpho, geometry, *, paint_rules=(), place_rules=(
 
 _mech_mod.build_cv_mechanisms = _fast_build_cv_mechanisms
 
+_POS_ORDER = _node_build_mod._POSITION_ORDER
+_NodeRole = _node_build_mod.NodeRole
+_NodeEdgeRole = _node_build_mod.NodeEdgeRole
+_Node = _node_build_mod.Node
+_NodeEdge = _node_build_mod.NodeEdge
+_NodeTree = _node_build_mod.NodeTree
+
 def _fast_build_node_tree(morpho, *, cvs):
     n_branches = len(morpho.branches)
     cv_ids_by_branch = [[] for _ in range(n_branches)]
@@ -556,11 +632,14 @@ def _fast_build_node_tree(morpho, *, cvs):
 
     def new_node(*, cv_id, position):
         node_id = len(drafts)
-        drafts.append(_node_build_mod._NodeDraft(id=node_id, roles={(cv_id, position)}))
+        drafts.append([(cv_id, position)])
         return node_id
 
     def add_node_role(node_id, *, cv_id, position):
-        drafts[node_id].roles.add((cv_id, position))
+        pair = (cv_id, position)
+        r = drafts[node_id]
+        if pair not in r:
+            r.append(pair)
 
     def add_edge_role(parent_node_id, child_node_id, *, cv_id, half):
         key = (parent_node_id, child_node_id)
@@ -631,63 +710,75 @@ def _fast_build_node_tree(morpho, *, cvs):
         n_branches=n_branches,
     )
 
-    node_roles = tuple(
-        tuple(
-            _node_build_mod.NodeRole(cv_id=cv_id, position=position)
-            for cv_id, position in sorted(
-                draft.roles,
-                key=lambda item: (item[0], _node_build_mod._POSITION_ORDER[item[1]]),
-            )
-        )
-        for draft in drafts
-    )
+    n_nodes = len(drafts)
     role_to_node_id = {}
-    for node_id, roles in enumerate(node_roles):
-        for role in roles:
-            role_to_node_id[(int(role.cv_id), str(role.position))] = node_id
+    nodes_list = []
+    node_density_mech_lists = [[] for _ in range(n_nodes)]
+    node_point_mech_lists = [[] for _ in range(n_nodes)]
 
-    node_point_mech_lists = [[] for _ in node_roles]
-    node_density_mech_lists = [[] for _ in node_roles]
     for cv in cvs:
         mid_id = int(cv_to_mid_node_id[cv.id])
-        node_density_mech_lists[mid_id].extend(cv.density_mech)
-        for placement in cv.point_mech_roles:
-            n_id = role_to_node_id.get((cv.id, placement.position), mid_id)
-            node_point_mech_lists[n_id].append(placement.mechanism)
+        if cv.density_mech:
+            node_density_mech_lists[mid_id].extend(cv.density_mech)
 
-    nodes = tuple(
-        _node_build_mod.Node(
+    for node_id, raw_roles in enumerate(drafts):
+        if len(raw_roles) == 1:
+            cid, pos = raw_roles[0]
+            roles_tuple = (_NodeRole(cv_id=cid, position=pos),)
+            role_to_node_id[(cid, pos)] = node_id
+            kind = "mid" if pos == "mid" else "boundary"
+        else:
+            raw_roles.sort(key=lambda item: (item[0], _POS_ORDER[item[1]]))
+            roles_tuple = tuple(_NodeRole(cv_id=cid, position=pos) for cid, pos in raw_roles)
+            for cid, pos in raw_roles:
+                role_to_node_id[(cid, pos)] = node_id
+            kind = "mid" if all(pos == "mid" for _, pos in raw_roles) else "boundary"
+
+        nodes_list.append(_Node(
             id=node_id,
-            kind="mid" if all(role.position == "mid" for role in roles) else "boundary",
-            roles=roles,
+            kind=kind,
+            roles=roles_tuple,
             density_mech=tuple(node_density_mech_lists[node_id]),
-            point_mech=tuple(node_point_mech_lists[node_id]),
-        )
-        for node_id, roles in enumerate(node_roles)
-    )
+            point_mech=(),
+        ))
 
-    edges = tuple(
-        _node_build_mod.NodeEdge(
+    for cv in cvs:
+        if cv.point_mech_roles:
+            mid_id = int(cv_to_mid_node_id[cv.id])
+            for placement in cv.point_mech_roles:
+                n_id = role_to_node_id.get((cv.id, placement.position), mid_id)
+                node_point_mech_lists[n_id].append(placement.mechanism)
+
+    r_prox_arr = [cv.r_axial_prox for cv in cvs]
+    r_dist_arr = [cv.r_axial_dist for cv in cvs]
+
+    edges_list = []
+    for edge_id, ((p_node, c_node), cv_roles) in enumerate(
+        (key, logical_edge_roles[key]) for key in logical_edge_order
+    ):
+        if len(cv_roles) == 1:
+            c_id, half = cv_roles[0]
+            r = r_prox_arr[c_id] if half == "prox" else r_dist_arr[c_id]
+            edge_roles = (_NodeEdgeRole(cv_id=c_id, half=half, r_axial=r),)
+        else:
+            cv_roles.sort(key=lambda item: (item[0], item[1]))
+            edge_roles = tuple(
+                _NodeEdgeRole(
+                    cv_id=c_id, half=half,
+                    r_axial=(r_prox_arr[c_id] if half == "prox" else r_dist_arr[c_id]),
+                )
+                for c_id, half in cv_roles
+            )
+        edges_list.append(_NodeEdge(
             id=edge_id,
             parent_node_id=p_node,
             child_node_id=c_node,
-            roles=tuple(
-                _node_build_mod.NodeEdgeRole(
-                    cv_id=c_id,
-                    half=half,
-                    r_axial=_node_build_mod._role_axial_resistance(cvs, cv_id=c_id, half=half),
-                )
-                for c_id, half in sorted(cv_roles, key=lambda item: (item[0], item[1]))
-            ),
-        )
-        for edge_id, ((p_node, c_node), cv_roles) in enumerate(
-            (key, logical_edge_roles[key]) for key in logical_edge_order
-        )
-    )
+            roles=edge_roles,
+        ))
 
-    return _node_build_mod.NodeTree(
-        nodes=nodes,
-        edges=edges,
+    return _NodeTree(
+        nodes=tuple(nodes_list),
+        edges=tuple(edges_list),
         root_node_id=root_node_id,
         cv_to_mid_node_id=cv_to_mid_node_id,
         branch_endpoint_node_id=branch_endpoint_node_id,
@@ -1190,6 +1281,12 @@ def _fast_clone_morpho(morpho: braincell.Morphology) -> braincell.Morphology:
     disc_cache = getattr(morpho, "_h01_disc_cache", None)
     if disc_cache is not None:
         cloned._h01_disc_cache = disc_cache
+    bmap_cache = getattr(morpho, "_cached_branch_index_map", None)
+    if bmap_cache is not None:
+        cloned._cached_branch_index_map = bmap_cache
+    nids_cache = getattr(morpho, "_cached_ordered_node_ids", None)
+    if nids_cache is not None:
+        cloned._cached_ordered_node_ids = nids_cache
     return cloned
 
 braincell.morph.morphology.clone_morpho = _fast_clone_morpho
@@ -1250,6 +1347,9 @@ def _fast_branch_index_map(self, *, order: str = "default") -> dict[int, int]:
     return res
 
 def _fast_branch_index(self, node_id: int, *, order: str = "default") -> int:
+    cached = getattr(self, "_cached_branch_index_map", None)
+    if cached is not None and cached[0] == (len(self._nodes), self._next_id, order):
+        return cached[1][node_id]
     return self._branch_index_map(order=order)[node_id]
 
 braincell.Morphology._ordered_node_ids_by = _fast_ordered_node_ids_by

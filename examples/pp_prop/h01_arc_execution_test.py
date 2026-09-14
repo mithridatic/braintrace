@@ -34,13 +34,13 @@ def test_encoded_arc_episode_updates_and_padding_does_not_advance(tmp_path):
         train = brainstate.transform.jit(lambda p: update_episode(session, p, module))
         result = train(jax.tree.map(jnp.asarray, payload))
         assert np.isfinite(np.asarray(result)).all() and int(trainer.updates) == 1
-        assert int(model.stepper.tick.value) == int(np.sum(advances))*20
+        assert int(model.stepper.tick.value) == int(np.sum(advances))*model.substeps
         before = {name: np.array(value) for name, value in trainer.parameters.items()}
         logits, activity = brainstate.transform.jit(lambda e, a: score_episode(session, e, a))(events, advances)
         assert logits.shape == (31, 360) and np.isfinite(logits).all()
         assert np.isfinite(activity).all()
         exact, loss = direct_query_metrics(np.asarray(logits), grid, module.decode_prediction)
         assert isinstance(exact, bool) and np.isfinite(loss)
-        assert int(model.stepper.tick.value) == int(np.sum(advances))*20
+        assert int(model.stepper.tick.value) == int(np.sum(advances))*model.substeps
         for name, value in trainer.parameters.items():
             np.testing.assert_array_equal(value, before[name])

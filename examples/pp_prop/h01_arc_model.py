@@ -39,7 +39,7 @@ class H01ArcModel(brainstate.nn.Module):
     Compiler and allocation gates must pass before a training claim is made.
     """
 
-    def __init__(self, network, source_ids, *, seed=21, dt_ms=0.000625,   # qualified step, docs/evidence/h01-timestep-ladder.json
+    def __init__(self, network, source_ids, *, seed=21, dt_ms=None,   # qualified step, docs/evidence/h01-timestep-ladder.json
                  input_pattern=None,
                  checkpoint_substeps=True, release_probability=None):
         super().__init__()
@@ -50,6 +50,12 @@ class H01ArcModel(brainstate.nn.Module):
             raise ValueError("Source IDs must be unique")
         if len(self.source_ids) != len(network.populations):
             raise ValueError("Source IDs must match network populations")
+        if dt_ms is None:
+            env_dt = brainstate.environ.get('dt', None)
+            if env_dt is not None:
+                dt_ms = float(env_dt.to_decimal(u.ms)) if isinstance(env_dt, u.Quantity) else float(env_dt)
+            else:
+                dt_ms = 0.000625
         if not np.isfinite(dt_ms) or dt_ms <= 0 or not np.isclose(.1/dt_ms, round(.1/dt_ms)):
             raise ValueError("Cable dt must divide the 0.1 ms event interval")
         self.substeps = int(round(.1/dt_ms))

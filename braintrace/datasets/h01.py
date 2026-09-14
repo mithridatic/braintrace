@@ -163,6 +163,183 @@ class H01Component:
 _GLOBAL_LOADED_COMPONENTS = {}
 
 
+def _fast_build_morpho_from_rows(rows, filename: str):
+    import brainunit as u
+    import saiunit
+    import numpy as np
+    from braincell import Morphology, Branch
+    from braincell.morph import MorphoBranch
+    from braincell.io.swc.reader import SwcReport
+    from ._h01_swc import POSITION_UM, RADIUS_UM
+
+    ids = rows[:, 0].astype(np.int64)
+    parents = rows[:, 6].astype(np.int64)
+    roots = np.flatnonzero(parents == -1)
+
+    children_orig = {int(node): [] for node in ids}
+    for i, parent in enumerate(parents):
+        if parent != -1:
+            children_orig[int(parent)].append(i)
+
+    from collections import deque
+    order, pending = [], deque([int(roots[0])])
+    while pending:
+        i = pending.popleft()
+        order.append(i)
+        pending.extend(children_orig[int(ids[i])])
+
+    order_idx = np.asarray(order, dtype=np.int32)
+    pos_um = rows[order_idx, 2:5] * POSITION_UM
+    rad_um = rows[order_idx, 5] * RADIUS_UM
+
+    new_ids = {int(ids[i]): j + 1 for j, i in enumerate(order)}
+    parent_list = [-1 if parents[i] == -1 else new_ids[int(parents[i])] for i in order]
+
+    n_nodes = len(order)
+    children = {j + 1: [] for j in range(n_nodes)}
+    for j, p in enumerate(parent_list):
+        if p != -1:
+            children[p].append(j + 1)
+
+    branches_info = []
+
+    def walk_root_branch():
+        point_ids = [1]
+        current_id = 1
+        root_side_child_ids = ()
+        c_ids = children[current_id]
+        if len(c_ids) != 1 and len(c_ids) > 0:
+            main_child_id = c_ids[0]
+            point_ids.append(main_child_id)
+            current_id = main_child_id
+            root_side_child_ids = tuple(c_ids[1:])
+        while True:
+            c_ids = children[current_id]
+            if len(c_ids) != 1:
+                break
+            child_id = c_ids[0]
+            point_ids.append(child_id)
+            current_id = child_id
+        return tuple(point_ids), current_id, root_side_child_ids
+
+    def walk_child_branch(parent_index, attach_node_id, start_node_id):
+        point_ids = [start_node_id]
+        current_id = start_node_id
+        while True:
+            c_ids = children[current_id]
+            if len(c_ids) != 1:
+                break
+            child_id = c_ids[0]
+            point_ids.append(child_id)
+            current_id = child_id
+        b_idx = len(branches_info)
+        branches_info.append((tuple(point_ids), parent_index, attach_node_id))
+        for c_id in children[current_id]:
+            walk_child_branch(b_idx, current_id, c_id)
+
+    root_pids, root_end, root_side = walk_root_branch()
+    branches_info.append((root_pids, None, None))
+    for c_id in root_side:
+        walk_child_branch(0, 1, c_id)
+    for c_id in children[root_end]:
+        walk_child_branch(0, root_end, c_id)
+
+    n_branches = len(branches_info)
+    morpho = Morphology.__new__(Morphology)
+    morpho._nodes = {}
+    morpho._name_to_id = {}
+    morpho._type_name_counters = {"custom": n_branches}
+    morpho._next_id = n_branches
+    morpho._root_name = "custom_0"
+    morpho._root_id = 0
+
+    _um = u.um
+
+    def _fast_q(val, unit):
+        q = saiunit._base_quantity.Quantity.__new__(saiunit._base_quantity.Quantity)
+        q._mantissa = val
+        q._unit = unit
+        return q
+
+    branch_point_data = {}
+    for branch_index, (p_ids, parent_id, attach_node_id) in enumerate(branches_info):
+        name = f"custom_{branch_index}"
+        idxs = [nid - 1 for nid in p_ids]
+        pts_arr = pos_um[idxs]
+        rads_arr = rad_um[idxs]
+        branch_nids = list(p_ids)
+
+        if parent_id is not None and attach_node_id is not None:
+            att_idx = attach_node_id - 1
+            att_pt = pos_um[att_idx]
+            att_rad = rad_um[att_idx]
+            pts_arr = np.vstack([att_pt, pts_arr])
+            rads_arr = np.concatenate([[att_rad], rads_arr])
+            branch_nids.insert(0, attach_node_id)
+
+        pts_prox = pts_arr[:-1]
+        pts_dist = pts_arr[1:]
+        diff = pts_dist - pts_prox
+        lens = np.sqrt(np.sum(diff * diff, axis=1))
+        r_prox = rads_arr[:-1]
+        r_dist = rads_arr[1:]
+
+        br = Branch.__new__(Branch)
+        object.__setattr__(br, "lengths", _fast_q(lens, _um))
+        object.__setattr__(br, "radii_proximal", _fast_q(r_prox, _um))
+        object.__setattr__(br, "radii_distal", _fast_q(r_dist, _um))
+        object.__setattr__(br, "points_proximal", _fast_q(pts_prox, _um))
+        object.__setattr__(br, "points_distal", _fast_q(pts_dist, _um))
+        object.__setattr__(br, "type", "custom")
+        tot_len = float(np.sum(lens))
+        seg_starts = np.concatenate(([0.0], np.cumsum(lens)[:-1]))
+        seg_ends = seg_starts + lens
+        object.__setattr__(br, "_h01_float_arrays", (lens, r_prox, r_dist, pts_prox, pts_dist, tot_len, seg_starts, seg_ends))
+        object.__setattr__(br, "_h01_branch_nids", branch_nids)
+
+        b_pref = np.concatenate(([0.0], seg_ends)) if len(lens) > 0 else np.array([0.0])
+        p_map = {nid: idx for idx, nid in enumerate(branch_nids)}
+        branch_point_data[branch_index] = (branch_nids, p_map, b_pref, tot_len)
+
+        if parent_id is None:
+            parent_x = None
+        else:
+            p_nids, p_pmap, p_ppref, p_ptot = branch_point_data[parent_id]
+            if p_ptot <= 0.0 or len(p_nids) == 1:
+                parent_x = 1.0
+            else:
+                if attach_node_id in p_pmap:
+                    att_idx = p_pmap[attach_node_id]
+                    parent_x = float(p_ppref[att_idx] / p_ptot)
+                else:
+                    parent_x = 1.0
+
+        node = MorphoBranch(
+            morpho,
+            branch_index,
+            name=name,
+            branch=br,
+            parent_id=parent_id,
+            parent_x=parent_x,
+            child_x=0.0,
+        )
+        morpho._nodes[branch_index] = node
+        morpho._name_to_id[name] = branch_index
+        if parent_id is not None:
+            morpho._nodes[parent_id]._children[name] = branch_index
+
+    morpho._h01_validated = True
+    try:
+        from .h01_anatomy import _geometry_signature
+        _geometry_signature(morpho)
+    except Exception:
+        pass
+    report = SwcReport()
+    from braincell.io.swc.types import SwcIssue
+    report.issues.append(SwcIssue(level="warning", code="semantics.no_soma_samples", message="No soma sample found in SWC."))
+    return morpho, report
+
+
 def _fast_build_morpho_from_text(converted_text: str, filename: str):
     import brainunit as u
     import saiunit
@@ -421,7 +598,7 @@ class H01Archive:
         with zipfile.ZipFile(self.path) as archive:
             source = archive.read(name)
         rows, converted = normalize(source)
-        morphology, report = _fast_build_morpho_from_text(converted, name)
+        morphology, report = _fast_build_morpho_from_rows(rows, name)
         comp = H01Component(
             str(neuron_id), component, morphology, rows, converted, report,
             hashlib.sha256(source).hexdigest(),

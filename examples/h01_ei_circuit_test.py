@@ -9,7 +9,7 @@ def test_measured_pair_is_the_default_and_uses_the_pinned_identities():
     args = build_parser().parse_args(["--output", "x"])
     assert args.connectivity == "measured" and args.control == "ei" and args.solver == "staggered"
     assert identities_for(args.connectivity) == (("E", "4157825456"), ("I", "5584343344"))
-    assert args.e_delay_ms == 2. and args.i_pulse_ms == 3. and args.dt_ms == .005
+    assert args.e_delay_ms == 2. and args.i_pulse_ms == 3. and args.dt_ms == .000625
 
 
 def test_illustrative_pair_is_explicit_and_unknown_wiring_is_rejected():

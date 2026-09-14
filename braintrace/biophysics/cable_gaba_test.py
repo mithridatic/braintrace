@@ -21,7 +21,7 @@ def test_spatial_gaba_receptor_current_and_voltage(tmp_path):
         # A new declaration rebuilds runtime. Bind only after rebuilding it.
         cell.reset()
         cell.paint(AllRegion(), Channel('EnvironmentGABA', name='tonic'))
-        step = H01NetworkStep(old.network)
+        step = H01NetworkStep(old.network, dt_ms=.000625)
         binding = CablePotassiumBinding(cell, env)
         channel = next(node for node in cell.runtime.runtime_nodes.values() if isinstance(node, EnvironmentGABA))
         channel.bind(binding)
