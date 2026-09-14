@@ -91,12 +91,9 @@ def input_topology():
         Input-to-neuron sparse relation with 441 rows and 32 entries per row.
     """
 
-    targets = jnp.asarray(
-        [(131 * feature + 61 * k) % N_NEURONS
-         for feature in range(N_INPUTS)
-         for k in range(INPUT_FANOUT)],
-        dtype=jnp.int32,
-    )
+    features = np.arange(N_INPUTS)[:, None]
+    ks = np.arange(INPUT_FANOUT)[None, :]
+    targets = jnp.asarray(((131 * features + 61 * ks) % N_NEURONS).reshape(-1), dtype=jnp.int32)
     return brainevent.CSR(
         _normal((N_INPUTS * INPUT_FANOUT,), 21, 1.0 / jnp.sqrt(32.0)),
         targets,
@@ -114,9 +111,9 @@ def recurrent_topology():
         Recurrent sparse relation with eight non-self entries per source.
     """
 
-    offsets = jnp.asarray([1, 2, 4, 8, 16, 32, 64, 128], dtype=jnp.int32)
-    sources = jnp.arange(N_NEURONS, dtype=jnp.int32)[:, None]
-    targets = ((sources + offsets) % N_NEURONS).reshape(-1)
+    offsets = np.asarray([1, 2, 4, 8, 16, 32, 64, 128], dtype=np.int32)
+    sources = np.arange(N_NEURONS, dtype=np.int32)[:, None]
+    targets = jnp.asarray(((sources + offsets) % N_NEURONS).reshape(-1), dtype=jnp.int32)
     return brainevent.CSR(
         _normal((N_NEURONS * RECURRENT_FANOUT,), 22, 1.0 / jnp.sqrt(8.0)),
         targets,
