@@ -745,7 +745,7 @@ read from a committed decision JSON, and a term with no evidence scores zero and
 | --- | ---: | --- | --- |
 | Donor accuracy | 0.718 | yes | B3 on ten elements at 310 pA, against its own recording; the type donor for 28 of 104 cells |
 | Type coverage | 0.529 | yes | 55 of 104 matched in layer and class |
-| Build | 1.000 | yes | import, construction, initialisation, forward pass, all 104 |
+| Construction | 1.000 | yes | import, construction, initialisation, **synthetic** forward pass, all 104 |
 | Driven window | 0.000 | no | 10 ms explicit died nonfinite; implicit retry aborted at the wall cap after 21,286 s |
 | Timestep | 0.000 | no | the 1 mV gate FAILS by 6.36 mV between dt 0.005 and 0.0025 ms |
 | Anatomy transfer | 0.000 | **yes** | B3's fit fires 4 spikes at 200 pA on the donor's reconstruction and **0** on the H01 skeleton |

@@ -14,7 +14,7 @@ Five terms, each read from a committed decision JSON:
              104 cells. The other three donors had their published fits reproduced and REJECTED
              against their own recordings, and no ten-element score exists for them.
   coverage   how many H01 cells have a donor matched in both layer and class (55 of 104).
-  build      whether the cell can be imported, constructed, initialised and stepped. Split into
+  construction  whether the cell can be imported, constructed, initialised and stepped. Split into
              the gates that pass (import, construction, initialisation, a forward pass on a
              synthetic probe) and the gate that does not (a driven window at a physiological
              duration with a qualified timestep).
@@ -95,7 +95,7 @@ def build_term():
           and init["status"] == "passed" and probe["status"] == "forward_pass")
     n_imported = sum(1 for c in imp["cells"] if c["passed"])
     return _term(
-        "build", (n_imported / CELLS) if ok else 0., True,
+        "construction", (n_imported / CELLS) if ok else 0., True,
         f"All {n_imported} of {CELLS} largest soma-bearing components import with zero missing "
         f"segments; construction passes with {build['n_compartments']:,} compartments and no "
         f"failures; initialisation passes; a forward pass completes all six phases at dt "
@@ -179,10 +179,10 @@ def report():
         "cells": CELLS,
         "terms": terms,
         "product_as_measured": product(terms),
-        "product_if_construction_counts_as_build": product(
+        "product_if_construction_counts_as_simulation": product(
             terms, assume=["driven_window", "timestep", "anatomy_transfer"]),
-        "note": ("The second product is the figure obtained by counting construction as build "
-                 "success and setting the three unqualified terms to one. It is quoted only with "
+        "note": ("The second product is the figure obtained by counting construction as a "
+                 "working simulation and setting the three unqualified terms to one. It is quoted only with "
                  "its assumptions attached; it also assumes the three rejected donors score like "
                  "the one donor that was scored, which the anatomy term actively contradicts."),
     }
@@ -196,7 +196,7 @@ def main():
         print(f"{t['term']:<18} {t['value']:.3f}  measured={t['measured']}")
     print(f"as measured: {r['product_as_measured']['value_pct']:.2f} percent")
     print(f"with three terms assumed: "
-          f"{r['product_if_construction_counts_as_build']['value_pct']:.2f} percent")
+          f"{r['product_if_construction_counts_as_simulation']['value_pct']:.2f} percent")
     print(f"wrote {out}")
 
 

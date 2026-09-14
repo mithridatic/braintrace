@@ -287,7 +287,7 @@ def build_nodes():
         n("goal", GOAL,
           "GOAL: a scored model set over the 104 H01 cells. Reachable form: the product of the six ledger "
           "terms. As measured that product is 0 percent, because three terms have no positive evidence. "
-          "The figure obtained by counting construction as build success and assuming the other three "
+          "The figure obtained by counting construction as a working simulation and assuming the other three "
           "terms away is 38 percent (0.718 x 0.529), and it is quotable only with those assumptions "
           "attached. The earlier 'about 4 percent' was arithmetic on a stale build term and is withdrawn.",
           "The 1-to-100 scale the goal asks for is therefore best read as this product, with all six "
@@ -333,7 +333,10 @@ def build_edges():
         e("plan_holdout", "plan_second_cell", "describes", "cross-cell test"),
         e("plan_second_cell", "pop_typematch", "describes", "scale to the population"),
         e("pop_typematch", "goal", "describes", "coverage factor"),
-        e("pop_build", "goal", "describes", "build factor (closed: 104/104)"),
+        e("pop_typematch", "pop_build", "describes", "and the matched cells have to build"),
+        e("pop_typematch", "pop_anatomy", "describes",
+          "and the matched donor's fit has to survive H01 anatomy"),
+        e("pop_build", "goal", "describes", "construction factor (closed: 104/104)"),
         e("pop_build", "pop_driven", "describes", "construction is not simulation"),
         e("pop_driven", "pop_dt", "describes", "blocked on a qualified step"),
         e("pop_driven", "goal", "describes", "driven-window factor (zero)"),

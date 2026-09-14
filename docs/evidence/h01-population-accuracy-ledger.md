@@ -83,12 +83,12 @@ working build all describe a model that, on the anatomy it is meant to run on, i
 | --- | ---: | --- | --- |
 | `donor_accuracy` | 0.718 | yes | B3 on ten elements at 310 pA, against Allen 541563728's own recording. Scoped to the **28** cells B3 is the type match for. |
 | `type_coverage` | 0.529 | yes | 55 of 104 cells matched in layer **and** class. |
-| `build` | 1.000 | yes | import, construction, initialisation and a synthetic forward pass, all 104. |
+| `construction` | 1.000 | yes | import, construction, initialisation and a **synthetic** forward pass, all 104. Named `construction`, not `build`: the forward pass it credits drives an all-ones probe, and whether the population *runs* is the `driven_window` term below. |
 | `driven_window` | 0.000 | no | no qualified driven window at 104 cells. |
 | `timestep` | 0.000 | no | 1 mV gate FAIL at the coarse rungs; finer rungs unreadable. |
 | `anatomy_transfer` | 0.000 | **yes** | the donor's fit does not spike on H01 anatomy. |
 
-**Product as measured: 0 percent.** Product if construction is counted as build success and the
+**Product as measured: 0 percent.** Product if construction is counted as a working simulation and the
 three unqualified terms are set to one: **38 percent** — and that figure additionally assumes the
 three donors whose published fits were *reproduced and rejected* against their own recordings
 score like the one donor that was scored.

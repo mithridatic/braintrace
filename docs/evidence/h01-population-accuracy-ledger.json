@@ -24,7 +24,7 @@
       ]
     },
     {
-      "term": "build",
+      "term": "construction",
       "value": 1.0,
       "measured": true,
       "statement": "All 104 of 104 largest soma-bearing components import with zero missing segments; construction passes with 808,495 compartments and no failures; initialisation passes; a forward pass completes all six phases at dt 0.005 ms, peak RSS 14.0 GiB.",
@@ -83,7 +83,7 @@
         "assumed": false
       },
       {
-        "term": "build",
+        "term": "construction",
         "used": 1.0,
         "assumed": false
       },
@@ -104,7 +104,7 @@
       }
     ]
   },
-  "product_if_construction_counts_as_build": {
+  "product_if_construction_counts_as_simulation": {
     "value_pct": 37.9621098054756,
     "assumptions": [
       "driven_window",
@@ -123,7 +123,7 @@
         "assumed": false
       },
       {
-        "term": "build",
+        "term": "construction",
         "used": 1.0,
         "assumed": false
       },
@@ -144,5 +144,5 @@
       }
     ]
   },
-  "note": "The second product is the figure obtained by counting construction as build success and setting the three unqualified terms to one. It is quoted only with its assumptions attached; it also assumes the three rejected donors score like the one donor that was scored, which the anatomy term actively contradicts."
+  "note": "The second product is the figure obtained by counting construction as a working simulation and setting the three unqualified terms to one. It is quoted only with its assumptions attached; it also assumes the three rejected donors score like the one donor that was scored, which the anatomy term actively contradicts."
 }

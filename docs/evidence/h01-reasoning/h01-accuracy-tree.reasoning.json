@@ -1,5 +1,5 @@
 {
-  "id": "doc_b1da9540-b01",
+  "id": "doc_0957921b-df7",
   "title": "H01 accuracy roadmap",
   "graph": {
     "classes": [
@@ -156,11 +156,25 @@
         "label": "coverage factor"
       },
       {
+        "id": "pop_typematch__pop_build",
+        "source": "pop_typematch",
+        "target": "pop_build",
+        "relation": "describes",
+        "label": "and the matched cells have to build"
+      },
+      {
+        "id": "pop_typematch__pop_anatomy",
+        "source": "pop_typematch",
+        "target": "pop_anatomy",
+        "relation": "describes",
+        "label": "and the matched donor's fit has to survive H01 anatomy"
+      },
+      {
         "id": "pop_build__goal",
         "source": "pop_build",
         "target": "goal",
         "relation": "describes",
-        "label": "build factor (closed: 104/104)"
+        "label": "construction factor (closed: 104/104)"
       },
       {
         "id": "pop_build__pop_driven",
@@ -889,7 +903,7 @@
       {
         "id": "goal",
         "type": "Goal",
-        "text": "GOAL: a scored model set over the 104 H01 cells. Reachable form: the product of the six ledger terms. As measured that product is 0 percent, because three terms have no positive evidence. The figure obtained by counting construction as build success and assuming the other three terms away is 38 percent (0.718 x 0.529), and it is quotable only with those assumptions attached. The earlier 'about 4 percent' was arithmetic on a stale build term and is withdrawn.",
+        "text": "GOAL: a scored model set over the 104 H01 cells. Reachable form: the product of the six ledger terms. As measured that product is 0 percent, because three terms have no positive evidence. The figure obtained by counting construction as a working simulation and assuming the other three terms away is 38 percent (0.718 x 0.529), and it is quotable only with those assumptions attached. The earlier 'about 4 percent' was arithmetic on a stale build term and is withdrawn.",
         "status": "unverified",
         "confidence": 0.08,
         "notes": "The 1-to-100 scale the goal asks for is therefore best read as this product, with all six factors reported separately so no single number hides a zero. Confidence lowered 15 -> 8 percent that the full product exceeds 80 percent within this campaign's scope. The reason is not the climb: it is that the ledger correction moved the binding constraint from an engineering blocker believed 75 percent fixable to anatomy transfer, which has a measured negative reading, and to a driven window that has twice failed to complete. The absence of H01 ground truth remains the one limit that cannot be removed at all.\n\nEvidence: docs/evidence/h01-population-status.md; docs/evidence/h01-population-types.md; docs/evidence/h01-topographic/stage-15.json; docs/evidence/h01-population-accuracy-ledger.md",
@@ -1254,6 +1268,38 @@
         "reservations": [
           {
             "id": "reservation_pop_typematch__goal",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_pop_typematch__pop_build",
+        "edgeId": "pop_typematch__pop_build",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_pop_typematch__pop_build",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_pop_typematch__pop_anatomy",
+        "edgeId": "pop_typematch__pop_anatomy",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_pop_typematch__pop_anatomy",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

@@ -16,7 +16,7 @@ def test_every_term_is_present_and_named():
     """Six terms, in order, each with a value, a statement, a cause and its evidence files."""
     terms = pl.ledger()
     assert [t["term"] for t in terms] == [
-        "donor_accuracy", "type_coverage", "build", "driven_window", "timestep",
+        "donor_accuracy", "type_coverage", "construction", "driven_window", "timestep",
         "anatomy_transfer"]
     for t in terms:
         assert 0. <= t["value"] <= 1.
@@ -32,9 +32,9 @@ def test_the_measured_terms_carry_the_committed_numbers():
     assert terms["type_coverage"]["value"] == pytest.approx(types["summary"]["matched"] / 104.)
 
 
-def test_the_build_term_is_the_full_population_not_the_stale_twelve():
+def test_the_construction_term_is_the_full_population_not_the_stale_twelve():
     """The one-point SWC branch is repaired; the build term must reflect the committed audit."""
-    build = {t["term"]: t for t in pl.ledger()}["build"]
+    build = {t["term"]: t for t in pl.ledger()}["construction"]
     assert build["value"] == pytest.approx(1.)
     assert "12-of-104" in build["cause"]
 
@@ -77,5 +77,5 @@ def test_report_quotes_the_optimistic_figure_only_with_its_assumptions():
     assert r["cells"] == 104
     assert len(r["terms"]) == 6
     assert r["product_as_measured"]["value_pct"] == 0.
-    assert r["product_if_construction_counts_as_build"]["assumptions"]
+    assert r["product_if_construction_counts_as_simulation"]["assumptions"]
     assert "assumptions attached" in r["note"]

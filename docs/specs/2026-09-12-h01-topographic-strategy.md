@@ -972,7 +972,7 @@ the score of exactly the case that fails it.
 | --- | ---: | --- |
 | Donor accuracy (B3, ten elements, 310 pA; donor for 28 of 104) | 0.718 | yes |
 | Type coverage (layer and class) | 0.529 | yes |
-| Build (import, construction, initialisation, forward pass) | 1.000 | yes |
+| Construction (import, construction, initialisation, synthetic forward pass) | 1.000 | yes |
 | Driven window at a physiological duration | 0.000 | no |
 | Timestep qualified against the 1 mV contract | 0.000 | no |
 | Anatomy transfer (donor fit on H01 anatomy) | 0.000 | **yes, negative** |
