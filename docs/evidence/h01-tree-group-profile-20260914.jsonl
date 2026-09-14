@@ -1,0 +1,4 @@
+{"tree": "tree-0.npz", "nodes": 64047, "old_shape": [3232, 32], "new_shape": [1568, 15072], "old_s": 0.03702509310096502, "new_s": 0.02783655747771263, "max_error": 0.0}
+{"tree": "tree-1.npz", "nodes": 21334, "old_shape": [1496, 32], "new_shape": [1043, 4194], "old_s": 0.016561192460358143, "new_s": 0.017789501696825027, "max_error": 0.0}
+{"tree": "tree-2.npz", "nodes": 26055, "old_shape": [1914, 32], "new_shape": [1341, 6043], "old_s": 0.019136251881718636, "new_s": 0.02459049876779318, "max_error": 0.0}
+{"tree": "tree-3.npz", "nodes": 20958, "old_shape": [2505, 32], "new_shape": [2091, 3143], "old_s": 0.02687818743288517, "new_s": 0.03815056290477514, "max_error": 0.0}

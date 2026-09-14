@@ -1,0 +1,31 @@
+         4889221 function calls (4689636 primitive calls) in 14.365 seconds
+
+   Ordered by: cumulative time
+   List reduced from 3497 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   14.379   14.379 h01_event_profile.py:90(<lambda>)
+   5158/5    0.006    0.000   14.371    2.874 traceback_util.py:191(reraise_with_filtered_traceback)
+        1    0.000    0.000   14.322   14.322 _jit.py:125(jitted_fn)
+4949/4813    0.018    0.000   12.715    0.003 pjit.py:257(cache_miss)
+4949/4870    0.023    0.000   12.174    0.002 pjit.py:133(_run_python_pjit)
+        2    0.000    0.000   11.694    5.847 pjit.py:1169(_pjit_call_impl_python)
+   115/28    0.001    0.000   11.067    0.395 profiler.py:417(wrapper)
+        2    0.000    0.000    6.537    3.269 pxla.py:1230(compile)
+        2    0.000    0.000    6.537    3.269 pxla.py:1707(from_hlo)
+        2    0.000    0.000    6.531    3.266 pxla.py:1520(_cached_compilation)
+        2    0.000    0.000    6.530    3.265 compiler.py:384(compile_or_get_cached)
+        2    0.000    0.000    6.409    3.205 compiler.py:719(_compile_and_write_cache)
+        2    5.859    2.930    5.859    2.930 compiler.py:289(backend_compile_and_load)
+        2    4.189    2.095    4.207    2.104 pxla.py:399(__call__)
+   569/59    0.002    0.000    2.719    0.046 partial_eval.py:2319(trace_to_jaxpr)
+   569/59    0.015    0.000    2.718    0.046 partial_eval.py:2247(trace_to_jaxpr_nocache)
+  4964/75    0.047    0.000    2.713    0.036 pjit.py:635(_infer_params)
+   437/35    0.023    0.000    2.707    0.077 pjit.py:484(_trace_for_jit)
+     41/2    0.000    0.000    2.659    1.330 _make_jaxpr.py:378(get_arg_cache_key)
+     11/1    0.000    0.000    2.658    2.658 _make_jaxpr.py:633(get_state_trace)
+     11/1    0.001    0.000    2.657    2.657 _make_jaxpr.py:884(make_jaxpr)
+     11/1    0.000    0.000    2.654    2.654 api.py:2133(make_jaxpr_f)
+     15/1    0.000    0.000    2.653    2.653 pjit.py:310(jit_trace)
+     11/1    0.000    0.000    2.648    2.648 _make_jaxpr.py:814(_wrapped_fun_to_eval)
+        1    0.000    0.000    2.645    2.645 h01_arc_model.py:179(step)

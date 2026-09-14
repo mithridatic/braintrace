@@ -113,7 +113,9 @@ def _prepare_levels(edges, offsets, sentinel):
     counts = np.diff(offsets)
     width = int(counts.max(initial=0))
     children = np.full((len(counts), width), sentinel, dtype=np.int32)
-    parents = children.copy()
+    # Invalid entries must not contend on one in-bounds atomic-add address.
+    # Children still read the neutral sentinel; parent updates are dropped.
+    parents = np.full_like(children, sentinel+1)
     valid = np.zeros(children.shape, dtype=bool)
     for i, count in enumerate(counts):
         children[i, :count] = edges[offsets[i]:offsets[i+1], 0]
@@ -136,8 +138,8 @@ def _triang_raw(d_raw, s_raw, l_raw, u_raw, levels):
         multiplier = uc / d[..., c]
         delta_d = jnp.where(v, -lc * multiplier, 0.0)
         delta_s = jnp.where(v, -s[..., c] * multiplier, 0.0)
-        d = d.at[..., p].add(delta_d)
-        s = s.at[..., p].add(delta_s)
+        d = d.at[..., p].add(delta_d, mode='drop')
+        s = s.at[..., p].add(delta_s, mode='drop')
         return (d, s), None
 
     (d_out, s_out), _ = jax.lax.scan(level_step, (d_raw, s_raw), (children, parents, valid, u_c, l_c))
@@ -187,7 +189,7 @@ def _backsub(diags, solves, lowers, indices):
     return res_v
 
 
-def _solve_raw(d, s, low, up, levels, jumps, edges):
+def _solve_raw(d, s, low, up, levels, jumps, edges, *, use_gpu=True):
     """Use the tree solve with an exact implicit linear derivative on raw arrays."""
     children_edges, parents_edges = edges[:, 0], edges[:, 1]
     children, parents, valid = levels
@@ -205,19 +207,25 @@ def _solve_raw(d, s, low, up, levels, jumps, edges):
         multiplier = uc / d_c[..., c]
         delta_d = jnp.where(v, -lc * multiplier, 0.0)
         delta_s = jnp.where(v, -s_c[..., c] * multiplier, 0.0)
-        d_c = d_c.at[..., p].add(delta_d)
-        s_c = s_c.at[..., p].add(delta_s)
+        d_c = d_c.at[..., p].add(delta_d, mode='drop')
+        s_c = s_c.at[..., p].add(delta_s, mode='drop')
         return (d_c, s_c), None
 
     def solve(_, rhs):
-        if children.shape[0] == 0:
+        if use_gpu:
+            from .h01_dhs_gpu import eliminate
+            diagonal, right = eliminate(d, rhs, low, up, levels)
+        elif children.shape[0] == 0:
             diagonal, right = d, rhs
         else:
             (diagonal, right), _ = jax.lax.scan(level_step, (d, rhs), (children, parents, valid, up_c, low_c))
         return _backsub_raw(diagonal, right, low, jumps)
 
     def transpose_solve(_, rhs):
-        if children.shape[0] == 0:
+        if use_gpu:
+            from .h01_dhs_gpu import eliminate
+            diagonal, right = eliminate(d, rhs, up, low, levels)
+        elif children.shape[0] == 0:
             diagonal, right = d, rhs
         else:
             (diagonal, right), _ = jax.lax.scan(level_step, (d, rhs), (children, parents, valid, low_c, up_c))

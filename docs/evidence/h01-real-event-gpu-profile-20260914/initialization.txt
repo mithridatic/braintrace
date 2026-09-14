@@ -1,0 +1,31 @@
+         32293882 function calls (32099222 primitive calls) in 28.751 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1703 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   30.223   30.223 h01_event_profile.py:73(<lambda>)
+        1    0.000    0.000   30.223   30.223 h01_network_init.py:101(init_h01_network_states)
+        4    0.012    0.003   30.221    7.555 h01_construction.py:1576(init_state)
+       56    0.001    0.000   21.690    0.387 h01_construction.py:1551(_discretization)
+        4    0.000    0.000   21.682    5.420 cell.py:421(_discretization)
+        4    0.031    0.008   21.682    5.420 base.py:427(build_discretization)
+        4    0.122    0.031   21.651    5.413 base.py:471(_build_discretization_parts)
+        4    1.539    0.385    6.217    1.554 h01_construction.py:298(_fast_build_cv_geometry)
+        4    2.939    0.735    5.359    1.340 h01_construction.py:621(_fast_build_node_tree)
+        4    0.353    0.088    3.792    0.948 h01_construction.py:540(_fast_build_cv_mechanisms)
+    64/16    0.041    0.001    3.682    0.230 region.py:195(evaluate)
+        4    0.110    0.027    3.297    0.824 h01_discretization.py:31(resolve_cv_bounds)
+    67/63    0.000    0.000    3.104    0.049 traceback_util.py:191(reraise_with_filtered_traceback)
+    60/56    0.001    0.000    3.101    0.055 pjit.py:257(cache_miss)
+       12    0.000    0.000    3.049    0.254 _base_ion.py:327(init_state)
+       60    0.001    0.000    3.013    0.050 pjit.py:133(_run_python_pjit)
+       56    0.001    0.000    3.010    0.054 pjit.py:1169(_pjit_call_impl_python)
+  293/236    0.003    0.000    2.910    0.012 profiler.py:417(wrapper)
+    75609    0.031    0.000    2.743    0.000 base.py:496(<genexpr>)
+    75605    0.448    0.000    2.711    0.000 h01_construction.py:866(_fast_assemble_cv)
+        4    0.273    0.068    2.673    0.668 h01_construction.py:950(_fast_from_cell)
+       56    0.001    0.000    2.580    0.046 pxla.py:1230(compile)
+       56    0.004    0.000    2.579    0.046 pxla.py:1707(from_hlo)
+       56    0.001    0.000    2.555    0.046 pxla.py:1520(_cached_compilation)
+       56    0.002    0.000    2.530    0.045 compiler.py:384(compile_or_get_cached)

@@ -58,7 +58,8 @@ def test_original_trace_expands_with_depth():
     assert sizes[1] == 8*sizes[0]
 
 
-@pytest.mark.parametrize("parent", [[0], [0, 0, 1, 2, 3], [0, 0, 0, 1, 1, 2, 5]])
+@pytest.mark.parametrize("parent", [[0], [0, 0, 1, 2, 3], [0, 0, 0, 1, 1, 2, 5],
+                                   [0, 0, 1, 2]+[3]*16])
 @pytest.mark.parametrize("quantity", [False, True])
 @pytest.mark.parametrize("batch", [1, 3])
 def test_solve_matches_original_and_dense(parent, quantity, batch):
