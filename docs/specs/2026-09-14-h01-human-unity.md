@@ -167,3 +167,43 @@ release hash. This CPU-only static check has a 60-second process cap and execute
 no membrane dynamics. Require all edges to match and total lateral area within
 1e-8 relative tolerance. Passing this check qualifies only the recorded geometry
 and discretization, not membrane completeness, physiology or the final population.
+
+## All-104 production compartment geometry
+
+Extend source-to-simulation verification to the exact 104-cell inventory and
+component selection in the retained construction reference. Freeze its SHA256
+against the recorded build decision. Use the deployed MaxCVLen(10 um) policy
+with the same BoundaryAlignedCV electrical regions, without painting or running
+any biological mechanism. Compare each region with the recorded intervals.
+For every cell, verify every directed source edge, coordinate and radius against
+the production import. Independently compute tapered lateral area and length
+from each branch's source segments. Check every branch's CV intervals cover
+[0,1] once without gaps/overlap, and its summed CV area and length agree within
+1e-8 relative tolerance. Check per-cell and total compartment counts against
+the pinned construction reference (808,495 overall). Do not equate aggregate
+area agreement with per-branch preservation.
+
+Retain every source/imported edge, branch and CV area/length/interval observation,
+source identities, executed source hashes and terminal process receipt. Reject
+changed component hashes, missing/duplicate cells, invalid geometry, partial
+coverage and nonfinite values. Original acquisition coordinates remain the
+datum. This stage measures static geometry on human anatomy only; its success
+does not qualify channel kinetics, source-mesh completeness, physiological
+transfer, or population timestep. The existing scores remain unchanged until
+their full requirements have independent evidence.
+
+Use one local CPU process capped at 600 seconds, retaining completed per-cell
+artifacts on timeout without declaring 104-cell success. Historical import of
+all 104 took 509 seconds; current optimized construction may be faster. No
+multi-hour run or membrane rollout is authorized by this stage. Tests must
+exercise per-branch mismatch even when global area cancels, holes/overlaps,
+empty branches, nonfinite and nonpositive geometry, and reordered CV rows.
+
+The first attempt terminated after 15 cells on a historical-region comparison
+for cell 1830470325 (maximum normalized-boundary discrepancy 1.3103e-12 versus
+the runner's 1e-12 comparison). Preserve that attempt and its terminal receipt.
+A second prefix keeps the identical tolerance, records every current/reference
+region interval and each discrepancy, and continues collecting all cells' geometry.
+Report strict historical-region agreement separately from source-edge and per-CV
+conservation. Any failed region comparison keeps the overall comparison failed;
+successful process termination or matching total compartments does not override it.

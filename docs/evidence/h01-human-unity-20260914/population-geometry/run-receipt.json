@@ -1,0 +1,16 @@
+{
+  "command": [
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Scripts\\python.exe",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-human-unity\\docs\\evidence\\h01-human-unity-20260914\\population-geometry\\run_audit.py",
+    "--archive",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.cache\\h01\\proofread104.zip",
+    "--reference",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.cache\\h01\\readiness\\104-implicit-construction-reference.json"
+  ],
+  "pid": 19176,
+  "returncode": 1,
+  "timed_out": false,
+  "wall_cap_seconds": 600,
+  "elapsed_seconds": 26.152930100011872,
+  "log_sha256": "2a6f911582e99d10e5fcc486adf369a9b7b496c5625987ecafc1791f1812886d"
+}

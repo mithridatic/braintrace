@@ -1,0 +1,10 @@
+{
+  "reference_sha256": "a32286fa4dbe2fd1865a7cc50415df32a13906d76b6ac3c217ca7891a94cfd68",
+  "reference_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.cache\\h01\\readiness\\104-implicit-construction-reference.json",
+  "archive_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.cache\\h01\\proofread104.zip",
+  "expected_cells": 104,
+  "expected_compartments": 808495,
+  "wall_cap_seconds": 600,
+  "human_anatomy_only": true,
+  "biological_mechanisms_executed": false
+}

@@ -130,3 +130,14 @@ archive is the pinned proofread104 release. Ten additional sibling tests pass,
 covering edge loss, nonfinite data, reordered edges, endpoint displacement and
 radius changes. [Test results](post-import-tests.xml) and [actual-run coverage](post-import-coverage.json)
 are retained separately from the original 81-test repair suite.
+
+## All-104 production compartment geometry
+
+The [population geometry check](population-geometry-r2/README.md) now verifies
+all 2,804,445 directed source edges and per-branch area/length conservation
+through the exact 808,495-compartment production policy for all 104 cells.
+Every cell's compartment count matches the pinned construction reference.
+The separate strict historical-region comparison fails for one cell by a
+maximum normalized discrepancy of 1.3103e-12 against its retained 1e-12 threshold;
+that failure remains explicit. No physiological or six-term score promotion
+follows from this static geometry result.
