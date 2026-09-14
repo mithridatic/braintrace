@@ -1427,6 +1427,9 @@ def build_dhs_static_source_1d(target, *, node_tree, scheduling) -> _st.DHSStati
     )
 
 
+_GLOBAL_DISCRETIZATION_CACHE = {}
+
+
 class H01Cell(braincell.Cell):
     """BrainCell cell with branch-index lookup caching and sparse solver memory.
 
@@ -1447,8 +1450,20 @@ class H01Cell(braincell.Cell):
 
     @property
     def _discretization(self):
+        sig = getattr(self._morpho, "_h01_geom_sig", None)
+        if sig is not None:
+            disc_key = (sig, self.cv_policy, tuple(self._paint_rules), tuple(self._place_rules))
+            cached = _GLOBAL_DISCRETIZATION_CACHE.get(disc_key)
+            if cached is not None:
+                self._discretization_cache = cached
+                self._discretization_cache_key = self._discretization_key()
+                return cached
         with _indexed_morphology(self._morpho):
-            return super()._discretization
+            res = super()._discretization
+            if sig is not None:
+                disc_key = (sig, self.cv_policy, tuple(self._paint_rules), tuple(self._place_rules))
+                _GLOBAL_DISCRETIZATION_CACHE[disc_key] = res
+            return res
 
     @property
     def n_cv(self) -> int:
