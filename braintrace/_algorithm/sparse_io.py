@@ -29,7 +29,7 @@ def _get_layout_precomputed(layout):
             spec = ("full" if is_full else "sparse", shape, tuple(row_colors.tolist()))
         block_specs.append(spec)
 
-    pre = (colors_np, out_mask_np, tuple(block_specs), {})
+    pre = (colors_np, out_mask_np, tuple(block_specs))
     try:
         object.__setattr__(layout, "_sparse_io_precomputed", pre)
     except (AttributeError, TypeError):
@@ -76,12 +76,8 @@ def instant_factors(tail, output, layout):
                 result.append(t[..., None])
         return tuple(result)
 
-    colors_np, out_mask_np, block_specs, seed_cache = _get_layout_precomputed(layout)
-    seed_key = (output.dtype, 0.0)
-    out_seeds = seed_cache.get(seed_key)
-    if out_seeds is None:
-        out_seeds = jnp.asarray(out_mask_np, dtype=output.dtype)
-        seed_cache[seed_key] = out_seeds
+    colors_np, out_mask_np, block_specs = _get_layout_precomputed(layout)
+    out_seeds = jnp.asarray(out_mask_np, dtype=output.dtype)
 
     def _jvp_tail(out_s):
         _, tan = jax.jvp(tail, (output,), (out_s,))
@@ -258,12 +254,8 @@ def advance_factors(transition, output, state, factors, layout, decay):
                 result.append(t[..., None])
         return tuple(result)
 
-    colors_np, out_mask_np, block_specs, seed_cache = _get_layout_precomputed(layout)
-    seed_key = (output.dtype, float(decay))
-    out_seeds = seed_cache.get(seed_key)
-    if out_seeds is None:
-        out_seeds = (1.0 - decay) * jnp.asarray(out_mask_np, dtype=output.dtype)
-        seed_cache[seed_key] = out_seeds
+    colors_np, out_mask_np, block_specs = _get_layout_precomputed(layout)
+    out_seeds = (1.0 - decay) * jnp.asarray(out_mask_np, dtype=output.dtype)
 
     hidden_seeds = []
     for factor, (kind, shape, row_colors) in zip(factors, block_specs):
