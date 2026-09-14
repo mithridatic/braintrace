@@ -3,6 +3,7 @@
 import bisect
 import sys
 from contextlib import contextmanager
+from weakref import WeakValueDictionary
 
 import braincell
 import brainstate
@@ -1531,7 +1532,7 @@ def build_dhs_static_source_1d(target, *, node_tree, scheduling) -> _st.DHSStati
     )
 
 
-_GLOBAL_DISCRETIZATION_CACHE = {}
+_GLOBAL_DISCRETIZATION_CACHE = WeakValueDictionary()
 
 
 class H01Cell(braincell.Cell):
@@ -1690,7 +1691,8 @@ class H01Cell(braincell.Cell):
         self._initialized = True
         self._runtime_cvs_cache = None
         self._runtime_nodes_cache = None
-        self._discretization_cache = None
+        # Keep the live snapshot owned by this cell. Shared lookup uses weak
+        # values so invalidated previews and retired cells can be collected.
 
     def _voltage_linearizer(self):
         runtime = getattr(self, "_runtime", None)

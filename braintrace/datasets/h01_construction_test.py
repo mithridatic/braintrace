@@ -1,6 +1,7 @@
 """Construction index work, exact discretization parity, and cache lifetime."""
 
 import braincell
+import brainstate
 from braincell.quad import _staggered as _st
 import brainunit as u
 import numpy as np
@@ -10,6 +11,29 @@ from .h01_anatomy_test import imported
 from .h01_ei_cell import make_h01_ei_cell
 from .h01_ei_circuit_test import arguments
 from .h01_construction import H01Cell, _indexed_morphology, build_dhs_static_source_1d
+
+
+def test_obsolete_discretization_is_not_retained_globally(imported):
+    import gc
+    import weakref
+    imported.anatomy()
+    cell = H01Cell(imported.morphology, cv_policy=braincell.MaxCVLen(.5*u.um))
+    preview = weakref.ref(cell._discretization)
+    cell.paint(braincell.filter.AllRegion(), braincell.mech.Channel('IL', name='retention_leak'))
+    gc.collect()
+    assert preview() is None
+
+
+def test_initialized_cell_owns_its_discretization(imported):
+    imported.anatomy()
+    with brainstate.environ.context(precision=64):
+        cell = H01Cell(imported.morphology, cv_policy=braincell.MaxCVLen(2.*u.um))
+        cell.paint(braincell.filter.AllRegion(), braincell.mech.Channel('IL', name='retention_leak'))
+        cell.init_state()
+        snapshot = cell.__dict__.get('_discretization_cache')
+        assert snapshot is not None
+        assert cell._discretization is snapshot
+        assert cell._discretization is snapshot
 
 
 def test_geometry_reuses_equal_bounds_and_clone(imported):

@@ -1,0 +1,31 @@
+         40272 function calls (39589 primitive calls) in 4.770 seconds
+
+   Ordered by: cumulative time
+   List reduced from 162 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    4.770    4.770 h01_arc_probe.py:52(<lambda>)
+        1    0.001    0.001    4.761    4.761 _jit.py:125(jitted_fn)
+        1    0.000    0.000    4.753    4.753 traceback_util.py:191(reraise_with_filtered_traceback)
+        1    0.000    0.000    4.753    4.753 pjit.py:257(cache_miss)
+        1    0.000    0.000    4.750    4.750 pjit.py:133(_run_python_pjit)
+        1    0.000    0.000    4.749    4.749 pjit.py:1169(_pjit_call_impl_python)
+      3/2    0.000    0.000    4.741    2.371 profiler.py:417(wrapper)
+        1    4.738    4.738    4.741    4.741 pxla.py:399(__call__)
+        1    0.009    0.009    0.009    0.009 api.py:2666(block_until_ready)
+        2    0.000    0.000    0.006    0.003 {jaxlib.utils.safe_map}
+      224    0.001    0.000    0.006    0.000 pjit.py:1155(convert_to_metaty)
+      896    0.002    0.000    0.004    0.000 array.py:1120(_get_aval_array)
+      672    0.000    0.000    0.004    0.000 core.py:1930(shaped_abstractify)
+        2    0.000    0.000    0.003    0.002 pxla.py:85(shard_args)
+        1    0.000    0.000    0.003    0.003 pxla.py:304(__call__)
+        1    0.000    0.000    0.003    0.003 _make_jaxpr.py:633(get_state_trace)
+        1    0.000    0.000    0.003    0.003 _make_jaxpr.py:378(get_arg_cache_key)
+        1    0.000    0.000    0.003    0.003 _state.py:2557(assign_state_vals_v2)
+        1    0.000    0.000    0.003    0.003 _make_jaxpr.py:442(_compilation_is_stale)
+  339/113    0.000    0.000    0.003    0.000 _state.py:418(__setattr__)
+  339/113    0.001    0.000    0.003    0.000 _state.py:435(_setattr)
+        1    0.001    0.001    0.003    0.003 array.py:1228(_array_shard_arg)
+     2015    0.001    0.000    0.002    0.000 sharding_impls.py:138(__eq__)
+      113    0.000    0.000    0.002    0.000 _state.py:503(value)
+      673    0.000    0.000    0.002    0.000 {built-in method builtins.getattr}

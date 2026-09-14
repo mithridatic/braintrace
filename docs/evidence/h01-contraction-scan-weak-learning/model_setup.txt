@@ -1,0 +1,31 @@
+         279839 function calls (261870 primitive calls) in 2.765 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1605 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    2.767    2.767 h01_event_profile.py:87(<lambda>)
+      2/1    0.000    0.000    2.767    2.767 _node.py:40(__call__)
+        1    0.001    0.001    2.767    2.767 h01_arc_model.py:42(__init__)
+   377/39    0.000    0.000    2.736    0.070 traceback_util.py:191(reraise_with_filtered_traceback)
+   367/29    0.001    0.000    2.733    0.094 pjit.py:257(cache_miss)
+   367/48    0.002    0.000    2.654    0.055 pjit.py:133(_run_python_pjit)
+       29    0.001    0.000    2.649    0.091 pjit.py:1169(_pjit_call_impl_python)
+  167/124    0.001    0.000    2.605    0.021 profiler.py:417(wrapper)
+       29    0.000    0.000    2.326    0.080 pxla.py:1230(compile)
+       29    0.002    0.000    2.326    0.080 pxla.py:1707(from_hlo)
+       29    0.001    0.000    2.316    0.080 pxla.py:1520(_cached_compilation)
+       29    0.001    0.000    2.306    0.080 compiler.py:384(compile_or_get_cached)
+       29    0.000    0.000    2.284    0.079 compiler.py:719(_compile_and_write_cache)
+       29    2.283    0.079    2.283    0.079 compiler.py:289(backend_compile_and_load)
+        3    0.000    0.000    1.635    0.545 _named_scope.py:108(wrapper)
+        2    0.000    0.000    1.068    0.534 _state.py:606(normal)
+        2    0.000    0.000    1.063    0.532 core.py:912(normal)
+  689/536    0.005    0.000    0.927    0.002 core.py:682(bind)
+  682/531    0.002    0.000    0.885    0.002 core.py:731(bind_with_trace)
+       46    0.000    0.000    0.879    0.019 core.py:1307(process_primitive)
+       42    0.007    0.000    0.581    0.014 dispatch.py:81(apply_primitive)
+        1    0.000    0.000    0.567    0.567 _state.py:729(uniform)
+        9    0.000    0.000    0.387    0.043 indexing.py:1080(rewriting_take)
+        3    0.000    0.000    0.331    0.110 _state.py:273(__get_key)
+        3    0.000    0.000    0.331    0.110 _state.py:203(split_key)
