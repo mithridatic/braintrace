@@ -1,5 +1,10 @@
 # Human donor data access established
 
+Follow-up: [recording preparation and QC](preparation.md) now establishes eight
+calibration and nine held-out sweeps passing standard IPFX QC, with explicit
+padding masks and exclusions. This acquisition receipt remains the original
+data-access record; it does not qualify a donor model.
+
 The missing fitted L1 donor has an actionable data source. On 2026-09-14, the
 published DANDI 000630 version 0.230915.2257 was queried directly: 210 human cells,
 open access, CC-BY-4.0 electrophysiology. The source collection and analysis

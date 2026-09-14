@@ -1,0 +1,69 @@
+{
+  "source_sha256": "004f27f306180bd610ba2439e600f688c11be24adf5cea2a1663a22ba0336af6",
+  "specimen_id": "811953283",
+  "session_id": "811953264",
+  "sweep": 16,
+  "role": "calibration",
+  "sample_rate_hz": 50000.0,
+  "absolute_start_s": 429.14200019836426,
+  "samples": 330000,
+  "last_recorded_index": 136971,
+  "last_recorded_time_ms": 2739.42,
+  "trailing_padding_samples": 193028,
+  "stimulus_description": "X4PS_SupraThresh_DA_0",
+  "holding_current_pa": -0.632111225341847,
+  "instrument": {
+    "Bridge Bal Enable": {
+      "value": 1.0,
+      "unit": "On/Off"
+    },
+    "Bridge Bal Value": {
+      "value": 10.927961,
+      "unit": "MOhm"
+    },
+    "Async AD 1: Bath Temperature": {
+      "value": 0.03125,
+      "unit": "degC"
+    }
+  },
+  "online_global_qc": {
+    "USER_DA Scale Chk0 S-RMS QC": null,
+    "USER_DA Scale Chk0 L-RMS QC": null,
+    "USER_DA Scale Chk0 T-V BL QC": null,
+    "USER_DA Scale Chk0 BL QC": 1.0,
+    "USER_DA Scale Chk1 S-RMS QC": null,
+    "USER_DA Scale Chk1 L-RMS QC": null,
+    "USER_DA Scale Chk1 T-V BL QC": null,
+    "USER_DA Scale Chk1 BL QC": 1.0,
+    "USER_DA Scale Sweep QC": 1.0,
+    "USER_DA Scale Set QC": 1.0,
+    "USER_Squ. Pul. Sweep QC": null,
+    "USER_Squ. Pul. Set QC": null,
+    "USER_Rheobase Chk0 S-RMS QC": null,
+    "USER_Rheobase Chk0 L-RMS QC": null,
+    "USER_Rheobase Chk0 T-V BL QC": null,
+    "USER_Rheobase Chk0 BL QC": null,
+    "USER_Rheobase Chk1 S-RMS QC": null,
+    "USER_Rheobase Chk1 L-RMS QC": null,
+    "USER_Rheobase Chk1 T-V BL QC": null,
+    "USER_Rheobase Chk1 BL QC": null,
+    "USER_Rheobase BL QC": null,
+    "USER_Rheobase Set QC": null,
+    "USER_Ramp Chk0 S-RMS QC": null,
+    "USER_Ramp Chk0 L-RMS QC": null,
+    "USER_Ramp Chk0 T-V BL QC": null,
+    "USER_Ramp Chk0 BL QC": null,
+    "USER_Ramp Chk1 S-RMS QC": null,
+    "USER_Ramp Chk1 L-RMS QC": null,
+    "USER_Ramp Chk1 T-V BL QC": null,
+    "USER_Ramp Chk1 BL QC": null,
+    "USER_Ramp BL QC": null,
+    "USER_Ramp Sweep QC": null,
+    "USER_Ramp Set QC": null
+  },
+  "offline_sweep_qc": "not evaluated here",
+  "voltage_reference": "recorded; junction correction not applied",
+  "bridge_correction": "not reapplied",
+  "physiological_qualification": false,
+  "arrays_sha256": "2b7c73414e55730fdfb6483ea7842a3219ed9af8a127075c313fea5879639816"
+}
