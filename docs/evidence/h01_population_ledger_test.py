@@ -43,9 +43,10 @@ def test_the_unqualified_terms_are_zero_and_say_why():
     terms = {t["term"]: t for t in pl.ledger()}
     assert terms["driven_window"]["value"] == 0.
     assert terms["driven_window"]["measured"] is False
-    # the anatomy term is measured, and its reading is negative
+    # The historical negative interpretation was invalidated by the converter audit.
     assert terms["anatomy_transfer"]["value"] == 0.
-    assert terms["anatomy_transfer"]["measured"] is True
+    assert terms["anatomy_transfer"]["measured"] is False
+    assert 'conversion' in terms['anatomy_transfer']['cause']
 
 
 def test_the_timestep_term_closed_on_the_recovered_ladder():
@@ -86,3 +87,21 @@ def test_report_quotes_the_optimistic_figure_only_with_its_assumptions():
     assert r["product_as_measured"]["value_pct"] == 0.
     assert r["product_if_construction_counts_as_simulation"]["assumptions"]
     assert "assumptions attached" in r["note"]
+
+
+def test_invalid_correction_cannot_change_the_evidence_interpretation(monkeypatch):
+    monkeypatch.setattr(pl, '_read', lambda name: {
+        'status': 'failed', 'historical_transfer_interpretation': 'invalidated_by_conversion_defect'})
+    with pytest.raises(ValueError, match='does not support'):
+        pl.anatomy_term()
+
+
+def test_cli_retains_all_six_terms_and_unavailable_transfer(tmp_path, monkeypatch):
+    original = pl.HERE
+    monkeypatch.setattr(pl, '_read', lambda name: json.loads((original / name).read_text()))
+    monkeypatch.setattr(pl, 'HERE', tmp_path)
+    pl.main()
+    record = json.loads((tmp_path / 'h01-population-accuracy-ledger.json').read_text())
+    assert len(record['terms']) == 6
+    assert record['terms'][-1]['measured'] is False
+    assert record['product_as_measured']['value_pct'] == 0

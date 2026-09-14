@@ -748,29 +748,33 @@ read from a committed decision JSON, and a term with no evidence scores zero and
 | Construction | 1.000 | yes | import, construction, initialisation, **synthetic** forward pass, all 104 |
 | Driven window | 0.000 | no | 10 ms explicit died nonfinite; implicit retry aborted at the wall cap after 21,286 s |
 | Timestep | 1.000 | yes | qualified at dt 0.000625 ms (0.933 mV to the next halving, the ladder's finest pair) |
-| Anatomy transfer | 0.000 | **yes** | B3's fit fires 4 spikes at 200 pA on the donor's reconstruction and **0** on the H01 skeleton |
+| Anatomy transfer | 0.000 | **no** | the historical negative interpretation used a malformed conversion; corrected physiological transfer is unmeasured |
 
 Product as measured: **0 percent**. The 38 percent obtainable by counting construction as build
 success and assuming the other three terms away is quotable only with those assumptions attached,
 and it additionally assumes the three donors whose published fits were reproduced and *rejected*
 score like the one donor that was scored.
 
-The binding constraint has therefore moved. It was believed to be an engineering blocker 75
-percent likely to be fixable. It is anatomy transfer: the converted H01 skeleton (2,460 um of
-cable, 9,975 nodes, 8,551 sections) presents an onset capacitance of 785 pF against the donor
-reconstruction's 125 pF and an input resistance of about 38 MOhm against about 98, so at the
-donor's own 200 pA the cell sits on a -78.2 mV plateau instead of spiking. This is the only term
-in the ledger with a negative reading rather than a missing one, and it makes the others moot:
-donor accuracy, type coverage and a working build all describe a model that is silent on the
-anatomy it is meant to run on. Whether that load is physical or an artefact of the conversion
-(skeleton radii used as cable radii) is not established.
+**Correction, 2026-09-14: the diagnostic conversion was malformed.** The archived source for
+955432427 uses H01 code 1 for dendrite and code 3 for soma. The stage-1 converter treated
+code 1 as SWC soma and collapsed 1,550 dendrite-labeled points into one donor sphere; it also
+treated H01 code 2 (astrocyte) as axon. Its stored SWC has 91,056.139 um of cable versus
+3,343.088 um in the source; the previously quoted 2,460 um omitted the introduced soma links.
+Common-scale XY/XZ views show the artificial radial connections directly. The corrected
+export preserves all 11,524 source nodes, 11,523 edges, radii and annotations. This establishes
+the cause of the geometric distortion. It does not establish that corrected physiology spikes
+or that geometry alone explains every difference in the historical electrical response.
 
-The next registrable split is named by the stage-1 record and needs no population: scale the
-donor's dendritic load (cm and g_pas together) by 1.5 and 2 and read the 200 pA count and the
-upstroke. A graded degradation says the H01 load is quantitatively too large and a conversion or
-load correction restores a readable response; a cliff says the conversion itself is suspect.
-Separately, check the H01 conversion's membrane area against the H01 surface mesh before that
-skeleton is used again.
+The old -78.2 mV plateau and 785 pF onset-capacitance observations remain historical readings
+of that malformed model. Their interpretation as a measured failure of faithful H01 anatomy
+is withdrawn. The production importer already keeps H01 codes separate from SWC types and
+is not the defective converter. Next resolve source-mesh correspondence and post-import
+geometry, then qualify transfer with human-constrained mechanisms. Do not repeat the
+historical graded donor-load suggestion: those stages have already executed.
+
+Corrective evidence: [decision](evidence/h01-human-unity-20260914/conversion-correction.json),
+[source and mesh audit](evidence/h01-human-unity-20260914/anatomy-mesh-lod0-r2.json),
+[visual interpretation and remaining limits](evidence/h01-human-unity-20260914/result.md).
 
 Evidence: [ledger](evidence/h01-population-accuracy-ledger.md),
 [ledger numbers](evidence/h01-population-accuracy-ledger.json),

@@ -1,0 +1,105 @@
+# H01 source-conversion repair and remaining human qualification
+
+The first implementation stage found and repaired a diagnostic conversion defect.
+The original six numerical values remain unchanged. Anatomy transfer is now
+reported as unavailable: its historical negative interpretation used malformed
+geometry. No new physiological simulation or human-only model has been qualified.
+
+## Observed defect and repair
+
+The retained source archive member is `955432427.0.swc`, SHA256
+`cc52cc1b8d396bc840648faee816f3e02b2702539c7235129625e5cbba8b9f27`.
+H01 annotations differ from standard SWC: 1 means dendrite, 2 astrocyte, 3 soma.
+The old diagnostic converter collapsed 1,550 dendrite-labeled samples into one
+donor sphere, mislabeled astrocyte samples as axon, and guessed apical branches.
+It attached the remaining fragments back to that false soma, producing long
+radial cables. Its length summary omitted those introduced attachments.
+
+| Geometry reading | Original component | Historical conversion | Corrected export |
+| --- | ---: | ---: | ---: |
+| Nodes | 11,524 | 9,975 | 11,524 |
+| Edges | 11,523 | 9,974 | 11,523 |
+| Total cable length, um | 3,343.088280 | 91,056.138722 | 3,343.088280 |
+| Lateral frustum area, um2 | 4,307.493077 | 1,976,498.653095 | 4,307.493077 |
+
+These are geometrical SWC measurements, not NEURON post-import membrane areas
+or measured human capacitances. The old 2,459.97 um cable summary excluded its
+new soma connections. The verified correction checks every original identifier,
+annotation, coordinate, radius and parent edge: maximum coordinate discrepancy
+is 4.55e-13 um and radius discrepancy 8.89e-16 um (decimal serialization).
+
+The corrected export retains neutral SWC labels and reversible original H01
+annotations, as the existing production importer does. It applies no radius
+floor, soma replacement, apical inference or axon stub. Preparation writes an
+anatomy sidecar rather than an invalid donor.json for the incompatible L2 driver.
+The original stage-1 artifacts and decision remain unchanged.
+
+Evidence: [correction decision](conversion-correction.json),
+[corrected anatomy sidecar](source-preserved/anatomy.json),
+[corrected SWC](source-preserved/h01-955432427.swc).
+
+## Visual interpretation
+
+![All source and historical edges on common XY and XZ scales](anatomy-correction.png)
+
+The XY and XZ images were opened and visually inspected. The source tree follows
+branching neurites; the malformed export adds a dense fan of straight radial
+edges to an inserted central point. That fan is visible in both projections,
+so this is not merely projection overlap. The source's soma-coded samples mostly
+cluster near X 2610-2625 um, but a few are distant outliers. Consequently even
+the correct code cannot justify collapsing every soma-coded sample into one
+centroid. The new export preserves these labels without treating them as proven
+whole-cell anatomy. All plotted edges are retained; no random subsampling.
+
+The intervention from old converter to source-preserving export restores exact
+source topology and geometry. This explains the geometric distortion, not the
+entire historical electrical response. A corrected transfer run is still needed.
+
+## Surface mesh acquisition and remaining correspondence
+
+The finest released mesh (LOD 0) was retrieved for the same segment: a 2,655,615
+byte mesh payload, checked against the 64 MiB cap before download. CloudVolume
+12.14.4 and DracoPy 1.7.0 decoded it with source metadata transforms into physical
+nanometres. The local array SHA256 is
+`4e7811eb037323147c6eff0c220c213c42e3ed60a07b220db5c86876fbcd6c75`.
+Raw arrays and acquisition/cache records are in `.cache/human-anatomy/` in this
+worktree; the committed [audit](anatomy-mesh-lod0-r2.json) records their hashes.
+
+The mesh has 2,322,552 triangles before duplicate-face handling. Its unique
+nondegenerate area is 6,285.701 um2. Exact coordinate deduplication reports
+22,318 repeated vertices, 4,527 duplicate faces, 3,341 boundary edges and
+1,655 nonmanifold edges. The 2,811 resulting connected sets are algorithmic
+mesh components, not identified biological components. The SWC archive has
+19 components for this segment. No whole-mesh/selected-component ratio is
+qualified without resolving those domains and reconstruction boundaries.
+This audit does not change anatomy_transfer to 1.000.
+
+## Verification and failure prevention
+
+The final affected test run passed **81 tests in 8.82 seconds** on local CPU,
+Python 3.14.6. Every changed code module exceeds 90% line coverage (lowest 92%,
+overall 97%). See [JUnit results](tests.xml) and [coverage](coverage.json).
+This is audit/export/ledger validation, not the full package suite or a model run.
+
+The label-error regression failed against the original converter, then passed
+after repair. Tests also cover node and parent preservation, source annotation
+identity, anisotropic units, positive radii, no soma substitution, archive and
+mesh hash mismatches, missing fragments, payload caps, exact mesh seams, duplicate
+and degenerate faces, and open/nonmanifold edges. CLI tests reject overwriting
+evidence and ensure preparation does not require electrophysiology scorer imports.
+
+The initial new audit repeated the old code-1 soma assumption in one reporting
+field. That field was corrected after a failing source-label regression; the
+retained r2 report uses code 3. Unregistered draft reports were removed before
+integration. The prevention is to test H01's source vocabulary independently of
+the converted SWC and validate every mapped original identifier, not only totals.
+
+## Work still required by the full objective
+
+Resolve mesh-component and post-import geometry correspondence; qualify human
+mechanisms in place of unsupported nonhuman assumptions; cover and validate all
+donor types; obtain physiological transfer readings; extend timestep qualification
+across the final population; and complete the full driven controls. The historical
+NaTg human-sodium experiments must be reviewed before choosing a new mechanism
+experiment. No animal-data fallback, relaxed score or smaller-population result
+will close the objective. All six numerical values remain at their previous levels.

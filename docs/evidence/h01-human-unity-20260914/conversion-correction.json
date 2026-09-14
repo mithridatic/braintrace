@@ -1,0 +1,213 @@
+{
+  "status": "passed",
+  "nodes_checked": 11524,
+  "edges_checked": 11523,
+  "max_coordinate_error_um": 4.547473508864641e-13,
+  "max_radius_error_um": 8.881784197001252e-16,
+  "original_geometry": {
+    "nodes": 11524,
+    "edges": 11523,
+    "length_um": 3343.088280093296,
+    "lateral_area_um2": 4307.493077002365,
+    "zero_length_edges": 0,
+    "cross_label_edges": 4342,
+    "radius_min_um": 0.032,
+    "radius_max_um": 4.418350098,
+    "bounds_um": [
+      [
+        2504.512,
+        356.288,
+        0.132
+      ],
+      [
+        2678.4,
+        632.96,
+        60.06
+      ]
+    ],
+    "by_endpoint_labels": {
+      "-1->-1": {
+        "edges": 7124,
+        "length_um": 2063.3528113765174,
+        "lateral_area_um2": 2628.7773105440883
+      },
+      "-1->0": {
+        "edges": 603,
+        "length_um": 176.85311321688204,
+        "lateral_area_um2": 120.76481065092997
+      },
+      "-1->1": {
+        "edges": 1506,
+        "length_um": 429.2280960834691,
+        "lateral_area_um2": 542.3544466674966
+      },
+      "-1->2": {
+        "edges": 25,
+        "length_um": 5.558338871431856,
+        "lateral_area_um2": 4.666665653577087
+      },
+      "-1->3": {
+        "edges": 19,
+        "length_um": 8.120109146206184,
+        "lateral_area_um2": 155.85608919276171
+      },
+      "-1->5": {
+        "edges": 16,
+        "length_um": 5.1671753292964535,
+        "lateral_area_um2": 5.734984570234139
+      },
+      "-1->1001": {
+        "edges": 4,
+        "length_um": 1.2685851845045688,
+        "lateral_area_um2": 1.647405187763582
+      },
+      "0->-1": {
+        "edges": 600,
+        "length_um": 177.8899611431061,
+        "lateral_area_um2": 119.30683680424696
+      },
+      "0->0": {
+        "edges": 14,
+        "length_um": 3.386854795175008,
+        "lateral_area_um2": 2.875597973803286
+      },
+      "1->-1": {
+        "edges": 1507,
+        "length_um": 440.45664723670654,
+        "lateral_area_um2": 556.7210693859914
+      },
+      "1->1": {
+        "edges": 43,
+        "length_um": 13.430915893798012,
+        "lateral_area_um2": 19.87878200328266
+      },
+      "2->-1": {
+        "edges": 21,
+        "length_um": 4.398066115001938,
+        "lateral_area_um2": 3.566543711200044
+      },
+      "3->-1": {
+        "edges": 21,
+        "length_um": 7.582940158957521,
+        "lateral_area_um2": 138.23190009271812
+      },
+      "5->-1": {
+        "edges": 16,
+        "length_um": 5.1251545656434105,
+        "lateral_area_um2": 5.645660999248942
+      },
+      "1001->-1": {
+        "edges": 4,
+        "length_um": 1.2695109766001562,
+        "lateral_area_um2": 1.464973565021586
+      }
+    },
+    "soma_sphere_area_um2": null,
+    "area_convention": "lateral frusta; no end caps; zero-length edges excluded"
+  },
+  "corrected_geometry": {
+    "nodes": 11524,
+    "edges": 11523,
+    "length_um": 3343.088280093295,
+    "lateral_area_um2": 4307.493077002357,
+    "zero_length_edges": 0,
+    "cross_label_edges": 0,
+    "radius_min_um": 0.032,
+    "radius_max_um": 4.418350098,
+    "bounds_um": [
+      [
+        2504.512,
+        356.288,
+        0.132
+      ],
+      [
+        2678.4,
+        632.96,
+        60.06
+      ]
+    ],
+    "by_endpoint_labels": {
+      "0->0": {
+        "edges": 11523,
+        "length_um": 3343.088280093295,
+        "lateral_area_um2": 4307.493077002357
+      }
+    },
+    "soma_sphere_area_um2": null,
+    "area_convention": "lateral frusta; no end caps; zero-length edges excluded"
+  },
+  "annotation_code_counts": {
+    "-1": 9293,
+    "0": 617,
+    "1": 1550,
+    "2": 25,
+    "3": 19,
+    "5": 16,
+    "1001": 4
+  },
+  "historical_geometry": {
+    "nodes": 9975,
+    "edges": 9974,
+    "length_um": 91056.13872168053,
+    "lateral_area_um2": 1976498.6530946745,
+    "zero_length_edges": 0,
+    "cross_label_edges": 1553,
+    "radius_min_um": 0.05,
+    "radius_max_um": 6.864014,
+    "bounds_um": [
+      [
+        2504.512,
+        356.288,
+        0.132
+      ],
+      [
+        2678.4,
+        632.96,
+        60.06
+      ]
+    ],
+    "by_endpoint_labels": {
+      "1->3": {
+        "edges": 1506,
+        "length_um": 88569.83222468385,
+        "lateral_area_um2": 1972693.0701980325
+      },
+      "1->4": {
+        "edges": 1,
+        "length_um": 26.333876117366973,
+        "lateral_area_um2": 607.6223327287632
+      },
+      "2->3": {
+        "edges": 21,
+        "length_um": 4.398066115001985,
+        "lateral_area_um2": 3.6262139036733116
+      },
+      "3->2": {
+        "edges": 25,
+        "length_um": 5.5583388714316415,
+        "lateral_area_um2": 4.724678066957543
+      },
+      "3->3": {
+        "edges": 5498,
+        "length_um": 1580.8760391110632,
+        "lateral_area_um2": 2593.7861220599034
+      },
+      "4->4": {
+        "edges": 2923,
+        "length_um": 869.1401767818174,
+        "lateral_area_um2": 595.8235498823291
+      }
+    },
+    "soma_sphere_area_um2": null,
+    "area_convention": "lateral frusta; no end caps; zero-length edges excluded"
+  },
+  "cell_id": "955432427",
+  "source_member_sha256": "cc52cc1b8d396bc840648faee816f3e02b2702539c7235129625e5cbba8b9f27",
+  "historical_swc_sha256": "d5b2b87b3bada6a19b4b0b219e09ecb0f7efc15a38cf0e1038d2d6c669144512",
+  "corrected_swc_sha256": "c8cc9c3a9ff7e339a88c9af8e7d20130f4ed72ec28dcd2663c08b73518836788",
+  "historical_reported_cable_um": 2459.9726208793218,
+  "defect": "H01 dendrite code 1 collapsed as SWC soma; H01 astrocyte code 2 relabeled axon",
+  "historical_transfer_interpretation": "invalidated_by_conversion_defect",
+  "anatomy_transfer": "unqualified; corrected physiology not measured",
+  "scope": "Exact geometry preservation, not membrane equivalence or human physiology"
+}
