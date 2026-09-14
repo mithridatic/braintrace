@@ -1124,13 +1124,18 @@ class PPPropEpisodeTrainer:
         groups = self.parameters if self.optimizer_adapter is not None else self.adam_groups
         if not groups or set(gradients).issubset(groups):
             return gradients
+        if not hasattr(self, "_path_group_cache"):
+            self._path_group_cache = {}
         grouped = {}
         for path, gradient in gradients.items():
-            parts = path if isinstance(path, tuple) else (path,)
-            name = next(
-                (group for group in groups if any(group in str(part) for part in parts)),
-                None,
-            )
+            name = self._path_group_cache.get(path)
+            if name is None and path not in self._path_group_cache:
+                parts = path if isinstance(path, tuple) else (path,)
+                name = next(
+                    (group for group in groups if any(group in str(part) for part in parts)),
+                    None,
+                )
+                self._path_group_cache[path] = name
             if name is not None:
                 grouped[name] = gradient
         return grouped
@@ -1138,20 +1143,27 @@ class PPPropEpisodeTrainer:
     def _sync_compiled_parameters(self):
         """Write grouped optimizer values back to matching compiled states."""
 
-        states = getattr(self.learner, "param_states", {})
-        groups = self.parameters if self.optimizer_adapter is not None else self.adam_groups
-        for path, state in states.items():
-            parts = path if isinstance(path, tuple) else (path,)
-            name = next(
-                (group for group in groups or {} if any(group in str(part) for part in parts)),
-                None,
-            )
+        if not hasattr(self, "_sync_state_pairs"):
+            states = getattr(self.learner, "param_states", {})
+            groups = self.parameters if self.optimizer_adapter is not None else self.adam_groups
+            pairs = []
+            for path, state in states.items():
+                parts = path if isinstance(path, tuple) else (path,)
+                name = next(
+                    (group for group in groups or {} if any(group in str(part) for part in parts)),
+                    None,
+                )
+                if name is not None:
+                    pairs.append((state, name))
+            model = getattr(self.learner, "model4compile", None)
+            for name in ("readout_weight", "readout_bias"):
+                state = getattr(model, name, None)
+                if state is not None:
+                    pairs.append((state, name))
+            self._sync_state_pairs = tuple(pairs)
+
+        for state, name in self._sync_state_pairs:
             if name in self.parameters:
-                state.value = self.parameters[name]
-        model = getattr(self.learner, "model4compile", None)
-        for name in ("readout_weight", "readout_bias"):
-            state = getattr(model, name, None)
-            if state is not None and name in self.parameters:
                 state.value = self.parameters[name]
 
     def _project_dale_parameters(self):
