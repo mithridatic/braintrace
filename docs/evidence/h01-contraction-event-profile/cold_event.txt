@@ -1,0 +1,31 @@
+         13313406 function calls (12819039 primitive calls) in 21.499 seconds
+
+   Ordered by: cumulative time
+   List reduced from 2683 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   21.542   21.542 h01_event_profile.py:90(<lambda>)
+  12765/5    0.014    0.000   21.535    4.307 traceback_util.py:191(reraise_with_filtered_traceback)
+        1    0.000    0.000   21.478   21.478 _jit.py:125(jitted_fn)
+12010/11853    0.044    0.000   16.982    0.001 pjit.py:257(cache_miss)
+12010/11943    0.055    0.000   15.876    0.001 pjit.py:133(_run_python_pjit)
+        2    0.000    0.000   14.167    7.083 pjit.py:1169(_pjit_call_impl_python)
+  573/502    0.003    0.000   13.678    0.027 profiler.py:417(wrapper)
+        2    0.000    0.000   11.310    5.655 pxla.py:1230(compile)
+        2    0.000    0.000   11.310    5.655 pxla.py:1707(from_hlo)
+        2    0.000    0.000   11.306    5.653 pxla.py:1520(_cached_compilation)
+        2    0.000    0.000   11.305    5.652 compiler.py:384(compile_or_get_cached)
+        2    0.000    0.000   11.205    5.603 compiler.py:719(_compile_and_write_cache)
+        2   10.577    5.289   10.577    5.289 compiler.py:289(backend_compile_and_load)
+   955/51    0.003    0.000    7.426    0.146 partial_eval.py:2319(trace_to_jaxpr)
+   955/51    0.024    0.000    7.426    0.146 partial_eval.py:2247(trace_to_jaxpr_nocache)
+ 12025/63    0.117    0.000    7.398    0.117 pjit.py:635(_infer_params)
+   903/31    0.046    0.000    7.394    0.239 pjit.py:484(_trace_for_jit)
+     41/2    0.000    0.000    7.302    3.651 _make_jaxpr.py:378(get_arg_cache_key)
+     11/1    0.000    0.000    7.300    7.300 _make_jaxpr.py:633(get_state_trace)
+     11/1    0.001    0.000    7.300    7.300 _make_jaxpr.py:884(make_jaxpr)
+     11/1    0.000    0.000    7.297    7.297 api.py:2133(make_jaxpr_f)
+     15/1    0.000    0.000    7.296    7.296 pjit.py:310(jit_trace)
+     11/1    0.000    0.000    7.278    7.278 _make_jaxpr.py:814(_wrapped_fun_to_eval)
+        1    0.000    0.000    7.276    7.276 h01_arc_model.py:179(step)
+        1    0.000    0.000    7.275    7.275 _conditions.py:37(cond)

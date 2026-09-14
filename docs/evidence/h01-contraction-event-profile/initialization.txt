@@ -1,0 +1,31 @@
+         27634138 function calls (27439478 primitive calls) in 20.827 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1682 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   21.625   21.625 h01_event_profile.py:73(<lambda>)
+        1    0.000    0.000   21.625   21.625 h01_network_init.py:101(init_h01_network_states)
+        4    0.010    0.003   21.624    5.406 h01_construction.py:1580(init_state)
+       56    0.000    0.000   13.678    0.244 h01_construction.py:1555(_discretization)
+        4    0.000    0.000   13.671    3.418 cell.py:421(_discretization)
+        4    0.025    0.006   13.671    3.418 base.py:427(build_discretization)
+        4    0.090    0.022   13.646    3.411 base.py:471(_build_discretization_parts)
+        4    0.316    0.079    4.549    1.137 h01_construction.py:544(_fast_build_cv_mechanisms)
+        4    3.116    0.779    4.544    1.136 h01_construction.py:625(_fast_build_node_tree)
+       12    0.000    0.000    2.983    0.249 _base_ion.py:327(init_state)
+    67/63    0.000    0.000    2.940    0.047 traceback_util.py:191(reraise_with_filtered_traceback)
+    60/56    0.001    0.000    2.937    0.052 pjit.py:257(cache_miss)
+       60    0.001    0.000    2.857    0.048 pjit.py:133(_run_python_pjit)
+       56    0.001    0.000    2.854    0.051 pjit.py:1169(_pjit_call_impl_python)
+  293/236    0.002    0.000    2.777    0.012 profiler.py:417(wrapper)
+        4    0.261    0.065    2.551    0.638 h01_construction.py:954(_fast_from_cell)
+       56    0.001    0.000    2.495    0.045 pxla.py:1230(compile)
+       56    0.003    0.000    2.494    0.045 pxla.py:1707(from_hlo)
+       56    0.001    0.000    2.478    0.044 pxla.py:1520(_cached_compilation)
+       56    0.001    0.000    2.459    0.044 compiler.py:384(compile_or_get_cached)
+       56    0.001    0.000    2.428    0.043 compiler.py:719(_compile_and_write_cache)
+       56    2.426    0.043    2.426    0.043 compiler.py:289(backend_compile_and_load)
+    64/16    0.033    0.001    2.281    0.143 region.py:195(evaluate)
+   208693    1.305    0.000    2.063    0.000 h01_construction.py:797(_fast_coverage_fraction)
+    75609    0.028    0.000    2.000    0.000 base.py:496(<genexpr>)

@@ -1,0 +1,31 @@
+         13313352 function calls (12818985 primitive calls) in 12.804 seconds
+
+   Ordered by: cumulative time
+   List reduced from 2682 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   12.847   12.847 h01_event_profile.py:90(<lambda>)
+  12765/5    0.014    0.000   12.841    2.568 traceback_util.py:191(reraise_with_filtered_traceback)
+        1    0.000    0.000   12.788   12.788 _jit.py:125(jitted_fn)
+12010/11853    0.045    0.000    8.232    0.001 pjit.py:257(cache_miss)
+   955/51    0.003    0.000    7.525    0.148 partial_eval.py:2319(trace_to_jaxpr)
+   955/51    0.024    0.000    7.525    0.148 partial_eval.py:2247(trace_to_jaxpr_nocache)
+ 12025/63    0.119    0.000    7.498    0.119 pjit.py:635(_infer_params)
+   903/31    0.048    0.000    7.493    0.242 pjit.py:484(_trace_for_jit)
+     41/2    0.000    0.000    7.401    3.700 _make_jaxpr.py:378(get_arg_cache_key)
+     11/1    0.000    0.000    7.399    7.399 _make_jaxpr.py:633(get_state_trace)
+     11/1    0.001    0.000    7.399    7.399 _make_jaxpr.py:884(make_jaxpr)
+     11/1    0.000    0.000    7.396    7.396 api.py:2133(make_jaxpr_f)
+     15/1    0.000    0.000    7.395    7.395 pjit.py:310(jit_trace)
+     11/1    0.000    0.000    7.377    7.377 _make_jaxpr.py:814(_wrapped_fun_to_eval)
+        1    0.000    0.000    7.374    7.374 h01_arc_model.py:179(step)
+        1    0.000    0.000    7.374    7.374 _conditions.py:37(cond)
+        1    0.000    0.000    7.191    7.191 h01_arc_model.py:198(<lambda>)
+        1    0.003    0.003    7.191    7.191 h01_arc_model.py:144(update)
+        1    0.000    0.000    7.175    7.175 _loop_collect_return.py:487(for_loop)
+        1    0.000    0.000    7.175    7.175 _loop_collect_return.py:58(scan)
+12010/11943    0.056    0.000    7.112    0.001 pjit.py:133(_run_python_pjit)
+        1    0.000    0.000    7.028    7.028 _loop_collect_return.py:480(scan_fun)
+        1    0.000    0.000    7.028    7.028 _grad_checkpoint.py:168(remat_fun)
+        1    0.000    0.000    6.489    6.489 h01_arc_model.py:161(cable_step)
+        1    0.000    0.000    6.489    6.489 h01_network_step.py:67(update)

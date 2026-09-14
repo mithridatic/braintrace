@@ -1,0 +1,5 @@
+{"dense_oracles": 3, "derivative_modes": ["jacfwd", "jacrev"], "status": "pass"}
+{"tree": "tree-0.npz", "nodes": 64047, "stages": 20, "schedule_seconds": 0.1952346758916974, "cold_seconds": 1.5661411508917809, "max_error": 1.3877787807814457e-16, "baseline": 0.009222753345966339, "contraction": 0.000624590553343296}
+{"tree": "tree-1.npz", "nodes": 21334, "stages": 18, "schedule_seconds": 0.052315604873001575, "cold_seconds": 1.1170732816681266, "max_error": 1.1102230246251565e-16, "baseline": 0.004912791773676872, "contraction": 0.0007600514218211174}
+{"tree": "tree-2.npz", "nodes": 26055, "stages": 18, "schedule_seconds": 0.0672926688566804, "cold_seconds": 1.1201734198257327, "max_error": 1.1102230246251565e-16, "baseline": 0.005330322310328484, "contraction": 0.0009360695257782936}
+{"tree": "tree-3.npz", "nodes": 20958, "stages": 17, "schedule_seconds": 0.04870092403143644, "cold_seconds": 1.0985155124217272, "max_error": 1.1102230246251565e-16, "baseline": 0.006464570760726929, "contraction": 0.0016946308314800262}
