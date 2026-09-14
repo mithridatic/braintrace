@@ -1,0 +1,31 @@
+         36011083 function calls (34063237 primitive calls) in 96.182 seconds
+
+   Ordered by: cumulative time
+   List reduced from 2666 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   96.285   96.285 h01_arc_probe.py:49(<lambda>)
+        1    0.001    0.001   96.277   96.277 _jit.py:125(jitted_fn)
+   3536/3    0.009    0.000   96.268   32.089 traceback_util.py:191(reraise_with_filtered_traceback)
+   571/42    0.003    0.000   86.865    2.068 profiler.py:417(wrapper)
+3048/1805    0.012    0.000   79.095    0.044 pjit.py:257(cache_miss)
+3048/1840    0.015    0.000   78.796    0.043 pjit.py:133(_run_python_pjit)
+        1    0.000    0.000   78.629   78.629 pjit.py:1169(_pjit_call_impl_python)
+        1    0.000    0.000   67.787   67.787 pxla.py:1230(compile)
+        1    0.000    0.000   67.787   67.787 pxla.py:1707(from_hlo)
+        1    0.000    0.000   67.764   67.764 pxla.py:1520(_cached_compilation)
+        1    0.000    0.000   67.764   67.764 compiler.py:384(compile_or_get_cached)
+        1    0.000    0.000   67.473   67.473 compiler.py:719(_compile_and_write_cache)
+        1   64.368   64.368   64.368   64.368 compiler.py:289(backend_compile_and_load)
+  648/290    0.002    0.000   18.130    0.063 partial_eval.py:2319(trace_to_jaxpr)
+  648/290    0.020    0.000   18.130    0.063 partial_eval.py:2247(trace_to_jaxpr_nocache)
+3058/1209    0.033    0.000   17.773    0.015 pjit.py:635(_infer_params)
+   312/83    0.018    0.000   17.739    0.214 pjit.py:484(_trace_for_jit)
+     30/2    0.000    0.000   17.589    8.795 _make_jaxpr.py:378(get_arg_cache_key)
+      9/1    0.000    0.000   17.587   17.587 _make_jaxpr.py:633(get_state_trace)
+      9/1    0.001    0.000   17.587   17.587 _make_jaxpr.py:884(make_jaxpr)
+      9/1    0.000    0.000   17.584   17.584 api.py:2133(make_jaxpr_f)
+     10/1    0.000    0.000   17.581   17.581 pjit.py:310(jit_trace)
+      9/1    0.000    0.000   17.573   17.573 _make_jaxpr.py:814(_wrapped_fun_to_eval)
+        1    0.000    0.000   17.570   17.570 h01_arc_probe.py:48(<lambda>)
+        1    0.000    0.000   17.569   17.569 21-braincell-arc.py:1193(update_episode)

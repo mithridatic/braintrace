@@ -23,11 +23,24 @@ def solve(d, rhs, low, up, stages):
     n = d.shape[0]-1
     if not stages:
         return rhs/d
-    width = max(len(stage[0]) for stage in stages)
-    packed = tuple(np.full((len(stages), width), n, dtype=np.int32) for _ in range(3))
-    for index, stage in enumerate(stages):
-        for target, values in zip(packed, stage):
-            target[index, :len(values)] = values
+    largest = max(len(stage[0]) for stage in stages)
+    groups = []
+    previous = None
+    for stage in stages:
+        width = len(stage[0])
+        bucket = 0 if width > largest/4 else (1 if width > largest/64 else 2)
+        if bucket != previous:
+            groups.append([])
+            previous = bucket
+        groups[-1].append(stage)
+    packs = []
+    for group in groups:
+        width = max(len(stage[0]) for stage in group)
+        packed = tuple(np.full((len(group), width), n, dtype=np.int32) for _ in range(3))
+        for index, stage in enumerate(group):
+            for target, values in zip(packed, stage):
+                target[index, :len(values)] = values
+        packs.append(packed)
 
     def eliminate(carry, indices):
         d, rhs, low, up = carry
@@ -48,7 +61,8 @@ def solve(d, rhs, low, up, stages):
         up = up.at[removed_target].set(child_upper, mode='drop')
         return (d, rhs, low, up), None
 
-    (d, rhs, low, up), _ = jax.lax.scan(eliminate, (d, rhs, low, up), packed)
+    for packed in packs:
+        (d, rhs, low, up), _ = jax.lax.scan(eliminate, (d, rhs, low, up), packed)
     result = jnp.zeros_like(rhs).at[0].set(rhs[0]/d[0]).at[-1].set(rhs[-1]/d[-1])
 
     def substitute(result, indices):
@@ -57,7 +71,8 @@ def solve(d, rhs, low, up, stages):
         target = jnp.where(removed < n, removed, n+1)
         return result.at[target].set(values, mode='drop'), None
 
-    result, _ = jax.lax.scan(substitute, result, packed, reverse=True)
+    for packed in reversed(packs):
+        result, _ = jax.lax.scan(substitute, result, packed, reverse=True)
     return result
 
 

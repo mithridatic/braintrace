@@ -195,6 +195,10 @@ def _solve_raw(d, s, low, up, levels, jumps, edges, *, use_gpu=True):
     children, parents, valid = levels
     low_c = low[children]
     up_c = up[children]
+    contraction = None
+    if use_gpu and isinstance(edges, np.ndarray) and d.ndim == 2 and low.ndim == 1:
+        from .h01_dhs_contraction import prepare, solve as contracted_solve
+        contraction = prepare(edges, d.shape[-1]-1)
 
     def matvec(value):
         result = d*value
@@ -212,6 +216,9 @@ def _solve_raw(d, s, low, up, levels, jumps, edges, *, use_gpu=True):
         return (d_c, s_c), None
 
     def solve(_, rhs):
+        if contraction is not None:
+            return jax.vmap(lambda diagonal, right: contracted_solve(
+                diagonal, right, low, up, contraction))(d, rhs)
         if use_gpu:
             from .h01_dhs_gpu import eliminate
             diagonal, right = eliminate(d, rhs, low, up, levels)
@@ -222,6 +229,9 @@ def _solve_raw(d, s, low, up, levels, jumps, edges, *, use_gpu=True):
         return _backsub_raw(diagonal, right, low, jumps)
 
     def transpose_solve(_, rhs):
+        if contraction is not None:
+            return jax.vmap(lambda diagonal, right: contracted_solve(
+                diagonal, right, up, low, contraction))(d, rhs)
         if use_gpu:
             from .h01_dhs_gpu import eliminate
             diagonal, right = eliminate(d, rhs, up, low, levels)

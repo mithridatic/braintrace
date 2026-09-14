@@ -1,0 +1,31 @@
+         5104273 function calls (4955708 primitive calls) in 4.176 seconds
+
+   Ordered by: cumulative time
+   List reduced from 2204 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    4.187    4.187 h01_arc_probe.py:38(<lambda>)
+        1    0.000    0.000    4.186    4.186 sparse_pp_prop.py:88(compile_graph)
+  6888/32    0.007    0.000    3.820    0.119 traceback_util.py:191(reraise_with_filtered_traceback)
+        1    0.001    0.001    3.447    3.447 sparse_io_graph.py:58(__init__)
+        1    0.000    0.000    3.090    3.090 module_info.py:521(extract_module_info)
+  6599/18    0.056    0.000    3.049    0.169 pjit.py:635(_infer_params)
+    47/18    0.004    0.000    3.046    0.169 pjit.py:484(_trace_for_jit)
+     10/2    0.000    0.000    3.034    1.517 api.py:2133(make_jaxpr_f)
+   121/18    0.000    0.000    3.032    0.168 partial_eval.py:2319(trace_to_jaxpr)
+   121/18    0.004    0.000    3.032    0.168 partial_eval.py:2247(trace_to_jaxpr_nocache)
+     11/2    0.000    0.000    3.032    1.516 pjit.py:310(jit_trace)
+        1    0.000    0.000    3.030    3.030 module_info.py:148(abstractify_model)
+      9/1    0.000    0.000    3.013    3.013 _make_jaxpr.py:884(make_jaxpr)
+      9/1    0.000    0.000    3.005    3.005 _make_jaxpr.py:814(_wrapped_fun_to_eval)
+        1    0.000    0.000    3.003    3.003 module_info.py:54(_model_that_not_allow_param_assign)
+        1    0.000    0.000    3.003    3.003 _module.py:242(__call__)
+        1    0.002    0.002    3.003    3.003 h01_arc_model.py:144(update)
+        1    0.000    0.000    2.995    2.995 _loop_collect_return.py:487(for_loop)
+        1    0.000    0.000    2.994    2.994 _loop_collect_return.py:58(scan)
+        1    0.000    0.000    2.955    2.955 _loop_collect_return.py:480(scan_fun)
+        1    0.000    0.000    2.955    2.955 _grad_checkpoint.py:168(remat_fun)
+26282/16848    0.162    0.000    2.733    0.000 core.py:682(bind)
+     34/9    0.000    0.000    2.583    0.287 _make_jaxpr.py:378(get_arg_cache_key)
+      8/2    0.000    0.000    2.580    1.290 _make_jaxpr.py:633(get_state_trace)
+        1    0.000    0.000    2.557    2.557 h01_arc_model.py:161(cable_step)

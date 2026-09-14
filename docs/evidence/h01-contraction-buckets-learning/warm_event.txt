@@ -1,0 +1,31 @@
+         22606 function calls (22079 primitive calls) in 0.699 seconds
+
+   Ordered by: cumulative time
+   List reduced from 226 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.699    0.699 h01_event_profile.py:91(<lambda>)
+        1    0.000    0.000    0.697    0.697 _jit.py:125(jitted_fn)
+        1    0.000    0.000    0.693    0.693 traceback_util.py:191(reraise_with_filtered_traceback)
+        1    0.000    0.000    0.693    0.693 pjit.py:257(cache_miss)
+        1    0.000    0.000    0.692    0.692 pjit.py:133(_run_python_pjit)
+        1    0.000    0.000    0.691    0.691 pjit.py:1169(_pjit_call_impl_python)
+      3/2    0.000    0.000    0.688    0.344 profiler.py:417(wrapper)
+        1    0.686    0.686    0.688    0.688 pxla.py:399(__call__)
+        4    0.000    0.000    0.002    0.001 {jaxlib.utils.safe_map}
+      106    0.000    0.000    0.002    0.000 pjit.py:1155(convert_to_metaty)
+        1    0.000    0.000    0.002    0.002 _state.py:2557(assign_state_vals_v2)
+  311/105    0.000    0.000    0.002    0.000 _state.py:418(__setattr__)
+  311/105    0.001    0.000    0.002    0.000 _state.py:435(_setattr)
+        2    0.000    0.000    0.002    0.001 pxla.py:85(shard_args)
+        1    0.000    0.000    0.002    0.002 pxla.py:304(__call__)
+        1    0.000    0.000    0.002    0.002 _make_jaxpr.py:633(get_state_trace)
+        1    0.000    0.000    0.002    0.002 _make_jaxpr.py:378(get_arg_cache_key)
+      426    0.001    0.000    0.002    0.000 array.py:1120(_get_aval_array)
+      318    0.000    0.000    0.001    0.000 core.py:1930(shaped_abstractify)
+        1    0.000    0.000    0.001    0.001 _make_jaxpr.py:442(_compilation_is_stale)
+        1    0.001    0.001    0.001    0.001 array.py:1228(_array_shard_arg)
+      103    0.000    0.000    0.001    0.000 _state.py:503(value)
+        1    0.000    0.000    0.001    0.001 array_creation.py:98(ones)
+        1    0.000    0.000    0.001    0.001 lax.py:3603(full)
+      888    0.001    0.000    0.001    0.000 sharding_impls.py:138(__eq__)

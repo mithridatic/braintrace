@@ -1,0 +1,31 @@
+         36521354 function calls (36405156 primitive calls) in 31.592 seconds
+
+   Ordered by: cumulative time
+   List reduced from 930 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001   33.073   33.073 h01_event_profile.py:68(<lambda>)
+        1    0.000    0.000   32.959   32.959 h01_network.py:220(make_h01_network)
+        4    0.006    0.001   15.571    3.893 h01_ei_cell.py:86(make_h01_ei_cell)
+        1    0.006    0.006   14.884   14.884 h01_network.py:163(_load_contact_cells)
+        4    0.000    0.000   13.624    3.406 _node.py:40(__call__)
+        4    0.000    0.000   13.623    3.406 cell.py:174(__init__)
+        4    0.000    0.000   13.622    3.406 cell.py:444(cvs)
+        4    0.000    0.000   13.622    3.406 h01_construction.py:1556(_discretization)
+        4    0.000    0.000   13.619    3.405 cell.py:421(_discretization)
+        4    0.007    0.002   13.619    3.405 base.py:427(build_discretization)
+        4    0.086    0.021   13.613    3.403 base.py:471(_build_discretization_parts)
+        4    0.102    0.026   10.365    2.591 h01.py:562(load)
+        4    2.697    0.674    7.776    1.944 h01.py:166(_fast_build_morpho_from_rows)
+        4    1.464    0.366    5.838    1.460 h01_construction.py:297(_fast_build_cv_geometry)
+        4    0.000    0.000    4.511    1.128 h01_network.py:31(_location)
+       14    0.104    0.007    4.494    0.321 h01.py:121(anatomy)
+        4    3.623    0.906    4.390    1.098 h01_anatomy.py:120(__init__)
+        4    1.985    0.496    4.140    1.035 h01_construction.py:626(_fast_build_node_tree)
+    96/24    0.071    0.001    3.199    0.133 region.py:195(evaluate)
+       20    0.228    0.011    3.004    0.150 h01_discretization.py:31(resolve_cv_bounds)
+      140    0.795    0.006    2.659    0.019 h01_anatomy.py:24(_geometry_signature)
+        4    1.134    0.284    2.271    0.568 _h01_swc.py:25(normalize)
+        4    0.004    0.001    2.182    0.546 h01_network.py:204(_register_cell)
+      336    1.689    0.005    1.968    0.006 h01_construction.py:1171(_fast_norm_region_intervals)
+    75609    0.027    0.000    1.947    0.000 base.py:496(<genexpr>)
