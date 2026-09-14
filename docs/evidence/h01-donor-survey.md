@@ -1,5 +1,11 @@
 # H01 per-type donor survey (SP6b, 2026-09-07)
 
+Follow-up on 2026-09-14: the previously identified DANDI 000630 lead now has a
+verified downloaded human L1 recording and matching public morphology, with
+36 metadata-eligible specimens joined to published recordings. This supplies
+inputs for fitting; no new donor has passed reproduction or human-only mechanism
+qualification. See the [acquisition receipt and limits](h01-human-unity-20260914/human-data/README.md).
+
 Five parallel read-only searches (ModelDB human L5 family, Allen human biophysical models,
 human L2/3 pyramidal models, human interneuron models, human L4 pyramidal) returned 63
 candidates; one judge applied the SP6b criteria (human species; layer and class match an H01
