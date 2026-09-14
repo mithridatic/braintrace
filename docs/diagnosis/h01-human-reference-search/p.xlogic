@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flyingLogic majorVersion="5" minorVersion="0">
+<domains><domain><attributes><attribute class="java.lang.String" key="name">H01 Topographic Search</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute></attributes>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000001</attribute><attribute class="java.lang.String" key="name">Overview</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.84" green="0.9" blue="0.98"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="rectangle"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000002</attribute><attribute class="java.lang.String" key="name">Answered Yes</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.8" green="0.94" blue="0.85"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000003</attribute><attribute class="java.lang.String" key="name">Answered No</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.99" green="0.84" blue="0.82"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000004</attribute><attribute class="java.lang.String" key="name">Open</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="1" green="0.94" blue="0.73"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000005</attribute><attribute class="java.lang.String" key="name">Inconclusive</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.9" green="0.85" blue="0.98"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000006</attribute><attribute class="java.lang.String" key="name">Blocked</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.87" green="0.88" blue="0.91"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="lozenge"/></attribute></attributes></entityClass>
+<entityClass><attributes><attribute class="java.util.UUID" key="uuid">fa010909-0000-4000-8000-000000000007</attribute><attribute class="java.lang.String" key="name">Outcome</attribute><attribute class="java.lang.Boolean" key="builtIn">false</attribute><attribute class="com.arciem.graphics.ColorRGB" key="color"><colorRGB red="0.96" green="0.96" blue="0.96"/></attribute><attribute class="com.arciem.symbol.Symbol" key="symbol"><symbol generator="com.arciem.symbol.FlowchartSymbolGenerator" idCode="rectangle"/></attribute></attributes></entityClass>
+</domain></domains>
+<displaySettings addEntityAsSuccessor="true" bias="Bias.start" confidenceVisible="false" edgeNotesVisible="true" edgeWeightsVisible="false" noteNumbersVisible="false" orientation="Orientation.leftToRight"/>
+<documentInfo author="" comments="Current diagnosis. Yes/No are predicates, not physiological verdicts. Evidence snapshot 2026-09-09, base 34ca482." keywords="H01 topographic search human reference" title="H01 human-reference topographic search"/>
+<decisionGraph><entityOperator class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator"><fuzzyOr/></entityOperator><defaultJunctorOperator class="com.flyinglogic.logicgraph.operator.FuzzyAndVertexOperator"><fuzzyAnd/></defaultJunctorOperator><logicGraph><operatorFamily class="com.flyinglogic.decisiongraph.DecisionGraphOperatorFamily"/><graph majorVersion="1" minorVersion="0" supportsGroups="true"><vertices>
+<vertex eid="1"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Overview" uuid="fa010909-0000-4000-8000-000000000001"/></attribute><attribute class="java.lang.String" key="title">H01 | Population execution and reference coverage</attribute><attribute class="java.lang.String" key="note">Current diagnosis; donor response, transfer, circuit and population subtrees can be active simultaneously.
+
+Exact count; 1 ms timing and recovery delays; 1 mV voltage; 0.05 ms spike phases. No trace alignment or pooled override. Usable-tier separate.
+
+Released/spent: I 0.23 nA; E sweeps 53 and 55. Still sealed in this snapshot: E sweep 54 (330 pA), I Noise1 sweep 48. No holdout opened by this artifact.
+
+No simulations, fitting, morphology edits, or revival of stopped campaigns. Open/blocked leaves require separately registered and bounded experiments.
+
+Legend: YES/NO = answered predicate, not physiological pass/fail. OPEN = valid question awaiting evidence; INCONCLUSIVE = attempted but no answer; BLOCKED = prerequisite or campaign boundary. Gray outcome boxes are conditional, not selected answers.
+
+Overview links are navigation, not causal exclusions. Open the companion Markdown for the linked source index.
+
+p014.md: Topographic diagnosis asks what is happening; do not begin with a root-cause label.
+p018.md-p021.md: Binary questions cover all remaining possibilities and are quick, unambiguous and cheap; do not repeat the same split consecutively.
+p035.md, p041.md: Retain the search as an explicit tree; classify the observation before selecting the decomposition.
+p144.md: Functional Isolation: split the serial path and ask at which boundary the contrast remains.
+p182.md-p183.md, p188.md, p192.md-p194.md: Structural Dissection: retain the complementary subsystem, interactions, and each written split.
+p022.md, p074.md: Distinguish physical/mathematical constraints from man-made requirements. Use voltage/current and charge balance at electrical boundaries; no absolute-truth label for assumptions.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="2"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Overview" uuid="fa010909-0000-4000-8000-000000000001"/></attribute><attribute class="java.lang.String" key="title">Population execution and reference coverage</attribute><attribute class="java.lang.String" key="note">Small-network execution exists; 40-cell construction and donor coverage remain separate limitations.
+
+Navigation group; independent residuals can coexist.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="3"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered No" uuid="fa010909-0000-4000-8000-000000000003"/></attribute><attribute class="java.lang.String" key="title">P01 [NO]
+40-cell stage completes construction?</attribute><attribute class="java.lang.String" key="note">P01 | 40-cell stage completes construction?
+
+Status: NO
+
+Method: Functional isolation / build before run
+
+Scope / coordinates: SP8 40-cell prefix, merged tree 0488c84; --include-isolated --cells 40 --control ei; build-only.
+
+Remaining search space: Actual construction succeeds for every selected cell, or at least one import/build fails.
+
+Binary predicate: The build completes all selected morphologies and discretization without error.
+
+Decision limit: Successful real construction of all 40 selected cells, not an extrapolated cost estimate.
+
+Recorded observation: Build fails at 82.6 s, before discretization, in H01Archive.load for cell 5805562981: from_points requires at least two points.
+
+YES: Proceed to separately measured initialization and runtime.
+
+NO: Localize the import failure before investigating network stepping.
+
+Next check: Use P02 to retain the recorded import-level localization.
+
+Unresolved after either answer: Subsequent init/run stages were not launched; no 40-cell runtime measurement exists.
+
+Evidence (repository-relative):
+docs/evidence/h01-population-build-40.json
+docs/evidence/h01-population-build-40.md
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="4"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Proceed to separately measured initialization and runtime.</attribute><attribute class="java.lang.String" key="note">P01: YES outcome.
+
+Proceed to separately measured initialization and runtime.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Subsequent init/run stages were not launched; no 40-cell runtime measurement exists.
+
+Next: Use P02 to retain the recorded import-level localization.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="5"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO — recorded
+Localize the import failure before investigating network stepping.</attribute><attribute class="java.lang.String" key="note">P01: NO outcome.
+
+Localize the import failure before investigating network stepping.
+
+This outcome is recorded for the stated scope.
+
+Remaining: Subsequent init/run stages were not launched; no 40-cell runtime measurement exists.
+
+Next: Use P02 to retain the recorded import-level localization.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="6"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered Yes" uuid="fa010909-0000-4000-8000-000000000002"/></attribute><attribute class="java.lang.String" key="title">P02 [YES]
+Import alone reproduces the failure?</attribute><attribute class="java.lang.String" key="note">P02 | Import alone reproduces the failure?
+
+Status: YES
+
+Method: Functional isolation / importer boundary
+
+Scope / coordinates: Offline H01Archive.load of 104 largest components; same BrainCell SWC reader, no simulation.
+
+Remaining search space: Failure reproduced without network initialization or stepping, or only later in the pipeline.
+
+Binary predicate: The standalone import reproduces the branch-construction failure.
+
+Decision limit: Same from_points exception on the released component; exact node/parent structure retained.
+
+Recorded observation: Seven of 104 largest components fail. Near-coincident 0.032 um nodes interact with reader np.allclose at coordinates near 3000 um; both leaf and branch-point cases occur.
+
+YES: Keep the fault localized to import/reader geometry handling.
+
+NO: Investigate construction context and subsequent stages.
+
+Next check: A future repair needs a reproducer for both leaf and branch-point cases, preserved geometry/provenance, and full 104-component audit before rerunning 40 cells.
+
+Unresolved after either answer: This artifact applies no repair and does not authorize collapsing nodes or inventing cable.
+
+Evidence (repository-relative):
+docs/evidence/h01-population-build-40.md
+docs/evidence/h01-population-build-40.json
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="7"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES — recorded
+Keep the fault localized to import/reader geometry handling.</attribute><attribute class="java.lang.String" key="note">P02: YES outcome.
+
+Keep the fault localized to import/reader geometry handling.
+
+This outcome is recorded for the stated scope.
+
+Remaining: This artifact applies no repair and does not authorize collapsing nodes or inventing cable.
+
+Next: A future repair needs a reproducer for both leaf and branch-point cases, preserved geometry/provenance, and full 104-component audit before rerunning 40 cells.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="8"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Investigate construction context and subsequent stages.</attribute><attribute class="java.lang.String" key="note">P02: NO outcome.
+
+Investigate construction context and subsequent stages.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: This artifact applies no repair and does not authorize collapsing nodes or inventing cable.
+
+Next: A future repair needs a reproducer for both leaf and branch-point cases, preserved geometry/provenance, and full 104-component audit before rerunning 40 cells.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="9"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered Yes" uuid="fa010909-0000-4000-8000-000000000002"/></attribute><attribute class="java.lang.String" key="title">P03 [YES]
+Twelve-cell finite execution exists?</attribute><attribute class="java.lang.String" key="note">P03 | Twelve-cell finite execution exists?
+
+Status: YES
+
+Method: Functional isolation / staged execution
+
+Scope / coordinates: SP8 12-cell subset: four incident cells plus eight selected isolated cells; use successful retained attempts, not killed attempts.
+
+Remaining search space: At least one actual finite execution exists for this subset, or only construction/projections exist.
+
+Binary predicate: The saved 12-cell evidence contains a completed real finite runtime after initialization.
+
+Decision limit: Completed real run and finite traces, with measured duration/load/attempt retained.
+
+Recorded observation: Attempt 3 completed 1 ms at dt 0.005 ms in both ei and disconnected configurations with finite traces; conductance probes were zero in both. Earlier killed attempts remain untested.
+
+YES: Retain the measured subset as the runtime boundary.
+
+NO: Keep execution open despite construction success.
+
+Next check: Report the selected attempt's measured configuration; do not extrapolate qualification to 40 or 104 cells.
+
+Unresolved after either answer: Includes isolated cells and borrowed profiles; runtime is not physiological coverage.
+
+Evidence (repository-relative):
+docs/evidence/h01-population-build-12.json
+docs/evidence/h01-population-build-12.md
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="10"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES — recorded
+Retain the measured subset as the runtime boundary.</attribute><attribute class="java.lang.String" key="note">P03: YES outcome.
+
+Retain the measured subset as the runtime boundary.
+
+This outcome is recorded for the stated scope.
+
+Remaining: Includes isolated cells and borrowed profiles; runtime is not physiological coverage.
+
+Next: Report the selected attempt's measured configuration; do not extrapolate qualification to 40 or 104 cells.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="11"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO
+Keep execution open despite construction success.</attribute><attribute class="java.lang.String" key="note">P03: NO outcome.
+
+Keep execution open despite construction success.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Includes isolated cells and borrowed profiles; runtime is not physiological coverage.
+
+Next: Report the selected attempt's measured configuration; do not extrapolate qualification to 40 or 104 cells.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="12"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered No" uuid="fa010909-0000-4000-8000-000000000003"/></attribute><attribute class="java.lang.String" key="title">P04 [NO]
+Added SST donor reproduces its counts?</attribute><attribute class="java.lang.String" key="note">P04 | Added SST donor reproduces its counts?
+
+Status: NO
+
+Method: Hierarchical / reference before transfer
+
+Scope / coordinates: HL5MN1 source fit, 100/150 pA, sweeps 44/35, original and half dt.
+
+Remaining search space: Exact counts agree at both inputs, or at least one differs.
+
+Binary predicate: The source model reproduces both matched donor counts.
+
+Decision limit: Exact counts; retain separate repeat bands. Latency limits use |dt-pair difference| x2.95.
+
+Recorded observation: Human 14/34; model 16/30 at both dt values. Source reproduction rejected.
+
+YES: Continue waveform and transfer qualification.
+
+NO: Isolate unchanged source-condition mismatch before using this donor as qualified physiology.
+
+Next check: Audit initial state, bias, temperature, waveform and mechanism conventions under a frozen source model; preserve two-input constraints.
+
+Unresolved after either answer: Halving-dt count agreement rules out that count change over the tested pair, not every numerical issue.
+
+Evidence (repository-relative):
+docs/evidence/h01-sst-reproduction.md
+docs/evidence/h01-donors/stage-hl5mn1-decision.json
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="13"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Continue waveform and transfer qualification.</attribute><attribute class="java.lang.String" key="note">P04: YES outcome.
+
+Continue waveform and transfer qualification.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Halving-dt count agreement rules out that count change over the tested pair, not every numerical issue.
+
+Next: Audit initial state, bias, temperature, waveform and mechanism conventions under a frozen source model; preserve two-input constraints.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="14"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO — recorded
+Isolate unchanged source-condition mismatch before using this donor as qualified physiology.</attribute><attribute class="java.lang.String" key="note">P04: NO outcome.
+
+Isolate unchanged source-condition mismatch before using this donor as qualified physiology.
+
+This outcome is recorded for the stated scope.
+
+Remaining: Halving-dt count agreement rules out that count change over the tested pair, not every numerical issue.
+
+Next: Audit initial state, bias, temperature, waveform and mechanism conventions under a frozen source model; preserve two-input constraints.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="15"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Answered No" uuid="fa010909-0000-4000-8000-000000000003"/></attribute><attribute class="java.lang.String" key="title">P05 [NO]
+Added L4 donor reproduces its counts?</attribute><attribute class="java.lang.String" key="note">P05 | Added L4 donor reproduces its counts?
+
+Status: NO
+
+Method: Hierarchical / reference before transfer
+
+Scope / coordinates: Allen 527952884 source fit, 100/90 pA, sweeps 69/39, original and half dt.
+
+Remaining search space: Exact counts agree at both inputs, or at least one differs.
+
+Binary predicate: The source model reproduces both matched donor counts.
+
+Decision limit: Exact counts; 100 pA repeat band 17-20 is separately reported and cannot replace exact 20.
+
+Recorded observation: Human 20/12; model 19/8 at both dt values. Being within the first repeat band does not satisfy both exact counts.
+
+YES: Continue waveform and transfer qualification.
+
+NO: Isolate the source-condition mismatch before transfer claims.
+
+Next check: Compare pinned initial state, temperature, waveform/bias and mechanism versions; keep every input in the test.
+
+Unresolved after either answer: Anatomical labels and imported templates do not establish complete population reference coverage.
+
+Evidence (repository-relative):
+docs/evidence/h01-l4-reproduction.md
+docs/evidence/h01-donors/stage-allen-l4-decision.json
+
+Snapshot 2026-09-09, base 34ca482. A branch is conditional unless its question has an answered status.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="16"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">YES
+Continue waveform and transfer qualification.</attribute><attribute class="java.lang.String" key="note">P05: YES outcome.
+
+Continue waveform and transfer qualification.
+
+Conditional outcome. This box is not evidence that the outcome occurred.
+
+Remaining: Anatomical labels and imported templates do not establish complete population reference coverage.
+
+Next: Compare pinned initial state, temperature, waveform/bias and mechanism versions; keep every input in the test.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+<vertex eid="17"><attributes><attribute class="java.lang.String" key="type">entity</attribute><attribute class="com.flyinglogic.logicgraph.entityclass.EntityClass" key="entityClass"><entityClass name="Outcome" uuid="fa010909-0000-4000-8000-000000000007"/></attribute><attribute class="java.lang.String" key="title">NO — recorded
+Isolate the source-condition mismatch before transfer claims.</attribute><attribute class="java.lang.String" key="note">P05: NO outcome.
+
+Isolate the source-condition mismatch before transfer claims.
+
+This outcome is recorded for the stated scope.
+
+Remaining: Anatomical labels and imported templates do not establish complete population reference coverage.
+
+Next: Compare pinned initial state, temperature, waveform/bias and mechanism versions; keep every input in the test.</attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute><attribute class="com.arciem.FuzzyBoolean" key="confidence"><fuzzyBoolean true="0.5"/></attribute><attribute class="com.flyinglogic.logicgraph.operator.FuzzyOrVertexOperator" key="forwardOperator"><fuzzyOr/></attribute></attributes></vertex>
+</vertices><edges>
+<edge eid="18" source="1" target="2"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="19" source="2" target="3"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="20" source="2" target="9"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="21" source="2" target="12"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="22" source="2" target="15"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="23" source="3" target="4"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="24" source="3" target="5"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="25" source="5" target="6"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note"></attribute><attribute class="java.lang.Boolean" key="noteVisible">false</attribute></attributes></edge>
+<edge eid="26" source="6" target="7"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="27" source="6" target="8"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="28" source="9" target="10"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="29" source="9" target="11"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="30" source="12" target="13"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="31" source="12" target="14"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="32" source="15" target="16"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">Yes</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+<edge eid="33" source="15" target="17"><attributes><attribute class="java.lang.Double" key="weight">1.0</attribute><attribute class="com.flyinglogic.logicgraph.operator.MultiplyEdgeOperator" key="forwardOperator"><multiply/></attribute><attribute class="java.lang.String" key="note">No</attribute><attribute class="java.lang.Boolean" key="noteVisible">true</attribute></attributes></edge>
+</edges></graph></logicGraph></decisionGraph>
+</flyingLogic>
