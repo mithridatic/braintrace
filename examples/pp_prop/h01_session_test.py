@@ -127,7 +127,8 @@ def test_biological_session_physical_wait_restore_includes_eligibility(imported,
         expected = np.array(session.model._soma())
         expected_factors = [np.array(f) for f in session.learner.factors.value]
         session.restore_physical(path, wait=wait, expected_sha256=digest)
-        assert wait.elapsed_events.value == 1 and session.model.release.tick.value == 20
+        assert wait.elapsed_events.value == 1
+        assert session.model.release.tick.value == session.model.substeps
         assert not step()
         np.testing.assert_array_equal(session.model._soma(), expected)
         for value, saved in zip(session.learner.factors.value, expected_factors):
@@ -177,7 +178,8 @@ def test_spatial_session_rebuild_restore_and_eligibility_replay(imported, tmp_pa
         for actual, wanted in zip(rebuilt.learner.factors.value, factors):
             np.testing.assert_array_equal(actual, wanted)
         assert rebuilt.settings['biology'] == H01SpatialManifest(biology, topology.to_dict()).to_dict()
-        assert int(rebuilt.model.release.tick.value) == 40
+        # derived: two events, each advancing one event's worth of substeps
+        assert int(rebuilt.model.release.tick.value) == 2*rebuilt.model.substeps
         with pytest.raises(ValueError, match='biological maps'):
             rebuilt.mutate(topology, archive)
 

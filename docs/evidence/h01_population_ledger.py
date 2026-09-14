@@ -134,7 +134,7 @@ def timestep_term():
         if dt else "Not qualified at any step on this ladder.",
         f"This supersedes {DTLADDER}, which compared only the two coarsest rungs and reported the "
         f"gate as FAIL at 6.36 mV. The three finer rungs had already run; their traces were "
-        f"recovered from the 2026-09-09 worktree stash on 2026-09-14 and the ladder closed as "
+        f"recovered from the 2026-09-09 worktree stash and the ladder closes as "
         f"arithmetic, with no new simulation. Two limits on the reading: the gate is met by the "
         f"FINEST pair on the ladder, so no rung below 0.0003125 ms confirms that convergence "
         f"continues (the first-order ratios say it should, which is an extrapolation, not a "

@@ -26,7 +26,7 @@ class H01NetworkStep(brainstate.nn.Module):
     Delivery queues persist until reset, including across ARC event boundaries.
     """
 
-    def __init__(self, network, dt_ms=0.005):
+    def __init__(self, network, dt_ms=0.000625):   # qualified step, docs/evidence/h01-timestep-ladder.json
         super().__init__()
         if not np.isfinite(dt_ms) or dt_ms <= 0:
             raise ValueError("dt_ms must be positive and finite")

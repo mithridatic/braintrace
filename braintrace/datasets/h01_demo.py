@@ -79,7 +79,7 @@ def main(argv=None):
     parser.add_argument("--neuron", default="810151953")
     parser.add_argument("--component", type=int, default=0)
     parser.add_argument("--duration-ms", type=float, default=1.0)
-    parser.add_argument("--dt-ms", type=float, default=.025)
+    parser.add_argument("--dt-ms", type=float, default=.000625)  # qualified step, docs/evidence/h01-timestep-ladder.json
     parser.add_argument("--current-na", type=float, default=.001)
     parser.add_argument("--output", type=Path, help="Optional JSON evidence file.")
     args = parser.parse_args(argv)

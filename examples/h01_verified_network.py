@@ -43,7 +43,7 @@ def main():
     parser.add_argument("--heartbeat-s", type=float, default=60.,
                         help="Heartbeat period (elapsed s, RSS) while init_state or compile+run is otherwise silent.")
     parser.add_argument("--duration-ms", type=float, default=0.)
-    parser.add_argument("--dt-ms", type=float, default=.005)
+    parser.add_argument("--dt-ms", type=float, default=.000625)  # qualified step, docs/evidence/h01-timestep-ladder.json
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--current-na", type=float, default=0., help="Same assumed soma pulse for each incident cell.")
     parser.add_argument("--solver", default="h01_staggered_scan", choices=["h01_staggered_scan", "staggered", "h01_staggered_calcium_implicit"])

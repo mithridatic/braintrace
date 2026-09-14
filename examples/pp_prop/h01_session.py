@@ -40,7 +40,8 @@ def _numerical_settings_cached():
     paths.append(root/'examples/pp_prop/h01_neuroglial.py')
     implementation = {str(path.relative_to(root)).replace('\\', '/'): hashlib.sha256(path.read_bytes()).hexdigest()
                       for path in paths if not path.name.endswith('_test.py')}
-    return dict(optimizer_policy=POLICY, dt_ms=.005, event_ms=.1, substeps=20, precision=64,
+    # dt is the qualified step, docs/evidence/h01-timestep-ladder.json; substeps = event_ms / dt_ms = 0.1 / 0.000625 = 160
+    return dict(optimizer_policy=POLICY, dt_ms=.000625, event_ms=.1, substeps=160, precision=64,
         solver='h01_staggered_calcium_implicit', max_cv_length_um=10., decay=.99,
         factor_limit_bytes=512*1024**2, seed=21, checkpoint_substeps=True,
         implementation_sha256=implementation,

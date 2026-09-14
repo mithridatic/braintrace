@@ -45,12 +45,12 @@ The second attempt spent 5.9 hours and produced nothing, which is also a policy 
 (no hour-plus runs) and is the reason this ledger is being written from committed evidence rather
 than from a third attempt.
 
-### 2. The timestep: CLOSED 2026-09-14 — qualified at dt 0.000625 ms
+### 2. The timestep: qualified at dt 0.000625 ms
 
 *This section previously read "not qualified ... the traces were deleted and `.cache/h01` no
 longer exists". Both claims were wrong.* All five rungs survived in the 2026-09-09
 worktree-recovery stash, which was restored while cleaning up the stale worktrees. The ladder
-closed as arithmetic, with no new simulation:
+closes as arithmetic, with no new simulation:
 
 | pair | max \|ΔV\| | at | gate |
 | --- | ---: | ---: | --- |

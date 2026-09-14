@@ -39,7 +39,8 @@ class H01ArcModel(brainstate.nn.Module):
     Compiler and allocation gates must pass before a training claim is made.
     """
 
-    def __init__(self, network, source_ids, *, seed=21, dt_ms=0.005, input_pattern=None,
+    def __init__(self, network, source_ids, *, seed=21, dt_ms=0.000625,   # qualified step, docs/evidence/h01-timestep-ladder.json
+                 input_pattern=None,
                  checkpoint_substeps=True, release_probability=None):
         super().__init__()
         self.source_ids = tuple(source_ids)

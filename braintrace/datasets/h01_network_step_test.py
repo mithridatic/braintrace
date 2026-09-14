@@ -31,7 +31,7 @@ def test_native_step_and_reset(tmp_path):
     network = _network(tmp_path)
     expected = network.run(dt=.005*u.ms, duration=.1*u.ms).traces
     network.reset_state()
-    step = H01NetworkStep(network)
+    step = H01NetworkStep(network, dt_ms=.005)   # matched to the native run above; the subject is equivalence at one clock
     result = brainstate.transform.for_loop(lambda _: step.update(), jnp.arange(20))
     np.testing.assert_allclose(result["cell"]["voltage"].to_decimal(u.mV),
                                expected["cell"]["voltage"].to_decimal(u.mV), atol=1e-10)
@@ -72,7 +72,7 @@ def test_active_delayed_contact_matches_native_and_reset_clears_queue(tmp_path):
     assert np.any(native.spikes["cell"])
     assert float(native.traces["post"]["voltage"][-1].to_decimal(u.mV).reshape(())) > -65
     network.reset_state()
-    step = H01NetworkStep(network)
+    step = H01NetworkStep(network, dt_ms=.005)   # matched to the native run above; the subject is equivalence at one clock
     actual = brainstate.transform.for_loop(lambda _: step.update(), jnp.arange(20))
     np.testing.assert_allclose(actual["post"]["voltage"].to_decimal(u.mV),
                                native.traces["post"]["voltage"].to_decimal(u.mV), atol=1e-9)
@@ -104,7 +104,7 @@ def test_half_ms_delay_and_simultaneous_arrivals_match_native(tmp_path, reversal
         np.testing.assert_allclose(expected[:100], -65., atol=1e-10)
         assert (expected[-1]+65.)*(reversal+65.) > 0
         network.reset_state()
-        step = H01NetworkStep(network)
+        step = H01NetworkStep(network, dt_ms=.005)   # matched to the native run above; the subject is equivalence at one clock
         actual = brainstate.transform.for_loop(lambda _: step.update(), jnp.arange(len(expected)))
         np.testing.assert_allclose(np.asarray(actual['post']['voltage'].to_decimal(u.mV)).reshape(-1),
                                    expected, atol=1e-10)

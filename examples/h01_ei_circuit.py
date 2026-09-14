@@ -42,7 +42,7 @@ def build_parser():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--control", choices=("ei", "e_only", "i_only", "disconnected"), default="ei")
     parser.add_argument("--connectivity", choices=("measured", "illustrative"), default="measured")
-    parser.add_argument("--dt-ms", type=float, default=.005)
+    parser.add_argument("--dt-ms", type=float, default=.000625)  # qualified step, docs/evidence/h01-timestep-ladder.json
     parser.add_argument("--duration-ms", type=float, default=10.)
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--solver", choices=("staggered", "h01_staggered_scan"), default="staggered")

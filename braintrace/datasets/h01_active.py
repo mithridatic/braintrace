@@ -159,7 +159,7 @@ def main(argv=None):
     parser.add_argument("--potassium-ms-cm2", type=float, default=4.884943554)
     parser.add_argument("--max-cv-length-um", type=float, default=10.)
     parser.add_argument("--align-active-boundaries", action="store_true")
-    parser.add_argument("--dt-ms", type=float, default=.005)
+    parser.add_argument("--dt-ms", type=float, default=.000625)  # qualified step, docs/evidence/h01-timestep-ladder.json
     parser.add_argument("--duration-ms", type=float, default=20.)
     parser.add_argument("--pulse-ms", type=float, default=3.)
     parser.add_argument("--delay-ms", type=float, default=2.)

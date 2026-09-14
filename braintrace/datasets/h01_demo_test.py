@@ -25,8 +25,10 @@ def test_cli_runs_and_writes_reproducible_evidence(tmp_path, monkeypatch, capsys
     output = tmp_path / "evidence" / "run.json"
     source = ["--download", str(tmp_path)] if download else ["--archive", str(path)]
     report = h01_demo.main(source + [
-        "--neuron", "12", "--component", "0", "--duration-ms", ".1", "--output", str(output),
+        "--neuron", "12", "--component", "0", "--duration-ms", ".1", "--dt-ms", ".025",
+        "--output", str(output),
     ])
+    # the clock is pinned here rather than inherited: this is a fixture-sized reproducibility check
     assert report["finite"] and report["steps"] == 4
     assert report["source_points"] == 3
     assert report["voltage_final_mv"] > -65

@@ -747,7 +747,7 @@ read from a committed decision JSON, and a term with no evidence scores zero and
 | Type coverage | 0.529 | yes | 55 of 104 matched in layer and class |
 | Construction | 1.000 | yes | import, construction, initialisation, **synthetic** forward pass, all 104 |
 | Driven window | 0.000 | no | 10 ms explicit died nonfinite; implicit retry aborted at the wall cap after 21,286 s |
-| Timestep | 1.000 | yes | qualified at dt 0.000625 ms (0.933 mV to the next halving, the ladder's finest pair), closed 2026-09-14 from recovered traces |
+| Timestep | 1.000 | yes | qualified at dt 0.000625 ms (0.933 mV to the next halving, the ladder's finest pair) |
 | Anatomy transfer | 0.000 | **yes** | B3's fit fires 4 spikes at 200 pA on the donor's reconstruction and **0** on the H01 skeleton |
 
 Product as measured: **0 percent**. The 38 percent obtainable by counting construction as build

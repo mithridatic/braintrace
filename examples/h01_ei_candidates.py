@@ -59,7 +59,7 @@ def main():
     parser.add_argument("--cache", type=Path, default=Path(".cache/h01"))
     parser.add_argument("--output", type=Path, default=Path(".cache/h01/ei-defaults"))
     parser.add_argument("--duration-ms", type=float, default=10.)
-    parser.add_argument("--dt-ms", type=float, default=.005)
+    parser.add_argument("--dt-ms", type=float, default=.000625)  # qualified step, docs/evidence/h01-timestep-ladder.json
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--current-na", type=float, default=.1)
     parser.add_argument("--role", choices=("both", "E", "I"), default="both")

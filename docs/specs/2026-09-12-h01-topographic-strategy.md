@@ -1054,3 +1054,43 @@ stash and are unrelated to this work.
 
 Artifacts: [`h01-timestep-ladder.json`](../evidence/h01-timestep-ladder.json),
 [`h01_timestep_ladder.py`](../evidence/h01_timestep_ladder.py) (7 tests).
+
+### Addendum — the qualified step is now the default
+
+User decision, 2026-09-14, after the cost objection below was raised and overruled. Every H01
+simulation entry point now defaults to **dt 0.000625 ms**:
+
+| File | Was | Now |
+| --- | ---: | ---: |
+| `examples/h01_verified_network.py` `--dt-ms` | .005 | .000625 |
+| `examples/h01_ei_candidates.py` `--dt-ms` | .005 | .000625 |
+| `examples/h01_ei_circuit.py` `--dt-ms` | .005 | .000625 |
+| `braintrace/datasets/h01_active.py` `--dt-ms` | .005 | .000625 |
+| `braintrace/datasets/h01_demo.py` `--dt-ms` | .025 | .000625 |
+| `braintrace/datasets/h01_network_step.py` `dt_ms` | 0.005 | 0.000625 |
+| `examples/pp_prop/h01_arc_model.py` `dt_ms` | 0.005 | 0.000625 |
+| `examples/pp_prop/h01_session.py` `dt_ms` / `substeps` | .005 / 20 | .000625 / **160** |
+
+`substeps` is not free to choose: `h01_arc_model` requires the cable step to divide the 0.1 ms
+event interval, and 0.1 / 0.000625 = 160 exactly. The session's pinned numerical settings therefore
+change, and with them `implementation_sha256`; that is intended, not incidental.
+
+**The objection, recorded because it was overruled rather than answered.** 0.000625 ms costs 8x the
+steps of the old default (40x for the demo). The r2 full-104 run already died at the wall cap *at
+this step*, so making it the default makes every script that inherits it 8x more expensive and
+pushes more of them past their caps. The qualification is also one isolated cell at the ladder's
+finest pair, not a population-wide claim. The alternatives offered were: leave the defaults and
+warn when `--dt-ms` exceeds the qualified step, or gate it behind an explicit flag. The user chose
+the default change.
+
+**Test changes, all decoupling rather than reverting.** Eleven tests failed because they hardcoded
+values derived from the old default. None indicated a defect in the change:
+
+- `h01_network_step_test.py` compared `H01NetworkStep(network)` (default clock) against
+  `network.run(dt=.005)`. The subject is equivalence at a *matched* clock, so the three
+  constructions now pin `dt_ms=.005`.
+- `h01_demo_test.py` and `h01_active_test.py` asserted fixture-sized step and sample counts
+  (`steps == 4`, `len(voltage_mv) == 10`). They now pin their own `--dt-ms` rather than inheriting
+  one, which is what a reproducibility check should do.
+- `h01_arc_model_test.py` and `h01_session_test.py` asserted tick counts of 20 and 40. These are
+  one and two events' worth of substeps, so they are now derived from `model.substeps`.

@@ -38,7 +38,8 @@ def test_forward_padding_and_readout(tmp_path):
     assert int(model.stepper.tick.value) == 0
     result = brainstate.transform.jit(model.step)(event)
     assert np.isfinite(result).all()
-    assert int(model.stepper.tick.value) == 20
+    # derived, not hardcoded: one event advances exactly one event's worth of substeps
+    assert int(model.stepper.tick.value) == model.substeps
     model.reset_episode()
     assert int(model.stepper.tick.value) == 0
     np.testing.assert_array_equal(before, model._soma())

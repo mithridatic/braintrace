@@ -81,7 +81,8 @@ def test_cli_records_source_and_finite_trace(imported, tmp_path, monkeypatch, ca
     monkeypatch.setattr(h01_active, "H01Annotations", lambda _: annotations())
     output = tmp_path / "run.json"
     report = h01_active.main(["--archive", "fixture", "--annotations", "fixture",
-        "--active-radius-um", "2", "--current-na", "0", "--duration-ms", ".05", "--output", str(output)]
+        "--active-radius-um", "2", "--current-na", "0", "--duration-ms", ".05",
+        "--dt-ms", ".005", "--output", str(output)]   # clock pinned: 0.05 / 0.005 = 10 samples
         + (["--observe-channels", "--align-active-boundaries"] if observe else []))
     assert report["result"]["precision_bits"] == 64
     assert len(report["result"]["voltage_mv"]) == 10
