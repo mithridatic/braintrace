@@ -64,3 +64,22 @@ Follow preparation with protocol resolution, human-mechanism selection, model
 fitting and independent testing. A preparation pass is not a donor_accuracy or
 type_coverage pass. Record direct voltage/current observations and visually inspect
 the calibration data before interpreting physiology under the observation contract.
+
+## Protocol and mechanism source follow-up
+
+Resolve the recording reference from this study's own methods and retain a new
+protocol receipt beside the unchanged preparation artifacts. Record protocol bath
+temperature as a range, not an exact specimen measurement. Record the stated
+junction potential separately from an applied voltage transformation. Preserve the
+raw-reference exports until the signed transformation is explicitly qualified.
+
+Inspect the pinned author notebook and its archived release for the nucleated-patch
+potassium-current inputs. Distinguish saved notebook outputs, complete source
+tables, and time-resolved raw currents. Verify archive size/checksum before reading
+its member list; do not execute upstream notebooks. A missing file in these two
+releases establishes an acquisition gap there, not proof that no public human
+measurements exist. Retain exact source identities and the search boundary.
+
+This stage is read-only source analysis plus new evidence receipts. It neither
+fits a model nor accesses held-out response arrays. The existing eight/nine
+calibration/holdout QC split and the six population values remain unchanged.
