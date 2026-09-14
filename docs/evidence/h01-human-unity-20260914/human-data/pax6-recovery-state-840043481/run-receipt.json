@@ -1,0 +1,13 @@
+{
+  "command": [
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-human-unity\\.cache\\human-audit-venv\\Scripts\\python.exe",
+    "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-human-unity\\docs\\evidence\\h01-human-unity-20260914\\human-data\\pax6-recovery-state-840043481\\fit.py"
+  ],
+  "started_utc": "2026-09-14T23:22:00.985913+00:00",
+  "ended_utc": "2026-09-14T23:22:30.871848+00:00",
+  "elapsed_seconds": 29.88604199999827,
+  "wall_cap_seconds": 300,
+  "timed_out": false,
+  "returncode": 0,
+  "execution": "local CPU; no neuronal rollout"
+}

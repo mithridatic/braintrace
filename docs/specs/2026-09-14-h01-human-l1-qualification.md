@@ -332,3 +332,64 @@ controls, negative inferred gain, nonfinite samples, unequal clocks or commands,
 extra transitions and missing or off-grid analysis windows. Use local CPU only;
 no neuronal rollout or external validation response access. Preserve the original
 whole-cell split and six-term qualification criteria.
+
+## Joint within-sweep recovery-state candidate
+
+Fit the already exposed recovery sweeps 123-141 jointly using both original
+pulse currents and the return-to-holding current. Subtract each sweep's original
+2000-2090 ms initial baseline once from all three responses, keeping raw arrays
+and offsets. This retains the observed post-pulse baseline change. Do not fit
+per-sweep offsets or gains. Pulse fitting uses every sample at phases 10-280 ms;
+return fitting uses every sample at phases 10-980 ms. Verify complete original
+clocks, +60/-90/-20 mV command correspondence and 300 ms pulse durations.
+
+The candidate has two mathematical availability populations, not assigned
+molecular identities. For population j, initial availability f_j decays toward
+zero during the first pulse with constant d_j. The end state is
+f_j*exp(-300/d_j). During the measured recovery gap g it approaches one with
+constant r_j; second-pulse initial availability is
+u_j=1-(1-f_j*exp(-300/d_j))*exp(-g/r_j). Carry that state through the second
+300 ms pulse. Its end state is z_j=u_j*exp(-300/d_j).
+
+Pulse currents are C + sum(A_j*h_j(t)), where h_j(t) is f_j*exp(-t/d_j)
+or u_j*exp(-t/d_j). A_j is the fully available amplitude at phase zero, unlike
+the earlier difference fit's phase-10 amplitude. C is one shared nondecaying
+baseline-centered pulse term; it is not an identified ionic component.
+
+At return to holding, availability relaxes toward f_j with constant s_j:
+h_j(t)=f_j+(z_j-f_j)*exp(-t/s_j). The effective current factor relaxes from
+rho toward rho*eta_j with a shared off time constant a_off:
+q_j(t)=rho*(eta_j+(1-eta_j)*exp(-t/a_off)). Return current relative to the
+initial holding baseline is sum(A_j*(q_j(t)*h_j(t)-rho*eta_j*f_j)).
+Thus the return prediction carries the same availability as the second pulse.
+Initial availability equal to the holding asymptote, settled pulse activation
+after 10 ms, and one shared initial state across these sweeps are testable
+candidate assumptions. They are not established by command matching. rho and
+eta are conditional current factors, not measured reversal potential or gating
+curves. The gap current itself is not predicted in this candidate.
+
+Use phase indices divided by the recorded sample rate for the common fitting
+coordinates, checking them against each original source timestamp difference
+within 1e-8 ms. Preserve every source timestamp separately. This only accommodates
+floating-point subtraction at different onset times; it neither interpolates
+currents nor changes sample membership. Fit masks are defined on the common
+sample-index coordinates and their exact source indices are retained.
+
+Parameter order: A1,A2,d1,d2,r1,r2,f1,f2,C,rho,eta1,eta2,s1,s2,a_off.
+Bounds: amplitudes 0-2500 pA; d 1-10000 ms; r and s 1-20000 ms; f, rho and
+eta 0-1; C -100 to 500 pA; a_off 0.04-1000 ms. Initial values are
+170,500,32,750,60,510,0.15,0.01,30,0.5,0.1,0.2,300,1500,10.
+Use equal weight per original current sample across all three windows, without
+smoothing or interpolation. Retain per-window/condition residuals and all fitted
+samples, predictions, state endpoints, optimizer flags and bound proximity.
+Report singular values of the Jacobian after scaling each parameter column by
+max(abs(parameter),1); this is a local numerical diagnostic, not confidence
+intervals from independent samples. Do not infer certainty from sample count.
+
+Use vectorized closed-form state transitions, no repeated Python membrane-model
+loop. Bound the local CPU attempt to 300 seconds and 120 optimizer evaluations.
+Retain a terminal timeout or nonconvergence as such; do not restart based on an
+observation timeout. Tests must independently verify state carry at zero/long
+gaps, pulse and return endpoints, long-hold recovery to the baseline, distinct
+original pulse/return clocks, invalid data, and synthetic joint-fit recovery.
+Keep the earlier recording blocks distinct and the external-response gate closed.

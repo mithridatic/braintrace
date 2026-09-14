@@ -100,3 +100,11 @@ uniform gain does not account for the same-command response difference. A
 sustained change during leak-control sweep 80 is retained on its original clock.
 [Revision 7](fitting-inputs-r7.json) keeps recording epochs explicit for candidate
 fitting; deployment and external-response access remain gated. No score changes.
+
+## Joint recovery-state checkpoint
+
+[One state candidate now fits both pulses and the holding return](pax6-recovery-state-840043481/README.md)
+across all 19 recovery conditions. Its shared first-pulse prediction misses an
+acquisition-order trend; the fitted parameters remain conditional. [Revision 8](fitting-inputs-r8.json)
+is the current input receipt. The additional tail-protocol inspection read commands
+only. External currents, the original whole-cell split and all six scores remain unchanged.

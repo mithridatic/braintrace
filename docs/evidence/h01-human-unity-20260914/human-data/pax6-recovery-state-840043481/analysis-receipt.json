@@ -1,0 +1,45 @@
+{
+  "session_id": "840043481",
+  "specimen_id": "840043506",
+  "nwb_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "modules": {
+    "h01_l1_recovery_state.py": "8929fa2077f9e40a4b67a4bc6df01788d0121e8b5acb259f27283135d6a2454c"
+  },
+  "environment": {
+    "python": "3.13.14 (main, Jul 18 2026, 17:10:39) [MSC v.1944 64 bit (AMD64)]",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "execution": "local CPU closed-form state transitions; no neuronal rollout"
+  },
+  "test_command": ".cache/human-audit-venv/Scripts/python.exe -m pytest --confcutdir=docs/evidence docs/evidence/h01_l1_recording_test.py docs/evidence/h01_l1_qc_test.py docs/evidence/h01_l1_voltage_clamp_test.py docs/evidence/h01_l1_leak_test.py docs/evidence/h01_l1_decay_test.py docs/evidence/h01_l1_recovery_test.py docs/evidence/h01_l1_recovery_fit_test.py docs/evidence/h01_l1_conditioning_test.py docs/evidence/h01_l1_control_test.py docs/evidence/h01_l1_recovery_state_test.py -q --cov=h01_l1_voltage_clamp --cov=h01_l1_leak --cov=h01_l1_decay --cov=h01_l1_recovery --cov=h01_l1_recovery_fit --cov=h01_l1_conditioning --cov=h01_l1_control --cov=h01_l1_recovery_state --cov-report=term-missing --cov-report=json:docs/evidence/h01-human-unity-20260914/human-data/pax6-recovery-state-840043481/coverage.json --junitxml=docs/evidence/h01-human-unity-20260914/human-data/pax6-recovery-state-840043481/tests.xml",
+  "tests_passed": 152,
+  "conditions": 19,
+  "fit_samples": 717250,
+  "optimizer_success": true,
+  "external_response_opened": false,
+  "tail_protocol_response_arrays_opened": false,
+  "physiology_qualified": false,
+  "scores_promoted": false,
+  "decision": "Conditional state candidate retained; shared first-pulse prediction misses acquisition-order trend. Estimate initial state separately before broadening voltage-dependent inference.",
+  "verification": "All raw/centered sample membership and original timestamps verified against bound source exports. Predictions and carried state endpoints reproduced populationwise.",
+  "files": {
+    "all-state-residuals.png": "629e5be7bb9238695daff1f55487ce8e505d97afc3dbbcf7c787d70f0e60fee4",
+    "coverage.json": "85a89eb2c819d9d66556591c5b39a867a32db8f0bf7be532db9a5e18fdde87fd",
+    "direct-phase-observations.json": "effbec228d513e52f080fdc1ca4e24bbcf7ffb1153e9f70780a3ad1cc0af7887",
+    "fit.log": "a4677d37d5f46eabef4b247efd3b427c8395f4cdbf49cbd50746c68d4c13d466",
+    "fit.py": "3c5e2c820d859866e0d18e384579264cea167309d274f13d64ea6ecdb06ada62",
+    "holding-excursion.png": "cc75d4e52124a452caed6cf1c84688ef2d5e09b7f115ad65f4436b9a0280bd7f",
+    "inputs.json": "d7aa6cc650093e3094c72c7187b5695bc280ed9c41e651466400d326bfb5d4ea",
+    "inputs.npz": "4f893df47b4c528df2b62cb6a773ce6cd634233edc3990ebf44f1745ce841998",
+    "joint-fit.json": "6674cd796b48c8144ea4b516b93820e5473b741a71f3e615cb40d1b8b4508377",
+    "joint-fit.npz": "09caf801922cafa5850f2928565dd5b16a1330e054466a7cc960523fddda7495",
+    "joint-state-fit.png": "25361a1a439664b52e85274d27c25953e5b8483319cdbd04b0d5c4b6a422cfc8",
+    "next-protocol-commands.json": "0a1278a56db6aaf0cabc2d5c5efabffd5714b91c2457aabc05cf61bd263acf90",
+    "plot_fit.py": "405be480c3cdf0ec52f8a5cd9377a327c6b75448df00be17177c9c427a556ba3",
+    "prepare.py": "eb0cba8d4d50c59b16916cdf2cc33f7c8ce9da832998d7fb4fc2679f31649f4a",
+    "README.md": "fc818264346d27586b427bfe133612c2d36f3db0f1c6ed0afdf325173e859c00",
+    "run-receipt.json": "187591495890bc96f0474bfdee0757a5f2122748a1ed080407fdcb25fb2ff544",
+    "run.py": "b4b90f376bb856c0590b6b198039a23c8788e3e82f8d1bf84c139339b0e60a9a",
+    "tests.xml": "0c7fbd775ddf6b864e8baa25319a27f70a135c63adbb796c1ff57b51818ff9c1"
+  }
+}

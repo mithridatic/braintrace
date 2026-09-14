@@ -1,0 +1,250 @@
+[
+  {
+    "sweep": 99,
+    "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+    "holding_mv": -89.9871364235878,
+    "sample_rate_hz": 25000.0,
+    "command_segments": [
+      {
+        "start_index": 0,
+        "stop_index": 1125,
+        "start_ms": 0.0,
+        "stop_ms": 45.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 1125,
+        "stop_index": 1376,
+        "start_ms": 45.0,
+        "stop_ms": 55.04,
+        "command_mv": -79.98713594861329
+      },
+      {
+        "start_index": 1376,
+        "stop_index": 27500,
+        "start_ms": 55.04,
+        "stop_ms": 1100.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 27500,
+        "stop_index": 52500,
+        "start_ms": 1100.0,
+        "stop_ms": 2100.0,
+        "command_mv": 70.01287117600441
+      },
+      {
+        "start_index": 52500,
+        "stop_index": 90000,
+        "start_ms": 2100.0,
+        "stop_ms": 3600.0,
+        "command_mv": -89.9871364235878
+      }
+    ],
+    "response_arrays_read": false
+  },
+  {
+    "sweep": 100,
+    "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+    "holding_mv": -89.9871364235878,
+    "sample_rate_hz": 25000.0,
+    "command_segments": [
+      {
+        "start_index": 0,
+        "stop_index": 1125,
+        "start_ms": 0.0,
+        "stop_ms": 45.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 1125,
+        "stop_index": 1376,
+        "start_ms": 45.0,
+        "stop_ms": 55.04,
+        "command_mv": -79.98713594861329
+      },
+      {
+        "start_index": 1376,
+        "stop_index": 27500,
+        "start_ms": 55.04,
+        "stop_ms": 1100.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 27500,
+        "stop_index": 52500,
+        "start_ms": 1100.0,
+        "stop_ms": 2100.0,
+        "command_mv": 70.01287117600441
+      },
+      {
+        "start_index": 52500,
+        "stop_index": 65000,
+        "start_ms": 2100.0,
+        "stop_ms": 2600.0,
+        "command_mv": -104.98713713604957
+      },
+      {
+        "start_index": 65000,
+        "stop_index": 90000,
+        "start_ms": 2600.0,
+        "stop_ms": 3600.0,
+        "command_mv": -89.9871364235878
+      }
+    ],
+    "response_arrays_read": false
+  },
+  {
+    "sweep": 101,
+    "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+    "holding_mv": -89.9871364235878,
+    "sample_rate_hz": 25000.0,
+    "command_segments": [
+      {
+        "start_index": 0,
+        "stop_index": 1125,
+        "start_ms": 0.0,
+        "stop_ms": 45.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 1125,
+        "stop_index": 1376,
+        "start_ms": 45.0,
+        "stop_ms": 55.04,
+        "command_mv": -79.98713594861329
+      },
+      {
+        "start_index": 1376,
+        "stop_index": 27500,
+        "start_ms": 55.04,
+        "stop_ms": 1100.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 27500,
+        "stop_index": 52500,
+        "start_ms": 1100.0,
+        "stop_ms": 2100.0,
+        "command_mv": 70.01287117600441
+      },
+      {
+        "start_index": 52500,
+        "stop_index": 65000,
+        "start_ms": 2100.0,
+        "stop_ms": 2600.0,
+        "command_mv": -119.98713784851134
+      },
+      {
+        "start_index": 65000,
+        "stop_index": 90000,
+        "start_ms": 2600.0,
+        "stop_ms": 3600.0,
+        "command_mv": -89.9871364235878
+      }
+    ],
+    "response_arrays_read": false
+  },
+  {
+    "sweep": 102,
+    "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+    "holding_mv": -89.9871364235878,
+    "sample_rate_hz": 25000.0,
+    "command_segments": [
+      {
+        "start_index": 0,
+        "stop_index": 1125,
+        "start_ms": 0.0,
+        "stop_ms": 45.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 1125,
+        "stop_index": 1376,
+        "start_ms": 45.0,
+        "stop_ms": 55.04,
+        "command_mv": -79.98713594861329
+      },
+      {
+        "start_index": 1376,
+        "stop_index": 27500,
+        "start_ms": 55.04,
+        "stop_ms": 1100.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 27500,
+        "stop_index": 52500,
+        "start_ms": 1100.0,
+        "stop_ms": 2100.0,
+        "command_mv": 70.01287117600441
+      },
+      {
+        "start_index": 52500,
+        "stop_index": 65000,
+        "start_ms": 2100.0,
+        "stop_ms": 2600.0,
+        "command_mv": -134.9871385609731
+      },
+      {
+        "start_index": 65000,
+        "stop_index": 90000,
+        "start_ms": 2600.0,
+        "stop_ms": 3600.0,
+        "command_mv": -89.9871364235878
+      }
+    ],
+    "response_arrays_read": false
+  },
+  {
+    "sweep": 103,
+    "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+    "holding_mv": -89.9871364235878,
+    "sample_rate_hz": 25000.0,
+    "command_segments": [
+      {
+        "start_index": 0,
+        "stop_index": 1125,
+        "start_ms": 0.0,
+        "stop_ms": 45.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 1125,
+        "stop_index": 1376,
+        "start_ms": 45.0,
+        "stop_ms": 55.04,
+        "command_mv": -79.98713594861329
+      },
+      {
+        "start_index": 1376,
+        "stop_index": 27500,
+        "start_ms": 55.04,
+        "stop_ms": 1100.0,
+        "command_mv": -89.9871364235878
+      },
+      {
+        "start_index": 27500,
+        "stop_index": 52500,
+        "start_ms": 1100.0,
+        "stop_ms": 2100.0,
+        "command_mv": 70.01287117600441
+      },
+      {
+        "start_index": 52500,
+        "stop_index": 65000,
+        "start_ms": 2100.0,
+        "stop_ms": 2600.0,
+        "command_mv": -149.98713927343488
+      },
+      {
+        "start_index": 65000,
+        "stop_index": 90000,
+        "start_ms": 2600.0,
+        "stop_ms": 3600.0,
+        "command_mv": -89.9871364235878
+      }
+    ],
+    "response_arrays_read": false
+  }
+]
