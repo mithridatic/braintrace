@@ -393,3 +393,44 @@ observation timeout. Tests must independently verify state carry at zero/long
 gaps, pulse and return endpoints, long-hold recovery to the baseline, distinct
 original pulse/return clocks, invalid data, and synthetic joint-fit recovery.
 Keep the earlier recording blocks distinct and the external-response gate closed.
+
+## Frozen-parameter initial-state observation
+
+Freeze the joint recovery-state fit from commit 59531e9. Estimate only the two
+availability states using first-pulse phases 10-60 ms; do not pass the later first
+pulse, second pulse or holding response to the estimation objective. Their use
+here is a calibration diagnostic, not independent validation: these records
+already contributed to the frozen global fit. Preserve all earlier results.
+
+Respect the measured holding history. The last early control returns to -20 mV
+at 55.04 ms; the first large pulse starts at 2100 ms. Verify constant holding
+through this 2044.96 ms interval. Estimate availability z_j at the beginning of
+that interval, constrained to [0,1]. With frozen holding asymptote f_j and time
+constant s_j, the first-pulse availability is
+h0_j=f_j+(z_j-f_j)*exp(-T/s_j), where T is the measured holding duration.
+This restricts possible first states; do not permit arbitrary fractions that
+cannot survive the recorded holding interval.
+
+Account for the original baseline window as well. For baseline phases b_k
+(-100 to -10.04 ms relative to first onset), its average availability is
+hb_j=f_j+(z_j-f_j)*mean(exp(-(T+b_k)/s_j)). The pulse term is therefore
+C-rho*sum(A_j*eta_j*(hb_j-f_j))+sum(A_j*h_j(t)). Return current is
+sum(A_j*(q_j(t)*h_j(t)-rho*eta_j*hb_j)). This baseline change follows the
+estimated state; it is not an extra fitted offset. Holding asymptotes and every
+rate, amplitude and current factor remain unchanged.
+
+The first-current prediction is linear in z. Use bounded least squares with
+two unknowns and no gain or intercept, retaining design singular values,
+optimizer/active-bound flags, inferred holding-start state, first state and
+baseline state. Reject incomplete or nonuniform clocks, nonfinite inputs,
+invalid parameter bounds, an unobserved baseline or holding interval, and a
+rank-deficient two-state observation matrix. Retain every original sample and
+the exact estimation mask. Compare original versus state-conditioned predictions
+over first-pulse 60-280 ms, second-pulse 10-280 ms and return 10-980 ms.
+
+Tests independently verify holding relaxation, baseline-window averaging, known
+state recovery, state carry through both pulses and return, and that changing
+first-current samples after 60 ms cannot change the estimate. Include boundary
+states, missing coverage, malformed clocks and unobservable populations. Use
+local CPU closed-form algebra only. Do not change global parameters, discard
+failed conditions, access external currents or promote qualification scores.

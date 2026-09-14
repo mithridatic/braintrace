@@ -108,3 +108,11 @@ across all 19 recovery conditions. Its shared first-pulse prediction misses an
 acquisition-order trend; the fitted parameters remain conditional. [Revision 8](fitting-inputs-r8.json)
 is the current input receipt. The additional tail-protocol inspection read commands
 only. External currents, the original whole-cell split and all six scores remain unchanged.
+
+## Initial-state checkpoint: repair rejected
+
+[Bounded initial-state estimation](pax6-initial-state-840043481/README.md) improves
+the later first pulse but leaves the second-pulse mismatch intact. This state-only
+repair path is closed without qualification or score promotion. [Revision 9](fitting-inputs-r9.json)
+is the current input receipt. The corrected anatomy still needs a qualified human
+model before its physiological transfer gate can be tested under the approved scope.
