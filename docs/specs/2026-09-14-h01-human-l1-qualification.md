@@ -297,3 +297,38 @@ separately; retain onset artifacts and a separate magnified post-5 ms view.
 Record the different durations of preceding holding and notebook instrument
 settings. This comparison can expose a stationary-state assumption failure;
 it cannot uniquely attribute the difference to activation, recovery or drift.
+
+## Test-pulse control of the same-command discrepancy
+
+Use the already exported total 70-78, leak-control 79-88 and prepulse 89-97
+responses from the pinned PAX6 recording. Retain their complete early test-pulse
+windows (35-65 ms), command traces and original clocks. Verify the +10 mV pulse
+over 45-55.04 ms, holding command before/after, on-grid boundaries, and uniform
+sampling. Use 35-44 ms as baseline and 52-55 ms as a late-pulse descriptive
+window. Preserve original samples, baseline centering as a separate array, and
+the late current/command slope as an apparent response, not measured membrane
+conductance or access resistance. Do not treat notebook zero resistance as a
+measurement of zero resistance.
+
+Evaluate a specific recording-gain hypothesis using total sweep 72 as reference
+and each conditioning sweep 89-97 as a target. Estimate one positive scalar gain
+from all baseline-centered test-pulse samples in 45-55.04 ms by least squares
+through zero. Use this gain to predict the target's baseline-centered first
+100 ms at the actual -90 to -20 mV step, without fitting to that response.
+Require matching control and main command trajectories and original phase clocks;
+preserve both source currents, fitted control, predicted main response and both
+residuals. This tests a uniform multiplicative gain explanation only. Failure
+does not exclude voltage-dependent clamp effects or biological history changes.
+
+Use the existing same-command history bundles to avoid new response access.
+Inspect all control traces plus first/middle/last target predictions and all-nine
+residuals. Retain the leak-control chronology and the anomalous long-control
+sweep 80 rather than discarding it. Compare its early test pulse, long negative
+step and post-return current directly with adjacent controls to locate when the
+recording changes. No new channel rate is inferred from a control fit.
+
+Tests cover known multiplicative gain with distinct baseline offsets, zero-energy
+controls, negative inferred gain, nonfinite samples, unequal clocks or commands,
+extra transitions and missing or off-grid analysis windows. Use local CPU only;
+no neuronal rollout or external validation response access. Preserve the original
+whole-cell split and six-term qualification criteria.

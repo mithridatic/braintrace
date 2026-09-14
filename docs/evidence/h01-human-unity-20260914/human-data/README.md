@@ -92,3 +92,11 @@ correct the earlier sweep-89 command interpretation and expose different respons
 to the same actual command across protocol families. Conditional decay fits are
 not qualified for deployment. [Revision 6](fitting-inputs-r6.json) is the current
 input receipt; the original whole-cell split and all six scores remain unchanged.
+
+## Control-gain checkpoint
+
+[The small-pulse control test](pax6-controls-840043481/README.md) finds that a
+uniform gain does not account for the same-command response difference. A
+sustained change during leak-control sweep 80 is retained on its original clock.
+[Revision 7](fitting-inputs-r7.json) keeps recording epochs explicit for candidate
+fitting; deployment and external-response access remain gated. No score changes.
