@@ -1,0 +1,18 @@
+{
+  "segments": 128,
+  "steps_per_call": 10,
+  "dt_ms": 0.005,
+  "solver": "coupled_backward_euler_newton_krylov",
+  "substeps": 4,
+  "physical_ms_per_call": 0.05,
+  "construction_seconds": 0.23882570000205305,
+  "compile_and_first_seconds": 2.931617999998707,
+  "warmed_seconds": 1.8687523000007786,
+  "physical_ms_per_wall_second": 0.026755819912558324,
+  "rss_bytes": 587214848,
+  "device": [
+    "cpu:0"
+  ],
+  "valid": true,
+  "qualification": "synthetic linear geometry runtime probe only"
+}

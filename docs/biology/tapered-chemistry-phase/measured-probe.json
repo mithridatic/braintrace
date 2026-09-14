@@ -1,0 +1,58 @@
+{
+  "status": "MEASURED_TAPERED_CHEMISTRY_PASS",
+  "compartments": 148,
+  "duration_ms": 0.015,
+  "steps": 3,
+  "dt_ms": 0.005,
+  "total_inside_volume_um3": 21.522699198610958,
+  "calcium_shell_k_volume_max_error_um3": 2.220446049250313e-16,
+  "potassium_balance_error_mm_um3": 0.0,
+  "calcium_balance_error_mm_um3": 1.1990810159568689e-17,
+  "all_valid": true,
+  "exact_fresh_checkpoint_replay": true,
+  "exact_reset_replay": true,
+  "glial_inside_k_range_mm": [
+    140.00004143559272,
+    140.000679143379
+  ],
+  "elapsed_seconds": 23.626767299996573,
+  "manifest": {
+    "assembly_sha256": "8fc25ef05eccbde869551cef6e22662d6037686780ba319018483cfa2a6c7ca4",
+    "chemical_geometry_sha256": "87441c9e7e351eaaed1b208ab651d53cf5fe45ad74d435a4f672dbeb1998ac7e",
+    "dt_ms": 0.005,
+    "calcium_substeps": 4,
+    "outside_volume_ratio": 10.0,
+    "outside_transport": "isolated finite diagnostic pools",
+    "calcium_parameters": {
+      "stationary_mm": 0.07,
+      "mobile_mm": 0.0075,
+      "resting_mm": 5e-05,
+      "ip3_resting_mm": 5e-05,
+      "diffusion_um2_ms": 0.3,
+      "mobile_diffusion_um2_ms": 0.05,
+      "pump_threshold_mm": 2e-05,
+      "pump_velocity_um_ms": 0.008,
+      "er_mm": 0.4,
+      "alpha": 1.0
+    },
+    "dependencies": {
+      "braincell": "0.1.0",
+      "brainstate": "0.5.3",
+      "brainunit": "0.5.2",
+      "jax": "0.11.0",
+      "jaxlib": "0.11.0",
+      "numpy": "2.4.6"
+    },
+    "source_sha256": "6d424520d70c277e5b734b9ded86a8d0b839da391875733e63be1b20cf019e85",
+    "initial_calcium_pulse": {
+      "cv": 0,
+      "shell": 0,
+      "concentration_mm": 0.001
+    }
+  },
+  "limitations": [
+    "Homothetic finite-volume taper extension, not 3-D or source RxD equivalence",
+    "Diagnostic isolated extracellular pools and imposed initial calcium pulse",
+    "No neuronal release, measured extracellular anatomy, long wave or session-factory qualification"
+  ]
+}

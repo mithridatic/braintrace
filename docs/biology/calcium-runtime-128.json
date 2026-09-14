@@ -1,0 +1,16 @@
+{
+  "segments": 128,
+  "steps_per_call": 100,
+  "dt_ms": 0.005,
+  "physical_ms_per_call": 0.5,
+  "construction_seconds": 0.25960639999902924,
+  "compile_and_first_seconds": 1.5403045999992173,
+  "warmed_seconds": 1.2095383000014408,
+  "physical_ms_per_wall_second": 0.41338087433808784,
+  "rss_bytes": 488611840,
+  "device": [
+    "cpu:0"
+  ],
+  "valid": true,
+  "qualification": "synthetic linear geometry runtime probe only"
+}

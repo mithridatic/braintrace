@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from importlib.metadata import version
 import hashlib
+import json
 from pathlib import Path
 
 import brainstate
@@ -14,6 +15,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from braintrace.datasets.h01 import H01Archive
+from braintrace.datasets.h01_biology import H01SpatialManifest
 from braintrace.datasets.h01_network_init import init_h01_network_states
 from .h01_arc_model import H01ArcModel
 from .h01_checkpoint import load_checkpoint, save_checkpoint, restore_optimizer
@@ -26,12 +28,16 @@ from .h01_remap import remap_mutation, remap_optimizer_group
 def _numerical_settings_cached():
     root = Path(__file__).resolve().parents[2]
     paths = sorted((root/'braintrace'/'datasets').glob('h01*.py'))
+    paths += sorted((root/'braintrace'/'biophysics').glob('*.py'))
+    paths += sorted((root/'examples'/'pp_prop').glob('h01_physical*.py'))
     paths += [root/name for name in ('braintrace/_algorithm/sparse_pp_prop.py',
         'braintrace/_algorithm/sparse_io.py', 'braintrace/_compiler/sparse_io_graph.py',
         'braintrace/_compiler/sparse_support.py', 'braintrace/_compiler/sparse_influence.py',
         'examples/pp_prop/h01_arc_model.py', 'examples/pp_prop/h01_arc_execution.py',
         'examples/pp_prop/h01_muon.py', 'examples/pp_prop/21-braincell-arc.py',
         'examples/pp_prop/h01_session.py')]
+    paths.append(root/'examples/pp_prop/h01_runtime.py')
+    paths.append(root/'examples/pp_prop/h01_neuroglial.py')
     implementation = {str(path.relative_to(root)).replace('\\', '/'): hashlib.sha256(path.read_bytes()).hexdigest()
                       for path in paths if not path.name.endswith('_test.py')}
     return dict(optimizer_policy=POLICY, dt_ms=.005, event_ms=.1, substeps=20, precision=64,
@@ -77,7 +83,7 @@ class H01Session:
 
     @classmethod
     def build(cls, topology, archive, trainer_type, *, settings=None, assets=(),
-              parameters=None, input_pattern=None, progress=None, optimizer_slots=None):
+              parameters=None, input_pattern=None, progress=None, optimizer_slots=None, biology_assets=None):
         """Construct, initialize and compile the full active H01 model.
 
         Parameters
@@ -100,13 +106,15 @@ class H01Session:
             Construction and initialization progress callback.
         optimizer_slots : mapping, optional
             Inherited parallel-contact plane assignments during mutation.
+        biology_assets : mapping, optional
+            Glial source SHA256 to local asset path for neuroglial construction.
 
         Returns
         -------
         H01Session
             Executable episode-boundary state.
         """
-        settings = numerical_settings() if settings is None else dict(settings)
+        settings = numerical_settings() if settings is None else copy.deepcopy(settings)
         installed = numerical_settings()
         if settings.get('optimizer_policy') != installed['optimizer_policy']:
             raise ValueError('Incompatible H01 optimizer checkpoint; legacy AdamW continuation is unsupported')
@@ -116,13 +124,44 @@ class H01Session:
             raise ValueError('Pinned H01 implementation differs from this runtime')
         if brainstate.environ.get('precision') != 64:
             raise ValueError('H01 sessions require an enclosing 64-bit precision context')
+        biology = settings.get('biology')
+        spatial = None
+        neuroglial = None
+        if isinstance(biology, dict) and biology.get('schema') == 'h01-biology-neuroglia-v1':
+            from braintrace.datasets.h01_neuroglia import H01NeuroglialManifest
+            neuroglial = H01NeuroglialManifest(biology, topology.to_dict())
+            biology = settings['biology'] = neuroglial.to_dict()
+            if biology['dt_ms'] != settings['dt_ms']:
+                raise ValueError('Neuroglial and cable clocks differ')
+            spatial = H01SpatialManifest(biology['spines'], topology.to_dict())
+            probabilities = [biology['spines']['release_probability'][key] for key in topology.to_dict()['active_contacts']]
+        elif isinstance(biology, dict) and biology.get('schema') == 'h01-biology-spines-v1':
+            spatial = H01SpatialManifest(biology, topology.to_dict())
+            # Persist the same canonical arrays validated by the manifest.
+            # Python tuple directions otherwise become lists only on save,
+            # making a freshly rebuilt session fail the identity comparison.
+            biology = settings['biology'] = spatial.to_dict()
+            probabilities = [biology['release_probability'][key] for key in topology.to_dict()['active_contacts']]
+        elif biology is not None:
+            if not isinstance(biology, dict) or biology.get('schema') != 'h01-biology-release-v1' or set(biology) != {'schema', 'release_probability'}:
+                raise ValueError('Unsupported biology manifest; spatial assembly is not implicit')
+            probabilities = biology['release_probability']
+        else:
+            probabilities = None
         network, records = build_network(topology, archive, solver=settings['solver'],
-            max_cv_length_um=settings['max_cv_length_um'], progress=progress)
+            max_cv_length_um=settings['max_cv_length_um'], progress=progress, biology=spatial,
+            environment_potassium=neuroglial is not None)
         del records
+        if neuroglial is not None:
+            from .h01_neuroglial import prepare_neuroglia, attach_neuroglia
+            glia = prepare_neuroglia(network, neuroglial, biology_assets)
         init_h01_network_states(network, progress=progress)
         model = H01ArcModel(network, topology.to_dict()['active_cells'], seed=settings['seed'],
                             dt_ms=settings['dt_ms'], input_pattern=input_pattern,
-                            checkpoint_substeps=settings['checkpoint_substeps'])
+                            checkpoint_substeps=settings['checkpoint_substeps'],
+                            release_probability=probabilities)
+        if neuroglial is not None:
+            attach_neuroglia(model, topology.to_dict(), neuroglial, glia)
         states = dict(input=model.input_weight, recurrent=model.recurrent_weight,
                       readout_weight=model.readout_weight, readout_bias=model.readout_bias)
         if parameters is not None:
@@ -165,6 +204,8 @@ class H01Session:
         str
             Durable checkpoint digest.
         """
+        if self.settings.get('biology') is not None or self.model.stepper.chemistry is not None:
+            raise ValueError('Biological models require an explicit physical v2 checkpoint')
         self.model.reset_episode(self.learner)
         boundary = dict(continuation or {}, episode_boundary=True,
             completed_episodes=int(self.trainer.updates), stage_id=stage_id,
@@ -172,6 +213,70 @@ class H01Session:
         return save_checkpoint(path, topology=self.topology, parameters=self.trainer.parameters,
             input_indices=self.model.input_csr.indices, input_indptr=self.model.input_csr.indptr,
             optimizer=self.trainer.muon_groups, settings=self.settings, continuation=boundary, assets=self.assets)
+
+    def _physical_context(self, wait, biology_manifest):
+        if wait.model is not self.model or wait.learner is not None and wait.learner is not self.learner:
+            raise ValueError('Physical wait belongs to a different H01 session')
+        configured = self.settings.get('biology')
+        if isinstance(configured, dict) and configured.get('schema') == 'h01-biology-neuroglia-v1':
+            identity = hashlib.sha256(json.dumps(configured, sort_keys=True,
+                separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+            if identity != getattr(self.model.stepper.chemistry, 'biology_sha256', None):
+                raise ValueError('Session biology differs from constructed chemistry')
+            if biology_manifest is not None and biology_manifest != configured:
+                raise ValueError('Physical biology manifest differs from constructed session')
+            biology_manifest = configured
+        if self.model.stepper.chemistry is not None and not biology_manifest:
+            raise ValueError('Spatial physical snapshots require an explicit immutable biology manifest')
+        roots = dict(model=self.model, learner=self.learner, wait=wait)
+        optimizer = dict(parameters=self.trainer.parameters, groups=self.trainer.muon_groups,
+                         updates=self.trainer.updates)
+        manifest = dict(topology=self.topology.to_dict(), settings=self.settings, assets=list(self.assets),
+                        biology=biology_manifest or self.settings.get('biology'), wait_events=wait.total_events)
+        return roots, optimizer, manifest
+
+    def save_physical(self, path, *, wait, biology_manifest=None):
+        """Save a complete wait boundary without resetting any physical state.
+
+        Parameters
+        ----------
+        path : path-like
+            Version-2 physical checkpoint destination.
+        wait : PhysicalWait
+            This session's wait driver, including its physical progress cursor.
+        biology_manifest : dict or None, optional
+            Full immutable spatial/rate manifest, required for attached chemistry.
+
+        Returns
+        -------
+        str
+            Durable checkpoint digest. Includes parameters, optimizer and traces.
+        """
+        from .h01_physical_checkpoint import save_physical_checkpoint
+        roots, optimizer, manifest = self._physical_context(wait, biology_manifest)
+        return save_physical_checkpoint(path, roots=roots, optimizer=optimizer, manifest=manifest)
+
+    def restore_physical(self, path, *, wait, expected_sha256, biology_manifest=None):
+        """Restore a wait boundary into an already constructed matching session.
+
+        Parameters
+        ----------
+        path : path-like
+            Version-2 physical checkpoint.
+        wait : PhysicalWait
+            Matching wait driver for this session.
+        expected_sha256 : str
+            Authenticated continuation identity.
+        biology_manifest : dict or None, optional
+            Same immutable biological configuration supplied at save time.
+        """
+        from .h01_physical_checkpoint import restore_physical_checkpoint
+        roots, optimizer, manifest = self._physical_context(wait, biology_manifest)
+        restored = restore_physical_checkpoint(path, roots=roots, optimizer=optimizer, manifest=manifest,
+                                               expected_sha256=expected_sha256)
+        self.trainer.parameters = restored['parameters']
+        self.trainer.muon_groups = restored['groups']
+        self.trainer.updates = restored['updates']
 
     @classmethod
     def restore(cls, path, asset_root, trainer_type, *, expected_sha256=None, progress=None):
@@ -228,6 +333,8 @@ class H01Session:
         H01Session
             Real child model with new moments initialized to zero.
         """
+        if self.settings.get('biology') is not None or self.model.stepper.chemistry is not None:
+            raise ValueError('Mutation requires rebuilding biological maps; implicit reuse is unsupported')
         transported = remap_mutation(self.topology, topology, self.trainer.parameters,
             self.model.input_csr.indices, self.model.input_csr.indptr)
         trainer_type = type(self.trainer)

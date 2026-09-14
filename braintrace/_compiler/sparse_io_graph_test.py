@@ -2,10 +2,36 @@
 
 import brainstate
 import braintrace
+import jax
 import jax.numpy as jnp
 import numpy as np
 
 from .sparse_io_graph import SparseIOGraph
+
+
+def test_typed_random_key_retains_forward_state_without_temporal_factor():
+    class Stochastic(_CableBlocks):
+        def __init__(self):
+            super().__init__()
+            self.rng = brainstate.random.RandomState(21)
+
+        def update(self, x):
+            return super().update(x) * self.rng.bernoulli(.36, size=(2,))
+
+    model = Stochastic()
+    x = jnp.ones(2)
+    graph = SparseIOGraph(model, x)
+    assert all(path[-1] != 'rng' for path in graph.state_paths)
+    raw = graph.inputs(x)
+    key_indices = [i for i, value in enumerate(raw)
+                   if jax.dtypes.issubdtype(value.dtype, jax.dtypes.prng_key)]
+    assert len(key_indices) == 1
+    full, _, _ = graph.forward(raw)
+    output_keys = [value for value in full
+                   if jax.dtypes.issubdtype(value.dtype, jax.dtypes.prng_key)]
+    assert len(output_keys) == 1
+    assert not np.array_equal(jax.random.key_data(output_keys[0]),
+                              jax.random.key_data(raw[key_indices[0]]))
 
 
 class _CableBlocks(brainstate.nn.Module):

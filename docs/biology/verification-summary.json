@@ -1,0 +1,239 @@
+{
+  "status": "PARTIAL_IMPLEMENTATION",
+  "date": "2026-09-12",
+  "branch": "feat/h01-braincell-biology",
+  "base_commit": "e21e22c",
+  "scope": "Affected CPU regression gate; not full repository, GPU or all-104 qualification",
+  "tests": {
+    "tests": "212",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "142.954"
+  },
+  "warnings": 15,
+  "warning_categories": [
+    "Readout states omitted from compiled temporal model",
+    "Opaque recurrence omitted on older baseline algorithm path",
+    "Recurrent ETP operation has no connected hidden states on older baseline algorithm path"
+  ],
+  "new_production_coverage_percent": 99.4731296101159,
+  "new_production_covered_lines": 944,
+  "new_production_statements": 949,
+  "new_production_modules": {
+    "braintrace/biophysics/__init__.py": {
+      "covered_lines": 9,
+      "num_statements": 9,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/astrocyte.py": {
+      "covered_lines": 81,
+      "num_statements": 81,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/astrocyte_coupled.py": {
+      "covered_lines": 58,
+      "num_statements": 58,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/astrocyte_network.py": {
+      "covered_lines": 84,
+      "num_statements": 84,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/cable_gaba.py": {
+      "covered_lines": 24,
+      "num_statements": 25,
+      "percent_covered": 96.0,
+      "percent_covered_display": "96",
+      "missing_lines": 1,
+      "excluded_lines": 0,
+      "percent_statements_covered": 96.0,
+      "percent_statements_covered_display": "96"
+    },
+    "braintrace/biophysics/cable_potassium.py": {
+      "covered_lines": 79,
+      "num_statements": 79,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 1,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/environment.py": {
+      "covered_lines": 78,
+      "num_statements": 78,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/extracellular.py": {
+      "covered_lines": 37,
+      "num_statements": 37,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 2,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/gaba.py": {
+      "covered_lines": 37,
+      "num_statements": 37,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/myelin.py": {
+      "covered_lines": 45,
+      "num_statements": 45,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/provenance.py": {
+      "covered_lines": 6,
+      "num_statements": 6,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/release.py": {
+      "covered_lines": 42,
+      "num_statements": 42,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/shells.py": {
+      "covered_lines": 51,
+      "num_statements": 51,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/spine_mapping.py": {
+      "covered_lines": 48,
+      "num_statements": 48,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/biophysics/spines.py": {
+      "covered_lines": 89,
+      "num_statements": 92,
+      "percent_covered": 96.73913043478261,
+      "percent_covered_display": "97",
+      "missing_lines": 3,
+      "excluded_lines": 1,
+      "percent_statements_covered": 96.73913043478261,
+      "percent_statements_covered_display": "97"
+    },
+    "braintrace/biophysics/transport.py": {
+      "covered_lines": 71,
+      "num_statements": 71,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "examples/pp_prop/h01_physical_checkpoint.py": {
+      "covered_lines": 78,
+      "num_statements": 79,
+      "percent_covered": 98.73417721518987,
+      "percent_covered_display": "99",
+      "missing_lines": 1,
+      "excluded_lines": 0,
+      "percent_statements_covered": 98.73417721518987,
+      "percent_statements_covered_display": "99"
+    },
+    "examples/pp_prop/h01_physical_wait.py": {
+      "covered_lines": 27,
+      "num_statements": 27,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    }
+  },
+  "implementation_sha256": {
+    "braintrace/_compiler/sparse_io_graph.py": "a21108167adba21a31a489987ca291fd77db579377ace171fd6b40d397d8b7a7",
+    "braintrace/biophysics/__init__.py": "2f0b1e7db5fceb52a89fe3e704f1e876c0f7ed405f11ebd8a0152a14517ea8de",
+    "braintrace/biophysics/astrocyte.py": "f5ea0cc9ea43fcc0a9624d514c5f1da40e300aad18e65ea8cb8048b2028001b3",
+    "braintrace/biophysics/astrocyte_coupled.py": "d23f0f2a781330a2c60c5750789eb871639f07af1355fe2c4ed2f68a57236fab",
+    "braintrace/biophysics/astrocyte_network.py": "a5d3055c745c4d5d3932b17ac0220bd67b52929f5718d67909a88dc7f27b6acb",
+    "braintrace/biophysics/cable_gaba.py": "f437d2f1d025592ad43ee0115a0eb65809d806d4469da6e18c0b64fc501f65c6",
+    "braintrace/biophysics/cable_potassium.py": "2f70733ba0e83ce0816cf5fa01069db71c86523d39cf215ff8b01c328d56d92f",
+    "braintrace/biophysics/environment.py": "6e8cf0ceb80bddd09df11a148ab4d05cd9d37f8c1facd2ca758459253db5c0a8",
+    "braintrace/biophysics/extracellular.py": "965302c2844eb752f9ec9accc0f32f1fe57936c105b6c1cf94bb285fbfabdf8e",
+    "braintrace/biophysics/gaba.py": "fb317fe6174ecc2dcf19fce579799f9fd70a0e78cc199fd72ef9544ea9ec7f30",
+    "braintrace/biophysics/myelin.py": "2e102e29f6f671dfefde6ebc73fc799a65eb2e6dce2579ff87c8b5505520fb11",
+    "braintrace/biophysics/provenance.py": "eabdcf807d5a6256be4007a60e297c4ec1f8f413138e76175127a9afbaf5c96d",
+    "braintrace/biophysics/release.py": "f8c98b510ca0d824c995977f931bc86a5acfccf6de9ecb5443e828be08308fa2",
+    "braintrace/biophysics/shells.py": "612a5eda4bb4d3fff7328b58f8b50e25718e78484dd13153d2b46ca9aa18b186",
+    "braintrace/biophysics/spine_mapping.py": "b94266d845aa57efea39964c4ba3541a3e88fc03bb3a42d0f630479f189bc36c",
+    "braintrace/biophysics/spines.py": "e776edf36e789f92270f0fc1bda9ef673e2669af62b78598196dc5a1c2e2db83",
+    "braintrace/biophysics/transport.py": "e5203154f5cdad5f913c623f34ee669fee54fe4bc68da4282803953cac2d9d30",
+    "braintrace/datasets/h01_ei_cell.py": "25a9cf4b3e01983f0f6b34bb5c28bdd7fcce3cc42e9f03989fb0f9643f0c54e8",
+    "braintrace/datasets/h01_network_step.py": "a4be6960b1bcd111f82be62147ee5928f057508019827265f7b37ef63539bdf4",
+    "examples/pp_prop/h01_arc_model.py": "d7de8c5fb96d7206fa7f463e8c64a8a95c72c1ef77e36b6996fdc5840ad0108d",
+    "examples/pp_prop/h01_physical_checkpoint.py": "de789332a5d4142cb788dd1334e2273f928d765b29e3a707096006a911516252",
+    "examples/pp_prop/h01_physical_wait.py": "6819c6986fb572318e8182b0624ee9ca750d1aeb060324b144baa87a3a5e89fe",
+    "examples/pp_prop/h01_runtime.py": "650e94ebdbe205696dafa916f13cda815e5d0d65531a02096d77453cc42d8f99",
+    "examples/pp_prop/h01_session.py": "4a43cfba0efdae0e9c90c0e1aca0262fce8861fb69aacc407e60d5a64925ec4c"
+  },
+  "pending": [
+    "full spatial anatomy assembly",
+    "endogenous neuron-glia coupling",
+    "sheath electrical model and independent myelin reference",
+    "matched physical waits in ARC answer flow",
+    "spatial reconstruction and cable-substep continuation",
+    "joint pp-prop learning and all-104 qualification"
+  ]
+}

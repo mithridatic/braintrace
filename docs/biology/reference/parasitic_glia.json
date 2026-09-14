@@ -1,0 +1,205 @@
+{
+    "dimensions": {
+      "x": [
+        8e-9,
+        "m"
+      ],
+      "y": [
+        8e-9,
+        "m"
+      ],
+      "z": [
+        3.3e-8,
+        "m"
+      ]
+    },
+    "position": [
+      314269.46875,
+      127563.9921875,
+      497.5
+    ],
+    "crossSectionScale": 3.7154448381793608,
+    "projectionOrientation": [
+      -0.0015683274250477552,
+      0.03190300613641739,
+      -0.1274108737707138,
+      -0.9913355708122253
+    ],
+    "projectionScale": 28144.84030961505,
+    "layers": [
+      {
+        "type": "image",
+        "source": "precomputed://gs://h01-release/data/20210601/4nm_raw",
+        "tab": "source",
+        "name": "4nm_raw"
+      },
+      {
+        "type": "segmentation",
+        "source": {
+          "url": "precomputed://gs://h01-release/data/20210601/c3",
+          "subsources": {
+            "default": true,
+            "bounds": true,
+            "properties": true,
+            "mesh": true
+          },
+          "enableDefaultSubsources": false
+        },
+        "tab": "rendering",
+        "segments": [
+          "2104939055",
+          "2934875093",
+          "3036468700"
+        ],
+        "colorSeed": 4230884682,
+        "name": "c3_segmentation"
+      },
+      {
+        "type": "segmentation",
+        "source": "precomputed://gs://h01-release/data/20210601/c3/synapses/incoming_excitatory",
+        "tab": "rendering",
+        "linkedSegmentationGroup": "c3_segmentation",
+        "linkedSegmentationColorGroup": false,
+        "segmentDefaultColor": "#00ff2a",
+        "name": "incoming_excitatory",
+        "archived": true
+      },
+      {
+        "type": "segmentation",
+        "source": "precomputed://gs://h01-release/data/20210601/c3/synapses/incoming_inhibitory",
+        "tab": "rendering",
+        "linkedSegmentationGroup": "c3_segmentation",
+        "linkedSegmentationColorGroup": false,
+        "colorSeed": 3371976554,
+        "segmentDefaultColor": "#ff0000",
+        "name": "incoming_inhibitory",
+        "archived": true
+      },
+      {
+        "type": "segmentation",
+        "source": "precomputed://gs://h01-release/data/20210601/masking",
+        "tab": "source",
+        "name": "masking",
+        "archived": true
+      },
+      {
+        "type": "annotation",
+        "source": "precomputed://gs://h01-release/data/20210601/c3/synapses/precomputed",
+        "tab": "annotations",
+        "linkedSegmentationLayer": {
+          "pre_synaptic_cell": "c3_segmentation",
+          "post_synaptic_cell": "c3_segmentation"
+        },
+        "filterBySegmentation": [
+          "post_synaptic_cell",
+          "pre_synaptic_cell"
+        ],
+        "name": "synapses",
+        "archived": true
+      },
+      {
+        "type": "annotation",
+        "source": "precomputed://gs://h01-release/data/20210601/c3/synapses/precomputed",
+        "tab": "source",
+        "linkedSegmentationLayer": {
+          "pre_synaptic_cell": "c3_segmentation"
+        },
+        "filterBySegmentation": [
+          "pre_synaptic_cell"
+        ],
+        "name": "outgoing_only",
+        "archived": true
+      },
+      {
+        "type": "annotation",
+        "source": "precomputed://gs://h01-release/data/20210601/c3/synapses/precomputed",
+        "tab": "annotations",
+        "linkedSegmentationLayer": {
+          "post_synaptic_cell": "c3_segmentation"
+        },
+        "filterBySegmentation": [
+          "post_synaptic_cell"
+        ],
+        "name": "incoming_only",
+        "archived": true
+      },
+      {
+        "type": "segmentation",
+        "source": "precomputed://gs://h01-release/data/20210601/cell_bodies",
+        "tab": "source",
+        "name": "cell_bodies",
+        "archived": true
+      },
+      {
+        "type": "annotation",
+        "source": "precomputed://gs://h01-release/data/20210601/c3/synapses/precomputed",
+        "tab": "source",
+        "shader": "\nvoid main() {\n  if (prop_type() == uint(1)) {\n    setColor(vec3(1.,0.,0.));\n  } else {\n    setColor(vec3(0.,1.,0.));\n  }\n}\n",
+        "linkedSegmentationLayer": {
+          "pre_synaptic_cell": "c3_segmentation"
+        },
+        "filterBySegmentation": [
+          "pre_synaptic_cell"
+        ],
+        "name": "ei_point_outgoing_colored",
+        "archived": true
+      },
+      {
+        "type": "annotation",
+        "source": "precomputed://gs://h01-release/data/20210601/c3/synapses/precomputed",
+        "tab": "annotations",
+        "shader": "\nvoid main() {\n  if (prop_type() == uint(1)) {\n    setColor(vec3(1.,0.,0.));\n  } else {\n    setColor(vec3(0.,1.,0.));\n  }\n}\n",
+        "linkedSegmentationLayer": {
+          "post_synaptic_cell": "c3_segmentation"
+        },
+        "filterBySegmentation": [
+          "post_synaptic_cell"
+        ],
+        "name": "ei_point_incoming_colored",
+        "archived": true
+      },
+      {
+        "type": "segmentation",
+        "source": "precomputed://gs://h01-release/data/20210601/blood_vessels",
+        "tab": "source",
+        "name": "blood_vessels",
+        "archived": true
+      },
+      {
+        "type": "segmentation",
+        "source": "precomputed://gs://h01-release/data/20210601/proofread_104",
+        "tab": "source",
+        "name": "proofread_104",
+        "archived": true
+      },
+      {
+        "type": "segmentation",
+        "source": "precomputed://gs://h01-release/data/20210601/layers",
+        "tab": "rendering",
+        "meshSilhouetteRendering": 1.9,
+        "segments": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ],
+        "segmentQuery": "1,2,3,4,5,6,7",
+        "name": "layers",
+        "archived": true
+      }
+    ],
+    "showSlices": false,
+    "prefetch": false,
+    "selectedLayer": {
+      "row": 1,
+      "layer": "c3_segmentation"
+    },
+    "layout": "xy-3d",
+    "selection": {
+      "row": 0,
+      "visible": false
+    }
+  }

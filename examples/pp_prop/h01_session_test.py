@@ -101,3 +101,91 @@ def test_saved_optimizer_layout_mismatch_prevents_compilation(monkeypatch):
     with brainstate.environ.context(precision=64):
         with pytest.raises(ValueError,match='optimizer layout'):
             H01Session.build(Obj(to_dict=lambda:dict(active_cells=['a','b'])),None,None,settings=settings)
+
+
+def test_biological_session_physical_wait_restore_includes_eligibility(imported, tmp_path):
+    from types import SimpleNamespace
+    from .h01_physical_wait import PhysicalWait
+    trainer_type = Example21ArcAdapter(Path('.'))._model().PPPropEpisodeTrainer
+    archive = SimpleNamespace(load=lambda identity, component: imported)
+    with brainstate.environ.context(precision=64, dt=.005*u.ms):
+        topology = _manifest(imported).clone('12', stage='clone')
+        child = topology.to_dict()['active_cells'][-1]
+        topology = topology.add_contact('12', child, stage='contact')
+        settings = numerical_settings()
+        settings['biology'] = dict(schema='h01-biology-release-v1', release_probability=[.36])
+        session = H01Session.build(topology, archive, trainer_type, settings=settings)
+        session.model.reset_episode(session.learner)
+        wait = PhysicalWait(session.model, .0003, learner=session.learner)
+        step = brainstate.transform.jit(lambda: wait.update(max_events=1))
+        assert not step()
+        path = tmp_path/'physical-session.npz'
+        digest = session.save_physical(path, wait=wait)
+        with pytest.raises(ValueError, match='v2'):
+            session.save(tmp_path/'legacy.npz', stage_id='legacy')
+        assert not step()
+        expected = np.array(session.model._soma())
+        expected_factors = [np.array(f) for f in session.learner.factors.value]
+        session.restore_physical(path, wait=wait, expected_sha256=digest)
+        assert wait.elapsed_events.value == 1 and session.model.release.tick.value == 20
+        assert not step()
+        np.testing.assert_array_equal(session.model._soma(), expected)
+        for value, saved in zip(session.learner.factors.value, expected_factors):
+            np.testing.assert_array_equal(value, saved)
+        wrong_wait = SimpleNamespace(model=None, learner=None)
+        with pytest.raises(ValueError, match='different'):
+            session.save_physical(path, wait=wrong_wait)
+
+
+def test_mutation_rejects_stale_biological_maps_before_touching_parent():
+    from types import SimpleNamespace
+    session = object.__new__(H01Session)
+    session.settings = dict(biology=dict(schema='h01-biology-release-v1', release_probability=[.36]))
+    parent = SimpleNamespace(stepper=SimpleNamespace(chemistry=None))
+    session.model = parent
+    with pytest.raises(ValueError, match='biological maps'):
+        session.mutate(None, None, release_parent=True)
+    assert session.model is parent
+
+
+def test_spatial_session_rebuild_restore_and_eligibility_replay(imported, tmp_path):
+    from types import SimpleNamespace
+    from .h01_runtime_test import _spatial_fixture
+    from .h01_physical_wait import PhysicalWait
+    from braintrace.datasets.h01_biology import H01SpatialManifest
+    trainer_type = Example21ArcAdapter(Path('.'))._model().PPPropEpisodeTrainer
+    archive = SimpleNamespace(load=lambda identity, component: imported)
+    with brainstate.environ.context(precision=64, dt=.005*u.ms):
+        topology, biology, _ = _spatial_fixture(imported)
+        settings = numerical_settings()
+        settings['biology'] = biology
+        session = H01Session.build(topology, archive, trainer_type, settings=settings)
+        session.model.reset_episode(session.learner)
+        wait = PhysicalWait(session.model, .0003, learner=session.learner)
+        advance = brainstate.transform.jit(lambda: wait.update(max_events=1))
+        assert not advance()
+        path = tmp_path/'spatial.npz'
+        digest = session.save_physical(path, wait=wait)
+        assert not advance()
+        expected = np.array(session.model._soma())
+        factors = [np.array(value) for value in session.learner.factors.value]
+        rebuilt = H01Session.build(topology, archive, trainer_type, settings=settings)
+        resumed = PhysicalWait(rebuilt.model, .0003, learner=rebuilt.learner)
+        rebuilt.restore_physical(path, wait=resumed, expected_sha256=digest)
+        assert not brainstate.transform.jit(lambda: resumed.update(max_events=1))()
+        np.testing.assert_array_equal(rebuilt.model._soma(), expected)
+        for actual, wanted in zip(rebuilt.learner.factors.value, factors):
+            np.testing.assert_array_equal(actual, wanted)
+        assert rebuilt.settings['biology'] == H01SpatialManifest(biology, topology.to_dict()).to_dict()
+        assert int(rebuilt.model.release.tick.value) == 40
+        with pytest.raises(ValueError, match='biological maps'):
+            rebuilt.mutate(topology, archive)
+
+
+@pytest.mark.parametrize('schema', ['h01-biology-spines-v1', 'unsupported'])
+def test_invalid_biology_rejected_before_spatial_session_build(imported, schema):
+    with brainstate.environ.context(precision=64):
+        settings = numerical_settings()
+        settings['biology'] = dict(schema=schema)
+        with pytest.raises(ValueError, match='manifest'):
+            H01Session.build(_manifest(imported), None, None, settings=settings)

@@ -1,3 +1,6 @@
 * text=auto eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
+# Preserve upstream byte identities used by the biological source manifest.
+docs/biology/reference/** -text
+braintrace/biophysics/BRAINCELL-LICENSE.txt -text

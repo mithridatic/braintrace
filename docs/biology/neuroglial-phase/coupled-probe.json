@@ -1,0 +1,39 @@
+{
+  "status": "SYNTHETIC_COUPLED_DIAGNOSTIC",
+  "basis": "Synthetic unit geometry and roles; Kir-only glial cable; diagnostic .1 mM glutamate impulse, not a measured vesicle dose",
+  "neurons": 2,
+  "astrocytes": 1,
+  "astrocyte_compartments": 1,
+  "dt_ms": 0.005,
+  "steps": 10,
+  "duration_ms": 0.05,
+  "neuronal_spike_counts": [
+    1,
+    1
+  ],
+  "all_valid": true,
+  "potassium_balance_error_mm_um3": 0.0,
+  "glial_inside_potassium_mm": 140.00007191599488,
+  "glial_initial_voltage_mv": -100.0,
+  "glial_final_voltage_mv": -99.65378121429984,
+  "gaba_released_mm_um3": 0.00996323440304308,
+  "glutamate_released_mm_um3": 10.0,
+  "glutamate_removed_mm_um3": 0.0049986252749553185,
+  "glutamate_balance_error_mm_um3": -1.884742390796495e-15,
+  "gaba_voltage_effect_min_mv": -0.007476802615613565,
+  "glutamate_calcium_effect_max_mm": 1.2744064701100677e-14,
+  "ip3_final_mm": 5.001978023912577e-05,
+  "elapsed_seconds": 16.724211699998705,
+  "limitations": [
+    "Synthetic roles, geometry, intracellular neuronal volumes and diagnostic glutamate dose",
+    "Kir-only glial cable; no calcium membrane charge feedback",
+    "No measured H01 glial assembly, long wave or joint learning qualification"
+  ],
+  "implementation_sha256": {
+    "braintrace/biophysics/neuroglial.py": "ffa6695427c2d87bed3c290bb061c1f0e4f8f23e4bfa0a080c7cd1e977c892e5",
+    "braintrace/biophysics/neuroglial_test.py": "d98566d16c32246ff6ada3fa436e3d70a05155bc00d74374763b1bc820aaf8d1",
+    "braintrace/biophysics/cable_kir.py": "6d0beb08ee72734a460590d239617697a506594bdfcd67713710a41169851757",
+    "braintrace/biophysics/transmitter.py": "b4d2fdd33a7f8d8573acc593e343b34c82dbce2c66dd647223648747520d5416",
+    "docs/biology/neuroglial_probe.py": "370a2efcefbd9a0b41cbec06541650f90a1891f44226261c38d4c8d0807e360c"
+  }
+}

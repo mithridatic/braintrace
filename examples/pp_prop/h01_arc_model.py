@@ -29,6 +29,9 @@ class H01ArcModel(brainstate.nn.Module):
         Explicit CSR indices and indptr for checkpoint restore or evolution.
     checkpoint_substeps : bool, optional
         Rematerialize cable substeps during reverse-mode differentiation.
+    release_probability : array-like or None, optional
+        Fixed probability per placed contact. None preserves deterministic
+        delivery. Explicit probabilities use an episode-reset random stream.
 
     Notes
     -----
@@ -37,7 +40,7 @@ class H01ArcModel(brainstate.nn.Module):
     """
 
     def __init__(self, network, source_ids, *, seed=21, dt_ms=0.005, input_pattern=None,
-                 checkpoint_substeps=True):
+                 checkpoint_substeps=True, release_probability=None):
         super().__init__()
         self.source_ids = tuple(source_ids)
         if not self.source_ids or any(not isinstance(x, str) for x in self.source_ids):
@@ -74,6 +77,13 @@ class H01ArcModel(brainstate.nn.Module):
         self.readout_bias = brainstate.ParamState(jnp.zeros(360))
         self.drive = brainstate.ShortTermState(jnp.zeros(self.neuron_count))
         blocks = self.stepper.setup.delivery_blocks
+        self.release = None
+        if release_probability is not None:
+            from braintrace.biophysics.release import ReleaseState
+            if np.asarray(release_probability).shape != (len(blocks),):
+                raise ValueError('Release probabilities must match placed contacts')
+            self.release = ReleaseState(release_probability, seed=seed)
+            self.release_mask = brainstate.ShortTermState(jnp.ones(len(blocks)))
         if any(len(block.pre_index) != 1 for block in blocks):
             raise ValueError("H01 requires one named placed contact per delivery block")
         self.recurrent_weight = brainstate.ParamState(jnp.asarray([
@@ -108,6 +118,8 @@ class H01ArcModel(brainstate.nn.Module):
         def deliver(spikes):
             magnitude = self.contact_magnitude.value[index]
             event = spikes[block.pre_index[0]] * magnitude
+            if self.release is not None:
+                event = event * self.release_mask.value[index]
             size = self.stepper.network.populations[block.source.post_population].size*block.source.n_active
             return jnp.zeros(size).at[block.flat_target_index[0]].add(event)*u.uS
         return deliver
@@ -140,6 +152,8 @@ class H01ArcModel(brainstate.nn.Module):
         self.contact_magnitude.value = braintrace.element_wise(
             self.recurrent_weight.value, weight_fn=jnp.abs)
         def cable_step(_):
+            if self.release is not None:
+                self.release_mask.value = self.release.update(jnp.ones_like(self.release_mask.value))
             self.stepper.update(sample_probes=False)
         if self.checkpoint_substeps:
             brainstate.transform.for_loop(brainstate.transform.checkpoint(cable_step, prevent_cse=False),
@@ -229,5 +243,8 @@ class H01ArcModel(brainstate.nn.Module):
         self.stepper.reset_state()
         self.drive.value = jnp.zeros_like(self.drive.value)
         self.contact_magnitude.value = jnp.abs(self.recurrent_weight.value)
+        if self.release is not None:
+            self.release.reset_state()
+            self.release_mask.value = jnp.ones_like(self.release_mask.value)
         if learner is not None:
             learner.reset_state()

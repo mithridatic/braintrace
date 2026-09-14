@@ -1,0 +1,17 @@
+{
+  "identity": "63900941936",
+  "components": 257,
+  "largest_component": 0,
+  "largest_vertices": 79152,
+  "total_vertices": 104133,
+  "largest_share": 0.7601048658926565,
+  "edges": 103876,
+  "tree_edge_count": true,
+  "zero_length_edges": 0,
+  "nonpositive_radii": 0,
+  "length_range_um": [
+    0.032,
+    5.905356212795295
+  ],
+  "qualification": "graph inventory only; not a selected or positioned H01 astrocyte model"
+}

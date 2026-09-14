@@ -1,0 +1,104 @@
+{
+  "repository": "https://github.com/RusakovLab/BRAINCELL",
+  "revision": "8acd1c23032a17af59ae1f813d142735fef8689c",
+  "paper_sha256": "e5c884ca8d0b11f82f23430685007ac39f8ee8c8a146f24ef0302d769d860163",
+  "files": [
+    {
+      "source": "LICENSE",
+      "local": "LICENSE",
+      "sha256": "a9f6cf8479d8501c49216b12ec60a1565bd86e4393a69e087fece5244528f36f",
+      "bytes": 1525
+    },
+    {
+      "source": "Mechanisms/Common/MOD_files/cadifus.mod",
+      "local": "cadifus.mod",
+      "sha256": "c7c601b3bf3dc79c772a04ba4701dfc004d7bbde13bff556962f90f4b5660a87",
+      "bytes": 30444
+    },
+    {
+      "source": "Mechanisms/Common/MOD_files/Kir4.mod",
+      "local": "Kir4.mod",
+      "sha256": "60c299a802dacb7defda704a99de82695f42e2726e216dd96d96c4fd2d4b36c1",
+      "bytes": 770
+    },
+    {
+      "source": "_Code/Extracellular/InsideOutDiffusion/PythonCode/NumbaBackends/CommonBackend.py",
+      "local": "CommonBackend.py",
+      "sha256": "37417ce118b3f90cc50890510b2ffb9ea1a850c452438c8a2a7e68a7be18976d",
+      "bytes": 2417
+    },
+    {
+      "source": "Geometry/Astrocyte/New Style/AstrocyteCa1RealAstrocyteSkeleton1_scaled_v2_NanoFig5.hoc",
+      "local": "AstrocyteCa1RealAstrocyteSkeleton1_scaled_v2_NanoFig5.hoc",
+      "sha256": "bf2ea54cb9369857394e1a5bbdce1f724d1b0c07d158d54f22f4e8ed6ad2ec91",
+      "bytes": 3346278
+    },
+    {
+      "source": "_Code/Simulations/Sims/Neuron/SimMyelinatedAxon/SimCore.py",
+      "local": "SimCore.py",
+      "sha256": "d6749946877667e5c74054d67b597bab8dd05c2e28ed7c99f9ef03660ffcb198",
+      "bytes": 47540
+    },
+    {
+      "source": "_Code/Simulations/Sims/Neuron/SimMyelinatedAxon/Helpers/ProcAdvanceHelper.py",
+      "local": "ProcAdvanceHelper.py",
+      "sha256": "a13771a28c8ac15b3b5b4b7513e8574d6eecf092dcf4521e0ac6bceb9d34d026",
+      "bytes": 3877
+    },
+    {
+      "source": "_Code/Simulations/Sims/Neuron/SimMyelinatedAxon/Helpers/CellBuildHelper.py",
+      "local": "CellBuildHelper.py",
+      "sha256": "579a7f422d87b11f991406bf3c2f30e3bf9a4218b36cd7dfff1d5a4d4f77509b",
+      "bytes": 12224
+    },
+    {
+      "source": "_Code/Simulations/Sims/Neuron/SimMyelinatedAxon/PERIAXONAL_PARAMS.md",
+      "local": "PERIAXONAL_PARAMS.md",
+      "sha256": "108ead0eee64ecd2122fba0f434e9ff764646330e78ac91898a1efae500e9d8b",
+      "bytes": 3375
+    },
+    {
+      "source": "_Code/Simulations/Sims/Neuron/SimMyelinatedAxon/Ko_Siphoning_Notes.md",
+      "local": "Ko_Siphoning_Notes.md",
+      "sha256": "2758cd1c68461923bda9f60d9a041e18db5f84bf6041daecfdb85ef51a0f0a28",
+      "bytes": 14023
+    },
+    {
+      "source": "Mechanisms/Common/MOD_files/kpump.mod",
+      "local": "kpump.mod",
+      "sha256": "b847b6c23b1bafe5a0e1d428ecddc212a8687d87988f899555e3d86c12cf9a5c",
+      "bytes": 419
+    },
+    {
+      "source": "Mechanisms/Neuron/MOD_files/GABA_tonic.mod",
+      "local": "GABA_tonic.mod",
+      "sha256": "fc0d3eacd488a8c6046945c929ca97582188788083394303723fb30b79359ab2",
+      "bytes": 326
+    },
+    {
+      "source": "Mechanisms/Common/MOD_files/GabaUpdate.mod",
+      "local": "GabaUpdate.mod",
+      "sha256": "5ea614cd8609519b50fbf5feb302ce5e76c7d3ced19d4b9e69b96acd796f5bbd",
+      "bytes": 1034
+    },
+    {
+      "source": "Mechanisms/Common/MOD_files/GabaUpdateLinear.mod",
+      "local": "GabaUpdateLinear.mod",
+      "sha256": "432a7228757d501a3a8b324ae65e527994c150122ca1cdd4564644f1783cb2cc",
+      "bytes": 1685
+    },
+    {
+      "source": "Biophysics/Neuron/SimMyelinatedAxon.json",
+      "local": "SimMyelinatedAxon.json",
+      "sha256": "19d504fe5353e8f0de377cfc5b6ea78f33232fc8a429b78028f5384eee582f4d",
+      "bytes": 6416
+    },
+    {
+      "source": "Mechanisms/Neuron/MOD_files/nkpump.mod",
+      "local": "nkpump.mod",
+      "sha256": "36073ba8b09896ed15a6f3a38d84cfc90b62fdb519293b26f1d53a3ed8e468c2",
+      "bytes": 849
+    }
+  ],
+  "qualification": "Pinned cadifus.mod executed independently in NEURON 8.2.7 for local and three-segment calcium fixtures; full experiment and myelin equivalence pending"
+}

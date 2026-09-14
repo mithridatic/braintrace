@@ -1,0 +1,44 @@
+{
+  "dimensions": {
+    "x": [
+      8e-9,
+      "m"
+    ],
+    "y": [
+      8e-9,
+      "m"
+    ],
+    "z": [
+      3.3e-8,
+      "m"
+    ]
+  },
+  "position": [
+    413322.6875,
+    118677.3046875,
+    4137.81689453125
+  ],
+  "crossSectionScale": 0.5833304581716987,
+  "projectionOrientation": [
+    0.23585373163223267,
+    0.08304993808269501,
+    0.23672738671302795,
+    0.9388481378555298
+  ],
+  "projectionScale": 463.49615717559374,
+  "layers": [
+    {
+      "type": "image",
+      "source": "precomputed://gs://h01-release/data/20210601/4nm_raw",
+      "tab": "source",
+      "name": "em"
+    }
+  ],
+  "showSlices": false,
+  "prefetch": false,
+  "layout": "xy",
+  "layerListPanel": {
+    "size": 100,
+    "visible": true
+  }
+}

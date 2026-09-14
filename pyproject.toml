@@ -107,6 +107,7 @@ dev = ["pytest", "pytest-cov", "pytest-xdist>=3.8", "jax[cpu]", "brainevent[cpu]
 
 [tool.setuptools.package-data]
 braintrace = ["py.typed"]
+"braintrace.biophysics" = ["BRAINCELL-LICENSE.txt"]
 
 
 [tool.pytest.ini_options]

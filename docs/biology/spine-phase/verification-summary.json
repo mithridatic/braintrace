@@ -1,0 +1,58 @@
+{
+  "status": "SPINE_ASSEMBLY_PHASE_PASS",
+  "full_biology_status": "INCOMPLETE",
+  "base_commit": "2b419b4",
+  "date": "2026-09-12",
+  "scope": "Explicit spine construction, contact delivery, physical-session replay and bounded real source component; no glia/myelin integration or all-104 simulation",
+  "tests": {
+    "tests": "216",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "161.482"
+  },
+  "warnings": 17,
+  "additional_receptor_gate": {
+    "test": "examples/pp_prop/h01_runtime_test.py::test_spine_builder_remaps_actual_contacts_probes_and_compiled_cable",
+    "passed": 1,
+    "seconds": 6.0,
+    "note": "Strengthened delivery assertions after the broad gate; production unchanged"
+  },
+  "new_production_modules": {
+    "braintrace/datasets/h01_biology.py": {
+      "covered_lines": 68,
+      "num_statements": 68,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/datasets/h01_spine_assembly.py": {
+      "covered_lines": 25,
+      "num_statements": 25,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    }
+  },
+  "implementation_sha256": {
+    "braintrace/datasets/h01_biology.py": "5cb2c38f4f403c4b19e17e10d832d7a07080587b0a452173e0da4f45794498c4",
+    "braintrace/datasets/h01_spine_assembly.py": "05e012ef40ee5f8b4147cc6261cd1c873205455711915bf8d84453c8a365aaed",
+    "braintrace/datasets/h01_ei_cell.py": "b3e34248b30458d0b56d54ed8c7b2911b5bf86d1d611e34ecf6ab4030ccd596b",
+    "examples/pp_prop/h01_runtime.py": "c381f4bf2460729102aef4a40fbf6b2c21a20f4f732d34cd818e3f7d52025660",
+    "examples/pp_prop/h01_session.py": "07987944d3d27c8e45aed27235949a600dcfac4a564d84bc556cdc87444b883c"
+  },
+  "artifact_sha256": {
+    "real-component-probe.json": "05cbaf4a412ea713b4eba3dcb7915366351607c5ded8eefb3f197bac9a5a8e99",
+    "real-component-probe.topology.json": "7e2061bdd93143d9224efddf579d1781db1abeab439d8c430b46495eacd2a671",
+    "real-component-probe.biology.json": "b985af21f69f673aa43d52b6a6fe9ea980ac0edc9dc4fdb460157badda41baba",
+    "spatial-frame-audit.json": "c428f602ce54e342182f1e79ec6139319811304c77849ece7b2a84671736d053",
+    "verification.xml": "2bf430caa6da8981a55d995b3a446acfc9404850e5c8adca7db4fbe8fa82a13a",
+    "coverage.json": "dc6a1548366aa2ad6356bc91d6f52533bcf6c4576966efde587a873c90d5235b"
+  }
+}

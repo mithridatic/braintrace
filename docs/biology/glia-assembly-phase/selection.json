@@ -1,0 +1,11 @@
+{
+  "anchor_vertex": 88562,
+  "attribution": "H01 Shapson-Coe et al., Science 2024; Harvard Lichtman laboratory and Google; CC BY 4.0",
+  "coordinate_frame": "h01-c3-nm",
+  "identity": "63900941936",
+  "max_vertices": 600,
+  "schema": "h01-glial-fragment-v1",
+  "selection_basis": "Entire component containing vertex 88562 from the pinned prior proximity audit; local diagnostic selection, not biological connectivity",
+  "source": "https://storage.googleapis.com/h01-release/data/20210601/c3/skeletons",
+  "source_sha256": "6d424520d70c277e5b734b9ded86a8d0b839da391875733e63be1b20cf019e85"
+}

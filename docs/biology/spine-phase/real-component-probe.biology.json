@@ -1,0 +1,30 @@
+{
+  "schema": "h01-biology-spines-v1",
+  "topology_sha256": "85c02ec9771cddad82bc3cc95f0e95d963f152e324d7ddb595500ac63ae5dd4b",
+  "coordinate_frame": "h01-swc-um",
+  "cells": {
+    "3178243558": {
+      "source_sha256": "dac6f15d0b608c90856ac93a0af213858a418651921f12d4b48c01f6154ba657",
+      "spines": [
+        {
+          "identity": "synthetic_probe_0",
+          "parent_branch": 0,
+          "parent_x": 0.5,
+          "neck_length_um": 0.689,
+          "neck_radius_um": 0.0335,
+          "head_length_um": 0.583,
+          "head_radius_um": 0.2915,
+          "direction": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "provenance": "Synthetic centreline addition using paper mean dimensions; not a measured H01 spine",
+          "origin": "synthetic"
+        }
+      ]
+    }
+  },
+  "contact_heads": {},
+  "release_probability": {}
+}

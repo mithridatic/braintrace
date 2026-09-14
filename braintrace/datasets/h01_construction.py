@@ -756,10 +756,14 @@ _RA_CACHE = {}
 
 def _get_ra_ohm_cm(ra):
     cached = _RA_CACHE.get(id(ra))
-    if cached is not None:
-        return cached
+    if cached is not None and cached[0] is ra:
+        return cached[1]
     val = float(np.asarray(ra.to_decimal(u.ohm * u.cm), dtype=float))
-    _RA_CACHE[id(ra)] = val
+    # Quantity does not support weak references. Retain a bounded set of owners
+    # so Python object-id reuse cannot substitute another cable's resistivity.
+    if len(_RA_CACHE) >= 1024:
+        _RA_CACHE.clear()
+    _RA_CACHE[id(ra)] = (ra, val)
     return val
 
 def _fast_quantity(val, unit):

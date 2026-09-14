@@ -1,0 +1,73 @@
+{
+  "status": "MEASURED_GLIAL_FRAGMENT_ASSEMBLY_PASS",
+  "full_biology_status": "INCOMPLETE",
+  "base_commit": "de1f1e2",
+  "date": "2026-09-12",
+  "scope": "Source-pinned complete glial fragment reconstruction and Kir-only cable; fixed pools, no complete coupled H01 factory",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "97",
+    "time": "114.946",
+    "timestamp": "2026-09-12T12:32:18.943477-07:00",
+    "hostname": "KYOSHI"
+  },
+  "additional_axial_test": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "1",
+    "time": "2.965",
+    "timestamp": "2026-09-12T12:34:49.630175-07:00",
+    "hostname": "KYOSHI"
+  },
+  "warnings": 6,
+  "new_production_modules": {
+    "braintrace/datasets/h01_glia.py": {
+      "covered_lines": 100,
+      "num_statements": 100,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "braintrace/datasets/h01_glial_cable.py": {
+      "covered_lines": 34,
+      "num_statements": 34,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    }
+  },
+  "implementation_sha256": {
+    "braintrace/datasets/h01_glia.py": "57192b1841a47062bb4dcea191e98ab523a5d8105a811bdb8d623b0768c1aa4e",
+    "braintrace/datasets/h01_glial_cable.py": "b0680562de1013271ff3b42ab449133940c79923d3eb4f7fb2583ed15ea7f35b",
+    "braintrace/datasets/h01_glia_test.py": "041ccd4b18ac8a778014b36f8cb3c56682a9e3340d9c434e5de7fcb9f9b7fdd6",
+    "braintrace/datasets/h01_glial_cable_test.py": "6988a402c1161263698a56dddc3d24e3a90f26b431534c25e999ffe731e374ce",
+    "docs/biology/glial_fragment_probe.py": "90ad633ae52e03e3b28d3ef2b4379647a9400313aa7eec86e90eeb255806d65c"
+  },
+  "artifact_sha256": {
+    "selection.json": "7c923499c7bc8064027edb94492b4f861f898615bcfffe4e5cd87447120e6d3f",
+    "assembly.json": "e37d5589d160f913136a8e4736fc367657b28c19afc86de091a523b3b21e2f38",
+    "measured-probe.json": "c065ee4c2885cdfd953b2f498b148b166b0a2fdf19be4504692e0436c792247b",
+    "verification.xml": "dd147cda8d6069f6e1904f74afc19451ee6006334e87b228a0f36932e4413724",
+    "axial-verification.xml": "2824b760fb36e9438b64d49bfccbd0ff37cb9925528c638e79cff8adad5be874",
+    "coverage.json": "8e79bcd001a57a223a708776f6d50f949a728163c2e0406effbc10c8e02881cb"
+  },
+  "qualification": {
+    "anatomy": "Whole selected source component preserved; all exclusions explicit; not a complete astrocyte",
+    "numerical": "Short dynamic fixed-pool voltage and synthetic axial propagation checks pass",
+    "replay": "Exact measured-source reconstruction and fresh-cable trajectory replay",
+    "coupling": "Tapered calcium volumes and extracellular neighborhoods pending",
+    "runtime": "0.1 ms measured-fragment probe only; no full population forecast",
+    "learning": "No new learning qualification"
+  }
+}

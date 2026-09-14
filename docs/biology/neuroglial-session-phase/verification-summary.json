@@ -1,0 +1,83 @@
+{
+  "status": "EXPLICIT_NEUROGLIAL_SESSION_PHASE_PASS",
+  "full_biology_status": "INCOMPLETE",
+  "date": "2026-09-13",
+  "base_commit": "fd780a9",
+  "scope": "One explicit glial fragment and extracellular domain assembled with H01 neurons before sparse learner compilation",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "80",
+    "time": "149.368",
+    "timestamp": "2026-09-13T08:40:48.871270-07:00",
+    "hostname": "KYOSHI"
+  },
+  "warnings": 11,
+  "new_module_coverage": {
+    "braintrace/datasets/h01_neuroglia.py": {
+      "covered_lines": 90,
+      "num_statements": 90,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    },
+    "examples/pp_prop/h01_neuroglial.py": {
+      "covered_lines": 66,
+      "num_statements": 68,
+      "percent_covered": 97.05882352941177,
+      "percent_covered_display": "97",
+      "missing_lines": 2,
+      "excluded_lines": 0,
+      "percent_statements_covered": 97.05882352941177,
+      "percent_statements_covered_display": "97"
+    }
+  },
+  "implementation_sha256": {
+    "braintrace/datasets/h01_neuroglia.py": "1d1c8d87273b27cf089b12b24e90ed3d496609d26ed68d537e37da998fd14a34",
+    "examples/pp_prop/h01_neuroglial.py": "c5ef34b103a54983a9b8f818cc92f48ccaae7773028cd4801690ee3a0e678e64",
+    "examples/pp_prop/h01_session.py": "57b59e41c8eba8ffc582f80cd3358049e750daa919e2df2ee55c637b389a382f",
+    "braintrace/datasets/h01_construction.py": "5eb20bd066838a4ccf61d126ec35f3b17699632ebcc14b85bb8ddba89dfb2f65",
+    "braintrace/datasets/h01_neuroglia_test.py": "8ca427f571a47b01c4d526f6cb61a90176a1825a68ad3847839679489c702369",
+    "examples/pp_prop/h01_neuroglial_test.py": "2135dde369a37069eb23ce8f027149ff67246ae7e53ee41376fad4e7dc2ddd46",
+    "braintrace/datasets/h01_construction_test.py": "5b0e612ce8817bd6ae2c8093f2386083f932b777aa5290f885e0683cf3ec7149",
+    "docs/biology/neuroglial_session_probe.py": "a4dfcb42ed4ebf77571cc579b1911bba91afbbbbf14c3e67279cc47209f23907"
+  },
+  "artifact_sha256": {
+    "docs/biology/neuroglial-session-phase/manifest.json": "407f607aa85dc5634d1ea6fe19bffd56e75e48c6f0e67e3d2454bf298e4aab8c",
+    "docs/biology/neuroglial-session-phase/session-probe.json": "5597b7cde2f81c79bebc6ca7f8c625138f9a0bcd08d9dfa47e342ee912f24534",
+    "docs/biology/neuroglial-session-phase/verification.xml": "11958acc6137703c1238411a3141e1b05b526c8774ec2ccdd8a760f311c211ea",
+    "docs/biology/neuroglial-session-phase/coverage.json": "79fbc39c0386de3b6bca8cb81628026c86c02b05ebc72cb6e33b6150e5d4ba24"
+  },
+  "diagnostic": {
+    "status": "SYNTHETIC_NEUROGLIAL_SESSION_PASS",
+    "neurons": 1,
+    "neuronal_compartments": 7,
+    "glial_compartments": 1,
+    "dt_ms": 0.005,
+    "event_ms": 0.1,
+    "total_physical_ticks": 60,
+    "driven_events": 1,
+    "wait_events": 2,
+    "nonzero_eligibility_entries_after_drive": 119,
+    "packed_arrays": 100,
+    "all_finite": true,
+    "chemistry_valid": true,
+    "exact_fresh_session_replay": true,
+    "biology_sha256": "b25be02e137a159b845bbe5a8e814557fce40603e5ffb82f54aceaf45e8830a9",
+    "elapsed_seconds": 27.160303599986946,
+    "qualification": "Synthetic diagnostic assembly, compiler and physical/eligibility replay only; no learning accuracy or physiology qualification"
+  },
+  "qualification": {
+    "assembly": "Synthetic full-session construction passed",
+    "compiler": "Sparse learner compiled and produced nonzero eligibility",
+    "replay": "100 finite arrays matched exactly after fresh-session restoration",
+    "learning_accuracy": "Not qualified: no finite-window gradient oracle or optimizer descent claim",
+    "anatomy": "Synthetic placements; measured extracellular reconstruction not qualified",
+    "runtime": "60 CPU cable ticks; no GPU or all-104 runtime qualification"
+  }
+}

@@ -11,6 +11,8 @@ import brainunit as u
 
 from braintrace.datasets.h01_ei_cell import make_h01_ei_cell
 from braintrace.datasets.h01_network import _regions, _register_cell
+from braintrace.datasets.h01_biology import H01SpatialManifest
+from braintrace.datasets.h01_spine_assembly import assembled_location
 from .h01_topology import H01Topology
 
 
@@ -69,7 +71,7 @@ def topology_from_evidence(evidence, contact_audit, archive):
 
 
 def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
-                  max_cv_length_um=10., progress=None):
+                  max_cv_length_um=10., progress=None, environment_potassium=False, biology=None):
     """Build real selected cables and placed conductance contacts for a topology.
 
     Parameters
@@ -84,6 +86,10 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         Frozen spatial discretization length.
     progress : callable, optional
         Construction progress callback.
+    environment_potassium : bool, optional
+        Declare external K pools; caller must bind chemistry after initialization.
+    biology : H01SpatialManifest or dict or None, optional
+        Explicit topology-pinned spine additions and contact-head assignments.
 
     Returns
     -------
@@ -92,6 +98,9 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         is separate so its time and memory can be measured independently.
     """
     doc = topology.to_dict()
+    manifest = None if biology is None else H01SpatialManifest(
+        biology.to_dict() if isinstance(biology, H01SpatialManifest) else biology, doc)
+    biological = None if manifest is None else manifest.to_dict()
     emit = progress or (lambda message: None)
     loaded, cells, records = {}, {}, {}
     network = braincell.Network(name='h01_evolved')
@@ -109,13 +118,27 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         cell, record = make_h01_ei_cell(imported, annotations, polarity=source['polarity'],
             donor=source['donor'], mode=source['profile']['mode'], regions=_regions(imported),
             region_basis=source['region_basis'], current_na=0., delay_ms=2., duration_ms=3.,
-            max_cv_length_um=max_cv_length_um, solver=solver, pop_size=(1,))
+            max_cv_length_um=max_cv_length_um, solver=solver, pop_size=(1,),
+            environment_potassium=environment_potassium,
+            spines=() if manifest is None else manifest.spines(identity))
         if json.dumps(record['borrowed_dynamics'], sort_keys=True) != json.dumps(source['profile'], sort_keys=True):
             raise ValueError('Frozen H01 donor profile differs from this runtime')
         cells[identity], records[identity] = cell, record
+        if manifest is not None:
+            record['biology_manifest_sha256'] = manifest.sha256
+            record['declared_spine_origins'] = {row['identity']: row['origin']
+                for row in biological['cells'][identity]['spines']}
     for identity in doc['active_contacts']:
         edge = doc['contacts'][identity]
-        cell, site, name = cells[edge['post']], AtLocation(*edge['post_site']), 'syn_'+identity
+        record = records[edge['post']]
+        mapped_site = assembled_location(record, edge['post_site'])
+        if biological is not None and identity in biological['contact_heads']:
+            head = biological['contact_heads'][identity]
+            mapped_site = (record['spine_assembly']['heads'][head], .5)
+        if manifest is not None:
+            record.setdefault('contact_sites', {})[identity] = dict(source=list(edge['post_site']),
+                                                                   assembled=list(mapped_site))
+        cell, site, name = cells[edge['post']], AtLocation(*mapped_site), 'syn_'+identity
         cell.place(site, Synapse('ExpSyn', name=name, e=edge['reversal_mv']*u.mV,
                                 tau=edge['tau_ms']*u.ms, weight=1.*u.uS))
         cell.place(site, MechanismProbe(mechanism=name, field='g', name=name+'_g'))
@@ -129,7 +152,9 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
             if edge['pre'] == identity and edge['pre_site'] != site:
                 raise ValueError('A cell cannot have conflicting designated output sites')
         _register_cell(network, identity, cells[identity], records[identity], loaded[source_id],
-                       {identity: site}, 0., emit)
+                       {identity: assembled_location(records[identity], site)}, 0., emit)
+        if manifest is not None:
+            records[identity]['original_output_site'] = list(site)
     for identity in doc['active_contacts']:
         edge, name = doc['contacts'][identity], 'syn_'+identity
         network.add_edges(name=name, pre='cell_'+edge['pre'], post='cell_'+edge['post'], method=pairs([(0, 0)]))

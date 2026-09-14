@@ -1,0 +1,15 @@
+{
+  "qualification": "labelled measured candidate; skeleton acquired and fragmented into 257 components; spatial matching and model conversion pending",
+  "selection": "L2 astrocyte at median released voxel count; no proximity or completeness claim",
+  "candidates": [
+    {
+      "id": "63900941936",
+      "voxel_count": 4921762933,
+      "tags": [
+        "L2",
+        "astrocyte",
+        "glial"
+      ]
+    }
+  ]
+}
