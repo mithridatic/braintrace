@@ -155,3 +155,15 @@ and record their interpretation under docs/evidence/AGENTS.md.
   describes models built from individual neuronal recordings and morphology,
   with optimized somatic conductances and other stimuli used for testing.
   This description does not certify human provenance of every kinetic equation.
+
+## Bounded post-import geometry check
+
+Use the existing production H01Archive importer for cell 955432427, component 0,
+and compare every directed source edge, coordinate and endpoint radius with the
+actual BrainCell branches. Then lower the same morphology with CVPerBranch and
+inspect every returned control-volume lateral area. Preserve the importer,
+geometry-library and policy source hashes, all branch/CV observations, and the
+release hash. This CPU-only static check has a 60-second process cap and executes
+no membrane dynamics. Require all edges to match and total lateral area within
+1e-8 relative tolerance. Passing this check qualifies only the recorded geometry
+and discretization, not membrane completeness, physiology or the final population.

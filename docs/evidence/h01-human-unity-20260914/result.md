@@ -96,10 +96,37 @@ the converted SWC and validate every mapped original identifier, not only totals
 
 ## Work still required by the full objective
 
-Resolve mesh-component and post-import geometry correspondence; qualify human
+Resolve mesh-component correspondence and extend geometry checks to the final
+population and discretization; qualify human
 mechanisms in place of unsupported nonhuman assumptions; cover and validate all
 donor types; obtain physiological transfer readings; extend timestep qualification
 across the final population; and complete the full driven controls. The historical
 NaTg human-sodium experiments must be reviewed before choosing a new mechanism
 experiment. No animal-data fallback, relaxed score or smaller-population result
 will close the objective. All six numerical values remain at their previous levels.
+
+## Actual BrainCell post-import geometry
+
+The production H01Archive importer and installed BrainCell geometry stage were
+executed on local CPU for cell 955432427, component 0. Every one of the 11,523
+directed edges matched its source endpoint coordinates and radii exactly. Source
+coordinates are unique for this component, so that correspondence is unambiguous.
+With CVPerBranch, all 2,569 control volumes had finite positive lateral areas.
+Their summed length was 3,343.088280093296 um and summed lateral area was
+4,307.493077002364 um2, matching the original source-frustum calculation within
+the preregistered 1e-8 relative tolerance. The previously inspected source plot
+therefore represents the imported edge geometry as well.
+
+The measured import/geometry phase took 4.09 seconds; the complete process finished
+within its 60-second cap. No channels, membrane simulation or GPU were used.
+This closes the static source-to-import and CVPerBranch area check for this one
+component. It does not close source-mesh correspondence, membrane completeness,
+final-population discretization or anatomy-transfer physiology.
+
+See [post-import report](post-import.json) for all CV observations and executed
+source-file hashes, and [direct edge arrays](post-import.npz) for every source and
+imported edge. The script is `docs/evidence/h01_post_import_audit.py` and the exact
+archive is the pinned proofread104 release. Ten additional sibling tests pass,
+covering edge loss, nonfinite data, reordered edges, endpoint displacement and
+radius changes. [Test results](post-import-tests.xml) and [actual-run coverage](post-import-coverage.json)
+are retained separately from the original 81-test repair suite.
