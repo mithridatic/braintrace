@@ -1,0 +1,114 @@
+[
+  {
+    "holding_label": "Holding near -90 mV",
+    "target_sweep": 78,
+    "controls": [
+      {
+        "sweep": 79,
+        "baseline_mean_pa": -16.32305511776308,
+        "late_centered_mean_pa": -3.381110913647679
+      },
+      {
+        "sweep": 80,
+        "baseline_mean_pa": -15.632499347952958,
+        "late_centered_mean_pa": 0.9525002437254623
+      },
+      {
+        "sweep": 81,
+        "baseline_mean_pa": -12.888332354438807,
+        "late_centered_mean_pa": -2.5775002647828757
+      },
+      {
+        "sweep": 82,
+        "baseline_mean_pa": -11.587221284130521,
+        "late_centered_mean_pa": -2.505555515026271
+      },
+      {
+        "sweep": 83,
+        "baseline_mean_pa": -11.537776857049787,
+        "late_centered_mean_pa": -2.5199999354651754
+      },
+      {
+        "sweep": 84,
+        "baseline_mean_pa": -11.675832387682021,
+        "late_centered_mean_pa": -2.351111070775101
+      },
+      {
+        "sweep": 85,
+        "baseline_mean_pa": -11.691943497033336,
+        "late_centered_mean_pa": -2.562499968991846
+      },
+      {
+        "sweep": 86,
+        "baseline_mean_pa": -11.599443498674512,
+        "late_centered_mean_pa": -2.129444393126223
+      },
+      {
+        "sweep": 87,
+        "baseline_mean_pa": -11.973610142653321,
+        "late_centered_mean_pa": -2.47194448542967
+      },
+      {
+        "sweep": 88,
+        "baseline_mean_pa": -11.702499075646823,
+        "late_centered_mean_pa": -2.5516666486293866
+      }
+    ]
+  },
+  {
+    "holding_label": "Holding near -20 mV",
+    "target_sweep": 112,
+    "controls": [
+      {
+        "sweep": 113,
+        "baseline_mean_pa": 4.25111094572219,
+        "late_centered_mean_pa": -3.254722081106744
+      },
+      {
+        "sweep": 114,
+        "baseline_mean_pa": 4.464166481882751,
+        "late_centered_mean_pa": -3.788610939358054
+      },
+      {
+        "sweep": 115,
+        "baseline_mean_pa": 4.593888690394134,
+        "late_centered_mean_pa": -3.3316665030443158
+      },
+      {
+        "sweep": 116,
+        "baseline_mean_pa": 4.026110951813473,
+        "late_centered_mean_pa": -3.435555406723892
+      },
+      {
+        "sweep": 117,
+        "baseline_mean_pa": 3.654722077071256,
+        "late_centered_mean_pa": -3.0969443092046243
+      },
+      {
+        "sweep": 118,
+        "baseline_mean_pa": 3.913610953693511,
+        "late_centered_mean_pa": -3.2369442996912694
+      },
+      {
+        "sweep": 119,
+        "baseline_mean_pa": 3.7377776219634664,
+        "late_centered_mean_pa": -3.441388736537111
+      },
+      {
+        "sweep": 120,
+        "baseline_mean_pa": 3.941666510302565,
+        "late_centered_mean_pa": -3.2763887463622883
+      },
+      {
+        "sweep": 121,
+        "baseline_mean_pa": 3.9391665063918935,
+        "late_centered_mean_pa": -3.3136109628726778
+      },
+      {
+        "sweep": 122,
+        "baseline_mean_pa": 3.930833171661347,
+        "late_centered_mean_pa": -3.328610959315936
+      }
+    ]
+  }
+]

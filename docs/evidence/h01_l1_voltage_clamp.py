@@ -26,6 +26,10 @@ FAMILIES = {
     **dict.fromkeys(range(161, 166), 'NucVCzrecovms100_DA_0'),
     **dict.fromkeys(range(166, 170), 'NucVCzrecovs1_DA_0'),
 }
+PAX6_SESSION = '840043481'
+PAX6_SHA256 = '30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944'
+# Confirmed against every family in the hash-bound PAX6 acquisition inventory.
+PAX6_FAMILIES = {sweep - 28: family for sweep, family in FAMILIES.items()}
 
 
 def command_segments(voltage, rate):
@@ -53,7 +57,7 @@ def command_segments(voltage, rate):
             for a, b in zip(edges[:-1], edges[1:])]
 
 
-def read_sweep(path, sweep):
+def read_sweep(path, sweep, *, session=SESSION):
     """Read a pinned human channel-discovery sweep and its instrument settings.
 
     Parameters
@@ -62,6 +66,9 @@ def read_sweep(path, sweep):
         Original human NWB file for the registered session.
     sweep : int
         Registered nucleated-patch sweep; other responses fail before file access.
+    session : str, optional
+        One of the two pinned discovery/calibration sessions. External validation
+        sessions are rejected before opening response data.
 
     Returns
     -------
@@ -69,10 +76,16 @@ def read_sweep(path, sweep):
         Unfiltered arrays and provenance. Current is total amplifier current;
         command voltage is not measured patch voltage. No channel QC is implied.
     """
-    if sweep not in FAMILIES:
+    if session == SESSION:
+        expected_hash, specimen, families = SOURCE_SHA256, SPECIMEN, FAMILIES
+    elif session == PAX6_SESSION:
+        expected_hash, specimen, families = PAX6_SHA256, '840043506', PAX6_FAMILIES
+    else:
+        raise ValueError('Session is not registered for discovery/calibration access.')
+    if sweep not in families:
         raise ValueError('Only registered nucleated-patch sweeps may be exported.')
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    if digest != SOURCE_SHA256:
+    if digest != expected_hash:
         raise ValueError('NWB source SHA256 mismatch.')
     with h5py.File(path, 'r') as source:
         groups = [source['acquisition'][f'data_{sweep:05d}_AD0'],
@@ -83,7 +96,7 @@ def read_sweep(path, sweep):
                 ('amperes', 'volts'), (1e12, 1e3)):
             if (group.attrs['neurodata_type'] != kind
                     or group.attrs['sweep_number'] != sweep
-                    or group.attrs['stimulus_description'] != FAMILIES[sweep]):
+                    or group.attrs['stimulus_description'] != families[sweep]):
                 raise ValueError('Clamp mode, sweep identity or protocol family mismatch.')
             data, start = group['data'], group['starting_time']
             if data.ndim != 1 or data.attrs.get('unit') != unit:
@@ -124,8 +137,8 @@ def read_sweep(path, sweep):
         arrays = dict(time_ms=np.arange(len(current)) / clocks[0][1] * 1000,
                       total_current_pa=current, dac_voltage_mv=dac,
                       holding_voltage_mv=np.float64(holding), command_voltage_mv=command)
-        metadata = dict(source_sha256=digest, session_id=SESSION, specimen_id=SPECIMEN,
-                        sweep=sweep, family=FAMILIES[sweep], role='channel discovery',
+        metadata = dict(source_sha256=digest, session_id=session, specimen_id=specimen,
+                        sweep=sweep, family=families[sweep], role='channel discovery',
                         absolute_start_s=clocks[0][0], sample_rate_hz=clocks[0][1],
                         samples=len(current), conversions=conversions, instrument=instrument,
                         command_segments=command_segments(command, clocks[0][1]),
@@ -146,11 +159,12 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--nwb', type=Path, required=True)
     parser.add_argument('--sweep', type=int, required=True)
+    parser.add_argument('--session', default=SESSION)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args(argv)
     if any(args.output.with_suffix(s).exists() for s in ('.npz', '.json')):
         raise FileExistsError('Use a new evidence prefix.')
-    arrays, metadata = read_sweep(args.nwb, args.sweep)
+    arrays, metadata = read_sweep(args.nwb, args.sweep, session=args.session)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.with_suffix('.npz').open('xb') as f:
         np.savez_compressed(f, **arrays)

@@ -1,5 +1,9 @@
 # Human donor data access established
 
+Current analysis: [PAX6 currents and control assessment](pax6-840043481/README.md)
+prepares the type-matched source, tests linear-control sensitivity and records
+why the first descriptive decay fits are unsuitable for kinetic deployment.
+
 Latest follow-up: [human L1 channel-current sources recovered](channel-923103553/README.md)
 provides verified LAMP5 and type-matched PAX6 recordings, direct current observations
 and a distinct-donor kinetic validation reservation.

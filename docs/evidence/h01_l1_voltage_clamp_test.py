@@ -132,3 +132,28 @@ def test_export_hash_and_no_overwrite(nwb, monkeypatch, tmp_path):
     with np.load(out.with_suffix('.npz')) as a:
         np.testing.assert_allclose(a['command_voltage_mv'], [-88, -48, -48, -88])
     with pytest.raises(FileExistsError): vc.main(args)
+
+
+def test_pax6_source_is_separate_and_identity_preserved(nwb, monkeypatch, tmp_path):
+    with h5py.File(nwb, 'a') as f:
+        for root, suffix in [('acquisition', 'AD0'), ('stimulus/presentation', 'DA0')]:
+            f.move(f'{root}/data_00098_{suffix}', f'{root}/data_00070_{suffix}')
+            f[f'{root}/data_00070_{suffix}'].attrs['sweep_number'] = 70
+        f['general/labnotebook/ITC18USB_Dev_0/numericalValues'][:, 0, :] = 70
+    monkeypatch.setattr(vc, 'PAX6_SHA256', hashlib.sha256(nwb.read_bytes()).hexdigest())
+    a, m = vc.read_sweep(nwb, 70, session=vc.PAX6_SESSION)
+    assert m['session_id'] == '840043481' and m['specimen_id'] == '840043506'
+    assert m['family'] == 'NucVCLS0_DA_0'
+    np.testing.assert_allclose(a['command_voltage_mv'], [-88, -48, -48, -88])
+    with pytest.raises(ValueError, match='registered'): vc.read_sweep(nwb, 70)
+    with pytest.raises(ValueError, match='SHA256'): vc.read_sweep(nwb, 98)
+    out = tmp_path / 'pax6'
+    vc.main(['--nwb', str(nwb), '--sweep', '70', '--session', vc.PAX6_SESSION,
+             '--output', str(out)])
+    assert json.loads(out.with_suffix('.json').read_bytes())['specimen_id'] == '840043506'
+
+
+@pytest.mark.parametrize('session', ['835648738', 'unknown'])
+def test_external_validation_and_unknown_session_rejected_before_open(tmp_path, session):
+    with pytest.raises(ValueError, match='Session'):
+        vc.read_sweep(tmp_path / 'unopened.nwb', 70, session=session)

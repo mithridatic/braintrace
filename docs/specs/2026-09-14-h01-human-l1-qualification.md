@@ -160,3 +160,45 @@ the source contract. Freeze candidate kinetics, protocol predictions, QC and
 scoring rules before accessing those validation currents. Do not tune against
 them. Preserve the original specimen 811953283 whole-cell data split unchanged.
 LAMP5 specimen 923103580 remains discovery/reproduction material, not a holdout.
+
+## PAX6 current preparation and leak-control assessment
+
+Extend the exporter with an explicit session argument limited to the two pinned
+discovery/calibration sources. Reject the reserved external validation session
+before file access. Register the PAX6 family mapping from the acquired inventory
+(70-141); retain all existing LAMP5 identities and behavior. Test both sources,
+wrong source/session combinations and the external-response access boundary.
+
+Export PAX6 total-current sweeps 70, 74, 78, prepulse 89, 93, 97, sustained
+104, 108, 112, all leak controls 79-88 and 113-122, and recovery 123, 132, 141.
+Retain all samples and instrument metadata. Assess repeated control stability
+using their full waveforms, with a fixed 900-990 ms baseline and 1100-2100 ms
+command window checked against the actual waveform. Compare the first and last
+control, preserving repeat identity. Any linear subtraction is a conditional
+estimate, not proof of channel isolation; assess its sensitivity to the selected
+control and retain capacitive transients. A control at one amplitude cannot
+establish linearity over the full depolarizing range. No external response is
+opened and no kinetic parameters are fitted until these observations are reviewed.
+
+Implement conditional plain-step subtraction as baseline-centered response minus
+the baseline-centered control scaled by their command increments. Preserve raw,
+scaled-control and conditional-current arrays separately. Require identical finite
+clocks, complete pulse coverage, a constant pre-step command through pulse onset,
+a constant nonzero pulse, return to baseline, and matching holding potentials
+within 0.1 mV. Reject prepulse/recovery histories: one scaling factor cannot model
+their different capacitive and steady-state offsets. Use total and sustained
+families only. Test against an analytic passive-current plus active-current oracle,
+and reject incomplete windows, different holdings, zero controls, extra transitions
+and nonfinite traces. This calculation is an explicit linear-response assumption,
+never itself a gate passing human potassium-current isolation.
+
+After visual inspection, the conditional +70 mV total-current estimates using
+controls 79 and 88 show a consistent large decaying component beyond the onset
+artifact. Fit each on 1110-2090 ms, retaining all samples, with the descriptive
+envelope C + A1 exp(-t/tau1) + A2 exp(-t/tau2), relative to 1110 ms. Use nonnegative
+amplitudes bounded at 10000 pA, offset -1000 to 1000 pA, and both time constants
+1-10000 ms. Report optimizer status, boundary proximity, original data, predictions,
+residuals and sensitivity to the control. These are conditional decay time scales,
+not identified A/D molecular channels, voltage-dependent rate laws or a physiological
+qualification. The 10 ms onset exclusion follows the observed control transients;
+it cannot establish behavior of faster gates. Do not access external currents.
