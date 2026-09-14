@@ -1,0 +1,527 @@
+[
+  {
+    "cell": {
+      "spec_id": "902511379",
+      "cell_name": "H19.03.315.11.09.01.06",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1008.0",
+      "Ephys_time": "69.0",
+      "endPipetteR": "5000.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "d72947c0-9a43-4e99-a095-51cc5b09cc39",
+      "blob": "032db881-7900-48de-80bb-174de32b5c52",
+      "zarr": null,
+      "path": "sub-902323111/sub-902323111_ses-902511350_icephys.nwb",
+      "size": 67571826,
+      "created": "2023-09-15T22:11:41.786097Z",
+      "modified": "2023-09-15T22:57:38.880397Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "839897427",
+      "cell_name": "H19.06.351.11.16.01.01",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "686.0",
+      "Ephys_time": "66.0",
+      "endPipetteR": "3000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "0e00d50d-668f-46f8-b598-1cbc3290e6d5",
+      "blob": "0061699e-1fd0-4fa1-8192-bdb535917748",
+      "zarr": null,
+      "path": "sub-839796862/sub-839796862_ses-839897299_icephys.nwb",
+      "size": 63695370,
+      "created": "2023-09-15T22:11:33.933532Z",
+      "modified": "2023-09-15T22:57:38.740303Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "674620956",
+      "cell_name": "H18.03.005.11.11.04",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Partial-Nucleus",
+      "Total_time": "1150.0",
+      "Ephys_time": "36.0",
+      "endPipetteR": "8.5",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "2d28a5c5-0b70-4c12-ae3c-67e50e227bb0",
+      "blob": "ec7beeb5-85fe-4225-a8c8-a6cf87d5ff39",
+      "zarr": null,
+      "path": "sub-674562997/sub-674562997_ses-674620943_icephys.nwb",
+      "size": 56821628,
+      "created": "2023-09-15T22:11:43.564487Z",
+      "modified": "2023-09-15T22:57:38.788308Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "840043506",
+      "cell_name": "H19.06.351.11.06.01.06",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1009.0",
+      "Ephys_time": "263.0",
+      "endPipetteR": "2000.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "94bd9fd3-0456-489f-84c0-82f0eaf1a529",
+      "blob": "e1d9710d-5e30-4afb-916c-6565d87268c0",
+      "zarr": null,
+      "path": "sub-839796862/sub-839796862_ses-840043481_icephys.nwb",
+      "size": 55132693,
+      "created": "2023-09-15T22:12:18.175264Z",
+      "modified": "2023-09-15T22:57:38.801644Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "835648767",
+      "cell_name": "H19.03.306.11.12.01.05",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1006.0",
+      "Ephys_time": "249.0",
+      "endPipetteR": "2000.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "eecfda7a-6155-46af-aaa3-51841e4a04c8",
+      "blob": "e2404141-d67d-49a1-b6ce-61c4ffe81517",
+      "zarr": null,
+      "path": "sub-835477230/sub-835477230_ses-835648738_icephys.nwb",
+      "size": 48874861,
+      "created": "2023-09-15T22:11:38.469123Z",
+      "modified": "2023-09-15T22:57:39.150875Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "811830358",
+      "cell_name": "H19.03.302.11.15.01.02",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1393.0",
+      "Ephys_time": "54.0",
+      "endPipetteR": "2000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "f0d2d839-c58f-492f-995b-9f40e2eb81ec",
+      "blob": "42e90540-47e5-4255-923d-a751585ab354",
+      "zarr": null,
+      "path": "sub-811677083/sub-811677083_ses-811830262_icephys.nwb",
+      "size": 46622271,
+      "created": "2023-09-15T22:12:19.047630Z",
+      "modified": "2023-09-15T22:57:38.889542Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "712885453",
+      "cell_name": "H18.26.403.11.02.01.04",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "745.0",
+      "Ephys_time": "55.0",
+      "endPipetteR": "1000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "604c5408-200e-400a-81e9-1f663451eab5",
+      "blob": "cb7f792f-a57a-42ba-b927-19a2e770ab3e",
+      "zarr": null,
+      "path": "sub-712700908/sub-712700908_ses-712885392_icephys.nwb",
+      "size": 46058052,
+      "created": "2023-09-15T22:11:40.460547Z",
+      "modified": "2023-09-15T22:57:38.779340Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "832731991",
+      "cell_name": "H19.03.305.11.08.01.11",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1432.0",
+      "Ephys_time": "184.0",
+      "endPipetteR": "4000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "ca5d5319-9309-46e3-834f-e58932262f7a",
+      "blob": "fece7fea-e223-4b6f-bc15-b1559e21c0f5",
+      "zarr": null,
+      "path": "sub-832340431/sub-832340431_ses-832731928_icephys.nwb",
+      "size": 43013122,
+      "created": "2023-09-15T22:11:41.335188Z",
+      "modified": "2023-09-15T22:57:39.159140Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "805751552",
+      "cell_name": "H19.03.301.11.05.01.01",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1392.0",
+      "Ephys_time": "80.0",
+      "endPipetteR": "2000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "e89eb647-7d7f-495b-9578-cfb6879269cd",
+      "blob": "bff85152-3126-4249-a5b7-e9042d245158",
+      "zarr": null,
+      "path": "sub-805678822/sub-805678822_ses-805751525_icephys.nwb",
+      "size": 42105205,
+      "created": "2023-09-15T22:11:43.124405Z",
+      "modified": "2023-09-15T22:57:39.452326Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "654341386",
+      "cell_name": "H17.03.016.11.09.06",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1011.0",
+      "Ephys_time": "20.0",
+      "endPipetteR": "1000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "b8f27a1d-40e0-4891-8f15-9d84c38efa84",
+      "blob": "46be6bb8-02ba-4056-a6f0-48d9bac87b07",
+      "zarr": null,
+      "path": "sub-653718968/sub-653718968_ses-654340992_icephys.nwb",
+      "size": 41804282,
+      "created": "2023-09-15T22:11:35.977736Z",
+      "modified": "2023-09-15T22:57:38.842509Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "1005127787",
+      "cell_name": "H20.03.303.11.03.01.07",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Partial-Nucleus",
+      "Total_time": "1031.0",
+      "Ephys_time": "62.0",
+      "endPipetteR": "150.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "d3ea0b9c-fe58-4d5c-8d1a-8af9cd770690",
+      "blob": "f7af5ed0-909f-4a3d-a88e-363d4314091d",
+      "zarr": null,
+      "path": "sub-1005024327/sub-1005024327_ses-1005127773_icephys.nwb",
+      "size": 40772626,
+      "created": "2023-09-15T22:11:42.238228Z",
+      "modified": "2023-09-15T22:57:39.167357Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "868243321",
+      "cell_name": "H19.03.312.11.05.01.01",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Partial-Nucleus",
+      "Total_time": "1009.0",
+      "Ephys_time": "31.0",
+      "endPipetteR": "20.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "df96a2a6-18cc-4d96-afbe-2a39214d2b50",
+      "blob": "dca1aed7-84cd-44f3-aa60-cca25249ec83",
+      "zarr": null,
+      "path": "sub-868104622/sub-868104622_ses-868243054_icephys.nwb",
+      "size": 35059654,
+      "created": "2023-09-15T22:47:49.244708Z",
+      "modified": "2023-09-15T22:57:38.612933Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "835572687",
+      "cell_name": "H19.03.306.11.12.01.01",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "1286.0",
+      "Ephys_time": "213.0",
+      "endPipetteR": "1500.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "0a86822f-c520-41e6-a9c5-c2b513e5ffcb",
+      "blob": "f306e2ba-a0cc-424a-8f40-50b6f820f883",
+      "zarr": null,
+      "path": "sub-835477230/sub-835477230_ses-835572569_icephys.nwb",
+      "size": 34252357,
+      "created": "2023-09-15T22:11:38.042232Z",
+      "modified": "2023-09-15T22:57:38.852339Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "832614788",
+      "cell_name": "H19.03.305.11.10.01.07",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "936.0",
+      "Ephys_time": "133.0",
+      "endPipetteR": "2000.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "c235ccd2-d3c2-4700-a0d7-cf08f9a5096b",
+      "blob": "cc4e0f07-1b4d-474c-aea1-19d2475ad650",
+      "zarr": null,
+      "path": "sub-832340431/sub-832340431_ses-832614721_icephys.nwb",
+      "size": 31956341,
+      "created": "2023-09-15T22:11:37.577578Z",
+      "modified": "2023-09-15T22:57:38.762786Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "840146916",
+      "cell_name": "H19.06.351.11.16.02.06",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "486.0",
+      "Ephys_time": "65.0",
+      "endPipetteR": "1000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "241ab2ef-9554-44ba-a8f7-e207cad38f1e",
+      "blob": "8907ec16-a57f-4649-abc0-5d7c39239e8f",
+      "zarr": null,
+      "path": "sub-839796862/sub-839796862_ses-840146894_icephys.nwb",
+      "size": 28686740,
+      "created": "2023-09-15T22:11:34.996241Z",
+      "modified": "2023-09-15T22:57:38.833617Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "840142358",
+      "cell_name": "H19.06.351.11.10.01.11",
+      "t-type": "PAX6 TNFAIP8L3",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "601.0",
+      "Ephys_time": "97.0",
+      "endPipetteR": "3000.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "8602ed7e-a8f9-41fd-8af1-5e2bed97767a",
+      "blob": "ed0c6ec4-530b-4803-aa3f-0e2c7ea5b6d1",
+      "zarr": null,
+      "path": "sub-839796862/sub-839796862_ses-840142339_icephys.nwb",
+      "size": 27691370,
+      "created": "2023-09-15T22:12:19.999818Z",
+      "modified": "2023-09-15T22:57:38.898281Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "839918826",
+      "cell_name": "H19.06.351.11.16.01.03",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "643.0",
+      "Ephys_time": "43.0",
+      "endPipetteR": "3000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "baf61d81-cd46-429f-90c8-99637105eb90",
+      "blob": "1ac4d5d5-c329-45ca-bfde-539b13e0e81b",
+      "zarr": null,
+      "path": "sub-839796862/sub-839796862_ses-839918580_icephys.nwb",
+      "size": 26478361,
+      "created": "2023-09-15T22:11:34.504407Z",
+      "modified": "2023-09-15T22:57:38.824681Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "911007428",
+      "cell_name": "H19.03.317.11.05.01.01",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "861.0",
+      "Ephys_time": "228.0",
+      "endPipetteR": "1000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "853bf084-0a4e-406d-9be1-bbf0b46433c1",
+      "blob": "09c800de-d79e-45d6-ae19-82de69775ce8",
+      "zarr": null,
+      "path": "sub-910872916/sub-910872916_ses-911007218_icephys.nwb",
+      "size": 25342207,
+      "created": "2023-09-15T22:11:42.684119Z",
+      "modified": "2023-09-15T22:57:39.176083Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "548480353",
+      "cell_name": "H16.06.012.11.03.07",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "0.0",
+      "Ephys_time": "0.0",
+      "endPipetteR": "0.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "9c71d6fc-1fea-47a5-b9a5-e3561730cdfd",
+      "blob": "bf8484d2-647f-42ac-b508-b12a814461b4",
+      "zarr": null,
+      "path": "sub-548298531/sub-548298531_ses-548480228_icephys.nwb",
+      "size": 23865680,
+      "created": "2023-09-15T22:12:17.750466Z",
+      "modified": "2023-09-15T22:57:39.192347Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "868240930",
+      "cell_name": "H19.03.312.11.09.01.01",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "563.0",
+      "Ephys_time": "68.0",
+      "endPipetteR": "5000.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "708dc7cd-0395-43f0-aa20-10b15a00b434",
+      "blob": "f57392ae-c468-4327-9212-b3d99e3ca00a",
+      "zarr": null,
+      "path": "sub-868104622/sub-868104622_ses-868240696_icephys.nwb",
+      "size": 23211885,
+      "created": "2023-09-15T22:47:50.973187Z",
+      "modified": "2023-09-15T22:57:38.521413Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "811837476",
+      "cell_name": "H19.03.302.11.15.01.03",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "639.0",
+      "Ephys_time": "186.0",
+      "endPipetteR": "2000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "bcea9ae7-3971-4aa1-b6ab-9d472ff6f90c",
+      "blob": "9ed22f07-9169-457c-a102-f4c4dfc0f04e",
+      "zarr": null,
+      "path": "sub-811677083/sub-811677083_ses-811837270_icephys.nwb",
+      "size": 21837471,
+      "created": "2023-09-15T22:11:37.113249Z",
+      "modified": "2023-09-15T22:57:38.749415Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "880209298",
+      "cell_name": "H19.06.356.11.09.01.04",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "745.0",
+      "Ephys_time": "132.0",
+      "endPipetteR": "4000.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "f86009b9-6815-4828-a199-a9a5d9dc2f2f",
+      "blob": "0ead5bd0-a6d2-4778-b28f-665f42912687",
+      "zarr": null,
+      "path": "sub-879881396/sub-879881396_ses-880209119_icephys.nwb",
+      "size": 20962662,
+      "created": "2023-09-15T22:11:40.879343Z",
+      "modified": "2023-09-15T22:57:38.870758Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "602201902",
+      "cell_name": "H17.03.010.11.06.05",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "No-Seal",
+      "Total_time": "0.0",
+      "Ephys_time": "0.0",
+      "endPipetteR": "0.0",
+      "has_morph": "False"
+    },
+    "asset": {
+      "asset_id": "554993fe-89b4-4508-9b39-0d1eeddd8bf5",
+      "blob": "d9372d99-d322-4591-b6f4-6664a9daed03",
+      "zarr": null,
+      "path": "sub-601901227/sub-601901227_ses-602201875_icephys.nwb",
+      "size": 20366027,
+      "created": "2023-09-15T22:12:18.599921Z",
+      "modified": "2023-09-15T22:57:39.203684Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "811953283",
+      "cell_name": "H19.03.302.11.04.01.04",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Partial-Nucleus",
+      "Total_time": "609.0",
+      "Ephys_time": "95.0",
+      "endPipetteR": "100.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "23666b66-2d4d-4b4e-a5f0-bbc39e898252",
+      "blob": "55c23f2a-667d-4cde-b90a-0ee40d08b593",
+      "zarr": null,
+      "path": "sub-811677083/sub-811677083_ses-811953264_icephys.nwb",
+      "size": 19022226,
+      "created": "2023-09-15T22:11:44.026432Z",
+      "modified": "2023-09-15T22:57:39.184261Z"
+    }
+  },
+  {
+    "cell": {
+      "spec_id": "721688585",
+      "cell_name": "H18.03.313.11.06.01.05",
+      "t-type": "PAX6 CDH12",
+      "postPatch_classification": "Nucleated",
+      "Total_time": "515.0",
+      "Ephys_time": "51.0",
+      "endPipetteR": "4000.0",
+      "has_morph": "True"
+    },
+    "asset": {
+      "asset_id": "35f3bcc0-8a23-4c6b-9225-30aede27db4f",
+      "blob": "3db140f6-7f12-4d3e-a6d5-0640caff70ad",
+      "zarr": null,
+      "path": "sub-720619787/sub-720619787_ses-721688570_icephys.nwb",
+      "size": 18957779,
+      "created": "2023-09-15T22:11:36.655861Z",
+      "modified": "2023-09-15T22:57:39.434496Z"
+    }
+  }
+]

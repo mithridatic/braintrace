@@ -1,5 +1,9 @@
 # L1 protocol resolved; channel kinetics remain unqualified
 
+Follow-up: [raw channel experiments have now been recovered](channel-923103553/README.md).
+The missing summary CSV described below remains absent, but it no longer prevents
+analysis of the published currents. Kinetic qualification remains pending.
+
 The recording-method reference is now available. The new
 [fitting-input receipt](fitting-inputs-r2.json) supersedes the earlier preparation
 receipt without changing the calibration/holdout split or population scores.

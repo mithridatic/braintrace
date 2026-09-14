@@ -83,3 +83,80 @@ measurements exist. Retain exact source identities and the search boundary.
 This stage is read-only source analysis plus new evidence receipts. It neither
 fits a model nor accesses held-out response arrays. The existing eight/nine
 calibration/holdout QC split and the six population values remain unchanged.
+
+### Recover raw channel experiments from published NWB sessions
+
+Join the human cell names visible in the author channel-table preview to pinned
+metadata specimen and Ephys_Roi_Result identifiers, then join the latter to DANDI
+session identifiers. DANDI subject identifiers identify tissue subjects and must
+not be mistaken for individual cell identifiers. Start with non-excluded human
+cells; retain any excluded match in the inventory without using it to fit.
+
+Fetch at most three eligible files, capped at 170 MB combined and 80 MB each,
+checking upstream size and SHA256. Inspect acquisition/stimulus identities and
+actual voltage commands to distinguish nucleated-patch step families from setup
+checks. Do not infer channel evidence from VoltageClampSeries alone. Preserve
+all original data, clocks, conversion factors, source hashes and command families.
+Any comparison to the author's table is reproduction, not independent validation.
+Newly observed channel records are discovery/calibration material, not holdouts.
+This local CPU source audit runs no membrane model or optimization.
+
+Implement `docs/evidence/h01_l1_voltage_clamp.py` with sibling tests to export
+registered nucleated-patch sweeps from the hash-pinned session 923103553. Reconstruct
+the command from the stored DAC waveform plus explicitly enabled amplifier holding
+voltage, keeping both separately. This is a command, not measured patch voltage;
+do not label the measured total current as isolated potassium current. Preserve
+SI conversions/offsets and notebook compensation metadata. Reject wrong source,
+mode, family, holding units, clocks, nonfinite arrays and ambiguous terminal zeros.
+Zero current can be real: never silently strip it using the current-clamp voltage
+padding heuristic. Retain all accepted samples and report unresolved coverage/QC.
+
+Export a deterministic low/middle/high selection in the total, prepulse and
+sustained families, their first leak controls, and first/middle/last recovery
+conditions. Inspect common-scale current/command plots before deriving kinetic
+parameters. The first extraction is discovery evidence and changes no metric.
+
+After recovering the LAMP5 source, search eligible PAX6 metadata for an appropriate
+kinetic source under the same 170 MB combined acquisition cap. Restrict to human,
+exclude=No, transcriptomic QC true, Nucleated extraction and matching CDH12 type;
+rank by descending NWB byte size as a discovery heuristic for additional sweeps,
+not by current or fit outcomes. Record this selection rule before opening arrays.
+Keep all whole-cell current-clamp responses in this new specimen unopened. A
+source match by type does not establish kinetic equivalence between specimens.
+
+The largest PAX6 file (session 902511350) contains additional whole-cell stimulus
+families but no nucleated-patch channel families. Retain this negative inventory.
+For the third and final acquisition in this audit, inspect the next eligible file
+(session associated with specimen 839897427). Raise only the combined byte cap
+to 210 MB; the three-file and 80 MB per-file limits remain. This candidate also
+shares the H19.06.351 donor with a cell in the author channel-table preview. No
+whole-cell responses or fit outcomes inform this follow-up selection.
+
+Both inspected PAX6 files lack nucleated-patch families. Before any further full
+download, allow HTTP Range reads of HDF5 headers for the next three eligible
+PAX6 files. Cap each probe at 2 MB of actual fetched bytes; require HTTP 206 and
+the exact requested Content-Range. Inspect the last acquisition's family as a
+discovery screen, not an exhaustive negative inventory. Cache fixed-size blocks
+locally in memory. These partial reads cannot verify a whole-file digest and
+must remain explicitly preliminary until a positive source is fully acquired.
+
+The 64 KiB block probe exceeded the per-file cap because sparse metadata occupied
+many blocks. Repeating with 8 KiB blocks stayed below the same cap and identified
+`NucVCzrecovs1_DA_0` in PAX6 CDH12 session 840043481. Acquire this positively
+screened file as the fourth full file, increasing the full-file total cap to
+265 MB. Preserve the preliminary range receipts and both negative full inventories;
+do not treat the failed range probes as absent channel evidence. This additional
+acquisition directly addresses the selected donor's transcriptomic class.
+
+## Prospective kinetic calibration and external validation
+
+Use PAX6 CDH12 specimen 840043506, session 840043481, donor H19.06.351 as the
+channel-calibration source. Its full hash-verified NWB contains nucleated-patch
+sweeps 70-141. Before decoding its currents, reserve PAX6 CDH12 specimen
+835648767, session 835648738, donor H19.03.306 for external kinetic validation.
+Only author metadata and its last acquisition header have been inspected; the
+full file and response arrays remain unopened. This exposure is disclosed in
+the source contract. Freeze candidate kinetics, protocol predictions, QC and
+scoring rules before accessing those validation currents. Do not tune against
+them. Preserve the original specimen 811953283 whole-cell data split unchanged.
+LAMP5 specimen 923103580 remains discovery/reproduction material, not a holdout.

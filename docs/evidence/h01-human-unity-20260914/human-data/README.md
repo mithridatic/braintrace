@@ -1,5 +1,9 @@
 # Human donor data access established
 
+Latest follow-up: [human L1 channel-current sources recovered](channel-923103553/README.md)
+provides verified LAMP5 and type-matched PAX6 recordings, direct current observations
+and a distinct-donor kinetic validation reservation.
+
 Follow-up: [recording preparation and QC](preparation.md) now establishes eight
 calibration and nine held-out sweeps passing standard IPFX QC, with explicit
 padding masks and exclusions. This acquisition receipt remains the original

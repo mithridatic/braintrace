@@ -1,0 +1,93 @@
+{
+  "source_sha256": "367240a152f4304707fc849391109da76898cf29405ac66a6a5b6541f559dc54",
+  "session_id": "923103553",
+  "specimen_id": "923103580",
+  "sweep": 140,
+  "family": "NucVCSus0_DA_0",
+  "role": "channel discovery",
+  "absolute_start_s": 4847.4169998168945,
+  "sample_rate_hz": 50000.0,
+  "samples": 155000,
+  "conversions": [
+    {
+      "stored_unit": "amperes",
+      "conversion": 9.999999960041972e-13,
+      "offset": 0.0
+    },
+    {
+      "stored_unit": "volts",
+      "conversion": 0.0010000000474974513,
+      "offset": 0.0
+    }
+  ],
+  "instrument": {
+    "RsComp Enable": {
+      "value": 0.0,
+      "unit": "On/Off"
+    },
+    "RsComp Correction": {
+      "value": 0.0,
+      "unit": "%"
+    },
+    "Series Resistance": {
+      "value": 0.0,
+      "unit": "MOhms"
+    },
+    "TP Steady State Resistance": {
+      "value": 1429.5899658203125,
+      "unit": "Mohm"
+    },
+    "Fast compensation capacitance": {
+      "value": 9.97915292066942e-12,
+      "unit": "F"
+    },
+    "Slow compensation capacitance": {
+      "value": 0.0,
+      "unit": "F"
+    }
+  },
+  "command_segments": [
+    {
+      "start_index": 0,
+      "stop_index": 2250,
+      "start_ms": 0.0,
+      "stop_ms": 45.0,
+      "command_mv": -20.00674046576023
+    },
+    {
+      "start_index": 2250,
+      "stop_index": 2751,
+      "start_ms": 45.0,
+      "stop_ms": 55.019999999999996,
+      "command_mv": -10.006739990785718
+    },
+    {
+      "start_index": 2751,
+      "stop_index": 55000,
+      "start_ms": 55.019999999999996,
+      "stop_ms": 1100.0,
+      "command_mv": -20.00674046576023
+    },
+    {
+      "start_index": 55000,
+      "stop_index": 105000,
+      "start_ms": 1100.0,
+      "stop_ms": 2100.0,
+      "command_mv": 69.99326380901039
+    },
+    {
+      "start_index": 105000,
+      "stop_index": 155000,
+      "start_ms": 2100.0,
+      "stop_ms": 3100.0,
+      "command_mv": -20.00674046576023
+    }
+  ],
+  "junction_correction_applied": false,
+  "leak_subtraction_applied": false,
+  "actual_patch_voltage_measured": false,
+  "patch_area_um2": null,
+  "channel_kinetics_qualified": false,
+  "coverage_qc": "pending independent assessment",
+  "arrays_sha256": "8ceb61c7a7c2099e40d4652c064ce843e2b5c0de04eeffb4b9bfb1b800a4015a"
+}
