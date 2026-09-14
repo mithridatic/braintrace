@@ -1440,7 +1440,7 @@ def run_fixed_schedule(trainer, episodes, *, proof=False):
         payload = {**episode, **static_payload}
         return trainer.update_episode(**payload)
 
-    return brainstate.transform.for_loop(update, stacked)
+    return brainstate.transform.jit(lambda ep: brainstate.transform.for_loop(update, ep))(stacked)
 
 
 def _supervised_episodes(data_root, task_ids):
@@ -1499,13 +1499,18 @@ def _screen_predictions(model, learner, episodes):
         episode.get("advance_mask", episode["loss_mask"]) for episode in episodes
     ])
 
-    def evaluate(events, advances):
-        model.reset_episode(learner)
-        voltages = run_event_sequence(model, events, advances)
-        features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
-        return features @ model.readout_weight.value + model.readout_bias.value
+    def evaluate_all(all_events, all_advances):
+        def evaluate_one(events, advances):
+            model.reset_episode(learner)
+            voltages = brainstate.transform.for_loop(
+                lambda event, advance: model.step(event, advance), events, advances
+            )
+            features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+            return features @ model.readout_weight.value + model.readout_bias.value
 
-    logits = brainstate.transform.for_loop(evaluate, event_values, advance_values)
+        return brainstate.transform.for_loop(evaluate_one, all_events, all_advances)
+
+    logits = brainstate.transform.jit(evaluate_all)(event_values, advance_values)
     records = []
     for episode, output in zip(episodes, np.asarray(logits)):
         prediction = decode_prediction(np.asarray(output))
