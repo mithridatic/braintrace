@@ -12,6 +12,44 @@ from .h01_ei_circuit_test import arguments
 from .h01_construction import H01Cell, _indexed_morphology, build_dhs_static_source_1d
 
 
+def test_geometry_reuses_equal_bounds_and_clone(imported):
+    from .h01_construction import _fast_build_cv_geometry, _fast_clone_morpho
+    morpho = imported.morphology
+    bounds = braincell.MaxCVLen(.5*u.um).resolve_cv_bounds(morpho)
+    first = _fast_build_cv_geometry(morpho, bounds)
+    copied = tuple(tuple((lo, hi) for lo, hi in branch) for branch in bounds)
+    assert copied is not bounds
+    assert _fast_build_cv_geometry(morpho, copied) is first
+    assert _fast_build_cv_geometry(_fast_clone_morpho(morpho), copied) is first
+
+
+def test_geometry_cache_releases_result_with_owner(imported):
+    import gc
+    import weakref
+    from .h01_construction import _fast_build_cv_geometry, _fast_clone_morpho
+    morpho = _fast_clone_morpho(imported.morphology)
+    bounds = braincell.MaxCVLen(.5*u.um).resolve_cv_bounds(morpho)
+    result = _fast_build_cv_geometry(morpho, bounds)
+    reference = weakref.ref(result)
+    del result, morpho
+    gc.collect()
+    assert reference() is None
+
+
+def test_geometry_cache_invalidates_bounds_and_topology(imported):
+    from .h01_construction import _fast_build_cv_geometry
+    morpho = imported.morphology
+    policy = braincell.MaxCVLen(.5*u.um)
+    first = _fast_build_cv_geometry(morpho, policy.resolve_cv_bounds(morpho))
+    second = _fast_build_cv_geometry(morpho, braincell.MaxCVLen(1.*u.um).resolve_cv_bounds(morpho))
+    assert len(second.geos) < len(first.geos)
+    morpho.attach(parent=morpho.root,
+        child_branch=braincell.Branch.from_lengths(lengths=[2.]*u.um, radii=[1., 1.]*u.um),
+        child_name="cache_extra")
+    third = _fast_build_cv_geometry(morpho, policy.resolve_cv_bounds(morpho))
+    assert len(third.geos) > len(first.geos)
+
+
 def test_axial_resistivity_cache_cannot_reuse_another_quantity_identity(monkeypatch):
     from . import h01_construction as subject
     monkeypatch.setattr(subject,'_RA_CACHE',{})

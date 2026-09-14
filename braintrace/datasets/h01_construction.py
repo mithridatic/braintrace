@@ -293,14 +293,18 @@ def _fast_validate_morphology(morpho):
 _geo_mod.validate_morphology = _fast_validate_morphology
 
 _orig_build_cv_geometry = _geo_mod.build_cv_geometry
-_GEOMETRY_CACHE = {}
-
 def _fast_build_cv_geometry(morpho, bounds_by_branch):
-    sig = getattr(morpho, "_h01_geom_sig", None)
-    geom_key = sig if sig is not None else id(morpho)
-    key = (geom_key, len(morpho._nodes), id(bounds_by_branch))
-    if key in _GEOMETRY_CACHE:
-        return _GEOMETRY_CACHE[key]
+    # Branch geometries are immutable; retain their owners alongside identities
+    # so recycled object addresses can never produce a false cache hit.
+    owners = tuple(node.branch for node in morpho._nodes.values())
+    topology = tuple((node_id, id(node.branch), node.parent_id, node.parent_x, node.child_x)
+                     for node_id, node in morpho._nodes.items())
+    bounds = tuple(tuple((float(lo), float(hi)) for lo, hi in branch)
+                   for branch in bounds_by_branch)
+    key = (topology, bounds)
+    cached = getattr(morpho, "_h01_cv_geometry_cache", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
 
     if not getattr(morpho, "_h01_validated", False):
         _geo_mod.validate_morphology(morpho)
@@ -531,7 +535,7 @@ def _fast_build_cv_geometry(morpho, bounds_by_branch):
         geos=finalized,
         branch_to_cv_ids=branch_to_cv_ids,
     )
-    _GEOMETRY_CACHE[key] = res
+    morpho._h01_cv_geometry_cache = (key, res, owners)
     return res
 
 _geo_mod.build_cv_geometry = _fast_build_cv_geometry

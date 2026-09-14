@@ -1,0 +1,31 @@
+         22614 function calls (22087 primitive calls) in 4.441 seconds
+
+   Ordered by: cumulative time
+   List reduced from 226 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    4.441    4.441 h01_event_profile.py:91(<lambda>)
+        1    0.000    0.000    4.439    4.439 _jit.py:125(jitted_fn)
+        1    0.000    0.000    4.435    4.435 traceback_util.py:191(reraise_with_filtered_traceback)
+        1    0.000    0.000    4.435    4.435 pjit.py:257(cache_miss)
+        1    0.000    0.000    4.433    4.433 pjit.py:133(_run_python_pjit)
+        1    0.000    0.000    4.433    4.433 pjit.py:1169(_pjit_call_impl_python)
+      3/2    0.000    0.000    4.430    2.215 profiler.py:417(wrapper)
+        1    4.428    4.428    4.430    4.430 pxla.py:399(__call__)
+        4    0.000    0.000    0.002    0.001 {jaxlib.utils.safe_map}
+      106    0.000    0.000    0.002    0.000 pjit.py:1155(convert_to_metaty)
+        1    0.000    0.000    0.002    0.002 _state.py:2557(assign_state_vals_v2)
+  311/105    0.000    0.000    0.002    0.000 _state.py:418(__setattr__)
+  311/105    0.001    0.000    0.002    0.000 _state.py:435(_setattr)
+        1    0.000    0.000    0.002    0.002 _make_jaxpr.py:633(get_state_trace)
+        2    0.000    0.000    0.002    0.001 pxla.py:85(shard_args)
+        1    0.000    0.000    0.002    0.002 _make_jaxpr.py:378(get_arg_cache_key)
+        1    0.000    0.000    0.002    0.002 pxla.py:304(__call__)
+      426    0.001    0.000    0.002    0.000 array.py:1120(_get_aval_array)
+        1    0.000    0.000    0.002    0.002 array_creation.py:98(ones)
+        1    0.000    0.000    0.002    0.002 _make_jaxpr.py:442(_compilation_is_stale)
+      318    0.000    0.000    0.002    0.000 core.py:1930(shaped_abstractify)
+        1    0.001    0.001    0.001    0.001 array.py:1228(_array_shard_arg)
+        1    0.000    0.000    0.001    0.001 lax.py:3603(full)
+      103    0.000    0.000    0.001    0.000 _state.py:503(value)
+        2    0.000    0.000    0.001    0.001 core.py:682(bind)

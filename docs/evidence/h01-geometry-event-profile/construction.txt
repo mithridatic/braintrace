@@ -1,0 +1,31 @@
+         36597142 function calls (36480934 primitive calls) in 30.098 seconds
+
+   Ordered by: cumulative time
+   List reduced from 913 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001   31.598   31.598 h01_event_profile.py:68(<lambda>)
+        1    0.000    0.000   31.480   31.480 h01_network.py:220(make_h01_network)
+        4    0.006    0.001   15.809    3.952 h01_ei_cell.py:86(make_h01_ei_cell)
+        1    0.006    0.006   14.365   14.365 h01_network.py:163(_load_contact_cells)
+        4    0.000    0.000   13.960    3.490 _node.py:40(__call__)
+        4    0.000    0.000   13.959    3.490 cell.py:174(__init__)
+        4    0.000    0.000   13.959    3.490 cell.py:444(cvs)
+        4    0.000    0.000   13.959    3.490 h01_construction.py:1555(_discretization)
+        4    0.000    0.000   13.956    3.489 cell.py:421(_discretization)
+        4    0.008    0.002   13.956    3.489 base.py:427(build_discretization)
+        4    0.091    0.023   13.948    3.487 base.py:471(_build_discretization_parts)
+        4    0.097    0.024   10.210    2.553 h01.py:562(load)
+        4    2.560    0.640    7.652    1.913 h01.py:166(_fast_build_morpho_from_rows)
+        4    1.463    0.366    5.841    1.460 h01_construction.py:296(_fast_build_cv_geometry)
+        4    3.158    0.789    5.233    1.308 h01_construction.py:625(_fast_build_node_tree)
+        4    0.000    0.000    4.148    1.037 h01_network.py:31(_location)
+       14    0.108    0.008    4.131    0.295 h01.py:121(anatomy)
+        4    3.327    0.832    4.023    1.006 h01_anatomy.py:120(__init__)
+      140    0.750    0.005    2.505    0.018 h01_anatomy.py:24(_geometry_signature)
+        4    1.106    0.277    2.252    0.563 _h01_swc.py:25(normalize)
+    96/24    0.071    0.001    2.104    0.088 region.py:195(evaluate)
+       20    0.209    0.010    1.838    0.092 h01_discretization.py:31(resolve_cv_bounds)
+        4    0.493    0.123    1.754    0.439 h01_ei_cell.py:28(_validate_regions)
+    75609    0.026    0.000    1.501    0.000 base.py:496(<genexpr>)
+    75605    0.770    0.000    1.475    0.000 h01_construction.py:870(_fast_assemble_cv)
