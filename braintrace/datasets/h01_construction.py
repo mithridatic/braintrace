@@ -1553,6 +1553,40 @@ class H01Cell(braincell.Cell):
     only on demand if ``compute_axial_derivative`` or ``_get_axial_operator`` is called.
     """
 
+    def __init__(self, morpho, **kwargs):
+        """Validate declaration geometry without assembling a discarded preview.
+
+        Parameters
+        ----------
+        morpho : braincell.Morphology
+            Source morphology.
+        **kwargs
+            Unchanged ``braincell.Cell`` constructor options.
+        """
+        self._h01_constructor_validation = True
+        try:
+            super().__init__(morpho, **kwargs)
+        finally:
+            self._h01_constructor_validation = False
+
+    @property
+    def cvs(self):
+        """Return the full public CV preview after declaration validation.
+
+        Returns
+        -------
+        tuple
+            Static or runtime CV views as provided by BrainCell.
+        """
+        if getattr(self, '_h01_constructor_validation', False):
+            with _indexed_morphology(self._morpho):
+                bounds = self.cv_policy.resolve_cv_bounds(
+                    self._morpho, paint_rules=self._paint_rules)
+                _fast_build_cv_geometry(self._morpho, bounds)
+            # Parent Cell.__init__ discards this eager validation result.
+            return ()
+        return super().cvs
+
     @property
     def _discretization(self):
         sig = getattr(self._morpho, "_h01_geom_sig", None)

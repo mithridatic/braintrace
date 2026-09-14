@@ -13,6 +13,36 @@ from .h01_ei_circuit_test import arguments
 from .h01_construction import H01Cell, _indexed_morphology, build_dhs_static_source_1d
 
 
+def test_constructor_defers_discarded_node_tree(imported, monkeypatch):
+    from . import h01_construction as construction
+    calls = []
+    original = construction._node_build_mod.build_node_tree_from_cvs
+
+    def counted(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(construction._node_build_mod, 'build_node_tree_from_cvs', counted)
+    cell = H01Cell(imported.morphology, cv_policy=braincell.MaxCVLen(2.*u.um))
+    assert not calls
+    assert cell.__dict__.get('_discretization_cache') is None
+    assert len(cell.cvs) > 0
+    assert len(calls) == 1
+    assert len(cell.cvs) > 0
+    assert len(calls) == 1
+
+
+def test_constructor_preserves_eager_policy_validation(imported, monkeypatch):
+    policy = braincell.MaxCVLen(2.*u.um)
+
+    def invalid(*args, **kwargs):
+        raise ValueError('invalid geometry policy')
+
+    monkeypatch.setattr(type(policy), 'resolve_cv_bounds', invalid)
+    with pytest.raises(ValueError, match='invalid geometry policy'):
+        H01Cell(imported.morphology, cv_policy=policy)
+
+
 def test_obsolete_discretization_is_not_retained_globally(imported):
     import gc
     import weakref

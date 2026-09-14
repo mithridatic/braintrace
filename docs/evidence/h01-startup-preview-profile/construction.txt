@@ -1,0 +1,31 @@
+         30352105 function calls (30236041 primitive calls) in 24.993 seconds
+
+   Ordered by: cumulative time
+   List reduced from 873 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001   25.734   25.734 h01_event_profile.py:68(<lambda>)
+        1    0.000    0.000   25.614   25.614 h01_network.py:220(make_h01_network)
+        1    0.007    0.007   14.602   14.602 h01_network.py:163(_load_contact_cells)
+        4    0.109    0.027   10.157    2.539 h01.py:562(load)
+        4    0.005    0.001    9.291    2.323 h01_ei_cell.py:86(make_h01_ei_cell)
+        4    2.505    0.626    7.563    1.891 h01.py:166(_fast_build_morpho_from_rows)
+        4    0.000    0.000    7.359    1.840 _node.py:40(__call__)
+        4    0.000    0.000    7.359    1.840 h01_construction.py:1556(__init__)
+        4    0.000    0.000    7.359    1.840 cell.py:174(__init__)
+        4    0.018    0.004    7.358    1.839 h01_construction.py:1572(cvs)
+        4    1.541    0.385    6.035    1.509 h01_construction.py:297(_fast_build_cv_geometry)
+        4    0.000    0.000    4.438    1.109 h01_network.py:31(_location)
+       14    0.106    0.008    4.420    0.316 h01.py:121(anatomy)
+        4    3.592    0.898    4.314    1.078 h01_anatomy.py:120(__init__)
+       20    0.571    0.029    2.596    0.130 h01_discretization.py:31(resolve_cv_bounds)
+      140    0.744    0.005    2.493    0.018 h01_anatomy.py:24(_geometry_signature)
+    96/24    0.068    0.001    2.490    0.104 region.py:195(evaluate)
+        4    1.160    0.290    2.273    0.568 _h01_swc.py:25(normalize)
+        4    0.561    0.140    1.834    0.458 h01_ei_cell.py:28(_validate_regions)
+       48    0.128    0.003    1.471    0.031 h01_construction.py:1217(_fast_difference_region_intervals)
+      336    1.119    0.003    1.385    0.004 h01_construction.py:1171(_fast_norm_region_intervals)
+        4    0.002    0.001    1.372    0.343 h01_network.py:204(_register_cell)
+       96    0.608    0.006    1.260    0.013 helper.py:383(_group_by_branch)
+   256237    0.252    0.000    1.224    0.000 fromnumeric.py:2304(sum)
+        8    0.017    0.002    1.189    0.149 morphology.py:628(edges)

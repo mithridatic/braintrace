@@ -1,0 +1,192 @@
+{
+  "status": "forward_pass",
+  "phases": {
+    "construction": {
+      "seconds": 32.89861289784312,
+      "status": "pass"
+    },
+    "initialization": {
+      "seconds": 24.120491901412606,
+      "status": "pass"
+    },
+    "model_setup": {
+      "seconds": 2.4685781924054027,
+      "status": "pass"
+    },
+    "cold_event": {
+      "seconds": 7.917926157824695,
+      "status": "pass"
+    },
+    "warm_event": {
+      "seconds": 0.3924845736473799,
+      "status": "pass"
+    }
+  },
+  "cells": 4,
+  "settings": {
+    "optimizer_policy": {
+      "version": "h01-masked-muon-v1",
+      "weight_decay": 0.1,
+      "beta": 0.95,
+      "ns_steps": 5,
+      "eps": 1e-08,
+      "ns_coeffs": [
+        3.4445,
+        -4.775,
+        2.0315
+      ],
+      "nesterov": true,
+      "adaptive": false,
+      "preconditioning": "frobenius",
+      "shape_scaling": "width",
+      "learning_rates": {
+        "input": 0.001,
+        "recurrent": 0.0003,
+        "readout": 0.003
+      },
+      "bias": {
+        "algorithm": "adamw",
+        "b1": 0.9,
+        "b2": 0.999,
+        "eps": 1e-08,
+        "weight_decay": 0.1,
+        "nesterov": true
+      },
+      "workspace_limit_bytes": 536870912
+    },
+    "dt_ms": 0.000625,
+    "event_ms": 0.1,
+    "substeps": 160,
+    "precision": 64,
+    "solver": "h01_staggered_calcium_implicit",
+    "max_cv_length_um": 10.0,
+    "decay": 0.99,
+    "factor_limit_bytes": 536870912,
+    "seed": 21,
+    "checkpoint_substeps": true,
+    "implementation_sha256": {
+      "braintrace/datasets/h01.py": "86b88bc399baffbe58b014ed8e02eeb17d3c35f7a15bc45379e20cd6f0114eea",
+      "braintrace/datasets/h01_active.py": "f6dd8a6772bb0efdf3b336930baad7de3cdb752c876e24fccc9046be2b679623",
+      "braintrace/datasets/h01_anatomy.py": "3cbec09536add38d2ad286365ac8a13883bf3597252472708b383b8c5a1173bd",
+      "braintrace/datasets/h01_annotated_demo.py": "f0316a45c606ac0cdef4b2169b87f3f08d647ca3e13169ea8286320b3d7d7791",
+      "braintrace/datasets/h01_annotations.py": "4b91aa96e0841b10ae93ca8533696844aad00f6f6c94602feb1c4281fda78c20",
+      "braintrace/datasets/h01_biology.py": "5cb2c38f4f403c4b19e17e10d832d7a07080587b0a452173e0da4f45794498c4",
+      "braintrace/datasets/h01_calcium_implicit.py": "dacc13d6661e008b5a71b9761879f26d16f528700758b2d86b89cccfdb8f5b5d",
+      "braintrace/datasets/h01_calcium_solver.py": "0d0ca81450c7c50c0a14cb92f5d2251c131c29d18dc17fa6019289ca2a571b2b",
+      "braintrace/datasets/h01_cell_types.py": "72cad4cf0ef0690d9ad14415f147bb41841adde19a00110a6ca8352683a5e179",
+      "braintrace/datasets/h01_channels.py": "bcbef72ca581e4a30ad13804035911aea916bc43dc144cf1aa40f279db235d63",
+      "braintrace/datasets/h01_connectivity.py": "19600d0817b601f6aad9ae72bb960d19943b09588189261d4d316411f020de98",
+      "braintrace/datasets/h01_construction.py": "7256e7336b1e801ba5dac14a113afe2344443047aa0d1c2e649e0dc983687170",
+      "braintrace/datasets/h01_demo.py": "261ae0b6c0711c21c37bf098512f2b0c9207ea85639c648fbdf5e0009befdc7a",
+      "braintrace/datasets/h01_dhs_contraction.py": "92063560dfb7d5aa24ceaf11f8cb38d39dd570694c1802381229c9906c6d25e1",
+      "braintrace/datasets/h01_dhs_gpu.py": "9ff1dc1a7b7548f08a50919181e51184c6bf3f5f227d5a76435e54076497bb7d",
+      "braintrace/datasets/h01_dhs_scan.py": "edfa9fb90bfa1d153976a1f216d94072a225365912b387842f2a25d4d455c864",
+      "braintrace/datasets/h01_discretization.py": "9b53809c2926009b351224a90baa302bc781a269a200d0eaa937d67bb63eff18",
+      "braintrace/datasets/h01_ei_cell.py": "b3e34248b30458d0b56d54ed8c7b2911b5bf86d1d611e34ecf6ab4030ccd596b",
+      "braintrace/datasets/h01_ei_circuit.py": "eb8a49f027360ebe148736581ec7fc18bd2dfd52575eefba3e8aa8237aed2677",
+      "braintrace/datasets/h01_ei_profiles.py": "4479f1897452479d529a20e444aa4437432194da9eb7cf14d28400662bb0b38d",
+      "braintrace/datasets/h01_glia.py": "57192b1841a47062bb4dcea191e98ab523a5d8105a811bdb8d623b0768c1aa4e",
+      "braintrace/datasets/h01_glial_cable.py": "b0680562de1013271ff3b42ab449133940c79923d3eb4f7fb2583ed15ea7f35b",
+      "braintrace/datasets/h01_l2_cell.py": "6b97996a20230df16f4bdb5479a14a7a9e1842d85467d0bd0d7a49521ff61764",
+      "braintrace/datasets/h01_l2_channels.py": "60408006f4e4175ae2ac9de5f2b8d7326d03c8c116715970af244dc245a99111",
+      "braintrace/datasets/h01_measured_contact.py": "fa9e4a47460f4618ec2d7eea40d0b612d71df169d74c63ed649ead20b108fa06",
+      "braintrace/datasets/h01_network.py": "657fea3b0715ca56e517b47aabafbf84cbf8ad8ef43db9047c224f8a8f78ff01",
+      "braintrace/datasets/h01_network_init.py": "459e2cc82796e576598ac08221d1c9e14f3eec993b795e8e0aba7bf330c5c2c6",
+      "braintrace/datasets/h01_network_step.py": "3923a3b5354f121eebd623de5fca7fb7626747c4f566aef3b721ea0b0e5e0bdf",
+      "braintrace/datasets/h01_neuroglia.py": "1d1c8d87273b27cf089b12b24e90ed3d496609d26ed68d537e37da998fd14a34",
+      "braintrace/datasets/h01_pv_calcium.py": "f836566196fe8b4eb366ede8f5637a12c10b2e05988524a1deb0dc7cfa8d6188",
+      "braintrace/datasets/h01_pv_cell.py": "62b60b5c753fde237ff338da4aebb633d5109abf67a3aadf75666b29ddf01a4e",
+      "braintrace/datasets/h01_pv_channels.py": "beaae51a60a42dbac6ca21f17e72c0aa20e063ca500a675cf4f4b70f366cb614",
+      "braintrace/datasets/h01_pv_morphology.py": "f0e43458d93fc905b29e9b69bce77a24ef4bebbfeae568006cabeba7e7e2ac68",
+      "braintrace/datasets/h01_pv_rates.py": "cd29eb8921470102a08bace46af17947fa191dd833b72d24cfce9c013be101f6",
+      "braintrace/datasets/h01_reference.py": "98d063ca2bdf65f36ea6380d9af2956d4b7f0f1849ef090cdef67b0dfc30981b",
+      "braintrace/datasets/h01_spike_output.py": "5a257751134ab434040fc67ca7ba657b997719a84b92e430236f4e10d5652ee8",
+      "braintrace/datasets/h01_spine_assembly.py": "05e012ef40ee5f8b4147cc6261cd1c873205455711915bf8d84453c8a365aaed",
+      "braintrace/datasets/h01_wilbers.py": "6f84b48128408cbb70098dcb31453ffb235a878c1422e4824375615b60f2bc4d",
+      "braintrace/biophysics/__init__.py": "2f0b1e7db5fceb52a89fe3e704f1e876c0f7ed405f11ebd8a0152a14517ea8de",
+      "braintrace/biophysics/astrocyte.py": "f5ea0cc9ea43fcc0a9624d514c5f1da40e300aad18e65ea8cb8048b2028001b3",
+      "braintrace/biophysics/astrocyte_coupled.py": "d23f0f2a781330a2c60c5750789eb871639f07af1355fe2c4ed2f68a57236fab",
+      "braintrace/biophysics/astrocyte_network.py": "a034c265eddfea943750c29c13768fc6064fc92fa169926b41dc6345b5459dd4",
+      "braintrace/biophysics/cable_gaba.py": "f437d2f1d025592ad43ee0115a0eb65809d806d4469da6e18c0b64fc501f65c6",
+      "braintrace/biophysics/cable_geometry.py": "6b0bc05e55c570d3ba93b68b8c6d2d3523b4a57bb50d927b3681f42bba262bd6",
+      "braintrace/biophysics/cable_kir.py": "6d0beb08ee72734a460590d239617697a506594bdfcd67713710a41169851757",
+      "braintrace/biophysics/cable_potassium.py": "2f70733ba0e83ce0816cf5fa01069db71c86523d39cf215ff8b01c328d56d92f",
+      "braintrace/biophysics/environment.py": "6e8cf0ceb80bddd09df11a148ab4d05cd9d37f8c1facd2ca758459253db5c0a8",
+      "braintrace/biophysics/extracellular.py": "965302c2844eb752f9ec9accc0f32f1fe57936c105b6c1cf94bb285fbfabdf8e",
+      "braintrace/biophysics/gaba.py": "fb317fe6174ecc2dcf19fce579799f9fd70a0e78cc199fd72ef9544ea9ec7f30",
+      "braintrace/biophysics/myelin.py": "2e102e29f6f671dfefde6ebc73fc799a65eb2e6dce2579ff87c8b5505520fb11",
+      "braintrace/biophysics/neuroglial.py": "ffa6695427c2d87bed3c290bb061c1f0e4f8f23e4bfa0a080c7cd1e977c892e5",
+      "braintrace/biophysics/provenance.py": "eabdcf807d5a6256be4007a60e297c4ec1f8f413138e76175127a9afbaf5c96d",
+      "braintrace/biophysics/release.py": "f8c98b510ca0d824c995977f931bc86a5acfccf6de9ecb5443e828be08308fa2",
+      "braintrace/biophysics/shells.py": "612a5eda4bb4d3fff7328b58f8b50e25718e78484dd13153d2b46ca9aa18b186",
+      "braintrace/biophysics/spine_mapping.py": "b94266d845aa57efea39964c4ba3541a3e88fc03bb3a42d0f630479f189bc36c",
+      "braintrace/biophysics/spines.py": "e776edf36e789f92270f0fc1bda9ef673e2669af62b78598196dc5a1c2e2db83",
+      "braintrace/biophysics/transmitter.py": "b4d2fdd33a7f8d8573acc593e343b34c82dbce2c66dd647223648747520d5416",
+      "braintrace/biophysics/transport.py": "e5203154f5cdad5f913c623f34ee669fee54fe4bc68da4282803953cac2d9d30",
+      "examples/pp_prop/h01_physical_checkpoint.py": "de789332a5d4142cb788dd1334e2273f928d765b29e3a707096006a911516252",
+      "examples/pp_prop/h01_physical_wait.py": "6819c6986fb572318e8182b0624ee9ca750d1aeb060324b144baa87a3a5e89fe",
+      "braintrace/_algorithm/sparse_pp_prop.py": "44e25ae8aa47f436e8f60f099f8fcb2d04535466c353491cc14a0ab453d0c674",
+      "braintrace/_algorithm/sparse_io.py": "f5b706a0026884d1894c6c0bce8f3804ee73656362143d0151cf86b6e4a3697e",
+      "braintrace/_compiler/sparse_io_graph.py": "a21108167adba21a31a489987ca291fd77db579377ace171fd6b40d397d8b7a7",
+      "braintrace/_compiler/sparse_support.py": "89a59ae289435dd6c49639b71e19fa42457f98c4bcb5ec0eccc94c0fee39a9e8",
+      "braintrace/_compiler/sparse_influence.py": "045427d819723a9f5a3873c3c1da5a730176e804b1e5e6e78c3a367a5fb18170",
+      "examples/pp_prop/h01_arc_model.py": "ed77004c724b5d72ba0cf41e3b2c36823e3880c1b6870e9c4b052d54076d543f",
+      "examples/pp_prop/h01_arc_execution.py": "072d2d2a73c3d7c5df74a59f53fb0355e562dd794d4a5951d5fe5f5ebc659048",
+      "examples/pp_prop/h01_muon.py": "e3d9fd58dca155fc8c5319fc83b0d5ca33fdaa216760cee5ed3134f7922274dc",
+      "examples/pp_prop/21-braincell-arc.py": "556541e5aa190445eabdca962ea9e039d1bf2f09fc4a5d4cff37cc435f5cad33",
+      "examples/pp_prop/h01_session.py": "734b3647ffca5934a29f43237c9ba9d6b24fbe579d8c7eb436d8c67e9f2eaffa",
+      "examples/pp_prop/h01_runtime.py": "2bf94193160932536d01c5bb3e894fc6deacfac96da43314cc65bfb716c745ea",
+      "examples/pp_prop/h01_neuroglial.py": "c5ef34b103a54983a9b8f818cc92f48ccaae7773028cd4801690ee3a0e678e64"
+    },
+    "dependencies": {
+      "jax": "0.11.0",
+      "jaxlib": "0.11.0",
+      "brainstate": "0.5.3",
+      "brainunit": "0.5.2",
+      "braincell": "0.1.0",
+      "brainevent": "0.2.1",
+      "optax": "0.2.8",
+      "numpy": "2.4.6"
+    }
+  },
+  "active_phase": "warm_event",
+  "peak_rss_kib": 2299464,
+  "compartments": 75605,
+  "tree_padding": [
+    {
+      "edges": 64046,
+      "levels": 3232,
+      "padded_entries": 103424
+    },
+    {
+      "edges": 21333,
+      "levels": 1496,
+      "padded_entries": 47872
+    },
+    {
+      "edges": 26054,
+      "levels": 1914,
+      "padded_entries": 61248
+    },
+    {
+      "edges": 20957,
+      "levels": 2505,
+      "padded_entries": 80160
+    }
+  ],
+  "finite_events": true,
+  "event_voltages_mv": [
+    [
+      -80.96963050532521,
+      -83.93715659699772,
+      -84.19523746152251,
+      -80.81111206250323
+    ],
+    [
+      -81.07312181163589,
+      -83.90322070509842,
+      -84.35323357693609,
+      -81.49273596705599
+    ]
+  ]
+}
