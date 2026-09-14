@@ -47,7 +47,8 @@
     }
   ],
   "qualified_dt_ms": 0.000625,
-  "verdict": "QUALIFIED at dt 0.000625 ms",
+  "confirmed_by_a_finer_pair": false,
+  "verdict": "QUALIFIED at dt 0.000625 ms; met by the finest pair on this ladder, with no rung below it to confirm that convergence continues",
   "finest_pair_error_mv": 0.9333431178712033,
   "supersedes": "h01-ready-cell7196644737-implicit-decision.json, which compared only the two coarsest rungs and reported the 1 mV gate as FAIL. The three finer rungs had already run; their traces were recovered on 2026-09-14."
 }

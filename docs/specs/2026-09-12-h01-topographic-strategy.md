@@ -1030,7 +1030,9 @@ produced.
 | **dt 0.000625 → 0.0003125 ms** | **0.933 mV** | 5.0144 ms | **PASS** |
 
 Ratios 1.83 / 1.91 / 1.95 — first order in dt, independently matching what the I-cell transfer
-study (SP2) found. **dt 0.000625 ms is qualified.** The committed decision
+study (SP2) found. **dt 0.000625 ms is qualified** — with the limit that the gate is met by the
+ladder's finest pair, so no rung below 0.0003125 ms confirms the trend continues (the ratios
+predict about 0.48 mV, which is extrapolation). The committed decision
 `h01-ready-cell7196644737-implicit-decision.json` reported the gate as FAIL because it compared
 only the two coarsest rungs; it is superseded.
 

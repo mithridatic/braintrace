@@ -1,5 +1,5 @@
 {
-  "id": "doc_4551fbe9-ff2",
+  "id": "doc_9692c9e7-cea",
   "title": "H01 accuracy roadmap",
   "graph": {
     "classes": [
@@ -823,8 +823,8 @@
         "type": "Closed branch",
         "text": "STEP 5d - CLOSED 2026-09-14: the integration step IS qualified, at dt 0.000625 ms. The four adjacent pairs give 6.365, 3.471, 1.820 and 0.933 mV, so the last halving lands inside the 1 mV contract; the ratios 1.83/1.91/1.95 are first order in dt, matching what the I-cell transfer study found independently.",
         "status": "supported",
-        "confidence": 0.9,
-        "notes": "The node previously said the ladder could not close because the three finer rungs' traces had been deleted. They had not: all five survived in the 2026-09-09 worktree-recovery stash, which was restored while cleaning up the stale worktrees, and the ladder closed as arithmetic with no new simulation. The earlier FAIL verdict had compared only the two coarsest rungs. Note that 0.000625 ms is exactly the step the failed r2 run was already using: that run died on cost, not on accuracy. Confidence 90 percent that this stays closed - it is a convergence reading on committed traces, and the only way it reopens is if this one isolated cell is unrepresentative of the other 103.\n\nEvidence: docs/evidence/h01-timestep-ladder.json; docs/evidence/h01-ready-cell7196644737-implicit-decision.json; docs/evidence/h01-population-accuracy-ledger.md",
+        "confidence": 0.8,
+        "notes": "The node previously said the ladder could not close because the three finer rungs' traces had been deleted. They had not: all five survived in the 2026-09-09 worktree-recovery stash, which was restored while cleaning up the stale worktrees, and the ladder closed as arithmetic with no new simulation. The earlier FAIL verdict had compared only the two coarsest rungs. Note that 0.000625 ms is exactly the step the failed r2 run was already using: that run died on cost, not on accuracy. One limit: the gate is met by the ladder's FINEST pair, so no rung below 0.0003125 ms confirms the trend continues; the first-order ratios predict about 0.48 mV, which is extrapolation. Confidence lowered 90 -> 80 percent that this stays closed - it is a convergence reading on committed traces, but it rests on one pair, 7 percent inside the gate, on one isolated cell that may not represent the other 103.\n\nEvidence: docs/evidence/h01-timestep-ladder.json; docs/evidence/h01-ready-cell7196644737-implicit-decision.json; docs/evidence/h01-population-accuracy-ledger.md",
         "evidence": [
           {
             "id": "pop_dt_ev0",

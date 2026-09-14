@@ -52,7 +52,7 @@
       "value": 1.0,
       "measured": true,
       "statement": "Qualified at dt 0.000625 ms: refining to 0.0003125 ms moves the trace by 0.933 mV, inside the 1 mV contract. The four adjacent pairs give 6.36, 3.47, 1.82, 0.93 mV, halving with the step (first order).",
-      "cause": "This supersedes h01-ready-cell7196644737-implicit-decision.json, which compared only the two coarsest rungs and reported the gate as FAIL at 6.36 mV. The three finer rungs had already run; their traces were recovered from the 2026-09-09 worktree stash on 2026-09-14 and the ladder closed as arithmetic, with no new simulation. Qualification is numerical convergence on one isolated cell, not a claim about the other 103.",
+      "cause": "This supersedes h01-ready-cell7196644737-implicit-decision.json, which compared only the two coarsest rungs and reported the gate as FAIL at 6.36 mV. The three finer rungs had already run; their traces were recovered from the 2026-09-09 worktree stash on 2026-09-14 and the ladder closed as arithmetic, with no new simulation. Two limits on the reading: the gate is met by the FINEST pair on the ladder, so no rung below 0.0003125 ms confirms that convergence continues (the first-order ratios say it should, which is an extrapolation, not a measurement); and it is convergence on one isolated cell, not a claim about the other 103.",
       "evidence": [
         "h01-timestep-ladder.json",
         "h01-ready-cell7196644737-implicit-decision.json"

@@ -63,6 +63,11 @@ Error ratios 1.83 / 1.91 / 1.95 — first order in dt, matching what the I-cell 
 independently. **dt 0.000625 ms is qualified**, and it is exactly the step the failed r2 run was
 already using: that run died on cost, not on accuracy.
 
+One limit on the reading, stated because the ledger's whole purpose is not to let a term carry more
+than its evidence: the gate is met by the **finest pair on the ladder**, so no rung below
+0.0003125 ms confirms that convergence continues. The first-order ratios say the next halving
+should land near 0.48 mV, but that is an extrapolation, not a measurement.
+
 The earlier FAIL verdict in
 [`h01-ready-cell7196644737-implicit-decision.json`](h01-ready-cell7196644737-implicit-decision.json)
 compared only the two coarsest rungs. Reading:
@@ -100,7 +105,7 @@ working build all describe a model that, on the anatomy it is meant to run on, i
 | `type_coverage` | 0.529 | yes | 55 of 104 cells matched in layer **and** class. |
 | `construction` | 1.000 | yes | import, construction, initialisation and a **synthetic** forward pass, all 104. Named `construction`, not `build`: the forward pass it credits drives an all-ones probe, and whether the population *runs* is the `driven_window` term below. |
 | `driven_window` | 0.000 | no | no qualified driven window at 104 cells. |
-| `timestep` | 1.000 | yes | qualified at dt 0.000625 ms (0.933 mV to the next halving); first order in dt. |
+| `timestep` | 1.000 | yes | qualified at dt 0.000625 ms (0.933 mV to the next halving), on the ladder's finest pair; first order in dt. |
 | `anatomy_transfer` | 0.000 | **yes** | the donor's fit does not spike on H01 anatomy. |
 
 **Product as measured: 0 percent.** Product if construction is counted as a working simulation and the

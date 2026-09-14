@@ -75,6 +75,21 @@ def test_the_error_halves_with_the_step_first_order():
     assert all(1.6 < r < 2.4 for r in ratios), ratios
 
 
+def test_a_pass_on_the_last_rung_is_not_confirmed_from_below():
+    """The boundary case qualified_step cannot rule out: nothing finer exists to check the trend."""
+    rows = [{"dt_coarse_ms": .01, "passes_gate": False}, {"dt_coarse_ms": .005, "passes_gate": True}]
+    assert tl.qualified_step(rows) == .005
+    assert tl.confirmed_below(rows, .005) is False
+    deeper = rows + [{"dt_coarse_ms": .0025, "passes_gate": True}]
+    assert tl.confirmed_below(deeper, .005) is True
+
+
+def test_the_recovered_ladder_is_not_confirmed_from_below_and_says_so():
+    r = tl.report()
+    assert r["confirmed_by_a_finer_pair"] is False
+    assert "no rung below it" in r["verdict"]
+
+
 def test_the_report_says_what_it_supersedes():
     r = tl.report()
     assert tl.DECISION in r["supersedes"]

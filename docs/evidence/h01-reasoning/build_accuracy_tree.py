@@ -262,10 +262,12 @@ def build_nodes():
           "was restored while cleaning up the stale worktrees, and the ladder closed as arithmetic with no "
           "new simulation. The earlier FAIL verdict had compared only the two coarsest rungs. Note that "
           "0.000625 ms is exactly the step the failed r2 run was already using: that run died on cost, not "
-          "on accuracy. Confidence 90 percent that this stays closed - it is a convergence reading on "
-          "committed traces, and the only way it reopens is if this one isolated cell is unrepresentative "
-          "of the other 103.",
-          [LADDER, DTLADDER, LEDGER], "supported", 90),
+          "on accuracy. One limit: the gate is met by the ladder's FINEST pair, so no rung below "
+          "0.0003125 ms confirms the trend continues; the first-order ratios predict about 0.48 mV, "
+          "which is extrapolation. Confidence lowered 90 -> 80 percent that this stays closed - it is a "
+          "convergence reading on committed traces, but it rests on one pair, 7 percent inside the gate, "
+          "on one isolated cell that may not represent the other 103.",
+          [LADDER, DTLADDER, LEDGER], "supported", 80),
         n("pop_anatomy", BLOCK,
           "STEP 5e - BLOCKER, the binding one, and previously unnamed: a donor's fitted conductances do "
           "not survive the move onto H01 anatomy. B3 fires 4 spikes at 200 pA on the donor's own "

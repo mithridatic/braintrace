@@ -83,6 +83,11 @@ def qualified_step(rows):
 
     A step is qualified only if it and every finer pair below it also pass: a single passing pair
     in the middle of a diverging ladder is not convergence.
+
+    Note the boundary case this cannot rule out. When the passing pair is the LAST rung there is
+    nothing below it, so the "every finer pair also passes" clause is vacuous and the reading rests
+    on one pair. `confirmed_below` reports that, and the caller must not describe such a step as a
+    confirmed convergence floor.
     """
     for i, r in enumerate(rows):
         if r.get("passes_gate") and all(x.get("passes_gate") for x in rows[i:]):
@@ -90,9 +95,22 @@ def qualified_step(rows):
     return None
 
 
+def confirmed_below(rows, dt):
+    """Whether any pair finer than the qualified one also passed.
+
+    False means the gate is met only by the finest pair that was run, with no halving below it to
+    confirm the trend continues.
+    """
+    if dt is None:
+        return False
+    finer = [r for r in rows if r["dt_coarse_ms"] < dt]
+    return bool(finer) and all(r.get("passes_gate") for r in finer)
+
+
 def report(root=None):
     rows = ladder(root)
     dt = qualified_step(rows)
+    confirmed = confirmed_below(rows, dt)
     finest = rows[-1] if rows else None
     return {
         "cell": CELL,
@@ -104,7 +122,11 @@ def report(root=None):
         "duration_ms": 10.0,
         "pairs": rows,
         "qualified_dt_ms": dt,
-        "verdict": ("QUALIFIED at dt %g ms" % dt) if dt else
+        "confirmed_by_a_finer_pair": confirmed,
+        "verdict": (("QUALIFIED at dt %g ms" % dt) +
+                    ("" if confirmed else
+                     "; met by the finest pair on this ladder, with no rung below it to confirm "
+                     "that convergence continues")) if dt else
                    "NOT QUALIFIED at any step on this ladder",
         "finest_pair_error_mv": finest["max_error_mv"] if finest and "max_error_mv" in finest else None,
         "supersedes": (f"{DECISION}, which compared only the two coarsest rungs and reported the "
