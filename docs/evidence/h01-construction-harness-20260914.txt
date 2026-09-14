@@ -1,0 +1,37 @@
+import line_profiler
+import json
+from pathlib import Path
+import brainstate, braintrace
+import brainunit as u
+import jax, jax.numpy as jnp, numpy as np
+
+from braintrace.datasets.h01 import H01Archive
+from braintrace.datasets.h01_annotations import H01Annotations
+from braintrace.datasets.h01_network import make_h01_network
+from braintrace.datasets.h01_network_init import init_h01_network_states
+from examples.pp_prop.h01_arc_model import H01ArcModel
+import braintrace.datasets.h01_construction as h01_const
+import braintrace.datasets.h01_network_init as h01_init
+
+lp = line_profiler.LineProfiler()
+
+# Profile key functions
+lp.add_function(make_h01_network)
+lp.add_function(init_h01_network_states)
+for name, func in h01_const.__dict__.items():
+    if callable(func) and getattr(func, "__module__", "") == h01_const.__name__:
+        lp.add_function(func)
+
+topology = json.loads(Path("docs/evidence/h01-verified-network.json").read_text())
+components = json.loads(Path("docs/evidence/h01-population-components-soma.json").read_text())
+
+def run():
+    with brainstate.environ.context(precision=64):
+        network, evidence = make_h01_network(
+            topology, H01Archive(Path("/h01/proofread104.zip")), H01Annotations(Path("/h01")),
+            include_isolated=True, cells=12, components=components,
+            solver="h01_staggered_calcium_implicit")
+        init_h01_network_states(network)
+
+lp.runcall(run)
+lp.print_stats(output_unit=1e-3)

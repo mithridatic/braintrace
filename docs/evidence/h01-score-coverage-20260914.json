@@ -1,0 +1,41 @@
+[
+  {
+    "file": "examples/pp_prop/h01_arc_adapter.py",
+    "summary": {
+      "covered_lines": 166,
+      "num_statements": 220,
+      "percent_covered": 75.45454545454545,
+      "percent_covered_display": "75",
+      "missing_lines": 54,
+      "excluded_lines": 0,
+      "percent_statements_covered": 75.45454545454545,
+      "percent_statements_covered_display": "75"
+    }
+  },
+  {
+    "file": "examples/pp_prop/h01_arc_execution.py",
+    "summary": {
+      "covered_lines": 29,
+      "num_statements": 29,
+      "percent_covered": 100.0,
+      "percent_covered_display": "100",
+      "missing_lines": 0,
+      "excluded_lines": 0,
+      "percent_statements_covered": 100.0,
+      "percent_statements_covered_display": "100"
+    }
+  },
+  {
+    "file": "examples/pp_prop/h01_session.py",
+    "summary": {
+      "covered_lines": 147,
+      "num_statements": 167,
+      "percent_covered": 88.02395209580838,
+      "percent_covered_display": "88",
+      "missing_lines": 20,
+      "excluded_lines": 0,
+      "percent_statements_covered": 88.02395209580838,
+      "percent_statements_covered_display": "88"
+    }
+  }
+]

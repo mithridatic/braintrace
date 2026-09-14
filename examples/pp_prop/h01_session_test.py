@@ -55,10 +55,12 @@ def test_real_update_save_restore_and_clone_optimizer(imported, tmp_path):
                                jax.tree.leaves((restored.trainer.parameters, restored.trainer.muon_groups))):
             np.testing.assert_array_equal(left, right)
         parent_head = np.array(restored.trainer.parameters['readout_weight'][0])
+        restored._score_queries_compiled = object()
         cloned = restored.mutate(restored.topology.clone('12', stage='clone'), archive,
                                  progress=lambda _: None, release_parent=True)
         assert cloned.model.neuron_count == 2 and int(cloned.trainer.updates) == 2
         assert restored.model is None and restored.trainer is None
+        assert not hasattr(restored, '_score_queries_compiled')
         np.testing.assert_array_equal(cloned.trainer.parameters['readout_weight'][1], parent_head)
         for leaf in jax.tree.leaves(cloned.trainer.muon_groups['readout_weight']):
             if np.shape(leaf) == (2, 360):

@@ -1,0 +1,22 @@
+{"cold_s": 0.46962072886526585, "device": "cuda:0", "device_memory": {"bytes_in_use": 8786688, "bytes_limit": 18939379712, "bytes_reserved": 0, "largest_alloc_size": 8388608, "largest_free_block_bytes": 8388608, "num_allocs": 55, "peak_bytes_in_use": 17086976, "peak_bytes_reserved": 0, "peak_pool_bytes": 18874368, "pool_bytes": 18874368}, "events": 2048, "implementation": "optimized", "peak_rss_kib": 1073972, "queries": true, "warm_s": [0.023554238490760326, 0.02487362828105688]}
+         99183 function calls (89318 primitive calls) in 0.458 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1413 to 15 due to restriction <15>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.459    0.459 h01_score_profile.py:40(<lambda>)
+        1    0.000    0.000    0.459    0.459 h01_arc_execution.py:7(score_queries)
+        1    0.000    0.000    0.458    0.458 _jit.py:125(jitted_fn)
+     48/4    0.000    0.000    0.458    0.114 traceback_util.py:191(reraise_with_filtered_traceback)
+    31/17    0.000    0.000    0.442    0.026 pjit.py:257(cache_miss)
+    31/19    0.000    0.000    0.423    0.022 pjit.py:133(_run_python_pjit)
+        1    0.000    0.000    0.421    0.421 pjit.py:1169(_pjit_call_impl_python)
+      7/4    0.000    0.000    0.419    0.105 profiler.py:417(wrapper)
+        1    0.000    0.000    0.365    0.365 pxla.py:1230(compile)
+        1    0.000    0.000    0.365    0.365 pxla.py:1707(from_hlo)
+        1    0.000    0.000    0.364    0.364 pxla.py:1520(_cached_compilation)
+        1    0.000    0.000    0.364    0.364 compiler.py:384(compile_or_get_cached)
+        1    0.000    0.000    0.362    0.362 compiler.py:719(_compile_and_write_cache)
+        1    0.362    0.362    0.362    0.362 compiler.py:289(backend_compile_and_load)
+     36/6    0.000    0.000    0.048    0.008 partial_eval.py:2319(trace_to_jaxpr)

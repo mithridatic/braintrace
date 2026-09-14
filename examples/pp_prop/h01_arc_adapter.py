@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-import brainstate
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -15,7 +14,7 @@ import numpy as np
 from braintrace.datasets.h01 import H01Archive
 from braintrace.datasets.h01_network_init import process_rss_mb
 from .example21_arc_adapter import Example21ArcAdapter, direct_query_metrics
-from .h01_arc_execution import score_episode
+from .h01_arc_execution import score_queries
 from .h01_checkpoint import load_checkpoint
 from .h01_episode_recovery import recovery_checkpoint, run_episodes
 from .h01_session import H01Session
@@ -198,9 +197,7 @@ class H01ArcAdapter(Example21ArcAdapter):
         queries = tuple(q for q in self._encoded_queries(role) if q.task_id in ids)
         events = jnp.asarray(np.stack([q.events for q in queries]), dtype=jnp.float64)
         advances = jnp.asarray(np.stack([q.advances for q in queries]))
-        execute = brainstate.transform.jit(lambda e, a: brainstate.transform.for_loop(
-            lambda x, mask: score_episode(runtime, x, mask), e, a))
-        logits, activity = execute(events, advances)
+        logits, activity = score_queries(runtime, events, advances)
         logits, activity = np.asarray(logits), np.asarray(activity)
         metrics = {identity: [] for identity in ids}
         for query, output in zip(queries, logits):

@@ -12,6 +12,39 @@ from .h01_arc_adapter import H01ArcAdapter
 from .example21_evolve import ScoreSnapshot, PipelineConfig
 
 
+def test_score_runtime_reuses_compilation_and_preserves_ranking(monkeypatch):
+    from types import SimpleNamespace
+    import brainstate
+    from .h01_arc_execution_test import ScoreModel
+    from . import h01_arc_adapter as implementation
+
+    adapter = object.__new__(H01ArcAdapter)
+    query = SimpleNamespace(task_id='task', events=np.ones((31, 441)),
+                            advances=np.ones(31, dtype=bool), target=None)
+    monkeypatch.setattr(adapter, '_manifest', lambda role: None)
+    monkeypatch.setattr(adapter, '_scored_task_ids', lambda manifest, ids: ('task',))
+    monkeypatch.setattr(adapter, '_encoded_queries', lambda role: (query,))
+    monkeypatch.setattr(adapter, '_model', lambda: SimpleNamespace(decode_prediction=None))
+    monkeypatch.setattr(implementation, 'direct_query_metrics',
+                        lambda output, target, decode: (False, float(np.mean(output))))
+    with brainstate.environ.context(precision=64):
+        model = ScoreModel()
+        runtime = SimpleNamespace(model=model, learner=None,
+            topology=SimpleNamespace(to_dict=lambda: dict(active_cells=[str(i) for i in range(104)],
+                active_contacts=[], contacts={})),
+            trainer=SimpleNamespace(parameters={'readout_weight': model.readout_weight.value},
+                muon_groups={'readout_weight': ()}, optimizer_is_finite=lambda: True))
+        first = adapter._score_runtime(runtime, 'training')
+        compiled = runtime._score_queries_compiled
+        model.readout_bias.value = model.readout_bias.value+1.
+        second = adapter._score_runtime(runtime, 'training')
+        assert runtime._score_queries_compiled is compiled
+        assert first.score.finite and second.score.finite
+        np.testing.assert_allclose(second.score.task_loss, np.asarray(first.score.task_loss)+1.)
+        np.testing.assert_array_equal(second.neuron_scores, first.neuron_scores)
+        assert first.edge_scores.shape == (0,)
+
+
 def _candidate(tmp_path):
     path, _, _ = _save(tmp_path)
     loaded = load_checkpoint(path, asset_root=tmp_path/'assets')

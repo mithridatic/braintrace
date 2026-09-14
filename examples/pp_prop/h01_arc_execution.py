@@ -4,6 +4,34 @@ import brainstate
 import jax.numpy as jnp
 
 
+def score_queries(session, events, advances):
+    """Score queries using a compiled callable owned by the physical runtime.
+
+    Parameters
+    ----------
+    session : H01Session
+        Runtime whose model and learner identities remain fixed.
+    events, advances : arrays
+        Batched encoded episodes and their advance masks.
+
+    Returns
+    -------
+    tuple
+        Per-query logits and mean absolute soma activity.
+
+    Notes
+    -----
+    Parameter State values remain dynamic, so training does not invalidate the
+    callable. Rebuilt or restored runtimes own separate compilation caches.
+    """
+    execute = getattr(session, '_score_queries_compiled', None)
+    if execute is None:
+        execute = brainstate.transform.jit(lambda e, a: brainstate.transform.for_loop(
+            lambda x, mask: score_episode(session, x, mask), e, a))
+        session._score_queries_compiled = execute
+    return execute(events, advances)
+
+
 def training_step(session, module):
     """Create the existing ARC request loss around sparse H01 pp-prop.
 
@@ -76,6 +104,10 @@ def score_episode(session, events, advances):
         voltage = session.model.step(event, advance)
         features = jnp.tanh((voltage+65.)/20.)
         activity = jnp.where(advance, jnp.abs(features), jnp.zeros_like(features))
-        return features @ session.model.readout_weight.value + session.model.readout_bias.value, activity
-    logits, activity = brainstate.transform.for_loop(step, jnp.asarray(events, dtype=jnp.float64), advances)
-    return logits[-31:], jnp.sum(activity, axis=0)/jnp.maximum(jnp.sum(advances), 1)
+        return features, activity
+    features, activity = brainstate.transform.for_loop(
+        step, jnp.asarray(events, dtype=jnp.float64), advances)
+    # Only the final request window is scored. Keep the readout outside the
+    # physical loop, avoiding one matrix-vector product per prefix event.
+    logits = features[-31:] @ session.model.readout_weight.value + session.model.readout_bias.value
+    return logits, jnp.sum(activity, axis=0)/jnp.maximum(jnp.sum(advances), 1)

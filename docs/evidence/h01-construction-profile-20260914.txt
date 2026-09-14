@@ -1,0 +1,1545 @@
+/workspace/profile_h01.py:23: UserWarning: Adding a function with a `.__wrapped__` attribute. You may want to profile the wrapped function by adding `_indexed_morphology.__wrapped__` instead.
+  lp.add_function(func)
+/workspace/profile_h01.py:23: UserWarning: Could not extract a code object for the object <class 'braintrace.datasets.h01_construction.H01Cell'>
+  lp.add_function(func)
+Timer unit: 0.001 s
+
+Total time: 73.5652 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_network.py
+Function: make_h01_network at line 220
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   220                                           def make_h01_network(topology, archive, annotations, *, disconnected=False, control="ei",
+   221                                                                include_isolated=False, cells=None, components=None,
+   222                                                                excitatory_weight_us=.01, inhibitory_weight_us=.02,
+   223                                                                delay_ms=.5, max_cv_length_um=10., currents_na=None, progress=None,
+   224                                                                solver="h01_staggered_scan"):
+   225                                               """Construct the cells incident on verified and placed H01 synapses.
+   226
+   227                                               Parameters
+   228                                               ----------
+   229                                               topology : dict
+   230                                                   Output of ``prepare_connectivity``. Blocked contacts remain in evidence
+   231                                                   and are omitted from the simulated subset.
+   232                                               archive : H01Archive
+   233                                                   Pinned local morphology archive.
+   234                                               annotations : H01Annotations
+   235                                                   Pinned cell-type annotations.
+   236                                               disconnected : bool, optional
+   237                                                   Deprecated alias of ``control="disconnected"``: remove projections but
+   238                                                   retain cells, receptor placements, and inputs. Combining it with any
+   239                                                   other ``control`` raises ``ValueError``.
+   240                                               control : str, optional
+   241                                                   ``"ei"`` keeps every projection; ``"e_only"`` keeps projections whose
+   242                                                   presynaptic Dale sign is +1; ``"i_only"`` those with -1;
+   243                                                   ``"disconnected"`` keeps none. Only projections change.
+   244                                               include_isolated : bool, optional
+   245                                                   Also build every topology node without a constructible contact from its
+   246                                                   explicitly selected component, or its largest component when no override
+   247                                                   is supplied. The selection must carry a soma per ``components``. Isolated
+   248                                                   cells receive no receptors or projections; their output site is the
+   249                                                   soma. Fragments are never joined.
+   250                                               cells : int, optional
+   251                                                   Build only the first ``cells`` entries of the evidence ``cell_order``
+   252                                                   (incident cells first, then isolated cells by ascending selected-component
+   253                                                   node count). Must be between the incident count and the candidate count.
+   254                                               components : dict or list, optional
+   255                                                   Parsed ``h01-population-components.json`` (the object, its ``cells``
+   256                                                   list, or a ``cell_id -> row`` mapping). Required with ``include_isolated``.
+   257                                                   An optional ``selected_component`` record supplies ``component``, ``nodes``,
+   258                                                   ``has_soma``, ``source_sha256`` and an ``evidence`` reference. The loaded
+   259                                                   source must match its component, hash and node count before construction.
+   260                                               excitatory_weight_us, inhibitory_weight_us : float, optional
+   261                                                   Nonnegative assumed conductance magnitudes. Signs select receptors.
+   262                                               delay_ms : float, optional
+   263                                                   Nonnegative assumed transmission delay.
+   264                                               max_cv_length_um : float, optional
+   265                                                   Positive spatial discretization setting.
+   266                                               currents_na : dict, optional
+   267                                                   Soma pulse amplitudes keyed by source cell ID; unspecified cells get
+   268                                                   zero input. Pulses start at 2 ms and last 3 ms.
+   269                                               progress : callable, optional
+   270                                                   Receives a message before each construction stage. It does not alter
+   271                                                   the model or numerical settings.
+   272                                               solver : str, optional
+   273                                                   BrainCell integrator. Default is ``"h01_staggered_scan"``.
+   274
+   275                                               Returns
+   276                                               -------
+   277                                               network : braincell.Network
+   278                                                   Uninitialized network of built cells, named ``cell_<source ID>``.
+   279                                               evidence : dict
+   280                                                   Actual cell and contact settings, including ``control``,
+   281                                                   ``enabled_contacts``, ``removed_contacts``, ``isolated_cells`` and
+   282                                                   ``cell_order``.
+   283
+   284                                               Notes
+   285                                               -----
+   286                                               All 104 cells remain in the topology; isolated cells are simulated only
+   287                                               with ``include_isolated``. The current engine emits at one site per source
+   288                                               cell. Multiple different output sites for the same cell are rejected
+   289                                               instead of silently combined. Conductance weights remain nonnegative even
+   290                                               for inhibitory contacts.
+   291                                               """
+   292         1          0.0      0.0      0.0      values = [excitatory_weight_us, inhibitory_weight_us, delay_ms, max_cv_length_um]
+   293         1          0.0      0.0      0.0      emit = progress if progress is not None else lambda message: None
+   294         1          0.0      0.0      0.0      control = _resolve_control(control, disconnected)
+   295         1          0.0      0.0      0.0      if not np.isfinite(values).all() or min(values[:3]) < 0 or max_cv_length_um <= 0:
+   296                                                   raise ValueError("Invalid conductance, delay, or compartment length.")
+   297         1          0.0      0.0      0.0      if topology["archive_sha256"] != ARCHIVE_SHA256:
+   298                                                   raise ValueError("Topology uses a different archive.")
+   299         1          0.0      0.0      0.0      nodes = {n["cell_id"]: n for n in topology["nodes"]}
+   300         1          0.0      0.0      0.0      if len(nodes) != len(topology["nodes"]):
+   301                                                   raise ValueError("Duplicate node identity.")
+   302         1          0.0      0.0      0.0      contacts = [e for e in topology["contacts"] if e["construction_ready"]]
+   303         1          0.3      0.3      0.0      blocked = [deepcopy(e) for e in topology["contacts"] if not e["construction_ready"]]
+   304         1          0.0      0.0      0.0      if not contacts and not include_isolated:
+   305                                                   raise ValueError("Network requires nonempty contacts with resolved placements.")
+   306         1          1.0      1.0      0.0      plan = plan_h01_cells(topology, include_isolated=include_isolated, cells=cells, components=components)
+   307         2          0.0      0.0      0.0      incident, order, identities, isolated = (plan["incident_cell_ids"], plan["cell_order"],
+   308         1          0.0      0.0      0.0                                               plan["simulated_cell_ids"], plan["isolated_cells"])
+   309         1          0.0      0.0      0.0      currents = {} if currents_na is None else dict(currents_na)
+   310         1          0.0      0.0      0.0      if set(currents)-set(identities) or not np.isfinite(list(currents.values())).all():
+   311                                                   raise ValueError("Inputs must be finite and refer to simulated cells.")
+   312        13          0.0      0.0      0.0      for identity in identities:
+   313        12          0.1      0.0      0.0          sign = cell_sign(annotations.metadata(identity).tags)
+   314        12          0.0      0.0      0.0          if nodes[identity]["dale_sign"] != sign:
+   315                                                       raise ValueError("Node Dale sign conflicts with source tags.")
+   316         1      22907.4  22907.4     31.1      imported, locations, source_sites = _load_contact_cells(contacts, nodes, topology, archive, emit)
+   317         9          0.0      0.0      0.0      for identity, record in isolated.items():
+   318         8          0.1      0.0      0.0          emit(f"Loading cell {identity}, component {record['component']} ({record['summary']})")
+   319         8       2206.5    275.8      3.0          imported[identity] = archive.load(identity, component=record["component"])
+   320         8          0.0      0.0      0.0          if "source_sha256" in record:
+   321                                                       source = imported[identity]
+   322                                                       if (source.component_id != record["component"]
+   323                                                               or source.source_sha256 != record["source_sha256"]
+   324                                                               or len(source.source_rows) != record["component_nodes"]):
+   325                                                           raise ValueError("Explicit component selection does not match loaded source.")
+   326         1          0.1      0.1      0.0      network = braincell.Network(name="h01_verified")
+   327         1          0.0      0.0      0.0      cells_built, records = {}, {}
+   328         1          0.0      0.0      0.0      basis = ("Source soma/axon/AIS samples extend halfway along adjacent edges; "
+   329                                                        "remaining cable gets dendrite properties. Myelin is not modeled. "
+   330                                                        "This is the existing inferred electrical partition, not measured channel placement.")
+   331         1          0.0      0.0      0.0      donors = {}
+   332        13          0.0      0.0      0.0      for identity in identities:
+   333        12          0.0      0.0      0.0          emit(f"Building electrical cell {identity}")
+   334        12          0.0      0.0      0.0          polarity = "E" if nodes[identity]["dale_sign"] == 1 else "I"
+   335        12          0.7      0.1      0.0          donors[identity] = donor_for_tags(annotations.metadata(identity).tags, polarity)
+   336        24      41032.8   1709.7     55.8          cell, record = make_h01_ei_cell(imported[identity], annotations,
+   337        12          0.0      0.0      0.0              polarity=polarity, donor=donors[identity],
+   338        12        954.1     79.5      1.3              regions=_regions(imported[identity]), region_basis=basis,
+   339        12          0.0      0.0      0.0              current_na=currents.get(identity, 0.), delay_ms=2., duration_ms=3.,
+   340        12          0.0      0.0      0.0              max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
+   341        12          0.0      0.0      0.0          cells_built[identity], records[identity] = cell, record
+   342         1          0.0      0.0      0.0      weights = (excitatory_weight_us, inhibitory_weight_us)
+   343         5          0.6      0.1      0.0      edge_records = [_place_contact(cells_built, locations, edge, weights, delay_ms,
+   344         6          0.0      0.0      0.0                                     edge["dale_sign"] in _ENABLED_SIGNS[control]) for edge in contacts]
+   345        13          0.0      0.0      0.0      for identity, cell in cells_built.items():
+   346        24       6456.4    269.0      8.8          _register_cell(network, identity, cell, records[identity], imported[identity], source_sites,
+   347        12          0.0      0.0      0.0                         currents.get(identity, 0.), emit)
+   348         3          0.0      0.0      0.0      for edge in edge_records:
+   349         2          0.0      0.0      0.0          if edge["enabled"]:
+   350         2          0.0      0.0      0.0              name = "syn_"+edge["annotation_id"]
+   351         2          0.5      0.2      0.0              network.add_edges(name=name, pre="cell_"+edge["pre_cell"], post="cell_"+edge["post_cell"], method=pairs([(0, 0)]))
+   352         4          0.1      0.0      0.0              network.add_projection(name=name, edges=name, synapse=name,
+   353         2          0.3      0.1      0.0                                     weight=edge["weight_us"]*u.uS, delay=delay_ms*u.ms)
+   354         1          0.0      0.0      0.0      imported.clear()
+   355         1          0.0      0.0      0.0      locations.clear()
+   356         1          0.0      0.0      0.0      source_sites.clear()
+   357         1          0.0      0.0      0.0      cells_built.clear()
+   358         1          0.0      0.0      0.0      emit(f"Construction complete: {len(records)} cells, {len(network.projections)} projections")
+   359         2          3.8      1.9      0.0      return network, dict(nodes=deepcopy(topology["nodes"]), simulated_cell_ids=identities, cell_order=order,
+   360         1          0.0      0.0      0.0          cells=records, donors=donors, contacts=edge_records, blocked_contacts=blocked,
+   361         1          0.0      0.0      0.0          control=control, disconnected=control == "disconnected",
+   362         1          0.0      0.0      0.0          enabled_contacts=[e["annotation_id"] for e in edge_records if e["enabled"]],
+   363         1          0.0      0.0      0.0          removed_contacts=[e["annotation_id"] for e in edge_records if not e["enabled"]],
+   364         1          0.0      0.0      0.0          isolated_cells=isolated,
+   365         1          0.0      0.0      0.0          qualification="Verified anatomical subset with assumed synapse dynamics and unqualified candidate cells.",
+   366         1          0.0      0.0      0.0          topology_audit_sha256=topology.get("endpoint_audit_sha256"))
+
+Total time: 73.0921 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_network_init.py
+Function: init_h01_network_states at line 101
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   101                                           def init_h01_network_states(network, *, progress=None, heartbeat_seconds=60.):
+   102                                               """Initialize every population cell, one progress line per cell.
+   103
+   104                                               Parameters
+   105                                               ----------
+   106                                               network : braincell.Network
+   107                                                   Constructed network; cells already initialized are skipped, exactly as
+   108                                                   ``Network.init_state`` does.
+   109                                               progress : callable, optional
+   110                                                   Receives one line before and after each cell and the heartbeat lines.
+   111                                               heartbeat_seconds : float, optional
+   112                                                   Heartbeat period while a single ``Cell.init_state`` call is silent.
+   113
+   114                                               Returns
+   115                                               -------
+   116                                               dict
+   117                                                   ``init_state_seconds`` (all cells), ``init_seconds_by_population``,
+   118                                                   ``initialized_populations`` (names initialized here) and
+   119                                                   ``peak_rss_mb`` (process peak where reported, else current RSS).
+   120
+   121                                               Examples
+   122                                               --------
+   123                                               .. code-block:: python
+   124
+   125                                                   >>> from types import SimpleNamespace
+   126                                                   >>> from braintrace.datasets.h01_network_init import init_h01_network_states
+   127                                                   >>> cell = SimpleNamespace(_initialized=False, n_cv=3, init_state=lambda batch_size=None: None)
+   128                                                   >>> network = SimpleNamespace(populations={"cell_1": SimpleNamespace(cell=cell)}, init_state=lambda: None)
+   129                                                   >>> init_h01_network_states(network, progress=print)["initialized_populations"]
+   130                                                   Initializing cell_1 (1/1, 3 compartments)
+   131                                                   Initialized cell_1 in 0.0 s
+   132                                                   ['cell_1']
+   133                                               """
+   134         1          0.0      0.0      0.0      emit = progress if progress is not None else lambda message: None
+   135         1          0.0      0.0      0.0      started, seconds, names = time.perf_counter(), {}, list(network.populations)
+   136        13          0.0      0.0      0.0      for index, name in enumerate(names, start=1):
+   137        12          0.0      0.0      0.0          cell = network.populations[name].cell
+   138        12          0.1      0.0      0.0          if getattr(cell, "_initialized", False):
+   139                                                       continue
+   140        12          0.0      0.0      0.0          if progress is not None:
+   141                                                       emit(f"Initializing {name} ({index}/{len(names)}, {getattr(cell, 'n_cv', 'unknown')} compartments)")
+   142        12          0.0      0.0      0.0          cell_started = time.perf_counter()
+   143        12          0.0      0.0      0.0          if progress is not None:
+   144                                                       with heartbeat("init_state "+name, emit, seconds=heartbeat_seconds):
+   145                                                           cell.init_state()
+   146                                                   else:
+   147        12      73091.2   6090.9    100.0              cell.init_state()
+   148        12          0.0      0.0      0.0          seconds[name] = time.perf_counter()-cell_started
+   149        12          0.0      0.0      0.0          if progress is not None:
+   150                                                       emit(f"Initialized {name} in {seconds[name]:.1f} s")
+   151         1          0.0      0.0      0.0      network.init_state()
+   152         2          0.0      0.0      0.0      return dict(init_state_seconds=time.perf_counter()-started, init_seconds_by_population=seconds,
+   153         1          0.7      0.7      0.0                  initialized_populations=list(seconds), peak_rss_mb=process_rss_mb(peak=True))
+
+Total time: 0.00313476 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_try_import at line 43
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    43                                           def _fast_try_import(module_name: str):
+    44      2092          1.2      0.0     37.8      root_mod = module_name.split(".")[0]
+    45      2092          1.2      0.0     38.2      if root_mod in ("torch", "cupy", "dask", "ndonnx") and root_mod not in sys.modules:
+    46      2092          0.8      0.0     24.0          return None
+    47                                               return _orig_try_import(module_name)
+
+Total time: 0.223385 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_dim_eq at line 52
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    52                                           def _fast_dim_eq(self, other):
+    53    311827        106.2      0.0     47.5      if self is other:
+    54    310125         96.7      0.0     43.3          return True
+    55      1702          1.2      0.0      0.6      if not isinstance(other, saiunit._base_dimension.Dimension):
+    56                                                   return NotImplemented
+    57      1702          0.7      0.0      0.3      if self._dims is other._dims:
+    58                                                   return True
+    59      1702         18.6      0.0      8.3      return np.array_equal(self._dims, other._dims)
+
+Total time: 0.000241186 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_has_same_dim at line 64
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    64                                           def _fast_has_same_dim(self, other):
+    65        89          0.1      0.0     22.3      if self is other:
+    66                                                   return True
+    67        89          0.1      0.0     41.9      if self._dim is not None and hasattr(other, "_dim") and other._dim is not None:
+    68        89          0.0      0.0     20.0          if self._dim is other._dim:
+    69        89          0.0      0.0     15.8              return True
+    70                                               return _orig_has_same_dim(self, other)
+
+Total time: 0.000588006 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_has_same_mag at line 74
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    74                                           def _fast_has_same_mag(self, other):
+    75        89          0.0      0.0      7.2      if self is other:
+    76                                                   return True
+    77        89          0.1      0.0     16.5      if not isinstance(other, saiunit._base_unit.Unit):
+    78                                                   return False
+    79        89          0.4      0.0     76.3      return self.scale == other.scale and self.base == other.base and self.factor == other.factor
+
+Total time: 0.00478867 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_to_decimal at line 84
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    84                                           def _fast_to_decimal(self, unit=saiunit._base_unit.UNITLESS):
+    85      1111          1.6      0.0     33.2      if self.unit is unit:
+    86      1022          1.5      0.0     30.4          return self.mantissa
+    87        89          1.7      0.0     36.4      return _orig_to_decimal(self, unit)
+
+Total time: 0.000528778 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_in_unit at line 92
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    92                                           def _fast_in_unit(self, other=saiunit._base_unit.UNITLESS, err_msg=None):
+    93        99          0.5      0.0     93.4      if self.unit is other or self.unit == other:
+    94        99          0.0      0.0      6.6          return self
+    95                                               return _orig_in_unit(self, other, err_msg=err_msg)
+
+Total time: 2.37557 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_binary_operation at line 100
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   100                                           def _fast_binary_operation(
+   101                                               self,
+   102                                               other,
+   103                                               value_operation,
+   104                                               unit_operation=lambda a, b: a,
+   105                                               fail_for_mismatch=False,
+   106                                               operator_str=None,
+   107                                               inplace=False,
+   108                                           ):
+   109       489          0.5      0.0      0.0      if not isinstance(other, saiunit._base_quantity.Quantity):
+   110       393         20.0      0.1      0.8          other = saiunit._base_quantity._to_quantity(other)
+   111
+   112       489          0.2      0.0      0.0      if fail_for_mismatch:
+   113                                                   if self.unit is not other.unit and self.unit != other.unit:
+   114                                                       if (other.unit.is_unitless and not self.unit.is_unitless and saiunit._base_quantity._is_concrete_zero(other.mantissa)):
+   115                                                           other = saiunit._base_quantity.Quantity(other.mantissa, unit=self.unit)
+   116                                                       elif (self.unit.is_unitless and not other.unit.is_unitless and saiunit._base_quantity._is_concrete_zero(self.mantissa)):
+   117                                                           self = saiunit._base_quantity.Quantity(self.mantissa, unit=other.unit)
+   118                                                       else:
+   119                                                           other = other.in_unit(
+   120                                                               self.unit,
+   121                                                               err_msg=f"Cannot calculate \n{self} {operator_str} {other}, because units do not match: {self.unit} != {other.unit}"
+   122                                                           )
+   123       978         23.4      0.0      1.0      r = saiunit._base_quantity.Quantity(
+   124       489       2267.3      4.6     95.4          value_operation(self.mantissa, other.mantissa),
+   125       489         63.8      0.1      2.7          unit=unit_operation(self.unit, other.unit)
+   126                                               )
+   127       489          0.2      0.0      0.0      if inplace:
+   128                                                   if saiunit._base_quantity._is_tracer(self.mantissa) or isinstance(self.mantissa, saiunit._base_quantity.numbers.Number):
+   129                                                       return r
+   130                                                   self.update_mantissa(r.mantissa)
+   131                                                   return self
+   132       489          0.2      0.0      0.0      return r
+
+Total time: 0.0719822 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_q_init at line 137
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   137                                           def _fast_q_init(self, mantissa, unit=saiunit._base_unit.UNITLESS, dtype=None):
+   138      3008          2.5      0.0      3.5      if isinstance(mantissa, np.ndarray) and isinstance(unit, saiunit._base_unit.Unit) and dtype is None:
+   139      1418          0.5      0.0      0.7          self._mantissa = mantissa
+   140      1418          0.5      0.0      0.7          self._unit = unit
+   141      1418          0.5      0.0      0.7          return
+   142      1590         68.0      0.0     94.5      _orig_q_init(self, mantissa, unit=unit, dtype=dtype)
+
+Total time: 0.0865822 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _get_branch_float_arrays at line 147
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   147                                           def _get_branch_float_arrays(branch):
+   148     49304         27.7      0.0     32.0      b = getattr(branch, "_branch", branch)
+   149     49304         23.6      0.0     27.2      cached = getattr(b, "_h01_float_arrays", None)
+   150     49304         17.7      0.0     20.4      if cached is not None:
+   151     49304         17.6      0.0     20.3          return cached
+   152                                               l_um = b.lengths.mantissa if isinstance(b.lengths, u.Quantity) else np.asarray(b.lengths, dtype=float)
+   153                                               rp_um = b.radii_proximal.mantissa if isinstance(b.radii_proximal, u.Quantity) else np.asarray(b.radii_proximal, dtype=float)
+   154                                               rd_um = b.radii_distal.mantissa if isinstance(b.radii_distal, u.Quantity) else np.asarray(b.radii_distal, dtype=float)
+   155                                               pp_um = b.points_proximal.mantissa if isinstance(b.points_proximal, u.Quantity) else (np.asarray(b.points_proximal, dtype=float) if b.points_proximal is not None else None)
+   156                                               pd_um = b.points_distal.mantissa if isinstance(b.points_distal, u.Quantity) else (np.asarray(b.points_distal, dtype=float) if b.points_distal is not None else None)
+   157                                               tot_len = float(np.sum(l_um))
+   158                                               seg_starts = np.concatenate(([0.0], np.cumsum(l_um)[:-1]))
+   159                                               seg_ends = seg_starts + l_um
+   160                                               cached = (l_um, rp_um, rd_um, pp_um, pd_um, tot_len, seg_starts, seg_ends)
+   161                                               try:
+   162                                                   object.__setattr__(b, "_h01_float_arrays", cached)
+   163                                               except (AttributeError, TypeError):
+   164                                                   pass
+   165                                               return cached
+
+Total time: 4.23139 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_build_frusta at line 167
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   167                                           def _fast_build_frusta(branch, *, prox: float, dist: float):
+   168     49304         22.4      0.0      0.5      prox_f = float(prox)
+   169     49304         18.8      0.0      0.4      dist_f = float(dist)
+   170     49304         25.6      0.0      0.6      if not (0.0 - _geo_mod.EPS_PARAM <= prox_f < dist_f - _geo_mod.EPS_PARAM and dist_f <= 1.0 + _geo_mod.EPS_PARAM):
+   171                                                   raise ValueError(f"CV bounds must satisfy 0 <= prox < dist <= 1, got {(prox, dist)!r}.")
+   172     49304         23.7      0.0      0.6      prox_f = max(0.0, min(1.0, prox_f))
+   173     49304         22.2      0.0      0.5      dist_f = max(0.0, min(1.0, dist_f))
+   174
+   175     49304         24.4      0.0      0.6      (lengths_um, radii_prox_um, radii_dist_um, points_proximal, points_distal,
+   176     98608        166.1      0.0      3.9       total_length_um, segment_starts_um, segment_ends_um) = _get_branch_float_arrays(branch)
+   177
+   178     49304         18.8      0.0      0.4      if total_length_um <= _geo_mod.EPS_LEN_UM:
+   179                                                   raise ValueError(f"Branch total length must be > {_geo_mod.EPS_LEN_UM} μm (got {total_length_um} μm).")
+   180
+   181     49304         21.5      0.0      0.5      if len(lengths_um) == 1:
+   182                                                   seg_length_um = float(lengths_um[0])
+   183                                                   r_seg_prox = float(radii_prox_um[0])
+   184                                                   r_seg_dist = float(radii_dist_um[0])
+   185                                                   r0_um = r_seg_prox + (r_seg_dist - r_seg_prox) * prox_f
+   186                                                   r1_um = r_seg_prox + (r_seg_dist - r_seg_prox) * dist_f
+   187                                                   point0 = None
+   188                                                   point1 = None
+   189                                                   if points_proximal is not None and points_distal is not None:
+   190                                                       p_prox = points_proximal[0]
+   191                                                       p_dist = points_distal[0]
+   192                                                       point0 = p_prox + (p_dist - p_prox) * prox_f
+   193                                                       point1 = p_prox + (p_dist - p_prox) * dist_f
+   194                                                   return (_geo_mod._Frustum(prox=prox_f, dist=dist_f, length_um=(dist_f - prox_f) * seg_length_um,
+   195                                                                             r_prox_um=r0_um, r_dist_um=r1_um, point_prox_um=point0, point_dist_um=point1),)
+   196
+   197     49304         17.1      0.0      0.4      start_um = prox_f * total_length_um
+   198     49304         15.7      0.0      0.4      end_um = dist_f * total_length_um
+   199
+   200     49304        322.3      0.0      7.6      start_idx = max(0, int(np.searchsorted(segment_ends_um, start_um - _geo_mod.EPS_LEN_UM, side='left')))
+   201     49304        267.9      0.0      6.3      end_idx = min(len(lengths_um), int(np.searchsorted(segment_starts_um, end_um + _geo_mod.EPS_LEN_UM, side='right')) + 1)
+   202
+   203     49304         16.8      0.0      0.4      frusta = []
+   204    251452         94.4      0.0      2.2      for seg_idx in range(start_idx, end_idx):
+   205    202148        125.1      0.0      3.0          seg_length_um = float(lengths_um[seg_idx])
+   206    202148         99.5      0.0      2.4          seg_start_um = float(segment_starts_um[seg_idx])
+   207    202148         99.4      0.0      2.3          seg_end_um = float(segment_ends_um[seg_idx])
+   208    202148         69.5      0.0      1.6          if seg_length_um <= _geo_mod.EPS_LEN_UM:
+   209                                                       r_seg_prox = float(radii_prox_um[seg_idx])
+   210                                                       r_seg_dist = float(radii_dist_um[seg_idx])
+   211                                                       if np.isclose(r_seg_prox, r_seg_dist):
+   212                                                           continue
+   213                                                       if not _geo_mod._owns_zero_length_jump(position_um=seg_start_um, start_um=start_um, end_um=end_um):
+   214                                                           continue
+   215                                                       x_jump = max(prox_f, min(dist_f, seg_start_um / total_length_um))
+   216                                                       point_jump = points_distal[seg_idx] if points_distal is not None else None
+   217                                                       frusta.append(_geo_mod._Frustum(prox=float(x_jump), dist=float(x_jump), length_um=0.0, r_prox_um=r_seg_prox, r_dist_um=r_seg_dist, point_prox_um=point_jump, point_dist_um=point_jump))
+   218                                                       continue
+   219
+   220    202148         83.5      0.0      2.0          left_um = max(seg_start_um, start_um)
+   221    202148         79.4      0.0      1.9          right_um = min(seg_end_um, end_um)
+   222    202148         74.3      0.0      1.8          if right_um - left_um <= _geo_mod.EPS_LEN_UM:
+   223     41492         13.0      0.0      0.3              continue
+   224
+   225    160656         56.2      0.0      1.3          t0 = (left_um - seg_start_um) / seg_length_um
+   226    160656         52.4      0.0      1.2          t1 = (right_um - seg_start_um) / seg_length_um
+   227    160656         85.1      0.0      2.0          r_seg_prox = float(radii_prox_um[seg_idx])
+   228    160656         76.4      0.0      1.8          r_seg_dist = float(radii_dist_um[seg_idx])
+   229    160656         56.0      0.0      1.3          r0_um = r_seg_prox + (r_seg_dist - r_seg_prox) * t0
+   230    160656         56.6      0.0      1.3          r1_um = r_seg_prox + (r_seg_dist - r_seg_prox) * t1
+   231
+   232    160656         78.2      0.0      1.8          x0 = max(prox_f, min(dist_f, left_um / total_length_um))
+   233    160656         74.9      0.0      1.8          x1 = max(prox_f, min(dist_f, right_um / total_length_um))
+   234    160656         56.0      0.0      1.3          point0 = None
+   235    160656         48.6      0.0      1.1          point1 = None
+   236    160656         54.9      0.0      1.3          if points_proximal is not None and points_distal is not None:
+   237    160656         96.3      0.0      2.3              p_prox = points_proximal[seg_idx]
+   238    160656         81.3      0.0      1.9              p_dist = points_distal[seg_idx]
+   239    160656        496.1      0.0     11.7              point0 = p_prox + (p_dist - p_prox) * t0
+   240    160656        444.7      0.0     10.5              point1 = p_prox + (p_dist - p_prox) * t1
+   241
+   242    160656        651.2      0.0     15.4          frusta.append(_geo_mod._Frustum(prox=float(x0), dist=float(x1), length_um=float(right_um - left_um), r_prox_um=r0_um, r_dist_um=r1_um, point_prox_um=point0, point_dist_um=point1))
+   243
+   244     49304         21.4      0.0      0.5      if len(frusta) == 0:
+   245                                                   raise ValueError(f"CV [{prox}, {dist}] produced no frusta.")
+   246     49304         24.0      0.0      0.6      return tuple(frusta)
+
+Total time: 0.45502 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_bounds_from_max_len_um at line 250
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   250                                           def _fast_bounds_from_max_len_um(branch, *, max_len_um: float, keep_odd: bool):
+   251    186018         84.6      0.0     18.6      b = getattr(branch, "_branch", branch)
+   252    186018         78.5      0.0     17.3      cached = getattr(b, "_h01_float_arrays", None)
+   253    186018         69.8      0.0     15.3      if cached is not None:
+   254    186018         72.9      0.0     16.0          branch_len_um = float(cached[5])
+   255                                               else:
+   256                                                   branch_len_um = float(np.asarray(branch.length.to_decimal(u.um), dtype=float))
+   257    186018         68.4      0.0     15.0      if branch_len_um <= max_len_um + _geo_mod.EPS_LEN_UM:
+   258    184032         64.5      0.0     14.2          return ((0.0, 1.0),)
+   259      1986          1.9      0.0      0.4      n_cv = int(np.ceil((branch_len_um / max_len_um) - _geo_mod.EPS_PARAM))
+   260      1986          0.9      0.0      0.2      n_cv = max(1, n_cv)
+   261      1986          0.8      0.0      0.2      if keep_odd and n_cv % 2 == 0:
+   262      1656          0.6      0.0      0.1          n_cv += 1
+   263      3972         11.3      0.0      2.5      return tuple(
+   264                                                   (float(offset) / float(n_cv), float(offset + 1) / float(n_cv))
+   265      1986          0.9      0.0      0.2          for offset in range(n_cv)
+   266                                               )
+
+Total time: 1.28652 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_validate_morphology at line 271
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   271                                           def _fast_validate_morphology(morpho):
+   272        12          0.0      0.0      0.0      if getattr(morpho, "_h01_validated", False):
+   273                                                   return
+   274     62018         26.6      0.0      2.1      for branch_id, view in enumerate(morpho.branches):
+   275     62006         34.5      0.0      2.7          b = getattr(view, "_branch", view)
+   276     62006         28.5      0.0      2.2          cached = getattr(b, "_h01_float_arrays", None)
+   277     62006         21.4      0.0      1.7          if cached is not None:
+   278     62006         22.3      0.0      1.7              tot_len = cached[5]
+   279     62006         22.1      0.0      1.7              if tot_len <= _geo_mod.EPS_LEN_UM:
+   280                                                           raise ValueError(f"Branch {branch_id} has total length <= {_geo_mod.EPS_LEN_UM} μm; morphology rejected.")
+   281     62006         28.4      0.0      2.2              radii_prox = cached[1]
+   282     62006         20.5      0.0      1.6              radii_dist = cached[2]
+   283     62006       1082.2      0.0     84.1              if np.any(radii_prox <= 0.0) or np.any(radii_dist <= 0.0):
+   284                                                           raise ValueError(f"Branch {branch_id} has non-positive radii; morphology rejected.")
+   285                                                   else:
+   286                                                       _orig_validate_morphology(morpho)
+   287                                                       break
+   288        12          0.0      0.0      0.0      try:
+   289        12          0.0      0.0      0.0          morpho._h01_validated = True
+   290                                               except (AttributeError, TypeError):
+   291                                                   pass
+
+Total time: 28.1408 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_build_cv_geometry at line 298
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   298                                           def _fast_build_cv_geometry(morpho, bounds_by_branch):
+   299        24          0.0      0.0      0.0      sig = getattr(morpho, "_h01_geom_sig", None)
+   300        24          0.0      0.0      0.0      geom_key = sig if sig is not None else id(morpho)
+   301        24          0.0      0.0      0.0      key = (geom_key, len(morpho._nodes), id(bounds_by_branch))
+   302        24          0.0      0.0      0.0      if key in _GEOMETRY_CACHE:
+   303                                                   return _GEOMETRY_CACHE[key]
+   304
+   305        24          0.1      0.0      0.0      if not getattr(morpho, "_h01_validated", False):
+   306        12       1341.8    111.8      4.8          _geo_mod.validate_morphology(morpho)
+   307        12        329.2     27.4      1.2          _geo_mod.validate_bounds(bounds_by_branch, morpho)
+   308
+   309        24          0.0      0.0      0.0      n_branches = len(morpho._nodes)
+   310        24          0.0      0.0      0.0      branch_to_cv_ids_lists = []
+   311        24          0.0      0.0      0.0      geos = []
+   312        24          0.0      0.0      0.0      parent_by_cv = []
+   313        24          0.0      0.0      0.0      children_by_cv = []
+   314
+   315        24          0.0      0.0      0.0      cv_id = 0
+   316        24          0.0      0.0      0.0      pi = float(np.pi)
+   317        24          0.0      0.0      0.0      inv_pi_1e4 = 1e4 / pi
+   318
+   319    124036         51.8      0.0      0.2      for branch_id in range(n_branches):
+   320    124012         74.4      0.0      0.3          node = morpho._nodes[branch_id]
+   321    124012        326.4      0.0      1.2          branch = node.branch
+   322    124012         81.8      0.0      0.3          arrs = getattr(branch, "_h01_float_arrays", None)
+   323    124012         56.4      0.0      0.2          b_bounds = bounds_by_branch[branch_id]
+   324    124012         58.4      0.0      0.2          ids = []
+   325
+   326    124012         65.6      0.0      0.2          if arrs is not None and len(b_bounds) == 1 and b_bounds[0][0] <= 1e-9 and b_bounds[0][1] >= 1.0 - 1e-9:
+   327    115330         83.7      0.0      0.3              lens, r_prox_arr, r_dist_arr, pts_prox, pts_dist, tot_len, seg_starts, seg_ends = arrs
+   328    115330         61.5      0.0      0.2              if len(lens) == 1:
+   329     32066         30.1      0.0      0.1                  seg_len = float(lens[0])
+   330     32066         29.3      0.0      0.1                  rp = float(r_prox_arr[0])
+   331     32066         20.0      0.0      0.1                  rd = float(r_dist_arr[0])
+   332     32066         14.3      0.0      0.1                  rm = 0.5 * (rp + rd)
+   333     32066         42.2      0.0      0.1                  slant = float(np.sqrt(seg_len**2 + (rd - rp)**2))
+   334     32066         12.8      0.0      0.0                  area_um2 = pi * (rp + rd) * slant
+   335     32066         17.3      0.0      0.1                  f_tot = (seg_len / (rp * rd)) * inv_pi_1e4 if (rp > 0 and rd > 0) else 0.0
+   336     32066         18.1      0.0      0.1                  f_prox = ((0.5 * seg_len) / (rp * rm)) * inv_pi_1e4 if (rp > 0 and rm > 0) else 0.0
+   337     32066         16.0      0.0      0.1                  f_dist = ((0.5 * seg_len) / (rm * rd)) * inv_pi_1e4 if (rm > 0 and rd > 0) else 0.0
+   338     32066         11.8      0.0      0.0                  dm = rp + rd
+   339     32066         11.4      0.0      0.0                  L = seg_len
+   340                                                       else:
+   341     83264        156.7      0.0      0.6                  diff_r = r_dist_arr - r_prox_arr
+   342     83264        285.3      0.0      1.0                  slants = np.sqrt(lens * lens + diff_r * diff_r)
+   343     83264       1145.5      0.0      4.1                  area_um2 = float(np.sum(pi * (r_prox_arr + r_dist_arr) * slants))
+   344     83264        979.3      0.0      3.5                  f_tot = float(np.sum((lens / (r_prox_arr * r_dist_arr)) * inv_pi_1e4))
+   345     83264         38.0      0.0      0.1                  half_len = 0.5 * tot_len
+   346     83264        493.5      0.0      1.8                  mid_idx = np.searchsorted(seg_ends, half_len)
+   347     83264         52.5      0.0      0.2                  if mid_idx >= len(lens):
+   348                                                               mid_idx = len(lens) - 1
+   349     83264         69.6      0.0      0.2                  s_start = seg_starts[mid_idx]
+   350     83264         40.7      0.0      0.1                  s_len = lens[mid_idx]
+   351     83264         67.4      0.0      0.2                  t_mid = (half_len - s_start) / s_len if s_len > 0 else 0.5
+   352     83264         96.8      0.0      0.3                  rm = float(r_prox_arr[mid_idx] + (r_dist_arr[mid_idx] - r_prox_arr[mid_idx]) * t_mid)
+   353     83264         38.3      0.0      0.1                  if mid_idx == 0:
+   354     24168          8.7      0.0      0.0                      L_left = half_len
+   355     24168         15.4      0.0      0.1                      r_p_left = float(r_prox_arr[0])
+   356     24168         15.0      0.0      0.1                      f_prox = float(((L_left) / (r_p_left * rm)) * inv_pi_1e4) if (r_p_left > 0 and rm > 0) else 0.0
+   357                                                           else:
+   358     59096       1696.7      0.0      6.0                      f_left_prev = float(np.sum((lens[:mid_idx] / (r_prox_arr[:mid_idx] * r_dist_arr[:mid_idx])) * inv_pi_1e4))
+   359     59096         35.4      0.0      0.1                      L_part = half_len - s_start
+   360     59096         39.3      0.0      0.1                      r_p_part = float(r_prox_arr[mid_idx])
+   361     59096         49.4      0.0      0.2                      f_left_part = float(((L_part) / (r_p_part * rm)) * inv_pi_1e4) if (r_p_part > 0 and rm > 0) else 0.0
+   362     59096         24.3      0.0      0.1                      f_prox = f_left_prev + f_left_part
+   363     83264         33.8      0.0      0.1                  f_dist = f_tot - f_prox
+   364     83264         48.9      0.0      0.2                  rp = float(r_prox_arr[0])
+   365     83264         49.0      0.0      0.2                  rd = float(r_dist_arr[-1])
+   366     83264        924.1      0.0      3.3                  dm = float(np.sum((r_prox_arr + r_dist_arr) * lens) / tot_len) if tot_len > 0 else (rp + rd)
+   367     83264         31.2      0.0      0.1                  L = tot_len
+   368
+   369   2075940       1629.5      0.0      5.8              geos.append(_geo_mod._GeoCV(
+   370    115330         44.2      0.0      0.2                  id=cv_id,
+   371    115330         39.9      0.0      0.1                  branch_id=branch_id,
+   372    115330         41.5      0.0      0.1                  branch_type=branch.type,
+   373    115330         38.9      0.0      0.1                  prox=0.0,
+   374    115330         39.4      0.0      0.1                  dist=1.0,
+   375    115330         48.7      0.0      0.2                  midpoint=0.5,
+   376    115330         38.8      0.0      0.1                  parent_cv=None,
+   377    115330         40.6      0.0      0.1                  children_cv=(),
+   378    115330         40.7      0.0      0.1                  length_um=L,
+   379    115330         38.8      0.0      0.1                  lateral_area_um2=area_um2,
+   380    115330         52.8      0.0      0.2                  axial_factor_total_per_cm=f_tot,
+   381    115330         40.3      0.0      0.1                  axial_factor_prox_per_cm=f_prox,
+   382    115330         41.4      0.0      0.1                  axial_factor_dist_per_cm=f_dist,
+   383    115330         38.6      0.0      0.1                  r_prox_um=rp,
+   384    115330         40.6      0.0      0.1                  r_mid_um=rm,
+   385    115330         39.5      0.0      0.1                  diam_arc_mean_um=dm,
+   386    115330         45.2      0.0      0.2                  r_dist_um=rd
+   387                                                       ))
+   388    115330         46.3      0.0      0.2              parent_by_cv.append(None)
+   389    115330         40.3      0.0      0.1              children_by_cv.append([])
+   390    115330         44.9      0.0      0.2              ids.append(cv_id)
+   391    115330         47.7      0.0      0.2              cv_id += 1
+   392      8682          4.9      0.0      0.0          elif arrs is not None and len(arrs[0]) == 1:
+   393      1780          1.0      0.0      0.0              lens, r_prox_arr, r_dist_arr = arrs[0], arrs[1], arrs[2]
+   394      1780          1.5      0.0      0.0              seg_len = float(lens[0])
+   395      1780          2.0      0.0      0.0              r0 = float(r_prox_arr[0])
+   396      1780          1.1      0.0      0.0              r1 = float(r_dist_arr[0])
+   397
+   398      5340          2.3      0.0      0.0              for prox, dist in b_bounds:
+   399      3560          1.5      0.0      0.0                  prox_f = float(prox)
+   400      3560          1.3      0.0      0.0                  dist_f = float(dist)
+   401      3560          1.5      0.0      0.0                  L = (dist_f - prox_f) * seg_len
+   402      3560          1.5      0.0      0.0                  rp = r0 + (r1 - r0) * prox_f
+   403      3560          1.3      0.0      0.0                  rd = r0 + (r1 - r0) * dist_f
+   404      3560          1.6      0.0      0.0                  rm = 0.5 * (rp + rd)
+   405
+   406      3560          4.0      0.0      0.0                  slant = float(np.sqrt(L**2 + (rd - rp)**2))
+   407      3560          1.5      0.0      0.0                  area_um2 = pi * (rp + rd) * slant
+   408
+   409      3560          1.8      0.0      0.0                  factor_total = (L / (rp * rd)) * inv_pi_1e4 if (rp > 0 and rd > 0) else 0.0
+   410      3560          1.8      0.0      0.0                  factor_prox = ((0.5 * L) / (rp * rm)) * inv_pi_1e4 if (rp > 0 and rm > 0) else 0.0
+   411      3560          1.6      0.0      0.0                  factor_dist = ((0.5 * L) / (rm * rd)) * inv_pi_1e4 if (rm > 0 and rd > 0) else 0.0
+   412
+   413      3560          1.3      0.0      0.0                  midpoint = 0.5 * (prox_f + dist_f)
+   414
+   415     64080         49.3      0.0      0.2                  geos.append(_geo_mod._GeoCV(
+   416      3560          1.3      0.0      0.0                      id=cv_id,
+   417      3560          1.2      0.0      0.0                      branch_id=branch_id,
+   418      3560          1.3      0.0      0.0                      branch_type=branch.type,
+   419      3560          1.3      0.0      0.0                      prox=prox_f,
+   420      3560          1.3      0.0      0.0                      dist=dist_f,
+   421      3560          1.5      0.0      0.0                      midpoint=midpoint,
+   422      3560          1.2      0.0      0.0                      parent_cv=None,
+   423      3560          1.2      0.0      0.0                      children_cv=(),
+   424      3560          1.2      0.0      0.0                      length_um=L,
+   425      3560          1.2      0.0      0.0                      lateral_area_um2=area_um2,
+   426      3560          1.6      0.0      0.0                      axial_factor_total_per_cm=factor_total,
+   427      3560          1.2      0.0      0.0                      axial_factor_prox_per_cm=factor_prox,
+   428      3560          1.3      0.0      0.0                      axial_factor_dist_per_cm=factor_dist,
+   429      3560          1.2      0.0      0.0                      r_prox_um=rp,
+   430      3560          1.3      0.0      0.0                      r_mid_um=rm,
+   431      3560          1.3      0.0      0.0                      diam_arc_mean_um=rp + rd,
+   432      3560          1.2      0.0      0.0                      r_dist_um=rd
+   433                                                           ))
+   434      3560          1.3      0.0      0.0                  parent_by_cv.append(None)
+   435      3560          1.4      0.0      0.0                  children_by_cv.append([])
+   436      3560          1.3      0.0      0.0                  ids.append(cv_id)
+   437      3560          1.4      0.0      0.0                  cv_id += 1
+   438                                                   else:
+   439     56206         26.5      0.0      0.1              for prox, dist in b_bounds:
+   440     49304         21.4      0.0      0.1                  prox_f = float(prox)
+   441     49304         17.7      0.0      0.1                  dist_f = float(dist)
+   442     49304       4807.6      0.1     17.1                  frusta = _geo_mod._build_frusta(branch, prox=prox_f, dist=dist_f)
+   443     49304        135.6      0.0      0.5                  length_um = sum(p.length_um for p in frusta)
+   444     49304        472.2      0.0      1.7                  area_um2 = _geo_mod._lateral_area_um2(frusta)
+   445     49304        400.0      0.0      1.4                  factor_total = _geo_mod._axial_factor_per_cm(frusta)
+   446     49304         20.3      0.0      0.1                  midpoint = 0.5 * (prox_f + dist_f)
+   447     49304       1463.0      0.0      5.2                  left, right = _geo_mod._split_frusta(frusta, x=midpoint)
+   448     49304        300.6      0.0      1.1                  factor_prox = _geo_mod._axial_factor_per_cm(left) if left else 0.0
+   449     49304        297.8      0.0      1.1                  factor_dist = _geo_mod._axial_factor_per_cm(right) if right else 0.0
+   450     49304         79.9      0.0      0.3                  r_prox, r_dist = _geo_mod._boundary_radii_um(frusta)
+   451     49304        433.0      0.0      1.5                  r_mid = _geo_mod._midpoint_radius_um(frusta)
+   452
+   453     98608         37.6      0.0      0.1                  geos.append(
+   454    887472        684.7      0.0      2.4                      _geo_mod._GeoCV(
+   455     49304         18.9      0.0      0.1                          id=cv_id,
+   456     49304         16.7      0.0      0.1                          branch_id=branch_id,
+   457     49304         17.4      0.0      0.1                          branch_type=branch.type,
+   458     49304         17.1      0.0      0.1                          prox=prox_f,
+   459     49304         16.4      0.0      0.1                          dist=dist_f,
+   460     49304         20.4      0.0      0.1                          midpoint=midpoint,
+   461     49304         16.0      0.0      0.1                          parent_cv=None,
+   462     49304         17.1      0.0      0.1                          children_cv=(),
+   463     49304         16.4      0.0      0.1                          length_um=length_um,
+   464     49304         16.0      0.0      0.1                          lateral_area_um2=area_um2,
+   465     49304         22.0      0.0      0.1                          axial_factor_total_per_cm=factor_total,
+   466     49304         16.0      0.0      0.1                          axial_factor_prox_per_cm=factor_prox,
+   467     49304         17.3      0.0      0.1                          axial_factor_dist_per_cm=factor_dist,
+   468     49304         16.1      0.0      0.1                          r_prox_um=r_prox,
+   469     49304         16.7      0.0      0.1                          r_mid_um=r_mid,
+   470     49304        301.7      0.0      1.1                          diam_arc_mean_um=_geo_mod._arc_weighted_mean_diam_um(frusta),
+   471     49304         16.8      0.0      0.1                          r_dist_um=r_dist,
+   472                                                               )
+   473                                                           )
+   474     49304         18.6      0.0      0.1                  parent_by_cv.append(None)
+   475     49304         18.9      0.0      0.1                  children_by_cv.append([])
+   476     49304         18.4      0.0      0.1                  ids.append(cv_id)
+   477     49304         19.4      0.0      0.1                  cv_id += 1
+   478
+   479    124012         53.7      0.0      0.2          branch_to_cv_ids_lists.append(tuple(ids))
+   480
+   481        24          4.3      0.2      0.0      branch_to_cv_ids = tuple(branch_to_cv_ids_lists)
+   482
+   483    124036         39.5      0.0      0.1      for ids in branch_to_cv_ids:
+   484    168194         87.9      0.0      0.3          for left_id, right_id in zip(ids[:-1], ids[1:]):
+   485     44182         16.4      0.0      0.1              parent_by_cv[right_id] = left_id
+   486     44182         16.8      0.0      0.1              children_by_cv[left_id].append(right_id)
+   487
+   488    124012       1919.3      0.0      6.8      for edge in morpho.edges:
+   489    123988        373.0      0.0      1.3          parent_ids = branch_to_cv_ids[edge.parent.index]
+   490    123988        368.0      0.0      1.3          child_ids = branch_to_cv_ids[edge.child.index]
+   491    123988         45.5      0.0      0.2          if len(parent_ids) == 1:
+   492    113020         47.1      0.0      0.2              parent_cv = parent_ids[0]
+   493                                                   else:
+   494     10968          4.5      0.0      0.0              p_x = float(edge.parent_x)
+   495     10968          3.8      0.0      0.0              if p_x >= 1.0 - 1e-9:
+   496     10968          4.4      0.0      0.0                  parent_cv = parent_ids[-1]
+   497                                                       elif p_x <= 1e-9:
+   498                                                           parent_cv = parent_ids[0]
+   499                                                       else:
+   500                                                           parent_cv = _geo_mod.locate_cv_on_branch(parent_ids, geos, x=p_x)
+   501    123988         53.2      0.0      0.2          child_cv = child_ids[0]
+   502    123988         43.0      0.0      0.2          if parent_by_cv[child_cv] is None:
+   503    123988         42.3      0.0      0.2              parent_by_cv[child_cv] = parent_cv
+   504    123988         45.8      0.0      0.2          if child_cv not in children_by_cv[parent_cv]:
+   505    123988         48.8      0.0      0.2              children_by_cv[parent_cv].append(child_cv)
+   506
+   507        48       3253.1     67.8     11.6      finalized = tuple(
+   508                                                   _geo_mod._GeoCV(
+   509                                                       id=geo.id,
+   510                                                       branch_id=geo.branch_id,
+   511                                                       branch_type=geo.branch_type,
+   512                                                       prox=geo.prox,
+   513                                                       dist=geo.dist,
+   514                                                       midpoint=geo.midpoint,
+   515                                                       parent_cv=parent_by_cv[geo.id],
+   516                                                       children_cv=tuple(children_by_cv[geo.id]),
+   517                                                       length_um=geo.length_um,
+   518                                                       lateral_area_um2=geo.lateral_area_um2,
+   519                                                       axial_factor_total_per_cm=geo.axial_factor_total_per_cm,
+   520                                                       axial_factor_prox_per_cm=geo.axial_factor_prox_per_cm,
+   521                                                       axial_factor_dist_per_cm=geo.axial_factor_dist_per_cm,
+   522                                                       r_prox_um=geo.r_prox_um,
+   523                                                       r_mid_um=geo.r_mid_um,
+   524                                                       diam_arc_mean_um=geo.diam_arc_mean_um,
+   525                                                       r_dist_um=geo.r_dist_um,
+   526                                                   )
+   527        24          0.0      0.0      0.0          for geo in geos
+   528                                               )
+   529
+   530        48          0.2      0.0      0.0      res = _geo_mod.CVGeometryResult(
+   531        24          0.0      0.0      0.0          geos=finalized,
+   532        24          0.0      0.0      0.0          branch_to_cv_ids=branch_to_cv_ids,
+   533                                               )
+   534        24          0.0      0.0      0.0      _GEOMETRY_CACHE[key] = res
+   535        24          0.0      0.0      0.0      return res
+
+Total time: 17.5263 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_build_cv_mechanisms at line 540
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   540                                           def _fast_build_cv_mechanisms(morpho, geometry, *, paint_rules=(), place_rules=()):
+   541        24          0.0      0.0      0.0      geos = geometry.geos
+   542        24        671.7     28.0      3.8      buckets = [_mech_mod._init_bucket() for _ in geos]
+   543        24          0.4      0.0      0.0      cache = _mech_mod._RegionCache(morpho)
+   544        24          0.0      0.0      0.0      branch_to_cv_ids = geometry.branch_to_cv_ids
+   545
+   546        24          0.0      0.0      0.0      frusta_cache = {}
+   547
+   548        24          0.0      0.0      0.0      def _cached_frusta(branch, *, prox, dist):
+   549                                                   key = (id(branch), round(float(prox), 9), round(float(dist), 9))
+   550                                                   cached = frusta_cache.get(key)
+   551                                                   if cached is None:
+   552                                                       cached = _geo_mod._build_frusta(branch, prox=prox, dist=dist)
+   553                                                       frusta_cache[key] = cached
+   554                                                   return cached
+   555
+   556       389          0.3      0.0      0.0      for rule in paint_rules:
+   557       365       5249.4     14.4     30.0          intervals_by_branch = cache.intervals(rule.region)
+   558       365          0.2      0.0      0.0          mechanism = rule.mechanism
+   559       365          0.3      0.0      0.0          is_cable = isinstance(mechanism, _mech_mod.CableProperty)
+   560
+   561    319146        122.0      0.0      0.7          for branch_id, intervals in intervals_by_branch.items():
+   562    318781        117.3      0.0      0.7              if branch_id >= len(branch_to_cv_ids):
+   563                                                           continue
+   564    318781        123.3      0.0      0.7              cv_ids = branch_to_cv_ids[branch_id]
+   565    318781        114.4      0.0      0.7              if not cv_ids or not intervals:
+   566                                                           continue
+   567
+   568    318781        152.9      0.0      0.9              if len(intervals) == 1 and intervals[0][0] <= _mech_mod.EPS_PARAM and intervals[0][1] >= 1.0 - _mech_mod.EPS_PARAM:
+   569    268413         92.4      0.0      0.5                  if is_cable:
+   570    408140        165.3      0.0      0.9                      for cv_id in cv_ids:
+   571    226312         83.1      0.0      0.5                          buckets[cv_id].cable = mechanism
+   572                                                           else:
+   573    173760         66.9      0.0      0.4                      for cv_id in cv_ids:
+   574     87175        277.8      0.0      1.6                          _mech_mod._apply_density(buckets[cv_id], mechanism, region_key=rule.region, fraction=1.0)
+   575    268413         91.8      0.0      0.5                  continue
+   576
+   577    367052        149.6      0.0      0.9              for cv_id in cv_ids:
+   578    316684        118.8      0.0      0.7                  geo_cv = geos[cv_id]
+   579    316684        113.0      0.0      0.6                  bucket = buckets[cv_id]
+   580
+   581    316684        107.5      0.0      0.6                  if is_cable:
+   582     52267        267.5      0.0      1.5                      if not _mech_mod._interval_contains(intervals, geo_cv.midpoint, epsilon=_mech_mod.EPS_PARAM):
+   583     26288          9.1      0.0      0.1                          continue
+   584     25979          9.3      0.0      0.1                      bucket.cable = mechanism
+   585     25979          9.1      0.0      0.1                      continue
+   586
+   587    264417       8834.2      0.0     50.4                  fraction = _mech_mod._coverage_fraction(morpho, geo_cv, intervals, frusta_builder=_cached_frusta)
+   588    264417        101.4      0.0      0.6                  if fraction <= _mech_mod.EPS_PARAM:
+   589    138076         50.2      0.0      0.3                      continue
+   590    126341        423.1      0.0      2.4                  _mech_mod._apply_density(bucket, mechanism, region_key=rule.region, fraction=fraction)
+   591
+   592        24          0.0      0.0      0.0      seen_names = set()
+   593        66          0.1      0.0      0.0      for rule in place_rules:
+   594        84          2.4      0.0      0.0          for branch_id, x, display_name in cache.points(rule.locset):
+   595        42          0.1      0.0      0.0              ids = geometry.cv_ids(branch_id)
+   596        42          0.0      0.0      0.0              if not ids:
+   597                                                           continue
+   598        42          0.4      0.0      0.0              cv_id = geometry.locate_cv(branch_id=branch_id, x=x)
+   599        42          0.0      0.0      0.0              geo_cv = geos[cv_id]
+   600        42          0.1      0.0      0.0              position = _mech_mod._position_for_geo(geo_cv, x=float(x))
+   601        84          0.1      0.0      0.0              for mechanism in rule.mechanisms:
+   602        84          0.5      0.0      0.0                  _mech_mod._apply_place(
+   603        42          0.0      0.0      0.0                      buckets[cv_id],
+   604        42          0.0      0.0      0.0                      mechanism,
+   605        42          0.0      0.0      0.0                      display_name=display_name,
+   606        42          0.0      0.0      0.0                      seen_names=seen_names,
+   607        42          0.0      0.0      0.0                      position=position,
+   608                                                           )
+   609
+   610        24          0.0      0.0      0.0      return buckets
+
+Total time: 14.3811 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_build_node_tree at line 621
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   621                                           def _fast_build_node_tree(morpho, *, cvs):
+   622        24          0.2      0.0      0.0      n_branches = len(morpho.branches)
+   623        24         20.0      0.8      0.1      cv_ids_by_branch = [[] for _ in range(n_branches)]
+   624    168218         57.8      0.0      0.4      for cv in cvs:
+   625    168194         65.8      0.0      0.5          cv_ids_by_branch[cv.branch_id].append(cv.id)
+   626
+   627        24          0.0      0.0      0.0      drafts = []
+   628        24          0.9      0.0      0.0      cv_to_mid_node_id = np.full(len(cvs), -1, dtype=np.int32)
+   629        24          0.0      0.0      0.0      branch_endpoint_node_id_by_x = {}
+   630        24          0.0      0.0      0.0      logical_edge_roles = {}
+   631        24          0.0      0.0      0.0      logical_edge_order = []
+   632
+   633        24          0.0      0.0      0.0      def new_node(*, cv_id, position):
+   634                                                   node_id = len(drafts)
+   635                                                   drafts.append([(cv_id, position)])
+   636                                                   return node_id
+   637
+   638        24          0.0      0.0      0.0      def add_node_role(node_id, *, cv_id, position):
+   639                                                   pair = (cv_id, position)
+   640                                                   r = drafts[node_id]
+   641                                                   if pair not in r:
+   642                                                       r.append(pair)
+   643
+   644        24          0.0      0.0      0.0      def add_edge_role(parent_node_id, child_node_id, *, cv_id, half):
+   645                                                   key = (parent_node_id, child_node_id)
+   646                                                   entry = logical_edge_roles.get(key)
+   647                                                   if entry is None:
+   648                                                       entry = []
+   649                                                       logical_edge_roles[key] = entry
+   650                                                       logical_edge_order.append(key)
+   651                                                   role = (cv_id, half)
+   652                                                   if role not in entry:
+   653                                                       entry.append(role)
+   654
+   655        24          0.0      0.0      0.0      root_branch_cv_ids = cv_ids_by_branch[0]
+   656        24          0.0      0.0      0.0      if len(root_branch_cv_ids) == 0:
+   657                                                   raise ValueError("Root branch has no CVs.")
+   658        24          0.1      0.0      0.0      root_node_id = new_node(cv_id=root_branch_cv_ids[0], position="prox")
+   659        24          0.0      0.0      0.0      branch_endpoint_node_id_by_x[(0, 0.0)] = root_node_id
+   660
+   661    124036         47.1      0.0      0.3      for branch_id in range(n_branches):
+   662    124012         46.0      0.0      0.3          branch_cv_ids = cv_ids_by_branch[branch_id]
+   663    124012         62.9      0.0      0.4          node = morpho._nodes[branch_id]
+   664    124012        285.9      0.0      2.0          if node.parent_id is None:
+   665        24          0.0      0.0      0.0              attachment_node_id = root_node_id
+   666        24          0.0      0.0      0.0              attach_x = 0.0
+   667        24          0.0      0.0      0.0              ordered_cv_ids = branch_cv_ids
+   668                                                   else:
+   669    123988        271.6      0.0      1.9              p_id = node.parent_id
+   670    123988        530.5      0.0      3.7              p_x = float(node.parent_x) if node.parent_x is not None else 1.0
+   671    123988         67.4      0.0      0.5              if (p_id, p_x) in branch_endpoint_node_id_by_x:
+   672    115244         52.7      0.0      0.4                  attachment_node_id = branch_endpoint_node_id_by_x[(p_id, p_x)]
+   673      8744          4.4      0.0      0.0              elif p_x >= 1.0 - 1e-9 and (p_id, 1.0) in branch_endpoint_node_id_by_x:
+   674      8744          4.1      0.0      0.0                  attachment_node_id = branch_endpoint_node_id_by_x[(p_id, 1.0)]
+   675                                                       elif p_x <= 1e-9 and (p_id, 0.0) in branch_endpoint_node_id_by_x:
+   676                                                           attachment_node_id = branch_endpoint_node_id_by_x[(p_id, 0.0)]
+   677                                                       else:
+   678                                                           attachment_node_id = _node_build_mod._resolve_attachment_node(
+   679                                                               p_id, parent_x=p_x,
+   680                                                               branch_endpoint_node_id_by_x=branch_endpoint_node_id_by_x,
+   681                                                               cv_to_mid_node_id=cv_to_mid_node_id,
+   682                                                               cv_ids_by_branch=cv_ids_by_branch,
+   683                                                               cvs=cvs
+   684                                                           )
+   685    123988        518.6      0.0      3.6              c_x = float(node.child_x) if node.child_x is not None else 0.0
+   686    123988         40.9      0.0      0.3              attach_x = c_x
+   687    123988         50.4      0.0      0.4              ordered_cv_ids = branch_cv_ids if attach_x <= _node_build_mod._EPS_PARAM else tuple(reversed(branch_cv_ids))
+   688
+   689    124012         52.1      0.0      0.4          first_cv_id = ordered_cv_ids[0]
+   690    124012        335.4      0.0      2.3          add_node_role(attachment_node_id, cv_id=first_cv_id, position=_node_build_mod._entry_position_for_walk(attach_x))
+   691    124012         71.4      0.0      0.5          branch_endpoint_node_id_by_x[(branch_id, float(attach_x))] = attachment_node_id
+   692
+   693    292206        115.4      0.0      0.8          for cv_id in ordered_cv_ids:
+   694    168194        346.2      0.0      2.4              cv_to_mid_node_id[cv_id] = new_node(cv_id=cv_id, position="mid")
+   695
+   696    124012         45.7      0.0      0.3          terminal_cv_id = ordered_cv_ids[-1]
+   697    124012        308.3      0.0      2.1          terminal_node_id = new_node(cv_id=terminal_cv_id, position=_node_build_mod._exit_position_for_walk(attach_x))
+   698    124012         80.3      0.0      0.6          branch_endpoint_node_id_by_x[(branch_id, float(1.0 - attach_x))] = terminal_node_id
+   699
+   700    124012         51.3      0.0      0.4          n_ordered = len(ordered_cv_ids)
+   701    292206        152.1      0.0      1.1          for index, cv_id in enumerate(ordered_cv_ids):
+   702    168194        102.7      0.0      0.7              mid_id = int(cv_to_mid_node_id[cv_id])
+   703    168194         73.3      0.0      0.5              p_node_id = attachment_node_id if index == 0 else int(cv_to_mid_node_id[ordered_cv_ids[index - 1]])
+   704    168194         68.9      0.0      0.5              c_node_id = terminal_node_id if index == n_ordered - 1 else int(cv_to_mid_node_id[ordered_cv_ids[index + 1]])
+   705    168194        723.6      0.0      5.0              add_edge_role(p_node_id, mid_id, cv_id=cv_id, half=_node_build_mod._entry_half_for_walk(attach_x))
+   706    168194       1481.2      0.0     10.3              add_edge_role(mid_id, c_node_id, cv_id=cv_id, half=_node_build_mod._exit_half_for_walk(attach_x))
+   707
+   708        48        176.6      3.7      1.2      branch_endpoint_node_id = _node_build_mod._build_branch_endpoint_node_id(
+   709        24          0.0      0.0      0.0          branch_endpoint_node_id_by_x=branch_endpoint_node_id_by_x,
+   710        24          0.0      0.0      0.0          n_branches=n_branches,
+   711                                               )
+   712
+   713        24          0.0      0.0      0.0      n_nodes = len(drafts)
+   714        24          0.0      0.0      0.0      role_to_node_id = {}
+   715        24          0.0      0.0      0.0      nodes_list = []
+   716        24       1083.1     45.1      7.5      node_density_mech_lists = [[] for _ in range(n_nodes)]
+   717        24         31.4      1.3      0.2      node_point_mech_lists = [[] for _ in range(n_nodes)]
+   718
+   719    168218         55.8      0.0      0.4      for cv in cvs:
+   720    168194         90.5      0.0      0.6          mid_id = int(cv_to_mid_node_id[cv.id])
+   721    168194         58.3      0.0      0.4          if cv.density_mech:
+   722     84097         31.9      0.0      0.2              node_density_mech_lists[mid_id].extend(cv.density_mech)
+   723
+   724    292254        122.6      0.0      0.9      for node_id, raw_roles in enumerate(drafts):
+   725    292230        104.7      0.0      0.7          if len(raw_roles) == 1:
+   726    230360         85.9      0.0      0.6              cid, pos = raw_roles[0]
+   727    230360        416.5      0.0      2.9              roles_tuple = (_NodeRole(cv_id=cid, position=pos),)
+   728    230360         95.7      0.0      0.7              role_to_node_id[(cid, pos)] = node_id
+   729    230360         82.3      0.0      0.6              kind = "mid" if pos == "mid" else "boundary"
+   730                                                   else:
+   731     61870        140.4      0.0      1.0              raw_roles.sort(key=lambda item: (item[0], _POS_ORDER[item[1]]))
+   732     61870        832.1      0.0      5.8              roles_tuple = tuple(_NodeRole(cv_id=cid, position=pos) for cid, pos in raw_roles)
+   733    247728         85.3      0.0      0.6              for cid, pos in raw_roles:
+   734    185858         79.5      0.0      0.6                  role_to_node_id[(cid, pos)] = node_id
+   735     61870         67.3      0.0      0.5              kind = "mid" if all(pos == "mid" for _, pos in raw_roles) else "boundary"
+   736
+   737    584460       1012.9      0.0      7.0          nodes_list.append(_Node(
+   738    292230         89.2      0.0      0.6              id=node_id,
+   739    292230         93.9      0.0      0.7              kind=kind,
+   740    292230         96.7      0.0      0.7              roles=roles_tuple,
+   741    292230        121.6      0.0      0.8              density_mech=tuple(node_density_mech_lists[node_id]),
+   742    292230         90.1      0.0      0.6              point_mech=(),
+   743                                                   ))
+   744
+   745    168218         57.3      0.0      0.4      for cv in cvs:
+   746    168194         57.3      0.0      0.4          if cv.point_mech_roles:
+   747        22          0.1      0.0      0.0              mid_id = int(cv_to_mid_node_id[cv.id])
+   748        64          0.0      0.0      0.0              for placement in cv.point_mech_roles:
+   749        42          0.0      0.0      0.0                  n_id = role_to_node_id.get((cv.id, placement.position), mid_id)
+   750        42          0.0      0.0      0.0                  node_point_mech_lists[n_id].append(placement.mechanism)
+   751
+   752        24          9.9      0.4      0.1      r_prox_arr = [cv.r_axial_prox for cv in cvs]
+   753        24          8.2      0.3      0.1      r_dist_arr = [cv.r_axial_dist for cv in cvs]
+   754
+   755        24          0.0      0.0      0.0      edges_list = []
+   756    292254        265.3      0.0      1.8      for edge_id, ((p_node, c_node), cv_roles) in enumerate(
+   757        24          0.0      0.0      0.0          (key, logical_edge_roles[key]) for key in logical_edge_order
+   758                                               ):
+   759    292206        113.4      0.0      0.8          if len(cv_roles) == 1:
+   760    248024        110.4      0.0      0.8              c_id, half = cv_roles[0]
+   761    248024        102.3      0.0      0.7              r = r_prox_arr[c_id] if half == "prox" else r_dist_arr[c_id]
+   762    248024        558.2      0.0      3.9              edge_roles = (_NodeEdgeRole(cv_id=c_id, half=half, r_axial=r),)
+   763                                                   else:
+   764     44182         72.9      0.0      0.5              cv_roles.sort(key=lambda item: (item[0], item[1]))
+   765     88364        425.4      0.0      3.0              edge_roles = tuple(
+   766                                                           _NodeEdgeRole(
+   767                                                               cv_id=c_id, half=half,
+   768                                                               r_axial=(r_prox_arr[c_id] if half == "prox" else r_dist_arr[c_id]),
+   769                                                           )
+   770     44182         16.1      0.0      0.1                  for c_id, half in cv_roles
+   771                                                       )
+   772    584412        926.4      0.0      6.4          edges_list.append(_NodeEdge(
+   773    292206         95.2      0.0      0.7              id=edge_id,
+   774    292206         94.3      0.0      0.7              parent_node_id=p_node,
+   775    292206         90.3      0.0      0.6              child_node_id=c_node,
+   776    292206         92.6      0.0      0.6              roles=edge_roles,
+   777                                                   ))
+   778
+   779        48          0.3      0.0      0.0      return _NodeTree(
+   780        24          2.8      0.1      0.0          nodes=tuple(nodes_list),
+   781        24          2.3      0.1      0.0          edges=tuple(edges_list),
+   782        24          0.0      0.0      0.0          root_node_id=root_node_id,
+   783        24          0.0      0.0      0.0          cv_to_mid_node_id=cv_to_mid_node_id,
+   784        24          0.0      0.0      0.0          branch_endpoint_node_id=branch_endpoint_node_id,
+   785                                               )
+
+Total time: 6.97589 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_coverage_fraction at line 793
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   793                                           def _fast_coverage_fraction(morpho, geo, intervals, *, frusta_builder=None):
+   794    264417        112.7      0.0      1.6      if geo.lateral_area_um2 <= _mech_mod.EPS_AREA_UM2:
+   795                                                   return 0.0
+   796    264417         88.7      0.0      1.3      overlap = 0.0
+   797    264417         90.8      0.0      1.3      geo_prox = geo.prox
+   798    264417         83.1      0.0      1.2      geo_dist = geo.dist
+   799    264417        102.2      0.0      1.5      eps = _mech_mod.EPS_PARAM
+   800    264417        675.0      0.0      9.7      branch = morpho._nodes[geo.branch_id].branch if geo.branch_id in morpho._nodes else morpho.branches[geo.branch_id]
+   801    264417        121.2      0.0      1.7      arrs = getattr(branch, "_h01_float_arrays", None)
+   802    264417        115.7      0.0      1.7      is_single_seg = arrs is not None and len(arrs[0]) == 1
+   803
+   804    264417         91.1      0.0      1.3      if is_single_seg:
+   805     18246         11.4      0.0      0.2          seg_len = float(arrs[0][0])
+   806     18246         10.5      0.0      0.2          r0 = float(arrs[1][0])
+   807     18246          9.7      0.0      0.1          r1 = float(arrs[2][0])
+   808     18246          6.4      0.0      0.1          dr = r1 - r0
+   809     36492         14.5      0.0      0.2          for left, right in intervals:
+   810     18246          6.8      0.0      0.1              l_f = float(left)
+   811     18246          6.7      0.0      0.1              r_f = float(right)
+   812     18246          7.7      0.0      0.1              start = max(geo_prox, l_f)
+   813     18246          7.3      0.0      0.1              end = min(geo_dist, r_f)
+   814     18246          6.8      0.0      0.1              if end - start <= eps:
+   815      9123          3.0      0.0      0.0                  continue
+   816      9123          3.4      0.0      0.0              if start <= geo_prox + eps and end >= geo_dist - eps:
+   817      9123          3.2      0.0      0.0                  overlap += geo.lateral_area_um2
+   818                                                       else:
+   819                                                           rp = r0 + dr * start
+   820                                                           rd = r0 + dr * end
+   821                                                           L = (end - start) * seg_len
+   822                                                           slant = np.sqrt(L * L + (rd - rp) * (rd - rp))
+   823                                                           overlap += _PI_FLOAT * (rp + rd) * slant
+   824                                               else:
+   825   2347739        809.5      0.0     11.6          for left, right in intervals:
+   826   2101568        765.4      0.0     11.0              l_f = float(left)
+   827   2101568        707.6      0.0     10.1              r_f = float(right)
+   828   2101568        800.8      0.0     11.5              start = max(geo_prox, l_f)
+   829   2101568        781.4      0.0     11.2              end = min(geo_dist, r_f)
+   830   2101568        699.0      0.0     10.0              if end - start <= eps:
+   831   1984350        620.4      0.0      8.9                  continue
+   832    117218         42.7      0.0      0.6              if start <= geo_prox + eps and end >= geo_dist - eps:
+   833    117218         41.1      0.0      0.6                  overlap += geo.lateral_area_um2
+   834                                                       else:
+   835                                                           build = frusta_builder if frusta_builder is not None else _fast_build_frusta
+   836                                                           overlap += _geo_mod._lateral_area_um2(build(branch, prox=start, dist=end))
+   837
+   838    264417        130.0      0.0      1.9      return max(0.0, min(1.0, overlap / geo.lateral_area_um2))
+
+Total time: 0.204887 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _get_ra_ohm_cm at line 848
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   848                                           def _get_ra_ohm_cm(ra):
+   849    168194         80.1      0.0     39.1      cached = _RA_CACHE.get(id(ra))
+   850    168194         58.7      0.0     28.7      if cached is not None and cached[0] is ra:
+   851    168157         58.5      0.0     28.5          return cached[1]
+   852        37          7.5      0.2      3.7      val = float(np.asarray(ra.to_decimal(u.ohm * u.cm), dtype=float))
+   853                                               # Quantity does not support weak references. Retain a bounded set of owners
+   854                                               # so Python object-id reuse cannot substitute another cable's resistivity.
+   855        37          0.0      0.0      0.0      if len(_RA_CACHE) >= 1024:
+   856                                                   _RA_CACHE.clear()
+   857        37          0.0      0.0      0.0      _RA_CACHE[id(ra)] = (ra, val)
+   858        37          0.0      0.0      0.0      return val
+
+Total time: 2.23037 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_quantity at line 860
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   860                                           def _fast_quantity(val, unit):
+   861   1513842        805.3      0.0     36.1      q = saiunit._base_quantity.Quantity.__new__(saiunit._base_quantity.Quantity)
+   862   1513842        482.8      0.0     21.6      q._mantissa = val
+   863   1513842        449.7      0.0     20.2      q._unit = unit
+   864   1513842        492.5      0.0     22.1      return q
+
+Total time: 9.82383 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_assemble_cv at line 866
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   866                                           def _fast_assemble_cv(geo, bucket):
+   867    168194         66.2      0.0      0.7      cable = bucket.cable
+   868    168194         52.4      0.0      0.5      ra = cable.axial_resistivity
+   869    168194        389.7      0.0      4.0      ra_ohm_cm = _get_ra_ohm_cm(ra)
+   870   4036656       2888.8      0.0     29.4      return _base_mod.CV(
+   871    168194         66.0      0.0      0.7          id=geo.id,
+   872    168194         55.5      0.0      0.6          branch_id=geo.branch_id,
+   873    168194         56.3      0.0      0.6          branch_type=geo.branch_type,
+   874    168194         56.9      0.0      0.6          prox=geo.prox,
+   875    168194         57.8      0.0      0.6          dist=geo.dist,
+   876    168194         67.2      0.0      0.7          parent_cv=geo.parent_cv,
+   877    168194         58.2      0.0      0.6          children_cv=geo.children_cv,
+   878    168194        462.2      0.0      4.7          length=_fast_quantity(geo.length_um, _UM_UNIT),
+   879    168194        442.8      0.0      4.5          area=_fast_quantity(geo.lateral_area_um2, _UM2_UNIT),
+   880    168194         55.2      0.0      0.6          cm=cable.membrane_capacitance,
+   881    168194         66.6      0.0      0.7          ra=cable.axial_resistivity,
+   882    168194         56.7      0.0      0.6          v=cable.resting_potential,
+   883    168194         53.7      0.0      0.5          temp=cable.temperature,
+   884    168194        463.4      0.0      4.7          r_axial=_fast_quantity(ra_ohm_cm * geo.axial_factor_total_per_cm, _OHM_UNIT),
+   885    168194        453.6      0.0      4.6          r_axial_prox=_fast_quantity(ra_ohm_cm * geo.axial_factor_prox_per_cm, _OHM_UNIT),
+   886    168194        446.8      0.0      4.5          r_axial_dist=_fast_quantity(ra_ohm_cm * geo.axial_factor_dist_per_cm, _OHM_UNIT),
+   887    168194        450.0      0.0      4.6          radius_prox=_fast_quantity(geo.r_prox_um, _UM_UNIT),
+   888    168194        468.8      0.0      4.8          radius_mid=_fast_quantity(geo.r_mid_um, _UM_UNIT),
+   889    168194        448.1      0.0      4.6          diam_arc_mean=_fast_quantity(geo.diam_arc_mean_um, _UM_UNIT),
+   890    168194        443.9      0.0      4.5          radius_dist=_fast_quantity(geo.r_dist_um, _UM_UNIT),
+   891    168194       1532.9      0.0     15.6          density_mech=tuple(bucket.density_by_key.values()),
+   892    168194         93.6      0.0      1.0          point_mech=tuple(bucket.points),
+   893    168194         70.5      0.0      0.7          point_mech_roles=tuple(bucket.point_roles),
+   894                                               )
+
+Total time: 0 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_quantity_vector at line 899
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   899                                           def _fast_quantity_vector(values, *, shape=None):
+   900                                               if len(values) == 0:
+   901                                                   return values
+   902                                               first = values[0]
+   903                                               target_shape = (len(values),) if shape is None else shape
+   904                                               if hasattr(first, "unit"):
+   905                                                   unit = first.unit
+   906                                                   arr = np.fromiter((item.mantissa if isinstance(item, u.Quantity) else float(item) for item in values), dtype=np.float64, count=len(values))
+   907                                                   return u.Quantity(arr.reshape(target_shape), unit)
+   908                                               return np.asarray(values).reshape(target_shape)
+
+Total time: 0.0227905 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_build_clamp_routing_table at line 914
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   914                                           def _fast_build_clamp_routing_table(*, layouts, cvs, node_tree, n_point):
+   915        12          0.0      0.0      0.0      active = set()
+   916       312          0.1      0.0      0.5      for layout in layouts:
+   917       300          0.1      0.0      0.5          if layout.target != "point" or layout.point_index is None:
+   918       258          0.1      0.0      0.3              continue
+   919        42          0.0      0.0      0.1          if layout.kind not in _runtime_module.CLAMP_KINDS:
+   920        30          0.0      0.0      0.0              continue
+   921        12          0.1      0.0      0.2          active.update(int(pid) for pid in layout.point_index.tolist())
+   922
+   923        12          0.0      0.0      0.0      if not active:
+   924                                                   return None
+   925
+   926        12         21.8      1.8     95.7      mid_to_cv = {int(node_tree.cv_to_mid_node_id[cv.id]): cv.id for cv in cvs}
+   927        12          0.1      0.0      0.3      active_midpoints = sorted(pid for pid in active if pid in mid_to_cv)
+   928        12          0.1      0.0      0.3      ids = np.asarray(active_midpoints, dtype=np.int32)
+   929        12          0.1      0.0      0.2      area = np.asarray([cvs[mid_to_cv[pid]].area.mantissa * 1e-8 for pid in active_midpoints], dtype=np.float64)
+   930        12          0.2      0.0      1.0      if np.any(area <= 0.0):
+   931                                                   bad = ids[area <= 0.0].tolist()
+   932                                                   raise ValueError(
+   933                                                       "Midpoint clamp active points must have positive membrane area; "
+   934                                                       f"got non-positive area at point ids {bad!r}."
+   935                                                   )
+   936        24          0.0      0.0      0.1      boundary_ids = np.asarray(
+   937        12          0.0      0.0      0.1          sorted(pid for pid in active if pid not in mid_to_cv),
+   938        12          0.0      0.0      0.0          dtype=np.int32,
+   939                                               )
+   940        24          0.1      0.0      0.4      return _runtime_module.ClampRoutingTable(
+   941        12          0.0      0.0      0.0          midpoint_ids=ids,
+   942        12          0.0      0.0      0.0          midpoint_area=area,
+   943        12          0.0      0.0      0.0          boundary_ids=boundary_ids,
+   944                                               )
+
+Total time: 15.0065 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_norm_region_intervals at line 1166
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1166                                           def _fast_norm_region_intervals(intervals, *, epsilon=_filter_helper.EPSILON):
+  1167      1680          0.8      0.0      0.0      if not intervals:
+  1168        50          0.0      0.0      0.0          return ()
+  1169      1630          0.6      0.0      0.0      grouped = {}
+  1170   2082565        845.8      0.0      5.6      for branch, raw_prox, raw_dist in intervals:
+  1171   2080935       1514.5      0.0     10.1          prox = float(raw_prox)
+  1172   2080935        751.1      0.0      5.0          dist = float(raw_dist)
+  1173   2080935        699.2      0.0      4.7          if prox < 0.0:
+  1174                                                       prox = 0.0 if prox >= -epsilon else prox
+  1175   2080935        758.3      0.0      5.1          elif prox > 1.0:
+  1176                                                       prox = 1.0 if prox <= 1.0 + epsilon else prox
+  1177   2080935        650.4      0.0      4.3          if dist < 0.0:
+  1178                                                       dist = 0.0 if dist >= -epsilon else dist
+  1179   2080935        652.4      0.0      4.3          elif dist > 1.0:
+  1180                                                       dist = 1.0 if dist <= 1.0 + epsilon else dist
+  1181   2080935        772.1      0.0      5.1          if prox < -epsilon or dist > 1.0 + epsilon:
+  1182                                                       raise ValueError(f"Interval coordinates must be within [0, 1], got prox={prox!r}, dist={dist!r}.")
+  1183   2080935        769.1      0.0      5.1          if dist - prox <= epsilon:
+  1184                                                       continue
+  1185   2080935        748.3      0.0      5.0          b = int(branch)
+  1186   2080935        732.5      0.0      4.9          if b in grouped:
+  1187    562505        210.9      0.0      1.4              grouped[b].append((prox, dist))
+  1188                                                   else:
+  1189   1518430        765.3      0.0      5.1              grouped[b] = [(prox, dist)]
+  1190
+  1191      1630          0.6      0.0      0.0      normalized = []
+  1192   1520060        541.4      0.0      3.6      for branch in sorted(grouped):
+  1193   1518430        524.7      0.0      3.5          ranges = grouped[branch]
+  1194   1518430        526.4      0.0      3.5          if len(ranges) > 1:
+  1195    114300         55.0      0.0      0.4              ranges.sort()
+  1196   1518430        662.6      0.0      4.4          current_start, current_end = ranges[0]
+  1197   2080935        786.4      0.0      5.2          for start, end in ranges[1:]:
+  1198    562505        202.6      0.0      1.3              if start <= current_end + epsilon:
+  1199     91705         30.8      0.0      0.2                  if end > current_end:
+  1200     91705         28.6      0.0      0.2                      current_end = end
+  1201                                                       else:
+  1202    470800        175.1      0.0      1.2                  if current_end - current_start > epsilon:
+  1203    470800        162.5      0.0      1.1                      normalized.append((branch, current_start, current_end))
+  1204    470800        188.2      0.0      1.3                  current_start, current_end = start, end
+  1205   1518430        573.6      0.0      3.8          if current_end - current_start > epsilon:
+  1206   1518430        669.9      0.0      4.5              normalized.append((branch, current_start, current_end))
+  1207
+  1208      1630          6.6      0.0      0.0      return tuple(normalized)
+
+Total time: 10.861 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_difference_region_intervals at line 1212
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1212                                           def _fast_difference_region_intervals(left, right, *, epsilon=_filter_helper.EPSILON):
+  1213       240          0.1      0.0      0.0      if not left:
+  1214                                                   return ()
+  1215       240          0.1      0.0      0.0      if not right:
+  1216                                                   return _fast_norm_region_intervals(left, epsilon=epsilon)
+  1217
+  1218       240        579.3      2.4      5.3      right_group = _filter_helper._group_by_branch(right, epsilon=epsilon)
+  1219       240          0.1      0.0      0.0      if not right_group:
+  1220                                                   return _fast_norm_region_intervals(left, epsilon=epsilon)
+  1221
+  1222       240       8084.9     33.7     74.4      left_group = _filter_helper._group_by_branch(left, epsilon=epsilon)
+  1223       240          0.1      0.0      0.0      out = []
+  1224    659255        248.5      0.0      2.3      for branch, l_ranges in left_group.items():
+  1225    659015        251.3      0.0      2.3          if branch not in right_group:
+  1226   1343840        589.3      0.0      5.4              for start, end in l_ranges:
+  1227    706305        256.1      0.0      2.4                  out.append((branch, start, end))
+  1228                                                   else:
+  1229    109065        815.4      0.0      7.5              for start, end in _filter_helper._difference_branch_ranges(
+  1230     21480          8.3      0.0      0.1                  l_ranges, right_group[branch], epsilon=epsilon
+  1231                                                       ):
+  1232     66105         25.2      0.0      0.2                  out.append((branch, start, end))
+  1233       240          2.2      0.0      0.0      return tuple(out)
+
+Total time: 0.0159638 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_build_backsub_indices at line 1238
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1238                                           def _fast_build_backsub_indices(parent_lookup: np.ndarray, *, n_nodes: int) -> np.ndarray:
+  1239        12          0.0      0.0      0.2      parent_lookup = np.asarray(parent_lookup, dtype=np.int32)
+  1240        12          0.0      0.0      0.0      indices = []
+  1241        12          0.0      0.0      0.0      new_step = 1
+  1242        12          0.0      0.0      0.0      current = parent_lookup
+  1243       162          0.1      0.0      0.6      while new_step <= max(1, n_nodes):
+  1244       150          0.1      0.0      0.4          indices.append(current)
+  1245       150         10.5      0.1     65.7          current = current[current]
+  1246       150          0.1      0.0      0.4          new_step = 2 * new_step
+  1247        12          5.2      0.4     32.7      return np.asarray(indices, dtype=np.int32)
+
+Total time: 1.59383 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_clone_morpho at line 1252
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1252                                           def _fast_clone_morpho(morpho: braincell.Morphology) -> braincell.Morphology:
+  1253        12          0.0      0.0      0.0      cloned = braincell.Morphology.__new__(braincell.Morphology)
+  1254        12          3.4      0.3      0.2      cloned._name_to_id = dict(morpho._name_to_id)
+  1255        12          0.0      0.0      0.0      cloned._type_name_counters = dict(morpho._type_name_counters)
+  1256        12          0.0      0.0      0.0      cloned._next_id = morpho._next_id
+  1257        12          0.0      0.0      0.0      cloned._root_name = morpho._root_name
+  1258        12          0.0      0.0      0.0      cloned._root_id = morpho._root_id
+  1259        12          0.0      0.0      0.0      cloned._nodes = {}
+  1260     62018         26.4      0.0      1.7      for node_id, node in morpho._nodes.items():
+  1261    124012        311.0      0.0     19.5          new_node = braincell.morph.MorphoBranch(
+  1262     62006         20.7      0.0      1.3              cloned,
+  1263     62006        281.4      0.0     17.7              node.index,
+  1264     62006        143.9      0.0      9.0              name=node.name,
+  1265     62006        138.0      0.0      8.7              branch=node.branch,
+  1266     62006        134.2      0.0      8.4              parent_id=node.parent_id,
+  1267     62006        170.4      0.0     10.7              parent_x=node.parent_x,
+  1268     62006        166.6      0.0     10.5              child_x=node.child_x,
+  1269                                                   )
+  1270     62006        173.9      0.0     10.9          new_node._children = dict(node._children)
+  1271     62006         23.6      0.0      1.5          cloned._nodes[node_id] = new_node
+  1272        12          0.0      0.0      0.0      sig = getattr(morpho, "_h01_geom_sig", None)
+  1273        12          0.0      0.0      0.0      if sig is not None:
+  1274        12          0.0      0.0      0.0          cloned._h01_geom_sig = sig
+  1275        12          0.0      0.0      0.0      cv_cache = getattr(morpho, "_h01_cv_bounds_cache", None)
+  1276        12          0.0      0.0      0.0      if cv_cache is not None:
+  1277        12          0.0      0.0      0.0          cloned._h01_cv_bounds_cache = cv_cache
+  1278        12          0.1      0.0      0.0      geo_cache = getattr(morpho, "_h01_cv_geometry_cache", None)
+  1279        12          0.0      0.0      0.0      if geo_cache is not None:
+  1280                                                   cloned._h01_cv_geometry_cache = geo_cache
+  1281        12          0.0      0.0      0.0      disc_cache = getattr(morpho, "_h01_disc_cache", None)
+  1282        12          0.0      0.0      0.0      if disc_cache is not None:
+  1283                                                   cloned._h01_disc_cache = disc_cache
+  1284        12          0.0      0.0      0.0      bmap_cache = getattr(morpho, "_cached_branch_index_map", None)
+  1285        12          0.0      0.0      0.0      if bmap_cache is not None:
+  1286        12          0.0      0.0      0.0          cloned._cached_branch_index_map = bmap_cache
+  1287        12          0.0      0.0      0.0      nids_cache = getattr(morpho, "_cached_ordered_node_ids", None)
+  1288        12          0.0      0.0      0.0      if nids_cache is not None:
+  1289        12          0.0      0.0      0.0          cloned._cached_ordered_node_ids = nids_cache
+  1290        12          0.0      0.0      0.0      return cloned
+
+Total time: 0.0359367 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_instantiate_runtime_ion_instance at line 1299
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1299                                           def _fast_instantiate_runtime_ion_instance(
+  1300                                               *, instance_name, runtime_cls, layouts, declarations, state_buffers, n_point, pop_size=()
+  1301                                           ):
+  1302        36          6.8      0.2     18.8      supported_params = _runtime_module._supported_ion_runtime_params(runtime_cls)
+  1303        36          0.0      0.0      0.1      full_size = pop_size + (n_point,)
+  1304        36          0.0      0.0      0.1      if runtime_cls not in _cached_baseline_ions:
+  1305         3          1.4      0.5      3.8          _cached_baseline_ions[runtime_cls] = runtime_cls(size=1)
+  1306        36          0.0      0.0      0.1      baseline_ion = _cached_baseline_ions[runtime_cls]
+  1307        36          0.0      0.0      0.0      full_param_values = {}
+  1308       168          0.1      0.0      0.2      for param_name in supported_params:
+  1309       264          0.3      0.0      0.8          baseline_value = _runtime_module._normalize_ion_runtime_param_value(
+  1310       132          0.0      0.0      0.1              runtime_cls,
+  1311       132          0.0      0.0      0.1              param_name,
+  1312       132          0.3      0.0      0.9              getattr(baseline_ion, _runtime_module._ion_runtime_attr_name(runtime_cls, param_name)),
+  1313                                                   )
+  1314       132          9.5      0.1     26.5          full_param_values[param_name] = _runtime_module._ion_param_broadcast(baseline_value, shape=full_size)
+  1315        80          0.1      0.0      0.2      for layout, declaration in zip(layouts, declarations):
+  1316        44          0.0      0.0      0.1          point_index = layout.point_index
+  1317       108          0.1      0.0      0.3          for param_name in declaration.params.keys():
+  1318        64          0.0      0.0      0.1              buffer = state_buffers[(layout.id, param_name)]
+  1319       128          7.0      0.1     19.4              full_param_values[param_name] = _runtime_module._ion_param_scatter(
+  1320        64          0.0      0.0      0.1                  runtime_cls=runtime_cls,
+  1321        64          0.0      0.0      0.1                  param_name=param_name,
+  1322        64          0.0      0.0      0.1                  target=full_param_values[param_name],
+  1323        64          0.0      0.0      0.1                  buffer=buffer,
+  1324        64          0.0      0.0      0.1                  point_index=point_index,
+  1325                                                       )
+  1326        36         10.0      0.3     27.8      runtime_ion_instance = runtime_cls(size=full_size, name=instance_name, **full_param_values)
+  1327        36          0.1      0.0      0.3      _runtime_module._restore_shaped_species_initializers(runtime_ion_instance, full_param_values)
+  1328        36          0.0      0.0      0.0      return runtime_ion_instance
+
+Total time: 0.00242884 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_ordered_node_ids_by at line 1333
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1333                                           def _fast_ordered_node_ids_by(self, order: str = "default"):
+  1334       140          0.2      0.0      9.5      cached = getattr(self, "_cached_ordered_node_ids", None)
+  1335       140          0.2      0.0      7.3      if cached is not None and cached[0] == (len(self._nodes), self._next_id, order):
+  1336       128          0.1      0.0      6.0          return cached[1]
+  1337        12          1.9      0.2     76.5      res = _orig_ordered_node_ids_by(self, order=order)
+  1338        12          0.0      0.0      0.4      self._cached_ordered_node_ids = ((len(self._nodes), self._next_id, order), res)
+  1339        12          0.0      0.0      0.2      return res
+
+Total time: 0.00582182 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_branch_index_map at line 1341
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1341                                           def _fast_branch_index_map(self, *, order: str = "default") -> dict[int, int]:
+  1342        24          0.1      0.0      2.5      cached = getattr(self, "_cached_branch_index_map", None)
+  1343        24          0.0      0.0      0.5      if cached is not None and cached[0] == (len(self._nodes), self._next_id, order):
+  1344        12          0.0      0.0      0.2          return cached[1]
+  1345        12          5.6      0.5     96.4      res = {node_id: index for index, node_id in enumerate(self._ordered_node_ids_by(order=order))}
+  1346        12          0.0      0.0      0.3      self._cached_branch_index_map = ((len(self._nodes), self._next_id, order), res)
+  1347        12          0.0      0.0      0.1      return res
+
+Total time: 0.123251 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_branch_index at line 1349
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1349                                           def _fast_branch_index(self, node_id: int, *, order: str = "default") -> int:
+  1350     62010         65.9      0.0     53.5      cached = getattr(self, "_cached_branch_index_map", None)
+  1351     62010         32.6      0.0     26.4      if cached is not None and cached[0] == (len(self._nodes), self._next_id, order):
+  1352     62010         24.7      0.0     20.1          return cached[1][node_id]
+  1353                                               return self._branch_index_map(order=order)[node_id]
+
+Total time: 0.642534 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: _fast_attach_runtime_ion_geometry at line 1360
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1360                                           def _fast_attach_runtime_ion_geometry(*, ions, cvs, point_ids, n_point):
+  1361        12          0.0      0.0      0.0      if not ions or len(cvs) == 0:
+  1362                                                   return
+  1363        12          0.0      0.0      0.0      n_cv = len(cvs)
+  1364        12        100.1      8.3     15.6      length = np.fromiter((cv.length.mantissa if isinstance(cv.length, u.Quantity) else float(cv.length) for cv in cvs), dtype=np.float64, count=n_cv)
+  1365        12        100.4      8.4     15.6      area = np.fromiter((cv.area.mantissa if isinstance(cv.area, u.Quantity) else float(cv.area) for cv in cvs), dtype=np.float64, count=n_cv)
+  1366        12        100.5      8.4     15.6      radius_prox = np.fromiter((cv.radius_prox.mantissa if isinstance(cv.radius_prox, u.Quantity) else float(cv.radius_prox) for cv in cvs), dtype=np.float64, count=n_cv)
+  1367        12         96.8      8.1     15.1      radius_dist = np.fromiter((cv.radius_dist.mantissa if isinstance(cv.radius_dist, u.Quantity) else float(cv.radius_dist) for cv in cvs), dtype=np.float64, count=n_cv)
+  1368        12         94.9      7.9     14.8      diam_arc_mean = np.fromiter((cv.diam_arc_mean.mantissa if isinstance(cv.diam_arc_mean, u.Quantity) else float(cv.diam_arc_mean) for cv in cvs), dtype=np.float64, count=n_cv)
+  1369        12         97.0      8.1     15.1      diam_mid = np.fromiter((2.0 * (cv.radius_mid.mantissa if isinstance(cv.radius_mid, u.Quantity) else float(cv.radius_mid)) for cv in cvs), dtype=np.float64, count=n_cv)
+  1370
+  1371        12          0.0      0.0      0.0      point_geom = {
+  1372        12          0.8      0.1      0.1          "length": _fast_quantity(np.zeros(n_point, dtype=np.float64), _UM_UNIT),
+  1373        12          0.4      0.0      0.1          "area": _fast_quantity(np.zeros(n_point, dtype=np.float64), _UM2_UNIT),
+  1374        12          0.4      0.0      0.1          "radius_prox": _fast_quantity(np.zeros(n_point, dtype=np.float64), _UM_UNIT),
+  1375        12          0.4      0.0      0.1          "radius_dist": _fast_quantity(np.zeros(n_point, dtype=np.float64), _UM_UNIT),
+  1376        12          0.4      0.0      0.1          "diam_arc_mean": _fast_quantity(np.zeros(n_point, dtype=np.float64), _UM_UNIT),
+  1377        12          0.4      0.0      0.1          "diam_mid": _fast_quantity(np.zeros(n_point, dtype=np.float64), _UM_UNIT),
+  1378                                               }
+  1379        12          0.8      0.1      0.1      point_geom["length"]._mantissa[point_ids] = length
+  1380        12          0.6      0.0      0.1      point_geom["area"]._mantissa[point_ids] = area
+  1381        12          0.5      0.0      0.1      point_geom["radius_prox"]._mantissa[point_ids] = radius_prox
+  1382        12          0.6      0.0      0.1      point_geom["radius_dist"]._mantissa[point_ids] = radius_dist
+  1383        12          0.5      0.0      0.1      point_geom["diam_arc_mean"]._mantissa[point_ids] = diam_arc_mean
+  1384        12          0.5      0.0      0.1      point_geom["diam_mid"]._mantissa[point_ids] = diam_mid
+  1385
+  1386        48          0.0      0.0      0.0      for ion in ions.values():
+  1387        36          0.1      0.0      0.0          pop_size = tuple(getattr(ion, "varshape", ())[:-1])
+  1388        36          0.0      0.0      0.0          point_shape = pop_size + (n_point,)
+  1389       252          0.1      0.0      0.0          for attr in ("length", "area", "diam_mid", "diam_arc_mean", "radius_prox", "radius_dist"):
+  1390       216         45.9      0.2      7.1              val = bridge.broadcast_to_shape(point_geom[attr], point_shape, name=f"ion.{attr}")
+  1391       216          0.2      0.0      0.0              setattr(ion, attr, val)
+
+Total time: 0.00993343 s
+File: /root/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/contextlib.py
+Function: contextmanager.<locals>.helper at line 303
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   303                                               @wraps(func)
+   304                                               def helper(*args, **kwds):
+   305      2192          9.9      0.0    100.0          return _GeneratorContextManager(func, args, kwds)
+
+Total time: 1.93078 s
+File: /workspace/h01-profile-20260914/braintrace/datasets/h01_construction.py
+Function: build_dhs_static_source_1d at line 1440
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+  1440                                           def build_dhs_static_source_1d(target, *, node_tree, scheduling) -> _st.DHSStaticSource:
+  1441                                               """Assemble the static 1D DHS source arrays without dense matrix allocation.
+  1442
+  1443                                               Parameters
+  1444                                               ----------
+  1445                                               target : braincell.Cell
+  1446                                                   Multi-compartment target cell.
+  1447                                               node_tree : braincell.NodeTree
+  1448                                                   Morphological node tree.
+  1449                                               scheduling : braincell.NodeScheduling
+  1450                                                   Node scheduling metadata.
+  1451
+  1452                                               Returns
+  1453                                               -------
+  1454                                               _st.DHSStaticSource
+  1455                                                   Static DHS topology and diagonal / off-diagonal factors.
+  1456                                               """
+  1457        12          0.0      0.0      0.0      n_point = len(node_tree.nodes)
+  1458        12          0.0      0.0      0.0      point_id_to_row = np.asarray(scheduling.point_id_to_row, dtype=np.int32)
+  1459        12          0.3      0.0      0.0      cv_row_by_cv = point_id_to_row[node_tree.cv_to_mid_node_id]
+  1460        12          0.5      0.0      0.0      n_cv = len(target.cvs)
+  1461        12          0.1      0.0      0.0      dynamic_rows = cv_row_by_cv[:n_cv].astype(np.int32)
+  1462
+  1463        12          0.0      0.0      0.0      cv_r_prox = np.empty(n_cv, dtype=np.float64)
+  1464        12          0.0      0.0      0.0      cv_r_dist = np.empty(n_cv, dtype=np.float64)
+  1465        12          0.0      0.0      0.0      cv_cap = np.empty(n_cv, dtype=np.float64)
+  1466        12          0.0      0.0      0.0      cv_branches = np.empty(n_cv, dtype=np.int32)
+  1467
+  1468     84109         32.5      0.0      1.7      for i, cv in enumerate(target.cvs):
+  1469     84097         38.9      0.0      2.0          cv_branches[i] = cv.branch_id
+  1470     84097         30.8      0.0      1.6          r_p = cv.r_axial_prox
+  1471     84097        101.2      0.0      5.2          cv_r_prox[i] = r_p.mantissa if isinstance(r_p, u.Quantity) else float(r_p)
+  1472     84097         28.7      0.0      1.5          r_d = cv.r_axial_dist
+  1473     84097         97.6      0.0      5.1          cv_r_dist[i] = r_d.mantissa if isinstance(r_d, u.Quantity) else float(r_d)
+  1474     84097         97.2      0.0      5.0          area = cv.area.mantissa if isinstance(cv.area, u.Quantity) else float(cv.area)
+  1475     84097         88.0      0.0      4.6          cm = cv.cm.mantissa if isinstance(cv.cm, u.Quantity) else float(cm)
+  1476     84097         38.8      0.0      2.0          cv_cap[i] = (area * cm) * 1e-8
+  1477
+  1478        12          0.6      0.1      0.0      row_capacitance_uF = np.ones(n_point, dtype=np.float64)
+  1479        12          0.4      0.0      0.0      row_capacitance_uF[dynamic_rows] = cv_cap
+  1480
+  1481        12          0.3      0.0      0.0      diag_ms_inv = np.zeros(n_point, dtype=np.float64)
+  1482        12          0.3      0.0      0.0      lowers_ms_inv = np.zeros(n_point, dtype=np.float64)
+  1483        12          0.4      0.0      0.0      uppers_ms_inv = np.zeros(n_point, dtype=np.float64)
+  1484
+  1485    146115         50.5      0.0      2.6      for edge in node_tree.edges:
+  1486    146103         67.0      0.0      3.5          parent_row = point_id_to_row[edge.parent_node_id]
+  1487    146103         62.9      0.0      3.3          child_row = point_id_to_row[edge.child_node_id]
+  1488    146103         49.8      0.0      2.6          roles = edge.roles
+  1489    146103         50.9      0.0      2.6          if len(roles) == 1:
+  1490    124012         40.5      0.0      2.1              role = roles[0]
+  1491    124012         68.3      0.0      3.5              r = cv_r_prox[role.cv_id] if role.half == "prox" else cv_r_dist[role.cv_id]
+  1492    124012         53.9      0.0      2.8              conductance = 1.0 / r
+  1493                                                   else:
+  1494     22091         21.3      0.0      1.1              b_set = {cv_branches[r.cv_id] for r in roles}
+  1495     22091         17.1      0.0      0.9              res_list = [cv_r_prox[r.cv_id] if r.half == "prox" else cv_r_dist[r.cv_id] for r in roles]
+  1496     22091          8.3      0.0      0.4              if len(b_set) == 1:
+  1497     22091         15.1      0.0      0.8                  conductance = 1.0 / sum(res_list)
+  1498                                                       else:
+  1499                                                           conductance = sum(1.0 / r for r in res_list)
+  1500
+  1501    146103         97.8      0.0      5.1          parent_coeff = (conductance / row_capacitance_uF[parent_row]) * 1e3
+  1502    146103         89.7      0.0      4.6          child_coeff = (conductance / row_capacitance_uF[child_row]) * 1e3
+  1503    146103        100.0      0.0      5.2          diag_ms_inv[parent_row] += parent_coeff
+  1504    146103         93.1      0.0      4.8          diag_ms_inv[child_row] += child_coeff
+  1505    146103         93.4      0.0      4.8          lowers_ms_inv[child_row] -= child_coeff
+  1506    146103         93.6      0.0      4.8          uppers_ms_inv[child_row] -= parent_coeff
+  1507
+  1508        12          0.3      0.0      0.0      parent_lookup = np.empty((n_point + 1,), dtype=np.int32)
+  1509        12          0.0      0.0      0.0      spurious_row = n_point
+  1510        12          1.2      0.1      0.1      parent_lookup[:n_point] = np.where(scheduling.parent_rows >= 0, scheduling.parent_rows, spurious_row)
+  1511        12          0.0      0.0      0.0      parent_lookup[spurious_row] = spurious_row
+  1512        12        281.7     23.5     14.6      edges, level_size = _st._build_dhs_edge_order(scheduling)
+  1513        12         16.1      1.3      0.8      backsub_indices = _fast_build_backsub_indices(parent_lookup, n_nodes=n_point)
+  1514        12          1.5      0.1      0.1      level_offsets_np = np.cumsum(np.insert(level_size, 0, 0)).astype(np.int32, copy=False)
+  1515
+  1516        24          0.2      0.0      0.0      return _st.DHSStaticSource(
+  1517        12          0.0      0.0      0.0          n_point=n_point,
+  1518        12          0.0      0.0      0.0          dynamic_rows_np=dynamic_rows,
+  1519        12          0.0      0.0      0.0          row_to_point_id_np=np.asarray(scheduling.row_to_point_id, dtype=np.int32),
+  1520        12          0.0      0.0      0.0          row_capacitance_uF_np=row_capacitance_uF,
+  1521        12          0.0      0.0      0.0          diag_ms_inv_np=diag_ms_inv,
+  1522        12          0.0      0.0      0.0          lowers_ms_inv_np=lowers_ms_inv,
+  1523        12          0.0      0.0      0.0          uppers_ms_inv_np=uppers_ms_inv,
+  1524        12          0.0      0.0      0.0          edges_np=edges,
+  1525        12          0.0      0.0      0.0          level_offsets_np=level_offsets_np,
+  1526        12          0.0      0.0      0.0          backsub_indices_np=backsub_indices,
+  1527                                               )

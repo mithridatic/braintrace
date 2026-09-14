@@ -345,6 +345,7 @@ class H01Session:
         if release_parent:
             import gc
             self.released_updates = parent_updates
+            self.__dict__.pop('_score_queries_compiled', None)
             self.model = self.learner = self.trainer = None
             jax.clear_caches()
             gc.collect()
