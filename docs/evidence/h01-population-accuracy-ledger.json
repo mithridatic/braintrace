@@ -1,0 +1,148 @@
+{
+  "scope": "What a single accuracy percentage for the 104 H01 cells would have to be a product of. No H01 cell has electrophysiology, so every term is a transfer claim and none of them is a measurement of an H01 cell.",
+  "cells": 104,
+  "terms": [
+    {
+      "term": "donor_accuracy",
+      "value": 0.7178289854126294,
+      "measured": true,
+      "statement": "B3 scores 71.8 percent on 10 elements against Allen 541563728's own recording at 310 pA. That donor is the type match for 28 of 104 cells.",
+      "cause": "The other three donors (Allen L4 527952884, HL5MN1, HL5BN1) had their published fits reproduced and rejected against their own recordings; no ten-element score exists for them, so this term is measured for 28 cells only and assumed for the rest.",
+      "evidence": [
+        "h01-topographic/human-vs-rodent-accuracy.json",
+        "h01-population-types.json"
+      ]
+    },
+    {
+      "term": "type_coverage",
+      "value": 0.5288461538461539,
+      "measured": true,
+      "statement": "55 of 104 cells have a donor matched in both layer and class (52.9 percent).",
+      "cause": "The remaining 49 are matched on polarity or on part of the label only; they would inherit a model fitted to a different cell class.",
+      "evidence": [
+        "h01-population-types.json"
+      ]
+    },
+    {
+      "term": "build",
+      "value": 1.0,
+      "measured": true,
+      "statement": "All 104 of 104 largest soma-bearing components import with zero missing segments; construction passes with 808,495 compartments and no failures; initialisation passes; a forward pass completes all six phases at dt 0.005 ms, peak RSS 14.0 GiB.",
+      "cause": "This supersedes the earlier 12-of-104 figure: the one-point SWC branch that stopped 7 components from loading is repaired. The forward pass drives an all-ones synthetic 441-feature probe, not an encoded episode, and records physiology as 'unqualified'.",
+      "evidence": [
+        "h01-population-import-104.json",
+        "h01-ready-104-implicit-build-decision.json",
+        "h01-ready-104-implicit-init-decision.json",
+        "h01-arc-probe-104.json"
+      ]
+    },
+    {
+      "term": "driven_window",
+      "value": 0.0,
+      "measured": false,
+      "statement": "No qualified driven window at 104 cells. The 10 ms explicit run failed on Nonfinite trace: cell_7196644737/output_voltage after 2705 s; the implicit retry aborted at the wall cap after 21286 s with exit code 15 and no result.",
+      "cause": "Construction is not simulation. Until a driven window of physiological length completes, no population number describes anything the cells do.",
+      "evidence": [
+        "h01-ready-104-ei-10ms-decision.json",
+        "h01-ready-104-implicit-ei-10ms-r2-launch.json"
+      ]
+    },
+    {
+      "term": "timestep",
+      "value": 0.0,
+      "measured": false,
+      "statement": "The timestep is not qualified: on the isolated cell the 1 mV gate is FAIL, with 6.36 mV between dt 0.005 and 0.0025 ms at t = 5.015 ms.",
+      "cause": "Both steps are finite and both emit one event, so the failure is accuracy, not stability. Three finer rungs were run but their traces were deleted with the raw-trace sweep, so the ladder cannot be closed without re-running them.",
+      "evidence": [
+        "h01-ready-cell7196644737-implicit-decision.json"
+      ]
+    },
+    {
+      "term": "anatomy_transfer",
+      "value": 0.0,
+      "measured": true,
+      "statement": "Measured once and it fails: H01 anatomy did not spike; no upstroke to compare. On the donor's own reconstruction the same parameters fire 4 spikes at the same input.",
+      "cause": "The H01 skeleton is a far larger electrical load than the Allen reconstruction the fit was made on (onset capacitance 785 pF against 125 pF; input resistance about 38 MOhm against about 98), so at 200 pA it sits on a plateau instead of spiking. Every other term in this ledger is conditional on this one, and this one has a negative reading.",
+      "evidence": [
+        "h01-e-morphology/stage-1-decision.json"
+      ]
+    }
+  ],
+  "product_as_measured": {
+    "value_pct": 0.0,
+    "assumptions": [],
+    "factors": [
+      {
+        "term": "donor_accuracy",
+        "used": 0.7178289854126294,
+        "assumed": false
+      },
+      {
+        "term": "type_coverage",
+        "used": 0.5288461538461539,
+        "assumed": false
+      },
+      {
+        "term": "build",
+        "used": 1.0,
+        "assumed": false
+      },
+      {
+        "term": "driven_window",
+        "used": 0.0,
+        "assumed": false
+      },
+      {
+        "term": "timestep",
+        "used": 0.0,
+        "assumed": false
+      },
+      {
+        "term": "anatomy_transfer",
+        "used": 0.0,
+        "assumed": false
+      }
+    ]
+  },
+  "product_if_construction_counts_as_build": {
+    "value_pct": 37.9621098054756,
+    "assumptions": [
+      "driven_window",
+      "timestep",
+      "anatomy_transfer"
+    ],
+    "factors": [
+      {
+        "term": "donor_accuracy",
+        "used": 0.7178289854126294,
+        "assumed": false
+      },
+      {
+        "term": "type_coverage",
+        "used": 0.5288461538461539,
+        "assumed": false
+      },
+      {
+        "term": "build",
+        "used": 1.0,
+        "assumed": false
+      },
+      {
+        "term": "driven_window",
+        "used": 1.0,
+        "assumed": true
+      },
+      {
+        "term": "timestep",
+        "used": 1.0,
+        "assumed": true
+      },
+      {
+        "term": "anatomy_transfer",
+        "used": 1.0,
+        "assumed": true
+      }
+    ]
+  },
+  "note": "The second product is the figure obtained by counting construction as build success and setting the three unqualified terms to one. It is quoted only with its assumptions attached; it also assumes the three rejected donors score like the one donor that was scored, which the anatomy term actively contradicts."
+}

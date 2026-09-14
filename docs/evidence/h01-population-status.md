@@ -34,6 +34,11 @@ the continuation evidence above. The physiological verdicts are unchanged.
 The [E source-audit amendment](h01-e-gain-source-audit.md) also supersedes
 the earlier claims of absent M current and necessity outside the passive family.
 
+What a single accuracy percentage over these 104 cells could mean, term by
+term, is set out in the [population accuracy ledger](h01-population-accuracy-ledger.md)
+(2026-09-13), which withdraws the earlier `12/104` build term and names the three factors that
+are zero.
+
 The numerical failure has since been reproduced in isolation and repaired by an
 opt-in implicit calcium solve; the isolated fine timestep pair passes its
 registered comparison. The repaired full104 construction and initialization now
@@ -73,9 +78,14 @@ pages are linked second. Where a row states a count it is the JSON's count. Prog
 2. Functional inhibition: no 300 ms arm completed; the 100 ms benchmark (347 s, 2 E spikes) sizes the
    run; the placement question the +0.008 mV somatic result raises is untested
    ([SP5 decision](h01-ie-inhibition/decision.json)).
-3. A population larger than 12 cells: the one-point SWC branches that stop 7 of 104 components from
-   loading (reader tolerance), then the 40- and 104-cell builds against the derived 19.8 GB, then
-   windows beyond 1 ms and the e_only / i_only controls ([40 cells](h01-population-build-40.json)).
+3. ~~A population larger than 12 cells: the one-point SWC branches...~~ **Superseded 2026-09-08 and
+   restated 2026-09-13.** The reader defect is repaired and all 104 cells import, construct
+   (808,495 compartments), initialise and complete a forward pass. What remains is a *driven*
+   window at a physiological duration (two attempts: one nonfinite, one dead at the wall cap after
+   21,286 s), a timestep qualified against the 1 mV contract (currently FAIL by 6.36 mV between
+   dt 0.005 and 0.0025 ms), and the transfer of any donor fit onto H01 anatomy (measured once, and
+   negative: B3 fires 4 spikes at 200 pA on the donor's reconstruction and 0 on the H01 skeleton).
+   See the [population accuracy ledger](h01-population-accuracy-ledger.md).
 4. Per-type donors for the 49 cells without one; both imported donors are type-matched but their
    published fits do not reproduce their own counts here (conditions unsplit: initial state, held bias,
    axon replacement) ([L4](h01-donors/stage-allen-l4-decision.json), [SST](h01-donors/stage-hl5mn1-decision.json)).

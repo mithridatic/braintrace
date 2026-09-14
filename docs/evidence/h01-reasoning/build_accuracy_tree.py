@@ -53,6 +53,13 @@ POP = "docs/evidence/h01-population-status.md"
 TYPES = "docs/evidence/h01-population-types.md"
 BUILD40 = "docs/evidence/h01-population-build-40.json"
 BUILD12 = "docs/evidence/h01-population-build-12.json"
+LEDGER = "docs/evidence/h01-population-accuracy-ledger.md"
+LEDGER_JSON = "docs/evidence/h01-population-accuracy-ledger.json"
+IMPORT104 = "docs/evidence/h01-population-import-104.json"
+PROBE104 = "docs/evidence/h01-arc-probe-104.json"
+DRIVEN104 = "docs/evidence/h01-ready-104-ei-10ms-decision.json"
+DTLADDER = "docs/evidence/h01-ready-cell7196644737-implicit-decision.json"
+MORPH1 = "docs/evidence/h01-e-morphology/stage-1-decision.json"
 
 COLORS = {
     "Current state": "#2f6f9f",
@@ -221,46 +228,88 @@ def build_nodes():
           "same-class human model. Confidence 55 percent that type coverage can be raised materially "
           "without a new fitting programme per class.",
           [TYPES, POP], "unverified", 55),
-        n("pop_build", BLOCK,
-          "STEP 5b - BLOCKER: the population does not build. The 40-cell build fails on one-point SWC "
-          "branches (7 of the 104 largest components fail to load); 12 cells have been measured and run "
-          "1 ms; 92 remain unsimulated; 104 derived is ~19.8 GB.",
-          "This is an engineering blocker, not a science one, and it gates every population number. "
-          "Confidence 75 percent that it is fixable (the failure is a two-point requirement on leaf "
-          "branches 0.032 um from a branch point, i.e. a mesh repair, not a modelling problem).",
-          [BUILD40, BUILD12, POP], "supported", 75),
+        n("pop_build", CLOSED,
+          "STEP 5b - CLOSED, and it was closed before the campaign quoted it: the population DOES build. "
+          "All 104 components import with zero missing segments, construct to 808,495 compartments with "
+          "no failures, initialise, and complete a forward pass. The one-point SWC branch was repaired on "
+          "2026-09-08; the 12-of-104 figure quoted on 2026-09-13 was six days stale.",
+          "This is the correction that occasioned the ledger. Raising this term from 0.115 to 1.0 does "
+          "not raise the product, because the same audit exposes three terms that were never in the "
+          "product and are zero. Confidence 95 percent that the construction gates stay passed: they are "
+          "hash-pinned audits over committed inputs, not timing-sensitive runs.",
+          [IMPORT104, PROBE104, LEDGER], "supported", 95),
+        n("pop_driven", BLOCK,
+          "STEP 5c - BLOCKER: no driven window at a physiological duration. The forward pass that passes "
+          "drives an all-ones synthetic 441-feature probe and records physiology as unqualified. The 10 ms "
+          "explicit run died nonfinite on cell 7196644737 after 2,705 s; the implicit retry aborted at the "
+          "wall cap after 21,286 s with no result.",
+          "Construction is not simulation: until a driven window of physiological length completes, no "
+          "population number describes anything the cells do. Confidence 30 percent that a driven window "
+          "completes within this campaign's cost policy - the last attempt spent 5.9 hours for nothing, "
+          "and a third attempt without a qualified timestep would repeat it.",
+          [DRIVEN104, LEDGER], "supported", 30),
+        n("pop_dt", BLOCK,
+          "STEP 5d - BLOCKER: the integration step is not qualified. On the isolated failing cell every "
+          "rung is finite but the campaign's own 1 mV gate FAILS - 6.36 mV between dt 0.005 and 0.0025 ms "
+          "at t = 5.015 ms, one event at each step.",
+          "The failure is accuracy, not stability. Three finer rungs ran in 32, 48 and 69 s but their "
+          "traces were deleted in the raw-trace sweep and .cache/h01 no longer exists, so the ladder needs "
+          "the source cache rebuilt before it can close. Confidence 65 percent that it closes once re-run: "
+          "the rungs are cheap and the ladder is half-built, but nothing guarantees the 1 mV gate is "
+          "reachable at an affordable step.",
+          [DTLADDER, LEDGER], "supported", 65),
+        n("pop_anatomy", BLOCK,
+          "STEP 5e - BLOCKER, the binding one, and previously unnamed: a donor's fitted conductances do "
+          "not survive the move onto H01 anatomy. B3 fires 4 spikes at 200 pA on the donor's own "
+          "reconstruction and 0 on the H01 skeleton, sitting on a -78.2 mV plateau; onset capacitance 785 "
+          "pF against 125, input resistance about 38 MOhm against about 98.",
+          "This is the only term in the ledger with a NEGATIVE reading rather than a missing one, and it "
+          "makes the others moot: donor accuracy, type coverage and a working build all describe a model "
+          "that is silent on the anatomy it is meant to run on. Whether the load is physical or an "
+          "artefact of the conversion (skeleton radii used as cable radii) was left unestablished. "
+          "Confidence 40 percent that a graded load change restores a readable response without "
+          "refitting.",
+          [MORPH1, LEDGER], "supported", 40),
         n("pop_noground", BLOCK,
           "STEP 5c - BLOCKER, unfixable by simulation: there is no H01 electrophysiology. No H01 cell can "
           "be scored against its own recording, ever, from this data.",
-          "So a population 'accuracy' is a transfer claim, not a measurement. The defensible form is: "
-          "donor accuracy against real recordings (measurable, today 71.8), times type-match coverage "
-          "(measurable, 53 percent), times build/run success (measurable, currently 12 of 104). Anything "
-          "stated as a single population accuracy percentage without those three factors named is not "
-          "supportable. Confidence 95 percent that this limitation stands.",
-          [POP, TYPES], "supported", 95),
+          "So a population 'accuracy' is a transfer claim, not a measurement. The defensible form is a "
+          "product of six separately sourced terms: donor accuracy against a real recording (0.718, and "
+          "measured for the 28 cells B3 donates to, not for all 104), type-match coverage (0.529), build "
+          "(1.000), a driven physiological window (0.000), a qualified timestep (0.000) and anatomy "
+          "transfer (0.000, measured and negative). A term with no evidence scores zero and is never "
+          "dropped - dropping it raises the score of exactly the case that fails it, which is the bug "
+          "the single-cell scorer already made once. Anything stated as one percentage without those six "
+          "named is not supportable. Confidence 95 percent that this limitation stands.",
+          [POP, TYPES, LEDGER, LEDGER_JSON], "supported", 95),
 
         # ---------------- the goal --------------------------------------------------------
         n("goal", GOAL,
-          "GOAL: a scored model set over the 104 H01 cells. Reachable form: donor accuracy x type coverage "
-          "x build success. Today that product is 71.8 percent x 53 percent x 12/104 = about 4 percent of "
-          "the stated goal; with the climb closed, full type coverage and a fixed build it would be ~91 "
-          "percent of the reachable ceiling.",
-          "The 1-to-100 scale the goal asks for is therefore best read as this product, with the three "
-          "factors reported separately so no single number hides a blocker. Confidence 25 percent that the "
-          "full product exceeds 80 percent within this campaign's scope: the climb is plausible, the build "
-          "is fixable, but type coverage for 49 cells and the absence of H01 ground truth are the hard "
-          "limits, and the second of those cannot be removed. Lowered from 25 to 15 percent after stage "
-          "16: the climb, which carries two thirds of the single-cell headroom, resisted the one mechanism "
-          "that can physically reach it.",
-          [POP, TYPES, STAGE15], "unverified", 15),
+          "GOAL: a scored model set over the 104 H01 cells. Reachable form: the product of the six ledger "
+          "terms. As measured that product is 0 percent, because three terms have no positive evidence. "
+          "The figure obtained by counting construction as build success and assuming the other three "
+          "terms away is 38 percent (0.718 x 0.529), and it is quotable only with those assumptions "
+          "attached. The earlier 'about 4 percent' was arithmetic on a stale build term and is withdrawn.",
+          "The 1-to-100 scale the goal asks for is therefore best read as this product, with all six "
+          "factors reported separately so no single number hides a zero. Confidence lowered 15 -> 8 "
+          "percent that the full product exceeds 80 percent within this campaign's scope. The reason is "
+          "not the climb: it is that the ledger correction moved the binding constraint from an "
+          "engineering blocker believed 75 percent fixable to anatomy transfer, which has a measured "
+          "negative reading, and to a driven window that has twice failed to complete. The absence of H01 "
+          "ground truth remains the one limit that cannot be removed at all.",
+          [POP, TYPES, STAGE15, LEDGER], "unverified", 8),
         n("policy", PLAN,
-          "STOPPING RULE, stated in advance: after the climb resolves, the remaining measurable gain on the "
-          "E cell is 6.4 points (rise) plus 2.4 (everything else). That is the point to stop single-cell "
-          "work and either fix the population build or stop.",
-          "The campaign has already spent five stages on the rise. Sparsity of effects says chase the "
-          "steep X; the accuracy ledger says the steep X for SCORE is the climb, and after it there is no "
-          "third thing worth a run on this cell.",
-          [CM, STAGE15], "supported", 85),
+          "STOPPING RULE, amended by the ledger: the remaining measurable gain on the E cell is 6.4 points "
+          "(rise) plus 2.4 (everything else), and it applies to a score over 28 cells that is conditional "
+          "on a transfer which currently fails. Single-cell work stops here; the next run belongs to "
+          "anatomy transfer, which is also a single-cell run on the donor and needs no population.",
+          "The original rule said 'stop single-cell work and either fix the population build or stop'. "
+          "The build was already fixed, so that branch is void. Sparsity of effects still applies but the "
+          "steep X has moved: a term with a measured negative reading dominates two terms that are merely "
+          "small. The stage-1 record already names the split - check the H01 conversion's membrane area "
+          "against the H01 surface mesh, and scale the donor's dendritic load by 1.5 and 2 to see whether "
+          "the response degrades gradually or falls off a cliff.",
+          [CM, STAGE15, MORPH1, LEDGER], "supported", 85),
     ]
 
 
@@ -284,7 +333,13 @@ def build_edges():
         e("plan_holdout", "plan_second_cell", "describes", "cross-cell test"),
         e("plan_second_cell", "pop_typematch", "describes", "scale to the population"),
         e("pop_typematch", "goal", "describes", "coverage factor"),
-        e("pop_build", "goal", "describes", "build factor (blocker)"),
+        e("pop_build", "goal", "describes", "build factor (closed: 104/104)"),
+        e("pop_build", "pop_driven", "describes", "construction is not simulation"),
+        e("pop_driven", "pop_dt", "describes", "blocked on a qualified step"),
+        e("pop_driven", "goal", "describes", "driven-window factor (zero)"),
+        e("pop_dt", "goal", "describes", "timestep factor (zero)"),
+        e("pop_anatomy", "goal", "describes", "anatomy-transfer factor (zero, measured negative)"),
+        e("pop_anatomy", "policy", "describes", "where the next run belongs"),
         e("pop_noground", "goal", "describes", "no H01 ground truth (hard limit)"),
         e("state_scope", "pop_noground", "describes", "why population accuracy is inherited"),
         e("plan_rise", "policy", "describes", "stopping rule"),
@@ -320,21 +375,33 @@ def explanation(nodes):
         ),
         "uncertainties": (
             "Population accuracy is inherited, not measured: no H01 cell has a recording. Its defensible "
-            "form is the product of three separately measurable factors - donor accuracy against a real "
-            "recording (71.8 percent today), donor type-match coverage (55 of 104) and build success (12 of "
-            "104 built and run; the 40-cell build fails on one-point SWC branches). The sealed holdout "
+            "form is the product of six separately sourced factors - donor accuracy against a real "
+            "recording (0.718, and measured only for the 28 cells B3 donates to), type-match coverage "
+            "(55 of 104), build (1.000: all 104 import, construct to 808,495 compartments, initialise and "
+            "complete a forward pass; the one-point SWC branch was repaired on 2026-09-08 and the earlier "
+            "12-of-104 figure is withdrawn), a driven physiological window (0.000: two attempts, one "
+            "nonfinite and one dead at the wall cap), a qualified timestep (0.000: the 1 mV gate FAILS by "
+            "6.36 mV between the two coarse rungs) and anatomy transfer (0.000, and measured NEGATIVE: "
+            "B3's fit fires 4 spikes at 200 pA on the donor's own reconstruction and 0 on the H01 "
+            "skeleton). As measured the product is 0 percent; the 38 percent obtainable by assuming the "
+            "three unqualified terms away is quotable only with those assumptions attached. The sealed "
+            "holdout "
             "(sweep 54, 330 pA) has never been spent, so no element has been tested out of sample. Whether "
             "a mechanism that closes the climb on this cell transfers to another cell without refitting is "
             "untested. The ten-element mean scores voltage levels against a stated 100 mV span, which "
             "flatters it; the element table is the reading."
         ),
         "predictions": (
-            "Stage 16 part 2 (running): on the thickened-stub geometry the first-interval threshold step "
-            "grows monotonically as the axonal sodium recovery factor falls and some dose reaches at least "
-            "+0.69 mV with the count in 5 to 15 and the spike-1 rise within 15 percent of the arm's control, "
-            "while the same dose on the default 1 um stub gives at most a fraction of it. If that lands the "
-            "E cell reaches about 91 percent; the rise would then be the only element left, at 20 percent "
-            "confidence of closing."
+            "Stage 16 is closed: the threshold step did grow with falling axonal recovery and reached "
+            "+2.39 mV against a recorded +1.38, and the same dose through the default 1 um stub gave "
+            "-2.56 mV, the opposite sign - so the coupling is load-bearing and the mechanism is located. "
+            "But every dose that moved the threshold collapsed the train from 9 spikes to 2, both "
+            "registered cells failed, and the best arm scored 69.1 over ten elements, below B3's 71.8. "
+            "The next registrable prediction is not on this cell's score: scaling the donor's dendritic "
+            "load by 1.5 and 2 will show whether the H01 anatomy's silence at 200 pA is a graded "
+            "consequence of a six-fold larger load (response degrades smoothly, so a load correction or a "
+            "conversion fix restores it) or a cliff (so the conversion itself is suspect). That is the "
+            "only split whose outcome changes the population ledger."
         ),
         "nodeIds": [x["id"] for x in nodes],
         "testIds": [],

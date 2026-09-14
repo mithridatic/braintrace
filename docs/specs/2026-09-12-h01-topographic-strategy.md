@@ -944,3 +944,59 @@ the climb is not monotone in the dose.
 **Accuracy caveat, stated now.** This arm's baseline rise is further from the recording than plain
 B3's, so a climb won here need not raise the ten-element mean above B3's 71.8; the stage tests the
 climb's mechanism, and the accuracy of the resulting model is reported honestly either way.
+
+---
+
+## 2026-09-13 — ledger correction; the campaign's population term was stale, and the binding constraint moved
+
+Not a stage: no evaluation spent, no run launched. An audit of the campaign's own accuracy
+arithmetic against committed evidence, occasioned by a recommendation that turned out to target a
+blocker already repaired.
+
+**What was wrong.** The stage-16 report stated the population product as
+`71.8 percent x 55/104 x 12/104 = about 4 percent`, and recommended the next stage repair the
+one-point SWC branch that stopped 7 of the 104 largest components from loading. That reader defect
+was repaired on 2026-09-08, six days earlier: `h01-population-import-104.json` records 104 of 104
+components importing with zero missing segments, `h01-ready-104-implicit-build-decision.json`
+records 104 cells constructing to 808,495 compartments with no failures, initialisation passes,
+and `h01-arc-probe-104.json` records a forward pass completing all six phases. The recommendation
+is withdrawn; the build term is 1.000, not 12/104.
+
+**Why the correction does not raise the product.** The same audit exposes three factors that were
+never in it. The defensible form is a six-term product, each term read from a committed decision
+JSON, with a term that has no evidence scoring zero and never being dropped — the rule the
+stage-15/16 scorer violated once, and for the same reason: dropping a requirement quietly raises
+the score of exactly the case that fails it.
+
+| Term | Value | Measured |
+| --- | ---: | --- |
+| Donor accuracy (B3, ten elements, 310 pA; donor for 28 of 104) | 0.718 | yes |
+| Type coverage (layer and class) | 0.529 | yes |
+| Build (import, construction, initialisation, forward pass) | 1.000 | yes |
+| Driven window at a physiological duration | 0.000 | no |
+| Timestep qualified against the 1 mV contract | 0.000 | no |
+| Anatomy transfer (donor fit on H01 anatomy) | 0.000 | **yes, negative** |
+
+As measured: 0 percent. With the three unqualified terms assumed away: 38 percent, quotable only
+with the assumptions attached.
+
+**The binding constraint moved.** It was believed to be an engineering blocker, 75 percent likely
+fixable. It is anatomy transfer, which is the only term with a negative reading rather than a
+missing one: B3's fit fires 4 spikes at 200 pA on the donor's own reconstruction and 0 on the H01
+skeleton, which sits on a −78.2 mV plateau (onset capacitance 785 pF against 125; input resistance
+about 38 MΩ against about 98). Donor accuracy, type coverage and a working build all describe a
+model that is silent on the anatomy it is meant to run on.
+
+**The next split, registered but not launched.** Scale the donor's dendritic load (`cm` and
+`g_pas` together) by 1.5 and 2 on the donor's own anatomy and read the 200 pA count and the
+upstroke. Prediction if the H01 silence is a graded load effect: the count falls monotonically and
+the cell is still spiking at 1.5, so a load or conversion correction restores a readable response.
+Rejection: the count falls to zero between 1.0 and 1.5, i.e. a cliff, in which case the conversion
+itself is suspect and the membrane area must be checked against the H01 surface mesh before that
+skeleton is used again. Cap 2 evaluations. This needs no population and no box-side population
+cache.
+
+Artifacts: [`h01-population-accuracy-ledger.md`](../evidence/h01-population-accuracy-ledger.md),
+[`h01-population-accuracy-ledger.json`](../evidence/h01-population-accuracy-ledger.json),
+[`h01_population_ledger.py`](../evidence/h01_population_ledger.py) (8 tests),
+causal model Y5 consequence, accuracy tree (24 nodes, 28 edges).

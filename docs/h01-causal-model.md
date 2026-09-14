@@ -726,6 +726,59 @@ Evidence: [historical short run](evidence/h01-ready-104-ei-1ms-decision.json),
 [corrected construction](evidence/h01-104-corrected-construction-decision.json),
 [corrected initialization and runtime limit](evidence/h01-104-corrected-initialization-decision.json).
 
+### Consequence, 2026-09-13: the population accuracy ledger, and a correction
+
+The single-cell campaign's accuracy report of 2026-09-13 stated the population product as
+`71.8 percent x 55/104 x 12/104 = about 4 percent`, and recommended spending the next stage
+repairing the one-point SWC branch that stopped 7 of the 104 largest components from loading.
+**That build term was six days stale and the recommendation is withdrawn.** The reader defect was
+repaired on 2026-09-08: all 104 components import with zero missing segments, construct to 808,495
+compartments with no failures, initialise, and complete a forward pass. There is no engineering
+work to do there.
+
+Correcting the term does not raise the product, because the same audit exposes three factors that
+were never in it. The defensible form of a population accuracy is a product of six terms, each
+read from a committed decision JSON, and a term with no evidence scores zero and is never dropped
+(the rule the stage-15/16 scorer violated once):
+
+| Term | Value | Measured | Reading |
+| --- | ---: | --- | --- |
+| Donor accuracy | 0.718 | yes | B3 on ten elements at 310 pA, against its own recording; the type donor for 28 of 104 cells |
+| Type coverage | 0.529 | yes | 55 of 104 matched in layer and class |
+| Build | 1.000 | yes | import, construction, initialisation, forward pass, all 104 |
+| Driven window | 0.000 | no | 10 ms explicit died nonfinite; implicit retry aborted at the wall cap after 21,286 s |
+| Timestep | 0.000 | no | the 1 mV gate FAILS by 6.36 mV between dt 0.005 and 0.0025 ms |
+| Anatomy transfer | 0.000 | **yes** | B3's fit fires 4 spikes at 200 pA on the donor's reconstruction and **0** on the H01 skeleton |
+
+Product as measured: **0 percent**. The 38 percent obtainable by counting construction as build
+success and assuming the other three terms away is quotable only with those assumptions attached,
+and it additionally assumes the three donors whose published fits were reproduced and *rejected*
+score like the one donor that was scored.
+
+The binding constraint has therefore moved. It was believed to be an engineering blocker 75
+percent likely to be fixable. It is anatomy transfer: the converted H01 skeleton (2,460 um of
+cable, 9,975 nodes, 8,551 sections) presents an onset capacitance of 785 pF against the donor
+reconstruction's 125 pF and an input resistance of about 38 MOhm against about 98, so at the
+donor's own 200 pA the cell sits on a -78.2 mV plateau instead of spiking. This is the only term
+in the ledger with a negative reading rather than a missing one, and it makes the others moot:
+donor accuracy, type coverage and a working build all describe a model that is silent on the
+anatomy it is meant to run on. Whether that load is physical or an artefact of the conversion
+(skeleton radii used as cable radii) is not established.
+
+The next registrable split is named by the stage-1 record and needs no population: scale the
+donor's dendritic load (cm and g_pas together) by 1.5 and 2 and read the 200 pA count and the
+upstroke. A graded degradation says the H01 load is quantitatively too large and a conversion or
+load correction restores a readable response; a cliff says the conversion itself is suspect.
+Separately, check the H01 conversion's membrane area against the H01 surface mesh before that
+skeleton is used again.
+
+Evidence: [ledger](evidence/h01-population-accuracy-ledger.md),
+[ledger numbers](evidence/h01-population-accuracy-ledger.json),
+[import audit](evidence/h01-population-import-104.json),
+[forward pass](evidence/h01-arc-probe-104.json),
+[timestep ladder](evidence/h01-ready-cell7196644737-implicit-decision.json),
+[anatomy transfer](evidence/h01-e-morphology/stage-1-decision.json).
+
 ## Y6. Additional donor fits do not reproduce all recorded counts
 
 The imported HL5MN1 fit produced 16 and 30 spikes against recorded counts of 14 and 34.
