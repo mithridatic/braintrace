@@ -77,3 +77,10 @@ tissue or contact with external researchers was undertaken.
 
 DANDI attribution: Chartrand, Lee, Dalley, Lein and Kalmbach (2023), Human L1
 patch-seq electrophysiology, doi:10.48324/dandi.000630/0.230915.2257.
+
+## Recovery constraint checkpoint
+
+[All 19 PAX6 paired-pulse conditions](pax6-recovery-840043481/README.md) now
+constrain a conditional recovery envelope. Structured residuals and baseline/history
+questions remain; external validation currents stay unopened. The current input
+receipt is [revision 5](fitting-inputs-r5.json). No six-term score was promoted.

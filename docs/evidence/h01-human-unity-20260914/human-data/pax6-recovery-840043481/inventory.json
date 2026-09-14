@@ -1,0 +1,116 @@
+[
+  {
+    "sweep": 123,
+    "status": "paired",
+    "gap_ms": 5.0,
+    "baseline_change_pa": 0.09322915574676927
+  },
+  {
+    "sweep": 124,
+    "status": "paired",
+    "gap_ms": 10.0,
+    "baseline_change_pa": -0.047826385400985494
+  },
+  {
+    "sweep": 125,
+    "status": "paired",
+    "gap_ms": 15.0,
+    "baseline_change_pa": -0.3755138729760059
+  },
+  {
+    "sweep": 126,
+    "status": "paired",
+    "gap_ms": 20.0,
+    "baseline_change_pa": 1.3963332180124386
+  },
+  {
+    "sweep": 127,
+    "status": "paired",
+    "gap_ms": 25.0,
+    "baseline_change_pa": -0.36745830683638925
+  },
+  {
+    "sweep": 128,
+    "status": "paired",
+    "gap_ms": 30.0,
+    "baseline_change_pa": 3.5243192994330714
+  },
+  {
+    "sweep": 129,
+    "status": "paired",
+    "gap_ms": 35.0,
+    "baseline_change_pa": 1.4955137909259255
+  },
+  {
+    "sweep": 130,
+    "status": "paired",
+    "gap_ms": 40.0,
+    "baseline_change_pa": 0.005312504757739589
+  },
+  {
+    "sweep": 131,
+    "status": "paired",
+    "gap_ms": 45.0,
+    "baseline_change_pa": 1.7975207732960454
+  },
+  {
+    "sweep": 132,
+    "status": "paired",
+    "gap_ms": 50.0,
+    "baseline_change_pa": 1.901833363374978
+  },
+  {
+    "sweep": 133,
+    "status": "paired",
+    "gap_ms": 100.0,
+    "baseline_change_pa": 5.453270557775702
+  },
+  {
+    "sweep": 134,
+    "status": "paired",
+    "gap_ms": 200.0,
+    "baseline_change_pa": 12.87009711865106
+  },
+  {
+    "sweep": 135,
+    "status": "paired",
+    "gap_ms": 300.0,
+    "baseline_change_pa": 16.519811423964217
+  },
+  {
+    "sweep": 136,
+    "status": "paired",
+    "gap_ms": 400.0,
+    "baseline_change_pa": 16.631276565641727
+  },
+  {
+    "sweep": 137,
+    "status": "paired",
+    "gap_ms": 500.0,
+    "baseline_change_pa": 13.860026642412665
+  },
+  {
+    "sweep": 138,
+    "status": "paired",
+    "gap_ms": 1000.0,
+    "baseline_change_pa": 18.518824881253913
+  },
+  {
+    "sweep": 139,
+    "status": "paired",
+    "gap_ms": 2000.0,
+    "baseline_change_pa": 26.165568366974647
+  },
+  {
+    "sweep": 140,
+    "status": "paired",
+    "gap_ms": 3000.0,
+    "baseline_change_pa": 27.13138835908032
+  },
+  {
+    "sweep": 141,
+    "status": "paired",
+    "gap_ms": 4000.0,
+    "baseline_change_pa": 26.441811297787808
+  }
+]

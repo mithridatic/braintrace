@@ -1,0 +1,121 @@
+{
+  "gap_ms": 35.0,
+  "first_onset_ms": 2100.0,
+  "second_onset_ms": 2435.0,
+  "pulse_duration_ms": 300.0,
+  "pulse_command_mv": 60.00630371272564,
+  "gap_command_mv": -89.99370341189206,
+  "holding_command_mv": -19.993700087070465,
+  "initial_baseline_mean_pa": 4.266110929131898,
+  "final_baseline_mean_pa": 5.7616247200578234,
+  "baseline_change_pa": 1.4955137909259255,
+  "drift_correction_applied": false,
+  "ionic_isolation_qualified": false,
+  "source": {
+    "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+    "session_id": "840043481",
+    "specimen_id": "840043506",
+    "sweep": 129,
+    "family": "NucVCzrecovms5_DA_0",
+    "role": "channel discovery",
+    "absolute_start_s": 2142.6200003623962,
+    "sample_rate_hz": 25000.0,
+    "samples": 93750,
+    "conversions": [
+      {
+        "stored_unit": "amperes",
+        "conversion": 9.999999960041972e-13,
+        "offset": 0.0
+      },
+      {
+        "stored_unit": "volts",
+        "conversion": 0.0010000000474974513,
+        "offset": 0.0
+      }
+    ],
+    "instrument": {
+      "RsComp Enable": {
+        "value": 0.0,
+        "unit": "On/Off"
+      },
+      "RsComp Correction": {
+        "value": 0.0,
+        "unit": "%"
+      },
+      "Series Resistance": {
+        "value": 0.0,
+        "unit": "MOhms"
+      },
+      "TP Steady State Resistance": {
+        "value": null,
+        "unit": "Mohm"
+      },
+      "Fast compensation capacitance": {
+        "value": 9.999346836653267e-12,
+        "unit": "F"
+      },
+      "Slow compensation capacitance": {
+        "value": 0.0,
+        "unit": "F"
+      }
+    },
+    "command_segments": [
+      {
+        "start_index": 0,
+        "stop_index": 1125,
+        "start_ms": 0.0,
+        "stop_ms": 45.0,
+        "command_mv": -19.993700087070465
+      },
+      {
+        "start_index": 1125,
+        "stop_index": 1376,
+        "start_ms": 45.0,
+        "stop_ms": 55.04,
+        "command_mv": -9.993699612095952
+      },
+      {
+        "start_index": 1376,
+        "stop_index": 52500,
+        "start_ms": 55.04,
+        "stop_ms": 2100.0,
+        "command_mv": -19.993700087070465
+      },
+      {
+        "start_index": 52500,
+        "stop_index": 60000,
+        "start_ms": 2100.0,
+        "stop_ms": 2400.0,
+        "command_mv": 60.00630371272564
+      },
+      {
+        "start_index": 60000,
+        "stop_index": 60875,
+        "start_ms": 2400.0,
+        "stop_ms": 2435.0,
+        "command_mv": -89.99370341189206
+      },
+      {
+        "start_index": 60875,
+        "stop_index": 68375,
+        "start_ms": 2435.0,
+        "stop_ms": 2735.0,
+        "command_mv": 60.00630371272564
+      },
+      {
+        "start_index": 68375,
+        "stop_index": 93750,
+        "start_ms": 2735.0,
+        "stop_ms": 3750.0,
+        "command_mv": -19.993700087070465
+      }
+    ],
+    "junction_correction_applied": false,
+    "leak_subtraction_applied": false,
+    "actual_patch_voltage_measured": false,
+    "patch_area_um2": null,
+    "channel_kinetics_qualified": false,
+    "coverage_qc": "pending independent assessment"
+  },
+  "arrays_sha256": "1a56730c324425c665e4ddf2e17b8880e1a86497017469a6c5fe9676da161f94"
+}

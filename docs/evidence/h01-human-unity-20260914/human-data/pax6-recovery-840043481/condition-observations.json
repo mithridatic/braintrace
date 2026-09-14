@@ -1,0 +1,607 @@
+{
+  "command_values_mv": {
+    "pulse_command_mv": [
+      60.00630371272564
+    ],
+    "gap_command_mv": [
+      -89.99370341189206
+    ],
+    "holding_command_mv": [
+      -19.993700087070465
+    ]
+  },
+  "all_conditions_same_commands": true,
+  "rows": [
+    {
+      "sweep": 123,
+      "gap_ms": 5.0,
+      "absolute_start_s": 2116.952000141144,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2425.0,
+          "first_current_pa": 40.624996022973264,
+          "second_current_pa": 42.49999601548113,
+          "difference_pa": 1.8749999925078669
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2465.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 40.624996022973264,
+          "difference_pa": 0.6249961828053756
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2605.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 40.624996022973264,
+          "difference_pa": 0.6249961828053756
+        }
+      ]
+    },
+    {
+      "sweep": 124,
+      "gap_ms": 10.0,
+      "absolute_start_s": 2121.215000152588,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2430.0,
+          "first_current_pa": 40.624996022973264,
+          "second_current_pa": 51.87499597802048,
+          "difference_pa": 11.249999955047215
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2470.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 41.24999602047588,
+          "difference_pa": 1.2499961803079955
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2610.0,
+          "first_current_pa": 32.499999870136406,
+          "second_current_pa": 42.49999601548113,
+          "difference_pa": 9.999996145344724
+        }
+      ]
+    },
+    {
+      "sweep": 125,
+      "gap_ms": 15.0,
+      "absolute_start_s": 2125.465000152588,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2435.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 62.499995935565074,
+          "difference_pa": 22.499996095397186
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2475.0,
+          "first_current_pa": 38.12499984766002,
+          "second_current_pa": 54.99999596553359,
+          "difference_pa": 16.87499611787357
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2615.0,
+          "first_current_pa": 36.24999985515215,
+          "second_current_pa": 47.49999599550212,
+          "difference_pa": 11.249996140349971
+        }
+      ]
+    },
+    {
+      "sweep": 126,
+      "gap_ms": 20.0,
+      "absolute_start_s": 2129.741000175476,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2440.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 60.62499594305721,
+          "difference_pa": 20.62499610288932
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2480.0,
+          "first_current_pa": 34.9999998601469,
+          "second_current_pa": 59.37499594805196,
+          "difference_pa": 24.37499608790506
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2620.0,
+          "first_current_pa": 36.24999985515215,
+          "second_current_pa": 52.499995975523106,
+          "difference_pa": 16.24999612037096
+        }
+      ]
+    },
+    {
+      "sweep": 127,
+      "gap_ms": 25.0,
+      "absolute_start_s": 2134.013000011444,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2445.0,
+          "first_current_pa": 42.49999601548113,
+          "second_current_pa": 78.74999968533054,
+          "difference_pa": 36.250003669849406
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2485.0,
+          "first_current_pa": 40.624996022973264,
+          "second_current_pa": 60.62499594305721,
+          "difference_pa": 19.999999920083944
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2625.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 61.874995938062455,
+          "difference_pa": 21.874996097894567
+        }
+      ]
+    },
+    {
+      "sweep": 128,
+      "gap_ms": 30.0,
+      "absolute_start_s": 2138.317000389099,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2450.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 95.62499198850686,
+          "difference_pa": 55.624992148338976
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2490.0,
+          "first_current_pa": 36.24999985515215,
+          "second_current_pa": 84.99999203096226,
+          "difference_pa": 48.749992175810114
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2630.0,
+          "first_current_pa": 34.37499986264428,
+          "second_current_pa": 74.99999970031479,
+          "difference_pa": 40.62499983767051
+        }
+      ]
+    },
+    {
+      "sweep": 129,
+      "gap_ms": 35.0,
+      "absolute_start_s": 2142.6200003623962,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2455.0,
+          "first_current_pa": 48.12499599300474,
+          "second_current_pa": 99.99999197102522,
+          "difference_pa": 51.874995978020486
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2495.0,
+          "first_current_pa": 42.49999601548113,
+          "second_current_pa": 76.24999969532004,
+          "difference_pa": 33.75000367983891
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2635.0,
+          "first_current_pa": 34.9999998601469,
+          "second_current_pa": 61.24999594055983,
+          "difference_pa": 26.249996080412927
+        }
+      ]
+    },
+    {
+      "sweep": 130,
+      "gap_ms": 40.0,
+      "absolute_start_s": 2146.903000354767,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2460.0,
+          "first_current_pa": 41.87499601797851,
+          "second_current_pa": 92.49999200099374,
+          "difference_pa": 50.62499598301523
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2500.0,
+          "first_current_pa": 44.999996005491624,
+          "second_current_pa": 79.99999968033578,
+          "difference_pa": 35.00000367484415
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2640.0,
+          "first_current_pa": 36.874999852654774,
+          "second_current_pa": 71.87499971280167,
+          "difference_pa": 34.99999986014689
+        }
+      ]
+    },
+    {
+      "sweep": 131,
+      "gap_ms": 45.0,
+      "absolute_start_s": 2151.1730003356934,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2465.0,
+          "first_current_pa": 40.624996022973264,
+          "second_current_pa": 99.99999197102522,
+          "difference_pa": 59.37499594805196
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2505.0,
+          "first_current_pa": 44.999996005491624,
+          "second_current_pa": 74.37499970281216,
+          "difference_pa": 29.375003697320537
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2645.0,
+          "first_current_pa": 40.624996022973264,
+          "second_current_pa": 61.24999594055983,
+          "difference_pa": 20.624999917586564
+        }
+      ]
+    },
+    {
+      "sweep": 132,
+      "gap_ms": 50.0,
+      "absolute_start_s": 2155.4850001335144,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2470.0,
+          "first_current_pa": 44.374996007989,
+          "second_current_pa": 131.8749994730535,
+          "difference_pa": 87.5000034650645
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2510.0,
+          "first_current_pa": 46.24999600049687,
+          "second_current_pa": 99.99999197102522,
+          "difference_pa": 53.74999597052835
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2650.0,
+          "first_current_pa": 40.624996022973264,
+          "second_current_pa": 83.1249920384544,
+          "difference_pa": 42.49999601548113
+        }
+      ]
+    },
+    {
+      "sweep": 133,
+      "gap_ms": 100.0,
+      "absolute_start_s": 2159.804000377655,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2520.0,
+          "first_current_pa": 45.624996002994244,
+          "second_current_pa": 187.49998399199796,
+          "difference_pa": 141.87498798900373
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2560.0,
+          "first_current_pa": 44.374996007989,
+          "second_current_pa": 149.99999940062958,
+          "difference_pa": 105.62500339264058
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2700.0,
+          "first_current_pa": 39.99999984016789,
+          "second_current_pa": 115.6249919085908,
+          "difference_pa": 75.62499206842291
+        }
+      ]
+    },
+    {
+      "sweep": 134,
+      "gap_ms": 200.0,
+      "absolute_start_s": 2166.206000328064,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2620.0,
+          "first_current_pa": 48.749995990507365,
+          "second_current_pa": 280.62499887867784,
+          "difference_pa": 231.87500288817048
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2660.0,
+          "first_current_pa": 44.999996005491624,
+          "second_current_pa": 225.624983839658,
+          "difference_pa": 180.62498783416638
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2800.0,
+          "first_current_pa": 43.12499601298375,
+          "second_current_pa": 190.6249839795111,
+          "difference_pa": 147.49998796652733
+        }
+      ]
+    },
+    {
+      "sweep": 135,
+      "gap_ms": 300.0,
+      "absolute_start_s": 2172.5570001602173,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2720.0,
+          "first_current_pa": 48.749995990507365,
+          "second_current_pa": 314.99999874132214,
+          "difference_pa": 266.25000275081476
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2760.0,
+          "first_current_pa": 45.624996002994244,
+          "second_current_pa": 241.24998377722358,
+          "difference_pa": 195.62498777422934
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 2900.0,
+          "first_current_pa": 44.999996005491624,
+          "second_current_pa": 198.12498394954258,
+          "difference_pa": 153.12498794405096
+        }
+      ]
+    },
+    {
+      "sweep": 136,
+      "gap_ms": 400.0,
+      "absolute_start_s": 2178.933000087738,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2820.0,
+          "first_current_pa": 54.37499596803097,
+          "second_current_pa": 389.9999679240589,
+          "difference_pa": 335.62497195602793
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2860.0,
+          "first_current_pa": 57.49999595554409,
+          "second_current_pa": 328.74996816880184,
+          "difference_pa": 271.24997221325776
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 3000.0,
+          "first_current_pa": 53.749995970528346,
+          "second_current_pa": 249.37498374475769,
+          "difference_pa": 195.62498777422934
+        }
+      ]
+    },
+    {
+      "sweep": 137,
+      "gap_ms": 500.0,
+      "absolute_start_s": 2185.2070002555847,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 2920.0,
+          "first_current_pa": 61.24999594055983,
+          "second_current_pa": 435.6249677417504,
+          "difference_pa": 374.3749718011906
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 2960.0,
+          "first_current_pa": 61.24999594055983,
+          "second_current_pa": 364.99996802395395,
+          "difference_pa": 303.74997208339414
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 3100.0,
+          "first_current_pa": 59.99999594555458,
+          "second_current_pa": 290.6249988387198,
+          "difference_pa": 230.62500289316523
+        }
+      ]
+    },
+    {
+      "sweep": 138,
+      "gap_ms": 1000.0,
+      "absolute_start_s": 2191.4530000686646,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 3420.0,
+          "first_current_pa": 58.749995950549334,
+          "second_current_pa": 505.6249674620442,
+          "difference_pa": 446.8749715114949
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 3460.0,
+          "first_current_pa": 58.124995953046714,
+          "second_current_pa": 418.1249678116769,
+          "difference_pa": 359.9999718586302
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 3600.0,
+          "first_current_pa": 51.87499597802048,
+          "second_current_pa": 336.87496813633595,
+          "difference_pa": 284.9999721583155
+        }
+      ]
+    },
+    {
+      "sweep": 139,
+      "gap_ms": 2000.0,
+      "absolute_start_s": 2201.1890001296997,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 4420.0,
+          "first_current_pa": 52.499995975523106,
+          "second_current_pa": 600.624997600021,
+          "difference_pa": 548.1250016244978
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 4460.0,
+          "first_current_pa": 53.124995973025726,
+          "second_current_pa": 499.9999674845206,
+          "difference_pa": 446.8749715114949
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 4600.0,
+          "first_current_pa": 48.749995990507365,
+          "second_current_pa": 426.8749677767137,
+          "difference_pa": 378.1249717862063
+        }
+      ]
+    },
+    {
+      "sweep": 140,
+      "gap_ms": 3000.0,
+      "absolute_start_s": 2210.9490003585815,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 5420.0,
+          "first_current_pa": 50.62499598301523,
+          "second_current_pa": 609.9999975625603,
+          "difference_pa": 559.3750015795451
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 5460.0,
+          "first_current_pa": 53.749995970528346,
+          "second_current_pa": 513.1249979496537,
+          "difference_pa": 459.37500197912533
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 5600.0,
+          "first_current_pa": 51.87499597802048,
+          "second_current_pa": 429.99996776422677,
+          "difference_pa": 378.1249717862063
+        }
+      ]
+    },
+    {
+      "sweep": 141,
+      "gap_ms": 4000.0,
+      "absolute_start_s": 2220.714000225067,
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "first_time_ms": 2120.0,
+          "second_time_ms": 6420.0,
+          "first_current_pa": 60.62499594305721,
+          "second_current_pa": 645.6249363850538,
+          "difference_pa": 584.9999404419966
+        },
+        {
+          "phase_ms": 60.0,
+          "first_time_ms": 2160.0,
+          "second_time_ms": 6460.0,
+          "first_current_pa": 65.62499973777544,
+          "second_current_pa": 556.2499977773347,
+          "difference_pa": 490.6249980395592
+        },
+        {
+          "phase_ms": 200.0,
+          "first_time_ms": 2300.0,
+          "second_time_ms": 6600.0,
+          "first_current_pa": 54.99999596553359,
+          "second_current_pa": 428.74996776922154,
+          "difference_pa": 373.74997180368797
+        }
+      ]
+    }
+  ],
+  "interpretation": "Some individual phase samples are nonmonotonic across increasing gaps. This does not identify a cause or estimate repeat variability; there is one sweep per gap.",
+  "model_constraint": "For nonnegative amplitudes, positive time constants and initial fractions in [0,1], each recovery contribution is nondecreasing with gap. More such independent populations cannot reproduce a decrease exactly under identical other conditions."
+}

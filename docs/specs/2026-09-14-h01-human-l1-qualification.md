@@ -202,3 +202,45 @@ residuals and sensitivity to the control. These are conditional decay time scale
 not identified A/D molecular channels, voltage-dependent rate laws or a physiological
 qualification. The 10 ms onset exclusion follows the observed control transients;
 it cannot establish behavior of faster gates. Do not access external currents.
+
+## Within-sweep recovery comparison
+
+Prepare all PAX6 recovery sweeps 123-141 from the pinned calibration recording.
+Identify first pulse, recovery gap, second pulse and return using the actual
+command transitions after 1000 ms. Require equal pulse voltages and 300 ms pulse
+durations, a lower recovery command and equal pre/post holding command. Pair
+samples by exact phase indices on one uniform clock; never interpolate or infer
+missing coverage. Retain both currents, both original clocks, their pointwise
+difference and complete commands. Preserve the onset transients. This difference
+is a protocol comparison, not an isolated molecular current: first and second
+voltage jumps have different sizes, and inter-pulse drift remains possible.
+
+Report initial baseline (100-10 ms before first onset) and final baseline
+(500-900 ms after second pulse end) at the same holding command, preserving their
+samples and means. Do not apply an assumed drift correction. Compare these windows
+and repeated first-pulse responses across recovery intervals before fitting.
+
+After visual review, a conditional joint recovery envelope may use both recovery
+gap and phase (10-280 ms) to constrain two recovering/decaying components. Its
+assumptions, bounds, parameter sensitivity and residuals must be explicit; it
+cannot qualify voltage-dependent kinetics or unlock external data by itself.
+
+For the joint fit, retain initial availability f rather than assume the first
+pulse begins with zero availability. For each of two mathematical populations,
+first-pulse availability decays for 300 ms at +60 mV and recovers toward one
+during the gap at -90 mV. Its contribution to second-minus-first current is
+A * [1 - (1 - f * exp(-300/d)) * exp(-gap/r) - f] * exp(-(phase-10)/d).
+A is the fully available current amplitude at phase 10 ms; d and r are the
+conditional decay/recovery constants. This assumes activation is effectively
+settled after 10 ms and inactivation tends toward zero during the pulse.
+
+Fit all 19 gap conditions and every original sample in phases 10-280 ms jointly.
+Bounds per population: A 0-2000 pA, d 1-10000 ms, r 1-20000 ms, f 0-1.
+Initialize A=(200,500), d=(30,500), r=(50,1000), f=(0.05,0.05).
+Compare the unchanged difference with a sensitivity case subtracting the measured
+final-minus-initial baseline from each sweep's difference. This is not an asserted
+drift correction or uncertainty bound. Retain optimizer status, active bounds,
+parameters, per-sweep residuals and direct predictions. Fit no per-sweep free
+offsets. No source parameters or kinetics from animal preparations are used.
+Test pulse/voltage mismatch, extra transitions, nonuniform clocks, missing windows,
+known paired-current differences and unchanged original timestamps.
