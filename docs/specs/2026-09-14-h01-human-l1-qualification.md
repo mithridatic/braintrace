@@ -244,3 +244,56 @@ parameters, per-sweep residuals and direct predictions. Fit no per-sweep free
 offsets. No source parameters or kinetics from animal preparations are used.
 Test pulse/voltage mismatch, extra transitions, nonuniform clocks, missing windows,
 known paired-current differences and unchanged original timestamps.
+
+## Matched test-voltage conditioning comparison
+
+The stored segments correct the earlier reading of prepulse sweep 89: its
+1100-2100 ms test command is about -50 mV, matching total-current sweep 70.
+The return to -90 mV starts at 2100 ms. Preserve the old sealed review and write
+an explicit correction with the original time bounds. Avoid this error by matching
+the entire declared test window, not a family index or an unlabeled transition.
+
+Prepare all nine total sweeps 70-78 and prepulse sweeps 89-97. Pair them by the
+measured constant command over 1100-2100 ms, with matching clocks and holding
+commands, and no interpolation. Require the total command to remain at holding
+through 1100 ms; require the prepulse command to equal a single conditioning
+level between holding and test-range maximum for 1000-1100 ms. Conditioning
+need not be below the test command. Require return to holding and complete
+900-990 ms baseline and 1100-2100 ms test coverage. Reject extra transitions in
+those windows, different test voltages, invalid clocks or missing samples.
+Verify a constant return command over 2100-2200 ms, requiring each named window
+boundary to coincide with an original sample rather than rounding onto the clock.
+
+Retain both full source arrays, original test clocks, both currents, their
+total-minus-conditioned difference, both initial baseline arrays and command
+histories. Match voltage explicitly across all source candidates; reject missing
+or ambiguous partners. The comparison is not isolated potassium current and
+does not establish stable recording quality across sweeps. Plot all nine pairs
+and their differences on common phase/voltage scales before fitting.
+
+As a conditional diagnostic, fit each difference over original phases 10-980 ms
+to two nonnegative decaying exponentials, without a free constant offset.
+Amplitudes at phase 10 ms are bounded 0-10000 pA, decay constants 1-10000 ms;
+initialize amplitudes 100 and 300 pA, constants 30 and 500 ms. Retain every sample,
+optimizer status, active bounds, predictions and residuals. Compare raw differences
+with differences after subtracting total-minus-prepulse initial baseline means.
+This sensitivity is not an established drift correction. A boundary hit or low
+amplitude must be reported; a successful optimizer is not kinetic identification.
+Inspect residuals and trends before selecting any voltage-dependent rate law.
+
+Test analytic matched commands with conditioning above/below the test voltage,
+known exponential differences, retained baseline shifts and original timestamps,
+ambiguous/missing voltage matches, extra transitions, incomplete windows and
+unequal sample clocks. Use local CPU closed-form algebra only. Preserve the
+external-response gate and whole-cell split. Record the unobserved intervals
+between recovery acquisitions; do not invent measurements during those gaps.
+
+The first matched traces show a negative difference near -20 mV. Before assigning
+that to activation, compare the same actual -90 to -20 mV transition in total
+sweep 72 and all nine conditioning pulses 89-97. Retain the first 100 ms and the
+full common 1000 ms for sweeps 72 and 91, aligning only by observed command onset
+and preserving both original clocks. Show raw and baseline-centered currents
+separately; retain onset artifacts and a separate magnified post-5 ms view.
+Record the different durations of preceding holding and notebook instrument
+settings. This comparison can expose a stationary-state assumption failure;
+it cannot uniquely attribute the difference to activation, recovery or drift.

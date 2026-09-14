@@ -1,0 +1,41 @@
+{
+  "parameter_order": [
+    "A1",
+    "A2",
+    "d1",
+    "d2"
+  ],
+  "parameters": [
+    2.6547979188856117e-19,
+    9.306621479543303e-19,
+    1.0000000000000002,
+    1.0000000000000002
+  ],
+  "optimizer_success": true,
+  "evaluations": 13,
+  "optimizer_message": "`gtol` termination condition is satisfied.",
+  "active_bounds": [
+    -1,
+    -1,
+    -1,
+    -1
+  ],
+  "boundary_limited": true,
+  "residual_rms_pa": 5.277540134998109,
+  "phase_window_ms": [
+    10.0,
+    980.0
+  ],
+  "physiological_qualification": false,
+  "elapsed_seconds": 0.05337219999637455,
+  "scenario": "unadjusted",
+  "subtracted_baseline_difference_pa": 0.0,
+  "test_command_mv": -34.98713381122798,
+  "total_sweep": 71,
+  "conditioned_sweep": 90,
+  "input_pair": {
+    "path": "pair-71-90.json",
+    "sha256": "7bbb002020efc2bc92c9b81014ccc639e0a1e1245d066bd1734499788fa97a79"
+  },
+  "arrays_sha256": "82f77fdccb9c7e6af93d069d3a30aaed6176430f97798e8f3320646134be6b15"
+}

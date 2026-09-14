@@ -84,3 +84,11 @@ patch-seq electrophysiology, doi:10.48324/dandi.000630/0.230915.2257.
 constrain a conditional recovery envelope. Structured residuals and baseline/history
 questions remain; external validation currents stay unopened. The current input
 receipt is [revision 5](fitting-inputs-r5.json). No six-term score was promoted.
+
+## Conditioning and history checkpoint
+
+[All nine matched test-voltage pairs](pax6-conditioning-840043481/README.md)
+correct the earlier sweep-89 command interpretation and expose different responses
+to the same actual command across protocol families. Conditional decay fits are
+not qualified for deployment. [Revision 6](fitting-inputs-r6.json) is the current
+input receipt; the original whole-cell split and all six scores remain unchanged.

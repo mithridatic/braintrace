@@ -1,0 +1,740 @@
+[
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      7.445641900815166e-17,
+      6.295875442900414e-16,
+      1.0000000000208382,
+      1.0000000000000002
+    ],
+    "optimizer_success": true,
+    "evaluations": 14,
+    "optimizer_message": "`gtol` termination condition is satisfied.",
+    "active_bounds": [
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 4.0195055524394725,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.0643988000229001,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": -49.98713452368975,
+    "total_sweep": 70,
+    "conditioned_sweep": 89,
+    "input_pair": {
+      "path": "pair-70-89.json",
+      "sha256": "e2bee96bf395f35cc56046c1a8a783dc1cd786cb0e560d2a98d0df067b22b98f"
+    },
+    "arrays_sha256": "a041e1e10fd17718ae4823a6a57bf6dd5ef05a4ddc46a12004f26457c8b95baf"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      1.0382862387167935,
+      2.14730815411856,
+      31.05702871895837,
+      9999.991826542291
+    ],
+    "optimizer_success": true,
+    "evaluations": 40,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "boundary_limited": false,
+    "residual_rms_pa": 1.6279852064229359,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.15282469999510795,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -5.754445262379634,
+    "test_command_mv": -49.98713452368975,
+    "total_sweep": 70,
+    "conditioned_sweep": 89,
+    "input_pair": {
+      "path": "pair-70-89.json",
+      "sha256": "e2bee96bf395f35cc56046c1a8a783dc1cd786cb0e560d2a98d0df067b22b98f"
+    },
+    "arrays_sha256": "8240f8d75b7acca012402a59b79adddf4c0bd4976bcb89a564ad48217881b37a"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      2.6547979188856117e-19,
+      9.306621479543303e-19,
+      1.0000000000000002,
+      1.0000000000000002
+    ],
+    "optimizer_success": true,
+    "evaluations": 13,
+    "optimizer_message": "`gtol` termination condition is satisfied.",
+    "active_bounds": [
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 5.277540134998109,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.05337219999637455,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": -34.98713381122798,
+    "total_sweep": 71,
+    "conditioned_sweep": 90,
+    "input_pair": {
+      "path": "pair-71-90.json",
+      "sha256": "7bbb002020efc2bc92c9b81014ccc639e0a1e1245d066bd1734499788fa97a79"
+    },
+    "arrays_sha256": "82f77fdccb9c7e6af93d069d3a30aaed6176430f97798e8f3320646134be6b15"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      0.5113553131200553,
+      1.5027287688962097,
+      1.0000000000000002,
+      9999.999999996879
+    ],
+    "optimizer_success": true,
+    "evaluations": 18,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      -1,
+      1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 1.9510911862984623,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.08227109999279492,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -6.3494452366900935,
+    "test_command_mv": -34.98713381122798,
+    "total_sweep": 71,
+    "conditioned_sweep": 90,
+    "input_pair": {
+      "path": "pair-71-90.json",
+      "sha256": "7bbb002020efc2bc92c9b81014ccc639e0a1e1245d066bd1734499788fa97a79"
+    },
+    "arrays_sha256": "c25b65ff8d49b53c28d670e0675409e093b81d916298f2cd680a8ada0ca95d29"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      3.714843312910293e-14,
+      1.0019931610908426e-13,
+      1.0000000000000013,
+      1.0000000000000142
+    ],
+    "optimizer_success": true,
+    "evaluations": 10,
+    "optimizer_message": "`gtol` termination condition is satisfied.",
+    "active_bounds": [
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 18.71031388108436,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.046230000007199124,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": -19.987133098766208,
+    "total_sweep": 72,
+    "conditioned_sweep": 91,
+    "input_pair": {
+      "path": "pair-72-91.json",
+      "sha256": "51e4782359f1486d9c44cd4b164eb30f9fbbc3b462afb1f3f9119568f495a2e4"
+    },
+    "arrays_sha256": "a3aa8f9b1d828da77475b0e433b845086ed0666e456df473af153dc67a6b34d2"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      1.1170878298744526e-17,
+      1.8673884915964464e-10,
+      1.0000000000037113,
+      1.0000000000533222
+    ],
+    "optimizer_success": true,
+    "evaluations": 11,
+    "optimizer_message": "Both `ftol` and `xtol` termination conditions are satisfied.",
+    "active_bounds": [
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 13.365649431758909,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.04883319998043589,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -5.780556356008345,
+    "test_command_mv": -19.987133098766208,
+    "total_sweep": 72,
+    "conditioned_sweep": 91,
+    "input_pair": {
+      "path": "pair-72-91.json",
+      "sha256": "51e4782359f1486d9c44cd4b164eb30f9fbbc3b462afb1f3f9119568f495a2e4"
+    },
+    "arrays_sha256": "c2bf755b727ee2939070e52e7401ef6ac19e32a0c16dba23a0740539fb47a51e"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      1.1954157786626465e-18,
+      2.0460047753703123e-18,
+      1.0000000000000002,
+      1.0000000000000002
+    ],
+    "optimizer_success": true,
+    "evaluations": 10,
+    "optimizer_message": "`gtol` termination condition is satisfied.",
+    "active_bounds": [
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 19.94036683490926,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.043093199987197295,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": -4.987132386304438,
+    "total_sweep": 73,
+    "conditioned_sweep": 92,
+    "input_pair": {
+      "path": "pair-73-92.json",
+      "sha256": "78f79ca9af038df06864ff5bb2c4bffa4e31a30ee119f552ae42c0b4777da6e0"
+    },
+    "arrays_sha256": "b745328141780f68aa1b847c0b311fed179dfba7d6c3dcb56db5db54b56e8fbc"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      1.4100799406727897e-14,
+      2.193327537702226e-14,
+      1.0000000000000002,
+      1.000000000000007
+    ],
+    "optimizer_success": true,
+    "evaluations": 10,
+    "optimizer_message": "`gtol` termination condition is satisfied.",
+    "active_bounds": [
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 15.703715731626481,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.04630909999832511,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -6.514167464611947,
+    "test_command_mv": -4.987132386304438,
+    "total_sweep": 73,
+    "conditioned_sweep": 92,
+    "input_pair": {
+      "path": "pair-73-92.json",
+      "sha256": "78f79ca9af038df06864ff5bb2c4bffa4e31a30ee119f552ae42c0b4777da6e0"
+    },
+    "arrays_sha256": "037608c5a9c25bd53a17841c50867f85693f2dde2b86a66f70c80a146d3ed652"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      32.88226482748484,
+      5.322918268435873,
+      37.55598337814182,
+      9999.999999999998
+    ],
+    "optimizer_success": true,
+    "evaluations": 41,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 9.138899308658972,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.17471649998333305,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": 10.012868326157331,
+    "total_sweep": 74,
+    "conditioned_sweep": 93,
+    "input_pair": {
+      "path": "pair-74-93.json",
+      "sha256": "e3a28b0501933a6e6c84047de6efa37f6e2d52dbe607539287804ba13aa6374c"
+    },
+    "arrays_sha256": "a9b958c9d6788def7f8d712e882f46c13034544aa35c8ec28a7af393888a415e"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      32.55172969888552,
+      12.155807483362148,
+      36.806767846953925,
+      9999.999999999998
+    ],
+    "optimizer_success": true,
+    "evaluations": 33,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 9.154958342966033,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.13361779999104328,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -6.4775008286093705,
+    "test_command_mv": 10.012868326157331,
+    "total_sweep": 74,
+    "conditioned_sweep": 93,
+    "input_pair": {
+      "path": "pair-74-93.json",
+      "sha256": "e3a28b0501933a6e6c84047de6efa37f6e2d52dbe607539287804ba13aa6374c"
+    },
+    "arrays_sha256": "1c17427f761d8450f9a1e84e4d372601d934b39c8718f862cac01333b53308a1"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      3.3609329534615213,
+      80.23744813015863,
+      2.117527161233821,
+      738.8467980177593
+    ],
+    "optimizer_success": true,
+    "evaluations": 17,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "boundary_limited": false,
+    "residual_rms_pa": 15.05982101703465,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.055430600012186915,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": 25.0128690386191,
+    "total_sweep": 75,
+    "conditioned_sweep": 94,
+    "input_pair": {
+      "path": "pair-75-94.json",
+      "sha256": "1247a1f9c4b242df7eb6398e366f647bf0f9e7af2a78390997ff2fe2ae741723"
+    },
+    "arrays_sha256": "98d3aa21c4438cf21944d320155387c855bec1a9ae3f3faaf962b500077ba389"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      3.504503391442743,
+      85.71957137963639,
+      2.149973358584641,
+      815.6289985442842
+    ],
+    "optimizer_success": true,
+    "evaluations": 17,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "boundary_limited": false,
+    "residual_rms_pa": 14.872186712453422,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.05592279997654259,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -5.575278640933683,
+    "test_command_mv": 25.0128690386191,
+    "total_sweep": 75,
+    "conditioned_sweep": 94,
+    "input_pair": {
+      "path": "pair-75-94.json",
+      "sha256": "1247a1f9c4b242df7eb6398e366f647bf0f9e7af2a78390997ff2fe2ae741723"
+    },
+    "arrays_sha256": "2c2823a9d751effe82193d2831e8f014898c0bc014bb681c40473576465cf58d"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      99.38269857291817,
+      64.41333599837111,
+      46.33878188425124,
+      1375.6943447967205
+    ],
+    "optimizer_success": true,
+    "evaluations": 19,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "boundary_limited": false,
+    "residual_rms_pa": 12.106579040678332,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.07417360000545159,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": 40.01286975108087,
+    "total_sweep": 76,
+    "conditioned_sweep": 95,
+    "input_pair": {
+      "path": "pair-76-95.json",
+      "sha256": "3c9dda34bcae09078fe8a00cf0ad763a39b75ec98c70454f7a2e84172d5e71cb"
+    },
+    "arrays_sha256": "079d5abd8895fcdd877bab199fb36c874c5f781bc79932b4d496981e58757ad1"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      99.4629092632622,
+      67.76514336875472,
+      46.78995576404572,
+      1495.9312853567865
+    ],
+    "optimizer_success": true,
+    "evaluations": 19,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "boundary_limited": false,
+    "residual_rms_pa": 12.103479882732032,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.0720275999919977,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -3.695834014111977,
+    "test_command_mv": 40.01286975108087,
+    "total_sweep": 76,
+    "conditioned_sweep": 95,
+    "input_pair": {
+      "path": "pair-76-95.json",
+      "sha256": "3c9dda34bcae09078fe8a00cf0ad763a39b75ec98c70454f7a2e84172d5e71cb"
+    },
+    "arrays_sha256": "b25e2cf27d6b78ffa7bc2bdb6466be34346a93e455a636019d68b02f7a4d276f"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      115.44043432072415,
+      41.705300650141595,
+      118.32603842904429,
+      9999.999999999998
+    ],
+    "optimizer_success": true,
+    "evaluations": 21,
+    "optimizer_message": "Both `ftol` and `xtol` termination conditions are satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 14.02787099904776,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.08631320000858977,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": 55.01287046354264,
+    "total_sweep": 77,
+    "conditioned_sweep": 96,
+    "input_pair": {
+      "path": "pair-77-96.json",
+      "sha256": "5d6c6ec4fa64afee258b8f1478054217fd7e754f6fde86993b39036126290e26"
+    },
+    "arrays_sha256": "8f49f0486e54b92f9cddfda14bc2c6ced2296aed4271d627649d76e587eb3946"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      115.33254890705648,
+      44.04238904785813,
+      117.99586392619587,
+      9999.999999999998
+    ],
+    "optimizer_success": true,
+    "evaluations": 21,
+    "optimizer_message": "Both `ftol` and `xtol` termination conditions are satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 14.02881054333491,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.07971210000687279,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -2.17527818276852,
+    "test_command_mv": 55.01287046354264,
+    "total_sweep": 77,
+    "conditioned_sweep": 96,
+    "input_pair": {
+      "path": "pair-77-96.json",
+      "sha256": "5d6c6ec4fa64afee258b8f1478054217fd7e754f6fde86993b39036126290e26"
+    },
+    "arrays_sha256": "926b5536a8cff0cc9ff407600b717fd2de90dceef1587f459b6d68712a6f3e6b"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      123.83274495394956,
+      68.70558294129206,
+      37.54838166434693,
+      9999.999999999998
+    ],
+    "optimizer_success": true,
+    "evaluations": 13,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 19.17257621068171,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.05684299999848008,
+    "scenario": "unadjusted",
+    "subtracted_baseline_difference_pa": 0.0,
+    "test_command_mv": 70.01287117600441,
+    "total_sweep": 78,
+    "conditioned_sweep": 97,
+    "input_pair": {
+      "path": "pair-78-97.json",
+      "sha256": "a0311bf43fd77971a389f232401eea3b5e69a4c16a7dfc869141034bf6b6e437"
+    },
+    "arrays_sha256": "4232814d0882e98e3ba775b016a5ae05568668b82a6ae2b68aa68a0938e66ebd"
+  },
+  {
+    "parameter_order": [
+      "A1",
+      "A2",
+      "d1",
+      "d2"
+    ],
+    "parameters": [
+      123.83841619035317,
+      69.79922045757202,
+      37.477458826955875,
+      9999.999999999998
+    ],
+    "optimizer_success": true,
+    "evaluations": 15,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "active_bounds": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "boundary_limited": true,
+    "residual_rms_pa": 19.184618248697962,
+    "phase_window_ms": [
+      10.0,
+      980.0
+    ],
+    "physiological_qualification": false,
+    "elapsed_seconds": 0.060621900018304586,
+    "scenario": "baseline-sensitivity",
+    "subtracted_baseline_difference_pa": -1.033889148395638,
+    "test_command_mv": 70.01287117600441,
+    "total_sweep": 78,
+    "conditioned_sweep": 97,
+    "input_pair": {
+      "path": "pair-78-97.json",
+      "sha256": "a0311bf43fd77971a389f232401eea3b5e69a4c16a7dfc869141034bf6b6e437"
+    },
+    "arrays_sha256": "b9b3202bbd7768722f382376e3cbc220b9419784b56bfa5993ce8ab51dbfd66b"
+  }
+]

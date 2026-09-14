@@ -1,0 +1,1102 @@
+{
+  "same_command_early_mv": -19.987133098766208,
+  "same_command_samples_preserved": true,
+  "rows": [
+    {
+      "sweep": 72,
+      "source_json_sha256": "6a07a503fb54bc6825e0bfb3e50b8d4e6b57015a371152a0e2ae934cc9e25779",
+      "absolute_start_s": 1857.8380002975464,
+      "actual_onset_ms": 1100.0,
+      "preceding_hold_since_test_pulse_ms": 1044.96,
+      "initial_baseline_pa": -17.483610977671763,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 2480.0927734375,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1120.0,
+          "current_pa": 21.249998007740565,
+          "baseline_centered_pa": 38.73360898541233
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1160.0,
+          "current_pa": 24.999997992756306,
+          "baseline_centered_pa": 42.483608970428065
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1190.0,
+          "current_pa": 18.749999925078697,
+          "baseline_centered_pa": 36.233610902750456
+        }
+      ]
+    },
+    {
+      "sweep": 89,
+      "source_json_sha256": "da2ef5f4a82af56fd46ef32ce29aca1d24dafbfc14aedd6543d6b0f9ff6fc590",
+      "absolute_start_s": 1930.0970001220703,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -11.8088879418582,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 3196.811279296875,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 49.99999598551261,
+          "baseline_centered_pa": 61.808883927370815
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 51.24999598051786,
+          "baseline_centered_pa": 63.05888392237606
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 44.999996005491624,
+          "baseline_centered_pa": 56.80888394734983
+        }
+      ]
+    },
+    {
+      "sweep": 90,
+      "source_json_sha256": "5422677187ad7eee93619691a09c99cbbfe19934104927775ba5f3300bd4b25d",
+      "absolute_start_s": 1934.335000038147,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -11.625554618158393,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 3240.404296875,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 55.62499596303622,
+          "baseline_centered_pa": 67.25055058119462
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 53.749995970528346,
+          "baseline_centered_pa": 65.37555058868674
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 51.24999598051786,
+          "baseline_centered_pa": 62.875550598676256
+        }
+      ]
+    },
+    {
+      "sweep": 91,
+      "source_json_sha256": "02c9ade5052365e6e55ed2301cef0adfc992398f274711586477294e69e9f0fb",
+      "absolute_start_s": 1938.643000125885,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -11.703054621663417,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 3803.201171875,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 49.99999598551261,
+          "baseline_centered_pa": 61.70305060717603
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 47.49999599550212,
+          "baseline_centered_pa": 59.20305061716554
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 52.499995975523106,
+          "baseline_centered_pa": 64.20305059718652
+        }
+      ]
+    },
+    {
+      "sweep": 92,
+      "source_json_sha256": "e49d2c2eb91c4367f53009988a59ff0674b03a842f9b3990d6ee7a4ec394f09c",
+      "absolute_start_s": 1942.7960000038147,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -11.683610193827024,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 1645.9725341796875,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 43.12499601298375,
+          "baseline_centered_pa": 54.80860620681077
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 59.99999594555458,
+          "baseline_centered_pa": 71.68360613938161
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 59.99999594555458,
+          "baseline_centered_pa": 71.68360613938161
+        }
+      ]
+    },
+    {
+      "sweep": 93,
+      "source_json_sha256": "d60753d29de1ef3444e5af9d46873e9d868c90788c349c89fad16491c71e590b",
+      "absolute_start_s": 1947.1000003814697,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -12.179443467534789,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 3173.09619140625,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 59.37499594805196,
+          "baseline_centered_pa": 71.55443941558676
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 59.99999594555458,
+          "baseline_centered_pa": 72.17943941308937
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 54.99999596553359,
+          "baseline_centered_pa": 67.17943943306838
+        }
+      ]
+    },
+    {
+      "sweep": 94,
+      "source_json_sha256": "bd45fceba70a80c83e9d2c3c0377867c0181f8ac03de4092ad8f340de7d6072f",
+      "absolute_start_s": 1951.3830003738403,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -12.79861013596594,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 1773.8458251953125,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 59.99999594555458,
+          "baseline_centered_pa": 72.79860608152052
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 58.749995950549334,
+          "baseline_centered_pa": 71.54860608651528
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 54.99999596553359,
+          "baseline_centered_pa": 67.79860610149953
+        }
+      ]
+    },
+    {
+      "sweep": 95,
+      "source_json_sha256": "1284ab8b5ad190bbea6f3a68a1583ea3b03a005d4e54b2dc40c43eadb51c9e66",
+      "absolute_start_s": 1955.5500001907349,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -13.909165756596195,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 2337.34033203125,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 54.37499596803097,
+          "baseline_centered_pa": 68.28416172462717
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 56.24999596053884,
+          "baseline_centered_pa": 70.15916171713504
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 50.62499598301523,
+          "baseline_centered_pa": 64.53416173961142
+        }
+      ]
+    },
+    {
+      "sweep": 96,
+      "source_json_sha256": "ec439c6da8e4473c2c3f5835b671e9e2d35fd15d8e95dfcde625c62d876b3c14",
+      "absolute_start_s": 1959.8270001411438,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -13.767221261432448,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 2363.167724609375,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 53.749995970528346,
+          "baseline_centered_pa": 67.5172172319608
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 63.74999593057032,
+          "baseline_centered_pa": 77.51721719200278
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 52.499995975523106,
+          "baseline_centered_pa": 66.26721723695556
+        }
+      ]
+    },
+    {
+      "sweep": 97,
+      "source_json_sha256": "56d6305656cc27952593d82eb181f0f978a954e0e7b343049bb344aa771d76b3",
+      "absolute_start_s": 1964.03600025177,
+      "actual_onset_ms": 1000.0,
+      "preceding_hold_since_test_pulse_ms": 944.96,
+      "initial_baseline_pa": -15.259721486469822,
+      "instrument": {
+        "RsComp Enable": {
+          "value": 0.0,
+          "unit": "On/Off"
+        },
+        "RsComp Correction": {
+          "value": 0.0,
+          "unit": "%"
+        },
+        "Series Resistance": {
+          "value": 0.0,
+          "unit": "MOhms"
+        },
+        "TP Steady State Resistance": {
+          "value": 2779.896240234375,
+          "unit": "Mohm"
+        },
+        "Fast compensation capacitance": {
+          "value": 9.999346836653267e-12,
+          "unit": "F"
+        },
+        "Slow compensation capacitance": {
+          "value": 0.0,
+          "unit": "F"
+        }
+      },
+      "points": [
+        {
+          "phase_ms": 20.0,
+          "source_time_ms": 1020.0,
+          "current_pa": 48.749995990507365,
+          "baseline_centered_pa": 64.00971747697719
+        },
+        {
+          "phase_ms": 60.0,
+          "source_time_ms": 1060.0,
+          "current_pa": 56.24999596053884,
+          "baseline_centered_pa": 71.50971744700865
+        },
+        {
+          "phase_ms": 90.0,
+          "source_time_ms": 1090.0,
+          "current_pa": 45.624996002994244,
+          "baseline_centered_pa": 60.884717489464066
+        }
+      ]
+    }
+  ],
+  "arrays_sha256": "51ae4de42eae909a01e15cacab3c6bc8c95ba02f88d33f97fc4e4138389ff906",
+  "recovery_sequence": [
+    {
+      "sweep": 123,
+      "source_json_sha256": "5c2882af51f1f2374b4ce08e13a57b1262ab952a8fb1688f331e758b39271ce1",
+      "start_s": 2116.952000141144,
+      "exclusive_end_s": 2120.702000141144,
+      "preceding_unrecorded_s": null,
+      "recovery_gap_ms": 5.0
+    },
+    {
+      "sweep": 124,
+      "source_json_sha256": "5db8bfaeeff3ee55d6c2a221a4f63ec990d136599d2d12b8044f5bfcd1ea2c65",
+      "start_s": 2121.215000152588,
+      "exclusive_end_s": 2124.965000152588,
+      "preceding_unrecorded_s": 0.5130000114440918,
+      "recovery_gap_ms": 10.0
+    },
+    {
+      "sweep": 125,
+      "source_json_sha256": "70ee0dfe3c2fb438f2e1a1505d8d88e8f86b3b3e7f067b36507b7f1643866669",
+      "start_s": 2125.465000152588,
+      "exclusive_end_s": 2129.215000152588,
+      "preceding_unrecorded_s": 0.5,
+      "recovery_gap_ms": 15.0
+    },
+    {
+      "sweep": 126,
+      "source_json_sha256": "d8abf5da37c94cc23d0493964d1855d1d755eaab09422bf68d5dd769b737043e",
+      "start_s": 2129.741000175476,
+      "exclusive_end_s": 2133.491000175476,
+      "preceding_unrecorded_s": 0.5260000228881836,
+      "recovery_gap_ms": 20.0
+    },
+    {
+      "sweep": 127,
+      "source_json_sha256": "140767d78ecf02d2cec4d105c57c054aaa468439b8152f301b0bb09192ae8632",
+      "start_s": 2134.013000011444,
+      "exclusive_end_s": 2137.763000011444,
+      "preceding_unrecorded_s": 0.5219998359680176,
+      "recovery_gap_ms": 25.0
+    },
+    {
+      "sweep": 128,
+      "source_json_sha256": "f85a8bcc6570ee1545a4d485949e29304887f327908325f6681329b6e33f9d58",
+      "start_s": 2138.317000389099,
+      "exclusive_end_s": 2142.067000389099,
+      "preceding_unrecorded_s": 0.5540003776550293,
+      "recovery_gap_ms": 30.0
+    },
+    {
+      "sweep": 129,
+      "source_json_sha256": "cb138bfce363488d2dec544e0f25d706fd3813135c489f689d8ca85831393a55",
+      "start_s": 2142.6200003623962,
+      "exclusive_end_s": 2146.3700003623962,
+      "preceding_unrecorded_s": 0.5529999732971191,
+      "recovery_gap_ms": 35.0
+    },
+    {
+      "sweep": 130,
+      "source_json_sha256": "10497f6ea48044f2905ee10519b1c08925f065cd2f76faea8ddfa3f5bf346ab3",
+      "start_s": 2146.903000354767,
+      "exclusive_end_s": 2150.653000354767,
+      "preceding_unrecorded_s": 0.5329999923706055,
+      "recovery_gap_ms": 40.0
+    },
+    {
+      "sweep": 131,
+      "source_json_sha256": "00c3307a90d3a24cc8ad590940849b1e0b6e3c1327a41477c3c87cb4b04ea36c",
+      "start_s": 2151.1730003356934,
+      "exclusive_end_s": 2154.9230003356934,
+      "preceding_unrecorded_s": 0.5199999809265137,
+      "recovery_gap_ms": 45.0
+    },
+    {
+      "sweep": 132,
+      "source_json_sha256": "26d407f32720ea58dd47791c055695a80a2c37b5975e446c52cd4691108c917a",
+      "start_s": 2155.4850001335144,
+      "exclusive_end_s": 2159.2350001335144,
+      "preceding_unrecorded_s": 0.5619997978210449,
+      "recovery_gap_ms": 50.0
+    },
+    {
+      "sweep": 133,
+      "source_json_sha256": "1ff19e1d1965d7fc9f808a93a639f97f307f61534dcd6fe5fefd40ff17f05a52",
+      "start_s": 2159.804000377655,
+      "exclusive_end_s": 2164.004000377655,
+      "preceding_unrecorded_s": 0.569000244140625,
+      "recovery_gap_ms": 100.0
+    },
+    {
+      "sweep": 134,
+      "source_json_sha256": "db7d5e2188f3edf0fbbbfc39bbec4ff8d0f53116005c903b4e26bad92105f0d2",
+      "start_s": 2166.206000328064,
+      "exclusive_end_s": 2170.406000328064,
+      "preceding_unrecorded_s": 2.2019999504091174,
+      "recovery_gap_ms": 200.0
+    },
+    {
+      "sweep": 135,
+      "source_json_sha256": "23b7037229f40e3aeb7a379bc69d18c45df4ac9509ee750442b20683334f0db4",
+      "start_s": 2172.5570001602173,
+      "exclusive_end_s": 2176.757000160217,
+      "preceding_unrecorded_s": 2.150999832153502,
+      "recovery_gap_ms": 300.0
+    },
+    {
+      "sweep": 136,
+      "source_json_sha256": "e5f8d0694663999e75689ea708d831c69210169ce444a4b3cc7008a48b762e20",
+      "start_s": 2178.933000087738,
+      "exclusive_end_s": 2183.133000087738,
+      "preceding_unrecorded_s": 2.175999927520934,
+      "recovery_gap_ms": 400.0
+    },
+    {
+      "sweep": 137,
+      "source_json_sha256": "fc0d451c76a4fd86037409c63124081e1244502fb3fff588a9c411030da835f3",
+      "start_s": 2185.2070002555847,
+      "exclusive_end_s": 2189.4070002555845,
+      "preceding_unrecorded_s": 2.0740001678468616,
+      "recovery_gap_ms": 500.0
+    },
+    {
+      "sweep": 138,
+      "source_json_sha256": "3557bee0672673696a98776ea5fe816560ab6fc779f5876cefdbfd214923058e",
+      "start_s": 2191.4530000686646,
+      "exclusive_end_s": 2199.1530000686644,
+      "preceding_unrecorded_s": 2.045999813080016,
+      "recovery_gap_ms": 1000.0
+    },
+    {
+      "sweep": 139,
+      "source_json_sha256": "ec1f6b79cce0ba72267b35caac83a635b73114093d50eb3dfe184dd8ce2b8d8e",
+      "start_s": 2201.1890001296997,
+      "exclusive_end_s": 2208.8890001296995,
+      "preceding_unrecorded_s": 2.036000061035338,
+      "recovery_gap_ms": 2000.0
+    },
+    {
+      "sweep": 140,
+      "source_json_sha256": "56abc15e1f97a83872df193a4b877981e804ab2faf257de5c1e7caa5fd322715",
+      "start_s": 2210.9490003585815,
+      "exclusive_end_s": 2218.6490003585814,
+      "preceding_unrecorded_s": 2.060000228882018,
+      "recovery_gap_ms": 3000.0
+    },
+    {
+      "sweep": 141,
+      "source_json_sha256": "31be8a1e5366c34a46abad23afe7fd869d66e5a7a5396855433c5ad21f29999a",
+      "start_s": 2220.714000225067,
+      "exclusive_end_s": 2228.414000225067,
+      "preceding_unrecorded_s": 2.0649998664857776,
+      "recovery_gap_ms": 4000.0
+    }
+  ],
+  "bound_proximity": [
+    {
+      "total_sweep": 70,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        7.445641900815166e-21,
+        6.295875442900414e-20,
+        2.0840304068806294e-15,
+        2.2206681160619193e-20
+      ],
+      "within_one_millionth_of_range": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "optimizer_active_bounds": [
+        -1,
+        -1,
+        -1,
+        -1
+      ]
+    },
+    {
+      "total_sweep": 70,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        0.00010382862387167934,
+        0.00021473081541185598,
+        0.003006003472243061,
+        8.17427513634912e-07
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "total_sweep": 71,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        2.654797918885612e-23,
+        9.306621479543302e-23,
+        2.2206681160619193e-20,
+        2.2206681160619193e-20
+      ],
+      "within_one_millionth_of_range": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "optimizer_active_bounds": [
+        -1,
+        -1,
+        -1,
+        -1
+      ]
+    },
+    {
+      "total_sweep": 71,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        5.113553131200553e-05,
+        0.00015027287688962096,
+        2.2206681160619193e-20,
+        3.121697986283318e-13
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        true,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        -1,
+        1
+      ]
+    },
+    {
+      "total_sweep": 72,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        3.7148433129102926e-18,
+        1.0019931610908425e-17,
+        1.3324008696371517e-19,
+        1.4212275942796284e-18
+      ],
+      "within_one_millionth_of_range": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "optimizer_active_bounds": [
+        -1,
+        -1,
+        -1,
+        -1
+      ]
+    },
+    {
+      "total_sweep": 72,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        1.1170878298744526e-21,
+        1.8673884915964464e-14,
+        3.711624689185892e-16,
+        5.332756827273414e-15
+      ],
+      "within_one_millionth_of_range": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "optimizer_active_bounds": [
+        -1,
+        -1,
+        -1,
+        -1
+      ]
+    },
+    {
+      "total_sweep": 73,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        1.1954157786626464e-22,
+        2.0460047753703123e-22,
+        2.2206681160619193e-20,
+        2.2206681160619193e-20
+      ],
+      "within_one_millionth_of_range": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "optimizer_active_bounds": [
+        -1,
+        -1,
+        -1,
+        -1
+      ]
+    },
+    {
+      "total_sweep": 73,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        1.4100799406727897e-18,
+        2.193327537702226e-18,
+        2.2206681160619193e-20,
+        7.106137971398142e-19
+      ],
+      "within_one_millionth_of_range": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "optimizer_active_bounds": [
+        -1,
+        -1,
+        -1,
+        -1
+      ]
+    },
+    {
+      "total_sweep": 74,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        0.003288226482748484,
+        0.0005322918268435874,
+        0.0036559639342076027,
+        1.8191713206779243e-16
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "total_sweep": 74,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        0.0032551729698885516,
+        0.0012155807483362148,
+        0.003581034888184211,
+        1.8191713206779243e-16
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "total_sweep": 75,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        0.00033609329534615214,
+        0.008023744813015862,
+        0.00011176389251263336,
+        0.0737920590076767
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "total_sweep": 75,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        0.0003504503391442743,
+        0.008571957137963639,
+        0.00011500883674213829,
+        0.08147104695912433
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "total_sweep": 76,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        0.009938269857291817,
+        0.006441333599837111,
+        0.0045343316215872825,
+        0.13748318279795185
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "total_sweep": 76,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        0.00994629092632622,
+        0.006776514336875472,
+        0.004579453521756748,
+        0.14950807934361302
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "total_sweep": 77,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        0.011544043432072415,
+        0.004170530065014159,
+        0.011733777220626492,
+        1.8191713206779243e-16
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "total_sweep": 77,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        0.011533254890705648,
+        0.004404238904785813,
+        0.011700756468266413,
+        1.8191713206779243e-16
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "total_sweep": 78,
+      "scenario": "unadjusted",
+      "relative_distance_to_bound": [
+        0.012383274495394956,
+        0.006870558294129207,
+        0.003655203686803373,
+        1.8191713206779243e-16
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "total_sweep": 78,
+      "scenario": "baseline-sensitivity",
+      "relative_distance_to_bound": [
+        0.012383841619035317,
+        0.006979922045757202,
+        0.003648110693764964,
+        1.8191713206779243e-16
+      ],
+      "within_one_millionth_of_range": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "optimizer_active_bounds": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "interpretation": "Total sweep 72 and conditioning sweeps have different currents at the same actual command and phase. Holding duration and prior histories differ; stationarity is not established. No unique cause identified.",
+  "external_response_opened": false,
+  "physiological_qualification": false
+}
