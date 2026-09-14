@@ -974,7 +974,7 @@ the score of exactly the case that fails it.
 | Type coverage (layer and class) | 0.529 | yes |
 | Construction (import, construction, initialisation, synthetic forward pass) | 1.000 | yes |
 | Driven window at a physiological duration | 0.000 | no |
-| Timestep qualified against the 1 mV contract | 0.000 | no |
+| Timestep qualified against the 1 mV contract | 1.000 | yes (closed 2026-09-14) |
 | Anatomy transfer (donor fit on H01 anatomy) | 0.000 | **yes, negative** |
 
 As measured: 0 percent. With the three unqualified terms assumed away: 38 percent, quotable only
@@ -1000,3 +1000,55 @@ Artifacts: [`h01-population-accuracy-ledger.md`](../evidence/h01-population-accu
 [`h01-population-accuracy-ledger.json`](../evidence/h01-population-accuracy-ledger.json),
 [`h01_population_ledger.py`](../evidence/h01_population_ledger.py) (8 tests),
 causal model Y5 consequence, accuracy tree (24 nodes, 28 edges).
+
+---
+
+## 2026-09-14 — the timestep term closes; the cleanup recovered the data the ledger said was gone
+
+Not a stage: no evaluation spent, no simulation run. Arithmetic on traces recovered while removing
+the stale worktrees.
+
+**What the ledger got wrong.** The 2026-09-13 entry scored `timestep` 0.000 with the cause "three
+finer rungs were run but their traces were deleted with the raw-trace sweep ... and `.cache/h01`
+no longer exists". Both halves were false. The 2026-09-09 worktree-recovery stash under
+`.cache/worktree-recovery-2026-09-09/` held two complete copies of the H01 source cache — the
+proofread-104 archive, the nine export shards, the synapse table, and a 1.17 GB `readiness/`
+directory containing all five dt-ladder traces. One copy was restored to `.cache/h01` before the
+stash was removed.
+
+**The ladder, closed as arithmetic.** Each rung is an exact bisection of the one above, so adjacent
+rungs are compared at the coarse rung's own sample times by index arithmetic; nothing is
+interpolated. That matters: the trace reaches +384 mV on a 0.165 µm² output compartment, and an
+interpolated comparison across a spike edge would manufacture tens of millivolts the solver never
+produced.
+
+| pair | max ‖ΔV‖ | at | 1 mV gate |
+| --- | ---: | ---: | --- |
+| dt 0.005 → 0.0025 ms | 6.365 mV | 5.0150 ms | FAIL |
+| dt 0.0025 → 0.00125 ms | 3.471 mV | 5.0150 ms | FAIL |
+| dt 0.00125 → 0.000625 ms | 1.820 mV | 5.0150 ms | FAIL |
+| **dt 0.000625 → 0.0003125 ms** | **0.933 mV** | 5.0144 ms | **PASS** |
+
+Ratios 1.83 / 1.91 / 1.95 — first order in dt, independently matching what the I-cell transfer
+study (SP2) found. **dt 0.000625 ms is qualified.** The committed decision
+`h01-ready-cell7196644737-implicit-decision.json` reported the gate as FAIL because it compared
+only the two coarsest rungs; it is superseded.
+
+**What this changes.** The driven-window blocker is no longer an accuracy problem. The r2 run that
+died at the wall cap was *already* running at the now-qualified 0.000625 ms, so it failed on cost
+alone. The next attempt must be a cheaper window — fewer cells, a shorter duration, or a coarser
+step justified by a per-cell ladder — not a fourth full-population run at the same settings.
+
+Ledger terms now: donor 0.718, coverage 0.529, construction 1.000, driven window 0.000, timestep
+**1.000**, anatomy transfer 0.000 (measured negative). Product as measured still 0 percent; the
+binding constraint is unchanged and is still anatomy transfer.
+
+**Housekeeping recorded here because it changes reproducibility.** Three evidence modules
+(`h01_topographic_stage0.py`, `h01_e_morphology_swap.py`, `h01_sodium_slow_inactivation_test.py`)
+resolved the human recording and the proofread archive through the recovery stash path. They now
+point at `.cache/`, where the data was restored. Four PV audit tests still fail on raw `.npz`
+traces deleted deliberately in 368e6d1 (319 unreferenced traces, 7.15 GiB); those were not in the
+stash and are unrelated to this work.
+
+Artifacts: [`h01-timestep-ladder.json`](../evidence/h01-timestep-ladder.json),
+[`h01_timestep_ladder.py`](../evidence/h01_timestep_ladder.py) (7 tests).

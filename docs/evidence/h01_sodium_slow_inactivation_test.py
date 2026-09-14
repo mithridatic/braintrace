@@ -7,7 +7,7 @@ import pytest
 
 import h01_sodium_slow_inactivation as slow
 
-CACHE = Path(__file__).resolve().parents[2]/".cache/worktree-recovery-2026-09-09/h01/.cache"
+CACHE = Path(__file__).resolve().parents[2]/".cache"
 PINNED = {"NaTs": CACHE/"human-pyramidal-l2/kv3-closing-source/NaTs.mod",
           "NaTg": CACHE/"human-pv/kv3-phase-reference/mod/NaTg.mod"}
 

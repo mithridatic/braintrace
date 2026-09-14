@@ -1,5 +1,5 @@
 {
-  "id": "doc_0957921b-df7",
+  "id": "doc_4551fbe9-ff2",
   "title": "H01 accuracy roadmap",
   "graph": {
     "classes": [
@@ -163,6 +163,13 @@
         "label": "and the matched cells have to build"
       },
       {
+        "id": "pop_build__pop_dt",
+        "source": "pop_build",
+        "target": "pop_dt",
+        "relation": "describes",
+        "label": "and the step has to be qualified"
+      },
+      {
         "id": "pop_typematch__pop_anatomy",
         "source": "pop_typematch",
         "target": "pop_anatomy",
@@ -184,11 +191,11 @@
         "label": "construction is not simulation"
       },
       {
-        "id": "pop_driven__pop_dt",
-        "source": "pop_driven",
-        "target": "pop_dt",
+        "id": "pop_dt__pop_driven",
+        "source": "pop_dt",
+        "target": "pop_driven",
         "relation": "describes",
-        "label": "blocked on a qualified step"
+        "label": "the step is qualified; the cost is not"
       },
       {
         "id": "pop_driven__goal",
@@ -202,7 +209,7 @@
         "source": "pop_dt",
         "target": "goal",
         "relation": "describes",
-        "label": "timestep factor (zero)"
+        "label": "timestep factor (closed: dt 0.000625 ms)"
       },
       {
         "id": "pop_anatomy__goal",
@@ -255,7 +262,7 @@
         "effect": "H01 accuracy roadmap",
         "conditions": "One human L2/3 cell (Allen 541563728) with its own recording, its own reconstruction and an Allen perisomatic fit of itself (B3), scored at 310 pA on ten elements read through the measurement chain that stage 12 measured from the recording's own step edges and noise floor. The 104 H01 cells are electron-microscopy reconstructions with no electrophysiology, so none of them can be scored against its own recording.",
         "narrative": "Seven of the ten elements are already between 90 and 100 percent; the whole remaining gap is three numbers - the threshold climb, which carries 19.4 points of the mean, and the spike upstroke rate, which carries 6.4. Seven routes to closing them have been opened and closed on evidence: the passive cable, the onset shape, the measurement chain, the fitting pipeline, the rodent-versus-human kinetic lineage, slow inactivation of the somatic sodium, and any somatic conductance at all for the climb. The last is the sharpest: somatic outward current accumulates across the train while the take-off does not move, because at the take-off the axon delivers about thirty times the accumulated somatic brake. The threshold is the arrival time of the axonal spike, so the climb can only be reached at the initiation site through a coupling wide enough for the soma to see it, which is the test now running. Confidence on each node is the probability that a closed branch stays closed, or that an open or planned task hits its stated target.",
-        "uncertainties": "Population accuracy is inherited, not measured: no H01 cell has a recording. Its defensible form is the product of six separately sourced factors - donor accuracy against a real recording (0.718, and measured only for the 28 cells B3 donates to), type-match coverage (55 of 104), build (1.000: all 104 import, construct to 808,495 compartments, initialise and complete a forward pass; the one-point SWC branch was repaired on 2026-09-08 and the earlier 12-of-104 figure is withdrawn), a driven physiological window (0.000: two attempts, one nonfinite and one dead at the wall cap), a qualified timestep (0.000: the 1 mV gate FAILS by 6.36 mV between the two coarse rungs) and anatomy transfer (0.000, and measured NEGATIVE: B3's fit fires 4 spikes at 200 pA on the donor's own reconstruction and 0 on the H01 skeleton). As measured the product is 0 percent; the 38 percent obtainable by assuming the three unqualified terms away is quotable only with those assumptions attached. The sealed holdout (sweep 54, 330 pA) has never been spent, so no element has been tested out of sample. Whether a mechanism that closes the climb on this cell transfers to another cell without refitting is untested. The ten-element mean scores voltage levels against a stated 100 mV span, which flatters it; the element table is the reading.",
+        "uncertainties": "Population accuracy is inherited, not measured: no H01 cell has a recording. Its defensible form is the product of six separately sourced factors - donor accuracy against a real recording (0.718, and measured only for the 28 cells B3 donates to), type-match coverage (55 of 104), build (1.000: all 104 import, construct to 808,495 compartments, initialise and complete a forward pass; the one-point SWC branch was repaired on 2026-09-08 and the earlier 12-of-104 figure is withdrawn), a driven physiological window (0.000: two attempts, one nonfinite and one dead at the wall cap), a qualified timestep (1.000: closed on 2026-09-14 at dt 0.000625 ms from five recovered traces, 0.933 mV to the next halving) and anatomy transfer (0.000, and measured NEGATIVE: B3's fit fires 4 spikes at 200 pA on the donor's own reconstruction and 0 on the H01 skeleton). As measured the product is 0 percent; the 38 percent obtainable by assuming the two unqualified terms away is quotable only with those assumptions attached. The sealed holdout (sweep 54, 330 pA) has never been spent, so no element has been tested out of sample. Whether a mechanism that closes the climb on this cell transfers to another cell without refitting is untested. The ten-element mean scores voltage levels against a stated 100 mV span, which flatters it; the element table is the reading.",
         "predictions": "Stage 16 is closed: the threshold step did grow with falling axonal recovery and reached +2.39 mV against a recorded +1.38, and the same dose through the default 1 um stub gave -2.56 mV, the opposite sign - so the coupling is load-bearing and the mechanism is located. But every dose that moved the threshold collapsed the train from 9 spikes to 2, both registered cells failed, and the best arm scored 69.1 over ten elements, below B3's 71.8. The next registrable prediction is not on this cell's score: scaling the donor's dendritic load by 1.5 and 2 will show whether the H01 anatomy's silence at 200 pA is a graded consequence of a six-fold larger load (response degrades smoothly, so a load correction or a conversion fix restores it) or a cliff (so the conversion itself is suspect). That is the only split whose outcome changes the population ledger.",
         "nodeIds": [
           "state",
@@ -782,7 +789,7 @@
         "text": "STEP 5c - BLOCKER: no driven window at a physiological duration. The forward pass that passes drives an all-ones synthetic 441-feature probe and records physiology as unqualified. The 10 ms explicit run died nonfinite on cell 7196644737 after 2,705 s; the implicit retry aborted at the wall cap after 21,286 s with no result.",
         "status": "supported",
         "confidence": 0.3,
-        "notes": "Construction is not simulation: until a driven window of physiological length completes, no population number describes anything the cells do. Confidence 30 percent that a driven window completes within this campaign's cost policy - the last attempt spent 5.9 hours for nothing, and a third attempt without a qualified timestep would repeat it.\n\nEvidence: docs/evidence/h01-ready-104-ei-10ms-decision.json; docs/evidence/h01-population-accuracy-ledger.md",
+        "notes": "Construction is not simulation: until a driven window of physiological length completes, no population number describes anything the cells do. With the step now qualified this is a pure cost problem, not an accuracy one - the r2 attempt was already running at the qualified 0.000625 ms and still burned 5.9 hours for no result. What is needed is a cheaper window (fewer cells, a shorter duration, or a coarser step justified by a per-cell ladder), not a fourth full-population attempt. Confidence 30 percent that a driven window completes within this campaign's cost policy.\n\nEvidence: docs/evidence/h01-ready-104-ei-10ms-decision.json; docs/evidence/h01-timestep-ladder.json; docs/evidence/h01-population-accuracy-ledger.md",
         "evidence": [
           {
             "id": "pop_driven_ev0",
@@ -794,6 +801,14 @@
           },
           {
             "id": "pop_driven_ev1",
+            "title": "docs/evidence/h01-timestep-ladder.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-timestep-ladder.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "pop_driven_ev2",
             "title": "docs/evidence/h01-population-accuracy-ledger.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-population-accuracy-ledger.md",
@@ -805,14 +820,22 @@
       },
       {
         "id": "pop_dt",
-        "type": "Blocker",
-        "text": "STEP 5d - BLOCKER: the integration step is not qualified. On the isolated failing cell every rung is finite but the campaign's own 1 mV gate FAILS - 6.36 mV between dt 0.005 and 0.0025 ms at t = 5.015 ms, one event at each step.",
+        "type": "Closed branch",
+        "text": "STEP 5d - CLOSED 2026-09-14: the integration step IS qualified, at dt 0.000625 ms. The four adjacent pairs give 6.365, 3.471, 1.820 and 0.933 mV, so the last halving lands inside the 1 mV contract; the ratios 1.83/1.91/1.95 are first order in dt, matching what the I-cell transfer study found independently.",
         "status": "supported",
-        "confidence": 0.65,
-        "notes": "The failure is accuracy, not stability. Three finer rungs ran in 32, 48 and 69 s but their traces were deleted in the raw-trace sweep and .cache/h01 no longer exists, so the ladder needs the source cache rebuilt before it can close. Confidence 65 percent that it closes once re-run: the rungs are cheap and the ladder is half-built, but nothing guarantees the 1 mV gate is reachable at an affordable step.\n\nEvidence: docs/evidence/h01-ready-cell7196644737-implicit-decision.json; docs/evidence/h01-population-accuracy-ledger.md",
+        "confidence": 0.9,
+        "notes": "The node previously said the ladder could not close because the three finer rungs' traces had been deleted. They had not: all five survived in the 2026-09-09 worktree-recovery stash, which was restored while cleaning up the stale worktrees, and the ladder closed as arithmetic with no new simulation. The earlier FAIL verdict had compared only the two coarsest rungs. Note that 0.000625 ms is exactly the step the failed r2 run was already using: that run died on cost, not on accuracy. Confidence 90 percent that this stays closed - it is a convergence reading on committed traces, and the only way it reopens is if this one isolated cell is unrepresentative of the other 103.\n\nEvidence: docs/evidence/h01-timestep-ladder.json; docs/evidence/h01-ready-cell7196644737-implicit-decision.json; docs/evidence/h01-population-accuracy-ledger.md",
         "evidence": [
           {
             "id": "pop_dt_ev0",
+            "title": "docs/evidence/h01-timestep-ladder.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-timestep-ladder.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "pop_dt_ev1",
             "title": "docs/evidence/h01-ready-cell7196644737-implicit-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-ready-cell7196644737-implicit-decision.json",
@@ -820,7 +843,7 @@
             "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "pop_dt_ev1",
+            "id": "pop_dt_ev2",
             "title": "docs/evidence/h01-population-accuracy-ledger.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/docs/evidence/h01-population-accuracy-ledger.md",
@@ -863,7 +886,7 @@
         "text": "STEP 5c - BLOCKER, unfixable by simulation: there is no H01 electrophysiology. No H01 cell can be scored against its own recording, ever, from this data.",
         "status": "supported",
         "confidence": 0.95,
-        "notes": "So a population 'accuracy' is a transfer claim, not a measurement. The defensible form is a product of six separately sourced terms: donor accuracy against a real recording (0.718, and measured for the 28 cells B3 donates to, not for all 104), type-match coverage (0.529), build (1.000), a driven physiological window (0.000), a qualified timestep (0.000) and anatomy transfer (0.000, measured and negative). A term with no evidence scores zero and is never dropped - dropping it raises the score of exactly the case that fails it, which is the bug the single-cell scorer already made once. Anything stated as one percentage without those six named is not supportable. Confidence 95 percent that this limitation stands.\n\nEvidence: docs/evidence/h01-population-status.md; docs/evidence/h01-population-types.md; docs/evidence/h01-population-accuracy-ledger.md; docs/evidence/h01-population-accuracy-ledger.json",
+        "notes": "So a population 'accuracy' is a transfer claim, not a measurement. The defensible form is a product of six separately sourced terms: donor accuracy against a real recording (0.718, and measured for the 28 cells B3 donates to, not for all 104), type-match coverage (0.529), build (1.000), a driven physiological window (0.000), a qualified timestep (1.000, closed at dt 0.000625 ms) and anatomy transfer (0.000, measured and negative). A term with no evidence scores zero and is never dropped - dropping it raises the score of exactly the case that fails it, which is the bug the single-cell scorer already made once. Anything stated as one percentage without those six named is not supportable. Confidence 95 percent that this limitation stands.\n\nEvidence: docs/evidence/h01-population-status.md; docs/evidence/h01-population-types.md; docs/evidence/h01-population-accuracy-ledger.md; docs/evidence/h01-population-accuracy-ledger.json",
         "evidence": [
           {
             "id": "pop_noground_ev0",
@@ -1293,6 +1316,22 @@
         ]
       },
       {
+        "id": "review_pop_build__pop_dt",
+        "edgeId": "pop_build__pop_dt",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_pop_build__pop_dt",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
         "id": "review_pop_typematch__pop_anatomy",
         "edgeId": "pop_typematch__pop_anatomy",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
@@ -1341,13 +1380,13 @@
         ]
       },
       {
-        "id": "review_pop_driven__pop_dt",
-        "edgeId": "pop_driven__pop_dt",
+        "id": "review_pop_dt__pop_driven",
+        "edgeId": "pop_dt__pop_driven",
         "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
         "evidence": [],
         "reservations": [
           {
-            "id": "reservation_pop_driven__pop_dt",
+            "id": "reservation_pop_dt__pop_driven",
             "category": "Entity existence",
             "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
             "status": "open",

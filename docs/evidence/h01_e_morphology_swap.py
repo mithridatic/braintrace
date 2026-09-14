@@ -28,9 +28,9 @@ from h01_spike_cycle_energetics import landmarks
 from h01_topographic_stage0 import resample
 
 EVIDENCE = Path(__file__).resolve().parent
-ROOT = EVIDENCE.parents[1]/".cache/worktree-recovery-2026-09-09"
-ARCHIVE = ROOT/"h01/.cache/h01/proofread104.zip"
-L2_CACHE = ROOT/"h01/.cache/human-pyramidal-l2"
+ROOT = EVIDENCE.parents[1]/".cache"   # restored 2026-09-14 from the 2026-09-09 worktree stash
+ARCHIVE = ROOT/"h01/proofread104.zip"
+L2_CACHE = ROOT/"human-pyramidal-l2"
 POSITION_UM = np.array([.032, .032, .033])
 RADIUS_UM = .001
 PULSE_MS = (1020., 2020.)

@@ -41,12 +41,19 @@ def test_the_construction_term_is_the_full_population_not_the_stale_twelve():
 
 def test_the_unqualified_terms_are_zero_and_say_why():
     terms = {t["term"]: t for t in pl.ledger()}
-    for name in ("driven_window", "timestep"):
-        assert terms[name]["value"] == 0.
-        assert terms[name]["measured"] is False
+    assert terms["driven_window"]["value"] == 0.
+    assert terms["driven_window"]["measured"] is False
     # the anatomy term is measured, and its reading is negative
     assert terms["anatomy_transfer"]["value"] == 0.
     assert terms["anatomy_transfer"]["measured"] is True
+
+
+def test_the_timestep_term_closed_on_the_recovered_ladder():
+    """It was 0.000 'traces deleted'; the traces were recovered and the ladder qualifies a step."""
+    ts = {t["term"]: t for t in pl.ledger()}["timestep"]
+    assert ts["value"] == 1.
+    assert ts["measured"] is True
+    assert "0.000625" in ts["statement"]
 
 
 def test_the_product_is_zero_while_any_term_is_zero():
@@ -55,8 +62,8 @@ def test_the_product_is_zero_while_any_term_is_zero():
 
 def test_assuming_a_term_names_it_in_the_result():
     terms = pl.ledger()
-    p = pl.product(terms, assume=["driven_window", "timestep", "anatomy_transfer"])
-    assert p["assumptions"] == ["driven_window", "timestep", "anatomy_transfer"]
+    p = pl.product(terms, assume=["driven_window", "anatomy_transfer"])
+    assert p["assumptions"] == ["driven_window", "anatomy_transfer"]
     assert {f["term"] for f in p["factors"] if f["assumed"]} == set(p["assumptions"])
     donor = next(t for t in terms if t["term"] == "donor_accuracy")["value"]
     cover = next(t for t in terms if t["term"] == "type_coverage")["value"]

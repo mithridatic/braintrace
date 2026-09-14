@@ -22,7 +22,7 @@ from h01_isolation_report import nwb_sweep
 from h01_spike_cycle_energetics import landmarks
 
 EVIDENCE = Path(__file__).resolve().parent
-ROOT = EVIDENCE.parents[1]/".cache/worktree-recovery-2026-09-09/h01-braincell/.cache"
+ROOT = EVIDENCE.parents[1]/".cache"   # restored 2026-09-14 from the 2026-09-09 worktree stash
 OUT = EVIDENCE/"h01-topographic"
 LATE_MS = (1800., 2000.)
 

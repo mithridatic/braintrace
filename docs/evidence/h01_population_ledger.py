@@ -40,6 +40,7 @@ PROBE104 = "h01-arc-probe-104.json"
 DRIVEN104 = "h01-ready-104-ei-10ms-decision.json"
 DRIVEN_R2 = "h01-ready-104-implicit-ei-10ms-r2-launch.json"
 DTLADDER = "h01-ready-cell7196644737-implicit-decision.json"
+LADDER = "h01-timestep-ladder.json"
 ANATOMY = "h01-e-morphology/stage-1-decision.json"
 
 CELLS = 104
@@ -122,17 +123,21 @@ def driven_term():
 
 def timestep_term():
     """The integration step against the campaign's own 1 mV contract."""
-    lad = _read(DTLADDER)
-    cmp_ = lad["comparison"]
+    lad = _read(LADDER)
+    errs = [p["max_error_mv"] for p in lad["pairs"]]
+    dt = lad["qualified_dt_ms"]
     return _term(
-        "timestep", 0., False,
-        f"The timestep is not qualified: on the isolated cell the 1 mV gate is "
-        f"{cmp_['voltage_1mV_gate']}, with {cmp_['matched_end_step_max_error_mV']:.2f} mV between "
-        f"dt 0.005 and 0.0025 ms at t = {cmp_['max_error_time_ms']} ms.",
-        "Both steps are finite and both emit one event, so the failure is accuracy, not stability. "
-        "Three finer rungs were run but their traces were deleted with the raw-trace sweep, so the "
-        "ladder cannot be closed without re-running them.",
-        [DTLADDER])
+        "timestep", 1. if dt else 0., True,
+        f"Qualified at dt {dt} ms: refining to {lad['pairs'][-1]['dt_fine_ms']} ms moves the trace "
+        f"by {errs[-1]:.3f} mV, inside the {lad['gate_mv']:.0f} mV contract. The four adjacent "
+        f"pairs give {', '.join(f'{e:.2f}' for e in errs)} mV, halving with the step (first order)."
+        if dt else "Not qualified at any step on this ladder.",
+        f"This supersedes {DTLADDER}, which compared only the two coarsest rungs and reported the "
+        f"gate as FAIL at 6.36 mV. The three finer rungs had already run; their traces were "
+        f"recovered from the 2026-09-09 worktree stash on 2026-09-14 and the ladder closed as "
+        f"arithmetic, with no new simulation. Qualification is numerical convergence on one "
+        f"isolated cell, not a claim about the other 103.",
+        [LADDER, DTLADDER])
 
 
 def anatomy_term():
@@ -180,9 +185,9 @@ def report():
         "terms": terms,
         "product_as_measured": product(terms),
         "product_if_construction_counts_as_simulation": product(
-            terms, assume=["driven_window", "timestep", "anatomy_transfer"]),
+            terms, assume=["driven_window", "anatomy_transfer"]),
         "note": ("The second product is the figure obtained by counting construction as a "
-                 "working simulation and setting the three unqualified terms to one. It is quoted only with "
+                 "working simulation and setting the two unqualified terms to one. It is quoted only with "
                  "its assumptions attached; it also assumes the three rejected donors score like "
                  "the one donor that was scored, which the anatomy term actively contradicts."),
     }
@@ -195,7 +200,7 @@ def main():
     for t in r["terms"]:
         print(f"{t['term']:<18} {t['value']:.3f}  measured={t['measured']}")
     print(f"as measured: {r['product_as_measured']['value_pct']:.2f} percent")
-    print(f"with three terms assumed: "
+    print(f"with two terms assumed: "
           f"{r['product_if_construction_counts_as_simulation']['value_pct']:.2f} percent")
     print(f"wrote {out}")
 

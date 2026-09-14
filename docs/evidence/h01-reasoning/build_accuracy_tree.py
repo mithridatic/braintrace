@@ -60,6 +60,7 @@ PROBE104 = "docs/evidence/h01-arc-probe-104.json"
 DRIVEN104 = "docs/evidence/h01-ready-104-ei-10ms-decision.json"
 DTLADDER = "docs/evidence/h01-ready-cell7196644737-implicit-decision.json"
 MORPH1 = "docs/evidence/h01-e-morphology/stage-1-decision.json"
+LADDER = "docs/evidence/h01-timestep-ladder.json"
 
 COLORS = {
     "Current state": "#2f6f9f",
@@ -244,20 +245,27 @@ def build_nodes():
           "explicit run died nonfinite on cell 7196644737 after 2,705 s; the implicit retry aborted at the "
           "wall cap after 21,286 s with no result.",
           "Construction is not simulation: until a driven window of physiological length completes, no "
-          "population number describes anything the cells do. Confidence 30 percent that a driven window "
-          "completes within this campaign's cost policy - the last attempt spent 5.9 hours for nothing, "
-          "and a third attempt without a qualified timestep would repeat it.",
-          [DRIVEN104, LEDGER], "supported", 30),
-        n("pop_dt", BLOCK,
-          "STEP 5d - BLOCKER: the integration step is not qualified. On the isolated failing cell every "
-          "rung is finite but the campaign's own 1 mV gate FAILS - 6.36 mV between dt 0.005 and 0.0025 ms "
-          "at t = 5.015 ms, one event at each step.",
-          "The failure is accuracy, not stability. Three finer rungs ran in 32, 48 and 69 s but their "
-          "traces were deleted in the raw-trace sweep and .cache/h01 no longer exists, so the ladder needs "
-          "the source cache rebuilt before it can close. Confidence 65 percent that it closes once re-run: "
-          "the rungs are cheap and the ladder is half-built, but nothing guarantees the 1 mV gate is "
-          "reachable at an affordable step.",
-          [DTLADDER, LEDGER], "supported", 65),
+          "population number describes anything the cells do. With the step now qualified this is a pure "
+          "cost problem, not an accuracy one - the r2 attempt was already running at the qualified "
+          "0.000625 ms and still burned 5.9 hours for no result. What is needed is a cheaper window "
+          "(fewer cells, a shorter duration, or a coarser step justified by a per-cell ladder), not a "
+          "fourth full-population attempt. Confidence 30 percent that a driven window completes within "
+          "this campaign's cost policy.",
+          [DRIVEN104, LADDER, LEDGER], "supported", 30),
+        n("pop_dt", CLOSED,
+          "STEP 5d - CLOSED 2026-09-14: the integration step IS qualified, at dt 0.000625 ms. The four "
+          "adjacent pairs give 6.365, 3.471, 1.820 and 0.933 mV, so the last halving lands inside the 1 mV "
+          "contract; the ratios 1.83/1.91/1.95 are first order in dt, matching what the I-cell transfer "
+          "study found independently.",
+          "The node previously said the ladder could not close because the three finer rungs' traces had "
+          "been deleted. They had not: all five survived in the 2026-09-09 worktree-recovery stash, which "
+          "was restored while cleaning up the stale worktrees, and the ladder closed as arithmetic with no "
+          "new simulation. The earlier FAIL verdict had compared only the two coarsest rungs. Note that "
+          "0.000625 ms is exactly the step the failed r2 run was already using: that run died on cost, not "
+          "on accuracy. Confidence 90 percent that this stays closed - it is a convergence reading on "
+          "committed traces, and the only way it reopens is if this one isolated cell is unrepresentative "
+          "of the other 103.",
+          [LADDER, DTLADDER, LEDGER], "supported", 90),
         n("pop_anatomy", BLOCK,
           "STEP 5e - BLOCKER, the binding one, and previously unnamed: a donor's fitted conductances do "
           "not survive the move onto H01 anatomy. B3 fires 4 spikes at 200 pA on the donor's own "
@@ -276,7 +284,8 @@ def build_nodes():
           "So a population 'accuracy' is a transfer claim, not a measurement. The defensible form is a "
           "product of six separately sourced terms: donor accuracy against a real recording (0.718, and "
           "measured for the 28 cells B3 donates to, not for all 104), type-match coverage (0.529), build "
-          "(1.000), a driven physiological window (0.000), a qualified timestep (0.000) and anatomy "
+          "(1.000), a driven physiological window (0.000), a qualified timestep (1.000, closed at dt "
+          "0.000625 ms) and anatomy "
           "transfer (0.000, measured and negative). A term with no evidence scores zero and is never "
           "dropped - dropping it raises the score of exactly the case that fails it, which is the bug "
           "the single-cell scorer already made once. Anything stated as one percentage without those six "
@@ -334,13 +343,14 @@ def build_edges():
         e("plan_second_cell", "pop_typematch", "describes", "scale to the population"),
         e("pop_typematch", "goal", "describes", "coverage factor"),
         e("pop_typematch", "pop_build", "describes", "and the matched cells have to build"),
+        e("pop_build", "pop_dt", "describes", "and the step has to be qualified"),
         e("pop_typematch", "pop_anatomy", "describes",
           "and the matched donor's fit has to survive H01 anatomy"),
         e("pop_build", "goal", "describes", "construction factor (closed: 104/104)"),
         e("pop_build", "pop_driven", "describes", "construction is not simulation"),
-        e("pop_driven", "pop_dt", "describes", "blocked on a qualified step"),
+        e("pop_dt", "pop_driven", "describes", "the step is qualified; the cost is not"),
         e("pop_driven", "goal", "describes", "driven-window factor (zero)"),
-        e("pop_dt", "goal", "describes", "timestep factor (zero)"),
+        e("pop_dt", "goal", "describes", "timestep factor (closed: dt 0.000625 ms)"),
         e("pop_anatomy", "goal", "describes", "anatomy-transfer factor (zero, measured negative)"),
         e("pop_anatomy", "policy", "describes", "where the next run belongs"),
         e("pop_noground", "goal", "describes", "no H01 ground truth (hard limit)"),
@@ -383,11 +393,12 @@ def explanation(nodes):
             "(55 of 104), build (1.000: all 104 import, construct to 808,495 compartments, initialise and "
             "complete a forward pass; the one-point SWC branch was repaired on 2026-09-08 and the earlier "
             "12-of-104 figure is withdrawn), a driven physiological window (0.000: two attempts, one "
-            "nonfinite and one dead at the wall cap), a qualified timestep (0.000: the 1 mV gate FAILS by "
-            "6.36 mV between the two coarse rungs) and anatomy transfer (0.000, and measured NEGATIVE: "
+            "nonfinite and one dead at the wall cap), a qualified timestep (1.000: closed on 2026-09-14 at "
+            "dt 0.000625 ms from five recovered traces, 0.933 mV to the next halving) and anatomy "
+            "transfer (0.000, and measured NEGATIVE: "
             "B3's fit fires 4 spikes at 200 pA on the donor's own reconstruction and 0 on the H01 "
             "skeleton). As measured the product is 0 percent; the 38 percent obtainable by assuming the "
-            "three unqualified terms away is quotable only with those assumptions attached. The sealed "
+            "two unqualified terms away is quotable only with those assumptions attached. The sealed "
             "holdout "
             "(sweep 54, 330 pA) has never been spent, so no element has been tested out of sample. Whether "
             "a mechanism that closes the climb on this cell transfers to another cell without refitting is "

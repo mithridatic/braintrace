@@ -1,0 +1,53 @@
+{
+  "cell": "7196644737",
+  "scope": "Timestep qualification of the isolated cell against the campaign's 1 mV contract, read from the five recovered implicit-solver traces. Numerical convergence only; no physiology claim.",
+  "gate_mv": 1.0,
+  "solver": "h01_staggered_calcium_implicit",
+  "duration_ms": 10.0,
+  "pairs": [
+    {
+      "dt_coarse_ms": 0.005,
+      "dt_fine_ms": 0.0025,
+      "max_error_mv": 6.364915590023713,
+      "at_ms": 5.015,
+      "coarse_mv": 154.0670966185332,
+      "fine_mv": 147.7021810285095,
+      "n_compared": 2000,
+      "passes_gate": false
+    },
+    {
+      "dt_coarse_ms": 0.0025,
+      "dt_fine_ms": 0.00125,
+      "max_error_mv": 3.4711386227890273,
+      "at_ms": 5.015000000000001,
+      "coarse_mv": 147.7021810285095,
+      "fine_mv": 144.23104240572047,
+      "n_compared": 4000,
+      "passes_gate": false
+    },
+    {
+      "dt_coarse_ms": 0.00125,
+      "dt_fine_ms": 0.000625,
+      "max_error_mv": 1.8195633913774145,
+      "at_ms": 5.015,
+      "coarse_mv": 144.23104240572047,
+      "fine_mv": 142.41147901434306,
+      "n_compared": 8000,
+      "passes_gate": false
+    },
+    {
+      "dt_coarse_ms": 0.000625,
+      "dt_fine_ms": 0.0003125,
+      "max_error_mv": 0.9333431178712033,
+      "at_ms": 5.014375,
+      "coarse_mv": 146.39258762334765,
+      "fine_mv": 145.45924450547645,
+      "n_compared": 16000,
+      "passes_gate": true
+    }
+  ],
+  "qualified_dt_ms": 0.000625,
+  "verdict": "QUALIFIED at dt 0.000625 ms",
+  "finest_pair_error_mv": 0.9333431178712033,
+  "supersedes": "h01-ready-cell7196644737-implicit-decision.json, which compared only the two coarsest rungs and reported the 1 mV gate as FAIL. The three finer rungs had already run; their traces were recovered on 2026-09-14."
+}

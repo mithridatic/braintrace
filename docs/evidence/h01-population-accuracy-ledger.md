@@ -45,15 +45,30 @@ The second attempt spent 5.9 hours and produced nothing, which is also a policy 
 (no hour-plus runs) and is the reason this ledger is being written from committed evidence rather
 than from a third attempt.
 
-### 2. The timestep: not qualified
+### 2. The timestep: CLOSED 2026-09-14 — qualified at dt 0.000625 ms
 
-On the isolated failing cell the dt ladder is finite at every rung but **fails the campaign's own
-1 mV contract**: 6.36 mV between dt 0.005 and dt 0.0025 at t = 5.015 ms, one event at each step
-([`h01-ready-cell7196644737-implicit-decision.json`](h01-ready-cell7196644737-implicit-decision.json)
-`comparison.voltage_1mV_gate: FAIL`). The failure is accuracy, not stability. Three finer rungs
-(0.00125, 0.000625, 0.0003125 ms) ran to completion in 32, 48 and 69 s, but their traces were
-deleted in the raw-trace sweep and `.cache/h01` no longer exists, so the ladder cannot be closed
-without re-running them — and re-running them needs the H01 source cache rebuilt first.
+*This section previously read "not qualified ... the traces were deleted and `.cache/h01` no
+longer exists". Both claims were wrong.* All five rungs survived in the 2026-09-09
+worktree-recovery stash, which was restored while cleaning up the stale worktrees. The ladder
+closed as arithmetic, with no new simulation:
+
+| pair | max \|ΔV\| | at | gate |
+| --- | ---: | ---: | --- |
+| dt 0.005 → 0.0025 | 6.365 mV | 5.0150 ms | FAIL |
+| dt 0.0025 → 0.00125 | 3.471 mV | 5.0150 ms | FAIL |
+| dt 0.00125 → 0.000625 | 1.820 mV | 5.0150 ms | FAIL |
+| **dt 0.000625 → 0.0003125** | **0.933 mV** | 5.0144 ms | **PASS** |
+
+Error ratios 1.83 / 1.91 / 1.95 — first order in dt, matching what the I-cell transfer study found
+independently. **dt 0.000625 ms is qualified**, and it is exactly the step the failed r2 run was
+already using: that run died on cost, not on accuracy.
+
+The earlier FAIL verdict in
+[`h01-ready-cell7196644737-implicit-decision.json`](h01-ready-cell7196644737-implicit-decision.json)
+compared only the two coarsest rungs. Reading:
+[`h01-timestep-ladder.json`](h01-timestep-ladder.json) via
+[`h01_timestep_ladder.py`](h01_timestep_ladder.py) (7 tests). The qualification is numerical
+convergence on one isolated cell, not a claim about the other 103.
 
 ### 3. Anatomy transfer: measured once, and it fails
 
@@ -85,11 +100,11 @@ working build all describe a model that, on the anatomy it is meant to run on, i
 | `type_coverage` | 0.529 | yes | 55 of 104 cells matched in layer **and** class. |
 | `construction` | 1.000 | yes | import, construction, initialisation and a **synthetic** forward pass, all 104. Named `construction`, not `build`: the forward pass it credits drives an all-ones probe, and whether the population *runs* is the `driven_window` term below. |
 | `driven_window` | 0.000 | no | no qualified driven window at 104 cells. |
-| `timestep` | 0.000 | no | 1 mV gate FAIL at the coarse rungs; finer rungs unreadable. |
+| `timestep` | 1.000 | yes | qualified at dt 0.000625 ms (0.933 mV to the next halving); first order in dt. |
 | `anatomy_transfer` | 0.000 | **yes** | the donor's fit does not spike on H01 anatomy. |
 
 **Product as measured: 0 percent.** Product if construction is counted as a working simulation and the
-three unqualified terms are set to one: **38 percent** — and that figure additionally assumes the
+two unqualified terms are set to one: **38 percent** — and that figure additionally assumes the
 three donors whose published fits were *reproduced and rejected* against their own recordings
 score like the one donor that was scored.
 
@@ -97,8 +112,9 @@ score like the one donor that was scored.
 
 > 71.8 percent on the one human L2/3 cell where the accuracy is measured, which is the type donor
 > for 28 of the 104 H01 cells. Construction is qualified 104 of 104. A driven physiological window,
-> the integration step, and the transfer of any donor fit onto H01 anatomy are all unqualified, and
-> the one anatomy-transfer reading that exists is negative.
+> and the transfer of any donor fit onto H01 anatomy are unqualified, and the one
+> anatomy-transfer reading that exists is negative. The integration step is qualified at
+> dt 0.000625 ms.
 
 Anything shorter than that hides a zero.
 
@@ -111,9 +127,10 @@ The ranking of remaining work inverts. It was: fix the build, then close the cli
    membrane area against the H01 surface mesh before that skeleton is used again, and separately
    scale the donor's dendritic load by 1.5 and 2 to see whether the response degrades gradually or
    falls off a cliff. Neither needs the population; both are single-cell runs on the donor.
-2. **The timestep ladder** — three rungs already ran and only their traces are missing. Cheapest
-   qualification available once the H01 cache is rebuilt, and it gates the driven window.
-3. **The driven window** — blocked on (2) for a defensible dt and on cost; the last attempt burned
-   5.9 h for no result and a third attempt without a qualified dt would do the same.
+2. ~~The timestep ladder~~ **DONE.** dt 0.000625 ms is qualified.
+3. **The driven window** — no longer blocked on the step, only on cost. The r2 attempt was already
+   running at the qualified dt and burned 5.9 h for no result, so what is needed is a cheaper
+   window (fewer cells, shorter duration, or a coarser step justified by a per-cell ladder), not a
+   fourth full-population attempt.
 4. The single-cell climb and rise, which carry 19.4 and 6.4 points of a score that applies to 28
    cells conditional on a transfer that currently fails.

@@ -49,11 +49,12 @@
     },
     {
       "term": "timestep",
-      "value": 0.0,
-      "measured": false,
-      "statement": "The timestep is not qualified: on the isolated cell the 1 mV gate is FAIL, with 6.36 mV between dt 0.005 and 0.0025 ms at t = 5.015 ms.",
-      "cause": "Both steps are finite and both emit one event, so the failure is accuracy, not stability. Three finer rungs were run but their traces were deleted with the raw-trace sweep, so the ladder cannot be closed without re-running them.",
+      "value": 1.0,
+      "measured": true,
+      "statement": "Qualified at dt 0.000625 ms: refining to 0.0003125 ms moves the trace by 0.933 mV, inside the 1 mV contract. The four adjacent pairs give 6.36, 3.47, 1.82, 0.93 mV, halving with the step (first order).",
+      "cause": "This supersedes h01-ready-cell7196644737-implicit-decision.json, which compared only the two coarsest rungs and reported the gate as FAIL at 6.36 mV. The three finer rungs had already run; their traces were recovered from the 2026-09-09 worktree stash on 2026-09-14 and the ladder closed as arithmetic, with no new simulation. Qualification is numerical convergence on one isolated cell, not a claim about the other 103.",
       "evidence": [
+        "h01-timestep-ladder.json",
         "h01-ready-cell7196644737-implicit-decision.json"
       ]
     },
@@ -94,7 +95,7 @@
       },
       {
         "term": "timestep",
-        "used": 0.0,
+        "used": 1.0,
         "assumed": false
       },
       {
@@ -108,7 +109,6 @@
     "value_pct": 37.9621098054756,
     "assumptions": [
       "driven_window",
-      "timestep",
       "anatomy_transfer"
     ],
     "factors": [
@@ -135,7 +135,7 @@
       {
         "term": "timestep",
         "used": 1.0,
-        "assumed": true
+        "assumed": false
       },
       {
         "term": "anatomy_transfer",
@@ -144,5 +144,5 @@
       }
     ]
   },
-  "note": "The second product is the figure obtained by counting construction as a working simulation and setting the three unqualified terms to one. It is quoted only with its assumptions attached; it also assumes the three rejected donors score like the one donor that was scored, which the anatomy term actively contradicts."
+  "note": "The second product is the figure obtained by counting construction as a working simulation and setting the two unqualified terms to one. It is quoted only with its assumptions attached; it also assumes the three rejected donors score like the one donor that was scored, which the anatomy term actively contradicts."
 }
