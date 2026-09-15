@@ -797,6 +797,51 @@ The imported fits remain labeled with their measured limitations.
 Evidence: [HL5MN1 decision](evidence/h01-donors/stage-hl5mn1-decision.json),
 [Allen L4 decision](evidence/h01-donors/stage-allen-l4-decision.json).
 
+## Y7. Deployed donor densities on retained H01 anatomy: block, plateau, or spontaneous firing
+
+Review 2026-09-15, Vast executor, evidence under `evidence/h01-driven-window-20260915/`.
+
+**Conditions.** Each deployed donor profile, unchanged, painted by the production builder
+onto one type-matched, production-imported H01 component (MaxCVLen 10 um, `_regions`
+partition, implicit calcium solver, dt 0.005 ms with a dt-half repeat), driven at the soma
+with the donor recording's own step protocol. These are the first physiological readings on
+anatomy that the conversion correction (Y5) left intact.
+
+**Response.** L2 pyramidal B3 on 955432427 (soma region 149 um2, axon 130, dendrite 4,029):
+two spikes at 310 pA and at 200 pA, then a depolarised state at -27 mV that persists 80 ms
+after the pulse ends with zero input (recorded cell: 10 and 1 spikes; the fit on its own
+anatomy: 10 and 4). L5 PV HL5BN1 on 4853956860 (315 / 30 / 4,099 um2): no spike, a plateau at
+-37 mV at 0.19 and 0.27 nA that ends with the pulse (recorded 12 and 43). L3 SST HL5MN1 on
+4420044370 (107 / 12 / 2,210 um2): fires at about 80 Hz before any input from a -56 mV level,
+then holds -34 mV through the pulse (recorded 14). L4 Allen 527952884 on 3761379470
+(199 / 29 / 3,548 um2): 13 regularly spaced spikes at 90 pA and a return to -84 mV
+(recorded 12; the fit on its own anatomy 8). One of four donors transfers.
+
+**Mechanism established and boundary.** The L2 state after the pulse is a second stable
+resting state of soma plus profile, not slow recovery: it holds with the input off. Scaling
+the dendritic passive load alone (capacitance and leak of dend/apic) by 3 takes the response
+to one spike then the same block, and by 10 to a silent -62 mV plateau; more passive load
+suppresses the spike before it removes the block. The small dendritic load of the truncated
+component is therefore not the condition that creates the block. What remains as the
+condition is the somatic active profile on this soma geometry: the soma region is 149 um2
+where the Allen donor is a 590 um2 sphere, and H01 skeleton processes average 0.4 um in
+diameter with radii down to 0.032 um. Which somatic current holds -27 mV is not measured;
+this section names no channel.
+
+**Consequence.** Densities fitted on a full reconstruction do not transfer as densities onto
+proofread-skeleton components of 2-4 x 10^3 um2, and importing further donors for density
+transfer would meet the same condition. The registered prediction (counts at or above the
+donor fit's own count, because the truncated component loads less) is falsified for three
+of four donors. The open route is a per-cell fit of densities on each H01 cell's own anatomy
+against its type-matched human recording
+([proposal](specs/2026-09-15-h01-per-cell-human-fit.md)).
+
+Evidence: [decision](evidence/h01-driven-window-20260915/anatomy-transfer-decision.json),
+[traces](evidence/h01-driven-window-20260915/transfer-traces.png),
+[per-run records](evidence/h01-driven-window-20260915/transfer/),
+[load split](evidence/h01_transfer_load_split.py),
+[stage record](evidence/h01-driven-window-20260915/README.md).
+
 ## Concepts and truth conditions
 
 A causal model explains how a change produces a response.
