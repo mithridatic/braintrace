@@ -147,3 +147,12 @@ regression and unchanged original arrays. [Revision 12](fitting-inputs-r12.json)
 freezes the accepted conditional observation parameters for the next active-current
 fit. This does not qualify the rejected active-current candidate or change any
 of the six population scores.
+
+## Active-current refit with the corrected observer
+
+[The 17-sweep refit](pax6-active-refit-840043481/README.md) converged in 194 seconds
+and preserved every recording-control gate. Full-sample RMS error is 10.55 pA,
+but its reversal parameter reached the registered lower bound. The candidate is
+rejected; reserved sustained, external and whole-cell responses remain unopened.
+[Revision 13](fitting-inputs-r13.json) preserves this result and the frozen observer.
+No population score changed.
