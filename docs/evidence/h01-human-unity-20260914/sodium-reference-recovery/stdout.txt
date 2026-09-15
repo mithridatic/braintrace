@@ -1,0 +1,118 @@
+{
+  "temperature_c": 25,
+  "predictions": [
+    {
+      "voltage_mv": -90.0,
+      "current_recovery_fit": {
+        "available": true,
+        "tau_ms": 6.004231335086407,
+        "fitted_parameters": [
+          -56.670232591071624,
+          6.004231335086407,
+          2.9416494613158364e-05
+        ],
+        "r_squared": 0.999999999958656
+      },
+      "refined_current_recovery_fit": {
+        "available": true,
+        "tau_ms": 6.004231335086407,
+        "fitted_parameters": [
+          -56.670232591071624,
+          6.004231335086407,
+          2.9416494613158364e-05
+        ],
+        "r_squared": 0.999999999958656
+      },
+      "internal_h_tau_ms": 6.00409188252303,
+      "relative_refinement_difference": 0.0,
+      "numerical_pass": true
+    },
+    {
+      "voltage_mv": -85.0,
+      "current_recovery_fit": {
+        "available": true,
+        "tau_ms": 8.349770362795535,
+        "fitted_parameters": [
+          -56.51361345512932,
+          8.349770362795535,
+          6.7728168137317e-05
+        ],
+        "r_squared": 0.999999999816691
+      },
+      "refined_current_recovery_fit": {
+        "available": true,
+        "tau_ms": 8.349770362795535,
+        "fitted_parameters": [
+          -56.51361345512932,
+          8.349770362795535,
+          6.7728168137317e-05
+        ],
+        "r_squared": 0.999999999816691
+      },
+      "internal_h_tau_ms": 8.34945366639663,
+      "relative_refinement_difference": 0.0,
+      "numerical_pass": true
+    },
+    {
+      "voltage_mv": -80.0,
+      "current_recovery_fit": {
+        "available": true,
+        "tau_ms": 12.154143908981336,
+        "fitted_parameters": [
+          -54.532324420350974,
+          12.154143908981336,
+          0.0005491864966474868
+        ],
+        "r_squared": 0.99999999944243
+      },
+      "refined_current_recovery_fit": {
+        "available": true,
+        "tau_ms": 12.154218006602301,
+        "fitted_parameters": [
+          -54.53209826822215,
+          12.154218006602301,
+          0.0005638017998418263
+        ],
+        "r_squared": 0.9999999993054491
+      },
+      "internal_h_tau_ms": 12.15350569512069,
+      "relative_refinement_difference": 6.096453175759087e-06,
+      "numerical_pass": true
+    },
+    {
+      "voltage_mv": -75.0,
+      "current_recovery_fit": {
+        "available": true,
+        "tau_ms": 17.556271712811018,
+        "fitted_parameters": [
+          -50.35612703580988,
+          17.556271712811018,
+          0.014816748899508734
+        ],
+        "r_squared": 0.9999999987556445
+      },
+      "refined_current_recovery_fit": {
+        "available": true,
+        "tau_ms": 17.5566913742834,
+        "fitted_parameters": [
+          -50.355403250355,
+          17.5566913742834,
+          0.014894854439809362
+        ],
+        "r_squared": 0.9999999976871621
+      },
+      "internal_h_tau_ms": 17.555116628610662,
+      "relative_refinement_difference": 2.3903220910769923e-05,
+      "numerical_pass": true
+    }
+  ],
+  "retained_source_conditions": 133,
+  "eligible_conditions": 76,
+  "model_available_conditions": 76,
+  "numerical_pass": true,
+  "comparison_rmse_ms": 4.912240965727534,
+  "model_parameters_changed": false,
+  "physiology_qualified": false,
+  "scores_promoted": false,
+  "elapsed_seconds": 0.2925471000489779
+}
