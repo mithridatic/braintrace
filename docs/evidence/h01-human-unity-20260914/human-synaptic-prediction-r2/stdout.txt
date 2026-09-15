@@ -1,0 +1,132 @@
+{
+  "candidate": {
+    "synaptic_parameters": [
+      130.03165030411517,
+      0.15043211921569566,
+      1.025436531417632,
+      1.928160201930781
+    ],
+    "parameter_names": [
+      "peak_pa",
+      "rise_ms",
+      "decay_minus_rise_ms",
+      "delay_ms"
+    ],
+    "frozen_cell": {
+      "resistance_mohm": 72.55903367837949,
+      "membrane_tau_ms": 13.077357533655515
+    },
+    "cell_candidate_sha256": "a4cec3ab1f9f3ccb012586f77f78cd42941b38b5ddbf7330064389721e4d8c60",
+    "source_sha256": "a3f7af41e09b8885e0b8432ed79a6563c3e7b1c1d7735e25048409c5045640aa",
+    "calibration_sweeps": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "validation_sweeps": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+    ]
+  },
+  "candidate_sha256": "788bfaaa50870f06cac22443b4d4793fa01634c70bae23452cbc1d6405be5061",
+  "unassigned_crossings": {
+    "0": [],
+    "1": [],
+    "2": [
+      68280
+    ],
+    "3": [],
+    "4": [],
+    "5": [],
+    "6": [],
+    "7": [],
+    "8": [],
+    "9": [],
+    "10": [],
+    "11": [],
+    "12": [],
+    "13": [],
+    "14": [],
+    "15": [],
+    "16": [],
+    "17": [],
+    "18": [],
+    "19": [],
+    "20": [],
+    "21": [],
+    "22": [],
+    "23": [],
+    "24": [],
+    "25": [],
+    "26": [],
+    "27": [],
+    "28": [],
+    "29": []
+  },
+  "validation_by_event_ordinal": [
+    {
+      "event": 0,
+      "reference_rmse_mv": 0.5738652071719598,
+      "candidate_rmse_mv": 0.34562224949426207
+    },
+    {
+      "event": 1,
+      "reference_rmse_mv": 0.3635375311007559,
+      "candidate_rmse_mv": 0.20952071150545123
+    },
+    {
+      "event": 2,
+      "reference_rmse_mv": 0.5164485518933127,
+      "candidate_rmse_mv": 0.35986541900724284
+    },
+    {
+      "event": 3,
+      "reference_rmse_mv": 0.4168541187224059,
+      "candidate_rmse_mv": 0.22464292121583485
+    },
+    {
+      "event": 4,
+      "reference_rmse_mv": 0.4709414690547312,
+      "candidate_rmse_mv": 0.3733515150832621
+    },
+    {
+      "event": 5,
+      "reference_rmse_mv": 0.40154842376228567,
+      "candidate_rmse_mv": 0.24806571859876725
+    }
+  ],
+  "validation_reference_rmse_mv": 0.46278041579696794,
+  "validation_candidate_rmse_mv": 0.3011780161033661,
+  "validation_improvement_fraction": 0.34919887310983444,
+  "validation_failed_sweeps": [],
+  "no_active_bounds": true,
+  "accepted_for_further_qualification": true,
+  "physiology_qualified": false,
+  "scores_promoted": false,
+  "elapsed_seconds": 12.16313630004879
+}

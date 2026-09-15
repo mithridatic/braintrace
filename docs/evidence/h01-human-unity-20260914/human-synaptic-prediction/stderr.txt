@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.worktrees\h01-human-unity\docs\evidence\h01-human-unity-20260914\human-synaptic-prediction\analyze.py", line 63, in <module>
+    calibration = [extract(s) for s in range(15)]
+                   ~~~~~~~^^^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.worktrees\h01-human-unity\docs\evidence\h01-human-unity-20260914\human-synaptic-prediction\analyze.py", line 50, in extract
+    assert len(events['crossing_indices']) == len(events['accepted_crossings']) == 6
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
