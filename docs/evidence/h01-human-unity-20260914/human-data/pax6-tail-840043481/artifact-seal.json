@@ -1,0 +1,84 @@
+{
+  "files": [
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/analyze.py",
+      "bytes": 5964,
+      "sha256": "ab3b73e5727d663775ddfa2d635f5e624e7bbe2da9406917790f4b0046881708"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/commands-and-landmarks.png",
+      "bytes": 115348,
+      "sha256": "2c82768ae9a0471e9126154b655e9d5cc189a9c385439672738b3b780c544f20"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/direct-tails.png",
+      "bytes": 393359,
+      "sha256": "fe7738ffee389eba0eeab0ee60631c6118df5005fbc78fccb1fd57b38d8d8c15"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/observations.json",
+      "bytes": 19270,
+      "sha256": "5b77c2eb65bb9e43724b3b0c8e511025b52b9001bb1dae9e72679c8e3cdc5631"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/observations.npz",
+      "bytes": 1452137,
+      "sha256": "48f96b9f37aabf28a2b6de635f51f8219afa134b05720c68ca44a27f0ba4f36f"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/README.md",
+      "bytes": 5233,
+      "sha256": "07e310bf6084f09a9a64c7da7318e80e4bc4dc60c23ff5ba00bdc734b310bf58"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/run.py",
+      "bytes": 973,
+      "sha256": "49120ebcdd74b0999e9b655882c5c953201be2a1e183b4eda1a8b7d472c15e90"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/stdout.txt",
+      "bytes": 3587,
+      "sha256": "ffa5902808624d56f58e78f1d400c9a3bec902bac8c65cdea15b300b2e1ae7b4"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/terminal.json",
+      "bytes": 162,
+      "sha256": "a0fde3f679b7618fc43301302104bf018edfd6aacd10e1f1a47cdf2461d14a92"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/tests.xml",
+      "bytes": 4018,
+      "sha256": "ff3a6140bcf86ead5aadf43b2ea595f640b8e2d16146be9bc7eb7d18ebbf8900"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/verification.json",
+      "bytes": 2012,
+      "sha256": "c3d9e9f42fa832db8774952a5de31e5d737eebfa12d2db61acd670694c1fae40"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-tail-840043481/verify.py",
+      "bytes": 2650,
+      "sha256": "66264816fc01aed286d4822c0e15a7dd09fed7ae57f9901c089f6593764c4243"
+    },
+    {
+      "path": "docs/specs/2026-09-14-h01-pax6-tail-constraint.md",
+      "bytes": 2911,
+      "sha256": "34ed9e82aac845fbc1ce1f282d5b475848a943a23d4dfc78e72d3ef595d7046a"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/fitting-inputs-r10.json",
+      "bytes": 4057,
+      "sha256": "ee414da66987796fd77173e04dc551625ff16eb529d95fa3795527dbc370c117"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/README.md",
+      "bytes": 7661,
+      "sha256": "bd1654fa37bebbd6bb77feddf9a5c9db4bcc958d2b2e941961c92c8cca68e92e"
+    }
+  ]
+}

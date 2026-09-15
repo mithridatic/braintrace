@@ -116,3 +116,13 @@ the later first pulse but leaves the second-pulse mismatch intact. This state-on
 repair path is closed without qualification or score promotion. [Revision 9](fitting-inputs-r9.json)
 is the current input receipt. The corrected anatomy still needs a qualified human
 model before its physiological transfer gate can be tested under the approved scope.
+
+## Tail-voltage constraint
+
+[Five human tail responses](pax6-tail-840043481/README.md) now extend the raw-current
+calibration constraints to commands from -90 to -150 mV after a common +70 mV
+conditioning pulse. Their negative transients and late levels require a joint
+amplifier-current observation model; no isolated potassium deactivation constant
+or reversal potential is inferred. [Revision 10](fitting-inputs-r10.json) records
+the new calibration exposure while preserving the rejected recovery candidate,
+whole-cell split and unopened external responses. No score changed.
