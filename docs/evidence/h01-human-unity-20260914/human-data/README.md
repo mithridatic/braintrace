@@ -156,3 +156,11 @@ but its reversal parameter reached the registered lower bound. The candidate is
 rejected; reserved sustained, external and whole-cell responses remain unopened.
 [Revision 13](fitting-inputs-r13.json) preserves this result and the frozen observer.
 No population score changed.
+
+## Separate relaxation voltage dependence tested
+
+[The next candidate](pax6-independent-relaxation-840043481/README.md) reduces error
+21.6 percent on exactly the same samples, but fails four parameter-bound checks.
+Some responses worsen. Local sensitivity shows that availability midpoint and
+slope are poorly distinguished at this fit. [Revision 14](fitting-inputs-r14.json)
+retains the rejection and unopened response reservations. No score changed.
