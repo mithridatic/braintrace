@@ -28,11 +28,12 @@ The local worktree cache was moved intact to `.cache/h01-human-unity-retained`;
 all six cached NWB hashes were checked. Historical `.cache/human-source-followup`
 paths from this campaign now resolve beneath that retained cache directory.
 The pre-existing manifest edit was reviewed during final cleanup: its replacement
-`h01_arc_model.py` digest did not match the actual file. Its exact bytes are
-preserved in [the integration record](evidence/h01-human-unity-20260914/integration/README.md);
-the historical manifest is restored to its committed version. This is cleanup,
-not a new qualification or a declaration that the historical manifest describes
-the current implementation. The 91 affected helper tests passed again on integrated
+`h01_arc_model.py` digest matches the canonical Git/LF bytes and the Vast checkout.
+The apparent local mismatch came from Windows CRLF bytes. The edit is retained
+in the tracked manifest; the exact original edit and diagnosis are preserved in
+[the integration record](evidence/h01-human-unity-20260914/integration/README.md).
+This single digest correction does not qualify a new run or refresh the other
+historical manifest entries. The 91 affected helper tests passed again on integrated
 main. No new physiological experiment was launched during integration.
 
 ## What changed, and what did not

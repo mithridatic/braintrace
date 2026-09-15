@@ -84,7 +84,7 @@
       "braintrace/datasets/h01_wilbers.py": "6f84b48128408cbb70098dcb31453ffb235a878c1422e4824375615b60f2bc4d",
       "examples/pp_prop/21-braincell-arc.py": "556541e5aa190445eabdca962ea9e039d1bf2f09fc4a5d4cff37cc435f5cad33",
       "examples/pp_prop/h01_arc_execution.py": "259d09b67daf8caad33e1da9b073ce79ce295e5a9ecdbdb1ddd47f841f99778f",
-      "examples/pp_prop/h01_arc_model.py": "2019dfc42be16a12be86731d03b8e04bf702119fa4334e97f5fb10b458010850",
+      "examples/pp_prop/h01_arc_model.py": "ed77004c724b5d72ba0cf41e3b2c36823e3880c1b6870e9c4b052d54076d543f",
       "examples/pp_prop/h01_muon.py": "e3d9fd58dca155fc8c5319fc83b0d5ca33fdaa216760cee5ed3134f7922274dc",
       "examples/pp_prop/h01_neuroglial.py": "c5ef34b103a54983a9b8f818cc92f48ccaae7773028cd4801690ee3a0e678e64",
       "examples/pp_prop/h01_physical_checkpoint.py": "de789332a5d4142cb788dd1334e2273f928d765b29e3a707096006a911516252",
