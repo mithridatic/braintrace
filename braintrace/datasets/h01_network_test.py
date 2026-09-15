@@ -12,7 +12,7 @@ import pytest
 from .h01_anatomy_test import imported
 from .h01_connectivity_test import annotations, edge, report
 from .h01_connectivity import select_connectivity, cell_sign
-from .h01_network import make_h01_network, plan_h01_cells
+from .h01_network import _nearest_cv, make_h01_network, plan_h01_cells
 from .h01_cell_types import DEFAULT_DONOR_KEYS
 
 
@@ -291,3 +291,14 @@ def test_explicit_isolated_selection_does_not_override_contact_component(argumen
     components = _components(**{'12': dict(selected_component=None)})
     plan = plan_h01_cells(arguments['topology'], include_isolated=True, components=components)
     assert plan['isolated_cells'] == {}
+
+
+def test_nearest_cv_resolves_platform_ties_to_the_lowest_index():
+    # Real branch fractions of H01 cell 4157825456: the soma sample is a CV boundary, so the
+    # two adjacent midpoints are equidistant up to 1e-13 and the bare rule flipped across platforms.
+    midpoints = [0.20454545454548817, 0.3409090909091248]
+    assert _nearest_cv(midpoints, 0.27272727272731756) == 0   # Vast rounding
+    assert _nearest_cv(midpoints, 0.27272727272732095) == 0   # Windows rounding chose 1 before the fix
+    assert _nearest_cv(midpoints, 0.30) == 1                   # a real nearest still wins
+    assert _nearest_cv([0.1, 0.5, 0.9], 0.9) == 2
+    assert _nearest_cv([0.25], 0.7) == 0

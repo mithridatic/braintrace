@@ -201,6 +201,18 @@ def _place_contact(cells, locations, edge, weights, delay_ms, enabled):
                 delay_ms=delay_ms, enabled=enabled)
 
 
+def _nearest_cv(midpoints, x, tolerance=1e-9):
+    """Index of the CV midpoint nearest ``x``; ties within ``tolerance`` take the lowest index.
+
+    A boundary-aligned soma sample sits exactly between two CV midpoints, so the
+    bare nearest-distance rule was decided by last-bit rounding of the branch
+    fractions and differed between platforms for 17 of the 104 H01 cells
+    (docs/evidence/h01-driven-window-20260915/output-site-tie-break.json).
+    """
+    best = min(abs(m-x) for m in midpoints)
+    return next(i for i, m in enumerate(midpoints) if abs(m-x) <= best+tolerance)
+
+
 def _register_cell(network, identity, cell, record, imported, source_sites, current, emit):
     emit(f"Discretizing cell {identity} and selecting its output site")
     site = AtLocation(*source_sites[identity]) if identity in source_sites else imported.anatomy().soma_location()
@@ -208,7 +220,7 @@ def _register_cell(network, identity, cell, record, imported, source_sites, curr
     branch_id, x = points[0]
     bounds = cell.cv_policy.resolve_cv_bounds(cell.morpho)[branch_id]
     midpoints = [(lo + hi) / 2.0 for lo, hi in bounds]
-    best_idx = min(range(len(midpoints)), key=lambda i: (abs(midpoints[i] - x), i))
+    best_idx = _nearest_cv(midpoints, x)
     cell.place(AtLocation(branch_id, midpoints[best_idx]), StateProbe(field="v", name="output_voltage"))
     record["output_site"] = restrict_spike_output(cell, site)
     record["input_na"] = current
