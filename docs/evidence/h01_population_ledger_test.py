@@ -39,7 +39,7 @@ def test_the_construction_term_is_the_full_population_not_the_stale_twelve():
     assert "12-of-104" in build["cause"]
 
 
-def test_the_unqualified_terms_are_zero_and_say_why():
+def test_the_unqualified_terms_are_zero_and_say_why(without_vast_decisions):
     terms = {t["term"]: t for t in pl.ledger()}
     assert terms["driven_window"]["value"] == 0.
     assert terms["driven_window"]["measured"] is False
@@ -57,7 +57,7 @@ def test_the_timestep_term_closed_on_the_recovered_ladder():
     assert "0.000625" in ts["statement"]
 
 
-def test_the_product_is_zero_while_any_term_is_zero():
+def test_the_product_is_zero_while_any_term_is_zero(without_vast_decisions):
     assert pl.product(pl.ledger())["value_pct"] == 0.
 
 
@@ -80,13 +80,36 @@ def test_a_term_cannot_be_dropped_by_assuming_it_away_silently():
     assert all(f["assumed"] for f in p["factors"])
 
 
-def test_report_quotes_the_optimistic_figure_only_with_its_assumptions():
+def test_report_quotes_the_optimistic_figure_only_with_its_assumptions(without_vast_decisions):
     r = pl.report()
     assert r["cells"] == 104
     assert len(r["terms"]) == 6
     assert r["product_as_measured"]["value_pct"] == 0.
     assert r["product_if_construction_counts_as_simulation"]["assumptions"]
     assert "assumptions attached" in r["note"]
+
+
+@pytest.fixture
+def without_vast_decisions(monkeypatch):
+    monkeypatch.setattr(pl, '_exists', lambda name: False)
+
+
+def test_driven_and_transfer_terms_read_the_vast_decisions(monkeypatch):
+    original = pl._read
+    decisions = {
+        pl.DRIVEN_DECISION: {"verdict": "PASS", "runtime": {"ei": {"status": "passed"}},
+                             "controls": {"status": "passed"},
+                             "refinement": {"status": "passed", "worst_voltage_mV": .4, "worst_event_ms": 0.}},
+        pl.TRANSFER_DECISION: {"anatomy_transfer": .25, "verdict": "1 of 4",
+                               "donors": {"l4-pyramidal-x": {"count": 13, "human_count": 12}}},
+    }
+    monkeypatch.setattr(pl, '_exists', lambda name: name in decisions)
+    monkeypatch.setattr(pl, '_read', lambda name: decisions.get(name) or original(name))
+    driven, anatomy = pl.driven_term(), pl.anatomy_term()
+    assert driven["value"] == 1. and driven["measured"] is True and pl.DRIVEN_DECISION in driven["evidence"]
+    assert anatomy["value"] == .25 and anatomy["measured"] is True and "13 vs human 12" in anatomy["statement"]
+    decisions[pl.DRIVEN_DECISION]["verdict"] = "FAIL"
+    assert pl.driven_term()["value"] == 0.
 
 
 def test_invalid_correction_cannot_change_the_evidence_interpretation(monkeypatch):
@@ -96,7 +119,7 @@ def test_invalid_correction_cannot_change_the_evidence_interpretation(monkeypatc
         pl.anatomy_term()
 
 
-def test_cli_retains_all_six_terms_and_unavailable_transfer(tmp_path, monkeypatch):
+def test_cli_retains_all_six_terms_and_unavailable_transfer(tmp_path, monkeypatch, without_vast_decisions):
     original = pl.HERE
     monkeypatch.setattr(pl, '_read', lambda name: json.loads((original / name).read_text()))
     monkeypatch.setattr(pl, 'HERE', tmp_path)

@@ -43,6 +43,8 @@ DTLADDER = "h01-ready-cell7196644737-implicit-decision.json"
 LADDER = "h01-timestep-ladder.json"
 ANATOMY = "h01-e-morphology/stage-1-decision.json"
 ANATOMY_CORRECTION = "h01-human-unity-20260914/conversion-correction.json"
+DRIVEN_DECISION = "h01-driven-window-20260915/driven-window-decision.json"
+TRANSFER_DECISION = "h01-driven-window-20260915/anatomy-transfer-decision.json"
 
 CELLS = 104
 B3_KEY = "l2-pyramidal-allen-541563728"
@@ -109,8 +111,24 @@ def build_term():
         [IMPORT104, BUILD104, INIT104, PROBE104])
 
 
+def _exists(name):
+    return (HERE / name).exists()
+
+
 def driven_term():
-    """A driven window at a physiological duration. No reading exists, so the term is zero."""
+    """A driven window at a physiological duration, read from the Vast gate decision when it exists."""
+    if _exists(DRIVEN_DECISION):
+        dec = _read(DRIVEN_DECISION)
+        passed = dec["verdict"] == "PASS"
+        return _term(
+            "driven_window", 1. if passed else 0., True,
+            f"104-cell 50 ms window on the Vast executor: runtime gate {dec['runtime']}, control gate "
+            f"{dec['controls']['status'] if dec['controls'] else 'not run'}, refinement gate "
+            f"{dec['refinement']['status']} (worst {dec['refinement']['worst_voltage_mV']} mV, "
+            f"{dec['refinement']['worst_event_ms']} ms).",
+            "Delivery, control isolation and timestep convergence only; the 1 nA 2-5 ms probe is the "
+            "programme's assumed input, not a physiological stimulus, and no physiology is qualified.",
+            [DRIVEN_DECISION, DRIVEN104, DRIVEN_R2])
     dec, r2 = _read(DRIVEN104), _read(DRIVEN_R2)
     return _term(
         "driven_window", 0., False,
@@ -157,6 +175,17 @@ def anatomy_term():
     if (correction['status'] != 'passed' or correction['historical_transfer_interpretation']
             != 'invalidated_by_conversion_defect'):
         raise ValueError('Anatomy correction does not support withdrawing the old interpretation.')
+    if _exists(TRANSFER_DECISION):
+        dec = _read(TRANSFER_DECISION)
+        rows = "; ".join(f"{k.split('-')[0]}-{k.split('-')[1]} {v['count']} vs human {v['human_count']}"
+                         for k, v in dec["donors"].items())
+        return _term(
+            "anatomy_transfer", dec["anatomy_transfer"], True,
+            f"Measured on retained production-imported H01 anatomy: {dec['verdict']} ({rows}).",
+            "Each deployed donor was driven on one type-matched H01 component under its own recording's "
+            "step protocol. Failures are depolarisation block or spontaneous firing; the pass is within one "
+            "spike of the human count. A transfer reading, not a measurement of the H01 donor.",
+            [TRANSFER_DECISION, ANATOMY_CORRECTION, ANATOMY])
     return _term(
         "anatomy_transfer", 0., False,
         "No valid physiological transfer reading on corrected H01 anatomy. The historical "
