@@ -88,7 +88,9 @@ Decision: `anatomy-transfer-decision.json` (assembler `h01_anatomy_transfer_deci
 | L5 PV basket (HL5BN1) | 4853956860 | 315 / 30 / 4,099 | 0.19 nA | 12 | 14 | 0; plateau at -37 mV, recovers after the pulse | rejected |
 | same | same | same | 0.27 nA | 43 | 37 | 0; plateau at -37 mV | rejected |
 
-dt-half repeats (0.0025 ms) of the four primary inputs: PENDING.
+dt-half repeats (0.0025 ms, 840,000 steps) of the four primary inputs reproduce every
+count (2, 13, 4, 0) with crossings within 0.02 ms (`transfer/*-dthalf/`). Decision:
+`anatomy-transfer-decision.json` → **0.25** (L4 passes; L2, SST, PV fail).
 
 **Registered prediction: falsified.** The spec predicted counts at or above the
 donor fit's own count because the truncated components carry less load. Three of

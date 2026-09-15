@@ -1,0 +1,88 @@
+{
+  "anatomy_transfer": 0.25,
+  "measured": true,
+  "verdict": "1 of 4 deployed donors hold their human count on retained H01 anatomy",
+  "scope": "Each deployed donor driven on one type-matched, production-imported H01 component under its own recording's step protocol; a transfer reading against another human cell, not a measurement of the H01 donor. dt 0.005 ms implicit with a dt-half count repeat. No channel provenance qualified.",
+  "rule": "pass = finite traces, count inside the human repeat band (or within one where no repeats exist), and the dt-half repeat reproduces the count",
+  "donors": {
+    "l2-pyramidal-allen-541563728": {
+      "cell": "955432427",
+      "input_na": 0.31,
+      "count": 2,
+      "human_count": 10,
+      "repeat_counts": null,
+      "donor_fit_count": 10,
+      "finite": true,
+      "rest_mv": -83.49588835817998,
+      "peak_mv": 37.54710860513872,
+      "count_rule": "within one",
+      "count_rule_held": false,
+      "dt_half_count": 2,
+      "dt_half_agrees": true,
+      "passed": false
+    },
+    "l4-pyramidal-allen-527952884": {
+      "cell": "3761379470",
+      "input_na": 0.09,
+      "count": 13,
+      "human_count": 12,
+      "repeat_counts": null,
+      "donor_fit_count": 8,
+      "finite": true,
+      "rest_mv": -80.99067470213154,
+      "peak_mv": 30.56663738734338,
+      "count_rule": "within one",
+      "count_rule_held": true,
+      "dt_half_count": 13,
+      "dt_half_agrees": true,
+      "passed": true
+    },
+    "l3-sst-interneuron-hl5mn1": {
+      "cell": "4420044370",
+      "input_na": 0.1,
+      "count": 4,
+      "human_count": 14,
+      "repeat_counts": [
+        14,
+        14,
+        13,
+        12
+      ],
+      "donor_fit_count": 16,
+      "finite": true,
+      "rest_mv": -57.94236339402397,
+      "peak_mv": 9.540146658938605,
+      "count_rule": "repeat band",
+      "count_rule_held": false,
+      "dt_half_count": 4,
+      "dt_half_agrees": true,
+      "passed": false
+    },
+    "l5-pv-basket-hl5bn1": {
+      "cell": "4853956860",
+      "input_na": 0.19,
+      "count": 0,
+      "human_count": 12,
+      "repeat_counts": null,
+      "donor_fit_count": 14,
+      "finite": true,
+      "rest_mv": -86.92913068360872,
+      "peak_mv": -24.784702919208993,
+      "count_rule": "within one",
+      "count_rule_held": false,
+      "dt_half_count": 0,
+      "dt_half_agrees": true,
+      "passed": false
+    }
+  },
+  "input_hashes": {
+    "transfer-e310": "1040e453f65050622a786fe179a8cfa9d44e626eb0b86ddc4639547d30b2b7e5",
+    "transfer-e310-dthalf": "9ee6d6f7bc910c2dea5752e58526723e4c84c897cb0998e55ac0573265aa7292",
+    "transfer-l4-090": "3a3520c0b30e02f436ecea3bea7903d9c6b22a7ff95c0343af24124649f1459e",
+    "transfer-l4-090-dthalf": "5d2a27821b1fe70af20d7aee441015782e78dd7c744652b39d641c1352517488",
+    "transfer-sst-100": "cd9755e5af46b56abd8078d0d3fdfb2e81609fbd799cb057c78a8f690a67a38e",
+    "transfer-sst-100-dthalf": "c4484001b02576bdf4721d44602589013e13c6c3e8392e2adfe8ffdaa5cf2764",
+    "transfer-pv-190": "3075b3f202280a2ef164228c8b7bcf63689e3a8798e38160eac78fd7e1d7c83d",
+    "transfer-pv-190-dthalf": "77aa883e06c593ae71c696a89ede04df0b5b47195eebd8ab800f54ca9d6302f9"
+  }
+}

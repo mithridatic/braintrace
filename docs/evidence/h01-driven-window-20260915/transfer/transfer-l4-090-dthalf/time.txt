@@ -1,0 +1,23 @@
+	Command being timed: "env PYTHONPATH=/workspace/braintrace XLA_PYTHON_CLIENT_MEM_FRACTION=.3 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 taskset -c 200-231 /workspace/venv314/bin/python3 -u docs/evidence/h01_anatomy_transfer_run.py --cell 3761379470 --donor l4-pyramidal-allen-527952884 --polarity E --pulse-on-ms 1020 --pulse-ms 1000 --duration-ms 2100 --current-na 0.09 --registered-count 12 --donor-model-count 8 --dt-ms 0.0025 --output /workspace/braintrace/var/h01-driven/transfer-l4-090-dthalf/run"
+	User time (seconds): 519.05
+	System time (seconds): 648.63
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 19:17.64
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1221448
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3
+	Minor (reclaiming a frame) page faults: 530122
+	Voluntary context switches: 30329
+	Involuntary context switches: 2862
+	Swaps: 0
+	File system inputs: 96
+	File system outputs: 21640
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
