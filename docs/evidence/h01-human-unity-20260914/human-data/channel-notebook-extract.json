@@ -1,0 +1,98 @@
+{
+  "source_url": "https://raw.githubusercontent.com/AllenInstitute/patchseq_human_L1/7777857c1b89b19735e45fd9c9bd7493cc1d805c/notebooks/l1_cross_species.ipynb",
+  "source_sha256": "d67cd1d2ef3aefbb6c1276be37c7cad5df84d46f9aa9693d36e90c6041d816a7",
+  "executed": false,
+  "cells": [
+    {
+      "zero_based_index": 131,
+      "cell_type": "code",
+      "source": [
+        "channels_df = pd.read_csv(\"/home/tom.chartrand/projects/human_l1/L1_homologous_channel_cells.csv\", index_col=1)\n",
+        "channels_df.head()"
+      ],
+      "saved_text_outputs": [
+        "                                       Unnamed: 0  total_v_half  total_slope  \\\ncell_name                                                                      \nH19.03.305.11.10.01.06                         11     -6.370183    13.678684   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02          52           NaN          NaN   \nH19.03.319.11.04.01.01                         54    -10.453496     9.909890   \nH19.03.323.11.04.01.05                         77      1.428486    14.016928   \nH19.06.351.11.16.02.03                        125     15.516560    10.017801   \n\n                                       slow_v_half  slow_slope  fast_v_half  \\\ncell_name                                                                     \nH19.03.305.11.10.01.06                         NaN         NaN     7.456774   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02          NaN         NaN          NaN   \nH19.03.319.11.04.01.01                  -18.446655   11.155533     2.644184   \nH19.03.323.11.04.01.05                         NaN         NaN   -40.481452   \nH19.06.351.11.16.02.03                    9.238993   11.119369     4.466508   \n\n                                       fast_slope  sus_v_half  sus_slope  \\\ncell_name                                                                  \nH19.03.305.11.10.01.06                  17.809239         NaN        NaN   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02         NaN         NaN        NaN   \nH19.03.319.11.04.01.01                  15.032388   33.617053  13.161699   \nH19.03.323.11.04.01.05                  44.257497         NaN        NaN   \nH19.06.351.11.16.02.03                  59.810200   -3.398264   2.273635   \n\n                                       total_peak_current  \\\ncell_name                                                   \nH19.03.305.11.10.01.06                         864.770813   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                 NaN   \nH19.03.319.11.04.01.01                        1041.547607   \nH19.03.323.11.04.01.05                         511.423248   \nH19.06.351.11.16.02.03                        1598.805298   \n\n                                       total_current_density  \\\ncell_name                                                      \nH19.03.305.11.10.01.06                              6.744556   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                    NaN   \nH19.03.319.11.04.01.01                              5.805377   \nH19.03.323.11.04.01.05                              2.604785   \nH19.06.351.11.16.02.03                              7.144319   \n\n                                       total_conductance  \\\ncell_name                                                  \nH19.03.305.11.10.01.06                          5.086887   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                NaN   \nH19.03.319.11.04.01.01                          6.126751   \nH19.03.323.11.04.01.05                          3.008372   \nH19.06.351.11.16.02.03                          9.404737   \n\n                                       total_conductance_density  \\\ncell_name                                                          \nH19.03.305.11.10.01.06                                  0.039674   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                        NaN   \nH19.03.319.11.04.01.01                                  0.034149   \nH19.03.323.11.04.01.05                                  0.015322   \nH19.06.351.11.16.02.03                                  0.042025   \n\n                                       slow_peak_current  \\\ncell_name                                                  \nH19.03.305.11.10.01.06                               NaN   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                NaN   \nH19.03.319.11.04.01.01                        608.312988   \nH19.03.323.11.04.01.05                               NaN   \nH19.06.351.11.16.02.03                       1400.537842   \n\n                                       slow_current_density  slow_conductance  \\\ncell_name                                                                       \nH19.03.305.11.10.01.06                                  NaN               NaN   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                   NaN               NaN   \nH19.03.319.11.04.01.01                             3.390614          3.578312   \nH19.03.323.11.04.01.05                                  NaN               NaN   \nH19.06.351.11.16.02.03                             6.258353          8.238458   \n\n                                       slow_conductance_density  \\\ncell_name                                                         \nH19.03.305.11.10.01.06                                      NaN   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                       NaN   \nH19.03.319.11.04.01.01                                 0.019945   \nH19.03.323.11.04.01.05                                      NaN   \nH19.06.351.11.16.02.03                                 0.036814   \n\n                                       fast_peak_current  \\\ncell_name                                                  \nH19.03.305.11.10.01.06                        557.171082   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                NaN   \nH19.03.319.11.04.01.01                        561.033752   \nH19.03.323.11.04.01.05                        322.330353   \nH19.06.351.11.16.02.03                        439.679016   \n\n                                       fast_current_density  fast_conductance  \\\ncell_name                                                                       \nH19.03.305.11.10.01.06                             4.345511          3.277477   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                   NaN               NaN   \nH19.03.319.11.04.01.01                             3.127089          3.300199   \nH19.03.323.11.04.01.05                             1.641696          1.896061   \nH19.06.351.11.16.02.03                             1.964721          2.586347   \n\n                                       fast_conductance_density organism  \\\ncell_name                                                                  \nH19.03.305.11.10.01.06                                 0.025562    human   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02                       NaN    mouse   \nH19.03.319.11.04.01.01                                 0.018395    human   \nH19.03.323.11.04.01.05                                 0.009657    human   \nH19.06.351.11.16.02.03                                 0.011557    human   \n\n                                                      Tree_first_cl Tree_call  \\\ncell_name                                                                       \nH19.03.305.11.10.01.06                  Inh L1 SST CHRNA4 (ADARB2+)     PoorQ   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02             Lamp5 Plch2 Dock5      Core   \nH19.03.319.11.04.01.01                    Inh L1 SST NMBR (ADARB2+)      Core   \nH19.03.323.11.04.01.05                 Inh L1-2 GAD1 MC4R (ADARB2+)        I1   \nH19.06.351.11.16.02.03                           Inh L1-2 LAMP5 DBP        I2   \n\n                                                             cell_name_label  \\\ncell_name                                                                      \nH19.03.305.11.10.01.06                                H19.03.305.11.10.01.06   \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02  Ndnf-IRES2-dgCre;Ai14-470195.04.02.02   \nH19.03.319.11.04.01.01                                H19.03.319.11.04.01.01   \nH19.03.323.11.04.01.05                                H19.03.323.11.04.01.05   \nH19.06.351.11.16.02.03                                H19.06.351.11.16.02.03   \n\n                                      Tree_first_cl_color L1_homologous_type  \ncell_name                                                                     \nH19.03.305.11.10.01.06                            #73FF7B               Rxrg  \nNdnf-IRES2-dgCre;Ai14-470195.04.02.02             #FF7290              Lamp5  \nH19.03.319.11.04.01.01                            #3DCC52              Lamp5  \nH19.03.323.11.04.01.05                            #179935               Rxrg  \nH19.06.351.11.16.02.03                            #00FF50              Lamp5  "
+      ]
+    },
+    {
+      "zero_based_index": 132,
+      "cell_type": "code",
+      "source": [
+        "channels = combined_morph.join(channels_df, on='cell_name', rsuffix='_r', how='inner')\n",
+        "channels = channels.query('homology_type!=\"L1 VIP\"')\n",
+        "channels.homology_type.cat.remove_unused_categories(inplace=True)"
+      ],
+      "saved_text_outputs": []
+    },
+    {
+      "zero_based_index": 133,
+      "cell_type": "code",
+      "source": [
+        "channels.groupby(['homology_type','species']).slow_conductance_density.apply(lambda x: x.notna().sum())"
+      ],
+      "saved_text_outputs": [
+        "homology_type  species\nLAMP5          human      7.0\n               mouse      2.0\nMC4R           human      2.0\n               mouse      NaN\nPAX6           human      1.0\n               mouse      NaN\nName: slow_conductance_density, dtype: float64"
+      ]
+    },
+    {
+      "zero_based_index": 134,
+      "cell_type": "code",
+      "source": [
+        "channels.groupby(['homology_type','species']).fast_conductance_density.apply(lambda x: x.notna().sum())"
+      ],
+      "saved_text_outputs": [
+        "homology_type  species\nLAMP5          human      9.0\n               mouse      4.0\nMC4R           human      4.0\n               mouse      NaN\nPAX6           human      2.0\n               mouse      NaN\nName: fast_conductance_density, dtype: float64"
+      ]
+    },
+    {
+      "zero_based_index": 135,
+      "cell_type": "code",
+      "source": [
+        "channels.groupby(['homology_type','species']).total_conductance_density.apply(lambda x: x.notna().sum())"
+      ],
+      "saved_text_outputs": [
+        "homology_type  species\nLAMP5          human      10.0\n               mouse       5.0\nMC4R           human       5.0\n               mouse       NaN\nPAX6           human       4.0\n               mouse       NaN\nName: total_conductance_density, dtype: float64"
+      ]
+    },
+    {
+      "zero_based_index": 136,
+      "cell_type": "code",
+      "source": [
+        "y = \"fast_conductance_density\"\n",
+        "plot.plot_nested_comparisons(data=channels, x='homology_type', y=y, compare='species', \n",
+        "                   palette=species_palette, size=7)\n",
+        "plt.xlabel(None)\n",
+        "plt.ylabel(None)\n",
+        "plt.title(\"fast K+ cond. density ($nS/\\mu m^2$)\")\n",
+        "save_plot_multiple(figdir/'f2_k_channel_boxplot', ['pdf','svg'])"
+      ],
+      "saved_text_outputs": [
+        "<Figure size 288x180 with 1 Axes>"
+      ]
+    },
+    {
+      "zero_based_index": 137,
+      "cell_type": "code",
+      "source": [
+        "y = \"slow_conductance_density\"\n",
+        "plot.box_strip(data=channels, x='homology_type', y=y, hue='species', \n",
+        "                   palette=species_palette, dodge=True, legend=False, notch=False, size=10)"
+      ],
+      "saved_text_outputs": [
+        "<Figure size 288x180 with 1 Axes>"
+      ]
+    },
+    {
+      "zero_based_index": 138,
+      "cell_type": "code",
+      "source": [
+        "y = \"total_conductance_density\"\n",
+        "plot.plot_nested_comparisons(data=channels, x='homology_type', y=y, hue='species', \n",
+        "                   palette=species_palette, dodge=True, legend=False, notch=False, size=10)"
+      ],
+      "saved_text_outputs": [
+        "<Figure size 288x180 with 1 Axes>"
+      ]
+    }
+  ]
+}

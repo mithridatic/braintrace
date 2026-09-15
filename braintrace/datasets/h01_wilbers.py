@@ -1,8 +1,12 @@
-"""Wilbers 2023 human cortical channel kinetics in millivolts and milliseconds.
+"""Wilbers 2023 cortical channel models in millivolts and milliseconds.
 
 Source: doi:10.34894/L5J0SD, version 3.0, Current_clamp/mod files
 318563 (sodium) and 318566 (potassium), CC0. These are population current
 models, not molecular channel subtype assignments or H01 measurements.
+The published human-labeled potassium model fitted its inactivation/recovery
+kinetics to pooled human and mouse measurements (paper Methods, eade3300).
+It is therefore not a human-only kinetic source. Sodium kinetics were fitted
+separately by species at 25 C; Q10=2.3 is not independently qualified here.
 The source's singularity guard is replaced with its analytic limit.
 """
 

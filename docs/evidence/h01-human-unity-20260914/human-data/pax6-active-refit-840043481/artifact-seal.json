@@ -1,0 +1,126 @@
+{
+  "physiology_qualified": false,
+  "scores_promoted": false,
+  "files": [
+    {
+      "bytes": 194786,
+      "sha256": "be997e31f62bc5bdab79ee562bfd3dbe1af6fa2727a1a10f30451f3835a74a45",
+      "path": "conditioning.png"
+    },
+    {
+      "bytes": 6513,
+      "sha256": "a9d91e90ed716f1069dddc8cd299a8ba240c33487907a2dd8aabdcd7679638ec",
+      "path": "coverage.json"
+    },
+    {
+      "bytes": 4240,
+      "sha256": "01da2a64be6ab057cdee17481a4fb82f8fe66a77f211c7328b3acead6b4658f5",
+      "path": "decision.json"
+    },
+    {
+      "bytes": 187552,
+      "sha256": "2bfd1a001e55310fb34bc3ee5e53e46bea432da9de095a6d73b5608bd4396aa7",
+      "path": "depolarization.png"
+    },
+    {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "fit-stderr.txt"
+    },
+    {
+      "bytes": 4093,
+      "sha256": "86fbaf8c7ce409259c006e879aec1150a933e7affea013f21eb42adc6c4be245",
+      "path": "fit-stdout.txt"
+    },
+    {
+      "bytes": 167,
+      "sha256": "917cca7b301a057b58d0ce22bf8e564c7c7e6c3a1379493fb341b7ef62758c36",
+      "path": "fit-terminal.json"
+    },
+    {
+      "bytes": 5735,
+      "sha256": "40d1644988a5557f90aad7a6810a530729143496ac42871139a559942089d46b",
+      "path": "fit.py"
+    },
+    {
+      "bytes": 2143,
+      "sha256": "85a2e7fc442674561113cf4549cda4ca53bdb72d042a3e3d43ef9f3e88ee82eb",
+      "path": "frozen-candidate.json"
+    },
+    {
+      "bytes": 11550,
+      "sha256": "538d3079f865354d642bd344e1783a8c58f990af43c1ab48d517aa57cb32d857",
+      "path": "progress.jsonl"
+    },
+    {
+      "bytes": 5274,
+      "sha256": "a3ac366318ed105370ac3df151f8c6239d0a080cc59de22f805640e8712e7748",
+      "path": "README.md"
+    },
+    {
+      "bytes": 227481,
+      "sha256": "ffb7e15543061bfd890bd6fcd43d005adf5daab1679c9eb1ee80ab1d458b0637",
+      "path": "recovery-onsets.png"
+    },
+    {
+      "bytes": 186474,
+      "sha256": "3f46f812ce88bcdec935f813e3b9659ffaa052c894ed734e6ce34b43b09e3067",
+      "path": "recovery.png"
+    },
+    {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "review-stderr.txt"
+    },
+    {
+      "bytes": 3222,
+      "sha256": "1bfe73ff1e296696e354c243f2bb414a2564a76a1d7b996aff201cfac268fad4",
+      "path": "review-stdout.txt"
+    },
+    {
+      "bytes": 170,
+      "sha256": "276aa50e12176aa4f0dbb9673bfe386825b708cbdd6e40aa3345783226d6718c",
+      "path": "review-terminal.json"
+    },
+    {
+      "bytes": 7435,
+      "sha256": "16f214f08ddd1bb0cabaf41e3bab2ef1f271d4bfc8f1fb9d436ba5aebbf06b56",
+      "path": "review.py"
+    },
+    {
+      "bytes": 1060,
+      "sha256": "2f2cacbe340197f4229da8d75798fff480d151f3fbd1c7bba75185c24bf9f626",
+      "path": "run.py"
+    },
+    {
+      "bytes": 190605,
+      "sha256": "36832b9a477d2620315457e8199aa469a505269e055c39c6ef2b782b030d7a46",
+      "path": "tails.png"
+    },
+    {
+      "bytes": 17100,
+      "sha256": "168117e47a1baff62a4e4a910fc289595428e1b9ef3e5a1b1d999a56e3d15d50",
+      "path": "tests.xml"
+    },
+    {
+      "bytes": 106229,
+      "sha256": "60c469bdf2f45bd20eb778766ad5fe8d363cda26c94fbb80aa90f7be7d134b5a",
+      "path": "training-inputs.json"
+    },
+    {
+      "bytes": 23211378,
+      "sha256": "759430373bf6cb0a3d1a63bb0bf9ead33b0b8e5dc5344270d0585281f9a75b72",
+      "path": "training-predictions.npz"
+    },
+    {
+      "bytes": 4737821,
+      "sha256": "454f40e7e8ecdf8659afff66aa66eeaa7c6ff2c7df4566fe8b79a97dce09fbaf",
+      "path": "training-source.npz"
+    },
+    {
+      "bytes": 267,
+      "sha256": "6a6ab77d4ce537eb7ca7d1562501c24db42626592d12c779dcf3cec7e10376ce",
+      "path": "verification.json"
+    }
+  ]
+}

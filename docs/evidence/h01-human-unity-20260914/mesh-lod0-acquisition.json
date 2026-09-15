@@ -1,0 +1,1453 @@
+{
+  "cell_id": "955432427",
+  "lod": 0,
+  "num_lods": 4,
+  "payload_bytes": 2655615,
+  "max_mesh_bytes": 67108864,
+  "fragments": 155,
+  "nonempty_fragments": 154,
+  "fragment_sizes_bytes": [
+    3299,
+    6406,
+    35456,
+    7857,
+    17287,
+    26129,
+    483,
+    2399,
+    20364,
+    2588,
+    4322,
+    17549,
+    1146,
+    13640,
+    19828,
+    9478,
+    20803,
+    2340,
+    29286,
+    8165,
+    881,
+    18128,
+    437,
+    29454,
+    1995,
+    20170,
+    3101,
+    202123,
+    38584,
+    9113,
+    28766,
+    8373,
+    1904,
+    3822,
+    23391,
+    19561,
+    60476,
+    21843,
+    6793,
+    3745,
+    5866,
+    18731,
+    25098,
+    306,
+    17001,
+    0,
+    3646,
+    31898,
+    16442,
+    3299,
+    1823,
+    16759,
+    110338,
+    4777,
+    20378,
+    6676,
+    74160,
+    57915,
+    161,
+    30080,
+    28343,
+    777,
+    32173,
+    2472,
+    89110,
+    11085,
+    10324,
+    32037,
+    4840,
+    33750,
+    30268,
+    4253,
+    5392,
+    2225,
+    22271,
+    13428,
+    17474,
+    27252,
+    33709,
+    3028,
+    4818,
+    1378,
+    1467,
+    29858,
+    20166,
+    56769,
+    18563,
+    5245,
+    57228,
+    31901,
+    14669,
+    13687,
+    33672,
+    59667,
+    66727,
+    21149,
+    31581,
+    2204,
+    7899,
+    1376,
+    14864,
+    8965,
+    10144,
+    37125,
+    4109,
+    11069,
+    682,
+    7968,
+    5121,
+    33995,
+    26329,
+    15869,
+    1603,
+    1951,
+    11157,
+    13731,
+    438,
+    31170,
+    2530,
+    3265,
+    8773,
+    2270,
+    1189,
+    798,
+    9360,
+    10710,
+    1846,
+    5109,
+    7312,
+    5530,
+    27751,
+    662,
+    22048,
+    13349,
+    2527,
+    7688,
+    277,
+    13819,
+    13012,
+    11678,
+    37716,
+    18592,
+    12132,
+    1109,
+    1461,
+    1157,
+    2229,
+    25174,
+    14294,
+    10328,
+    8782,
+    17345,
+    10722,
+    2319,
+    3388
+  ],
+  "fragment_positions": [
+    [
+      154,
+      21,
+      1
+    ],
+    [
+      155,
+      21,
+      1
+    ],
+    [
+      155,
+      22,
+      1
+    ],
+    [
+      155,
+      23,
+      1
+    ],
+    [
+      156,
+      23,
+      1
+    ],
+    [
+      156,
+      24,
+      1
+    ],
+    [
+      157,
+      24,
+      1
+    ],
+    [
+      156,
+      25,
+      1
+    ],
+    [
+      157,
+      25,
+      1
+    ],
+    [
+      157,
+      26,
+      1
+    ],
+    [
+      158,
+      26,
+      1
+    ],
+    [
+      158,
+      27,
+      1
+    ],
+    [
+      156,
+      24,
+      2
+    ],
+    [
+      157,
+      25,
+      2
+    ],
+    [
+      157,
+      26,
+      2
+    ],
+    [
+      158,
+      26,
+      2
+    ],
+    [
+      158,
+      27,
+      2
+    ],
+    [
+      159,
+      27,
+      2
+    ],
+    [
+      155,
+      29,
+      2
+    ],
+    [
+      155,
+      28,
+      3
+    ],
+    [
+      155,
+      29,
+      3
+    ],
+    [
+      155,
+      30,
+      2
+    ],
+    [
+      156,
+      30,
+      1
+    ],
+    [
+      156,
+      31,
+      1
+    ],
+    [
+      158,
+      31,
+      0
+    ],
+    [
+      159,
+      30,
+      1
+    ],
+    [
+      158,
+      31,
+      1
+    ],
+    [
+      159,
+      31,
+      1
+    ],
+    [
+      159,
+      28,
+      2
+    ],
+    [
+      159,
+      29,
+      2
+    ],
+    [
+      156,
+      30,
+      2
+    ],
+    [
+      156,
+      31,
+      2
+    ],
+    [
+      157,
+      31,
+      2
+    ],
+    [
+      157,
+      31,
+      3
+    ],
+    [
+      159,
+      30,
+      2
+    ],
+    [
+      158,
+      31,
+      2
+    ],
+    [
+      159,
+      31,
+      2
+    ],
+    [
+      158,
+      31,
+      3
+    ],
+    [
+      163,
+      25,
+      3
+    ],
+    [
+      162,
+      27,
+      2
+    ],
+    [
+      162,
+      26,
+      3
+    ],
+    [
+      163,
+      26,
+      3
+    ],
+    [
+      162,
+      27,
+      3
+    ],
+    [
+      160,
+      29,
+      1
+    ],
+    [
+      161,
+      29,
+      1
+    ],
+    [
+      162,
+      29,
+      0
+    ],
+    [
+      160,
+      30,
+      0
+    ],
+    [
+      161,
+      30,
+      0
+    ],
+    [
+      160,
+      31,
+      0
+    ],
+    [
+      161,
+      31,
+      0
+    ],
+    [
+      160,
+      30,
+      1
+    ],
+    [
+      161,
+      30,
+      1
+    ],
+    [
+      160,
+      31,
+      1
+    ],
+    [
+      161,
+      31,
+      1
+    ],
+    [
+      162,
+      30,
+      0
+    ],
+    [
+      161,
+      28,
+      2
+    ],
+    [
+      160,
+      29,
+      2
+    ],
+    [
+      161,
+      29,
+      2
+    ],
+    [
+      161,
+      28,
+      3
+    ],
+    [
+      160,
+      29,
+      3
+    ],
+    [
+      162,
+      28,
+      2
+    ],
+    [
+      162,
+      29,
+      2
+    ],
+    [
+      162,
+      28,
+      3
+    ],
+    [
+      163,
+      28,
+      3
+    ],
+    [
+      160,
+      30,
+      2
+    ],
+    [
+      160,
+      31,
+      2
+    ],
+    [
+      160,
+      30,
+      3
+    ],
+    [
+      153,
+      33,
+      0
+    ],
+    [
+      154,
+      32,
+      0
+    ],
+    [
+      155,
+      32,
+      0
+    ],
+    [
+      154,
+      33,
+      0
+    ],
+    [
+      155,
+      33,
+      0
+    ],
+    [
+      152,
+      34,
+      0
+    ],
+    [
+      153,
+      34,
+      0
+    ],
+    [
+      153,
+      32,
+      2
+    ],
+    [
+      152,
+      33,
+      2
+    ],
+    [
+      153,
+      33,
+      2
+    ],
+    [
+      154,
+      32,
+      2
+    ],
+    [
+      155,
+      32,
+      2
+    ],
+    [
+      154,
+      33,
+      2
+    ],
+    [
+      155,
+      33,
+      2
+    ],
+    [
+      154,
+      32,
+      3
+    ],
+    [
+      155,
+      32,
+      3
+    ],
+    [
+      152,
+      34,
+      2
+    ],
+    [
+      152,
+      35,
+      2
+    ],
+    [
+      156,
+      32,
+      0
+    ],
+    [
+      157,
+      32,
+      0
+    ],
+    [
+      156,
+      32,
+      1
+    ],
+    [
+      157,
+      32,
+      1
+    ],
+    [
+      158,
+      32,
+      0
+    ],
+    [
+      159,
+      32,
+      0
+    ],
+    [
+      158,
+      33,
+      0
+    ],
+    [
+      159,
+      33,
+      0
+    ],
+    [
+      158,
+      32,
+      1
+    ],
+    [
+      159,
+      32,
+      1
+    ],
+    [
+      158,
+      33,
+      1
+    ],
+    [
+      159,
+      33,
+      1
+    ],
+    [
+      156,
+      34,
+      0
+    ],
+    [
+      157,
+      34,
+      0
+    ],
+    [
+      156,
+      35,
+      0
+    ],
+    [
+      157,
+      35,
+      0
+    ],
+    [
+      156,
+      34,
+      1
+    ],
+    [
+      158,
+      34,
+      0
+    ],
+    [
+      159,
+      34,
+      0
+    ],
+    [
+      159,
+      35,
+      0
+    ],
+    [
+      158,
+      34,
+      1
+    ],
+    [
+      159,
+      34,
+      1
+    ],
+    [
+      158,
+      35,
+      1
+    ],
+    [
+      159,
+      35,
+      1
+    ],
+    [
+      156,
+      32,
+      2
+    ],
+    [
+      157,
+      32,
+      2
+    ],
+    [
+      156,
+      33,
+      2
+    ],
+    [
+      157,
+      33,
+      2
+    ],
+    [
+      157,
+      32,
+      3
+    ],
+    [
+      158,
+      32,
+      2
+    ],
+    [
+      159,
+      32,
+      2
+    ],
+    [
+      158,
+      33,
+      2
+    ],
+    [
+      159,
+      33,
+      2
+    ],
+    [
+      159,
+      32,
+      3
+    ],
+    [
+      156,
+      34,
+      2
+    ],
+    [
+      157,
+      34,
+      2
+    ],
+    [
+      157,
+      34,
+      3
+    ],
+    [
+      158,
+      34,
+      2
+    ],
+    [
+      159,
+      34,
+      2
+    ],
+    [
+      158,
+      35,
+      2
+    ],
+    [
+      159,
+      35,
+      2
+    ],
+    [
+      159,
+      36,
+      1
+    ],
+    [
+      159,
+      36,
+      2
+    ],
+    [
+      161,
+      32,
+      0
+    ],
+    [
+      160,
+      33,
+      0
+    ],
+    [
+      161,
+      33,
+      0
+    ],
+    [
+      160,
+      32,
+      1
+    ],
+    [
+      161,
+      32,
+      1
+    ],
+    [
+      160,
+      33,
+      1
+    ],
+    [
+      161,
+      33,
+      1
+    ],
+    [
+      161,
+      34,
+      0
+    ],
+    [
+      160,
+      35,
+      0
+    ],
+    [
+      162,
+      34,
+      0
+    ],
+    [
+      160,
+      33,
+      2
+    ],
+    [
+      161,
+      33,
+      2
+    ],
+    [
+      160,
+      34,
+      2
+    ],
+    [
+      160,
+      35,
+      2
+    ],
+    [
+      161,
+      35,
+      2
+    ],
+    [
+      161,
+      35,
+      3
+    ],
+    [
+      160,
+      36,
+      1
+    ],
+    [
+      161,
+      36,
+      1
+    ],
+    [
+      161,
+      37,
+      1
+    ],
+    [
+      160,
+      36,
+      2
+    ],
+    [
+      161,
+      36,
+      2
+    ],
+    [
+      161,
+      37,
+      2
+    ],
+    [
+      161,
+      36,
+      3
+    ],
+    [
+      162,
+      37,
+      2
+    ],
+    [
+      162,
+      38,
+      2
+    ],
+    [
+      163,
+      38,
+      2
+    ],
+    [
+      163,
+      38,
+      3
+    ]
+  ],
+  "manifest_shard_offset": 3572450,
+  "manifest_shard_path": "mesh/00b.shard",
+  "chunk_shape": [
+    1024.0,
+    1024.0,
+    512.0
+  ],
+  "grid_origin": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "vertex_offsets": [
+    [
+      0.5,
+      0.5,
+      0.5
+    ],
+    [
+      1.0,
+      1.0,
+      0.5
+    ],
+    [
+      2.0,
+      2.0,
+      1.0
+    ],
+    [
+      4.0,
+      4.0,
+      2.0
+    ]
+  ],
+  "lod_scales": [
+    1.0,
+    2.0,
+    4.0,
+    8.0
+  ],
+  "volume_metadata": {
+    "@type": "neuroglancer_multiscale_volume",
+    "data_type": "uint64",
+    "num_channels": 1,
+    "scales": [
+      {
+        "chunk_sizes": [
+          [
+            128,
+            128,
+            32
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          16,
+          16,
+          4
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "8.0x8.0x33.0",
+        "resolution": [
+          8,
+          8,
+          33
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 6,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 17
+        },
+        "size": [
+          515892,
+          356400,
+          5293
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            128,
+            128,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          4
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "16.0x16.0x33.0",
+        "resolution": [
+          16,
+          16,
+          33
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 6,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 14
+        },
+        "size": [
+          257946,
+          178200,
+          5293
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "32.0x32.0x33.0",
+        "resolution": [
+          32,
+          32,
+          33
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 6,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 14
+        },
+        "size": [
+          128973,
+          89100,
+          5293
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "64.0x64.0x66.0",
+        "resolution": [
+          64,
+          64,
+          66
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 6,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 11
+        },
+        "size": [
+          64487,
+          44550,
+          2647
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "128.0x128.0x132.0",
+        "resolution": [
+          128,
+          128,
+          132
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 6,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 8
+        },
+        "size": [
+          32244,
+          22275,
+          1324
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "256.0x256.0x264.0",
+        "resolution": [
+          256,
+          256,
+          264
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 6,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 5
+        },
+        "size": [
+          16122,
+          11138,
+          662
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "512.0x512.0x528.0",
+        "resolution": [
+          512,
+          512,
+          528
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 6,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 2
+        },
+        "size": [
+          8061,
+          5569,
+          331
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "1024.0x1024.0x1056.0",
+        "resolution": [
+          1024,
+          1024,
+          1056
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 5,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 0
+        },
+        "size": [
+          4031,
+          2785,
+          166
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "2048.0x2048.0x2112.0",
+        "resolution": [
+          2048,
+          2048,
+          2112
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 2,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 9,
+          "shard_bits": 0
+        },
+        "size": [
+          2016,
+          1393,
+          83
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "4096.0x4096.0x4224.0",
+        "resolution": [
+          4096,
+          4096,
+          4224
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 0,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 8,
+          "shard_bits": 0
+        },
+        "size": [
+          1008,
+          697,
+          42
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "8192.0x8192.0x8448.0",
+        "resolution": [
+          8192,
+          8192,
+          8448
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 0,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 6,
+          "shard_bits": 0
+        },
+        "size": [
+          504,
+          349,
+          21
+        ]
+      },
+      {
+        "chunk_sizes": [
+          [
+            64,
+            64,
+            64
+          ]
+        ],
+        "compressed_segmentation_block_size": [
+          8,
+          8,
+          8
+        ],
+        "encoding": "compressed_segmentation",
+        "key": "16384.0x16384.0x16896.0",
+        "resolution": [
+          16384,
+          16384,
+          16896
+        ],
+        "sharding": {
+          "@type": "neuroglancer_uint64_sharded_v1",
+          "data_encoding": "gzip",
+          "hash": "identity",
+          "minishard_bits": 0,
+          "minishard_index_encoding": "gzip",
+          "preshift_bits": 4,
+          "shard_bits": 0
+        },
+        "size": [
+          252,
+          175,
+          11
+        ]
+      }
+    ],
+    "type": "segmentation",
+    "mesh": "mesh",
+    "skeletons": "skeletons",
+    "segment_properties": "segment_properties"
+  },
+  "mesh_metadata": {
+    "@type": "neuroglancer_multilod_draco",
+    "lod_scale_multiplier": 1,
+    "sharding": {
+      "@type": "neuroglancer_uint64_sharded_v1",
+      "data_encoding": "gzip",
+      "hash": "murmurhash3_x86_128",
+      "minishard_bits": 8,
+      "minishard_index_encoding": "gzip",
+      "preshift_bits": 6,
+      "shard_bits": 10
+    },
+    "transform": [
+      16,
+      0,
+      0,
+      0,
+      0,
+      16,
+      0,
+      0,
+      0,
+      0,
+      33,
+      0
+    ],
+    "vertex_quantization_bits": 16
+  },
+  "vertices_unit": "nm",
+  "transform_applied_by": "cloudvolume mesh decoder",
+  "domain": "whole released segment; no selected-SWC-component correspondence yet",
+  "physiology": "unqualified",
+  "source": "https://h01-release.storage.googleapis.com/data/20210601/proofread_104",
+  "versions": {
+    "cloud-volume": "12.14.4",
+    "DracoPy": "1.7.0",
+    "numpy": "2.5.3"
+  },
+  "array_sha256": "4e7811eb037323147c6eff0c220c213c42e3ed60a07b220db5c86876fbcd6c75"
+}

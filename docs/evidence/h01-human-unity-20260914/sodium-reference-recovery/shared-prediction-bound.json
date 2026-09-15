@@ -1,0 +1,41 @@
+{
+  "parts": [
+    {
+      "voltage_mv": -90.0,
+      "n": 19,
+      "human_mean_ms": 5.965129484758476,
+      "prediction_ms": 6.004231335086407,
+      "within_recording_population_sse": 94.57617698375375,
+      "shared_prediction_bias_sse": 0.02905013928229078
+    },
+    {
+      "voltage_mv": -85.0,
+      "n": 19,
+      "human_mean_ms": 8.444719401476545,
+      "prediction_ms": 8.349770362795535,
+      "within_recording_population_sse": 207.67332152382423,
+      "shared_prediction_bias_sse": 0.1712910789825112
+    },
+    {
+      "voltage_mv": -80.0,
+      "n": 19,
+      "human_mean_ms": 11.854356253164632,
+      "prediction_ms": 12.154143908981336,
+      "within_recording_population_sse": 389.5173803948358,
+      "shared_prediction_bias_sse": 1.7075801330214204
+    },
+    {
+      "voltage_mv": -75.0,
+      "n": 19,
+      "human_mean_ms": 17.649168963090926,
+      "prediction_ms": 17.556271712811018,
+      "within_recording_population_sse": 1140.0496908714726,
+      "shared_prediction_bias_sse": 0.1639680830817884
+    }
+  ],
+  "unrestricted_shared_prediction_minimum_rmse_ms": 4.909465307168182,
+  "published_model_rmse_ms": 4.912240965727534,
+  "maximum_possible_shared_prediction_rmse_reduction_fraction": 0.0005650493489055552,
+  "diagnostic_uses_all_76_observations": true,
+  "independent_validation": false
+}

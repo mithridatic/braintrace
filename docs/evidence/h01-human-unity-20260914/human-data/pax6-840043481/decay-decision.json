@@ -1,0 +1,21 @@
+{
+  "fits": [
+    {
+      "control": 79,
+      "source_json_sha256": "3124edffc07921a4a0d6d4e153f83ac650008cee0ee13861a382c9cdd7b2a9d5",
+      "boundary_limited": true,
+      "accepted_for_kinetic_deployment": false,
+      "reason": "Descriptive envelope only; offset reaches registered lower bound."
+    },
+    {
+      "control": 88,
+      "source_json_sha256": "12403260f4bf881e1989593da31a693686c3cc16601c70e2e95eebcfa6c70a83",
+      "boundary_limited": true,
+      "accepted_for_kinetic_deployment": false,
+      "reason": "Descriptive envelope only; offset reaches registered lower bound."
+    }
+  ],
+  "external_currents_opened": false,
+  "next_requirement": "Joint constraints from prepulse and recovery protocols",
+  "scores_promoted": false
+}

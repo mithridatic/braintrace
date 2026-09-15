@@ -1,0 +1,22 @@
+{
+  "study_doi": "10.1126/science.adf0805",
+  "methods_page": "12 of 18",
+  "primary_url": "https://research.vu.nl/ws/files/288952685/science.adf0805_Morphoelectric_and_transcriptomic_divergence_of_the_layer_1_interneuron_repertoire_in_human_versus_mouse_neocortex.pdf",
+  "access": "Primary PDF text retrieved through web search index; direct binary download returned HTTP 403. No PDF binary hash is claimed.",
+  "specimen_id": "811953283",
+  "nwb_sha256": "004f27f306180bd610ba2439e600f688c11be24adf5cea2a1663a22ba0336af6",
+  "recording_reference": "uncorrected for reported liquid junction potential",
+  "reported_liquid_junction_potential_mv": -14.0,
+  "applied_voltage_correction_mv": null,
+  "bath_temperature_protocol_range_c": [
+    32.0,
+    34.0
+  ],
+  "exact_specimen_temperature_c": null,
+  "filter_bessel_hz": 10000,
+  "sample_rate_hz": 50000,
+  "protocol_reference_resolved": true,
+  "signed_voltage_transformation_qualified": false,
+  "human_l1_channel_kinetics_qualified": false,
+  "scores_promoted": false
+}

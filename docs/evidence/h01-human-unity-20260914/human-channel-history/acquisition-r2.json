@@ -1,0 +1,77 @@
+{
+  "version_metadata_sha256": "84a387732c5326a35a1bec46d0dc2f4746df357309274f6f6e04d30d79af3b1d",
+  "files": [
+    {
+      "id": 318532,
+      "file": "318532-data_fig3.xlsx",
+      "bytes": 180676,
+      "sha256": "58512456c32c5ec29e1c403484714f07d15918dc709bc088f58127caaec9f4ca",
+      "published_checksum": {
+        "type": "SHA-1",
+        "value": "b76026cf9e5584d4b216413f2047cd7e77abc8ad"
+      },
+      "url": "https://dataverse.nl/api/access/datafile/318532",
+      "elapsed_seconds": 1.633687000023201
+    },
+    {
+      "id": 318547,
+      "file": "318547-channel_tools.py",
+      "bytes": 35826,
+      "sha256": "a496dd924cc489b36666db4f6cc709a664f1853c2a4578950f8ba4e68881b975",
+      "published_checksum": {
+        "type": "SHA-1",
+        "value": "c21839e8d545b2ffbf8e69839f167c376281a874"
+      },
+      "url": "https://dataverse.nl/api/access/datafile/318547",
+      "elapsed_seconds": 1.41804580000462
+    },
+    {
+      "id": 318550,
+      "file": "318550-channel_kinetics.py",
+      "bytes": 2482,
+      "sha256": "e77be00eacd0db88d518f71b720cec3fe748fed9c19dcd7fb5ea9ded2f3e2705",
+      "published_checksum": {
+        "type": "SHA-1",
+        "value": "a462fc4f9c725150c1bc83a9cf21c535d67c451f"
+      },
+      "url": "https://dataverse.nl/api/access/datafile/318550",
+      "elapsed_seconds": 1.3528346000239253
+    },
+    {
+      "id": 318548,
+      "file": "318548-fit_na_hh_cma_human.py",
+      "bytes": 3663,
+      "sha256": "ccb66f0d63514ba8eae60b17c61394630df15238cfbf67ddfb62c0d6a80c4f27",
+      "published_checksum": {
+        "type": "SHA-1",
+        "value": "3fac7eb5d25c2e02f6a3530d746de292548ef368"
+      },
+      "url": "https://dataverse.nl/api/access/datafile/318548",
+      "elapsed_seconds": 1.0068103999947198
+    },
+    {
+      "id": 318546,
+      "file": "318546-fit_k_hh_cma_human.py",
+      "bytes": 3875,
+      "sha256": "842cbfffc8031b8fa03044cd862494474f55ccc2ac2493a2cf5bc3a1fa99958c",
+      "published_checksum": {
+        "type": "SHA-1",
+        "value": "c819e59813acd70fae7af7151752bb1d8bbc7357"
+      },
+      "url": "https://dataverse.nl/api/access/datafile/318546",
+      "elapsed_seconds": 1.191891900030896
+    },
+    {
+      "id": 318529,
+      "file": "318529-Na_data_fig2.xlsx",
+      "bytes": 544224,
+      "sha256": "a360c6922a043f8f4f74476913b0f8f72b08cb881157d26c1323b7169598314f",
+      "published_checksum": {
+        "type": "SHA-1",
+        "value": "9c53e974fa5f911e144460767c11802e7e3b707c"
+      },
+      "url": "https://dataverse.nl/api/access/datafile/318529",
+      "elapsed_seconds": 2.192678600025829
+    }
+  ]
+}

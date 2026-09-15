@@ -1,0 +1,25 @@
+{
+  "full_samples": 800752,
+  "full_duration_ms": 6406.008,
+  "full_peaks": 240,
+  "sample_rate_hz": 125000,
+  "source_dtype": "float64",
+  "voltage_min_mv": -75.2373671326589,
+  "voltage_max_mv": 45.6351928710938,
+  "five_ap_source_indices": [
+    24875,
+    38375
+  ],
+  "prospective_200_ap_source_indices": [
+    0,
+    647750
+  ],
+  "five_ap_count": 5,
+  "prospective_train_ap_count": 200,
+  "peak_200_time_ms": 5177.568,
+  "peak_201_time_ms": 5330.584,
+  "gap_after_peak200_ms": 153.016,
+  "sodium_command_shift_mv": -10,
+  "original_recovery_command_acquired": false,
+  "original_measured_currents_acquired": false
+}

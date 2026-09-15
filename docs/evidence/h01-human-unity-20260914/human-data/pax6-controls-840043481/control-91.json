@@ -1,0 +1,57 @@
+{
+  "baseline_mean_pa": -11.363887949146452,
+  "holding_mv": -89.9871364235878,
+  "step_mv": 10.000000474974513,
+  "baseline_ms": [
+    35.0,
+    44.0
+  ],
+  "pulse_ms": [
+    45.0,
+    55.04
+  ],
+  "late_ms": [
+    52.0,
+    55.0
+  ],
+  "apparent_late_slope_ns": 0.319722132219803,
+  "membrane_conductance_qualified": false,
+  "sweep": 91,
+  "family": "NucVCprepulse_DA_0",
+  "absolute_start_s": 1938.643000125885,
+  "instrument": {
+    "RsComp Enable": {
+      "value": 0.0,
+      "unit": "On/Off"
+    },
+    "RsComp Correction": {
+      "value": 0.0,
+      "unit": "%"
+    },
+    "Series Resistance": {
+      "value": 0.0,
+      "unit": "MOhms"
+    },
+    "TP Steady State Resistance": {
+      "value": 3803.201171875,
+      "unit": "Mohm"
+    },
+    "Fast compensation capacitance": {
+      "value": 9.999346836653267e-12,
+      "unit": "F"
+    },
+    "Slow compensation capacitance": {
+      "value": 0.0,
+      "unit": "F"
+    }
+  },
+  "source": {
+    "path": "../pax6-conditioning-840043481/sweep-91.json",
+    "sha256": "02c9ade5052365e6e55ed2301cef0adfc992398f274711586477294e69e9f0fb"
+  },
+  "source_arrays": {
+    "path": "../pax6-conditioning-840043481/sweep-91.npz",
+    "sha256": "3a76db71743c186dc06e14ad6bc5e53e3f32c532f7dcc2b83075a5ee21b801d1"
+  },
+  "arrays_sha256": "0851a206a3601233af0f6d6a5bb28a071a8f32029c9935ae82948257916ffca5"
+}

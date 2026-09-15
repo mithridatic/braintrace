@@ -1,0 +1,41 @@
+{
+  "branch_count": 5514,
+  "cv_count": 5905,
+  "maximum_relative_area_error": 5.294464628728027e-16,
+  "maximum_relative_length_error": 3.188631828763087e-16,
+  "status": "passed",
+  "source_edge_and_cv_geometry_passed": true,
+  "region_comparison": {
+    "soma": {
+      "same_structure": true,
+      "passed": true,
+      "absolute_parameter_tolerance": 1e-12,
+      "maximum_parameter_difference": 2.765565554341265e-13,
+      "boundaries_exceeding_tolerance": 0
+    },
+    "axon": {
+      "same_structure": true,
+      "passed": true,
+      "absolute_parameter_tolerance": 1e-12,
+      "maximum_parameter_difference": 4.71289673953379e-13,
+      "boundaries_exceeding_tolerance": 0
+    },
+    "dend": {
+      "same_structure": true,
+      "passed": true,
+      "absolute_parameter_tolerance": 1e-12,
+      "maximum_parameter_difference": 4.71289673953379e-13,
+      "boundaries_exceeding_tolerance": 0
+    }
+  },
+  "cell_id": "883843993",
+  "component": 2,
+  "source_sha256": "4826b09490108456ffad79f02c58bd76cb5f8f3ac7c8af0bb015159e73580e30",
+  "directed_edges": 22742,
+  "maximum_endpoint_error_um": 0.0,
+  "duplicate_source_positions": 0,
+  "lateral_area_um2": 9550.173842518065,
+  "length_um": 6555.172587876881,
+  "arrays_sha256": "5f6bffcd40a53d9f7d0eb5e74b1434d2ec5ba60d7fb1778770a1314446b1b887",
+  "seconds": 1.0177331999875605
+}

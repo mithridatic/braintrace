@@ -1,0 +1,7 @@
+{
+  "wall_cap_seconds": 120,
+  "execution": "local CPU; no membrane simulation",
+  "exit_code": 0,
+  "timeout": false,
+  "wall_seconds": 4.574798299989197
+}

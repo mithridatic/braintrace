@@ -1,0 +1,677 @@
+{
+  "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "source_session": "840043481",
+  "source_specimen": "840043506",
+  "arrays_sha256": "4f893df47b4c528df2b62cb6a773ce6cd634233edc3990ebf44f1745ce841998",
+  "records": [
+    {
+      "sweep": 123,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-123.json",
+        "sha256": "5c2882af51f1f2374b4ce08e13a57b1262ab952a8fb1688f331e758b39271ce1"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-123.npz",
+        "sha256": "d7bd29c97314610406ce988fe7f4a48b78fb036865128ea2f8e7225556f617d1"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 60125,
+          "stop_index": 67625,
+          "onset_ms": 2405.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 67625,
+          "stop_index": 92625,
+          "onset_ms": 2705.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 4.000833176414921
+    },
+    {
+      "sweep": 124,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-124.json",
+        "sha256": "5db8bfaeeff3ee55d6c2a221a4f63ec990d136599d2d12b8044f5bfcd1ea2c65"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-124.npz",
+        "sha256": "7df13a80e867811448826911395d65e123e975cf3582bcdbeb7231bba2ca0631"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 60250,
+          "stop_index": 67750,
+          "onset_ms": 2410.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 67750,
+          "stop_index": 92750,
+          "onset_ms": 2710.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 3.751388735669285
+    },
+    {
+      "sweep": 125,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-125.json",
+        "sha256": "70ee0dfe3c2fb438f2e1a1505d8d88e8f86b3b3e7f067b36507b7f1643866669"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-125.npz",
+        "sha256": "2726037294ff15f78538a80f0189816fedf6c8a11d721719f306e957ade379f5"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 60375,
+          "stop_index": 67875,
+          "onset_ms": 2415.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 67875,
+          "stop_index": 92875,
+          "onset_ms": 2715.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 4.576388693219119
+    },
+    {
+      "sweep": 126,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-126.json",
+        "sha256": "d8abf5da37c94cc23d0493964d1855d1d755eaab09422bf68d5dd769b737043e"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-126.npz",
+        "sha256": "728cfd89ccd6fb244fdea1e5e5b859ac13d2428d7953b628f2cc43ab814667d4"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 60500,
+          "stop_index": 68000,
+          "onset_ms": 2420.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 68000,
+          "stop_index": 93000,
+          "onset_ms": 2720.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 4.529166468059655
+    },
+    {
+      "sweep": 127,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-127.json",
+        "sha256": "140767d78ecf02d2cec4d105c57c054aaa468439b8152f301b0bb09192ae8632"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-127.npz",
+        "sha256": "072a0b86797909618ba02cd01ababebbc0f96de4bd2cdd2c2682517c571f5e5f"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 60625,
+          "stop_index": 68125,
+          "onset_ms": 2425.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 68125,
+          "stop_index": 93125,
+          "onset_ms": 2725.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 4.880833099306748
+    },
+    {
+      "sweep": 128,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-128.json",
+        "sha256": "f85a8bcc6570ee1545a4d485949e29304887f327908325f6681329b6e33f9d58"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-128.npz",
+        "sha256": "a32b2dcad8aacbdc5506279d466d357383dc09fa37facd240420441887b5d564"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 60750,
+          "stop_index": 68250,
+          "onset_ms": 2430.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 68250,
+          "stop_index": 93250,
+          "onset_ms": 2730.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 3.4080554149929903
+    },
+    {
+      "sweep": 129,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-129.json",
+        "sha256": "cb138bfce363488d2dec544e0f25d706fd3813135c489f689d8ca85831393a55"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-129.npz",
+        "sha256": "1a56730c324425c665e4ddf2e17b8880e1a86497017469a6c5fe9676da161f94"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 60875,
+          "stop_index": 68375,
+          "onset_ms": 2435.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 68375,
+          "stop_index": 93375,
+          "onset_ms": 2735.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 4.266110929131898
+    },
+    {
+      "sweep": 130,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-130.json",
+        "sha256": "10497f6ea48044f2905ee10519b1c08925f065cd2f76faea8ddfa3f5bf346ab3"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-130.npz",
+        "sha256": "b704b6b7b5663c92ac3f933164c772d9f8e1c110983cb7524b48b29188ba9988"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 61000,
+          "stop_index": 68500,
+          "onset_ms": 2440.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 68500,
+          "stop_index": 93500,
+          "onset_ms": 2740.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 5.417499712648479
+    },
+    {
+      "sweep": 131,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-131.json",
+        "sha256": "00c3307a90d3a24cc8ad590940849b1e0b6e3c1327a41477c3c87cb4b04ea36c"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-131.npz",
+        "sha256": "2da23a2cf0a80d28ac3534b676b3a0952c2a19ce927a04c39facb93e69558522"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 61125,
+          "stop_index": 68625,
+          "onset_ms": 2445.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 68625,
+          "stop_index": 93625,
+          "onset_ms": 2745.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 5.136666412226443
+    },
+    {
+      "sweep": 132,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-132.json",
+        "sha256": "26d407f32720ea58dd47791c055695a80a2c37b5975e446c52cd4691108c917a"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-132.npz",
+        "sha256": "8faa08b24dc5ee964be99f5eb5796be883cf8e6689c4350891e87bb0ad3900cf"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 61250,
+          "stop_index": 68750,
+          "onset_ms": 2450.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 68750,
+          "stop_index": 93750,
+          "onset_ms": 2750.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 5.689166350255173
+    },
+    {
+      "sweep": 133,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-133.json",
+        "sha256": "1ff19e1d1965d7fc9f808a93a639f97f307f61534dcd6fe5fefd40ff17f05a52"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-133.npz",
+        "sha256": "36862741e2b9b195d71ebfa7ebf1e6a1d5f7f8389c088c23e2f783a8a1994217"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 62500,
+          "stop_index": 70000,
+          "onset_ms": 2500.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 70000,
+          "stop_index": 95000,
+          "onset_ms": 2800.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 5.141666404788999
+    },
+    {
+      "sweep": 134,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-134.json",
+        "sha256": "db7d5e2188f3edf0fbbbfc39bbec4ff8d0f53116005c903b4e26bad92105f0d2"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-134.npz",
+        "sha256": "bdb680011a71394a61099aa99a11de33da4d074ce7407e352ff3db36da77f76c"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 65000,
+          "stop_index": 72500,
+          "onset_ms": 2600.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 72500,
+          "stop_index": 97500,
+          "onset_ms": 2900.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 5.1327775210218896
+    },
+    {
+      "sweep": 135,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-135.json",
+        "sha256": "23b7037229f40e3aeb7a379bc69d18c45df4ac9509ee750442b20683334f0db4"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-135.npz",
+        "sha256": "ce9306b74012fd48044de3c7e0c6fd107b6f9367cc7742bb26e7a85b6a72b12e"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 67500,
+          "stop_index": 75000,
+          "onset_ms": 2700.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 75000,
+          "stop_index": 100000,
+          "onset_ms": 3000.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 5.009999762914158
+    },
+    {
+      "sweep": 136,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-136.json",
+        "sha256": "e5f8d0694663999e75689ea708d831c69210169ce444a4b3cc7008a48b762e20"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-136.npz",
+        "sha256": "ff8552c461e5ce08fcd75b6444bf2996c34bbf8943fc350f6bbd15cb42329b83"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 70000,
+          "stop_index": 77500,
+          "onset_ms": 2800.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 77500,
+          "stop_index": 102500,
+          "onset_ms": 3100.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 6.454721878221097
+    },
+    {
+      "sweep": 137,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-137.json",
+        "sha256": "fc0d451c76a4fd86037409c63124081e1244502fb3fff588a9c411030da835f3"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-137.npz",
+        "sha256": "ac4c2f5b2bba2d207876722a2708e4fb46dbd40f1a0f9af7a9017d34e8d264bc"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 72500,
+          "stop_index": 80000,
+          "onset_ms": 2900.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 80000,
+          "stop_index": 105000,
+          "onset_ms": 3200.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 8.58222191846338
+    },
+    {
+      "sweep": 138,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-138.json",
+        "sha256": "3557bee0672673696a98776ea5fe816560ab6fc779f5876cefdbfd214923058e"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-138.npz",
+        "sha256": "c2cf1aa7f2464fb51b558bea3b03fb5fc9f2ab0b5b9427aa5356290d585acc8d"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 85000,
+          "stop_index": 92500,
+          "onset_ms": 3400.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 92500,
+          "stop_index": 117500,
+          "onset_ms": 3700.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 6.6186107344540455
+    },
+    {
+      "sweep": 139,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-139.json",
+        "sha256": "ec1f6b79cce0ba72267b35caac83a635b73114093d50eb3dfe184dd8ce2b8d8e"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-139.npz",
+        "sha256": "88e1329d0f55098d5fb58975f73733604ef6d71088d6952600d661aa47053767"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 110000,
+          "stop_index": 117500,
+          "onset_ms": 4400.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 117500,
+          "stop_index": 142500,
+          "onset_ms": 4700.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 6.535555207840594
+    },
+    {
+      "sweep": 140,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-140.json",
+        "sha256": "56abc15e1f97a83872df193a4b877981e804ab2faf257de5c1e7caa5fd322715"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-140.npz",
+        "sha256": "0ce69cbce358ed5401529e05796d2d104785cdb783621411196d35c43384ac38"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 135000,
+          "stop_index": 142500,
+          "onset_ms": 5400.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 142500,
+          "stop_index": 167500,
+          "onset_ms": 5700.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 7.186110765459064
+    },
+    {
+      "sweep": 141,
+      "source_json": {
+        "path": "../pax6-recovery-840043481/sweep-141.json",
+        "sha256": "31be8a1e5366c34a46abad23afe7fd869d66e5a7a5396855433c5ad21f29999a"
+      },
+      "source_npz": {
+        "path": "../pax6-recovery-840043481/sweep-141.npz",
+        "sha256": "21605a798bcae29df3b4c777268687df4440f1df9dc1ee952f9d8f547b93307b"
+      },
+      "windows": [
+        {
+          "window": "first",
+          "start_index": 52500,
+          "stop_index": 60000,
+          "onset_ms": 2100.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "second",
+          "start_index": 160000,
+          "stop_index": 167500,
+          "onset_ms": 6400.0,
+          "command_mv": 60.00630371272564
+        },
+        {
+          "window": "post",
+          "start_index": 167500,
+          "stop_index": 192500,
+          "onset_ms": 6700.0,
+          "command_mv": -19.993700087070465
+        }
+      ],
+      "initial_baseline_pa": 4.459999795470482
+    }
+  ],
+  "coordinate_note": "Common phases are exact sample indices / 25 kHz; original timestamps retained and checked to 1e-8 ms. No interpolation.",
+  "raw_currents_preserved": true,
+  "baseline": "same measured initial baseline subtracted from all three responses",
+  "external_response_opened": false
+}

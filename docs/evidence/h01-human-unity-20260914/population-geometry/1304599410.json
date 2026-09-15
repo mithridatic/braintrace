@@ -1,0 +1,17 @@
+{
+  "branch_count": 9169,
+  "cv_count": 9830,
+  "maximum_relative_area_error": 4.659378450348471e-16,
+  "maximum_relative_length_error": 3.0965752407543987e-16,
+  "status": "passed",
+  "cell_id": "1304599410",
+  "component": 0,
+  "source_sha256": "0b70627080666463a3e358ff63b381858cc8e143de06c7177d56e87d87f7d2f6",
+  "directed_edges": 39793,
+  "maximum_endpoint_error_um": 0.0,
+  "duplicate_source_positions": 0,
+  "lateral_area_um2": 17461.897596089846,
+  "length_um": 11589.710199717729,
+  "arrays_sha256": "98a4726b5326692551fb6a23306d1e4cabfd0711541104630a2926e67292c4b4",
+  "seconds": 1.6597732000227552
+}

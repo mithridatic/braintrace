@@ -1,0 +1,91 @@
+{
+  "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "verified_response_samples": 450000,
+  "verified_baseline_and_late_windows": 10,
+  "verified_tail_landmarks": 25,
+  "conditioning_readings": [
+    {
+      "sweep": 99,
+      "conditioning_phases_ms": [
+        10,
+        60,
+        200,
+        990
+      ],
+      "conditioning_raw_pa": [
+        729.3749360504054,
+        574.3749977049108,
+        487.4999675344681,
+        299.99999880125915
+      ],
+      "final_raw_mean_pa": -15.744166054015821
+    },
+    {
+      "sweep": 100,
+      "conditioning_phases_ms": [
+        10,
+        60,
+        200,
+        990
+      ],
+      "conditioning_raw_pa": [
+        726.8749360603948,
+        588.1249976499685,
+        465.6249676218763,
+        301.874998793767
+      ],
+      "final_raw_mean_pa": -15.635277110460848
+    },
+    {
+      "sweep": 101,
+      "conditioning_phases_ms": [
+        10,
+        60,
+        200,
+        990
+      ],
+      "conditioning_raw_pa": [
+        704.999936147803,
+        591.8749976349842,
+        459.9999676443527,
+        287.49999885120667
+      ],
+      "final_raw_mean_pa": -15.577499329946955
+    },
+    {
+      "sweep": 102,
+      "conditioning_phases_ms": [
+        10,
+        60,
+        200,
+        990
+      ],
+      "conditioning_raw_pa": [
+        716.8749361003529,
+        609.9999975625603,
+        459.9999676443527,
+        287.49999885120667
+      ],
+      "final_raw_mean_pa": -16.96333305404743
+    },
+    {
+      "sweep": 103,
+      "conditioning_phases_ms": [
+        10,
+        60,
+        200,
+        990
+      ],
+      "conditioning_raw_pa": [
+        758.7499359330286,
+        593.1249976299895,
+        465.6249676218763,
+        300.6249987987618
+      ],
+      "final_raw_mean_pa": -15.421110392515754
+    }
+  ],
+  "result": "passed",
+  "independent_validation": false,
+  "physiology_qualified": false
+}

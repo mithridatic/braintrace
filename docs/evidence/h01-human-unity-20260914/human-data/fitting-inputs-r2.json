@@ -1,0 +1,113 @@
+{
+  "status": "protocol reference resolved; mechanism qualification and fitting pending",
+  "specimen_id": "811953283",
+  "nwb_sha256": "004f27f306180bd610ba2439e600f688c11be24adf5cea2a1663a22ba0336af6",
+  "qc_sha256": "a8b4595b2a9ad364c831e8b00a9dbda7ccff1ec292a723cd91f84ae58dcca22b",
+  "calibration_candidates": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    14,
+    16
+  ],
+  "holdout_candidates": [
+    13,
+    15,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "calibration_passing_qc": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    12,
+    14,
+    16
+  ],
+  "holdout_passing_qc": [
+    13,
+    15,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "integrity_rejected_sweeps": [
+    27
+  ],
+  "not_evaluated_search_sweeps": [
+    9,
+    10,
+    11,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "voltage_clamp_setup_or_ending_checks": [
+    0,
+    1,
+    2,
+    3,
+    35,
+    36
+  ],
+  "fit_gate": "closed pending qualified voltage transformation and human mechanism kinetics; protocol reference available",
+  "liquid_junction_correction_mv": null,
+  "qualified_temperature_c": null,
+  "scores_promoted": false,
+  "supersedes": {
+    "path": "fitting-inputs.json",
+    "sha256": "4c7cefdcb052e7082dc61a42cfc10a898b47902d3d1c6c71bf96c4d664ee861f"
+  },
+  "protocol_reference": {
+    "path": "protocol-reference.json",
+    "sha256": "92fd28935ea4d3bfdb9477d65b529208812a3b0c476a9136e1ed4f29fa9c4310"
+  },
+  "channel_archive_audit": {
+    "path": "channel-archive-audit.json",
+    "sha256": "d0b184bf9dd151fa8b57b907fb2faf6864eb5c9e87ea89c2986bdf1b73c9bb9e"
+  },
+  "channel_notebook_extract": {
+    "path": "channel-notebook-extract.json",
+    "sha256": "d1274f5e0074b909dc88a6d9bab1bd9a07cbe239e751220a358997361a41f966"
+  },
+  "bath_temperature_protocol_range_c": [
+    32.0,
+    34.0
+  ],
+  "reported_liquid_junction_potential_mv": -14.0
+}

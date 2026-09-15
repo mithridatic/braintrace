@@ -1,0 +1,12 @@
+{
+  "source_conditions_verified": 133,
+  "eligible_conditions_verified": 76,
+  "published_source_rate_values_verified": 24,
+  "second_pulse_gate_values_verified": 9504,
+  "all_errors_verified": true,
+  "numerical_gate_verified": true,
+  "shared_prediction_bound_verified": true,
+  "tests_passed": 18,
+  "helper_line_coverage_percent": 100,
+  "scores_promoted": false
+}

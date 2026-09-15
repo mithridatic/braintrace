@@ -1,0 +1,33 @@
+{
+  "test_command_mv": -4.987132386304438,
+  "holding_command_mv": -89.9871364235878,
+  "conditioning_command_mv": -19.987133098766208,
+  "conditioning_window_ms": [
+    1000.0,
+    1100.0
+  ],
+  "test_window_ms": [
+    1100.0,
+    2100.0
+  ],
+  "baseline_window_ms": [
+    900.0,
+    990.0
+  ],
+  "baseline_difference_pa": -6.514167464611947,
+  "drift_correction_applied": false,
+  "ionic_isolation_qualified": false,
+  "total_sweep": 73,
+  "conditioned_sweep": 92,
+  "source_exports": [
+    {
+      "path": "sweep-73.json",
+      "sha256": "f042a5fb7eeb817832402d2b754f41aa0bc5a504cd300ca7228a601d02c5f636"
+    },
+    {
+      "path": "sweep-92.json",
+      "sha256": "e49d2c2eb91c4367f53009988a59ff0674b03a842f9b3990d6ee7a4ec394f09c"
+    }
+  ],
+  "arrays_sha256": "bea55354e858dad536cc4ed8031b79bea763d8a0c91b302f6ac72ae7674e5cc3"
+}

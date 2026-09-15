@@ -1,0 +1,56 @@
+{
+  "status": "protocol_mismatch_retained_and_human_AP_inputs_verified",
+  "source_files_verified": 4,
+  "source_csv_lossless": true,
+  "command_windows_exact": true,
+  "source_peak_counts": {
+    "full": 240,
+    "five": 5,
+    "prospective_train": 200
+  },
+  "workbook_human_rows_complete": true,
+  "verified_human_records": 16,
+  "verified_amplitude_observations": 3200,
+  "metadata_fields_preserved": true,
+  "plots_visually_inspected": [
+    "sciadv.ade3300-f4.jpg",
+    "supplement-page-7.png",
+    "supplement-page-12.png",
+    "source-voltage-windows.png",
+    "human-hwide-trajectories.png"
+  ],
+  "tests_passed": 17,
+  "helper_line_coverage_percent": 100,
+  "original_recovery_command_acquired": false,
+  "original_current_traces_acquired": false,
+  "simulation_run": false,
+  "parameters_changed": false,
+  "six_term_scores_changed": false,
+  "artifact_sha256": {
+    "318538-apclamp_tools.py": "30a73fc7caf9835cb9c0f72c1d2027756db12da060ac5ab47a3a1faa6329fe1f",
+    "318541-H_wide.csv.gz": "1daf5e27dc23b64ee8440eceed64e4b992f4b446e9191be7e9286074d2e60017",
+    "318542-apclamp_k.py": "b7f599497e38f1d611c33ac09034d8dd4c4df23801328250bb66462c4a237028",
+    "318544-apclamp_na.py": "9eaad9f75df6feb71979fce2f10edf91b6a8e7325a20889603b8f35dc14e7db1",
+    "acquisition.json": "f23f1e45fd0891e3922a58856c3c15be672c64bf48b23b40c065fddc11fc7b28",
+    "command.json": "2f780868f848183874f814a6b4f9e9b5e46421a9617eeb6a7cdff77015fdbc02",
+    "commands.npz": "e1fe2ec9d6bfe06e1243ae5f90fd9a7b5915c0b237f51cdcf51af5e963768f5f",
+    "coverage.json": "be070b01818a699a9fbee3cacfad3912f34a9ddf726367501869fe20d38ff4fe",
+    "direct-voltage-windows.json": "4f05d928fc45d8ef174ff882e5d0d736e7334697a86e5771d339b869ffcc3635",
+    "human-hwide-responses.json": "2c04fe2b45a8182e19ba7c15b9403e7b232e172615aac5b88703d4b7c6fc73ed",
+    "human-hwide-trajectories.png": "e83ff584013e69e04257bb41bee0ed5da99391f0a1917b48ceded9633ad4f603",
+    "paper.xml": "5cf3dd88a8374caba525b0193aded3431f1acac454b5a5108247a39be11ed060",
+    "plot.py": "6cd3de94b45d712e5ccee9a6e362df8a9ac69fbf1baddfdea15ba5b864579853",
+    "prepare.py": "374c1eae5507499f83431031e426fa6638b3931a6f6d320c25c348ed5316e716",
+    "README.md": "1909f6e029cc76cdba541530755c0c41fe0351ff2ff4b89b697658f7b54378df",
+    "sciadv.ade3300-f4.jpg": "079d8c2b8c4a54c45256a8b3409c472f8498d39854a98ecb32fa14e9f6d6cd50",
+    "sciadv.ade3300_sm.pdf": "dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d",
+    "source-voltage-windows.png": "6f76f9fb7eb675a8d43137f5bb524a5fbdc8d35df7f32b576c6e9dd7011c3b30",
+    "supplement-page-12.png": "a436fb7c521f2af1625b7eed901cb2969ab22c5e181faf26cc0a765f4f4feeed",
+    "supplement-page-7.png": "80cefdecd3ef186975082c2c31d7ccc49f9d5cc9388bca762e1b33f8257795da",
+    "tests.xml": "a1c8a23a02d54b5c39f2acbf34393a8c6df2cf8b747009f3ab52eb707a831fea"
+  },
+  "module_sha256": {
+    "docs/evidence/h01_ap_command.py": "120c37e2354c2c91037edcbc9713fc12da277d1ec170ccdd9183afb15dae73fb",
+    "docs/evidence/h01_ap_command_test.py": "f850120d2674baf58cabcbd5913e7b0ac5effe84ae60581555fda07a62850ab7"
+  }
+}

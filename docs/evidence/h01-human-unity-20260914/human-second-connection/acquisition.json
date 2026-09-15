@@ -1,0 +1,27 @@
+{
+  "url": "https://dataverse.nl/api/access/datafile/359655",
+  "source_metadata": {
+    "id": 359655,
+    "persistentId": "",
+    "filename": "2015_11_04_0077.abf",
+    "contentType": "application/octet-stream",
+    "friendlyType": "Unknown",
+    "filesize": 36007936,
+    "storageIdentifier": "surf://store:187a3773561-2ef3b65a1b56",
+    "rootDataFileId": -1,
+    "checksum": {
+      "type": "SHA-1",
+      "value": "ddabe5a487523726c42237dbf2fea0fac5a519e8"
+    },
+    "tabularData": false,
+    "creationDate": "2023-04-21",
+    "publicationDate": "2023-04-21",
+    "directoryLabel": "Figure2/Data_human",
+    "lastUpdateTime": "2023-04-21T13:52:50Z",
+    "fileAccessRequest": false
+  },
+  "path": ".cache\\human-paired-synapse\\2015_11_04_0077.abf",
+  "sha256": "39a77cae70f141a24b2830c4eeba7a0be43ef1cb0d8fba50cb6e1a86e045d6cd",
+  "bytes": 36007936,
+  "elapsed_seconds": 12.637419500038959
+}

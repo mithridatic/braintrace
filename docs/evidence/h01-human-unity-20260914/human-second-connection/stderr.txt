@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.worktrees\h01-human-unity\docs\evidence\h01-human-unity-20260914\human-second-connection\analyze.py", line 120, in <module>
+    calibration = [extract(s) for s in range(15)]
+                   ~~~~~~~^^^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.worktrees\h01-human-unity\docs\evidence\h01-human-unity-20260914\human-second-connection\analyze.py", line 98, in extract
+    assigned, unassigned = commanded_crossings(pre, command)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\J\Documents\Projects\connectome-agent\braintrace-source\.worktrees\h01-human-unity\docs\evidence\h01_abf_pulses.py", line 77, in commanded_crossings
+    raise ValueError('A command pulse has missing or ambiguous voltage crossings.')
+ValueError: A command pulse has missing or ambiguous voltage crossings.

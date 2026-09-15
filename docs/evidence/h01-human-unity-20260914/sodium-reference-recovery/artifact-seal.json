@@ -1,0 +1,110 @@
+{
+  "parent_commit": "76ee138d",
+  "files": [
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/318563-na_human.mod",
+      "sha256": "4dd6995c3fd0614fe7cb92a6940a393d8f92d494b4810d0f3c2ed7dbf424592b",
+      "bytes": 3711
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/318629-na_human.mod",
+      "sha256": "e23ed354aa683639bfd2ffdeae4b2544adf8c5cce6f8a4adbada42549310f2fd",
+      "bytes": 3602
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/all-human-recovery.png",
+      "sha256": "36ce341aa1d414a5e87ec3f2449f3aa6bd1fbd93fb2726cd6cab24a1d08d969d",
+      "bytes": 231183
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/analyze.py",
+      "sha256": "74637eea3a7dcd91ab8b5d44f9f96de365da316009bd2c641281c2bc4cc4f68a",
+      "bytes": 5954
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/coverage.json",
+      "sha256": "732f11e246a172d9cce74e065731c18725d3f6e31d9dc7d682da487c83b78ca6",
+      "bytes": 3207
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/model-observations.npz",
+      "sha256": "a6a744bdb550125a7fa539182d06557d06fdf7f3d806eec217a8a08019e367fe",
+      "bytes": 85369
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/model-recovery-cycles.png",
+      "sha256": "63f43faa0f65303771192c0c4d2b6c4fdf052e3d9d895262122357dd4c5c1b00",
+      "bytes": 351377
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/plot.py",
+      "sha256": "6c661544a5d8695f0713c5bd8790bc5335f837f98143c455da9626d2288070c5",
+      "bytes": 2787
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/README.md",
+      "sha256": "01af9f0f678075013cd45b87af9c3b498a44c09633a1a26cd8a76b155603dd8c",
+      "bytes": 5676
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/result.json",
+      "sha256": "4892ee588824fb8dfad7ab1ff63f6d859958f3ef265982ec90b9e98db8147b3b",
+      "bytes": 61932
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/run.py",
+      "sha256": "9f3fd85c9d1e512eac32d0c5f96004b112aa2d49e7017ce54f409eba450efcb0",
+      "bytes": 972
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/shared-prediction-bound.json",
+      "sha256": "9720e43a501764ec38fcdb700a99136ecce05a1ee2c4e0c890ee5ea79bbf96e5",
+      "bytes": 1372
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/stdout.txt",
+      "sha256": "83cb8335a4d8b63a9cb8cb2f876c6c433ddd93328d6cf9ec8ce0e30c0277a1a4",
+      "bytes": 3404
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/terminal.json",
+      "sha256": "40d2f98293fad62bf87c0f4af88c4500ea91d2218643bda87c53f3c8a5a1f1cd",
+      "bytes": 144
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/tests.xml",
+      "sha256": "230a9e6cd1916c38e4a4303d5538bccf7d9d9b996412128c0afcb6367f25b770",
+      "bytes": 2536
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/verification.json",
+      "sha256": "06838ea201af25fd4e353190e1d8bb201727fb9cedf2a993268693478eb256b1",
+      "bytes": 381
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/sodium-reference-recovery/verify.py",
+      "sha256": "6c9d96bdcb8571eb0e36330f96acf40536ac07828b03202e7fa51b833bdacb11",
+      "bytes": 5425
+    },
+    {
+      "path": "docs/evidence/h01_sodium_recovery_assay.py",
+      "sha256": "6a8aaec406a048e4d02f2e968da6a8ba39a1079c71efd35f59276213e487e002",
+      "bytes": 4575
+    },
+    {
+      "path": "docs/evidence/h01_sodium_recovery_assay_test.py",
+      "sha256": "daa55ede7c644f4b5f0ef4ff7c9258f85b20ac4a53817ea6e3e00dd5fe37f024",
+      "bytes": 2638
+    },
+    {
+      "path": "docs/specs/2026-09-14-h01-sodium-reference-recovery.md",
+      "sha256": "900a7db2c8b5f0839203478fc9694dbb29fa325515643794ebadfad41f6664c4",
+      "bytes": 2849
+    }
+  ]
+}

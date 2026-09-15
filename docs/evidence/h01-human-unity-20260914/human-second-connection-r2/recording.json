@@ -1,0 +1,38 @@
+{
+  "pair": {
+    "User": "NGA",
+    "Date": "20151104",
+    "Slice": "3",
+    "Cluster": "6",
+    "SpikeCh": "IN3",
+    "ResponseCh": "IN2",
+    "Type": "EXC",
+    "Base_Vm": "-69.97211823",
+    "Latency": "1.54",
+    "DecayTime": "6.430426979",
+    "Amplitude": "0.305727637",
+    "Risetime": "4.88",
+    "species": "Human",
+    "File/folder name": "2015_11_04_0077.abf"
+  },
+  "adc_names": [
+    "IN 0",
+    "IN 2",
+    "IN 3"
+  ],
+  "physical_adc_numbers": [
+    0,
+    2,
+    3
+  ],
+  "adc_units": [
+    "mV",
+    "mV",
+    "mV"
+  ],
+  "protocol": "Stim5Hz_3to012",
+  "recorded_datetime": "2015-11-05T00:02:40.015",
+  "sample_rate_hz": 50000,
+  "sweep_count": 30,
+  "source_sha256": "39a77cae70f141a24b2830c4eeba7a0be43ef1cb0d8fba50cb6e1a86e045d6cd"
+}

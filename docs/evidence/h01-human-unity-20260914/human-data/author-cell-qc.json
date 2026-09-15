@@ -1,0 +1,25 @@
+{
+  "specimen_id": "811953283",
+  "source_url": "https://raw.githubusercontent.com/AllenInstitute/patchseq_human_L1/7777857c1b89b19735e45fd9c9bd7493cc1d805c/data/aibs_features_E.csv",
+  "source_sha256": "96e07c20d31ec744ad14ecde0cefbb1a8637587cb2893c1949826f33cb11d88d",
+  "observations": {
+    "blowout_mv_qc": "",
+    "electrode_0_pa_qc": "-51.885623931884766",
+    "recording_date_qc": "2019-01-23 04:33:01",
+    "seal_gohm_qc": "1.6755303680000002",
+    "input_resistance_mohm_qc": "258.926544",
+    "initial_access_resistance_mohm_qc": "12.865810999999999",
+    "input_access_resistance_ratio_qc": "0.04968903844790822",
+    "fail_tags_qc": "",
+    "failed_blowout": "False",
+    "failed_electrode_0": "False",
+    "failed_seal": "False",
+    "failed_input_access_resistance": "False",
+    "failed_qc": "False",
+    "failed_fx_long_squares": "False",
+    "failed_fx_short_squares": "False",
+    "failed_fx_ramps": "False",
+    "failed_fx_chirps": "True",
+    "failed_fx_sweep_features": "False"
+  }
+}

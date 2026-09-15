@@ -7,7 +7,7 @@ drop a term it cannot fill, for the same reason the stage-15/16 scorer refuses t
 a short train cannot exhibit: dropping a requirement quietly raises the score of exactly the thing
 that fails it.
 
-Five terms, each read from a committed decision JSON:
+Six terms, read from decision evidence:
 
   donor      the donor model's accuracy against a real human recording, ten elements at 310 pA
              through the measured chain. Measured for ONE donor (B3), which supplies 28 of the
@@ -19,9 +19,9 @@ Five terms, each read from a committed decision JSON:
              synthetic probe) and the gate that does not (a driven window at a physiological
              duration with a qualified timestep).
   timestep   whether the integration step is qualified against the campaign's own 1 mV contract.
-  anatomy    whether a donor's fitted conductances still behave on H01 anatomy. Measured once,
-             and the reading is that they do not: the H01 skeleton is silent at the donor's own
-             200 pA input.
+  anatomy    whether a donor's fitted conductances behave on verified H01 anatomy. The
+             historical negative interpretation was invalidated by a conversion defect;
+             corrected geometry is verified but physiological transfer remains unmeasured.
 
 A term with no supporting evidence is reported as 0.0 with its cause, never omitted.
 """
@@ -42,6 +42,7 @@ DRIVEN_R2 = "h01-ready-104-implicit-ei-10ms-r2-launch.json"
 DTLADDER = "h01-ready-cell7196644737-implicit-decision.json"
 LADDER = "h01-timestep-ladder.json"
 ANATOMY = "h01-e-morphology/stage-1-decision.json"
+ANATOMY_CORRECTION = "h01-human-unity-20260914/conversion-correction.json"
 
 CELLS = 104
 B3_KEY = "l2-pyramidal-allen-541563728"
@@ -144,17 +145,27 @@ def timestep_term():
 
 
 def anatomy_term():
-    """Whether a donor's fitted conductances survive the move onto H01 anatomy."""
-    ana = _read(ANATOMY)
+    """Report missing valid transfer evidence after the conversion correction.
+
+    Returns
+    -------
+    dict
+        Unqualified term with corrective evidence. Geometry preservation does
+        not establish a physiological transfer pass.
+    """
+    correction = _read(ANATOMY_CORRECTION)
+    if (correction['status'] != 'passed' or correction['historical_transfer_interpretation']
+            != 'invalidated_by_conversion_defect'):
+        raise ValueError('Anatomy correction does not support withdrawing the old interpretation.')
     return _term(
-        "anatomy_transfer", 0., True,
-        f"Measured once and it fails: {ana['verdict']}. On the donor's own reconstruction the same "
-        f"parameters fire {ana['control']['count']} spikes at the same input.",
-        "The H01 skeleton is a far larger electrical load than the Allen reconstruction the fit was "
-        "made on (onset capacitance 785 pF against 125 pF; input resistance about 38 MOhm against "
-        "about 98), so at 200 pA it sits on a plateau instead of spiking. Every other term in this "
-        "ledger is conditional on this one, and this one has a negative reading.",
-        [ANATOMY])
+        "anatomy_transfer", 0., False,
+        "No valid physiological transfer reading on corrected H01 anatomy. The historical "
+        "silent run used a malformed conversion and cannot establish an inherent H01 load failure.",
+        "The diagnostic conversion collapsed H01 dendrite code 1 as soma and mislabeled "
+        "astrocyte code 2 as axon. The corrected export preserves "
+        f"{correction['nodes_checked']} nodes and {correction['edges_checked']} edges, but has "
+        "not been physiologically qualified. The historical run and its failure remain recorded.",
+        [ANATOMY_CORRECTION, ANATOMY])
 
 
 def ledger():
@@ -192,7 +203,7 @@ def report():
         "note": ("The second product is the figure obtained by counting construction as a "
                  "working simulation and setting the two unqualified terms to one. It is quoted only with "
                  "its assumptions attached; it also assumes the three rejected donors score like "
-                 "the one donor that was scored, which the anatomy term actively contradicts."),
+                 "the one donor that was scored; valid anatomy-transfer evidence remains unavailable."),
     }
 
 

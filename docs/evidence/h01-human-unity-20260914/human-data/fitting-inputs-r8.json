@@ -1,0 +1,141 @@
+{
+  "status": "Joint within-sweep state candidate fitted to both pulses and holding return; shared first-pulse state remains inadequate",
+  "specimen_id": "811953283",
+  "nwb_sha256": "004f27f306180bd610ba2439e600f688c11be24adf5cea2a1663a22ba0336af6",
+  "qc_sha256": "a8b4595b2a9ad364c831e8b00a9dbda7ccff1ec292a723cd91f84ae58dcca22b",
+  "calibration_candidates": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    14,
+    16
+  ],
+  "holdout_candidates": [
+    13,
+    15,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "calibration_passing_qc": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    12,
+    14,
+    16
+  ],
+  "holdout_passing_qc": [
+    13,
+    15,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "integrity_rejected_sweeps": [
+    27
+  ],
+  "not_evaluated_search_sweeps": [
+    9,
+    10,
+    11,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "voltage_clamp_setup_or_ending_checks": [
+    0,
+    1,
+    2,
+    3,
+    35,
+    36
+  ],
+  "fit_gate": "Global candidate can be frozen for a calibration-only initial-state estimation check. Shared initial-state trend, voltage coverage and physiological qualification remain unresolved; external-response access stays closed.",
+  "liquid_junction_correction_mv": null,
+  "qualified_temperature_c": null,
+  "scores_promoted": false,
+  "supersedes": {
+    "path": "fitting-inputs-r7.json",
+    "sha256": "60ab251d5b717c41653026c34d563a7f48a2a72730c2e231302c023f2ff10e79"
+  },
+  "protocol_reference": {
+    "path": "protocol-reference.json",
+    "sha256": "92fd28935ea4d3bfdb9477d65b529208812a3b0c476a9136e1ed4f29fa9c4310"
+  },
+  "channel_archive_audit": {
+    "path": "channel-archive-audit.json",
+    "sha256": "d0b184bf9dd151fa8b57b907fb2faf6864eb5c9e87ea89c2986bdf1b73c9bb9e"
+  },
+  "channel_notebook_extract": {
+    "path": "channel-notebook-extract.json",
+    "sha256": "d1274f5e0074b909dc88a6d9bab1bd9a07cbe239e751220a358997361a41f966"
+  },
+  "bath_temperature_protocol_range_c": [
+    32.0,
+    34.0
+  ],
+  "reported_liquid_junction_potential_mv": -14.0,
+  "channel_data_contract": {
+    "path": "channel-923103553/pax6-kinetic-data-contract.json",
+    "sha256": "74150a63ff2d872bc51c4ee967103b2bed06f99a125cac60e2c5362c7a5af833"
+  },
+  "channel_source_inventory": {
+    "path": "channel-923103553/pax6-840043481-inventory.json",
+    "sha256": "ae5b7cbcc0cfaf4c8f40a553dd82add16419c852f0a5b34f90ec3f02da2c7054"
+  },
+  "current_analysis": {
+    "path": "pax6-840043481/analysis-receipt.json",
+    "sha256": "965239bdbb3f3eae92e72a6f4c179db696fe2429e83e2cd1045497719307faed"
+  },
+  "recovery_analysis": {
+    "path": "pax6-recovery-840043481/analysis-receipt.json",
+    "sha256": "f331be4b8866360f1e3503572b0feb395df57a9ddcafd472adcd6c81f0851390"
+  },
+  "conditioning_analysis": {
+    "path": "pax6-conditioning-840043481/analysis-receipt.json",
+    "sha256": "457c167b36e07e96145d99d72684183e6653e15f61d0a23e32c6fd166ca287b5"
+  },
+  "control_analysis": {
+    "path": "pax6-controls-840043481/analysis-receipt.json",
+    "sha256": "64ae83ecc6da29ef80897ce9846b1a2dbb325d973f8e748bf15e88752dfa2b13"
+  },
+  "recovery_state_analysis": {
+    "path": "pax6-recovery-state-840043481/analysis-receipt.json",
+    "sha256": "53c302417b91e1c2974d0db5c0f07b188aedbb28dedc78ac56367b9757b9883f"
+  }
+}

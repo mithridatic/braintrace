@@ -1,0 +1,44 @@
+{
+  "gain": 0.9570897572136792,
+  "gain_fit": "least squares through zero on the small pulse only",
+  "control_fit_rms_pa": 1.6263087532937535,
+  "main_post5_residual_rms_pa": 30.663138037938673,
+  "main_response_used_to_fit_gain": false,
+  "physiological_qualification": false,
+  "reference_sweep": 72,
+  "target_sweep": 93,
+  "points": [
+    {
+      "phase_ms": 20.0,
+      "reference_pa": 38.73360898541233,
+      "target_pa": 71.55443941558676,
+      "predicted_pa": 37.07154041985787,
+      "residual_pa": 34.48289899572889
+    },
+    {
+      "phase_ms": 60.0,
+      "reference_pa": 42.483608970428065,
+      "target_pa": 72.17943941308937,
+      "predicted_pa": 40.66062699506788,
+      "residual_pa": 31.51881241802149
+    },
+    {
+      "phase_ms": 90.0,
+      "reference_pa": 36.233610902750456,
+      "target_pa": 67.17943943306838,
+      "predicted_pa": 34.678817861888355,
+      "residual_pa": 32.50062157118003
+    }
+  ],
+  "source_controls": [
+    {
+      "path": "control-72.json",
+      "sha256": "1477b6ba92972f5aa27b61dd02c6f0bd2ff31b92a107f4d5b239655c86ee279c"
+    },
+    {
+      "path": "control-93.json",
+      "sha256": "4ee9b7402594d3de8aebff28e46b15101c122ed99129621d93ec70e5ce9aed0c"
+    }
+  ],
+  "arrays_sha256": "264621d8bee753c8ae22d13ce4b1d42c0377506aca7f319790288e94fb7f3237"
+}

@@ -1,0 +1,9 @@
+{
+  "task": "fit",
+  "wall_cap_seconds": 600,
+  "seconds": 227.9038939999882,
+  "timed_out": false,
+  "exit_code": 0,
+  "host": "local",
+  "device": "CPU"
+}

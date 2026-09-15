@@ -1,0 +1,36 @@
+{
+  "session_id": "840043481",
+  "specimen_id": "840043506",
+  "nwb_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "modules": {
+    "h01_l1_initial_state.py": "362f1696134d9304da73dbfeb2e3040770477055abe1aeddf3e6488eff3dee51",
+    "h01_l1_initial_state_test.py": "256dce3d5a55cce61aa2c07b2130abbda8fd2d2fe483225e9a9b1a1a584a49d1",
+    "h01_l1_recovery_state.py": "8929fa2077f9e40a4b67a4bc6df01788d0121e8b5acb259f27283135d6a2454c"
+  },
+  "environment": {
+    "python": "3.13.14 (main, Jul 18 2026, 17:10:39) [MSC v.1944 64 bit (AMD64)]",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "execution": "local CPU closed-form algebra; no neuronal rollout"
+  },
+  "test_command": ".cache/human-audit-venv/Scripts/python.exe -m pytest --confcutdir=docs/evidence docs/evidence/h01_l1_recording_test.py docs/evidence/h01_l1_qc_test.py docs/evidence/h01_l1_voltage_clamp_test.py docs/evidence/h01_l1_leak_test.py docs/evidence/h01_l1_decay_test.py docs/evidence/h01_l1_recovery_test.py docs/evidence/h01_l1_recovery_fit_test.py docs/evidence/h01_l1_conditioning_test.py docs/evidence/h01_l1_control_test.py docs/evidence/h01_l1_recovery_state_test.py docs/evidence/h01_l1_initial_state_test.py -q --cov=h01_l1_initial_state --cov-report=term-missing --cov-report=json:docs/evidence/h01-human-unity-20260914/human-data/pax6-initial-state-840043481/coverage.json --junitxml=docs/evidence/h01-human-unity-20260914/human-data/pax6-initial-state-840043481/tests.xml",
+  "tests_passed": 165,
+  "new_tests_passed": 13,
+  "new_helper_line_coverage_percent": 97,
+  "conditions": 19,
+  "external_response_opened": false,
+  "physiology_qualified": false,
+  "scores_promoted": false,
+  "decision": "Initial-state-only repair rejected: second-pulse mismatch persists. Stop this fitting path; no candidate promotion.",
+  "files": {
+    "analyze.py": "73bd7915bc1bd8b3f7ee323ef71a41d06459f7ae26f936e0509fbf6a32a0c5b9",
+    "coverage.json": "87f4944be2ba393c0f1d22f04343597f9010fd07343d4b721187eee1a22de42a",
+    "direct-comparison.png": "2427c567fb71caed56ac6d65b61fd7fdeb67c489654b81a1d27c53c261da1f5b",
+    "frozen-candidate.json": "dd6f88461bddf3f35663302c264670df59c899bafc9175f6a071ba82d68a6266",
+    "observation.json": "b40f6797a981d98b10a5524beb5cf7253fc2ee1a1b56e8705c14f228abace29a",
+    "observation.npz": "3db2a32febf98a0f8a3fb312ad301aca3a993cde8ad7dd745c23cc746c7b6565",
+    "plot_observation.py": "0558cd8c7ba618a4e762d6ed01829f0f85945b52d3ff53c967c5247f85c1ca3f",
+    "README.md": "7fbd68bcb2327545399a8ad49fc60c0d687cc1b6ac99aa679947055cda499d14",
+    "tests.xml": "7a287577986e10ef248ec4bce6c20041fe8c5e22598c9aff7345b31cce7a1f8a"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "metadata_url": "https://dataverse.nl/api/datasets/:persistentId/?persistentId=doi:10.34894/TONOHA",
+  "metadata_sha256": "72a652eaeb0c3b27a77318f5961d0d5d351291771cd965968ade50fe7890d865",
+  "paper_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10569701/fullTextXML",
+  "paper_sha256": "b7d1378eb688557cc7fbb8f62937e805b6d30ba8216e0e210c0334993e68075c",
+  "files": [
+    {
+      "id": 359666,
+      "url": "https://dataverse.nl/api/access/datafile/359666",
+      "directory": "Figure2",
+      "path": "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\Data_fig2_Pyr_FS.csv",
+      "bytes": 4280,
+      "sha256": "b510d900106d10814c71c7c01786e7c812a2dfce17a191c421f8c20a5b5f7330",
+      "checksum": {
+        "type": "SHA-1",
+        "value": "c4d2814558fb7e7b74af4b26468b3707f5e6e35a"
+      }
+    },
+    {
+      "id": 359652,
+      "url": "https://dataverse.nl/api/access/datafile/359652",
+      "directory": "Figure2/Data_human",
+      "path": ".cache\\human-paired-synapse\\2015_11_04_0076.abf",
+      "bytes": 36007936,
+      "sha256": "a3f7af41e09b8885e0b8432ed79a6563c3e7b1c1d7735e25048409c5045640aa",
+      "checksum": {
+        "type": "SHA-1",
+        "value": "02051abac669bef1932c6f69f66ec5bfd8e6c001"
+      }
+    }
+  ],
+  "total_bytes": 36357941,
+  "elapsed_seconds": 21.31185529998038,
+  "scores_promoted": false
+}

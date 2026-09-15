@@ -1,0 +1,54 @@
+{
+  "synaptic_parameters": [
+    130.03165030411517,
+    0.15043211921569566,
+    1.025436531417632,
+    1.928160201930781
+  ],
+  "parameter_names": [
+    "peak_pa",
+    "rise_ms",
+    "decay_minus_rise_ms",
+    "delay_ms"
+  ],
+  "frozen_cell": {
+    "resistance_mohm": 72.55903367837949,
+    "membrane_tau_ms": 13.077357533655515
+  },
+  "cell_candidate_sha256": "a4cec3ab1f9f3ccb012586f77f78cd42941b38b5ddbf7330064389721e4d8c60",
+  "source_sha256": "a3f7af41e09b8885e0b8432ed79a6563c3e7b1c1d7735e25048409c5045640aa",
+  "calibration_sweeps": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "validation_sweeps": [
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+  ]
+}

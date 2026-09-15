@@ -1,0 +1,23 @@
+{
+  "signal_step_mv": 160.0000075995922,
+  "control_step_mv": -10.000000474974513,
+  "scale": -16.0,
+  "signal_baseline_mean_pa": -16.293610634865463,
+  "control_baseline_mean_pa": -11.702499075646823,
+  "signal_holding_mv": -89.9871364235878,
+  "control_holding_mv": -89.9871364235878,
+  "baseline_ms": [
+    900.0,
+    990.0
+  ],
+  "pulse_ms": [
+    1100.0,
+    2100.0
+  ],
+  "assumption": "linear control response scales across command amplitudes",
+  "ionic_isolation_qualified": false,
+  "signal_sweep": 78,
+  "control_sweep": 88,
+  "nwb_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "arrays_sha256": "5dd3682204023e8151b9665556dcc8239251dd7b7e1dba96a373c820d9ddb284"
+}

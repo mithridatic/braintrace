@@ -1,0 +1,218 @@
+{
+  "per_sweep": [
+    {
+      "sweep": 0,
+      "baseline_mv": -70.72373962402344,
+      "reference_rmse_mv": 0.669658899307251,
+      "candidate_rmse_mv": 0.291858370314489,
+      "error_ratio": 0.43583139209590255
+    },
+    {
+      "sweep": 1,
+      "baseline_mv": -70.68572235107422,
+      "reference_rmse_mv": 0.6424798369407654,
+      "candidate_rmse_mv": 0.2947535675875691,
+      "error_ratio": 0.45877481383862395
+    },
+    {
+      "sweep": 2,
+      "baseline_mv": -70.78593444824219,
+      "reference_rmse_mv": 0.7221634984016418,
+      "candidate_rmse_mv": 0.5695419150017006,
+      "error_ratio": 0.7886606236153763
+    },
+    {
+      "sweep": 3,
+      "baseline_mv": -70.61335754394531,
+      "reference_rmse_mv": 0.6569962501525879,
+      "candidate_rmse_mv": 0.22894976359008143,
+      "error_ratio": 0.34847955910997613
+    },
+    {
+      "sweep": 4,
+      "baseline_mv": -70.43695068359375,
+      "reference_rmse_mv": 0.6149529814720154,
+      "candidate_rmse_mv": 0.2121903420768292,
+      "error_ratio": 0.3450513266378648
+    },
+    {
+      "sweep": 5,
+      "baseline_mv": -70.48075103759766,
+      "reference_rmse_mv": 0.6378071904182434,
+      "candidate_rmse_mv": 0.10426949875577715,
+      "error_ratio": 0.16348122178961672
+    },
+    {
+      "sweep": 6,
+      "baseline_mv": -70.53050231933594,
+      "reference_rmse_mv": 0.6446879506111145,
+      "candidate_rmse_mv": 0.10403953364201779,
+      "error_ratio": 0.16137967763069921
+    },
+    {
+      "sweep": 7,
+      "baseline_mv": -70.6259536743164,
+      "reference_rmse_mv": 0.568208634853363,
+      "candidate_rmse_mv": 0.25632429730440826,
+      "error_ratio": 0.45110947208776153
+    },
+    {
+      "sweep": 8,
+      "baseline_mv": -70.05914306640625,
+      "reference_rmse_mv": 0.8597400188446045,
+      "candidate_rmse_mv": 0.26542265981592733,
+      "error_ratio": 0.3087243282831315
+    },
+    {
+      "sweep": 9,
+      "baseline_mv": -70.46627807617188,
+      "reference_rmse_mv": 0.7153133749961853,
+      "candidate_rmse_mv": 0.13931447396311208,
+      "error_ratio": 0.1947600573858346
+    },
+    {
+      "sweep": 10,
+      "baseline_mv": -70.23237609863281,
+      "reference_rmse_mv": 0.895395815372467,
+      "candidate_rmse_mv": 0.29711285349369454,
+      "error_ratio": 0.3318229194203922
+    },
+    {
+      "sweep": 11,
+      "baseline_mv": -70.64317321777344,
+      "reference_rmse_mv": 0.6453654766082764,
+      "candidate_rmse_mv": 0.1965808898761255,
+      "error_ratio": 0.30460397557870306
+    },
+    {
+      "sweep": 12,
+      "baseline_mv": -70.53807830810547,
+      "reference_rmse_mv": 0.5686254501342773,
+      "candidate_rmse_mv": 0.24277945566830628,
+      "error_ratio": 0.42695847611283566
+    },
+    {
+      "sweep": 13,
+      "baseline_mv": -70.66951751708984,
+      "reference_rmse_mv": 0.6914926767349243,
+      "candidate_rmse_mv": 0.28412461346380125,
+      "error_ratio": 0.41088593274100155
+    },
+    {
+      "sweep": 14,
+      "baseline_mv": -70.44386291503906,
+      "reference_rmse_mv": 0.6847513914108276,
+      "candidate_rmse_mv": 0.10260554306030349,
+      "error_ratio": 0.14984349699370475
+    },
+    {
+      "sweep": 15,
+      "baseline_mv": -70.63075256347656,
+      "reference_rmse_mv": 0.5744900703430176,
+      "candidate_rmse_mv": 0.409702332995566,
+      "error_ratio": 0.7131582496298677
+    },
+    {
+      "sweep": 16,
+      "baseline_mv": -70.46131896972656,
+      "reference_rmse_mv": 0.6915572881698608,
+      "candidate_rmse_mv": 0.0791204898802687,
+      "error_ratio": 0.1144091620950932
+    },
+    {
+      "sweep": 17,
+      "baseline_mv": -69.99465942382812,
+      "reference_rmse_mv": 0.5303705334663391,
+      "candidate_rmse_mv": 0.36011893234127557,
+      "error_ratio": 0.6789949848602046
+    },
+    {
+      "sweep": 18,
+      "baseline_mv": -69.57110595703125,
+      "reference_rmse_mv": 0.5343756079673767,
+      "candidate_rmse_mv": 0.40617820664356313,
+      "error_ratio": 0.7600987032109445
+    },
+    {
+      "sweep": 19,
+      "baseline_mv": -68.9992446899414,
+      "reference_rmse_mv": 0.6964846849441528,
+      "candidate_rmse_mv": 0.17784757740382437,
+      "error_ratio": 0.25535030596987923
+    },
+    {
+      "sweep": 20,
+      "baseline_mv": -68.8515396118164,
+      "reference_rmse_mv": 0.5805288553237915,
+      "candidate_rmse_mv": 0.23390536924264962,
+      "error_ratio": 0.40291773113015766
+    },
+    {
+      "sweep": 21,
+      "baseline_mv": -68.87866973876953,
+      "reference_rmse_mv": 0.6689918041229248,
+      "candidate_rmse_mv": 0.12511374188765012,
+      "error_ratio": 0.18701834778331744
+    },
+    {
+      "sweep": 22,
+      "baseline_mv": -68.8550033569336,
+      "reference_rmse_mv": 0.6314958930015564,
+      "candidate_rmse_mv": 0.1301578411521772,
+      "error_ratio": 0.20611035256860558
+    },
+    {
+      "sweep": 23,
+      "baseline_mv": -69.15648651123047,
+      "reference_rmse_mv": 0.6037482023239136,
+      "candidate_rmse_mv": 0.2443252741330638,
+      "error_ratio": 0.4046807480214777
+    },
+    {
+      "sweep": 24,
+      "baseline_mv": -68.98098754882812,
+      "reference_rmse_mv": 0.9271442890167236,
+      "candidate_rmse_mv": 0.3822672919184646,
+      "error_ratio": 0.4123061495895914
+    },
+    {
+      "sweep": 25,
+      "baseline_mv": -69.14916229248047,
+      "reference_rmse_mv": 0.7637357711791992,
+      "candidate_rmse_mv": 0.18681496013567056,
+      "error_ratio": 0.24460679620548664
+    },
+    {
+      "sweep": 26,
+      "baseline_mv": -69.42354583740234,
+      "reference_rmse_mv": 0.5856671333312988,
+      "candidate_rmse_mv": 0.1349172755237042,
+      "error_ratio": 0.2303651132961639
+    },
+    {
+      "sweep": 27,
+      "baseline_mv": -69.55358123779297,
+      "reference_rmse_mv": 0.5726040005683899,
+      "candidate_rmse_mv": 0.2091859577848507,
+      "error_ratio": 0.36532395438593557
+    },
+    {
+      "sweep": 28,
+      "baseline_mv": -69.15760803222656,
+      "reference_rmse_mv": 0.6495895385742188,
+      "candidate_rmse_mv": 0.1204653568360282,
+      "error_ratio": 0.18544842501687617
+    },
+    {
+      "sweep": 29,
+      "baseline_mv": -69.23643493652344,
+      "reference_rmse_mv": 0.5746865272521973,
+      "candidate_rmse_mv": 0.22309396703353448,
+      "error_ratio": 0.3882011435003264
+    }
+  ],
+  "validation_reference_rmse_mv": 0.6467403173446655,
+  "validation_candidate_rmse_mv": 0.25228101223437865,
+  "failed_sweeps": [],
+  "passed": true
+}

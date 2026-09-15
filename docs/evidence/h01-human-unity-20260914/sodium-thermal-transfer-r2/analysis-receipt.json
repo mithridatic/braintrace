@@ -1,0 +1,52 @@
+{
+  "status": "candidate_rejected",
+  "comparison_observations": 3200,
+  "validation_recordings": 9,
+  "failed_validation_recordings": [
+    "H21.29.195.11.41.02.nwb",
+    "H21.29.197.11.41.01.nwb",
+    "H21.29.197.11.42.02.nwb",
+    "H21.29.197.11.42.03.nwb"
+  ],
+  "source_and_executed_hashes_verified": true,
+  "split_disjoint": true,
+  "all_scores_independently_recomputed": true,
+  "direct_command_and_current_proxy_verified": true,
+  "numerical_checks_passed": true,
+  "plots_visually_inspected": [
+    "all-human-predictions.png",
+    "direct-model-comparison.png"
+  ],
+  "tests_passed": 17,
+  "helper_line_coverage_percent": 100,
+  "branch_closed": true,
+  "parameters_installed": false,
+  "six_term_scores_changed": false,
+  "artifact_sha256": {
+    "all-human-predictions.png": "579f37e4bde108121e487597b0e2605912f6109c0c78b7c55daabab2e01c00d3",
+    "baseline-direct.npz": "13863b4542e0b647fbff249509fb2d32659c44b205f44122673aaaa9dc67e680",
+    "candidate-direct.npz": "241c56ea43516e08a3e1e12a57735718f3e54493eccf309765caa56ec224a5da",
+    "coverage.json": "9c3994f085a7983dc92d9eca5d008470f63f7829f2b68139b4266358607e4db5",
+    "direct-model-comparison.png": "062cb5a763bd5bf3ef69b78244becd233bc45c710cc8784b531a1cc24c1c195a",
+    "evaluations.json": "e565eb99b710ca7f26bd0aafe439653d864697bc1a7704d8c3ef2168ecbce896",
+    "frozen-candidate.json": "9a19524aebb380c20d454a4ed08bcee0dec04d2c60170de822027f6af0aec5c7",
+    "plot.py": "82d552d4820fdb073fcb2b8a1691ab10e0cb3e69d8e996d42b7ddd644b573836",
+    "README.md": "b7267d4a09a1937bd204351987d31ccdb3c18447d3bb76e903ce126b0b75ecc6",
+    "result.json": "9a8d0f39219166902e06e5a145ab49407229c67122d9d6e35566ffa99dee27f3",
+    "run.py": "c81e70f41d428f33dc62ee82f4ac54dd2545134d6c1fa1f7581e940f6b7b7c0c",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "55e162331759454a9e62f8d29d1736fa528518e83745d01fe63e59453cdaccad",
+    "terminal.json": "288980783168dc1a9d5530045dcc863588f4c6695438be54b251a2ae5ffc44c2",
+    "tests.xml": "e9cd319be0ec5d803b780be38278d35703d391605d7a9788ced90d12c7eaca45"
+  },
+  "interrupted_run_sha256": {
+    "executed-sodium-transfer.py": "0f810d10b99e892adfbb8fb644ccbd13528fbbcb1d8042a36fac791089587e69",
+    "executed-spec.md": "c9ce8d10564ce818dc53456c151f719b1c7cf503a7fec8707e6b393f450a7452",
+    "interruption.json": "8f9963cd773ccc4924fd0795a8683f385401decda147a43892845d6b9d166c98",
+    "run.py": "c81e70f41d428f33dc62ee82f4ac54dd2545134d6c1fa1f7581e940f6b7b7c0c",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "terminal.json": "ebfe8a9fa8683dd1fc88eb94f8cb0f2de6ba93d65b3ac9176112f85a721bfd1f"
+  },
+  "test_module_sha256": "8a60d0346b841949c6bdc7e628ad4e55d56156c51c64cc9172f154d46c2f5b11"
+}

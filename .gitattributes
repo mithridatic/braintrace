@@ -4,3 +4,5 @@
 # Preserve upstream byte identities used by the biological source manifest.
 docs/biology/reference/** -text
 braintrace/biophysics/BRAINCELL-LICENSE.txt -text
+# Keep the audited artifact bytes identical to their recorded SHA-256 hashes.
+docs/evidence/h01-human-unity-20260914/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

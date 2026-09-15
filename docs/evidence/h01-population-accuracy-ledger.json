@@ -61,10 +61,11 @@
     {
       "term": "anatomy_transfer",
       "value": 0.0,
-      "measured": true,
-      "statement": "Measured once and it fails: H01 anatomy did not spike; no upstroke to compare. On the donor's own reconstruction the same parameters fire 4 spikes at the same input.",
-      "cause": "The H01 skeleton is a far larger electrical load than the Allen reconstruction the fit was made on (onset capacitance 785 pF against 125 pF; input resistance about 38 MOhm against about 98), so at 200 pA it sits on a plateau instead of spiking. Every other term in this ledger is conditional on this one, and this one has a negative reading.",
+      "measured": false,
+      "statement": "No valid physiological transfer reading on corrected H01 anatomy. The historical silent run used a malformed conversion and cannot establish an inherent H01 load failure.",
+      "cause": "The diagnostic conversion collapsed H01 dendrite code 1 as soma and mislabeled astrocyte code 2 as axon. The corrected export preserves 11524 nodes and 11523 edges, but has not been physiologically qualified. The historical run and its failure remain recorded.",
       "evidence": [
+        "h01-human-unity-20260914/conversion-correction.json",
         "h01-e-morphology/stage-1-decision.json"
       ]
     }
@@ -144,5 +145,5 @@
       }
     ]
   },
-  "note": "The second product is the figure obtained by counting construction as a working simulation and setting the two unqualified terms to one. It is quoted only with its assumptions attached; it also assumes the three rejected donors score like the one donor that was scored, which the anatomy term actively contradicts."
+  "note": "The second product is the figure obtained by counting construction as a working simulation and setting the two unqualified terms to one. It is quoted only with its assumptions attached; it also assumes the three rejected donors score like the one donor that was scored; valid anatomy-transfer evidence remains unavailable."
 }

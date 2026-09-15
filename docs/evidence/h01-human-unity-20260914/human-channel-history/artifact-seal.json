@@ -1,0 +1,105 @@
+{
+  "parent_commit": "81a60ff6",
+  "files": [
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-data-request.md",
+      "sha256": "a76e7517cafee0d8d9018d9835f6fc511d7ce61ab9bb6ddde7b7323fd4aba09c",
+      "bytes": 4961
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318529-Na_data_fig2.xlsx",
+      "sha256": "a360c6922a043f8f4f74476913b0f8f72b08cb881157d26c1323b7169598314f",
+      "bytes": 544224
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318532-data_fig3.xlsx",
+      "sha256": "58512456c32c5ec29e1c403484714f07d15918dc709bc088f58127caaec9f4ca",
+      "bytes": 180676
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318546-fit_k_hh_cma_human.py",
+      "sha256": "842cbfffc8031b8fa03044cd862494474f55ccc2ac2493a2cf5bc3a1fa99958c",
+      "bytes": 3875
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318546-fit_k_hh_cma_human.py.diff",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318547-channel_tools.py",
+      "sha256": "a496dd924cc489b36666db4f6cc709a664f1853c2a4578950f8ba4e68881b975",
+      "bytes": 35826
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318547-channel_tools.py.diff",
+      "sha256": "3d05db2faac23c14d2529f11746e64f2ffdb2f31b4e6493cc881611f542dfa51",
+      "bytes": 5820
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318548-fit_na_hh_cma_human.py",
+      "sha256": "ccb66f0d63514ba8eae60b17c61394630df15238cfbf67ddfb62c0d6a80c4f27",
+      "bytes": 3663
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318548-fit_na_hh_cma_human.py.diff",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318550-channel_kinetics.py",
+      "sha256": "e77be00eacd0db88d518f71b720cec3fe748fed9c19dcd7fb5ea9ded2f3e2705",
+      "bytes": 2482
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/318550-channel_kinetics.py.diff",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/acquisition-r2.json",
+      "sha256": "7ad0e5b38fa573345063735903fae2fb15f5b9ffb6cca2d0d35836f543eec057",
+      "bytes": 2673
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/acquisition.json",
+      "sha256": "94a13116eef06a1a582f1c68be912a377b421366869c5b9c401cb0623dcd3979",
+      "bytes": 2248
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/ap-workbook-comparison.json",
+      "sha256": "b43566aa12a9c3ec431b66adc3e5218010ad4c798618b7def5329be77c89109b",
+      "bytes": 241
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/compare.py",
+      "sha256": "3f421b41c18dc793b85cdbaf9f1d751715afd975809504594fe165506539fe80",
+      "bytes": 7396
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/comparison.json",
+      "sha256": "0f4e24dbb005dc66f994084eebf1c257c6332895ccc57a365d13d71ba7a1e704",
+      "bytes": 12176
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/README.md",
+      "sha256": "b516aaa3e1095856e4bdd202ea00b6798233e511ab13ed1c049372781976dc01",
+      "bytes": 3786
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/verification.json",
+      "sha256": "4e378a63de14c81324ac1731f6dce7de78131253d89e7f4265a583418b8b92a9",
+      "bytes": 322
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-channel-history/versions.json",
+      "sha256": "84a387732c5326a35a1bec46d0dc2f4746df357309274f6f6e04d30d79af3b1d",
+      "bytes": 172430
+    },
+    {
+      "path": "docs/specs/2026-09-14-h01-human-channel-history.md",
+      "sha256": "1fcd6e1f37116a0a782e8cff51f6b7a09739bf8d9dff46fa0972e6595efbcbde",
+      "bytes": 2616
+    }
+  ]
+}

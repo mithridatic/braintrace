@@ -1,0 +1,55 @@
+{
+  "status": "source_selection_verified_not_physiology_qualified",
+  "source_files_verified": 12,
+  "source_bytes": 1202435,
+  "workbook_comparison": {
+    "sodium": {
+      "human_records": 19,
+      "all_original_fields_equal": true,
+      "human_rows_complete": true
+    },
+    "potassium": {
+      "human_records": 13,
+      "all_original_fields_equal": true,
+      "human_rows_complete": true
+    }
+  },
+  "tests_passed": 10,
+  "helper_line_coverage_percent": 100,
+  "plot_visually_inspected": true,
+  "parameters_changed": false,
+  "six_term_scores_changed": false,
+  "original_nwb_traces_acquired": false,
+  "upstream_scripts_executed": false,
+  "human_only_potassium_model_qualified": false,
+  "provenance_correction": "Published K inactivation and recovery fit pooled species means; human filename is not sufficient evidence. Future source review must inspect each parameter fitting population.",
+  "artifact_sha256": {
+    "318530-plots_fig2.py": "58380f2df0d216cc0fa7f66f5c733f392c659a1bc3987bd72e3ecb6893961d04",
+    "318533-plots_fig3.py": "74da31803d26e4005b7968c22da1f6a2fee37dbb2857f950ffd8c81624cf6c8b",
+    "318535-stats_fig4.py": "182f304788d603f665ffc039359d8c4161092f4e85544ad577532bac3409419a",
+    "318536-plots_fig4.py": "f148e973df0885499f81045a5b8c2ec17afe588bc6c5dc200421d39e158b0bd2",
+    "318666-data_fig3.xlsx": "c6c32a46ef9d4b8d28a98c53e39a0b83a4299290500c4cc1986d71519060e7c3",
+    "318667-data_fig4.xlsx": "79a39dce26b9e47cc6a1aa81bbc4dc3e29e3d2c733809dad14e98d4f5f9b4836",
+    "318668-Na_data_fig2.xlsx": "2fac600523d596a4dccbe167d3283b2e506dfdb9c7b1caef2a490c2c5dff184a",
+    "318669-K_data_fig2.xlsx": "f00714c534c9658b8c07d2a473d39b2fd5a99c392e6e2ab50fb52fbb3b6ca74d",
+    "326237-fit_k_hh_cma_human.py": "842cbfffc8031b8fa03044cd862494474f55ccc2ac2493a2cf5bc3a1fa99958c",
+    "326238-fit_na_hh_cma_human.py": "ccb66f0d63514ba8eae60b17c61394630df15238cfbf67ddfb62c0d6a80c4f27",
+    "326241-channel_kinetics.py": "e77be00eacd0db88d518f71b720cec3fe748fed9c19dcd7fb5ea9ded2f3e2705",
+    "326242-channel_tools.py": "1b9de7b4d5642633b3a8666bbbed4fd7d17b41bb6be4b4bcb1199a3fce534aba",
+    "acquisition.json": "2e1a9bd0669846cc9a39ec8584c159e7321f00a69fd068bc0c1853de158f2ea9",
+    "coverage.json": "0a0edd88eff9a7b1a8e2472cf663710323a49139dff737d42c8b0c66a32f2c20",
+    "direct-observations.json": "47501ee0b9b60bbf2f70b5cb6313f7d89e471f4c2ca2b04b3b975630402ba0f6",
+    "human-recovery-observations.png": "d8d95663dfc63685fa9c81fedd712bd2a5e2c5eb64a04a9a53034c2b8275b04e",
+    "metadata-v3.json": "bb7d253d5ac58c5fad6a67a790173bffc1a440bc80598f98eaedaea8fe90751f",
+    "plot_inputs.py": "0f30b945faca3c5057677a739ae3771000ea1ce068a3af8c63070814281200a4",
+    "potassium-human-records.json": "b71ef2620250969a8091f951cd133eb503b439f3dd0e6e40de57ea9eff733bd6",
+    "prepare.py": "d27dc049ff82c5442a31a49f7427553c9fd8b8ee0c835efc7988c664fe26eaed",
+    "README.md": "f2469bdd85925ca50bc83cc2504d45848b2494ee54012b8471a56f8d7f4352fb",
+    "sodium-human-records.json": "a34538850d17660178036ed3c0bee6d6f5cd3f1d1dc4e26cb7f7c4d2316cc031",
+    "tests.xml": "e607d2fbc915de64464e80b0c9ca3e57e6ffcc6680ce833684be29e35bed08ae"
+  },
+  "executed_module_sha256": {
+    "docs/evidence/h01_human_channel_source.py": "ddd13e1ef54fa23d52e2882c8684d1f561f9ee25ad18ee535f957c4c036ceb07",
+    "docs/evidence/h01_human_channel_source_test.py": "02cb02b6ded58062cb1805213e8315e481bd39967645181fc90aa32c86849326"
+  }
+}

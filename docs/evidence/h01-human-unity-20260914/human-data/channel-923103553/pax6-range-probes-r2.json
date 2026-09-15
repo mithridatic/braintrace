@@ -1,0 +1,95 @@
+[
+  {
+    "candidate": {
+      "cell": {
+        "spec_id": "840043506",
+        "cell_name": "H19.06.351.11.06.01.06",
+        "t-type": "PAX6 CDH12",
+        "postPatch_classification": "Nucleated",
+        "Total_time": "1009.0",
+        "Ephys_time": "263.0",
+        "endPipetteR": "2000.0",
+        "has_morph": "True"
+      },
+      "asset": {
+        "asset_id": "94bd9fd3-0456-489f-84c0-82f0eaf1a529",
+        "blob": "e1d9710d-5e30-4afb-916c-6565d87268c0",
+        "zarr": null,
+        "path": "sub-839796862/sub-839796862_ses-840043481_icephys.nwb",
+        "size": 55132693,
+        "created": "2023-09-15T22:12:18.175264Z",
+        "modified": "2023-09-15T22:57:38.801644Z"
+      }
+    },
+    "url": "https://dandiarchive.s3.amazonaws.com/blobs/e1d/971/e1d9710d-5e30-4afb-916c-6565d87268c0",
+    "whole_file_hash_verified": false,
+    "block_size": 8192,
+    "last_acquisition": "data_00141_AD0",
+    "family": "NucVCzrecovs1_DA_0",
+    "mode": "VoltageClampSeries",
+    "fetched_bytes": 368640,
+    "seconds": 11.584291899984237
+  },
+  {
+    "candidate": {
+      "cell": {
+        "spec_id": "835648767",
+        "cell_name": "H19.03.306.11.12.01.05",
+        "t-type": "PAX6 CDH12",
+        "postPatch_classification": "Nucleated",
+        "Total_time": "1006.0",
+        "Ephys_time": "249.0",
+        "endPipetteR": "2000.0",
+        "has_morph": "True"
+      },
+      "asset": {
+        "asset_id": "eecfda7a-6155-46af-aaa3-51841e4a04c8",
+        "blob": "e2404141-d67d-49a1-b6ce-61c4ffe81517",
+        "zarr": null,
+        "path": "sub-835477230/sub-835477230_ses-835648738_icephys.nwb",
+        "size": 48874861,
+        "created": "2023-09-15T22:11:38.469123Z",
+        "modified": "2023-09-15T22:57:39.150875Z"
+      }
+    },
+    "url": "https://dandiarchive.s3.amazonaws.com/blobs/e24/041/e2404141-d67d-49a1-b6ce-61c4ffe81517",
+    "whole_file_hash_verified": false,
+    "block_size": 8192,
+    "last_acquisition": "data_00157_AD0",
+    "family": "NucVCzrecovs1_DA_0",
+    "mode": "VoltageClampSeries",
+    "fetched_bytes": 434176,
+    "seconds": 13.646673999988707
+  },
+  {
+    "candidate": {
+      "cell": {
+        "spec_id": "811830358",
+        "cell_name": "H19.03.302.11.15.01.02",
+        "t-type": "PAX6 CDH12",
+        "postPatch_classification": "Nucleated",
+        "Total_time": "1393.0",
+        "Ephys_time": "54.0",
+        "endPipetteR": "2000.0",
+        "has_morph": "False"
+      },
+      "asset": {
+        "asset_id": "f0d2d839-c58f-492f-995b-9f40e2eb81ec",
+        "blob": "42e90540-47e5-4255-923d-a751585ab354",
+        "zarr": null,
+        "path": "sub-811677083/sub-811677083_ses-811830262_icephys.nwb",
+        "size": 46622271,
+        "created": "2023-09-15T22:12:19.047630Z",
+        "modified": "2023-09-15T22:57:38.889542Z"
+      }
+    },
+    "url": "https://dandiarchive.s3.amazonaws.com/blobs/42e/905/42e90540-47e5-4255-923d-a751585ab354",
+    "whole_file_hash_verified": false,
+    "block_size": 8192,
+    "last_acquisition": "data_00187_AD0",
+    "family": "EXTPEXPEND180424_DA_0",
+    "mode": "VoltageClampSeries",
+    "fetched_bytes": 532480,
+    "seconds": 16.79195489999256
+  }
+]

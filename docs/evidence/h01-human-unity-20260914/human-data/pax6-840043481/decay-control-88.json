@@ -1,0 +1,35 @@
+{
+  "amplitudes_pa": [
+    229.65398194718205,
+    1452.0993235003107
+  ],
+  "time_constants_ms": [
+    110.78519492339683,
+    8348.92523193256
+  ],
+  "offset_pa": -999.9999999999993,
+  "origin_ms": 1110.0,
+  "window_ms": [
+    1110.0,
+    2090.0
+  ],
+  "optimizer_success": true,
+  "evaluations": 26,
+  "optimizer_message": "`ftol` termination condition is satisfied.",
+  "active_bounds": [
+    0,
+    0,
+    -1,
+    0,
+    0
+  ],
+  "minimum_relative_bound_distance": 3.410605131648481e-16,
+  "residual_rms_pa": 20.975532821137662,
+  "physiological_qualification": false,
+  "interpretation": "conditional descriptive decay; no molecular identity or rate law",
+  "elapsed_seconds": 0.14351779999560677,
+  "source_npz_sha256": "5dd3682204023e8151b9665556dcc8239251dd7b7e1dba96a373c820d9ddb284",
+  "control_sweep": 88,
+  "signal_sweep": 78,
+  "arrays_sha256": "43f7a0d317cea768a8c6d0ca82368ae8cab4054a9a57b93af659297b81bebb33"
+}

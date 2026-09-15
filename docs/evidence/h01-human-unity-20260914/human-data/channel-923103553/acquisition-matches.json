@@ -1,0 +1,107 @@
+{
+  "metadata_sha256": "1f08047bfc92a2a62a8e6ec4fca55ee82f19ff1d4bbde9bd2c7d105b9f2b4542",
+  "assets_inventory_sha256": "b32ce99b8a23c8e8f93f19954f7d22a1ae26ca8d86b8c1943f018a6a3132dd45",
+  "join": "author cell_name -> metadata err_id -> DANDI session; confirmed by asset wasDerivedFrom cell identifier",
+  "matches": [
+    {
+      "cell": {
+        "spec_id": "923103580",
+        "cell_name": "H19.03.319.11.04.01.01",
+        "species": "human",
+        "t-type": "LAMP5 NMBR",
+        "homology_type": "LAMP5",
+        "exclude": "No",
+        "tx_qc": "True",
+        "err_id": "923103553.0"
+      },
+      "assets": [
+        {
+          "asset_id": "414f02e9-3d04-48aa-92d5-15027276c19a",
+          "blob": "a5096e90-aaa2-4733-af3c-a268356a02d2",
+          "zarr": null,
+          "path": "sub-922967568/sub-922967568_ses-923103553_icephys.nwb",
+          "size": 72822725,
+          "created": "2023-09-15T22:12:23.180248Z",
+          "modified": "2023-09-15T22:57:39.480699Z"
+        }
+      ]
+    },
+    {
+      "cell": {
+        "spec_id": "840079595",
+        "cell_name": "H19.06.351.11.16.02.03",
+        "species": "human",
+        "t-type": "LAMP5 DBP",
+        "homology_type": "LAMP5",
+        "exclude": "No",
+        "tx_qc": "True",
+        "err_id": "840079573.0"
+      },
+      "assets": [
+        {
+          "asset_id": "e0d7cc86-cae2-40d3-89b2-3c450228f1bf",
+          "blob": "2c4716c7-e92f-43ed-ba67-8314a5a3cddb",
+          "zarr": null,
+          "path": "sub-839796862/sub-839796862_ses-840079573_icephys.nwb",
+          "size": 33384994,
+          "created": "2023-09-15T22:12:56.494522Z",
+          "modified": "2023-09-15T22:57:39.676966Z"
+        }
+      ]
+    },
+    {
+      "cell": {
+        "spec_id": "992028544",
+        "cell_name": "H19.03.323.11.04.01.05",
+        "species": "human",
+        "t-type": "ADARB2 MC4R",
+        "homology_type": "MC4R",
+        "exclude": "YES",
+        "tx_qc": "True",
+        "err_id": "992028521.0"
+      },
+      "assets": [
+        {
+          "asset_id": "efbb13ba-fc67-4053-b3da-d55f07387d3d",
+          "blob": "cf05267e-e713-4036-813b-b23920f2204e",
+          "zarr": null,
+          "path": "sub-991969173/sub-991969173_ses-992028521_icephys.nwb",
+          "size": 68718088,
+          "created": "2023-09-15T22:47:29.114123Z",
+          "modified": "2023-09-15T22:57:38.147290Z"
+        }
+      ]
+    },
+    {
+      "cell": {
+        "spec_id": "832594616",
+        "cell_name": "H19.03.305.11.10.01.06",
+        "species": "human",
+        "t-type": "SST CHRNA4",
+        "homology_type": "MC4R",
+        "exclude": "No",
+        "tx_qc": "True",
+        "err_id": "832594509.0"
+      },
+      "assets": [
+        {
+          "asset_id": "e78a5c8c-a57e-470a-9d7b-c587661bcb39",
+          "blob": "70ceefd1-8793-4949-8a86-274cca75e8d8",
+          "zarr": null,
+          "path": "sub-832340431/sub-832340431_ses-832594509_icephys.nwb",
+          "size": 52872197,
+          "created": "2023-09-15T22:47:39.937728Z",
+          "modified": "2023-09-15T22:57:38.530206Z"
+        }
+      ]
+    }
+  ],
+  "downloaded_sessions": [
+    "923103553"
+  ],
+  "excluded_from_selection": [
+    "992028521"
+  ],
+  "current_clamp_responses_read": false,
+  "upstream_notebooks_executed": false
+}

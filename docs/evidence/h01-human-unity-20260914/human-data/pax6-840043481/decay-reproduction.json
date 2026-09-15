@@ -1,0 +1,96 @@
+[
+  {
+    "control": 79,
+    "maximum_absolute_differences": {
+      "time_ms": 0.0,
+      "current_pa": 0.0,
+      "fitted_current_pa": 0.0,
+      "residual_pa": 0.0
+    },
+    "updated_diagnostics": {
+      "amplitudes_pa": [
+        248.20489616097223,
+        1430.3107961212233
+      ],
+      "time_constants_ms": [
+        148.84669851641513,
+        8462.551270492455
+      ],
+      "offset_pa": -999.9999999999999,
+      "origin_ms": 1110.0,
+      "window_ms": [
+        1110.0,
+        2090.0
+      ],
+      "optimizer_success": true,
+      "evaluations": 36,
+      "optimizer_message": "`ftol` termination condition is satisfied.",
+      "active_bounds": [
+        0,
+        0,
+        -1,
+        0,
+        0
+      ],
+      "active_bounds_parameter_order": [
+        "A1",
+        "A2",
+        "C",
+        "tau1",
+        "tau2"
+      ],
+      "boundary_limited": true,
+      "minimum_relative_bound_distance": 5.684341886080802e-17,
+      "residual_rms_pa": 20.734110095081785,
+      "physiological_qualification": false,
+      "interpretation": "conditional descriptive decay; no molecular identity or rate law"
+    }
+  },
+  {
+    "control": 88,
+    "maximum_absolute_differences": {
+      "time_ms": 0.0,
+      "current_pa": 0.0,
+      "fitted_current_pa": 0.0,
+      "residual_pa": 0.0
+    },
+    "updated_diagnostics": {
+      "amplitudes_pa": [
+        229.65398194718205,
+        1452.0993235003107
+      ],
+      "time_constants_ms": [
+        110.78519492339683,
+        8348.92523193256
+      ],
+      "offset_pa": -999.9999999999993,
+      "origin_ms": 1110.0,
+      "window_ms": [
+        1110.0,
+        2090.0
+      ],
+      "optimizer_success": true,
+      "evaluations": 26,
+      "optimizer_message": "`ftol` termination condition is satisfied.",
+      "active_bounds": [
+        0,
+        0,
+        -1,
+        0,
+        0
+      ],
+      "active_bounds_parameter_order": [
+        "A1",
+        "A2",
+        "C",
+        "tau1",
+        "tau2"
+      ],
+      "boundary_limited": true,
+      "minimum_relative_bound_distance": 3.410605131648481e-16,
+      "residual_rms_pa": 20.975532821137662,
+      "physiological_qualification": false,
+      "interpretation": "conditional descriptive decay; no molecular identity or rate law"
+    }
+  }
+]

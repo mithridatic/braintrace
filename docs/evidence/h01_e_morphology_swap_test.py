@@ -2,6 +2,11 @@
 
 import numpy as np
 import pytest
+import json
+import zipfile
+import subprocess
+import sys
+from pathlib import Path
 
 import h01_e_morphology_swap as swap
 
@@ -17,27 +22,77 @@ SWC = """# test
 """
 
 
-def test_convert_collapses_the_soma_scales_units_and_labels_subtrees():
+def test_h01_dendrite_annotations_do_not_collapse_into_a_false_soma():
+    # H01 code 3 is soma, 1 is dendrite and 2 is astrocyte, unlike standard SWC.
+    source = '10 3 0 0 0 3000 -1\n20 1 1000 0 0 32 10\n30 1 2000 0 0 40 20\n'
+    text, summary = swap.convert(source)
+    rows = swap.parse_swc(text)
+    assert len(rows) == 3
+    assert rows[:, 1].tolist() == [0, 0, 0]
+    assert rows[:, 2].tolist() == pytest.approx([0, 32, 64])
+    assert rows[:, 5].tolist() == pytest.approx([3, .032, .04])
+    assert rows[:, 6].tolist() == [-1, 1, 2]
+    assert summary['source_annotation_by_node_id'] == {'10': 3, '20': 1, '30': 1}
+
+
+def test_convert_preserves_source_nodes_edges_radii_and_annotations():
     text, summary = swap.convert(SWC)
     rows = swap.parse_swc(text)
-    assert summary["soma_nodes_collapsed"] == 2 and summary["nodes_out"] == 6
-    assert rows[0, 1] == 1 and rows[0, 6] == -1
-    assert rows[0, 5] == pytest.approx(3.)  # largest soma radius, nm to um
-    assert rows[0, 2] == pytest.approx(1005*.032)  # centroid of the two soma nodes
-    by_x = {round(r[2]/.032): int(r[1]) for r in rows[1:]}
-    # the x-branch (x 1100, 1300) is the longest cable and becomes apical; the y-branch basal; x 900 stays axon
-    assert by_x[1100] == 4 and by_x[1300] == 4 and by_x[1000] == 3 and by_x[900] == 2
-    assert sum(1 for r in rows[1:] if r[6] == 1) == 3  # three soma children attach to the new soma
-    assert rows[:, 2:5].max() < 50.  # micrometres, not voxels
-    held, _ = swap.convert(SWC, soma_radius_um=6.5)
-    assert swap.parse_swc(held)[0, 5] == pytest.approx(6.5)
+    original = swap.parse_swc(SWC)
+    assert summary['nodes_out'] == len(original) == len(rows)
+    assert summary['soma_nodes_collapsed'] == 0
+    assert np.all(rows[:, 1] == 0)
+    reverse = summary['source_node_id_by_export_id']
+    by_id = {int(row[0]): row for row in original}
+    for row in rows:
+        source_id = reverse[str(int(row[0]))]
+        source = by_id[source_id]
+        assert row[2:5] == pytest.approx(source[2:5] * swap.POSITION_UM)
+        assert row[5] == pytest.approx(source[5] * .001)
+        assert (-1 if row[6] == -1 else reverse[str(int(row[6]))]) == source[6]
+        assert summary['source_annotation_by_node_id'][str(source_id)] == source[1]
+    with pytest.raises(ValueError, match='soma substitution'):
+        swap.convert(SWC, soma_radius_um=6.5)
 
 
-def test_convert_rejects_multiple_roots_and_missing_soma():
+def test_convert_rejects_multiple_roots_and_nonpositive_radius():
     with pytest.raises(ValueError):
         swap.convert("0 1 0 0 0 100 -1\n1 3 1 0 0 100 -1\n")
     with pytest.raises(ValueError):
-        swap.convert("0 3 0 0 0 100 -1\n1 3 1 0 0 100 0\n")
+        swap.convert("0 3 0 0 0 100 -1\n1 3 1 0 0 0 0\n")
+
+
+def test_prepare_exports_anatomy_without_fabricated_donor(tmp_path):
+    archive = tmp_path / 'archive.zip'
+    with zipfile.ZipFile(archive, 'w') as z:
+        z.writestr('7.0.swc', SWC)
+    output = tmp_path / 'source-preserved'
+    swap.main(['prepare', '--cell-id', '7', '--archive', str(archive), '--out', str(output)])
+    result = json.loads((output / 'anatomy.json').read_text())
+    assert result['conversion']['nodes_out'] == 7
+    assert result['physiology'] == 'unqualified'
+    assert not (output / 'donor.json').exists()
+    with pytest.raises(FileExistsError):
+        swap.prepare('7', 0, output, archive=archive)
+
+
+def test_prepare_cli_does_not_require_scorer_imports(tmp_path):
+    archive = tmp_path / 'archive.zip'
+    with zipfile.ZipFile(archive, 'w') as z:
+        z.writestr('7.0.swc', SWC)
+    command = [sys.executable, str(Path(swap.__file__).resolve()), 'prepare',
+               '--cell-id', '7', '--archive', str(archive), '--out', str(tmp_path / 'out')]
+    result = subprocess.run(command, cwd=tmp_path, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+
+
+def test_parse_and_bfs_reject_malformed_geometry():
+    with pytest.raises(ValueError):
+        swap.parse_swc('1 2 3')
+    with pytest.raises(ValueError):
+        swap.bfs_order(np.array([1, 2]), np.array([-1, -1]))
+    with pytest.raises(ValueError):
+        swap.bfs_order(np.array([1, 2, 3]), np.array([-1, 3, 2]))
 
 
 def test_decide_reads_mesh_control_then_anatomy_sensitivity():

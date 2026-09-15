@@ -1,0 +1,57 @@
+{
+  "baseline_mean_pa": -16.933333079174762,
+  "holding_mv": -89.9871364235878,
+  "step_mv": 10.000000474974513,
+  "baseline_ms": [
+    35.0,
+    44.0
+  ],
+  "pulse_ms": [
+    45.0,
+    55.04
+  ],
+  "late_ms": [
+    52.0,
+    55.0
+  ],
+  "apparent_late_slope_ns": 0.4341667184846786,
+  "membrane_conductance_qualified": false,
+  "sweep": 79,
+  "family": "NucVCLS1Leak_DA_0",
+  "absolute_start_s": 1887.5430002212524,
+  "instrument": {
+    "RsComp Enable": {
+      "value": 0.0,
+      "unit": "On/Off"
+    },
+    "RsComp Correction": {
+      "value": 0.0,
+      "unit": "%"
+    },
+    "Series Resistance": {
+      "value": 0.0,
+      "unit": "MOhms"
+    },
+    "TP Steady State Resistance": {
+      "value": 2237.879150390625,
+      "unit": "Mohm"
+    },
+    "Fast compensation capacitance": {
+      "value": 9.999346836653267e-12,
+      "unit": "F"
+    },
+    "Slow compensation capacitance": {
+      "value": 0.0,
+      "unit": "F"
+    }
+  },
+  "source": {
+    "path": "../pax6-840043481/sweep-79.json",
+    "sha256": "52a88cc59a0669d747050b454f2aaf2355d817ccc6a55c2fcf94f060b2601efd"
+  },
+  "source_arrays": {
+    "path": "../pax6-840043481/sweep-79.npz",
+    "sha256": "997f248f8647da42ccd2da070421cccbd3f384a2482b7053616947140bd6b657"
+  },
+  "arrays_sha256": "821a21e01523321283d4993c417c0fa1ff431c037728a364b9d97dbcfb20e05b"
+}

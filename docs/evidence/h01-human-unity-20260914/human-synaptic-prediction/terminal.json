@@ -1,0 +1,7 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "wall_cap_seconds": 120,
+  "elapsed_seconds": 0.8833590000285767,
+  "execution": "local CPU closed-form convolution"
+}

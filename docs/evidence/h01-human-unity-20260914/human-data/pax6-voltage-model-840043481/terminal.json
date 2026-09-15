@@ -1,0 +1,7 @@
+{
+  "wall_cap_seconds": 600,
+  "execution": "local CPU vectorized closed-form model",
+  "exit_code": 0,
+  "timeout": false,
+  "wall_seconds": 378.53828079998493
+}

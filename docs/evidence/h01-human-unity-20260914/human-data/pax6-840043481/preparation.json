@@ -1,0 +1,238 @@
+{
+  "session_id": "840043481",
+  "specimen_id": "840043506",
+  "nwb_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "module_sha256": "bc26fe9d296608f944c7cbdc6041efc75233452e02397e8d636264253644848e",
+  "selection": [
+    70,
+    74,
+    78,
+    89,
+    93,
+    97,
+    104,
+    108,
+    112,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    132,
+    141
+  ],
+  "results": [
+    {
+      "sweep": 70,
+      "status": "exported"
+    },
+    {
+      "sweep": 74,
+      "status": "exported"
+    },
+    {
+      "sweep": 78,
+      "status": "exported"
+    },
+    {
+      "sweep": 89,
+      "status": "exported"
+    },
+    {
+      "sweep": 93,
+      "status": "exported"
+    },
+    {
+      "sweep": 97,
+      "status": "exported"
+    },
+    {
+      "sweep": 104,
+      "status": "exported"
+    },
+    {
+      "sweep": 108,
+      "status": "exported"
+    },
+    {
+      "sweep": 112,
+      "status": "exported"
+    },
+    {
+      "sweep": 79,
+      "status": "exported"
+    },
+    {
+      "sweep": 80,
+      "status": "exported"
+    },
+    {
+      "sweep": 81,
+      "status": "exported"
+    },
+    {
+      "sweep": 82,
+      "status": "exported"
+    },
+    {
+      "sweep": 83,
+      "status": "exported"
+    },
+    {
+      "sweep": 84,
+      "status": "exported"
+    },
+    {
+      "sweep": 85,
+      "status": "exported"
+    },
+    {
+      "sweep": 86,
+      "status": "exported"
+    },
+    {
+      "sweep": 87,
+      "status": "exported"
+    },
+    {
+      "sweep": 88,
+      "status": "exported"
+    },
+    {
+      "sweep": 113,
+      "status": "exported"
+    },
+    {
+      "sweep": 114,
+      "status": "exported"
+    },
+    {
+      "sweep": 115,
+      "status": "exported"
+    },
+    {
+      "sweep": 116,
+      "status": "exported"
+    },
+    {
+      "sweep": 117,
+      "status": "exported"
+    },
+    {
+      "sweep": 118,
+      "status": "exported"
+    },
+    {
+      "sweep": 119,
+      "status": "exported"
+    },
+    {
+      "sweep": 120,
+      "status": "exported"
+    },
+    {
+      "sweep": 121,
+      "status": "exported"
+    },
+    {
+      "sweep": 122,
+      "status": "exported"
+    },
+    {
+      "sweep": 123,
+      "status": "exported"
+    },
+    {
+      "sweep": 132,
+      "status": "exported"
+    },
+    {
+      "sweep": 141,
+      "status": "exported"
+    }
+  ],
+  "files": {
+    "sweep-104.json": "c448e63ea78dcb8141c20cf676b9442dd15b08a07bbe7ef075b40b88f9854c84",
+    "sweep-104.npz": "aaf560d375454afa58af4acdad003453d282f6522510fa269b505326eb1d2d48",
+    "sweep-108.json": "9f5dd9150c6471e8386c0d01f0c7f5e926f8f7785378b3087a40075a7096cca6",
+    "sweep-108.npz": "7d29e77d72a27c782c4060233655fe908f92cdf5b49e49487359b64fb95cb671",
+    "sweep-112.json": "83d1fbe265e3945b74cda08388d6336972f9022680e0222d76d1c394abebfbc9",
+    "sweep-112.npz": "e81500c81b4d20bbc1675ce69fa542bb6021edcea1f480240cdfc58b824abd68",
+    "sweep-113.json": "bac00a022f0e743c899055d07b535193ad6da4aec04962123406332a7b0ca141",
+    "sweep-113.npz": "6c29608da11197e571aceb6b41cf6d9f20061b789511d180c84f3fb5c5c1320e",
+    "sweep-114.json": "7b70ade80d9d1d9c3b983baec02ca9c363f238a313c2a2ac9e83620051e89c26",
+    "sweep-114.npz": "4ebad26699ebb8e81dd56d1fb38f96fd9110a38b385f22007d2a8294dceff014",
+    "sweep-115.json": "5afc7d6d4cef8ad69304df57041104f6dc99f74e7960d5f33a58b67eafa58fe2",
+    "sweep-115.npz": "54a69d06771d10b58f2b0a965f0229ebaa513946aeedfdb8b9d3cbba335b9b1e",
+    "sweep-116.json": "a6cf0cff442c7bc99e71e5f10118024eff008e53f75937e739ad16b42b83fb13",
+    "sweep-116.npz": "7db0d912972de214d83145da389f4f3494d0a64fe58ba5d4b48ec8a4ecd9dc71",
+    "sweep-117.json": "758def60ae43e5816785fa6a30697710d8c6afbf33bb06669aa78d84b738d324",
+    "sweep-117.npz": "d6d0b56ac3569077c3cf17c8a0e0bb7d86f88e3e1216d3bda05c9aaa35d47468",
+    "sweep-118.json": "a79ebe9b95f35fb0a270b7474f1ef550dabd11863b48d933122ababf4f556b67",
+    "sweep-118.npz": "af69871e2a03fcf0f97bf991c841b2319b6606a160a6e387f4d148ee1741bdb8",
+    "sweep-119.json": "e34c421637af97dd5cd7440f241d0aaffc61851f432e94c03156c9e817ebfe4c",
+    "sweep-119.npz": "e2336abedb142acaaa17325f7376f43fdb41e5655e5b3a488bf4ce5fc9e9ead4",
+    "sweep-120.json": "ca105c63f5c4be36a7e249525aec3c6492b0411672bce919bcdc0bee950780fb",
+    "sweep-120.npz": "34873b16ef7b9f03106965ca30487fc069368e5c005f4342d105a6096218c95d",
+    "sweep-121.json": "1da2a863a168f87393bae7818b2cd0c0402e85473c21a676a0d99c575e8702a4",
+    "sweep-121.npz": "13ae9daf962e7cc6bdaf884be9a3f137f4e3505941fd2c6777aeebb12f921db6",
+    "sweep-122.json": "fc00f98fc9958874264881676478b0b4b8dc374cad870854d070c1454d806f86",
+    "sweep-122.npz": "86c0d6e88cda3f8beb5e8bbc7de709cf18e00bffb4a4b0ec60f52bcb26ad66f2",
+    "sweep-123.json": "b7f0c94ffe71d136e5f49f6a012e4475d00d039cc3be3f828c5d83ad975c2f34",
+    "sweep-123.npz": "cc8365a218a6fff8d1d1951ed83efe00f522d57fb97e8146dd284663b2032be8",
+    "sweep-132.json": "0493993aece1de769ee569ca50fd331a7ab7cd5fa86a1ba8b6792bb052f87d63",
+    "sweep-132.npz": "3728394d6ed114c783ad15e27f291e15afd36dd69bf7c16a4f9f26122859181f",
+    "sweep-141.json": "7bac4251a9baf97ac0d1c2292eb4cb4fc4ce78e1d802415e5af2715ec3c7d42e",
+    "sweep-141.npz": "dea2b2bb4dbba770ce03b2639c1aa8be3b321df988a24cae5b5ef7a9d5cb9123",
+    "sweep-70.json": "94c872434a8e28d2371576569dd5a9d39e6be1c449e0f4f37f5a585deb712cc9",
+    "sweep-70.npz": "97f54fcc7c6fc0aa25849d03b43b448720b01ed859c36bf6e79b9498ed48c81c",
+    "sweep-74.json": "3d10742ed2c164458fe3d432b3ed0981197f62ed2b04687b1df185043ce9bf82",
+    "sweep-74.npz": "81abcf941886b8f9ba6209ee1b9496bf8a1320f843deae8408a444b346b10db7",
+    "sweep-78.json": "b612e9ba352bb5a6766f02de4fa688d2238ca30475ddd49ebcdb1e9890d18fe6",
+    "sweep-78.npz": "2e4e4b33234c5315e6e56857cf9f7350e3c4d41f6fc79ec82461f060d66d4e50",
+    "sweep-79.json": "52a88cc59a0669d747050b454f2aaf2355d817ccc6a55c2fcf94f060b2601efd",
+    "sweep-79.npz": "997f248f8647da42ccd2da070421cccbd3f384a2482b7053616947140bd6b657",
+    "sweep-80.json": "e03bc68d6534d71b369f3945b3c4eb63084c23ee9bdadb7e2556ea0f37e112eb",
+    "sweep-80.npz": "d3c21e02ad73ae47b58ccaa93003c135cd8f2e09b75fc63202edf5a9fbe4057d",
+    "sweep-81.json": "a9b6e99edcfeffc3064672d00a47b4dc0d8305c74e1475d5ca4f2a50caf82c71",
+    "sweep-81.npz": "142fb6d6a63489f4d0ba1fc98508c5954c003e7fb413079daa8fb687a02df93a",
+    "sweep-82.json": "b920e96d5ac10edc950235db170b7f6dbba515a6887f00fe7da390dc98ad01e4",
+    "sweep-82.npz": "5689f9dff7dde3c348f384cd6b9b3bfcad2cb07b4bf644a87a596ea7f2f32438",
+    "sweep-83.json": "cd6e03bf1e86981eb139b01de2f1d7651b8adcf50554e17d2ee552e2f8956199",
+    "sweep-83.npz": "63ced81eccf9c927be9581e2f04045095539c0549d4702f8e57b6b7d8e30dcab",
+    "sweep-84.json": "4e0caba2cc354b039ec5951d8a2c4a25811522495effafc1b8d910af2384cffc",
+    "sweep-84.npz": "b389833e70f92b33aa03159a8d29d085a9be84561d813ae61f8ed71802fa6987",
+    "sweep-85.json": "df79a3914c1646a9f14218006cdaee8531f136e9a9207b5b0cafed52492b83b1",
+    "sweep-85.npz": "f31a43a28dcf73627f5423ac56d664b391d3e836d597dcb32965cf05f17af3a9",
+    "sweep-86.json": "18964ef2961e1dc7018a68383feac60b9381acc82c5d7f01706b11732fbf6135",
+    "sweep-86.npz": "b3a5e6b58c173fb2f063ceb339906a089f18eaac2e54648e090ab1eb92ed5ae4",
+    "sweep-87.json": "8dccc912f9f003a73c982ce15e285ffe74cdc0b63f59b9294f8749e3d3456b2a",
+    "sweep-87.npz": "b5d23f2181083624455a16801ab9c93e8469061c3caee4c72fa4405969adb7a3",
+    "sweep-88.json": "e3c99b117628e0c84d0b4a15acd1d56724a75e8b542e03724a8d5c8b265b656b",
+    "sweep-88.npz": "6d6f04373920c1c3b8fc54c51adb451c19b7ebc61144b43168a8f29ae7d78128",
+    "sweep-89.json": "da2ef5f4a82af56fd46ef32ce29aca1d24dafbfc14aedd6543d6b0f9ff6fc590",
+    "sweep-89.npz": "80a759b6a1d35417ac8407981b85a75caa7f8eb71303220222f834b3109ec94a",
+    "sweep-93.json": "d60753d29de1ef3444e5af9d46873e9d868c90788c349c89fad16491c71e590b",
+    "sweep-93.npz": "86d90210e23d7ee5b1abe6b1612ee88e25881f00df71e675dbbf180b9c0465ab",
+    "sweep-97.json": "56d6305656cc27952593d82eb181f0f978a954e0e7b343049bb344aa771d76b3",
+    "sweep-97.npz": "318a63c06b1405420878f529292ec73c4722e6bce1f4423db94f952c3167b401"
+  },
+  "kinetics_fitted": false,
+  "scores_promoted": false
+}

@@ -1,0 +1,41 @@
+{
+  "parameter_order": [
+    "A1",
+    "A2",
+    "d1",
+    "d2"
+  ],
+  "parameters": [
+    32.88226482748484,
+    5.322918268435873,
+    37.55598337814182,
+    9999.999999999998
+  ],
+  "optimizer_success": true,
+  "evaluations": 41,
+  "optimizer_message": "`ftol` termination condition is satisfied.",
+  "active_bounds": [
+    0,
+    0,
+    0,
+    1
+  ],
+  "boundary_limited": true,
+  "residual_rms_pa": 9.138899308658972,
+  "phase_window_ms": [
+    10.0,
+    980.0
+  ],
+  "physiological_qualification": false,
+  "elapsed_seconds": 0.17471649998333305,
+  "scenario": "unadjusted",
+  "subtracted_baseline_difference_pa": 0.0,
+  "test_command_mv": 10.012868326157331,
+  "total_sweep": 74,
+  "conditioned_sweep": 93,
+  "input_pair": {
+    "path": "pair-74-93.json",
+    "sha256": "e3a28b0501933a6e6c84047de6efa37f6e2d52dbe607539287804ba13aa6374c"
+  },
+  "arrays_sha256": "a9b958c9d6788def7f8d712e882f46c13034544aa35c8ec28a7af393888a415e"
+}
