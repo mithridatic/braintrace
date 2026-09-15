@@ -141,3 +141,14 @@ The separate strict historical-region comparison fails for one cell by a
 maximum normalized discrepancy of 1.3103e-12 against its retained 1e-12 threshold;
 that failure remains explicit. No physiological or six-term score promotion
 follows from this static geometry result.
+
+## Human pyramidal channel inputs
+
+The [human channel source checkpoint](human-pyramidal-channels/README.md)
+identifies pooled human/mouse inactivation and recovery fitting in the existing
+Wilbers potassium model. Its human label is insufficient for this campaign.
+The pinned experimental tables now supply 19 human sodium and 13 human potassium
+recordings with source identities and missing values preserved. Original NWB
+traces remain unavailable locally; source QC and unit discrepancies are explicit.
+This acquisition changes no model parameter or six-term score and supplies the
+input for a separately registered human-only potassium estimate.
