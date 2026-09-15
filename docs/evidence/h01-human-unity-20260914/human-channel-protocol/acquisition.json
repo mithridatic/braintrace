@@ -1,0 +1,86 @@
+{
+  "dataverse_doi": "10.34894/L5J0SD",
+  "version": "3.0",
+  "metadata_sha256": "bb7d253d5ac58c5fad6a67a790173bffc1a440bc80598f98eaedaea8fe90751f",
+  "files": [
+    {
+      "id": 318544,
+      "source_file": "318544-apclamp_na.py",
+      "stored_file": "318544-apclamp_na.py",
+      "source_bytes": 5856,
+      "published_sha1": "912469a0c3a0da144657ce2c055cf326e0d5fd7e",
+      "source_sha256": "9eaad9f75df6feb71979fce2f10edf91b6a8e7325a20889603b8f35dc14e7db1",
+      "stored_sha256": "9eaad9f75df6feb71979fce2f10edf91b6a8e7325a20889603b8f35dc14e7db1",
+      "url": "https://dataverse.nl/api/access/datafile/318544"
+    },
+    {
+      "id": 318542,
+      "source_file": "318542-apclamp_k.py",
+      "stored_file": "318542-apclamp_k.py",
+      "source_bytes": 1501,
+      "published_sha1": "629098ed765e1a7b86b36180e7f9a5f9cf4f3ffe",
+      "source_sha256": "b7f599497e38f1d611c33ac09034d8dd4c4df23801328250bb66462c4a237028",
+      "stored_sha256": "b7f599497e38f1d611c33ac09034d8dd4c4df23801328250bb66462c4a237028",
+      "url": "https://dataverse.nl/api/access/datafile/318542"
+    },
+    {
+      "id": 318538,
+      "source_file": "318538-apclamp_tools.py",
+      "stored_file": "318538-apclamp_tools.py",
+      "source_bytes": 5082,
+      "published_sha1": "be15b4567ada212035e33281ed097031c1a3cece",
+      "source_sha256": "30a73fc7caf9835cb9c0f72c1d2027756db12da060ac5ab47a3a1faa6329fe1f",
+      "stored_sha256": "30a73fc7caf9835cb9c0f72c1d2027756db12da060ac5ab47a3a1faa6329fe1f",
+      "url": "https://dataverse.nl/api/access/datafile/318538"
+    },
+    {
+      "id": 318541,
+      "source_file": "318541-H_wide.csv",
+      "stored_file": "318541-H_wide.csv.gz",
+      "source_bytes": 15095411,
+      "published_sha1": "e209550ce746483de580459f7d8e40de91ec3667",
+      "source_sha256": "10ccb67d0e6bb0d51032a4ebd7c727b473c0a9e356e772fda205f7f54795d719",
+      "stored_sha256": "1daf5e27dc23b64ee8440eceed64e4b992f4b446e9191be7e9286074d2e60017",
+      "url": "https://dataverse.nl/api/access/datafile/318541"
+    }
+  ],
+  "europe_pmc_xml_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10569700/fullTextXML",
+  "europe_pmc_supplement_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10569700/supplementaryFiles",
+  "europe_pmc_zip_sha256": "4e9068fca340bfe27a9057cad3fc7b031c85b80e526b2a3a7e169a8b1d0d683b",
+  "europe_pmc_files": [
+    {
+      "file": "paper.xml",
+      "bytes": 183502,
+      "sha256": "5cf3dd88a8374caba525b0193aded3431f1acac454b5a5108247a39be11ed060"
+    },
+    {
+      "file": "sciadv.ade3300_sm.pdf",
+      "bytes": 1468232,
+      "sha256": "dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d"
+    },
+    {
+      "file": "sciadv.ade3300-f4.jpg",
+      "bytes": 179116,
+      "sha256": "079d8c2b8c4a54c45256a8b3409c472f8498d39854a98ecb32fa14e9f6d6cd50"
+    },
+    {
+      "file": "supplement-page-7.png",
+      "bytes": 272027,
+      "sha256": "80cefdecd3ef186975082c2c31d7ccc49f9d5cc9388bca762e1b33f8257795da"
+    },
+    {
+      "file": "supplement-page-12.png",
+      "bytes": 320480,
+      "sha256": "a436fb7c521f2af1625b7eed901cb2969ab22c5e181faf26cc0a765f4f4feeed"
+    }
+  ],
+  "original_source_scripts_executed": false,
+  "simulation_run": false,
+  "scores_promoted": false,
+  "selected_human_response_records": 16,
+  "excluded_records": 33,
+  "executed_files_sha256": {
+    "docs/evidence/h01-human-unity-20260914/human-channel-protocol/prepare.py": "374c1eae5507499f83431031e426fa6638b3931a6f6d320c25c348ed5316e716",
+    "docs/evidence/h01_ap_command.py": "120c37e2354c2c91037edcbc9713fc12da277d1ec170ccdd9183afb15dae73fb"
+  }
+}

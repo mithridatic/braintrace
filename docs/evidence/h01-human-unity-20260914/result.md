@@ -160,3 +160,12 @@ over one exponential (0.15234 versus 0.15286), with substantial per-record error
 Effective current recovery constants of 215.3 and 1438.4 ms remain observation-model
 estimates; they are not installed as channel-gate rates. Full experimental command
 and original-trace validation remain necessary. The six-term ledger is unchanged.
+
+The [protocol reconciliation](human-channel-protocol/README.md) found a substantive
+source mismatch: the experimental potassium recovery figure depicts 200
+conditioning pulses, while the released model uses continuous depolarization.
+The missing experimental waveform prevents a justified gate-parameter transfer.
+Separately, the exact published Hwide AP command and 3,200 matching sodium
+amplitudes from 16 human recordings are now preserved for repeated-AP validation.
+The full CSV contains 240 peaks; five- and prospective 200-AP windows are explicitly
+indexed. No model prediction or ledger promotion follows from this input checkpoint.
