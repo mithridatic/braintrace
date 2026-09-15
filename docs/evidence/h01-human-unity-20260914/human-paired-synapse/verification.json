@@ -1,0 +1,33 @@
+{
+  "source_sha256": "a3f7af41e09b8885e0b8432ed79a6563c3e7b1c1d7735e25048409c5045640aa",
+  "verified_full_paired_sweeps": 3,
+  "verified_events": 18,
+  "direct_samples_verified": 45,
+  "comparison": "New pyabf read; direct flattened data-matrix indices, no extraction helper.",
+  "tests_passed": 17,
+  "helper_line_coverage_percent": 100,
+  "plot_review": "README.md",
+  "scores_promoted": false,
+  "files": {
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\acquire.py": "12a777f0df37f6ac00a5a7d4d7980281087cc12314321e3e47aefe8c83709469",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\acquisition.json": "9684bbb3ea45ae893cbede906e3b95094dfcf50796bdee9228f165724addc117",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\coverage.json": "9613299b0f7445a4a89dff15750581ba3e2410c2f888ecbe55854e6cd7efb1bc",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\Data_fig2_Pyr_FS.csv": "b510d900106d10814c71c7c01786e7c812a2dfce17a191c421f8c20a5b5f7330",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\direct-samples.json": "2275f531f9cf67a8e0dc84de5a6ee1fd50e8e387bdb324fcd71d8e23c8a76f30",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\events.json": "872d7fe9b30a1793279ca4bb2bfe26c7054602f3bbe2a2664de27bc4b73aef53",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\events.npz": "b8004372eef8ec0f8e4e7db62215d351aeae2a11065550c54ce58954faa2ed94",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\full-sweeps.npz": "1703c94176a5afe7c1b063b71d1c1d1391285cfd163335bafc6a95c40741e139",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\full-sweeps.png": "6872aea2e134aa3375121b7b7f84e95e9e2ed3f022b33a5ee4e01f5ca8dcb45c",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\observe.py": "51b1ce0ea6a0103a1aac9758b5469e7359a4cdeb6ac625bb454471394e01c749",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\paired-events.png": "fb3d235a2fffc318cb6642faeb3eebc71edb77a42809762635fd0aa5c5d5cc49",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\paper.xml": "b7d1378eb688557cc7fbb8f62937e805b6d30ba8216e0e210c0334993e68075c",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\README.md": "d4c039a75757014a4b4d4234102448143a8744628cbe11e33d2cc6a39d76624f",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\recording.json": "1ed1c37d1f9be4ee7b541c265c01001b2ba4d9154c59f7465b15b2f821c68517",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\release.json": "72a652eaeb0c3b27a77318f5961d0d5d351291771cd965968ade50fe7890d865",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\tests.xml": "5e608f7c11f17544eb27eb63070bd605080e057c72663d81fbf3413f592887d6",
+    "docs\\evidence\\h01-human-unity-20260914\\human-paired-synapse\\verify.py": "348c58c4654738296eed05600e6a39a4bc4576ffe8822b811ca1025e078a6f99",
+    "docs\\evidence\\h01_paired_response.py": "0c9012e1a41c81ec12b48d2241243ddb481e8baa97ea5b3e0705b0bee279015f",
+    "docs\\evidence\\h01_paired_response_test.py": "9a0be0f5121177b99c27d932126453efafc717173970c2b55cc1ab82e31b26b1",
+    "docs\\specs\\2026-09-14-h01-human-paired-synapse.md": "6f42c83082ccb9f05e9455c46b2b35d2c95b3331563cb13bb7a5521c087495df"
+  }
+}

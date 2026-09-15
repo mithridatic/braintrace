@@ -1,0 +1,53 @@
+[
+  {
+    "sweep": 0,
+    "crossings": [
+      28212,
+      38212,
+      48216,
+      58214,
+      68213,
+      93362
+    ],
+    "omitted_boundary_crossings": [],
+    "plotted_event_ordinals": [
+      0,
+      1,
+      5
+    ]
+  },
+  {
+    "sweep": 1,
+    "crossings": [
+      28209,
+      38213,
+      48215,
+      58216,
+      68216,
+      93361
+    ],
+    "omitted_boundary_crossings": [],
+    "plotted_event_ordinals": [
+      0,
+      1,
+      5
+    ]
+  },
+  {
+    "sweep": 29,
+    "crossings": [
+      28205,
+      38209,
+      48209,
+      58209,
+      68210,
+      93358
+    ],
+    "omitted_boundary_crossings": [],
+    "plotted_event_ordinals": [
+      0,
+      1,
+      5
+    ]
+  }
+]
