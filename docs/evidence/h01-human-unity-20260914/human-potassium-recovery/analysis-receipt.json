@@ -1,0 +1,34 @@
+{
+  "status": "effective_human_current_recovery_estimated_not_gate_qualified",
+  "verified_curves": 12,
+  "verified_observations": 120,
+  "verified_group_disjointness": true,
+  "independent_prediction_and_rmse_check": true,
+  "plots_visually_inspected": [
+    "grouped-predictions.png",
+    "grouped-residuals.png"
+  ],
+  "tests_passed": 34,
+  "module_line_coverage_percent": 100,
+  "six_term_scores_changed": false,
+  "parameters_installed": false,
+  "artifact_sha256": {
+    "coverage.json": "81a8920f9ecb7e50bbdaa7ee83544d0f1967f1d7bd6ef2319fd27db4ef357752",
+    "grouped-predictions.png": "bdee27720d8056a340d205d4c1db0707e66ac762f30a2f6df19cec67d0e3f9a5",
+    "grouped-residuals.png": "c297f1a84757e870b64d4f93740c72fe2b1e5f78e6a079e205b06fe0fdeb5f1a",
+    "inputs.json": "bf83888a2e06dc17cf51747fdad81b7b8578b901b781672a8404c42391980cb9",
+    "partial-fits.json": "d3fefd890df7dd58ea042bb4de395f90dcc751c99fe72dea41376dbdf1c1d5eb",
+    "plot.py": "5e6b7e24c8bddde581090db7b30258ccd8f112d481c67acbfc36d4ad71437447",
+    "README.md": "1d72356ecac5c691f73045b6ce5a1758195c66663fb75d1f535d5bcbc1f6c8a5",
+    "result.json": "62d8366a8703fcb85f28fe384fcd2a0f06c25458915fbd8a27cc006b880deda9",
+    "run.py": "9496fc7022a3756c17bb1c9e2d777cfe8278a2843e71d7684ff021d8fa56f60f",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "99fcf0d6c9afde1474d3d12aa250f56c2b01c098adfaa29a9a1a0eb0401bc304",
+    "terminal.json": "e42362f549d86b93e22a2383374018e8927f7b8aac2742b649cdcf11de5f0102",
+    "tests.xml": "5b589a5a7a015aeaa103722d1b3628ad1170408fb5d93b8b38f29079d509994c"
+  },
+  "module_sha256": {
+    "docs/evidence/h01_k_recovery.py": "ffdcdc274397469ca196398c0642996c7b15c87b9d393f00af5dd5731d6757f4",
+    "docs/evidence/h01_k_recovery_test.py": "c49b9b977bc95117f14e170e561ca993daa48fea634d7a72d045a864b48f6387"
+  }
+}

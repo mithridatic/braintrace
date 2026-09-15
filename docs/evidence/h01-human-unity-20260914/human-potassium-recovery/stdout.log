@@ -1,0 +1,1 @@
+{"status": "double_exponential_preferred_for_protocol_followup", "grouped_validation_rmse": {"single": 0.15286106899357996, "double": 0.15233640638691745}, "per_group_validation_rmse": {"H21.29.190": {"single": 0.16446591435005029, "double": 0.16426516304284197}, "H21.29.191": {"single": 0.13494800338303164, "double": 0.13386206483101962}}, "elapsed_seconds": 0.12771080003585666}

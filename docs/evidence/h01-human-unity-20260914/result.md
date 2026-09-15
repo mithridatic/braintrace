@@ -152,3 +152,11 @@ recordings with source identities and missing values preserved. Original NWB
 traces remain unavailable locally; source QC and unit discrepancies are explicit.
 This acquisition changes no model parameter or six-term score and supplies the
 input for a separately registered human-only potassium estimate.
+
+The subsequent [human-only recovery estimate](human-potassium-recovery/README.md)
+fits 120 experimental amplitude ratios from 12 recordings and tests prediction
+across two filename groups. Two exponentials improve grouped RMSE only 0.34%
+over one exponential (0.15234 versus 0.15286), with substantial per-record errors.
+Effective current recovery constants of 215.3 and 1438.4 ms remain observation-model
+estimates; they are not installed as channel-gate rates. Full experimental command
+and original-trace validation remain necessary. The six-term ledger is unchanged.
