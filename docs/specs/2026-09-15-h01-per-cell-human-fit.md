@@ -28,17 +28,22 @@ because the fit is made on the deployed anatomy.
   (`transfer-e310`, `split-e310-dendload-x3`). A fit of ~1,000 evaluations x 4
   inputs is 200+ GPU-hours per cell. Not viable on this path without batching
   parameter sets inside one program (untested).
-- NEURON on the box's 255 cores (`/workspace/h01-neuron/venv312`, NEURON 9.0.2):
-  an Allen-style perisomatic evaluation of a ~3,000-compartment cell for 2 s at
-  dt 0.025 is a few seconds on one core. 104 cells x 4 inputs x 2,000
-  evaluations at 4 s over 255 cores is about 4 hours of wall time. This is the
-  viable path, and it needs one new component: an H01 -> NEURON importer that
-  reproduces the production electrical partition (soma / axon / dend regions from
-  `_regions`) so the fitted densities can be painted back through the BrainCell
-  builder without a second interpretation of the anatomy. The corrected
-  source-preserving SWC export (`h01-human-unity-20260914/source-preserved/`)
-  plus the region intervals retained in `population-geometry-r2/*.npz` are the
-  inputs; no soma replacement, radius floor or axon stub.
+- NEURON on the box's 255 cores (`/workspace/h01-neuron/venv312`, NEURON 9.0.2),
+  measured 2026-09-15: `Import3d_SWC_read` loads the corrected source-preserving
+  export `h01-human-unity-20260914/source-preserved/h01-955432427.swc` directly,
+  4,307.5 um² and 3,343.1 um exactly as the source, but as 11,449 sections (one
+  per sample, because the neutral type 0 gives Import3d no branch merging), and a
+  passive 2 s run at dt 0.025 takes 20.2 s on one core. Merging unbranched
+  samples into the 2,569 source branches (the same branch set the production
+  importer uses; `population-geometry-r2/955432427.npz`) should bring that to a
+  few seconds; that merge is the one new importer component, and it must
+  reproduce the production `_regions` partition from the anatomy sidecar so the
+  fitted densities paint back through the BrainCell builder with no second
+  interpretation of the anatomy. At 5 s per evaluation, 104 cells x 4 inputs x
+  2,000 evaluations over 255 cores is about 5 hours of wall time; at the
+  unmerged 20 s it is about 22 hours. Both are within reach; neither is
+  authorised by this note. The Allen mod set is already compiled in
+  `/workspace/h01-neuron/cache/human-pyramidal-l2/kv3-closing-source`.
 
 ## Registered acceptance before any fit runs
 
