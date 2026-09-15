@@ -22,6 +22,22 @@ def test_final_pulse_is_retained_in_partial_final_period():
     assert np.count_nonzero(command == 2500) == 5*150
 
 
+@pytest.mark.parametrize('duration', [100, 40100, 40149])
+def test_unverified_truncated_pulse_is_rejected(duration):
+    e = epochs()
+    e.p2s[1] = e.p1s[2] = 10+duration
+    with pytest.raises(ValueError, match='truncated pulse'):
+        command_from_epochs(e)
+
+
+@pytest.mark.parametrize('duration,count', [(150, 1), (9999, 1), (10000, 1),
+                                          (40000, 4), (40150, 5), (40151, 5)])
+def test_unambiguous_complete_pulse_boundaries(duration, count):
+    e = epochs()
+    e.p2s[1] = e.p1s[2] = 10+duration
+    assert np.count_nonzero(command_from_epochs(e) == 2500) == count*150
+
+
 def test_associated_crossings_retain_unassigned_falling_phase_recrossing():
     command = np.zeros(30); command[5:10] = 10; command[20:25] = 10
     voltage = np.full(30, -60.); voltage[6:11] = 40; voltage[12] = .3; voltage[21:24] = 40

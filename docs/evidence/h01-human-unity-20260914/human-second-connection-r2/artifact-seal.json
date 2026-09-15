@@ -1,0 +1,211 @@
+{
+  "parent_commit": "77fccb74",
+  "files": [
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/acquisition.json",
+      "bytes": 924,
+      "sha256": "256ca7e793eebf2a8e6eef02e04a979aafb0ef93f64061d25cfb700ea193e03c"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/analyze.py",
+      "bytes": 10693,
+      "sha256": "5274879cd0763d6bf6b2ef022eb3800cf3a71655d6ec5aecef146e95232db146"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/missing-fifth-spike.npz",
+      "bytes": 15835,
+      "sha256": "3148f7625d9a070730b38b937a801d85e6f31cfbcc621d980dad453617410ec9"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/missing-fifth-spike.png",
+      "bytes": 156311,
+      "sha256": "1e387d9be83f8a000417f1cd602ef0eecff061e140887207e7d6333ce460c167"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/README.md",
+      "bytes": 2216,
+      "sha256": "1a2f90fc99110067286ea7daa5b8048e072e5a5d16947489d5a675293c462ac2"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/recording.json",
+      "bytes": 795,
+      "sha256": "d6428d7e37609264a18f8ffb0160729f1f987653d314456e3837bb6ef0d56d30"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/run.py",
+      "bytes": 1039,
+      "sha256": "ad74c1fc9726721a8b3b9add6ff69a65de1fbfeaceb7419818c972af14a0b5ab"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/stderr.txt",
+      "bytes": 963,
+      "sha256": "737e795bd84bb4b2f9d7e63b52e958b07c8d11d00fc8c304ba737d7dcd26efcd"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection/terminal.json",
+      "bytes": 149,
+      "sha256": "5f39c2542c794785a314e67fafba05cbe814d4c5687a68618eeeeb9c6606bf6c"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/acquisition.json",
+      "bytes": 924,
+      "sha256": "256ca7e793eebf2a8e6eef02e04a979aafb0ef93f64061d25cfb700ea193e03c"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/all-slot-residuals.png",
+      "bytes": 142090,
+      "sha256": "6bf92a987cc600cd012779d9cd651a6a33e72701a9c7cb9443c46c9d6f0a9a74"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/analyze.py",
+      "bytes": 12863,
+      "sha256": "7364391486f1d696d885f9f27aa4af86582bbcf48bc0a8892a6506d907e9a29c"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/calibration-responses.png",
+      "bytes": 352246,
+      "sha256": "0e84f92edd011c24af60074b911acb415c3f7232314607bef9565b0a8b3c7b46"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/coverage.json",
+      "bytes": 4238,
+      "sha256": "979d23ad6e62614ae219a12a286c2728b291a0c49e527ef84c422ba646926514"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/direct-samples.json",
+      "bytes": 12708,
+      "sha256": "efeb8765a1c76fee62a943980ee6ab552a0099c67b2e10e383ddf1ca75589da0"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/electrical-observations.npz",
+      "bytes": 619129,
+      "sha256": "149fe1661ed22d853dbd74a10c8d53e18b0b38d70fe34dc0056cecb84fcafb21"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/electrical-result.json",
+      "bytes": 6617,
+      "sha256": "7189c71cef1d3d8e6a0470966df9f5f44c0751fa4073444ed72b969a074d66c0"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/electrical-transfer.png",
+      "bytes": 189804,
+      "sha256": "a5d0f938b43df9b4003c7c8c6aa04f008d3c458b753538e2dcb12b1e5f8d706e"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/frozen-candidate.json",
+      "bytes": 1042,
+      "sha256": "a66722624d29a33f0b36717ad142f52cf3fe5d8592ceab087d00d5ccdb90b5fd"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/observations.npz",
+      "bytes": 9993053,
+      "sha256": "3c911a39022fa588def560c1a026e80fadbbe6bff4dfdea1c870f2b1272091ba"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/plot.py",
+      "bytes": 4454,
+      "sha256": "a5a552ed78e1b07a0f5c9a1bb799ce200965df9f68a9c610fed7074b7b9a4a40"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/presynaptic-epochs.json",
+      "bytes": 722,
+      "sha256": "7008b899f6300b57b0c3c2a031ccdc01daadef2217a889c33e48af50cfa2daf6"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/presynaptic-inputs.png",
+      "bytes": 189610,
+      "sha256": "b16d36e2a74c5fdf4cbfbf7ed0464bb41498b7ee8ca84a9da9d27c4cd6300386"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/README.md",
+      "bytes": 5977,
+      "sha256": "74ddf017ff1a9fa927e675005dd986c51902a49386d131a459b0b9f7427e693c"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/recording.json",
+      "bytes": 795,
+      "sha256": "d6428d7e37609264a18f8ffb0160729f1f987653d314456e3837bb6ef0d56d30"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/result.json",
+      "bytes": 54502,
+      "sha256": "cd284325cde6973d10e8747597c0ace478b17df50ee871f8f7b0bc381b450ada"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/run.py",
+      "bytes": 1039,
+      "sha256": "ad74c1fc9726721a8b3b9add6ff69a65de1fbfeaceb7419818c972af14a0b5ab"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/stdout.txt",
+      "bytes": 408,
+      "sha256": "6b73de8432745599c95afc3a5174e4846566cc0033a3f8abb016d2e6db0de8ca"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/terminal.json",
+      "bytes": 148,
+      "sha256": "948f7643f490010acecd1ec2d2d9da8562d931ea26d54cac96b2d49a09cc6698"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/tests.xml",
+      "bytes": 10542,
+      "sha256": "6b81a1ed0a82ee13dc9ecba88405c1e7e8cbbb6d95379466634931c0e470f1da"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/validation-responses.png",
+      "bytes": 346204,
+      "sha256": "75912fbb6b180ea55bf873a9b1e17d555f9c324ecfed35de1f6a531c6b4ba9f4"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/verification.json",
+      "bytes": 643,
+      "sha256": "10c6c90d6170f49c3083eea98f9a2090fa364123555c4711ad9d37ad5989b643"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-second-connection-r2/verify.py",
+      "bytes": 8393,
+      "sha256": "5fb8a5ffdb5e4988c3ab5d58815f4d3780aa422440781fee599d9cf6579d4ec4"
+    },
+    {
+      "path": "docs/evidence/h01_abf_pulses.py",
+      "bytes": 3877,
+      "sha256": "689b9b824652c4d1085137c7dfb99bd349bc07bd772250a33e93a2ad5a279c0c"
+    },
+    {
+      "path": "docs/evidence/h01_abf_pulses_test.py",
+      "bytes": 2498,
+      "sha256": "7e388adb9b16c071427b09bf308a2f2d8a54232cd1b370a040e703c0fd3ecbe7"
+    },
+    {
+      "path": "docs/evidence/h01_synaptic_transfer.py",
+      "bytes": 1689,
+      "sha256": "b635a55e6c3c0bc24cad9213442cbd90364034fab0ce4b8ce81c85bfcb7ab0ab"
+    },
+    {
+      "path": "docs/evidence/h01_synaptic_transfer_test.py",
+      "bytes": 1523,
+      "sha256": "7e1eca7630721c0977e26298c3cfa601f275fb3ca76e52df5800d19ad1de4175"
+    },
+    {
+      "path": "docs/specs/2026-09-14-h01-human-second-connection-r2.md",
+      "bytes": 3444,
+      "sha256": "f476c46a4887c4cc94338f28c7653c3895683f95b89f7f1001a81727915f6411"
+    },
+    {
+      "path": "docs/specs/2026-09-14-h01-human-second-connection.md",
+      "bytes": 3995,
+      "sha256": "d2eb3955c7f51b493ed5a479195dd3b6eb517a8425b4f6c97b482d7d0d6357e5"
+    }
+  ],
+  "scores_promoted": false
+}

@@ -1,0 +1,578 @@
+[
+  {
+    "sweep": 0,
+    "slot": 0,
+    "source_index": 28194,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 2.3345947265625,
+    "post_mv": -70.538330078125
+  },
+  {
+    "sweep": 0,
+    "slot": 0,
+    "source_index": 28294,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -30.8837890625,
+    "post_mv": -70.684814453125
+  },
+  {
+    "sweep": 0,
+    "slot": 0,
+    "source_index": 28694,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -47.4700927734375,
+    "post_mv": -68.5791015625
+  },
+  {
+    "sweep": 0,
+    "slot": 1,
+    "source_index": 38197,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 2.8533935546875,
+    "post_mv": -70.538330078125
+  },
+  {
+    "sweep": 0,
+    "slot": 1,
+    "source_index": 38297,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -30.5633544921875,
+    "post_mv": -70.819091796875
+  },
+  {
+    "sweep": 0,
+    "slot": 1,
+    "source_index": 38697,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -53.863525390625,
+    "post_mv": -70.672607421875
+  },
+  {
+    "sweep": 0,
+    "slot": 4,
+    "source_index": 68125,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -74.6612548828125,
+    "post_mv": -70.78857421875
+  },
+  {
+    "sweep": 0,
+    "slot": 4,
+    "source_index": 68225,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -74.6612548828125,
+    "post_mv": -70.794677734375
+  },
+  {
+    "sweep": 0,
+    "slot": 4,
+    "source_index": 68625,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -74.6612548828125,
+    "post_mv": -70.78857421875
+  },
+  {
+    "sweep": 0,
+    "slot": 5,
+    "source_index": 93295,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 0.42724609375,
+    "post_mv": -70.599365234375
+  },
+  {
+    "sweep": 0,
+    "slot": 5,
+    "source_index": 93395,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -29.4189453125,
+    "post_mv": -70.66650390625
+  },
+  {
+    "sweep": 0,
+    "slot": 5,
+    "source_index": 93795,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -51.33056640625,
+    "post_mv": -70.428466796875
+  },
+  {
+    "sweep": 1,
+    "slot": 0,
+    "source_index": 28195,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 3.204345703125,
+    "post_mv": -70.49560546875
+  },
+  {
+    "sweep": 1,
+    "slot": 0,
+    "source_index": 28295,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -31.6925048828125,
+    "post_mv": -70.660400390625
+  },
+  {
+    "sweep": 1,
+    "slot": 0,
+    "source_index": 28695,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -48.614501953125,
+    "post_mv": -70.477294921875
+  },
+  {
+    "sweep": 1,
+    "slot": 1,
+    "source_index": 38197,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 2.4566650390625,
+    "post_mv": -70.5810546875
+  },
+  {
+    "sweep": 1,
+    "slot": 1,
+    "source_index": 38297,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -29.6478271484375,
+    "post_mv": -70.849609375
+  },
+  {
+    "sweep": 1,
+    "slot": 1,
+    "source_index": 38697,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -53.4515380859375,
+    "post_mv": -70.587158203125
+  },
+  {
+    "sweep": 1,
+    "slot": 4,
+    "source_index": 68125,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -74.70703125,
+    "post_mv": -70.703125
+  },
+  {
+    "sweep": 1,
+    "slot": 4,
+    "source_index": 68225,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -74.70703125,
+    "post_mv": -70.66650390625
+  },
+  {
+    "sweep": 1,
+    "slot": 4,
+    "source_index": 68625,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -74.6612548828125,
+    "post_mv": -70.703125
+  },
+  {
+    "sweep": 1,
+    "slot": 5,
+    "source_index": 93295,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 2.655029296875,
+    "post_mv": -70.52001953125
+  },
+  {
+    "sweep": 1,
+    "slot": 5,
+    "source_index": 93395,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -30.5328369140625,
+    "post_mv": -70.660400390625
+  },
+  {
+    "sweep": 1,
+    "slot": 5,
+    "source_index": 93795,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -51.9866943359375,
+    "post_mv": -70.538330078125
+  },
+  {
+    "sweep": 14,
+    "slot": 0,
+    "source_index": 28192,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 0.54931640625,
+    "post_mv": -70.2880859375
+  },
+  {
+    "sweep": 14,
+    "slot": 0,
+    "source_index": 28292,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -29.8919677734375,
+    "post_mv": -70.556640625
+  },
+  {
+    "sweep": 14,
+    "slot": 0,
+    "source_index": 28692,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -49.01123046875,
+    "post_mv": -70.39794921875
+  },
+  {
+    "sweep": 14,
+    "slot": 1,
+    "source_index": 38195,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 1.3275146484375,
+    "post_mv": -70.3125
+  },
+  {
+    "sweep": 14,
+    "slot": 1,
+    "source_index": 38295,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -27.4658203125,
+    "post_mv": -70.611572265625
+  },
+  {
+    "sweep": 14,
+    "slot": 1,
+    "source_index": 38695,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -53.466796875,
+    "post_mv": -70.513916015625
+  },
+  {
+    "sweep": 14,
+    "slot": 4,
+    "source_index": 68125,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.822021484375,
+    "post_mv": -70.391845703125
+  },
+  {
+    "sweep": 14,
+    "slot": 4,
+    "source_index": 68225,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.8372802734375,
+    "post_mv": -69.415283203125
+  },
+  {
+    "sweep": 14,
+    "slot": 4,
+    "source_index": 68625,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.8677978515625,
+    "post_mv": -69.097900390625
+  },
+  {
+    "sweep": 14,
+    "slot": 5,
+    "source_index": 93293,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 0.7476806640625,
+    "post_mv": -70.294189453125
+  },
+  {
+    "sweep": 14,
+    "slot": 5,
+    "source_index": 93393,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -28.4423828125,
+    "post_mv": -70.379638671875
+  },
+  {
+    "sweep": 14,
+    "slot": 5,
+    "source_index": 93793,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -52.490234375,
+    "post_mv": -70.098876953125
+  },
+  {
+    "sweep": 15,
+    "slot": 0,
+    "source_index": 28193,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 1.312255859375,
+    "post_mv": -70.42236328125
+  },
+  {
+    "sweep": 15,
+    "slot": 0,
+    "source_index": 28293,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -30.1666259765625,
+    "post_mv": -70.71533203125
+  },
+  {
+    "sweep": 15,
+    "slot": 0,
+    "source_index": 28693,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -49.1180419921875,
+    "post_mv": -70.452880859375
+  },
+  {
+    "sweep": 15,
+    "slot": 1,
+    "source_index": 38194,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 4.0435791015625,
+    "post_mv": -70.404052734375
+  },
+  {
+    "sweep": 15,
+    "slot": 1,
+    "source_index": 38294,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -28.4881591796875,
+    "post_mv": -70.684814453125
+  },
+  {
+    "sweep": 15,
+    "slot": 1,
+    "source_index": 38694,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -54.107666015625,
+    "post_mv": -70.59326171875
+  },
+  {
+    "sweep": 15,
+    "slot": 4,
+    "source_index": 68125,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.8067626953125,
+    "post_mv": -70.39794921875
+  },
+  {
+    "sweep": 15,
+    "slot": 4,
+    "source_index": 68225,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.760986328125,
+    "post_mv": -70.41015625
+  },
+  {
+    "sweep": 15,
+    "slot": 4,
+    "source_index": 68625,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.79150390625,
+    "post_mv": -70.44677734375
+  },
+  {
+    "sweep": 15,
+    "slot": 5,
+    "source_index": 93293,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 4.2724609375,
+    "post_mv": -69.0673828125
+  },
+  {
+    "sweep": 15,
+    "slot": 5,
+    "source_index": 93393,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -29.35791015625,
+    "post_mv": -69.476318359375
+  },
+  {
+    "sweep": 15,
+    "slot": 5,
+    "source_index": 93793,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -52.4749755859375,
+    "post_mv": -69.6533203125
+  },
+  {
+    "sweep": 16,
+    "slot": 0,
+    "source_index": 28192,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 0.7781982421875,
+    "post_mv": -70.3125
+  },
+  {
+    "sweep": 16,
+    "slot": 0,
+    "source_index": 28292,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -30.09033203125,
+    "post_mv": -70.611572265625
+  },
+  {
+    "sweep": 16,
+    "slot": 0,
+    "source_index": 28692,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -49.5147705078125,
+    "post_mv": -69.659423828125
+  },
+  {
+    "sweep": 16,
+    "slot": 1,
+    "source_index": 38194,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 2.01416015625,
+    "post_mv": -70.281982421875
+  },
+  {
+    "sweep": 16,
+    "slot": 1,
+    "source_index": 38294,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -27.9083251953125,
+    "post_mv": -70.440673828125
+  },
+  {
+    "sweep": 16,
+    "slot": 1,
+    "source_index": 38694,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -53.89404296875,
+    "post_mv": -70.3125
+  },
+  {
+    "sweep": 16,
+    "slot": 4,
+    "source_index": 68125,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.8677978515625,
+    "post_mv": -70.5078125
+  },
+  {
+    "sweep": 16,
+    "slot": 4,
+    "source_index": 68225,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.822021484375,
+    "post_mv": -69.921875
+  },
+  {
+    "sweep": 16,
+    "slot": 4,
+    "source_index": 68625,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -73.8067626953125,
+    "post_mv": -70.3369140625
+  },
+  {
+    "sweep": 16,
+    "slot": 5,
+    "source_index": 93293,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 3.2501220703125,
+    "post_mv": -70.458984375
+  },
+  {
+    "sweep": 16,
+    "slot": 5,
+    "source_index": 93393,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -28.9764404296875,
+    "post_mv": -70.71533203125
+  },
+  {
+    "sweep": 16,
+    "slot": 5,
+    "source_index": 93793,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -52.5054931640625,
+    "post_mv": -70.538330078125
+  },
+  {
+    "sweep": 29,
+    "slot": 0,
+    "source_index": 28193,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 3.4332275390625,
+    "post_mv": -69.073486328125
+  },
+  {
+    "sweep": 29,
+    "slot": 0,
+    "source_index": 28293,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -30.487060546875,
+    "post_mv": -69.37255859375
+  },
+  {
+    "sweep": 29,
+    "slot": 0,
+    "source_index": 28693,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -50.59814453125,
+    "post_mv": -69.195556640625
+  },
+  {
+    "sweep": 29,
+    "slot": 1,
+    "source_index": 38196,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 2.3651123046875,
+    "post_mv": -69.183349609375
+  },
+  {
+    "sweep": 29,
+    "slot": 1,
+    "source_index": 38296,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -28.8238525390625,
+    "post_mv": -69.43359375
+  },
+  {
+    "sweep": 29,
+    "slot": 1,
+    "source_index": 38696,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -55.206298828125,
+    "post_mv": -69.2626953125
+  },
+  {
+    "sweep": 29,
+    "slot": 4,
+    "source_index": 68125,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -74.9969482421875,
+    "post_mv": -69.22607421875
+  },
+  {
+    "sweep": 29,
+    "slot": 4,
+    "source_index": 68225,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -75.0274658203125,
+    "post_mv": -69.183349609375
+  },
+  {
+    "sweep": 29,
+    "slot": 4,
+    "source_index": 68625,
+    "anchor_kind": "epoch clock; no spike",
+    "pre_mv": -75.0732421875,
+    "post_mv": -69.146728515625
+  },
+  {
+    "sweep": 29,
+    "slot": 5,
+    "source_index": 93294,
+    "anchor_kind": "recorded spike",
+    "pre_mv": 2.3956298828125,
+    "post_mv": -69.43359375
+  },
+  {
+    "sweep": 29,
+    "slot": 5,
+    "source_index": 93394,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -29.998779296875,
+    "post_mv": -69.7265625
+  },
+  {
+    "sweep": 29,
+    "slot": 5,
+    "source_index": 93794,
+    "anchor_kind": "recorded spike",
+    "pre_mv": -54.6875,
+    "post_mv": -69.464111328125
+  }
+]

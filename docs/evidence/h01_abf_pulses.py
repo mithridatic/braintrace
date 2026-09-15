@@ -4,7 +4,7 @@ import numpy as np
 
 
 def command_from_epochs(epochs):
-    """Reconstruct contiguous Step/Pulse epochs, including final partial periods.
+    """Reconstruct Step/Pulse epochs, rejecting ambiguous truncated pulses.
 
     Parameters
     ----------
@@ -16,6 +16,12 @@ def command_from_epochs(epochs):
     -------
     ndarray
         Complete reconstructed command on its original sample grid.
+
+    Raises
+    ------
+    ValueError
+        If an epoch is malformed or ends inside a pulse whose delivered
+        waveform cannot be established from the supported reconstruction.
     """
     fields = [getattr(epochs, k) for k in ['p1s', 'p2s', 'types', 'levels', 'pulsePeriods', 'pulseWidths']]
     if not len(fields[0]) or any(len(f) != len(fields[0]) for f in fields):
@@ -39,6 +45,9 @@ def command_from_epochs(epochs):
             if (not isinstance(period, (int, np.integer)) or not isinstance(width, (int, np.integer))
                     or period <= 0 or not 0 < width <= period):
                 raise ValueError('Invalid pulse period or width.')
+            remainder = (stop-start) % period
+            if 0 < remainder < width:
+                raise ValueError('Unverified truncated pulse at the epoch boundary.')
             phase = np.arange(stop-start) % period
             command[start:stop] = np.where(phase < width, level, previous_level)
         else:

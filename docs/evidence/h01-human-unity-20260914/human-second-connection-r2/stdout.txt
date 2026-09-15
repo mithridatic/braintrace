@@ -1,0 +1,16 @@
+{
+  "strength": {
+    "peak_pa": 30.208931472171567,
+    "unconstrained_peak_pa": 30.208931472171567,
+    "interior": true
+  },
+  "electrical_pass": true,
+  "synaptic_pass": false,
+  "reference_rmse_mv": 0.351645827293396,
+  "candidate_rmse_mv": 0.34989543606723095,
+  "original_strength_rmse_mv": 0.468087261445384,
+  "failed_sweeps": [
+    29
+  ],
+  "elapsed_seconds": 4.1795067000202835
+}

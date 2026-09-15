@@ -1,0 +1,16 @@
+{
+  "source_sha256": "39a77cae70f141a24b2830c4eeba7a0be43ef1cb0d8fba50cb6e1a86e045d6cd",
+  "source_spikes": 150,
+  "observation_slots": 180,
+  "paired_voltage_samples_verified": 1080360,
+  "scored_samples": 450180,
+  "electrical_samples_verified": 660030,
+  "direct_samples_verified": 72,
+  "strength_independently_verified_pa": 30.208931472176282,
+  "max_unit_voltage_difference_mv_per_pa": 2.6020852139652106e-18,
+  "max_float32_baseline_difference_from_float64_mv": 7.62939453125e-06,
+  "tests_passed": 82,
+  "gates_independently_verified": true,
+  "scores_promoted": false,
+  "first_record_commands_unchanged_sweeps": 30
+}
