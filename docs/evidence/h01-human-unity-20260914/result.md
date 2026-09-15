@@ -169,3 +169,11 @@ Separately, the exact published Hwide AP command and 3,200 matching sodium
 amplitudes from 16 human recordings are now preserved for repeated-AP validation.
 The full CSV contains 240 peaks; five- and prospective 200-AP windows are explicitly
 indexed. No model prediction or ledger promotion follows from this input checkpoint.
+
+The [executed sodium scaling experiment](sodium-thermal-transfer-r2/README.md)
+then tested a real two-parameter kinetic change against all 200 AP responses.
+Combined validation RMSE improved 23.16%, but four of nine validation recordings
+worsened beyond the registered 5% limit. The candidate is rejected and this
+two-scalar branch is closed; no model parameter or ledger term is promoted.
+The full fitted/validated run finished in 6.384 seconds after a separately
+preserved runtime correction; all direct predictions and gate samples remain.

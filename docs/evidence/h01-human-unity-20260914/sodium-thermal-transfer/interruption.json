@@ -1,0 +1,12 @@
+{
+  "pid": 43276,
+  "command": [
+    "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-human-unity/.cache/human-audit-venv/Scripts/python.exe",
+    "docs/evidence/h01-human-unity-20260914/sodium-thermal-transfer/run.py"
+  ],
+  "reason": "Full-length initial baseline exceeds practical per-evaluation runtime for bounded fit",
+  "elapsed_seconds": 126.70661282539368,
+  "cpu_seconds": 126.0625,
+  "executed-sodium-transfer.py_sha256": "0f810d10b99e892adfbb8fb644ccbd13528fbbcb1d8042a36fac791089587e69",
+  "executed-spec.md_sha256": "c9ce8d10564ce818dc53456c151f719b1c7cf503a7fec8707e6b393f450a7452"
+}
