@@ -27,8 +27,12 @@ SHA-256 verification, under `/workspace/braintrace/.cache/h01-q2-retained-202609
 The local worktree cache was moved intact to `.cache/h01-human-unity-retained`;
 all six cached NWB hashes were checked. Historical `.cache/human-source-followup`
 paths from this campaign now resolve beneath that retained cache directory.
-The unrelated dirty `docs/evidence/h01-arc-manifest/manifest.json` remains intact
-locally and remotely. The 91 affected helper tests passed again on integrated
+The pre-existing manifest edit was reviewed during final cleanup: its replacement
+`h01_arc_model.py` digest did not match the actual file. Its exact bytes are
+preserved in [the integration record](evidence/h01-human-unity-20260914/integration/README.md);
+the historical manifest is restored to its committed version. This is cleanup,
+not a new qualification or a declaration that the historical manifest describes
+the current implementation. The 91 affected helper tests passed again on integrated
 main. No new physiological experiment was launched during integration.
 
 ## What changed, and what did not
