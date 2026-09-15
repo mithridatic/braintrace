@@ -19,6 +19,18 @@ do not assume the old `.worktrees/h01-human-unity` path still exists. The local
 repository is `C:\Users\J\Documents\Projects\connectome-agent\braintrace-source`.
 Create a fresh worktree for any subsequently approved implementation.
 
+Integration checkpoint: `3f4d5c98` was pushed to `origin/main` and fast-forwarded
+on Vast.ai instance 50616476 (`braintrace-gpu`), `/workspace/braintrace`, branch
+`main`. The obsolete remote `/workspace/braintrace-q2` worktree was removed after
+preserving all 133 untracked/ignored files (1,085,412,882 bytes), with before/after
+SHA-256 verification, under `/workspace/braintrace/.cache/h01-q2-retained-20260914`.
+The local worktree cache was moved intact to `.cache/h01-human-unity-retained`;
+all six cached NWB hashes were checked. Historical `.cache/human-source-followup`
+paths from this campaign now resolve beneath that retained cache directory.
+The unrelated dirty `docs/evidence/h01-arc-manifest/manifest.json` remains intact
+locally and remotely. The 91 affected helper tests passed again on integrated
+main. No new physiological experiment was launched during integration.
+
 ## What changed, and what did not
 
 The original objective remains **all six values at 1.000, true human only, all
