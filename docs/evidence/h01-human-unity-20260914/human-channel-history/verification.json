@@ -1,0 +1,11 @@
+{
+  "acquired_files_verified": 6,
+  "bytes_verified": 770746,
+  "original_exclusion_cells_verified": 19,
+  "original_sweep_range_cells_verified": 38,
+  "matched_kinetic_records": 34,
+  "common_kinetic_cells_unchanged": 16830,
+  "matched_ap_records": 49,
+  "ap_cell_differences": 0,
+  "scores_promoted": false
+}

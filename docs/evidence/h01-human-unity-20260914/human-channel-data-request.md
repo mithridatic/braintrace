@@ -34,9 +34,10 @@ an existing archive location or clarification for the following inputs:
    command has 240 detected AP peaks in its complete file; our first-200 crop is
    an analysis choice, not a verified experimental sweep mapping.
 
-3. **Original kinetic analysis and QC.** The Na plotting code refers to an
-   exclude column that we did not find in the released Fig. 3 workbook. Please
-   identify the corresponding QC table and the MATLAB scripts that extracted
+3. **Original kinetic analysis and QC.** We recovered the original version 1.0
+   Fig. 3 exclusion flags and sweep ranges, which were omitted from version 3.0;
+   all shared measurement values agree. Please identify any additional QC and
+   the MATLAB scripts that extracted
    activation, inactivation and recovery observations from the NWB currents.
    The model-fitting code also references Experimental means CSV files absent
    from the 65-file release inventory we inspected. An archive pointer would be
@@ -56,6 +57,11 @@ identifying participant information. We preserve the published summaries and
 failed model predictions, and would cite any additional archive or clarification.
 
 ## Local evidence supporting the request
+
+- [Recovered original QC](human-channel-history/README.md): all 19 human kinetic
+  records have source exclude=0; all 16,830 common workbook cells agree across
+  versions. This resolves the missing exclusion-field question, not the remaining
+  original-current, protocol or AP-clamp correspondence questions.
 
 - [Protocol reconciliation](human-channel-protocol/README.md): inspected Fig. 4,
   Fig. S5, Table S2, original command samples, scripts and selected AP amplitudes.

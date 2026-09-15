@@ -1,0 +1,413 @@
+{
+  "old_sha256": "58512456c32c5ec29e1c403484714f07d15918dc709bc088f58127caaec9f4ca",
+  "current_sha256": "c6c32a46ef9d4b8d28a98c53e39a0b83a4299290500c4cc1986d71519060e7c3",
+  "old_columns": 505,
+  "current_columns": 495,
+  "matched_records": 34,
+  "matched_human_records": 19,
+  "compared_common_cells": 16830,
+  "recovered_columns": [
+    "Cp",
+    "Vhalf_ia",
+    "artefact_subtraction",
+    "exclude",
+    "gof_ia",
+    "swpnr_end",
+    "swpnr_start",
+    "swpnr_sylguard",
+    "swpnr_sylguard_end",
+    "wholeCell"
+  ],
+  "added_current_columns": [],
+  "differences": [],
+  "human_recovered_fields": [
+    {
+      "filename": "H20.29.184.11.42.04.nwb",
+      "historical_excel_row": 3,
+      "current_excel_row": 3,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -67.3938142306849,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9991741313913113,
+        "swpnr_end": 1183.0,
+        "swpnr_start": 491.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.184.11.42.05.nwb",
+      "historical_excel_row": 4,
+      "current_excel_row": 4,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -74.44220107740577,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9978300673666007,
+        "swpnr_end": 985.0,
+        "swpnr_start": 20.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.184.11.42.06.nwb",
+      "historical_excel_row": 5,
+      "current_excel_row": 5,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -66.6424972273252,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9987073255895377,
+        "swpnr_end": 829.0,
+        "swpnr_start": 4.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.185.11.41.02.nwb",
+      "historical_excel_row": 6,
+      "current_excel_row": 6,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -61.845216091702184,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9814485593857412,
+        "swpnr_end": 848.0,
+        "swpnr_start": 10.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.185.11.43.07.nwb",
+      "historical_excel_row": 7,
+      "current_excel_row": 7,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -66.09032699947389,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9977845169854903,
+        "swpnr_end": 1194.0,
+        "swpnr_start": 232.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.185.11.44.08.nwb",
+      "historical_excel_row": 8,
+      "current_excel_row": 8,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -55.70614484931301,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.06635323170533469,
+        "swpnr_end": 967.0,
+        "swpnr_start": 5.0,
+        "swpnr_sylguard": 976.0,
+        "swpnr_sylguard_end": 1294.0,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.186.11.41.01.nwb",
+      "historical_excel_row": 9,
+      "current_excel_row": 9,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -70.92312978425323,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9987201902437944,
+        "swpnr_end": 810.0,
+        "swpnr_start": 9.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.186.11.41.02.nwb",
+      "historical_excel_row": 10,
+      "current_excel_row": 10,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -75.43421214288195,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9975427812097606,
+        "swpnr_end": 669.0,
+        "swpnr_start": 166.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.186.11.42.04.nwb",
+      "historical_excel_row": 11,
+      "current_excel_row": 11,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -68.88541731225536,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9986915754400322,
+        "swpnr_end": 1130.0,
+        "swpnr_start": 169.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.186.11.43.06.nwb",
+      "historical_excel_row": 12,
+      "current_excel_row": 12,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -80.40778401708901,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9474682348108818,
+        "swpnr_end": 513.0,
+        "swpnr_start": 194.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.186.11.45.09.nwb",
+      "historical_excel_row": 13,
+      "current_excel_row": 13,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -67.17345644822487,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9675527693846446,
+        "swpnr_end": 801.0,
+        "swpnr_start": 495.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.186.11.46.11.nwb",
+      "historical_excel_row": 14,
+      "current_excel_row": 14,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -75.10699067830033,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9666610398695291,
+        "swpnr_end": 654.0,
+        "swpnr_start": 169.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.187.11.41.01.nwb",
+      "historical_excel_row": 29,
+      "current_excel_row": 29,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -64.00405594883493,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9982446474026464,
+        "swpnr_end": 965.0,
+        "swpnr_start": 4.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.187.11.42.02.nwb",
+      "historical_excel_row": 30,
+      "current_excel_row": 30,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -68.47631255470482,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9986650721083544,
+        "swpnr_end": 976.0,
+        "swpnr_start": 5.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.187.11.45.06.nwb",
+      "historical_excel_row": 31,
+      "current_excel_row": 31,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -70.05008201001932,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9964550124247413,
+        "swpnr_end": 484.0,
+        "swpnr_start": 5.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.187.11.45.07.nwb",
+      "historical_excel_row": 32,
+      "current_excel_row": 32,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -64.94236930380993,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9985255843398977,
+        "swpnr_end": 645.0,
+        "swpnr_start": 5.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.187.11.45.08.nwb",
+      "historical_excel_row": 33,
+      "current_excel_row": 33,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -59.16398408692101,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.8296235044247512,
+        "swpnr_end": 647.0,
+        "swpnr_start": 4.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.188.11.42.06.nwb",
+      "historical_excel_row": 34,
+      "current_excel_row": 34,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -72.69821572744779,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.9962228584394848,
+        "swpnr_end": 924.0,
+        "swpnr_start": 4.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    },
+    {
+      "filename": "H20.29.188.11.42.07.nwb",
+      "historical_excel_row": 35,
+      "current_excel_row": 35,
+      "recovered_fields": {
+        "Cp": "manual",
+        "Vhalf_ia": -64.11500841200582,
+        "artefact_subtraction": 0.0,
+        "exclude": 0.0,
+        "gof_ia": 0.7681660898252094,
+        "swpnr_end": 966.0,
+        "swpnr_start": 4.0,
+        "swpnr_sylguard": null,
+        "swpnr_sylguard_end": null,
+        "wholeCell": "yes"
+      }
+    }
+  ],
+  "scripts": [
+    {
+      "old_file": "318547-channel_tools.py",
+      "current_file": "326242-channel_tools.py",
+      "text_identical": false,
+      "syntax_identical": false,
+      "changed_functions": [
+        "K_IV",
+        "Na_IV",
+        "Na_recovery"
+      ],
+      "old_sha256": "a496dd924cc489b36666db4f6cc709a664f1853c2a4578950f8ba4e68881b975",
+      "current_sha256": "1b9de7b4d5642633b3a8666bbbed4fd7d17b41bb6be4b4bcb1199a3fce534aba"
+    },
+    {
+      "old_file": "318550-channel_kinetics.py",
+      "current_file": "326241-channel_kinetics.py",
+      "text_identical": true,
+      "syntax_identical": true,
+      "changed_functions": [],
+      "old_sha256": "e77be00eacd0db88d518f71b720cec3fe748fed9c19dcd7fb5ea9ded2f3e2705",
+      "current_sha256": "e77be00eacd0db88d518f71b720cec3fe748fed9c19dcd7fb5ea9ded2f3e2705"
+    },
+    {
+      "old_file": "318548-fit_na_hh_cma_human.py",
+      "current_file": "326238-fit_na_hh_cma_human.py",
+      "text_identical": true,
+      "syntax_identical": true,
+      "changed_functions": [],
+      "old_sha256": "ccb66f0d63514ba8eae60b17c61394630df15238cfbf67ddfb62c0d6a80c4f27",
+      "current_sha256": "ccb66f0d63514ba8eae60b17c61394630df15238cfbf67ddfb62c0d6a80c4f27"
+    },
+    {
+      "old_file": "318546-fit_k_hh_cma_human.py",
+      "current_file": "326237-fit_k_hh_cma_human.py",
+      "text_identical": true,
+      "syntax_identical": true,
+      "changed_functions": [],
+      "old_sha256": "842cbfffc8031b8fa03044cd862494474f55ccc2ac2493a2cf5bc3a1fa99958c",
+      "current_sha256": "842cbfffc8031b8fa03044cd862494474f55ccc2ac2493a2cf5bc3a1fa99958c"
+    }
+  ],
+  "release_history": [
+    {
+      "version": "3.0",
+      "files": 65,
+      "raw_trace_or_archive_paths": [],
+      "experimental_mean_paths": []
+    },
+    {
+      "version": "2.0",
+      "files": 65,
+      "raw_trace_or_archive_paths": [],
+      "experimental_mean_paths": []
+    },
+    {
+      "version": "1.0",
+      "files": 126,
+      "raw_trace_or_archive_paths": [],
+      "experimental_mean_paths": []
+    }
+  ],
+  "source_qc_recovered": true,
+  "original_current_arrays_recovered": false,
+  "scores_promoted": false
+}

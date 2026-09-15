@@ -1,0 +1,100 @@
+--- 318547-channel_tools.py
+
++++ 326242-channel_tools.py
+
+@@ -138,34 +138,34 @@
+
+     # autoscale_y(plt.gca(),margin=0.1)
+     plt.autoscale(axis='x')
+     
+-    df=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig4\k_ggmax_act.csv')
+-    df2=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig4\k_ggmax_inact.csv')
+-    ax[3].plot(df.loc[df.Species=='Human'].volt, df.loc[df.Species=='Human']['mean'], 'or',fillstyle='none')
+-    ax[3].plot(df.loc[df.Species=='Mouse'].volt, df.loc[df.Species=='Mouse']['mean'], 'xb')
+-    ax[3].plot(df2.loc[df2.Species=='Human'].volt, df2.loc[df2.Species=='Human']['mean'], 'or', fillstyle='none')
+-    ax[3].plot(df2.loc[df2.Species=='Mouse'].volt, df2.loc[df2.Species=='Mouse']['mean'], 'xb')
++    df=pd.read_csv(r'Experimental means\\k_ggmax_act.csv')
++    df2=pd.read_csv(r'Experimental means\\k_ggmax_inact.csv')
++    ax[3].plot(df.loc[df.species=='H'].volt, df.loc[df.species=='H']['mean'], 'or',fillstyle='none')
++    ax[3].plot(df.loc[df.species=='M'].volt, df.loc[df.species=='M']['mean'], 'xb')
++    ax[3].plot(df2.loc[df2.species=='H'].volt, df2.loc[df2.species=='H']['mean'], 'or', fillstyle='none')
++    ax[3].plot(df2.loc[df2.species=='M'].volt, df2.loc[df2.species=='M']['mean'], 'xb')
+     ax[3].plot(volts, ggmax, c)
+     ax[3].plot(volts, ggmax_inact, c)
+     ax[3].set_xlabel('mV')
+     ax[3].set_ylabel('G/Gmax')
+     
+-    df=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig4\k_tau_act.csv')
+-    ax[4].plot(df.loc[df.Species=='Human'].volt, df.loc[df.Species=='Human']['mean'], 'or', fillstyle='none')
+-    ax[4].plot(df.loc[df.Species=='Mouse'].volt, df.loc[df.Species=='Mouse']['mean'], 'xb')
++    df=pd.read_csv(r'Experimental means\\k_tau_act.csv')
++    ax[4].plot(df.loc[df.species=='H'].volt, df.loc[df.species=='H']['mean'], 'or', fillstyle='none')
++    ax[4].plot(df.loc[df.species=='M'].volt, df.loc[df.species=='M']['mean'], 'xb')
+     mask=(volts>=-10) & (ggmax>0.1)
+     ax[4].plot(volts[mask], tau_act[mask], c)
+     ax[4].set_ylabel('Act tau (ms)')
+     ax[4].set_xlabel('mV')
+-    
++    mask=(volts>=0) & (ggmax>0.1)
+     ax[5].plot(volts[mask], tau_inact1[mask], c)
+     ax[5].set_ylabel('Inact tau1 (ms)')
+     if double_exp:
+-        df=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig4\k_tau_inact_fast.csv')
+-        df2=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig4\k_tau_inact_slow.csv')
+-        ax[5].plot(df.loc[df.Species=='Human'].volt, df.loc[df.Species=='Human']['mean'], 'or', fillstyle='none')
+-        ax[5].plot(df.loc[df.Species=='Mouse'].volt, df.loc[df.Species=='Mouse']['mean'], 'xb')
+-        ax[6].plot(df2.loc[df2.Species=='Human'].volt, df2.loc[df2.Species=='Human']['mean'], 'or', fillstyle='none')
+-        ax[6].plot(df2.loc[df2.Species=='Mouse'].volt, df2.loc[df2.Species=='Mouse']['mean'], 'xb')
++        df=pd.read_csv(r'Experimental means\\k_tau_inact_fast.csv')
++        df2=pd.read_csv(r'Experimental means\\k_tau_inact_slow.csv')
++        ax[5].plot(df.loc[df.species=='H'].volt, df.loc[df.species=='H']['mean'], 'or', fillstyle='none')
++        ax[5].plot(df.loc[df.species=='M'].volt, df.loc[df.species=='M']['mean'], 'xb')
++        ax[6].plot(df2.loc[df2.species=='H'].volt, df2.loc[df2.species=='H']['mean'], 'or', fillstyle='none')
++        ax[6].plot(df2.loc[df2.species=='M'].volt, df2.loc[df2.species=='M']['mean'], 'xb')
+         ax[6].plot(volts[mask], tau_inact2[mask], c)
+         ax[6].set_ylabel('Inact tau2 (ms)')
+         ax[7].plot(-80, 228.52749381071555, 'or', fillstyle='none')
+@@ -173,7 +173,7 @@
+
+         ax[8].plot(-80, 1999.7294967866596, 'or', fillstyle='none')
+         ax[8].plot(-80, 3579.8563888349777, 'xb')
+     else:
+-        df=pd.read_csv(r'D:\Endurance\Modeling\WilbersEtAl\Channel fitting\Experimental means\k_tau_inact.csv')
++        df=pd.read_csv(r'Experimental means\\k_tau_inact.csv')
+         ax[5].plot(df.loc[df.species=='H'].volt, df.loc[df.species=='H']['mean'], 'or', fillstyle='none')
+         ax[5].plot(df.loc[df.species=='M'].volt, df.loc[df.species=='M']['mean'], 'xb')
+         ax[7].plot(-80, 807.0464447376081, 'or', fillstyle='none')
+@@ -512,8 +512,8 @@
+
+     # autoscale_y(plt.gca(),margin=0.1)
+     plt.autoscale(axis='x')
+     
+-    df=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig3\na_ggmax.csv')
+-    df2=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig3\na_ggmax_inact.csv')
++    df=pd.read_csv(r'Experimental means\\na_ggmax_act.csv')
++    df2=pd.read_csv(r'Experimental means\na_ggmax_inact.csv')
+     ax[1].plot(df.loc[df.species=='H'].volt, df.loc[df.species=='H']['mean'], 'or', fillstyle='none')
+     ax[1].plot(df.loc[df.species=='M'].volt, df.loc[df.species=='M']['mean'], 'xb')
+     ax[1].plot(volts, ggmax, c)
+@@ -524,8 +524,8 @@
+
+     ax[1].set_ylabel('G/Gmax')
+     
+     mask=ggmax>0.1
+-    df=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig3\na_tau_act.csv')
+-    df2=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig3\na_tau_inact.csv')
++    df=pd.read_csv(r'Experimental means\\na_tau_act.csv')
++    df2=pd.read_csv(r'Experimental means\\na_tau_inact.csv')
+     ax[2].plot(df.loc[df.species=='H'].volt, df.loc[df.species=='H']['mean'], 'or', fillstyle='none')
+     ax[2].plot(df.loc[df.species=='M'].volt, df.loc[df.species=='M']['mean'], 'xb')
+     ax[2].plot(volts[mask], tau_act[mask], c)
+@@ -603,7 +603,7 @@
+
+     axes[1].plot(volts, tau, c)
+     axes[1].set_xlabel('mV')
+     axes[1].set_ylabel('Recovery time constant (ms)')
+-    df=pd.read_csv(r'D:\Endurance\Paper\Apr2021\Fig3\na_tau_inact_rec.csv')
++    df=pd.read_csv(r'Experimental means\\na_tau_inact_rec.csv')
+     axes[1].plot(df.loc[df.species=='H'].volt, df.loc[df.species=='H']['mean'], 'or', fillstyle='none')
+     axes[1].plot(df.loc[df.species=='M'].volt, df.loc[df.species=='M']['mean'], 'xb')
+ 
