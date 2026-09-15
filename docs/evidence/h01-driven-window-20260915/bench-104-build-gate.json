@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "scope": "104-cell construction only",
+  "expected_cells": 104,
+  "simulated_cells": 104,
+  "n_compartments": 808495,
+  "failures": [],
+  "runtime_qualified": false,
+  "physiology_qualified": false,
+  "inputs": {
+    "build": {
+      "path": "docs\\evidence\\h01-driven-window-20260915\\bench-104-ei-1ms-build.json",
+      "sha256": "cfe59fe9a16b3a94275d2f0b7576c3fcaf6eca1c484df54d8e5ea041dbbf8a15"
+    },
+    "imports": {
+      "path": "docs\\evidence\\h01-population-import-104.json",
+      "sha256": "00eed7674ad05add04051044439bc9d241b6096df050f41b0ceacc22de4ee301"
+    },
+    "topology": {
+      "path": "docs\\evidence\\h01-verified-network.json",
+      "sha256": "cabe8f8f9176b76cb8c99f40a52c2d94bc4b66c9229dfa25d80399c6f76bde07"
+    }
+  }
+}

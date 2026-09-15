@@ -1,0 +1,196 @@
+{
+ "finding": "Output-site selection is a platform-dependent tie for 17 of 104 cells",
+ "cause": "_register_cell picks the CV whose midpoint is nearest the source soma point with key (abs(mid-x), i). Boundary-aligned CVs put the soma sample exactly on a CV boundary, so the two adjacent CV midpoints are equidistant and the choice is decided by last-bit rounding of the branch fractions (max interval discrepancy Vast vs Windows 1.31e-12), not by the rule.",
+ "consequence": "Neither choice is physically wrong (adjacent CVs, both bounded by the soma sample, at most 10 um apart). It does mean the Windows construction reference cannot be reused byte-for-byte for Vast runs; the Vast build (bench-104-ei-1ms-build.json, build gate passed) is the reference for every Vast run and records the actual sites. Same cell IDs, donors, per-cell compartment counts (808,495) and contacts on both platforms.",
+ "follow_up": "Deterministic tie-break with a tolerance in _register_cell, with a co-located test that reproduces an exact-tie source point; a rebuilt reference after that change re-pins sites for these 17 cells.",
+ "max_distance_asymmetry": 8.248957072964913e-14,
+ "cells": [
+  {
+   "cell_id": "4157825456",
+   "branch": 5438,
+   "source_x": 0.27272727272731756,
+   "vast_cv": 6106,
+   "vast_midpoint_x": 0.20454545454548817,
+   "windows_cv": 6107,
+   "windows_midpoint_x": 0.3409090909091248,
+   "distance_vast": 0.06818181818182939,
+   "distance_windows": 0.06818181818180724
+  },
+  {
+   "cell_id": "2530864375",
+   "branch": 122,
+   "source_x": 0.2456674046502189,
+   "vast_cv": 205,
+   "vast_midpoint_x": 0.18425055348766417,
+   "windows_cv": 206,
+   "windows_midpoint_x": 0.3070842558127737,
+   "distance_vast": 0.06141685116255474,
+   "distance_windows": 0.0614168511625548
+  },
+  {
+   "cell_id": "3178243558",
+   "branch": 476,
+   "source_x": 0.24601685824131697,
+   "vast_cv": 941,
+   "vast_midpoint_x": 0.2548031746070787,
+   "windows_cv": 940,
+   "windows_midpoint_x": 0.2372305418755658,
+   "distance_vast": 0.008786316365761715,
+   "distance_windows": 0.008786316365751168
+  },
+  {
+   "cell_id": "5013648003",
+   "branch": 1349,
+   "source_x": 0.27149598042979756,
+   "vast_cv": 1696,
+   "vast_midpoint_x": 0.28508890375702617,
+   "windows_cv": 1695,
+   "windows_midpoint_x": 0.25790305710257005,
+   "distance_vast": 0.013592923327228612,
+   "distance_windows": 0.013592923327227502
+  },
+  {
+   "cell_id": "2001418787",
+   "branch": 292,
+   "source_x": 0.2576130836427241,
+   "vast_cv": 368,
+   "vast_midpoint_x": 0.26833492501258494,
+   "windows_cv": 367,
+   "windows_midpoint_x": 0.2468912422728396,
+   "distance_vast": 0.010721841369860818,
+   "distance_windows": 0.010721841369884522
+  },
+  {
+   "cell_id": "546925828",
+   "branch": 407,
+   "source_x": 0.16802646024239182,
+   "vast_cv": 1754,
+   "vast_midpoint_x": 0.1655528973934553,
+   "windows_cv": 1755,
+   "windows_midpoint_x": 0.17050002309132156,
+   "distance_vast": 0.002473562848936517,
+   "distance_windows": 0.0024735628489297445
+  },
+  {
+   "cell_id": "3139317430",
+   "branch": 2148,
+   "source_x": 0.37154511138843527,
+   "vast_cv": 2445,
+   "vast_midpoint_x": 0.35655841396801735,
+   "windows_cv": 2446,
+   "windows_midpoint_x": 0.3865318088089194,
+   "distance_vast": 0.014986697420417916,
+   "distance_windows": 0.01498669742048414
+  },
+  {
+   "cell_id": "6833911543",
+   "branch": 2679,
+   "source_x": 0.3158275604787753,
+   "vast_cv": 3319,
+   "vast_midpoint_x": 0.3070545726876982,
+   "windows_cv": 3320,
+   "windows_midpoint_x": 0.3246005482698522,
+   "distance_vast": 0.008772987791077103,
+   "distance_windows": 0.00877298779107688
+  },
+  {
+   "cell_id": "547114083",
+   "branch": 450,
+   "source_x": 0.0769230769230771,
+   "vast_cv": 486,
+   "vast_midpoint_x": 0.05769230769230782,
+   "windows_cv": 487,
+   "windows_midpoint_x": 0.0961538461538469,
+   "distance_vast": 0.019230769230769273,
+   "distance_windows": 0.0192307692307698
+  },
+  {
+   "cell_id": "3432315514",
+   "branch": 5,
+   "source_x": 0.23211079954307345,
+   "vast_cv": 28,
+   "vast_midpoint_x": 0.22021704661294172,
+   "windows_cv": 29,
+   "windows_midpoint_x": 0.2440045524731989,
+   "distance_vast": 0.011893752930131729,
+   "distance_windows": 0.011893752930125456
+  },
+  {
+   "cell_id": "883843993",
+   "branch": 120,
+   "source_x": 0.5472532260715148,
+   "vast_cv": 170,
+   "vast_midpoint_x": 0.5567158638019679,
+   "windows_cv": 169,
+   "windows_midpoint_x": 0.5377905883410563,
+   "distance_vast": 0.009462637730453083,
+   "distance_windows": 0.009462637730458523
+  },
+  {
+   "cell_id": "2903686765",
+   "branch": 4048,
+   "source_x": 0.8853351461079042,
+   "vast_cv": 5259,
+   "vast_midpoint_x": 0.8948905505989098,
+   "windows_cv": 5258,
+   "windows_midpoint_x": 0.8757797416168833,
+   "distance_vast": 0.009555404491005559,
+   "distance_windows": 0.00955540449102088
+  },
+  {
+   "cell_id": "1669770671",
+   "branch": 3253,
+   "source_x": 0.3834894046956924,
+   "vast_cv": 4291,
+   "vast_midpoint_x": 0.40275536079893903,
+   "windows_cv": 4290,
+   "windows_midpoint_x": 0.36422344859236333,
+   "distance_vast": 0.019265956103246606,
+   "distance_windows": 0.019265956103329096
+  },
+  {
+   "cell_id": "751294744",
+   "branch": 3729,
+   "source_x": 0.17110468572081858,
+   "vast_cv": 4637,
+   "vast_midpoint_x": 0.1817987285783687,
+   "windows_cv": 4636,
+   "windows_midpoint_x": 0.16041064286326667,
+   "distance_vast": 0.010694042857550129,
+   "distance_windows": 0.010694042857551905
+  },
+  {
+   "cell_id": "2848552900",
+   "branch": 4175,
+   "source_x": 0.5587329105178961,
+   "vast_cv": 4592,
+   "vast_midpoint_x": 0.5307962649920015,
+   "windows_cv": 4593,
+   "windows_midpoint_x": 0.5866695560437917,
+   "distance_vast": 0.027936645525894588,
+   "distance_windows": 0.027936645525895587
+  },
+  {
+   "cell_id": "1304599410",
+   "branch": 5082,
+   "source_x": 0.06962921392518638,
+   "vast_cv": 5321,
+   "vast_midpoint_x": 0.08703651740648297,
+   "windows_cv": 5320,
+   "windows_midpoint_x": 0.05222191044389059,
+   "distance_vast": 0.017407303481296585,
+   "distance_windows": 0.017407303481295794
+  },
+  {
+   "cell_id": "5654281423",
+   "branch": 1749,
+   "source_x": 0.4581253866099889,
+   "vast_cv": 1804,
+   "vast_midpoint_x": 0.4534621370129104,
+   "windows_cv": 1805,
+   "windows_midpoint_x": 0.46278863620707467,
+   "distance_vast": 0.004663249597078534,
+   "distance_windows": 0.00466324959708575
+  }
+ ]
+}

@@ -1,0 +1,363 @@
+{
+ "source": "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[neuronal_model_template_id$eq329230710],specimen(donor(organism[name$eq'Homo Sapiens'])),rma::include,specimen(structure,cortex_layer,specimen_tags,donor(age))",
+ "queried_utc": "2026-09-15T04:15:35+00:00",
+ "template": "Biophysical - perisomatic (329230710)",
+ "total": 43,
+ "by_layer_and_dendrite": {
+  "Layer 2 / sparsely spiny": 2,
+  "Layer 2 / spiny": 3,
+  "Layer 3 / aspiny": 5,
+  "Layer 3 / spiny": 20,
+  "Layer 4 / spiny": 4,
+  "Layer 5 / aspiny": 1,
+  "Layer 5 / spiny": 5,
+  "Layer 6 / spiny": 3
+ },
+ "note": "Type-coverage lead only: 43 human perisomatic fits exist across L2-L6, spiny and aspiny. Same Allen template and import path as the deployed 541563728 and 527952884 donors. None is imported or qualified by this file; licence is Allen Terms of Use (non-commercial).",
+ "models": [
+  {
+   "model_id": 626170718,
+   "specimen_id": 527942865,
+   "name": "H16.06.008.01.26.04",
+   "region": "MTG",
+   "layer": "Layer 5",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170421,
+   "specimen_id": 571718621,
+   "name": "H17.06.006.11.08.08",
+   "region": "MTG",
+   "layer": "Layer 2",
+   "dendrite": "sparsely spiny"
+  },
+  {
+   "model_id": 626170670,
+   "specimen_id": 528687520,
+   "name": "H16.06.009.01.01.18.03",
+   "region": "MTG",
+   "layer": "Layer 5",
+   "dendrite": "aspiny"
+  },
+  {
+   "model_id": 626170709,
+   "specimen_id": 527952884,
+   "name": "H16.06.008.01.31.06",
+   "region": "MTG",
+   "layer": "Layer 4",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 560692910,
+   "specimen_id": 520631294,
+   "name": "H16.03.002.01.03.03",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170439,
+   "specimen_id": 571700636,
+   "name": "H17.06.006.11.09.05",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "aspiny"
+  },
+  {
+   "model_id": 626170574,
+   "specimen_id": 537266147,
+   "name": "H16.03.006.01.09.02",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170484,
+   "specimen_id": 569818704,
+   "name": "H17.03.002.11.04.01",
+   "region": "MTG",
+   "layer": "Layer 4",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 561405645,
+   "specimen_id": 528038990,
+   "name": "H16.06.008.01.20.04",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170538,
+   "specimen_id": 541563728,
+   "name": "H16.03.007.01.01.08.07",
+   "region": "MTG",
+   "layer": "Layer 2",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170565,
+   "specimen_id": 537313158,
+   "name": "H16.03.006.01.05.05",
+   "region": "MTG",
+   "layer": "Layer 5",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170610,
+   "specimen_id": 530062215,
+   "name": "H16.06.010.01.03.14.02",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 538907329,
+   "specimen_id": 508279351,
+   "name": "H16.06.004.01.04.01",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170520,
+   "specimen_id": 548457754,
+   "name": "H16.06.012.11.08.04",
+   "region": "MFG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170592,
+   "specimen_id": 531520637,
+   "name": "H16.06.007.01.05.03",
+   "region": "FroL",
+   "layer": "Layer 3",
+   "dendrite": "aspiny"
+  },
+  {
+   "model_id": 538907315,
+   "specimen_id": 508417989,
+   "name": "H16.06.004.02.13.04",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170727,
+   "specimen_id": 527891102,
+   "name": "H16.06.008.01.31.01",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170529,
+   "specimen_id": 548425467,
+   "name": "H16.06.012.11.08.02",
+   "region": "MFG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170601,
+   "specimen_id": 531517732,
+   "name": "H16.06.007.01.07.01",
+   "region": "FroL",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170583,
+   "specimen_id": 531526539,
+   "name": "H16.06.007.01.07.04",
+   "region": "FroL",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170801,
+   "specimen_id": 508282493,
+   "name": "H16.06.004.01.04.03",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170646,
+   "specimen_id": 529845713,
+   "name": "H16.06.010.01.02.18.02",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170679,
+   "specimen_id": 528614014,
+   "name": "H16.06.009.01.01.04.02",
+   "region": "MTG",
+   "layer": "Layer 6",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 556384280,
+   "specimen_id": 525133308,
+   "name": "H16.03.003.01.18.01",
+   "region": "FroL",
+   "layer": "Layer 2",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170502,
+   "specimen_id": 558211203,
+   "name": "H16.03.011.11.16.03",
+   "region": "MTG",
+   "layer": "Layer 6",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 552636652,
+   "specimen_id": 508378649,
+   "name": "H16.06.004.01.05.02",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170556,
+   "specimen_id": 541540569,
+   "name": "H16.03.007.01.01.03.02",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 543285979,
+   "specimen_id": 488418027,
+   "name": "H15.06.017.03.03.01",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "aspiny"
+  },
+  {
+   "model_id": 626170619,
+   "specimen_id": 529898751,
+   "name": "H16.06.010.01.01.10.02",
+   "region": "ITG",
+   "layer": "Layer 5",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170736,
+   "specimen_id": 526725807,
+   "name": "H16.03.005.01.03.02",
+   "region": "TemL",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170628,
+   "specimen_id": 529889679,
+   "name": "H16.06.010.01.01.10.01",
+   "region": "ITG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 549384722,
+   "specimen_id": 520454345,
+   "name": "H16.03.002.01.06.01",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170637,
+   "specimen_id": 529878215,
+   "name": "H16.06.010.01.03.05.03",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170661,
+   "specimen_id": 529807751,
+   "name": "H16.06.010.01.03.04.01",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "aspiny"
+  },
+  {
+   "model_id": 626170511,
+   "specimen_id": 548494556,
+   "name": "H16.06.012.11.06.06",
+   "region": "MFG",
+   "layer": "Layer 6",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 538906694,
+   "specimen_id": 508405843,
+   "name": "H16.06.004.01.13.02",
+   "region": "MTG",
+   "layer": "Layer 4",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 554338972,
+   "specimen_id": 528015670,
+   "name": "H16.06.008.01.24.03",
+   "region": "MTG",
+   "layer": "Layer 4",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170430,
+   "specimen_id": 571709783,
+   "name": "H17.06.006.11.08.07",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "aspiny"
+  },
+  {
+   "model_id": 626170475,
+   "specimen_id": 569820026,
+   "name": "H17.03.002.11.04.02",
+   "region": "MTG",
+   "layer": "Layer 5",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 560692892,
+   "specimen_id": 528042185,
+   "name": "H16.06.008.01.20.05",
+   "region": "MTG",
+   "layer": "Layer 5",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 549384713,
+   "specimen_id": 508421103,
+   "name": "H16.06.004.02.05.02",
+   "region": "MTG",
+   "layer": "Layer 2",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 626170547,
+   "specimen_id": 541545716,
+   "name": "H16.03.007.01.01.04.03",
+   "region": "MTG",
+   "layer": "Layer 3",
+   "dendrite": "spiny"
+  },
+  {
+   "model_id": 556384271,
+   "specimen_id": 525018757,
+   "name": "H16.03.003.01.19.02",
+   "region": "FroL",
+   "layer": "Layer 2",
+   "dendrite": "sparsely spiny"
+  }
+ ]
+}
