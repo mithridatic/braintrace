@@ -126,3 +126,13 @@ amplifier-current observation model; no isolated potassium deactivation constant
 or reversal potential is inferred. [Revision 10](fitting-inputs-r10.json) records
 the new calibration exposure while preserving the rejected recovery candidate,
 whole-cell split and unopened external responses. No score changed.
+
+## Executed voltage-dependent model candidate
+
+[A new joint current model](pax6-voltage-model-840043481/README.md) was implemented
+and fitted to eleven human protocols. Its fitting error fell from 29.88 to
+9.98 pA RMS, but it exhausted its evaluation limit and reached kinetic bounds;
+the prediction access gate correctly remained closed. The measured sharp control
+response starts later than this model predicts, identifying the next observation
+model correction. [Revision 11](fitting-inputs-r11.json) records the failed
+candidate and unchanged response reservations. No donor or population score changed.

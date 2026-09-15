@@ -1,0 +1,144 @@
+{
+  "files": [
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/all-training-residuals.png",
+      "bytes": 327745,
+      "sha256": "4bd4366d6f67b60a13bdd9920bb6b62a71ca1308c95029c2e5c8d075c66aa5d2"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/all-training.png",
+      "bytes": 370482,
+      "sha256": "7226749814c19292cc436a8e9465e8f9def02fcd7781e61f5c06253c943a9d17"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/control-onset-detail.png",
+      "bytes": 266494,
+      "sha256": "393000bbf6918b427954965543f378d701355e9a7f221f0147d8304882ae017c"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/control-onset-observations.json",
+      "bytes": 50493,
+      "sha256": "2f92c907c25a975e9a99e199e5d064478cc24785e9e56b0600c410779c24fb31"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/coverage.json",
+      "bytes": 3471,
+      "sha256": "6156f35f104afe16a4984f22b084fcec40016b4fa85e3993a84f572f715dcfff"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/decision.json",
+      "bytes": 268,
+      "sha256": "59fa178e7ac9e2d9efaebbf3a5315e6d407b7f648317cda3b77a6d5d9d2a8451"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/fit.py",
+      "bytes": 10998,
+      "sha256": "b22ba8488999402b6f48c9ab7756e77dc74997207b048917e88ddec6ca755727"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/frozen-candidate.json",
+      "bytes": 2656,
+      "sha256": "968c1144cfb45ccae46687a9cd34821787e4fc20acd921b62ea95428f1ed343a"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/onset_review.py",
+      "bytes": 2868,
+      "sha256": "34ba0afb0061be89735efe427fa74c94e52e418749df22bba8d76f219d3ff571"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/plot.py",
+      "bytes": 4472,
+      "sha256": "2030f3e0b432ba1e4ac6b1e172f3fdf2c4e063dd23a0ef5e2d1ef9c0a157c996"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/README.md",
+      "bytes": 6407,
+      "sha256": "6459cdea55ef3d03ce9d52196fb18af669ee2d5bc7db5690078dd2e7cd3ba2df"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/run.py",
+      "bytes": 1096,
+      "sha256": "cbc64b7b974076de2ea84426a3d4344e9373773e1254bf565e582ee9e31bfb3b"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/stdout.txt",
+      "bytes": 3616,
+      "sha256": "d6ac8f7f877e0f4a24cb6e580c83385cec5d2167bc5de2aecce9ea295bb341e0"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/terminal.json",
+      "bytes": 168,
+      "sha256": "06704f203628dfd88f77226f67bea9968ef43d11bfb4964e1537056a226bbb03"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/tests.xml",
+      "bytes": 4578,
+      "sha256": "975b7ec1e1ef50ab2cfc1ab6cac767e8b1e8b8840c7fad3126754e82c1c46405"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/training-detail.png",
+      "bytes": 401946,
+      "sha256": "a011732401419da4fa1f279e4261cfff4b3f5dfdc9f40bd4d29ddc03fa81118e"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/training-errors.json",
+      "bytes": 905,
+      "sha256": "849b56350159927c1fca8f1d334e9cef416ecbe4c6d89b86e396ec9c7b250d7c"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/training-inputs.json",
+      "bytes": 63053,
+      "sha256": "c440ff993ee14999243cc3f99a478189e4d078421eb9a1e2f6c277ad16e91f38"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/training-predictions.npz",
+      "bytes": 26259286,
+      "sha256": "5ca1298520a781e0395785e22d692071b677671d6c711cef0645469e5f1df3c9"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/training-source.npz",
+      "bytes": 2824828,
+      "sha256": "cd7784fb7ff8fad8bd0f98f562b675c4272981241194eb48e601aa92f7cbed5e"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/verification.json",
+      "bytes": 327,
+      "sha256": "13dc5fca408c63135b1ef37ba9bdabae2853a4f4ca8c5a145206b469b1c26f87"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-voltage-model-840043481/verify.py",
+      "bytes": 5807,
+      "sha256": "ceeef73ea5d5422e56d95110a7e6c3c1efbdabf8126d3c2976dab94714b8b9ee"
+    },
+    {
+      "path": "docs/specs/2026-09-14-h01-pax6-voltage-model.md",
+      "bytes": 5563,
+      "sha256": "c68a4eb2bb68697220e1221e09e3128b83c1ac316f3f4d841427554856e18ffe"
+    },
+    {
+      "path": "docs/evidence/h01_pax6_voltage_model.py",
+      "bytes": 8775,
+      "sha256": "7eb83dce3efd895d18cf11fe9b62293c5705ef5cd53de428552d72606637030f"
+    },
+    {
+      "path": "docs/evidence/h01_pax6_voltage_model_test.py",
+      "bytes": 6065,
+      "sha256": "5af27e34fba697ff4da18ee6d84ecf9157ee8872132354f661d946a975806798"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/fitting-inputs-r11.json",
+      "bytes": 4747,
+      "sha256": "0b9eea7354273637d8a43fc1392a34f8d8d360c00c50e577290ce0e65a390a02"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/README.md",
+      "bytes": 8270,
+      "sha256": "f5a188ec6a6e72bfb1a72c33c7ff48a74a3b91099a397f0a4e17d25802368f3a"
+    }
+  ]
+}

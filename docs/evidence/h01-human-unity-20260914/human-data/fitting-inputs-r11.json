@@ -1,0 +1,196 @@
+{
+  "status": "Executed voltage-dependent candidate rejected before prediction access",
+  "specimen_id": "811953283",
+  "nwb_sha256": "004f27f306180bd610ba2439e600f688c11be24adf5cea2a1663a22ba0336af6",
+  "qc_sha256": "a8b4595b2a9ad364c831e8b00a9dbda7ccff1ec292a723cd91f84ae58dcca22b",
+  "calibration_candidates": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    14,
+    16
+  ],
+  "holdout_candidates": [
+    13,
+    15,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "calibration_passing_qc": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    12,
+    14,
+    16
+  ],
+  "holdout_passing_qc": [
+    13,
+    15,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "integrity_rejected_sweeps": [
+    27
+  ],
+  "not_evaluated_search_sweeps": [
+    9,
+    10,
+    11,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "voltage_clamp_setup_or_ending_checks": [
+    0,
+    1,
+    2,
+    3,
+    35,
+    36
+  ],
+  "fit_gate": "State-only fitting path closed. No qualified model for physiological transfer. External-response gate remains closed.",
+  "liquid_junction_correction_mv": null,
+  "qualified_temperature_c": null,
+  "scores_promoted": false,
+  "supersedes": {
+    "path": "fitting-inputs-r8.json",
+    "sha256": "edf0639d548f77904498fb34d2f8e5caf4b1570aa8e80581462eba81b896f4fc"
+  },
+  "protocol_reference": {
+    "path": "protocol-reference.json",
+    "sha256": "92fd28935ea4d3bfdb9477d65b529208812a3b0c476a9136e1ed4f29fa9c4310"
+  },
+  "channel_archive_audit": {
+    "path": "channel-archive-audit.json",
+    "sha256": "d0b184bf9dd151fa8b57b907fb2faf6864eb5c9e87ea89c2986bdf1b73c9bb9e"
+  },
+  "channel_notebook_extract": {
+    "path": "channel-notebook-extract.json",
+    "sha256": "d1274f5e0074b909dc88a6d9bab1bd9a07cbe239e751220a358997361a41f966"
+  },
+  "bath_temperature_protocol_range_c": [
+    32.0,
+    34.0
+  ],
+  "reported_liquid_junction_potential_mv": -14.0,
+  "channel_data_contract": {
+    "path": "channel-923103553/pax6-kinetic-data-contract.json",
+    "sha256": "74150a63ff2d872bc51c4ee967103b2bed06f99a125cac60e2c5362c7a5af833"
+  },
+  "channel_source_inventory": {
+    "path": "channel-923103553/pax6-840043481-inventory.json",
+    "sha256": "ae5b7cbcc0cfaf4c8f40a553dd82add16419c852f0a5b34f90ec3f02da2c7054"
+  },
+  "current_analysis": {
+    "path": "pax6-840043481/analysis-receipt.json",
+    "sha256": "965239bdbb3f3eae92e72a6f4c179db696fe2429e83e2cd1045497719307faed"
+  },
+  "recovery_analysis": {
+    "path": "pax6-recovery-840043481/analysis-receipt.json",
+    "sha256": "f331be4b8866360f1e3503572b0feb395df57a9ddcafd472adcd6c81f0851390"
+  },
+  "conditioning_analysis": {
+    "path": "pax6-conditioning-840043481/analysis-receipt.json",
+    "sha256": "457c167b36e07e96145d99d72684183e6653e15f61d0a23e32c6fd166ca287b5"
+  },
+  "control_analysis": {
+    "path": "pax6-controls-840043481/analysis-receipt.json",
+    "sha256": "64ae83ecc6da29ef80897ce9846b1a2dbb325d973f8e748bf15e88752dfa2b13"
+  },
+  "recovery_state_analysis": {
+    "path": "pax6-recovery-state-840043481/analysis-receipt.json",
+    "sha256": "53c302417b91e1c2974d0db5c0f07b188aedbb28dedc78ac56367b9757b9883f"
+  },
+  "initial_state_analysis": {
+    "path": "pax6-initial-state-840043481/analysis-receipt.json",
+    "sha256": "88fa984abf8389f7a4227ee70fb884d090c04b92ac930dad13d78c77e4ba7eeb"
+  },
+  "previous_receipt": {
+    "path": "fitting-inputs-r10.json",
+    "sha256": "ee414da66987796fd77173e04dc551625ff16eb529d95fa3795527dbc370c117"
+  },
+  "tail_calibration": {
+    "specimen_id": "840043506",
+    "session_id": "840043481",
+    "sweeps": [
+      99,
+      100,
+      101,
+      102,
+      103
+    ],
+    "observations": "pax6-tail-840043481/observations.json",
+    "observations_sha256": "5b77c2eb65bb9e43724b3b0c8e511025b52b9001bb1dae9e72679c8e3cdc5631",
+    "independent_validation": false,
+    "qualified": false,
+    "external_response_opened": false,
+    "whole_cell_split_changed": false
+  },
+  "voltage_current_candidate": {
+    "path": "pax6-voltage-model-840043481/frozen-candidate.json",
+    "sha256": "968c1144cfb45ccae46687a9cd34821787e4fc20acd921b62ea95428f1ed343a",
+    "decision": "pax6-voltage-model-840043481/decision.json",
+    "decision_sha256": "59fa178e7ac9e2d9efaebbf3a5315e6d407b7f648317cda3b77a6d5d9d2a8451",
+    "training_sweeps": [
+      70,
+      72,
+      74,
+      76,
+      78,
+      79,
+      83,
+      88,
+      99,
+      101,
+      103
+    ],
+    "prediction_sweeps_unopened": [
+      105,
+      106,
+      107,
+      109,
+      110,
+      111
+    ],
+    "qualified": false,
+    "external_response_opened": false,
+    "whole_cell_split_changed": false
+  }
+}

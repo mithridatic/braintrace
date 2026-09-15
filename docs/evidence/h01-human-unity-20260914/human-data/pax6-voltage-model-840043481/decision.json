@@ -1,0 +1,9 @@
+{
+  "status": "rejected before new response access",
+  "optimizer_success": false,
+  "kinetic_parameter_at_bound": true,
+  "prediction_responses_opened": false,
+  "external_responses_opened": false,
+  "whole_cell_responses_opened": false,
+  "scores_promoted": false
+}

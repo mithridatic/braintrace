@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "original_training_current_samples": 890000,
+  "full_training_scoring_samples": 880375,
+  "separately_recomputed_prediction_samples": 1100,
+  "source_and_candidate_hashes_verified": true,
+  "prediction_access_and_decision_verified": true,
+  "physiology_qualified": false,
+  "scores_promoted": false
+}
