@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "current_command_and_clock_samples_unchanged": 890000,
+  "sweeps": 11,
+  "new_filter_fields_match_original_notebook": true,
+  "exporter_sha256": "8e2dfa9422dd1618720362bc58f666c4246c2c632c8cd4b1788fea9959df47a9"
+}

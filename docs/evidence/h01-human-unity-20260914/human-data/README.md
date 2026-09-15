@@ -136,3 +136,14 @@ the prediction access gate correctly remained closed. The measured sharp control
 response starts later than this model predicts, identifying the next observation
 model correction. [Revision 11](fitting-inputs-r11.json) records the failed
 candidate and unchanged response reservations. No donor or population score changed.
+
+## Recorded observation filter corrected
+
+[The recorded four-pole filter correction](pax6-recording-filter-840043481/README.md)
+passes its control-prediction gate, reducing excluded early-control error by
+65.1% and improving the excluded long control. The shared exporter now preserves
+the previously omitted filter/hardware fields, with a failing-then-passing
+regression and unchanged original arrays. [Revision 12](fitting-inputs-r12.json)
+freezes the accepted conditional observation parameters for the next active-current
+fit. This does not qualify the rejected active-current candidate or change any
+of the six population scores.

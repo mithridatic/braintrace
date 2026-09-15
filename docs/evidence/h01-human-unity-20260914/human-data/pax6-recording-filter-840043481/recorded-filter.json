@@ -1,0 +1,316 @@
+{
+  "source_sha256": "30abbb3cca63b0629242c7ad96f595d6e6ceea2ce7e522fdb5ebf8a3bc2ac944",
+  "records": [
+    {
+      "sweep": 70,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 72,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 74,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 76,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 78,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 79,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 83,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 88,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 99,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 101,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    },
+    {
+      "sweep": 103,
+      "headstage": 0,
+      "fields": {
+        "Hardware Type": {
+          "value": 1.0,
+          "stored_unit": ""
+        },
+        "LPF Cutoff": {
+          "value": 2000.0,
+          "stored_unit": ""
+        },
+        "Secondary LPF Cutoff": {
+          "value": 10000.0,
+          "stored_unit": ""
+        },
+        "Scaled Out Signal": {
+          "value": 0.0,
+          "stored_unit": ""
+        },
+        "Scale Factor Units": {
+          "value": 0.0,
+          "stored_unit": ""
+        }
+      }
+    }
+  ],
+  "cutoff_hz_used": 2000,
+  "order": 4,
+  "normalization": "analog -3 dB magnitude",
+  "metadata_description": "https://alleninstitute.github.io/MIES/labnotebook-descriptions.html",
+  "manufacturer_manual": "https://neurophysics.ucsd.edu/Manuals/Axon%20Instruments/MultiClamp_700B.pdf",
+  "manual_page": 144,
+  "secondary_filter_cascaded": false,
+  "pole_pair_constants": [
+    [
+      -12.50616217148396,
+      -17.216780125520465
+    ],
+    [
+      15.79725662342535,
+      5.15534999446263
+    ],
+    [
+      -9.888177414646247,
+      9.88817741464625
+    ],
+    [
+      13.34011614171746,
+      -49.912549955972864
+    ]
+  ]
+}

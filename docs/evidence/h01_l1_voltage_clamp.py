@@ -131,7 +131,9 @@ def read_sweep(path, sweep, *, session=SESSION):
                                 unit=units[keys.index(key)])
                       for key in ('RsComp Enable', 'RsComp Correction', 'Series Resistance',
                                   'TP Steady State Resistance', 'Fast compensation capacitance',
-                                  'Slow compensation capacitance') if key in keys}
+                                  'Slow compensation capacitance', 'LPF Cutoff',
+                                  'Secondary LPF Cutoff', 'Hardware Type',
+                                  'Scaled Out Signal', 'Scale Factor Units') if key in keys}
         current, dac = converted
         command = dac + holding
         arrays = dict(time_ms=np.arange(len(current)) / clocks[0][1] * 1000,

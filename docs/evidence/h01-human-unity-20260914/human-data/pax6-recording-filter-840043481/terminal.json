@@ -1,0 +1,7 @@
+{
+  "wall_cap_seconds": 180,
+  "execution": "local CPU; exact analog observation model",
+  "exit_code": 0,
+  "timeout": false,
+  "wall_seconds": 80.14097539999057
+}

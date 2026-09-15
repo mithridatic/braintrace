@@ -101,6 +101,39 @@ def test_disabled_holding_and_interior_zero_current_preserved(nwb, monkeypatch):
     np.testing.assert_array_equal(a['total_current_pa'], [0, 1, 0, 3])
 
 
+def test_preserve_recorded_filter_and_hardware_fields(nwb, monkeypatch):
+    pin(monkeypatch, nwb)
+    before, _ = vc.read_sweep(nwb, 98)
+    with h5py.File(nwb, 'a') as source:
+        notebook = source['general/labnotebook/ITC18USB_Dev_0']
+        keys = notebook['numericalKeys'].asstr()[:]
+        fields = np.array([['LPF Cutoff', 'Secondary LPF Cutoff', 'Hardware Type',
+                            'Scaled Out Signal', 'Scale Factor Units'], ['', '', '', '', '']])
+        values = np.pad(notebook['numericalValues'][:], ((0, 0), (0, 5), (0, 0)), constant_values=np.nan)
+        values[0, 4:, 0] = [2000, 10000, 1, 0, 0]
+        values[:, 4:, 8] = 12345  # Wrong global scope must never override headstage settings.
+        del notebook['numericalKeys'], notebook['numericalValues']
+        notebook.create_dataset('numericalKeys', data=np.concatenate([keys, fields], axis=1), dtype=h5py.string_dtype())
+        notebook.create_dataset('numericalValues', data=values)
+    pin(monkeypatch, nwb)
+    arrays, metadata = vc.read_sweep(nwb, 98)
+    assert metadata['instrument']['LPF Cutoff'] == {'value': 2000., 'unit': ''}
+    assert metadata['instrument']['Secondary LPF Cutoff'] == {'value': 10000., 'unit': ''}
+    assert metadata['instrument']['Hardware Type'] == {'value': 1., 'unit': ''}
+    assert metadata['instrument']['Scaled Out Signal'] == {'value': 0., 'unit': ''}
+    assert metadata['instrument']['Scale Factor Units'] == {'value': 0., 'unit': ''}
+    np.testing.assert_array_equal(arrays['total_current_pa'], before['total_current_pa'])
+    np.testing.assert_array_equal(arrays['command_voltage_mv'], before['command_voltage_mv'])
+    np.testing.assert_array_equal(arrays['time_ms'], before['time_ms'])
+
+
+def test_absent_filter_metadata_is_not_invented(nwb, monkeypatch):
+    pin(monkeypatch, nwb)
+    _, metadata = vc.read_sweep(nwb, 98)
+    assert 'LPF Cutoff' not in metadata['instrument']
+    assert 'Secondary LPF Cutoff' not in metadata['instrument']
+
+
 def test_wrong_hash_and_nonchannel_sweeps_fail_before_access(nwb):
     with pytest.raises(ValueError, match='SHA256'): vc.read_sweep(nwb, 98)
     for sweep in [0, 3, 4, 97, 170]:

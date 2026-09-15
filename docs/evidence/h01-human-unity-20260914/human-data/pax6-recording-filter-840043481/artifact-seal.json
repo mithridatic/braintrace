@@ -1,0 +1,169 @@
+{
+  "files": [
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/all-coverage.json",
+      "bytes": 6711,
+      "sha256": "bc796ced9e7fe87aca24aefb8186e9782359b6b7a6538815989d6b95199766cb"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/all-tests.xml",
+      "bytes": 11389,
+      "sha256": "0c9d04db0980b3094fe73d3b686c7cf0cedcc286c1d8676fca757a20fa1d87e6"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/coverage.json",
+      "bytes": 3448,
+      "sha256": "c427c92746cab794801ebf1189cccb3b904bede7656273924cdd580dec2d63d8"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/decision.json",
+      "bytes": 1392,
+      "sha256": "b0481fd8068fbbde28d793752ede714b65f8d86c370f5caafc6602f55e77baa2"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/excluded-control-onsets.png",
+      "bytes": 348472,
+      "sha256": "b36fb90e8d4e4c81ef903fae049e28ac47956a58fdc31fd610b30909d609dc7b"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/excluded-control-predictions.png",
+      "bytes": 268340,
+      "sha256": "de44b28bf559506118da882387d712233e346d2bd94bb814d253e147eef67ce4"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/excluded-long-control.png",
+      "bytes": 174338,
+      "sha256": "18f2ac36cca664ab20498e6badb8c4216fe04181fc4591e90aa56317b14ac4c7"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/export-verification.json",
+      "bytes": 333,
+      "sha256": "9d0e2c61a2ceff4e372152c34a1121a12f495a8102f3fe670493f7b9f4e5baa5"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/fit.py",
+      "bytes": 8281,
+      "sha256": "4083be49b3c2ad57c31429d9ca96c646569c487d70217731a5e5cf31013a9ce7"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/frozen-candidate.json",
+      "bytes": 1033,
+      "sha256": "9b1807e587ecb16fd4d3b4b8ab0cd8cfd5d6dde59fdbf9c3b7f34f94c6b2c502"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/inputs.json",
+      "bytes": 63255,
+      "sha256": "7339590f0ea2c9a23b27489ab43c7cf858a4f56a852f10eb6ada5511cf294162"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/inputs.npz",
+      "bytes": 2627882,
+      "sha256": "de1c16874bd3c27bc50921e9649bdfb9ddafe11dbe38886c4282068c8f0e2697"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/passing-coverage.json",
+      "bytes": 6711,
+      "sha256": "1a9a2df40d3903c71af1c4f3dbbcbd98c23d148e5848e9af2edbca45f3be33ca"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/passing-tests.xml",
+      "bytes": 8761,
+      "sha256": "28dc490761dac00dcf8fa638b49332e5565fccac4b8d206d432f17b6701bac45"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/predictions.npz",
+      "bytes": 2943416,
+      "sha256": "2d603a5f5a762f1eaa367360ed371827272c86a5ab99c97156971703f7efda78"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/README.md",
+      "bytes": 6744,
+      "sha256": "bd3389fdd817ae5ee719833eed375775352df555d9c90210b7067539bdede5a1"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/recorded-filter.json",
+      "bytes": 6780,
+      "sha256": "109eed5457a150cfcbc5eca3a6cadaea806a100b3401489456b8c35e2df35d4b"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/regression-before.txt",
+      "bytes": 1931,
+      "sha256": "e68716c1c477500ce12a4ef253202aacafbd87cf6cad7646d7f718ec349f7a73"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/review.py",
+      "bytes": 4553,
+      "sha256": "aaf109ea0a95427ddc7c19b716368b280334fa0e5d24681c2da64be8490a6616"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/run.py",
+      "bytes": 1103,
+      "sha256": "4079fd58e515fd9656895cbb6fa1f7ba0487523f2c8dad60d2b18f56aada8835"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/stdout.txt",
+      "bytes": 1298,
+      "sha256": "9799c625fc6d2e4e7880710392a356e208abf60349f5e4475abd1f0653d69496"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/terminal.json",
+      "bytes": 170,
+      "sha256": "9a6f1b56e0644745bb9e91e24f7ccd398bf8808cd4e7b869eaeefff782a4d7b5"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/tests.xml",
+      "bytes": 4724,
+      "sha256": "064987d99d8cf89dfb15338da2b77f9ef0b60e0316ac1fb3d4589d4344554d2a"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/verification.json",
+      "bytes": 345,
+      "sha256": "b3394a8ecea0f06aa7fcaa79a332403b1dad52711f3ae61ab61677a60af55694"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/pax6-recording-filter-840043481/verify_export.py",
+      "bytes": 1491,
+      "sha256": "a00f94de31073682b17a77ba17a7d587d4f63fbe52f9333ca1489a444434140c"
+    },
+    {
+      "path": "docs/specs/2026-09-14-h01-pax6-recording-filter.md",
+      "bytes": 5053,
+      "sha256": "df40b5e15a16c6160ff8ce39e108eb1b08e5b870b5a65293ad9bc95b5d9dfe1b"
+    },
+    {
+      "path": "docs/evidence/h01_pax6_recording_filter.py",
+      "bytes": 5919,
+      "sha256": "160afbaf4a325508d15adf58e10e83170a54c14a5560b8605ff76f1c5210d1fd"
+    },
+    {
+      "path": "docs/evidence/h01_pax6_recording_filter_test.py",
+      "bytes": 5043,
+      "sha256": "b3fbf4e82507c32e7566a083016d63a274189661feb99240eb571f015dd70a3e"
+    },
+    {
+      "path": "docs/evidence/h01_l1_voltage_clamp.py",
+      "bytes": 8994,
+      "sha256": "8e2dfa9422dd1618720362bc58f666c4246c2c632c8cd4b1788fea9959df47a9"
+    },
+    {
+      "path": "docs/evidence/h01_l1_voltage_clamp_test.py",
+      "bytes": 9871,
+      "sha256": "3ab3f1bf928904244b61ecf5c045acce698b0c7a12f6221be9f8ff7ebf66ced8"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/fitting-inputs-r12.json",
+      "bytes": 5338,
+      "sha256": "94bd00b1f315630af3a5f8d7c2240672e730b1feaea421109dc7be61f3a337eb"
+    },
+    {
+      "path": "docs/evidence/h01-human-unity-20260914/human-data/README.md",
+      "bytes": 8906,
+      "sha256": "7010e1d1d5119be74defc6d1e610f51906277ad99313012bcb5382073884568a"
+    }
+  ]
+}

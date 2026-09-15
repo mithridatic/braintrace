@@ -1,0 +1,29 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______________ test_preserve_recorded_filter_and_hardware_fields ______________
+
+nwb = WindowsPath('C:/tmp/codex-temp/pytest-of-J/pytest-3220/test_preserve_recorded_filter_0/source.nwb')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019FC9C5EFD0>
+
+    def test_preserve_recorded_filter_and_hardware_fields(nwb, monkeypatch):
+        with h5py.File(nwb, 'a') as source:
+            notebook = source['general/labnotebook/ITC18USB_Dev_0']
+            keys = notebook['numericalKeys'].asstr()[:]
+            fields = np.array([['LPF Cutoff', 'Secondary LPF Cutoff', 'Hardware Type',
+                                'Scaled Out Signal', 'Scale Factor Units'], ['', '', '', '', '']])
+            values = np.pad(notebook['numericalValues'][:], ((0, 0), (0, 5), (0, 0)), constant_values=np.nan)
+            values[0, 4:, 0] = [2000, 10000, 1, 0, 0]
+            values[:, 4:, 8] = 12345  # Wrong global scope must never override headstage settings.
+            del notebook['numericalKeys'], notebook['numericalValues']
+            notebook.create_dataset('numericalKeys', data=np.concatenate([keys, fields], axis=1), dtype=h5py.string_dtype())
+            notebook.create_dataset('numericalValues', data=values)
+        pin(monkeypatch, nwb)
+        arrays, metadata = vc.read_sweep(nwb, 98)
+>       assert metadata['instrument']['LPF Cutoff'] == {'value': 2000., 'unit': ''}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'LPF Cutoff'
+
+docs\evidence\h01_l1_voltage_clamp_test.py:118: KeyError
+=========================== short test summary info ===========================
+FAILED docs/evidence/h01_l1_voltage_clamp_test.py::test_preserve_recorded_filter_and_hardware_fields
+1 failed, 29 deselected in 0.68s

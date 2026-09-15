@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "source_observations_verified": 236875,
+  "training_samples": 155875,
+  "excluded_early_samples": 5250,
+  "long_control_samples": 76625,
+  "original_clocks_and_previous_predictions_verified": true,
+  "candidate_and_source_hashes_verified": true,
+  "independent_validation": false,
+  "scores_promoted": false
+}

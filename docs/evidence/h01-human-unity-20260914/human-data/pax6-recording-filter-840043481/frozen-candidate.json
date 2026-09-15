@@ -1,0 +1,59 @@
+{
+  "parameter_order": [
+    "gL_ns",
+    "C0_pf",
+    "C1_pf",
+    "tau_ms",
+    "latency_ms"
+  ],
+  "parameters": [
+    0.24643137533490003,
+    1.6701938765529454,
+    2.3167096822552153,
+    1.110368765243028,
+    0.11959825201138423
+  ],
+  "initial": [
+    0.3,
+    2.0,
+    2.0,
+    1.0,
+    0.12
+  ],
+  "lower": [
+    0.0,
+    0.0,
+    0.0,
+    0.04,
+    0.0
+  ],
+  "upper": [
+    3.0,
+    100.0,
+    100.0,
+    500.0,
+    0.3
+  ],
+  "optimizer_success": true,
+  "message": "`ftol` termination condition is satisfied.",
+  "evaluations": 9,
+  "active_bounds": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "relative_bound_distance": [
+    0.08214379177830002,
+    0.016701938765529455,
+    0.023167096822552153,
+    0.0021409088031903115,
+    0.39866084003794744
+  ],
+  "seconds": 75.84090030001244,
+  "cutoff_hz": 2000,
+  "observation_model_only": true,
+  "inputs_sha256": "7339590f0ea2c9a23b27489ab43c7cf858a4f56a852f10eb6ada5511cf294162",
+  "helper_sha256": "160afbaf4a325508d15adf58e10e83170a54c14a5560b8605ff76f1c5210d1fd"
+}
