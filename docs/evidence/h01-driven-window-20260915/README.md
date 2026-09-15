@@ -54,15 +54,21 @@ Registered plans: `plan-ctrl-{ei,e_only,i_only,disconnected}-50ms.json`,
 
 PENDING — filled in when the runs complete.
 
-**Execution failure preserved.** The first launch ran six population processes
+**Execution failures preserved.** The first launch ran six population processes
 and the transfer chain concurrently. Each unpinned JAX process holds ~1,300
-threads (255-CPU thread pools) and the container's cgroup pids limit is 7,680;
-at 04:37 UTC every population process aborted with `pthread_create failed:
-Resource temporarily unavailable` (exit 134) or `Failed to launch ptxas`, eight
-minutes into stepping. Receipts: `var/h01-driven/{ctrl-*-50ms,ctrl-e_only-50ms-r2,
-refine-ei-10ms-dt*}` on the box. The relaunch (`-r3`) pins each process with
-`taskset -c` (32-64 CPUs → ~200-400 threads) and
-`XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8`.
+threads (255-CPU thread pools) and the container's cgroup pids limit is 7,680
+(read-only from inside); at 04:37 UTC every population process aborted with
+`pthread_create failed: Resource temporarily unavailable` (exit 134) or `Failed
+to launch ptxas`, eight minutes into stepping. Receipts: `var/h01-driven/
+{ctrl-*-50ms,ctrl-e_only-50ms-r2,refine-ei-10ms-dt*}` on the box. The second
+launch (`-r3`) pinned each process with `taskset -c` (64 CPUs) and
+`XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8`; pinning is not a bound:
+two processes at the same stage held 975 and 4,775 threads, and at 04:53 UTC
+three of six aborted the same way. The third population process was then killed
+by hand (`refine-ei-10ms-dt000625-r3`, exit 143, `operator-kill.txt`) to keep
+the two 50 ms controls under the limit. The remaining runs go through
+`var/h01-driven/queue.sh`: at most two population processes at a time, the
+second launched only when the container's thread total is under 4,200.
 
 ## Stage C: anatomy transfer, one type-matched H01 cell per deployed donor
 
