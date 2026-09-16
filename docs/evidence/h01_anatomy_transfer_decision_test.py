@@ -181,8 +181,36 @@ DONOR = dict(rest_mv=REST-.4, sd_mv=.02, rest_repeat_mean_mv=REST, rest_repeat_s
 
 
 def _ramp(rheobase_na=.055, block_na=None, spikes=(1100., 1500., 1900., 2010.), ramp_max_na=.27, finite=True, pre=0):
-    return dict(ramp_max_na=ramp_max_na, rheobase_na=rheobase_na, block_na=block_na,
-                ramp_spike_times_ms=list(spikes), ramp_count=len(spikes), finite=finite, pre_pulse_count=pre)
+    """A ramp run.json in the runner's layout: the readings under ``ramp``, the windows at the top level."""
+    readings = dict(ramp_max_na=ramp_max_na, rheobase_na=rheobase_na, block_na=block_na,
+                    ramp_spike_times_ms=list(spikes), ramp_count=len(spikes), finite=finite)
+    return dict(drive="ramp", ramp_max_na=ramp_max_na, current_na=None, pulse_ms=[1020., 2020.], pre_pulse_count=pre,
+                output_site=dict(count=len(spikes), finite=finite), soma_site=dict(count=len(spikes), finite=finite),
+                ramp=dict(readings, soma_site=dict(readings)), rest_mean_mv=REST, return_mv=AFTER, return_available=True)
+
+
+def test_failure_verdict_reads_the_runner_layout_of_a_ramp_run():
+    """The runner (h01_anatomy_transfer_run.summarize) nests the ramp readings under ``ramp``; a ramp that fires to
+    its end must not read as silent (the defect seen on the first six C3 candidates, 2026-09-16)."""
+    run = pytest.importorskip("h01_anatomy_transfer_run")
+    import numpy as np
+    from types import SimpleNamespace
+    time = np.arange(.01, 2300.01, .01)
+    voltage = np.full_like(time, REST)
+    for centre in np.arange(1100., 2020., 40.):    # 23 spikes from 80 pA to the ramp end
+        voltage[(time >= centre) & (time < centre+.5)] = 20.
+    args = SimpleNamespace(cell="c", donor="l4-pyramidal-allen-527952884", polarity="E", current_na=None, ramp_na=.27,
+                           pulse_on_ms=1020., pulse_ms=1000., duration_ms=2300., dt_ms=.01, solver="s", max_cv_um=10.,
+                           registered_count=None, repeat_counts=None, donor_model_count=None, tags=None, cell_table=None)
+    voltage[(time >= 2210.) & (time <= 2220.)] = AFTER
+    summary = run.summarize(args, dict(time_ms=time, output_voltage=voltage, voltage=voltage),
+                            dict(component=0, source_sha256="x"*64, component_nodes=1, n_compartments=1))
+    assert summary["ramp"]["rheobase_na"] is not None and "rheobase_na" not in summary   # the layout under test
+    verdict = decision.keep_verdict_failure(_cell_run_failure(), summary, _cell_run_failure(), DONOR)
+    assert verdict["hard_rules"]["rheobase_in_step"] is False    # 21.6 pA rheobase vs human 50 +- 20
+    assert verdict["hard_rules"]["fires_at_highest"] is True and verdict["hard_rules"]["no_block_in_recorded_range"] is True
+    assert verdict["readings"]["model_rheobase_pa"] == pytest.approx(21.6, abs=.01) and verdict["readings"]["model_last_spike_pa"] > 170.
+    assert verdict["rules"]["finite"] is True and verdict["rules"]["no_spike_before_pulse"] is True
 
 
 def _cell_run_failure(**overrides):
@@ -327,7 +355,7 @@ def _failure_population(tmp_path, with_ramp=True, with_half=True):
         (runs/f"transfer-all-{cell}"/"run.json").write_text(json.dumps(_cell_run_failure(cell=cell, count=count)))
         if with_ramp:
             (runs/f"transfer-all-{cell}-ramp").mkdir()
-            (runs/f"transfer-all-{cell}-ramp"/"run.json").write_text(json.dumps(dict(cell=cell, ramp=None, **_ramp())))
+            (runs/f"transfer-all-{cell}-ramp"/"run.json").write_text(json.dumps(dict(cell=cell, **_ramp())))
         if with_half:
             (runs/f"transfer-all-{cell}-dthalf").mkdir()
             (runs/f"transfer-all-{cell}-dthalf"/"run.json").write_text(json.dumps(_cell_run_failure(cell=cell, count=count)))
@@ -448,3 +476,12 @@ def test_cli_failure_gate_reports_pending_ramps_and_takes_a_ramp_folder(tmp_path
     monkeypatch.setattr(sys, "argv", base+["--ramp-folder", str(ramps)])
     decision.main()
     assert json.loads(output.read_text())["kept"] == ["200"]
+
+
+def test_ramp_readings_of_accepts_both_layouts_and_folds_finiteness():
+    nested = _ramp(finite=True, pre=2)
+    flat = decision.ramp_readings_of(nested)
+    assert flat["rheobase_na"] == .055 and flat["pre_pulse_count"] == 2 and flat["finite"] is True
+    nested["output_site"]["finite"] = False
+    assert decision.ramp_readings_of(nested)["finite"] is False
+    assert decision.ramp_readings_of(nested["ramp"]) is nested["ramp"] and decision.ramp_readings_of(None) is None

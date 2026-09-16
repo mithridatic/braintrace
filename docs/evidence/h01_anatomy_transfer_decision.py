@@ -138,6 +138,26 @@ def count_band_of(datums):
     return None, None, "unavailable"
 
 
+def ramp_readings_of(run):
+    """The ramp readings of a ramp run.json (``h01_anatomy_transfer_run.summarize`` nests them under ``ramp``).
+
+    Returns the nested block with the run's ``pre_pulse_count`` and ``finite`` (output and
+    soma traces, and the ramp analysis) folded in; a flat dict (already readings) passes through.
+    """
+    if run is None:
+        return None
+    if not isinstance(run.get("ramp"), dict):
+        return run
+    readings = dict(run["ramp"])
+    readings.setdefault("pre_pulse_count", run.get("pre_pulse_count", 0))
+    finite = [readings.get("finite", True)]
+    for site in ("output_site", "soma_site"):
+        if isinstance(run.get(site), dict) and "finite" in run[site]:
+            finite.append(run[site]["finite"])
+    readings["finite"] = bool(all(finite))
+    return readings
+
+
 def firing_range_rules(primary, ramp, datums):
     """The three firing-range readings against the human datums; None where a reading is unavailable."""
     count, repeats = primary["output_site"]["count"], list(datums.get("repeat_counts") or [])
@@ -233,6 +253,7 @@ def keep_verdict_failure(primary, ramp, half, donor):
         unavailable datum is never a pass.
     """
     count = primary["output_site"]["count"]
+    ramp = ramp_readings_of(ramp)
     repeat_sd = donor.get("rest_repeat_sd_mv")
     rest_sd_source = ("across-sweep repeat sd (human-datums rest_repeat_sd_mv)" if repeat_sd is not None
                       else "within-trace sd (donor-rest sd_mv; repeat sd absent)")
