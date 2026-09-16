@@ -79,7 +79,7 @@ def _variables(model):
         if not hasattr(value, 'shape') or not np.issubdtype(np.asarray(value).dtype, np.floating):
             continue
         name = '.'.join(str(p) for p in path if p not in ('ion_channels', 'channels', '_channel'))
-        if name in ('spike', '_current_time_state'):
+        if name in ('spike', '_current_time_state') or path[0] == '_source_cells':
             continue
         last = value.shape[-1] if value.ndim else None
         if last in (n_cv, n_point) and value.ndim == 2:
@@ -90,7 +90,7 @@ def _variables(model):
 
 
 def _axial_rate(forest):
-    """Cable term of dV/dt per point row (mV/ms) from the DHS coefficients."""
+    """Cable term of dV/dt per CV (mV/ms) from the DHS coefficients (midpoint rows only)."""
     import jax.numpy as jnp
     import brainunit as u
     source = forest.runtime.dhs_static_source_np
@@ -100,7 +100,7 @@ def _axial_rate(forest):
     rate = -jnp.asarray(source.diag_ms_inv_np)*v
     rate = rate.at[child].add(-jnp.asarray(source.lowers_ms_inv_np)[child]*v[parent])
     rate = rate.at[parent].add(-jnp.asarray(source.uppers_ms_inv_np)[child]*v[child])
-    return rate[None, :]
+    return rate[jnp.asarray(source.dynamic_rows_np)][None, :]
 
 
 def _synaptic_current(model):
@@ -179,7 +179,7 @@ def _run(args):
         report['variables'] = {name: dict(axis=variables[REFERENCE_DT][name]['axis'], unit=variables[REFERENCE_DT][name]['unit'],
                                           shape=list(np.shape(u.get_mantissa(variables[REFERENCE_DT][name]['state'].value))))
                                for name in names}
-        report['variables']['axial_rate'] = dict(axis='point', unit='mV/ms', shape=[1, models[REFERENCE_DT].forest.runtime.n_point])
+        report['variables']['axial_rate'] = dict(axis='cv', unit='mV/ms', shape=[1, models[REFERENCE_DT].forest.n_cv])
         report['variables']['syn_current'] = dict(axis='contact', unit='nA', shape=[1, args.contacts])
         forest0 = models[REFERENCE_DT].forest
         point_of_cv = np.asarray(forest0.runtime.node_tree.cv_to_mid_node_id)
