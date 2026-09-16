@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from docs.evidence.h01_c3_neuron_graph import (COLUMNS, keep_row, merge_parts, new_progress, part_path,
-                                               pending_shards, shard_index, totals, write_json)
+from docs.evidence.h01_c3_neuron_graph import (BASE_URL, COLUMNS, curl_command, keep_row, merge_parts, new_progress,
+                                               part_path, pending_shards, shard_index, totals, write_json)
 
 
 def _record(pre, post, **kw):
@@ -69,3 +69,10 @@ def test_write_json_is_atomic_and_new_progress_carries_the_layout(tmp_path):
     progress = new_progress({"export000000000000": 1}, 6, {"x": "h"})
     assert progress["columns"] == list(COLUMNS) and progress["shards_total"] == 1 and progress["workers"] == 6
     assert progress["shards"] == [] and progress["stopped_reason"] is None
+
+
+def test_curl_command_fails_on_http_errors_aborts_stalls_and_caps_wall_time(tmp_path):
+    argv = curl_command("export000000000005", tmp_path / "x.part")
+    assert argv[0] == "curl" and "--fail" in argv and argv[-1] == BASE_URL + "export000000000005"
+    assert "--max-time" in argv and "--speed-limit" in argv and "--speed-time" in argv
+    assert argv[argv.index("-o") + 1] == str(tmp_path / "x.part")

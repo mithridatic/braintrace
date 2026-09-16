@@ -5,7 +5,10 @@ Layout (reused from ``h01_full_export_join.py``): curl download with a size
 check, atomic progress JSON rewritten after every shard, shard deleted after
 its scan, free-disk guard, resumable. New here: a process pool scans shards in
 parallel (fastavro decoding is CPU-bound) while a small thread pool keeps the
-next shards downloading. Each scanned shard writes its kept rows to a part file
+next shards downloading. The pool uses the ``spawn`` context: with ``fork``,
+a worker forked while a download thread sat inside ``subprocess.run`` inherited
+that curl's pipe, its ``communicate()`` never saw EOF, and the run hung on one
+shard (observed on shard 5 of the first box run, 2026-09-16). Each scanned shard writes its kept rows to a part file
 under ``.cache/h01/c3-graph/``; the final merge concatenates the parts in shard
 order into ``docs/evidence/h01-c3-neuron-graph.json.gz``.
 
@@ -24,6 +27,7 @@ import datetime as dt
 import gzip
 import hashlib
 import json
+import multiprocessing
 import shutil
 import subprocess
 import sys
@@ -41,6 +45,8 @@ CACHE = ROOT / ".cache/h01/c3-graph"
 COLUMNS = ("pre", "post", "type", "x", "y", "z", "pre_class", "post_class", "confidence", "shard")
 MIN_FREE_BYTES = 20 * 1024**3
 WALL_LIMIT_S = 3 * 3600
+CURL_MAX_S = 1500  # one shard; the object store throttles some streams to ~1.3 MB/s (150 s), never this slow
+CURL_STALL = ("--speed-limit", "50000", "--speed-time", "120")  # abort under 50 kB/s for 120 s, then retry
 
 
 def sha256_path(path):
@@ -116,8 +122,18 @@ def free_bytes(root=ROOT):
     return shutil.disk_usage(str(root)).free
 
 
-def download(shard, expected, attempts=2, cache=CACHE):
-    """Fetch one shard with curl; return ``(path, seconds)`` or ``(None, error)``."""
+def curl_command(shard, part):
+    """curl argv for one shard: fail on HTTP errors, abort a stalled stream, cap the wall time."""
+    return ["curl", "-sS", "-L", "--fail", "--retry", "2", "--max-time", str(CURL_MAX_S), *CURL_STALL,
+            "-o", str(part), BASE_URL + shard]
+
+
+def download(shard, expected, attempts=3, cache=CACHE):
+    """Fetch one shard with curl; return ``(path, seconds)`` or ``(None, error)``.
+
+    Runs in a download thread. The scan workers are started with the ``spawn``
+    context before any download begins, so no worker inherits a curl pipe.
+    """
     cache.mkdir(parents=True, exist_ok=True)
     final = cache / f"{shard}.avro"
     part = cache / f"{shard}.part"
@@ -126,9 +142,12 @@ def download(shard, expected, attempts=2, cache=CACHE):
     last = None
     for _ in range(attempts):
         t0 = time.monotonic()
-        proc = subprocess.run(
-            ["curl", "-sS", "-L", "--fail", "--retry", "2", "-o", str(part), BASE_URL + shard],
-            capture_output=True, text=True)
+        try:
+            proc = subprocess.run(curl_command(shard, part), capture_output=True, text=True, timeout=CURL_MAX_S + 60)
+        except subprocess.TimeoutExpired:
+            last = f"curl exceeded {CURL_MAX_S + 60}s"
+            part.unlink(missing_ok=True)
+            continue
         if proc.returncode == 0 and part.exists() and part.stat().st_size == expected:
             part.replace(final)
             return final, time.monotonic() - t0
@@ -232,7 +251,8 @@ def run(workers, downloads, listing, neuron_ids, progress, cache=CACHE, wall_lim
         write_json(PROGRESS, progress)
 
     reason = None
-    with ThreadPoolExecutor(downloads) as dl_pool, ProcessPoolExecutor(workers) as scan_pool:
+    spawn = multiprocessing.get_context("spawn")  # fork would copy a live curl's pipe fds into the workers
+    with ProcessPoolExecutor(workers, mp_context=spawn) as scan_pool, ThreadPoolExecutor(downloads) as dl_pool:
         while queue or dl_futs or scan_futs:
             if reason is None and time.monotonic() - start > wall_limit:
                 reason = f"wall clock limit {wall_limit}s reached"
