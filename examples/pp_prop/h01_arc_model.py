@@ -262,7 +262,7 @@ class H01ArcModel(brainstate.nn.Module):
                                  delay_ms=delay_ms, identity=identity)
         from braintrace.datasets.h01_forest_contacts import host_write
         host_write(self.recurrent_weight, row, float(weight_us))
-        self.contact_magnitude.value = jnp.asarray(np.abs(np.asarray(self.recurrent_weight.value)))
+        host_write(self.contact_magnitude, row, abs(float(weight_us)))
         return row
 
     def _soma(self):

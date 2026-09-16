@@ -39,14 +39,19 @@ def host_write(state, index, value):
 
     Notes
     -----
-    A device-side ``.at[].set`` returns an array committed to a device; a
-    later ``jit`` call then sees a different input signature and recompiles.
-    Writing through NumPy keeps the state uncommitted, exactly as it was
-    created, so mutations never trigger a recompile.
+    A ``jit`` cache key includes whether an input array is committed to a
+    device. The new array is placed exactly like the old one (committed to
+    the same device, or left uncommitted), so a mutation never changes the
+    compiled step's input signature.
     """
-    array = np.array(state.value)
+    import jax
+    old = state.value
+    array = np.array(old)
     array[index] = value
-    state.value = jnp.asarray(array)
+    if getattr(old, 'committed', False):
+        state.value = jax.device_put(array, next(iter(old.devices())))
+    else:
+        state.value = jnp.asarray(array)
 
 
 def contact_kind(reversal_mv, tau_ms):
