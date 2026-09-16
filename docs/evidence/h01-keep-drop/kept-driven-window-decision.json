@@ -1,0 +1,69 @@
+{
+  "driven_window": 0.0,
+  "verdict": "FAIL",
+  "scope": "17-cell driven window on the Vast executor: runtime, matched-control and timestep gates only; physiology, functional inhibition and human provenance are not qualified by this decision",
+  "runtime": {
+    "ei": {
+      "status": "passed",
+      "failures": []
+    },
+    "e_only": {
+      "status": "passed",
+      "failures": []
+    },
+    "i_only": {
+      "status": "passed",
+      "failures": []
+    },
+    "disconnected": {
+      "status": "passed",
+      "failures": []
+    }
+  },
+  "controls": {
+    "status": "failed",
+    "failures": [
+      "checker requires exactly two disjoint directed pairs"
+    ]
+  },
+  "refinement": {
+    "status": "passed",
+    "failures": [],
+    "worst_voltage_mV": 0.0013868619001584648,
+    "worst_event_ms": 0.0,
+    "cells_compared": 17
+  },
+  "input_hashes": {
+    "reference": "8d751001eb489091dc7aa4bcc00eedaf47a43ce71186d3713d959ac246dca92b",
+    "ei": {
+      "build": "274c86a6e91482547338f8df0a416320ab01505b24b11c827548754c6abddef9",
+      "plan": "55e5d787a0e961a90a472cb83c2f43754b4620fc3511966ef83a7042d35b8611",
+      "traces": "ca304141187ccf0f57d9eb4716d8ba5409c3713eac73ff882d18cd045a5509f0"
+    },
+    "e_only": {
+      "build": "fbe76fcbc659405434112d80a793b1e445f9988db16f4d7ad958e1107b10d971",
+      "plan": "067d0128e70193859ed77faac46a0a4620467d0677efd345ae580bc3bb96070b",
+      "traces": "fb3df40eddd7f50dd34819f4a3be74f2e721afed5e304f6e459da9b61a5144c7"
+    },
+    "i_only": {
+      "build": "edf55cc625f5f8b6fdcc659ff0c970a38bcc78926c72766b78093b68c15c2bba",
+      "plan": "b53f9e585735d8960c6754867d4fb7fcf2df9dc829ff8ec7f60fe2f2cb08f39e",
+      "traces": "3f77db370d70d18a6136429f3f7e2b57d761f1df5ceef704fc36ca52fba3b5ed"
+    },
+    "disconnected": {
+      "build": "fd7b0e6d088e059cb2d235350043a1d61c982971172288472b8b1574a319a634",
+      "plan": "dc003bd86e4a630648aefbb94d05fbc237f3419e70edc1c70e3fa5695a5e3444",
+      "traces": "d189768523ac2016f5b4e700d4259732d3fc6e267bd4d3331de8ad0104f8f6ed"
+    },
+    "refinement_coarse": {
+      "build": "080b8214d02bd8e7e7a419134d779486d0706944d1fab38bf8e64aec2a4f893d",
+      "plan": "3cb12183b9469fcd787f3edfa1ac22c22924b1f1510d61b50b48a49fdb9ccdd2",
+      "traces": "fc04f7265ffc8a00b355dcc87fb1b2f14c3666e37dd0470bbff002ba10d25a8d"
+    },
+    "refinement_fine": {
+      "build": "268a2dce72c756a5e72934cfff67a4bf775129c4fde75eddde79dac3b18dafa9",
+      "plan": "018c9ed898475b6bd3a90146f50439f56497c2c6ae207fe8c9df88da76e98577",
+      "traces": "eac67923fbc50295271742ab2b446cbc9aab9ca123c2eeeea2ad2407863ae550"
+    }
+  }
+}
