@@ -366,8 +366,8 @@ class H01ArcModel(brainstate.nn.Module):
         for path, shape in zip(paths, shapes):
             layout_key = next((p for p in path if isinstance(p, str) and p in by_layout), None)
             shared_key = next((p for p in path if isinstance(p, str) and table is not None and p in shared), None)
-            if table is not None and path[:2] == ('stepper', 'contact_table'):
-                if path[2] == 'ring':
+            if table is not None and 'contact_table' in path[:2]:
+                if path[-1] == 'ring':
                     owners = [({pre, ('contact', c)}, {post, ('contact', c)}) if contact is not None else
                               ({('contact', c)}, {('contact', c)})
                               for c, contact in enumerate(contacts) for pre, post in [contact or (None, None)]]
@@ -378,7 +378,7 @@ class H01ArcModel(brainstate.nn.Module):
                 points = shared[shared_key]
                 owners = [int(forest.cell_of_point[point]) for point in points]
                 blocks.append(('segments', np.arange(len(points)+1), owners))
-            elif path == ('forest', 'active'):
+            elif path[-1] == 'active':
                 blocks.append(('block', set(), set()))
             elif path[:2] == ('stepper', 'ring_buffers') and int(path[2]) < len(contacts):
                 pre, post = contacts[int(path[2])]
