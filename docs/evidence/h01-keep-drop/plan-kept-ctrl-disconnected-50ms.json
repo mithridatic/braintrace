@@ -1,7 +1,7 @@
 {
   "status": "registered before launch; untested",
   "spec": "docs/specs/2026-09-16-h01-keep-drop.md",
-  "source_commit": "79b7c41935842f0f852303d8b26c681d91dcc3b2",
+  "source_commit": "84c8765bd9591d231d28cbdc3af02d1eefe899ba",
   "executor": "Vast 50616476 RTX 4090, /workspace/venv314, branch campaign/h01-driven-window-20260914",
   "cells": 17,
   "current_na": "per cell from docs/evidence/h01-keep-drop/kept-currents.json",
