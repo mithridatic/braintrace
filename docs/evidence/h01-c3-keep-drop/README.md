@@ -29,24 +29,50 @@ rule that fails drops the cell whether or not the ramp has run.
 | [run_transfer.sh](run_transfer.sh) | Receipted launcher for the c3-keep worktree (`ROOT=/workspace/braintrace-c3-keep`, receipts `var/c3-keep/<label>/{launch,terminal}.json`, `run.{log,err,json,npz}`); refuses `/workspace/braintrace`. |
 | [kept-gate-preflight.json](kept-gate-preflight.json) | The failure gate applied offline to the 17 kept cells' existing keep/drop receipts (primary and dt-half; ramp pending). Not a decision. See below. |
 
-## Preflight reading on the 17 kept cells (no ramp yet)
+## Datum correction before any run (2026-09-16)
 
-`--folder ../h01-keep-drop/runs --ramp-folder runs` on [kept-types.json](kept-types.json):
-0 kept, 17 dropped, 0 pending. The ramp rules report `None` (`pending: ramp_missing` on every
-cell), but every kept cell already fails a measured rule of the new gate:
+The first preflight of the gate on the 17 kept cells' existing receipts dropped all 17 on
+two rules. Both were datum-construction errors, not cell failures, and were corrected with
+no tolerance widened (every tolerance is still read from the recording):
 
-- `count_in_repeat_range` fails on 16 of 17: the L2 and L4 donors have one registered sweep at
-  the primary input (`repeat_counts` `[10]` and `[12]`), so the repeat range is a single value
-  and the rule is exact equality; kept counts are 7-11 (L2) and 9, 11, 13, 15 (L4). Only
-  4437316933 (count 10) holds.
-- `rest_in_donor_spread` fails on 15 of 17, on the return leg: the pre-pulse rest sits inside
-  the band on most cells (L2 datum -84.01 +- 0.92 mV, L4 -80.60 +- 1.42 mV) but the level
-  200 ms after the pulse is 3.2 to 9.5 mV below the datum on every L2 cell (-87.2 to -93.5 mV) and
-  1.2 to 1.6 mV below on the L4 cells; 2001418787 and 4010150634 (L4) hold.
+- `count_in_repeat_range` had compared the count with the single registered sweep at the
+  primary amplitude (`[10]`, `[12]`), which carries no repeat spread. The datum is now
+  `count_band`: min to max of the counts of every long-square sweep whose amplitude lies
+  within one `sweep_step_pa` of `primary_pa` (inclusive, the primary's own repeats included),
+  the same one-step-of-drive tolerance the rheobase rule uses. L2 290/310/330 pA -> [9, 12]
+  (sweeps 52-54); L4 90/110 pA -> [12, 17] (39-40; the family has no 70 pA sweep, 60 pA is
+  30 pA away); PV 170/190/210 pA -> [4, 23] (34-36); SST 90/100 x4/110 pA -> [12, 21]
+  (32, 44-47, 33). `repeat_counts` and `measured_counts_at_primary` are unchanged.
+- `rest_in_donor_spread` had scored the return leg (the 10 ms ending 200 ms after offset)
+  against the pre-pulse datum. `h01_c3_human_datums.py` now reads each sweep's `after_mv`
+  over exactly the runner's window (`h01_anatomy_transfer_run.windows`: `off+190 <= t <=
+  off+200`, gated on the trace reaching `off+200`) and the family's `after_repeat_mean_mv` /
+  `after_repeat_sd_mv`: L2 -84.94 (sd 0.96), L4 -81.03 (1.83), PV -87.18 (0.45), SST -79.18
+  (2.27) mV; bands 2.87, 5.49, 1.34, 6.82 mV. Every sweep of all four families reaches the
+  window (`after_sweeps_unreached` empty); a leg the recording does not reach would be
+  recorded as not scored. The pre-pulse leg is unchanged.
 
-No tolerance is widened here (rule: none without a named human datum and its repeat spread).
-The reading is reported to J with the question whether the 17 kept-cell ramps still earn box
-time when no kept cell can pass the gate as registered.
+`human-datums.json` was regenerated from the four NWB files (shas unchanged:
+cc180b29..., e321fe93..., b6412208..., 218aa144...). The spec gate table, the register
+nodes `datum_fire` / `datum_rest` and the causal model's qualification rules carry the
+band construction.
+
+## Preflight reading on the 17 kept cells with the corrected datums (no ramp yet)
+
+`--folder ../h01-keep-drop/runs --ramp-folder runs` on [kept-types.json](kept-types.json)
+([kept-gate-preflight.json](kept-gate-preflight.json), not a decision): 0 kept, 15 dropped,
+2 pending on the ramp. Per rule: `finite` 17/17, `no_spike_before_pulse` 17/17,
+`dt_half_reproduces` 17/17, `count_in_repeat_range` 7/17 (L2 5 of 13: counts 9, 10, 11 x3
+inside [9, 12], eight cells at 7-8 outside; L4 2 of 4: 13 and 15 inside [12, 17], 9 and 11
+outside), `rest_in_donor_spread` 5/17 (pre-pulse leg 15/17; return leg 6/17: every L4 cell
+holds at -81.8 to -82.2 mV against -81.03 +- 5.49, two L2 cells hold at -87.2 and -87.7 mV
+against -84.94 +- 2.87, the other eleven L2 cells return 3.6 to 8.6 mV below the datum at
+-88.5 to -93.5 mV), `rheobase_in_step` and `fires_at_highest` unmeasured (17 pending on the
+ramp). Cells holding every measured rule: 3761379470 and 5439194879 (both L4).
+
+The count band is not touched. Ten kept cells still fail it (eight L2 at 7-8 spikes, two L4
+at 9 and 11) and eleven L2 cells still return
+below the family's post-pulse level; those are readings on the cells, reported as such.
 
 ## Launch recipe (only on "GO")
 

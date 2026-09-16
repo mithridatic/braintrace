@@ -2,21 +2,19 @@
   "phase": "final",
   "gate": "failure",
   "dropped": {
-    "1669770671": "count_in_repeat_range,rest_in_donor_spread",
+    "1669770671": "rest_in_donor_spread",
     "1684504313": "count_in_repeat_range,rest_in_donor_spread",
     "2001418787": "count_in_repeat_range",
-    "2103991145": "count_in_repeat_range,rest_in_donor_spread",
-    "2252715458": "count_in_repeat_range,rest_in_donor_spread",
+    "2103991145": "count_in_repeat_range",
+    "2252715458": "rest_in_donor_spread",
     "2848552900": "count_in_repeat_range,rest_in_donor_spread",
-    "3111823553": "count_in_repeat_range,rest_in_donor_spread",
+    "3111823553": "rest_in_donor_spread",
     "3571083397": "count_in_repeat_range,rest_in_donor_spread",
-    "3761379470": "count_in_repeat_range,rest_in_donor_spread",
     "4010150634": "count_in_repeat_range",
     "4197933517": "count_in_repeat_range,rest_in_donor_spread",
     "4437316933": "rest_in_donor_spread",
-    "5013648003": "count_in_repeat_range,rest_in_donor_spread",
+    "5013648003": "rest_in_donor_spread",
     "5173982155": "count_in_repeat_range,rest_in_donor_spread",
-    "5439194879": "count_in_repeat_range,rest_in_donor_spread",
     "6833911543": "count_in_repeat_range,rest_in_donor_spread",
     "751294744": "count_in_repeat_range,rest_in_donor_spread"
   },
@@ -45,24 +43,51 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 11,
       "rules": {
         "finite": true,
         "rheobase_in_step": null,
         "fires_at_highest": null,
-        "count_in_repeat_range": false,
+        "count_in_repeat_range": true,
         "rest_in_donor_spread": false,
         "no_spike_before_pulse": true,
         "dt_half_reproduces": true
       },
       "keep": false,
-      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "drop_reason": "rest_in_donor_spread",
       "pending": "ramp_missing",
       "measured_rules": [
         "finite",
@@ -123,11 +148,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 7,
       "rules": {
@@ -201,11 +253,35 @@
         "human_repeat_counts": [
           12
         ],
+        "human_count_band": [
+          12,
+          17
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          39,
+          40
+        ],
+        "human_count_band_amplitudes_pa": [
+          90.0000005077395,
+          110.000002162547
+        ],
+        "human_count_band_counts": [
+          12,
+          17
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -80.60354306502268,
         "rest_sd_mv": 0.47205698193400286,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -81.00987869203091
+        "donor_single_sweep_rest_mv": -81.00987869203091,
+        "after_datum_mv": -81.026309932056,
+        "after_sd_mv": 1.830920441156893,
+        "after_tolerance_mv": 5.4927613234706785,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": true
       },
       "dt_half_count": 11,
       "rules": {
@@ -279,11 +355,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": true
       },
       "dt_half_count": 7,
       "rules": {
@@ -291,12 +394,12 @@
         "rheobase_in_step": null,
         "fires_at_highest": null,
         "count_in_repeat_range": false,
-        "rest_in_donor_spread": false,
+        "rest_in_donor_spread": true,
         "no_spike_before_pulse": true,
         "dt_half_reproduces": true
       },
       "keep": false,
-      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "drop_reason": "count_in_repeat_range",
       "pending": "ramp_missing",
       "measured_rules": [
         "finite",
@@ -357,24 +460,51 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": false,
+        "return_leg_held": false
       },
       "dt_half_count": 9,
       "rules": {
         "finite": true,
         "rheobase_in_step": null,
         "fires_at_highest": null,
-        "count_in_repeat_range": false,
+        "count_in_repeat_range": true,
         "rest_in_donor_spread": false,
         "no_spike_before_pulse": true,
         "dt_half_reproduces": true
       },
       "keep": false,
-      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "drop_reason": "rest_in_donor_spread",
       "pending": "ramp_missing",
       "measured_rules": [
         "finite",
@@ -435,11 +565,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 8,
       "rules": {
@@ -513,24 +670,51 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 11,
       "rules": {
         "finite": true,
         "rheobase_in_step": null,
         "fires_at_highest": null,
-        "count_in_repeat_range": false,
+        "count_in_repeat_range": true,
         "rest_in_donor_spread": false,
         "no_spike_before_pulse": true,
         "dt_half_reproduces": true
       },
       "keep": false,
-      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "drop_reason": "rest_in_donor_spread",
       "pending": "ramp_missing",
       "measured_rules": [
         "finite",
@@ -591,11 +775,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 7,
       "rules": {
@@ -669,24 +880,48 @@
         "human_repeat_counts": [
           12
         ],
+        "human_count_band": [
+          12,
+          17
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          39,
+          40
+        ],
+        "human_count_band_amplitudes_pa": [
+          90.0000005077395,
+          110.000002162547
+        ],
+        "human_count_band_counts": [
+          12,
+          17
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -80.60354306502268,
         "rest_sd_mv": 0.47205698193400286,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -81.00987869203091
+        "donor_single_sweep_rest_mv": -81.00987869203091,
+        "after_datum_mv": -81.026309932056,
+        "after_sd_mv": 1.830920441156893,
+        "after_tolerance_mv": 5.4927613234706785,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": true
       },
       "dt_half_count": 13,
       "rules": {
         "finite": true,
         "rheobase_in_step": null,
         "fires_at_highest": null,
-        "count_in_repeat_range": false,
-        "rest_in_donor_spread": false,
+        "count_in_repeat_range": true,
+        "rest_in_donor_spread": true,
         "no_spike_before_pulse": true,
         "dt_half_reproduces": true
       },
       "keep": false,
-      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "drop_reason": null,
       "pending": "ramp_missing",
       "measured_rules": [
         "finite",
@@ -747,11 +982,35 @@
         "human_repeat_counts": [
           12
         ],
+        "human_count_band": [
+          12,
+          17
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          39,
+          40
+        ],
+        "human_count_band_amplitudes_pa": [
+          90.0000005077395,
+          110.000002162547
+        ],
+        "human_count_band_counts": [
+          12,
+          17
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -80.60354306502268,
         "rest_sd_mv": 0.47205698193400286,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -81.00987869203091
+        "donor_single_sweep_rest_mv": -81.00987869203091,
+        "after_datum_mv": -81.026309932056,
+        "after_sd_mv": 1.830920441156893,
+        "after_tolerance_mv": 5.4927613234706785,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": true
       },
       "dt_half_count": 9,
       "rules": {
@@ -825,11 +1084,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 7,
       "rules": {
@@ -903,11 +1189,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 10,
       "rules": {
@@ -981,24 +1294,51 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 11,
       "rules": {
         "finite": true,
         "rheobase_in_step": null,
         "fires_at_highest": null,
-        "count_in_repeat_range": false,
+        "count_in_repeat_range": true,
         "rest_in_donor_spread": false,
         "no_spike_before_pulse": true,
         "dt_half_reproduces": true
       },
       "keep": false,
-      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "drop_reason": "rest_in_donor_spread",
       "pending": "ramp_missing",
       "measured_rules": [
         "finite",
@@ -1059,11 +1399,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 7,
       "rules": {
@@ -1137,24 +1504,48 @@
         "human_repeat_counts": [
           12
         ],
+        "human_count_band": [
+          12,
+          17
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          39,
+          40
+        ],
+        "human_count_band_amplitudes_pa": [
+          90.0000005077395,
+          110.000002162547
+        ],
+        "human_count_band_counts": [
+          12,
+          17
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -80.60354306502268,
         "rest_sd_mv": 0.47205698193400286,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -81.00987869203091
+        "donor_single_sweep_rest_mv": -81.00987869203091,
+        "after_datum_mv": -81.026309932056,
+        "after_sd_mv": 1.830920441156893,
+        "after_tolerance_mv": 5.4927613234706785,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": true
       },
       "dt_half_count": 15,
       "rules": {
         "finite": true,
         "rheobase_in_step": null,
         "fires_at_highest": null,
-        "count_in_repeat_range": false,
-        "rest_in_donor_spread": false,
+        "count_in_repeat_range": true,
+        "rest_in_donor_spread": true,
         "no_spike_before_pulse": true,
         "dt_half_reproduces": true
       },
       "keep": false,
-      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "drop_reason": null,
       "pending": "ramp_missing",
       "measured_rules": [
         "finite",
@@ -1215,11 +1606,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": true,
+        "return_leg_held": false
       },
       "dt_half_count": 8,
       "rules": {
@@ -1293,11 +1711,38 @@
         "human_repeat_counts": [
           10
         ],
+        "human_count_band": [
+          9,
+          12
+        ],
+        "human_count_band_source": "count_band (sweeps within one step of the primary)",
+        "human_count_band_sweeps": [
+          52,
+          53,
+          54
+        ],
+        "human_count_band_amplitudes_pa": [
+          289.999996239132,
+          309.999997893939,
+          329.999999548747
+        ],
+        "human_count_band_counts": [
+          9,
+          10,
+          12
+        ],
         "block_above_recorded_range": null,
         "rest_datum_mv": -84.00724285831375,
         "rest_sd_mv": 0.30552479705306806,
         "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
-        "donor_single_sweep_rest_mv": -84.26339717358351
+        "donor_single_sweep_rest_mv": -84.26339717358351,
+        "after_datum_mv": -84.93701637836641,
+        "after_sd_mv": 0.9550971945700506,
+        "after_tolerance_mv": 2.865291583710152,
+        "return_leg_scored": true,
+        "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
+        "rest_leg_held": false,
+        "return_leg_held": true
       },
       "dt_half_count": 7,
       "rules": {
@@ -1385,10 +1830,13 @@
     "transfer-all-751294744": "c62f5f920fcbb20774350fb659a51da32d3bd7e066715154bb44b4f81ff3c8a0",
     "transfer-all-751294744-dthalf": "aaded468b8d7c9ff0fc6d31e60c621a0a10a55b0854b9130150e62ca2aa513e9"
   },
-  "pending": {},
+  "pending": {
+    "3761379470": "ramp_missing",
+    "5439194879": "ramp_missing"
+  },
   "ramp_folder": "docs/evidence/h01-c3-keep-drop/runs",
   "kept": [],
-  "rule": "keep = finite output and soma traces; firing range: the ramp rheobase within one human sweep step of the human rheobase, the ramp still firing at the human's highest recorded amplitude, and the step count at the primary input inside the human repeat range; rest: mean output voltage over the 100 ms before the pulse and over the 10 ms ending 200 ms after it both within 3 across-sweep repeat sd of the donor recording's across-sweep rest mean, no -20 mV crossing before the pulse; numerical: the dt-half repeat (0.0025 ms) is finite and reproduces the count. The block current above the recorded range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).",
+  "rule": "keep = finite output and soma traces; firing range: the ramp rheobase within one human sweep step of the human rheobase, the ramp still firing at the human's highest recorded amplitude, and the step count at the primary input inside the human count band (min to max of the counts of every long-square sweep within one sweep step of the primary amplitude, inclusive, the primary's repeats included: a single sweep carries no repeat spread); rest: mean output voltage over the 100 ms before the pulse within 3 across-sweep sd of the recording's across-sweep pre-pulse mean, and over the 10 ms ending 200 ms after the pulse within 3 across-sweep sd of the recording's across-sweep mean over that same window (a leg the recording does not reach is not scored), no -20 mV crossing before the pulse; numerical: the dt-half repeat (0.0025 ms) is finite and reproduces the count. The block current above the recorded range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).",
   "scope": "A kept cell reproduces a count and a resting level from another human donor's recording on retained H01 anatomy under that donor's step protocol; it is not a measurement of the H01 donor's own cell, and no channel provenance is qualified.",
   "by_donor": {
     "l2-pyramidal-allen-541563728": {
@@ -1402,10 +1850,10 @@
   },
   "counts": {
     "kept": 0,
-    "dropped": 17,
+    "dropped": 15,
     "missing": 0,
     "total": 17,
-    "pending": 0
+    "pending": 2
   },
-  "datums_sha256": "7b8c59b7baf7f25d15d12c52331b387a4b514b11b2d964febef559527eb450d6"
+  "datums_sha256": "87809f61f579bf44344a4283811388df356112e88c50702d3b2acf61628e8d34"
 }

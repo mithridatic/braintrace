@@ -41,7 +41,7 @@ def test_parse_args_defaults_and_c3_overrides():
 def test_main_waits_for_the_ramp_under_the_failure_gate_and_launches_once(tmp_path, monkeypatch):
     import json
     import subprocess
-    from docs.evidence.h01_anatomy_transfer_decision_test import _cell_run_failure, _ramp, REST
+    from docs.evidence.h01_anatomy_transfer_decision_test import _cell_run_failure, _ramp, AFTER, REST
     l4 = "l4-pyramidal-allen-527952884"
     folder = tmp_path/"runs"
     (folder/"transfer-all-200").mkdir(parents=True)
@@ -50,7 +50,8 @@ def test_main_waits_for_the_ramp_under_the_failure_gate_and_launches_once(tmp_pa
     types.write_text(json.dumps(dict(rows=[dict(cell_id="200", donor_key=l4)])))
     rests.write_text(json.dumps(dict(donors={l4: dict(rest_mv=REST-.4, sd_mv=.02)})))
     datums.write_text(json.dumps(dict(donors={l4: dict(rheobase_pa=50., sweep_step_pa=20., highest_firing_pa=170.,
-                                                        repeat_counts=[12], rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1)})))
+                                                        repeat_counts=[12], rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1,
+                                                        after_repeat_mean_mv=AFTER, after_repeat_sd_mv=.2)})))
     launched = []
     def fake_run(cmd, **kwargs):
         launched.append(cmd[2])

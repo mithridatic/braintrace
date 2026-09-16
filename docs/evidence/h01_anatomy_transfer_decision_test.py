@@ -168,8 +168,10 @@ def test_keep_cli_writes_decision(tmp_path, capsys):
     assert "kept 1 / dropped 1 / missing 1 of 3" in out and "drop 100: rest_and_return,count_in_band" in out
 
 
+AFTER = REST-.8    # the family's level over the 10 ms ending 200 ms after offset sits below its pre-pulse rest
 DONOR = dict(rest_mv=REST-.4, sd_mv=.02, rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1, rheobase_pa=50., sweep_step_pa=20.,
-             highest_firing_pa=170., repeat_counts=[12])   # single-sweep rest 0.4 mV below the family mean
+             highest_firing_pa=170., repeat_counts=[12], after_repeat_mean_mv=AFTER, after_repeat_sd_mv=.2,
+             count_band=dict(min=11, max=15, counts=[11, 12, 15], sweeps=[38, 39, 40], amplitudes_pa=[70., 90., 110.]))
 
 
 def _ramp(rheobase_na=.055, block_na=None, spikes=(1100., 1500., 1900., 2010.), ramp_max_na=.27, finite=True, pre=0):
@@ -178,6 +180,7 @@ def _ramp(rheobase_na=.055, block_na=None, spikes=(1100., 1500., 1900., 2010.), 
 
 
 def _cell_run_failure(**overrides):
+    overrides.setdefault("ret", AFTER)
     run = _cell_run(**{k: v for k, v in overrides.items() if k != "pulse"})
     run["pulse_ms"] = overrides.get("pulse", [1020., 2020.])
     return run
@@ -194,6 +197,10 @@ def test_failure_verdict_all_rules_hold_and_carries_the_legacy_verdict():
     assert verdict["donor_rest_mv"] == REST and verdict["legacy_verdict"]["keep"] is True   # legacy: single sweep
     assert readings["model_rheobase_pa"] == pytest.approx(55.) and readings["ramp_max_pa"] == pytest.approx(270.)
     assert readings["model_last_spike_pa"] == pytest.approx(267.3) and readings["block_above_recorded_range"] is None
+    assert readings["after_datum_mv"] == AFTER and readings["after_tolerance_mv"] == pytest.approx(.6)
+    assert readings["return_leg_scored"] is True and readings["rest_leg_held"] and readings["return_leg_held"]
+    assert readings["human_count_band"] == [11, 15] and readings["human_count_band_sweeps"] == [38, 39, 40]
+    assert readings["human_count_band_source"].startswith("count_band")
 
 
 @pytest.mark.parametrize("primary, ramp, half, reason", [
@@ -202,9 +209,11 @@ def test_failure_verdict_all_rules_hold_and_carries_the_legacy_verdict():
     (_cell_run_failure(), _ramp(rheobase_na=.0701), _cell_run_failure(), "rheobase_in_step"),
     (_cell_run_failure(), _ramp(rheobase_na=None, spikes=()), _cell_run_failure(), "rheobase_in_step,fires_at_highest"),
     (_cell_run_failure(), _ramp(block_na=.15, spikes=(1100., 1500.)), _cell_run_failure(), "fires_at_highest"),
-    (_cell_run_failure(count=13), _ramp(), _cell_run_failure(count=13), "count_in_repeat_range"),
+    (_cell_run_failure(count=16), _ramp(), _cell_run_failure(count=16), "count_in_repeat_range"),
+    (_cell_run_failure(count=10), _ramp(), _cell_run_failure(count=10), "count_in_repeat_range"),
     (_cell_run_failure(rest=REST-.31), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),
-    (_cell_run_failure(ret=REST+.31), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),
+    (_cell_run_failure(ret=AFTER+.61), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),
+    (_cell_run_failure(ret=REST), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),   # at the pre-pulse level, 0.8 above the after datum
     (_cell_run_failure(ret_available=False), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),
     (_cell_run_failure(pre=1), _ramp(), _cell_run_failure(), "no_spike_before_pulse"),
     (_cell_run_failure(), _ramp(pre=1), _cell_run_failure(), "no_spike_before_pulse"),
@@ -227,7 +236,7 @@ def test_failure_verdict_missing_runs_are_pending_not_dropped():
     assert set(no_ramp["measured_rules"]) == {"finite", "count_in_repeat_range", "rest_in_donor_spread",
                                              "no_spike_before_pulse", "dt_half_reproduces"}
     # a measured failure is a drop even while the ramp is pending
-    both = decision.keep_verdict_failure(_cell_run_failure(count=13), None, _cell_run_failure(count=13), DONOR)
+    both = decision.keep_verdict_failure(_cell_run_failure(count=16), None, _cell_run_failure(count=16), DONOR)
     assert both["drop_reason"] == "count_in_repeat_range" and both["pending"] == "ramp_missing" and both["keep"] is False
 
 
@@ -241,25 +250,54 @@ def test_failure_verdict_block_inside_the_recorded_range_fails_and_above_it_is_r
     assert above["readings"]["model_block_pa"] == pytest.approx(200.)
 
 
-def test_failure_verdict_repeat_range_is_inclusive_and_single_repeat_is_exact():
-    donor = dict(DONOR, repeat_counts=[14, 14, 13, 12])
-    for count in (12, 13, 14):
+def test_failure_verdict_count_band_is_inclusive_and_read_across_the_sweeps_within_one_step():
+    for count in (11, 12, 13, 14, 15):
         assert decision.keep_verdict_failure(_cell_run_failure(count=count), _ramp(), _cell_run_failure(count=count),
-                                             donor)["rules"]["count_in_repeat_range"]
+                                             DONOR)["rules"]["count_in_repeat_range"]
+    for count in (10, 16):
+        assert not decision.keep_verdict_failure(_cell_run_failure(count=count), _ramp(), _cell_run_failure(count=count),
+                                                 DONOR)["rules"]["count_in_repeat_range"]
+
+
+def test_failure_verdict_count_falls_back_to_the_registered_repeats_without_a_count_band():
+    donor = {k: v for k, v in DONOR.items() if k != "count_band"}
+    donor["repeat_counts"] = [14, 14, 13, 12]
+    for count in (12, 13, 14):
+        verdict = decision.keep_verdict_failure(_cell_run_failure(count=count), _ramp(), _cell_run_failure(count=count), donor)
+        assert verdict["rules"]["count_in_repeat_range"] and verdict["readings"]["human_count_band"] == [12, 14]
+        assert verdict["readings"]["human_count_band_source"].startswith("repeat_counts")
     assert not decision.keep_verdict_failure(_cell_run_failure(count=15), _ramp(), _cell_run_failure(count=15),
                                              donor)["rules"]["count_in_repeat_range"]
-    assert not decision.keep_verdict_failure(_cell_run_failure(count=11), _ramp(), _cell_run_failure(count=11),
-                                             DONOR)["rules"]["count_in_repeat_range"]
+    empty = dict(donor, count_band=dict(min=None, max=None, counts=[]), repeat_counts=[])
+    verdict = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), empty)
+    assert verdict["rules"]["count_in_repeat_range"] is None and verdict["readings"]["human_count_band"] is None
+
+
+def test_failure_verdict_return_leg_is_scored_against_its_own_window_datum():
+    # return at the pre-pulse datum (REST) is 0.8 mV above the after datum: outside 3 x 0.2 -> fails
+    at_rest = decision.keep_verdict_failure(_cell_run_failure(ret=REST), _ramp(), _cell_run_failure(), DONOR)
+    assert at_rest["rules"]["rest_in_donor_spread"] is False and at_rest["readings"]["return_leg_held"] is False
+    assert at_rest["readings"]["rest_leg_held"] is True and at_rest["legacy_verdict"]["rules"]["rest_and_return"] is True
+    inside = decision.keep_verdict_failure(_cell_run_failure(ret=AFTER-.6), _ramp(), _cell_run_failure(), DONOR)
+    assert inside["rules"]["rest_in_donor_spread"] is True and inside["readings"]["after_tolerance_mv"] == pytest.approx(.6)
+    # no across-sweep datum for the window: the leg is not scored, the pre-pulse leg still is
+    for donor in (dict(DONOR, after_repeat_mean_mv=None, after_repeat_sd_mv=None), dict(DONOR, after_repeat_sd_mv=None)):
+        unscored = decision.keep_verdict_failure(_cell_run_failure(ret=REST+5.), _ramp(), _cell_run_failure(), donor)
+        assert unscored["rules"]["rest_in_donor_spread"] is True and unscored["readings"]["return_leg_scored"] is False
+        assert unscored["readings"]["return_leg_held"] is None and unscored["readings"]["return_leg"].startswith("not scored")
+        assert unscored["readings"]["after_tolerance_mv"] is None
+        assert decision.keep_verdict_failure(_cell_run_failure(rest=REST-.31, ret=REST), _ramp(), _cell_run_failure(),
+                                             donor)["rules"]["rest_in_donor_spread"] is False
 
 
 def test_failure_verdict_rest_falls_back_to_the_single_sweep_when_no_repeat_set():
     donor = {k: v for k, v in DONOR.items() if k not in ("rest_repeat_sd_mv", "rest_repeat_mean_mv")}
     single = REST-.4
-    verdict = decision.keep_verdict_failure(_cell_run_failure(rest=single+.05, ret=single), _ramp(), _cell_run_failure(), donor)
+    verdict = decision.keep_verdict_failure(_cell_run_failure(rest=single+.05), _ramp(), _cell_run_failure(), donor)
     assert verdict["rest_tolerance_mv"] == pytest.approx(.06) and verdict["readings"]["rest_sd_mv"] == .02
     assert verdict["readings"]["rest_sd_source"].startswith("within-trace") and verdict["readings"]["rest_datum_mv"] == single
     assert verdict["keep"] is True
-    assert decision.keep_verdict_failure(_cell_run_failure(rest=single+.07, ret=single), _ramp(), _cell_run_failure(),
+    assert decision.keep_verdict_failure(_cell_run_failure(rest=single+.07), _ramp(), _cell_run_failure(),
                                          donor)["keep"] is False
 
 
@@ -276,7 +314,7 @@ def test_failure_verdict_unavailable_datum_is_never_a_keep():
                                              dict(DONOR, rheobase_pa=None))
     assert no_human["rules"]["rheobase_in_step"] is None and no_human["keep"] is False
     no_repeats = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
-                                               dict(DONOR, repeat_counts=[]))
+                                               dict(DONOR, repeat_counts=[], count_band=None))
     assert no_repeats["rules"]["count_in_repeat_range"] is None and no_repeats["keep"] is False
 
 
@@ -289,7 +327,9 @@ def _failure_population(tmp_path, with_ramp=True, with_half=True):
     rests.write_text(json.dumps(dict(donors={l4: dict(rest_mv=REST-.4, sd_mv=.02)})))
     datums = tmp_path/"datums.json"
     datums.write_text(json.dumps(dict(donors={l4: dict(rheobase_pa=50., sweep_step_pa=20., highest_firing_pa=170.,
-                                                        repeat_counts=[12], rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1)})))
+                                                        repeat_counts=[12], rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1,
+                                                        after_repeat_mean_mv=AFTER, after_repeat_sd_mv=.2,
+                                                        count_band=dict(min=12, max=14, counts=[12, 14], sweeps=[39, 40]))})))
     runs = tmp_path/"runs"
     for cell, count in (("200", 12), ("300", 15)):
         (runs/f"transfer-all-{cell}").mkdir(parents=True)

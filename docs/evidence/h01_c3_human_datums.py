@@ -4,8 +4,13 @@ For each donor recording in ``.cache/`` the long-square sweep family is listed w
 amplitude, pulse window, -20 mV crossing count inside the pulse and pre-pulse rest, and the
 firing-range datums are derived: ``rheobase_pa`` (lowest firing amplitude), ``sweep_step_pa``
 (median amplitude step of the family), ``highest_firing_pa`` (highest amplitude that still
-fires) and the registered repeat counts at the primary input (spec
-2026-09-16-h01-keep-drop, table). NWB voltages are corrected by the -14 mV liquid junction
+fires), the registered repeat counts at the primary input (spec 2026-09-16-h01-keep-drop,
+table) and ``count_band``: the counts of every sweep whose amplitude lies within one sweep
+step of the primary (inclusive, the primary's own repeats included), because a single sweep
+at one amplitude carries no repeat spread. Rest datums are read over the two windows the
+transfer runner scores: ``rest_mv`` over the 100 ms before onset and ``after_mv`` over the
+10 ms ending 200 ms after offset (``h01_anatomy_transfer_run.windows``), each averaged across
+the family with its across-sweep sd. NWB voltages are corrected by the -14 mV liquid junction
 potential once, as ``h01_keep_drop_rest.py`` does. Read-only analysis; runs on the laptop.
 """
 
@@ -25,6 +30,9 @@ from h01_pv_human_datums import spike_datums  # noqa: E402
 JUNCTION_MV = -14.
 DETECTION_MV = -20.
 REST_MS = 100.
+RETURN_MS = 200.        # the runner's return reading: the 10 ms ending RETURN_MS after the pulse offset
+RETURN_WIDTH_MS = 10.
+AMPLITUDE_TOLERANCE_PA = .5   # aibs_stimulus_amplitude_pa carries ~1e-5 pA jitter around the nominal level
 
 DONORS = {
     "l2-pyramidal-allen-541563728": dict(
@@ -85,19 +93,39 @@ def stimulus_window(time_ms, current_pa, baseline_fraction=.05, floor_pa=1.):
                 off_ms=float(time_ms[last])+step, baseline_pa=baseline)
 
 
+def return_window(time_ms, voltage_mv, offset_ms, return_ms=RETURN_MS, width_ms=RETURN_WIDTH_MS):
+    """Mean voltage over the ``width_ms`` ending ``return_ms`` after the pulse offset: the runner's window.
+
+    Same samples as ``h01_anatomy_transfer_run.windows``: ``offset+return_ms-width_ms <= t <=
+    offset+return_ms``, and None when the trace ends before ``offset+return_ms`` (the runner
+    then reports ``return_available`` False).
+    """
+    time_ms, voltage_mv = np.asarray(time_ms, float), np.asarray(voltage_mv, float)
+    end = offset_ms+return_ms
+    if not len(time_ms) or time_ms[-1] < end:
+        return dict(mean_mv=None, sd_mv=None, n=0, window_ms=[float(end-width_ms), float(end)], available=False)
+    mask = (time_ms >= end-width_ms) & (time_ms <= end)
+    segment = voltage_mv[mask]
+    return dict(mean_mv=float(segment.mean()), sd_mv=float(segment.std()), n=int(mask.sum()),
+                window_ms=[float(end-width_ms), float(end)], available=True)
+
+
 def sweep_features(time_ms, voltage_mv, command_pa, amplitude_attr_pa=None):
-    """One sweep's amplitude, window, crossing count inside the window and pre-pulse rest."""
+    """One sweep's amplitude, window, crossing count inside the window, pre-pulse rest and post-pulse return."""
     window = stimulus_window(time_ms, command_pa)
     amplitude = window["amplitude_pa"] if amplitude_attr_pa is None else float(amplitude_attr_pa)
     row = dict(amplitude_pa=amplitude, measured_amplitude_pa=window["amplitude_pa"],
-               on_ms=window["on_ms"], off_ms=window["off_ms"], count=None, rest_mv=None, rest_sd_mv=None)
+               on_ms=window["on_ms"], off_ms=window["off_ms"], count=None, rest_mv=None, rest_sd_mv=None,
+               after_mv=None, after_sd_mv=None, after_available=None)
     if window["on_ms"] is None:
         return row
     time_ms, voltage_mv = np.asarray(time_ms, float), np.asarray(voltage_mv, float)
     mask = (time_ms >= window["on_ms"]) & (time_ms < window["off_ms"])
     row["count"] = len(spike_datums(time_ms[mask], voltage_mv[mask], DETECTION_MV))
     rest = rest_window(time_ms, voltage_mv, window["on_ms"], REST_MS)
-    row.update(rest_mv=rest["mean_mv"], rest_sd_mv=rest["sd_mv"])
+    after = return_window(time_ms, voltage_mv, window["off_ms"])
+    row.update(rest_mv=rest["mean_mv"], rest_sd_mv=rest["sd_mv"], after_mv=after["mean_mv"],
+               after_sd_mv=after["sd_mv"], after_available=after["available"])
     return row
 
 
@@ -146,13 +174,21 @@ def derive_datums(rows, primary_pa, repeat_counts):
     ordered = sorted(positive, key=lambda r: r.get("sweep", 0))
     steps = [b["amplitude_pa"]-a["amplitude_pa"] for a, b in zip(ordered, ordered[1:])
              if b["amplitude_pa"]-a["amplitude_pa"] > .5]   # upward steps between consecutive sweeps
-    at_primary = [r for r in positive if abs(r["amplitude_pa"]-primary_pa) < .5]
+    at_primary = [r for r in positive if abs(r["amplitude_pa"]-primary_pa) < AMPLITUDE_TOLERANCE_PA]
     rests = [r["rest_mv"] for r in rows if r["rest_mv"] is not None]
+    afters = [r["after_mv"] for r in rows if r.get("after_mv") is not None]
+    unreached = [r.get("sweep") for r in rows if r.get("rest_mv") is not None and r.get("after_available") is False]
+    step = float(np.median(steps)) if len(steps) else None
     return dict(
         primary_pa=primary_pa, repeat_counts=list(repeat_counts),
+        count_band=count_band(positive, primary_pa, step),
+        after_repeat_mean_mv=float(np.mean(afters)) if afters else None,
+        after_repeat_sd_mv=float(np.std(afters)) if len(afters) >= 2 else None,
+        after_sweeps_unreached=unreached,
+        after_window="the 10 ms ending 200 ms after the pulse offset (h01_anatomy_transfer_run.windows)",
         rheobase_pa=firing[0]["amplitude_pa"] if firing else None,
         rheobase_count=firing[0]["count"] if firing else None,
-        sweep_step_pa=float(np.median(steps)) if len(steps) else None,
+        sweep_step_pa=step,
         highest_firing_pa=firing[-1]["amplitude_pa"] if firing else None,
         highest_firing_count=firing[-1]["count"] if firing else None,
         highest_recorded_pa=positive[-1]["amplitude_pa"] if positive else None,
@@ -161,6 +197,30 @@ def derive_datums(rows, primary_pa, repeat_counts):
         family_amplitudes_pa=levels,
         rest_repeat_mean_mv=float(np.mean(rests)) if rests else None,
         rest_repeat_sd_mv=float(np.std(rests)) if len(rests) >= 2 else None)
+
+
+def count_band(positive, primary_pa, step_pa, tolerance_pa=AMPLITUDE_TOLERANCE_PA):
+    """Count band across the sweeps within one sweep step of the primary amplitude (inclusive).
+
+    A single sweep at one amplitude has no repeat spread; the band is read across the sweeps
+    within one step of drive, the same tolerance the rheobase rule uses. ``primary_pa`` and
+    ``step_pa`` are nominal levels; recorded amplitudes carry ~1e-5 pA jitter, so membership
+    allows ``tolerance_pa`` on top of the step.
+
+    Returns
+    -------
+    dict
+        ``min``, ``max``, ``counts``, ``sweeps``, ``amplitudes_pa`` and ``rule``; the counts
+        are None when the family has no step.
+    """
+    rule = "counts of every long-square sweep with |amplitude - primary| <= sweep_step_pa (inclusive; the primary's repeats included)"
+    if step_pa is None:
+        return dict(min=None, max=None, counts=[], sweeps=[], amplitudes_pa=[], rule=rule)
+    members = sorted((r for r in positive if abs(r["amplitude_pa"]-primary_pa) <= step_pa+tolerance_pa),
+                     key=lambda r: (r["amplitude_pa"], r.get("sweep", 0)))
+    counts = [r["count"] for r in members]
+    return dict(min=min(counts) if counts else None, max=max(counts) if counts else None, counts=counts,
+                sweeps=[r.get("sweep") for r in members], amplitudes_pa=[r["amplitude_pa"] for r in members], rule=rule)
 
 
 def export_counts(cache, exports, pulse_ms):
@@ -199,20 +259,30 @@ def measure(cache, donors=None):
                     "order; highest_firing_pa = "
                     "highest amplitude with a crossing; repeat_counts = registered counts at the primary "
                     "input (spec 2026-09-16-h01-keep-drop); measured counts at that input are recorded beside "
-                    "them and are not the gate's datum. rest_repeat_mean_mv / rest_repeat_sd_mv = mean and sd of the "
-                    "pre-pulse rest across the long-square sweeps: the rest datum and its tolerance for the "
-                    "test-to-failure gate; donor-rest.json keeps the single-sweep value for the legacy verdict."),
+                    "them and are not the gate's datum. count_band = min/max of the counts of every sweep whose "
+                    "amplitude lies within one sweep_step_pa of primary_pa (inclusive, the primary's repeats "
+                    "included): the count datum of the test-to-failure gate, because a single sweep carries no "
+                    "repeat spread. rest_repeat_mean_mv / rest_repeat_sd_mv = mean and sd of the "
+                    "pre-pulse rest (100 ms before onset) across the long-square sweeps; after_repeat_mean_mv / "
+                    "after_repeat_sd_mv = mean and sd, across the same sweeps, of the voltage over the 10 ms ending "
+                    "200 ms after the pulse offset, the window the transfer runner scores as return_mv. Each leg's "
+                    "datum and tolerance (3 sd) come from its own window; donor-rest.json keeps the single-sweep "
+                    "value for the legacy verdict."),
         donors=result)
 
 
 def render(report):
     """One table row per donor."""
     lines = ["donor | rheobase_pa | step_pa | highest_firing_pa | highest_recorded_pa | primary_pa | "
-             "registered repeats | measured at primary | rest_mv (repeat sd)"]
+             "registered repeats | measured at primary | count band [sweeps] | rest_mv (repeat sd) | after_mv (repeat sd)"]
+    fmt = lambda mean, sd: "n/a" if mean is None else f"{mean:.2f} ({'n/a' if sd is None else f'{sd:.2f}'})"  # noqa: E731
     for donor, row in report["donors"].items():
+        band = row["count_band"]
         lines.append(f"{donor} | {row['rheobase_pa']} | {row['sweep_step_pa']} | {row['highest_firing_pa']} | "
                      f"{row['highest_recorded_pa']} | {row['primary_pa']} | {row['repeat_counts']} | "
-                     f"{row['measured_counts_at_primary']} | {row['rest_repeat_mean_mv']:.2f} ({row['rest_repeat_sd_mv']:.2f})")
+                     f"{row['measured_counts_at_primary']} | [{band['min']}, {band['max']}] {band['sweeps']} | "
+                     f"{fmt(row['rest_repeat_mean_mv'], row['rest_repeat_sd_mv'])} | "
+                     f"{fmt(row['after_repeat_mean_mv'], row['after_repeat_sd_mv'])}")
     return "\n".join(lines)
 
 

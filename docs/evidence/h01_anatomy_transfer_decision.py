@@ -105,23 +105,47 @@ FAILURE_RULE_NAMES = ("finite", "rheobase_in_step", "fires_at_highest", "count_i
                       "rest_in_donor_spread", "no_spike_before_pulse", "dt_half_reproduces")
 FAILURE_RULE = ("keep = finite output and soma traces; firing range: the ramp rheobase within one human sweep "
                 "step of the human rheobase, the ramp still firing at the human's highest recorded amplitude, and "
-                "the step count at the primary input inside the human repeat range; rest: mean output voltage "
-                "over the 100 ms before the pulse and over the 10 ms ending 200 ms after it both within 3 across-sweep "
-                "repeat sd of the donor recording's across-sweep rest mean, no -20 mV crossing before the pulse; numerical: the dt-half "
-                "repeat (0.0025 ms) is finite and reproduces the count. The block current above the recorded "
-                "range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).")
+                "the step count at the primary input inside the human count band (min to max of the counts of every "
+                "long-square sweep within one sweep step of the primary amplitude, inclusive, the primary's repeats "
+                "included: a single sweep carries no repeat spread); rest: mean output voltage over the 100 ms before "
+                "the pulse within 3 across-sweep sd of the recording's across-sweep pre-pulse mean, and over the 10 ms "
+                "ending 200 ms after the pulse within 3 across-sweep sd of the recording's across-sweep mean over that "
+                "same window (a leg the recording does not reach is not scored), no -20 mV crossing before the pulse; "
+                "numerical: the dt-half repeat (0.0025 ms) is finite and reproduces the count. The block current "
+                "above the recorded range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).")
 REST_SD_FACTOR = 3.
+
+
+def count_band_of(datums):
+    """The human count band: ``count_band`` min/max when the datums carry it, else the registered repeats.
+
+    Returns
+    -------
+    tuple
+        ``(low, high, source)``; ``(None, None, source)`` when neither is available.
+    """
+    band = datums.get("count_band") or {}
+    if band.get("min") is not None and band.get("max") is not None:
+        return band["min"], band["max"], "count_band (sweeps within one step of the primary)"
+    repeats = list(datums.get("repeat_counts") or [])
+    if repeats:
+        return min(repeats), max(repeats), "repeat_counts (registered repeats at the primary; no count_band)"
+    return None, None, "unavailable"
 
 
 def firing_range_rules(primary, ramp, datums):
     """The three firing-range readings against the human datums; None where a reading is unavailable."""
     count, repeats = primary["output_site"]["count"], list(datums.get("repeat_counts") or [])
+    low, high, band_source = count_band_of(datums)
+    band = datums.get("count_band") or {}
     rules = dict(rheobase_in_step=None, fires_at_highest=None,
-                 count_in_repeat_range=(min(repeats) <= count <= max(repeats)) if repeats else None)
+                 count_in_repeat_range=(low <= count <= high) if low is not None else None)
     readings = dict(model_rheobase_pa=None, model_block_pa=None, model_last_spike_pa=None, ramp_max_pa=None,
                     human_rheobase_pa=datums.get("rheobase_pa"), human_step_pa=datums.get("sweep_step_pa"),
                     human_highest_firing_pa=datums.get("highest_firing_pa"), human_repeat_counts=repeats,
-                    block_above_recorded_range=None)
+                    human_count_band=None if low is None else [low, high], human_count_band_source=band_source,
+                    human_count_band_sweeps=band.get("sweeps"), human_count_band_amplitudes_pa=band.get("amplitudes_pa"),
+                    human_count_band_counts=band.get("counts"), block_above_recorded_range=None)
     if ramp is None:
         return rules, readings
     rheobase = ramp.get("rheobase_na")
@@ -152,10 +176,15 @@ def keep_verdict_failure(primary, ramp, half, donor):
         Run JSON of the donor step run, the ramp run and the dt-half repeat.
     donor : dict
         ``rest_mv`` and ``sd_mv`` from donor-rest.json merged with the donor's human datums
-        (``rheobase_pa``, ``sweep_step_pa``, ``highest_firing_pa``, ``repeat_counts``,
-        ``rest_repeat_mean_mv``, ``rest_repeat_sd_mv``). The rest datum is the across-sweep
-        family mean and the tolerance 3 x its sd, both from the same repeat set; donor-rest's
-        single-sweep ``rest_mv``/``sd_mv`` are the fallback and feed the legacy verdict.
+        (``rheobase_pa``, ``sweep_step_pa``, ``highest_firing_pa``, ``count_band``,
+        ``repeat_counts``, ``rest_repeat_mean_mv``, ``rest_repeat_sd_mv``,
+        ``after_repeat_mean_mv``, ``after_repeat_sd_mv``). Each rest leg is scored against
+        the across-sweep mean of its own window with 3 x that window's across-sweep sd: the
+        pre-pulse leg against the pre-pulse family, the return leg against the family's mean
+        over the 10 ms ending 200 ms after offset. A return leg without a datum (the recording
+        does not reach the window, or a single sweep with no spread) is not scored and is
+        recorded as such. donor-rest's single-sweep ``rest_mv``/``sd_mv`` are the pre-pulse
+        fallback and feed the legacy verdict.
 
     Returns
     -------
@@ -171,11 +200,23 @@ def keep_verdict_failure(primary, ramp, half, donor):
     rest_datum = donor["rest_mv"] if repeat_mean is None else repeat_mean   # datum and tolerance from one sweep set
     rest_mv, return_mv = primary.get("rest_mean_mv"), primary.get("return_mv")
     rest_ok = rest_mv is not None and abs(rest_mv-rest_datum) <= tolerance
-    return_ok = (bool(primary.get("return_available")) and return_mv is not None
-                 and abs(return_mv-rest_datum) <= tolerance)
+    after_mean, after_sd = donor.get("after_repeat_mean_mv"), donor.get("after_repeat_sd_mv")
+    return_scored = after_mean is not None and after_sd is not None
+    after_tolerance = REST_SD_FACTOR*after_sd if return_scored else None
+    if return_scored:
+        return_ok = (bool(primary.get("return_available")) and return_mv is not None
+                     and abs(return_mv-after_mean) <= after_tolerance)
+        return_leg = "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)"
+    else:
+        return_ok = True
+        return_leg = ("not scored: the recording carries no across-sweep datum for the 10 ms ending 200 ms after offset"
+                      + (" (no sweep reaches it)" if after_mean is None else " (one sweep, no repeat spread)"))
     firing, readings = firing_range_rules(primary, ramp, donor)
     readings.update(rest_datum_mv=rest_datum, rest_sd_mv=donor["sd_mv"] if repeat_sd is None else repeat_sd,
-                    rest_sd_source=rest_sd_source, donor_single_sweep_rest_mv=donor["rest_mv"])
+                    rest_sd_source=rest_sd_source, donor_single_sweep_rest_mv=donor["rest_mv"],
+                    after_datum_mv=after_mean, after_sd_mv=after_sd, after_tolerance_mv=after_tolerance,
+                    return_leg_scored=return_scored, return_leg=return_leg,
+                    rest_leg_held=bool(rest_ok), return_leg_held=bool(return_ok) if return_scored else None)
     rules = dict(finite=bool(primary["output_site"]["finite"] and primary["soma_site"]["finite"]
                              and (ramp is None or ramp.get("finite", True))),
                  **firing,
