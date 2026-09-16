@@ -109,3 +109,21 @@ def test_priority_order_and_skip_started(tmp_path):
     assert rows == [("5", L4), ("1", PV), ("7", SST), ("9", L2)]
     assert chain.chains(rows, 2, keep_order=True) == [[("5", L4), ("7", SST)], [("1", PV), ("9", L2)]]
     assert chain.chains(rows, 2) == [[("1", PV), ("7", SST)], [("5", L4), ("9", L2)]]
+
+
+def test_ramp_command_drives_three_times_the_donor_input_without_a_count():
+    line = chain.command("42", "l5-pv-basket-hl5bn1", ramp=True)
+    assert line.startswith("$R transfer-all-42-ramp 1800 -- --cell 42 --donor l5-pv-basket-hl5bn1 --polarity I")
+    assert "--ramp-na 0.57" in line and "--current-na" not in line and "--registered-count" not in line
+    assert "--dt-ms" not in line and "--donor-model-count" not in line
+    sst = chain.command("7", "l3-sst-interneuron-hl5mn1", ramp=True, extra="--archive c3.zip --tags interneuron")
+    assert "--ramp-na 0.3" in sst and "--repeat-counts" not in sst and sst.endswith("--archive c3.zip --tags interneuron")
+
+
+def test_write_chains_ramp_phase_and_workdir(tmp_path):
+    rows = [("1", "l4-pyramidal-allen-527952884"), ("2", "l2-pyramidal-allen-541563728")]
+    paths = chain.write_chains(rows, tmp_path, "ramp", n=1, extra="--components c3.json", workdir="/workspace/braintrace-c3")
+    text = paths[0].read_text()
+    assert paths[0].name == "keep-chain-1-ramp.sh" and "cd /workspace/braintrace-c3" in text
+    assert "transfer-all-1-ramp 1800 --" in text and "--ramp-na 0.27" in text and "--ramp-na 0.93" in text
+    assert text.count("--components c3.json") == 2 and "keep-chain-1-ramp.done" in text

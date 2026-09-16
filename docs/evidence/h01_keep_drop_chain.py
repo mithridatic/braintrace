@@ -12,7 +12,8 @@ from pathlib import Path
 SPEC = "docs/specs/2026-09-16-h01-keep-drop.md"
 RUNNER = "var/h01-driven/run_transfer.sh"
 CPU_SETS = ["0-31", "32-63", "64-95", "96-127"]
-CAP_S = {"primary": 1800, "dthalf": 3600}
+CAP_S = {"primary": 1800, "dthalf": 3600, "ramp": 1800}
+RAMP_FACTOR = 3.
 
 PROTOCOL = {
     "l2-pyramidal-allen-541563728": dict(polarity="E", pulse_on_ms=1020, pulse_ms=1000, duration_ms=2300,
@@ -27,19 +28,29 @@ PROTOCOL = {
 }
 
 
-def command(cell, donor_key, dt_half=False):
-    """One launcher line for a cell: primary run, or the dt-half repeat when ``dt_half``."""
+def command(cell, donor_key, dt_half=False, ramp=False, extra=""):
+    """One launcher line for a cell: primary run, the dt-half repeat, or the ramp to 3x the donor input.
+
+    ``extra`` is appended verbatim (e.g. ``--archive ... --archive-sha256 ... --components ... --tags ...``
+    for a C3 candidate cell).
+    """
     p = PROTOCOL[donor_key]
-    label = f"transfer-all-{cell}" + ("-dthalf" if dt_half else "")
-    parts = [f"$R {label} {CAP_S['dthalf' if dt_half else 'primary']} --",
+    phase = "ramp" if ramp else ("dthalf" if dt_half else "primary")
+    label = f"transfer-all-{cell}" + {"primary": "", "dthalf": "-dthalf", "ramp": "-ramp"}[phase]
+    parts = [f"$R {label} {CAP_S[phase]} --",
              f"--cell {cell} --donor {donor_key} --polarity {p['polarity']}",
-             f"--pulse-on-ms {p['pulse_on_ms']} --pulse-ms {p['pulse_ms']} --duration-ms {p['duration_ms']}",
-             f"--current-na {p['current_na']:g} --registered-count {p['registered_count']}"]
-    if p["repeat_counts"]:
-        parts.append("--repeat-counts " + " ".join(str(c) for c in p["repeat_counts"]))
-    parts.append(f"--donor-model-count {p['donor_model_count']}")
+             f"--pulse-on-ms {p['pulse_on_ms']} --pulse-ms {p['pulse_ms']} --duration-ms {p['duration_ms']}"]
+    if ramp:
+        parts.append(f"--ramp-na {RAMP_FACTOR*p['current_na']:g}")
+    else:
+        parts.append(f"--current-na {p['current_na']:g} --registered-count {p['registered_count']}")
+        if p["repeat_counts"]:
+            parts.append("--repeat-counts " + " ".join(str(c) for c in p["repeat_counts"]))
+        parts.append(f"--donor-model-count {p['donor_model_count']}")
     if dt_half:
         parts.append("--dt-ms 0.0025")
+    if extra:
+        parts.append(extra)
     return " ".join(parts)
 
 
@@ -49,17 +60,17 @@ def chains(cells_with_donors, n=4, keep_order=False):
     return [ordered[k::n] for k in range(n)]
 
 
-def write_chains(rows, out_dir, phase, n=4, keep_order=False):
+def write_chains(rows, out_dir, phase, n=4, keep_order=False, extra="", workdir="/workspace/braintrace"):
     """Write keep-chain-<k>.sh for k = 1..n; returns the written paths."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    dt_half = phase == "dthalf"
-    suffix = "-dthalf" if dt_half else ""
+    dt_half, ramp = phase == "dthalf", phase == "ramp"
+    suffix = {"primary": "", "dthalf": "-dthalf", "ramp": "-ramp"}[phase]
     paths = []
     for k, chain in enumerate(chains(rows, n, keep_order), start=1):
         lines = ["#!/usr/bin/env bash", f"# Keep/drop {phase} chain {k} of {n}; rule and protocol in {SPEC}.",
-                 "cd /workspace/braintrace", f"R={RUNNER}", f"export CPUSET={CPU_SETS[k-1]} MEMFRAC=.2"]
-        lines += [command(cell, donor, dt_half) for cell, donor in chain]
+                 f"cd {workdir}", f"R={RUNNER}", f"export CPUSET={CPU_SETS[k-1]} MEMFRAC=.2"]
+        lines += [command(cell, donor, dt_half, ramp, extra) for cell, donor in chain]
         lines.append(f"echo CHAIN-DONE > var/h01-driven/keep-chain-{k}{suffix}.done")
         path = out_dir/f"keep-chain-{k}{suffix}.sh"
         path.write_text("\n".join(lines)+"\n", newline="\n")
@@ -95,7 +106,9 @@ def rows_from_types(types_path, candidates=None, skip_done=None, priority=False)
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--types", type=Path, default=Path("docs/evidence/h01-population-types.json"))
-    parser.add_argument("--phase", choices=["primary", "dthalf", "currents"], required=True)
+    parser.add_argument("--phase", choices=["primary", "dthalf", "ramp", "currents"], required=True)
+    parser.add_argument("--extra-args", default="", help="appended to every runner line (archive, components, tags)")
+    parser.add_argument("--workdir", default="/workspace/braintrace", help="box checkout the chains cd into")
     parser.add_argument("--candidates", type=Path,
                         help="decision.json whose 'candidates' (dthalf) or 'kept' (currents) list selects cells")
     parser.add_argument("--out-dir", type=Path, help="chain scripts directory (primary, dthalf)")
@@ -104,7 +117,7 @@ def main():
     parser.add_argument("--skip-done", type=Path, help="run folder; cells already launched there (launch.json) are omitted")
     parser.add_argument("--priority", action="store_true", help="order cells L4, PV, SST, then L2 (predicted keepers first)")
     args = parser.parse_args()
-    if args.phase != "primary" and args.candidates is None:
+    if args.phase in ("dthalf", "currents") and args.candidates is None:
         parser.error("--candidates is required for the dthalf and currents phases")
     key = "kept" if args.phase == "currents" else "candidates"
     candidates = None if args.candidates is None else json.loads(args.candidates.read_text())[key]
@@ -117,7 +130,8 @@ def main():
         return
     if args.out_dir is None:
         parser.error("--out-dir is required for chain phases")
-    for path in write_chains(rows, args.out_dir, args.phase, args.chains, keep_order=args.priority):
+    for path in write_chains(rows, args.out_dir, args.phase, args.chains, keep_order=args.priority,
+                             extra=args.extra_args, workdir=args.workdir):
         print(path)
 
 
