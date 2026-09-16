@@ -92,6 +92,7 @@ def test_build_summary_markdown_and_subgraph(tmp_path):
     assert [k["c3_id"] for k in doc["kept"]] == [1931553044, 1684504313]
     assert s["partners_total"] == 3 and s["partners_ge2_to_kept"] == 2 and s["kept_internal_rows"] == 1
     assert s["partners_excluded_as_proofread"] == [888]
+    assert s["row_labels"] == {"type": {"2": 8}, "pre_class": {"AXON": 8}, "post_class": {"DENDRITE": 8}}
     assert [c["c3_id"] for c in doc["candidates"]] == [5, 6]
     assert s["prediction"]["verdict"] == "refuted" and s["prediction"]["falsifier_fewer_than_20_partners"]
     assert s["prediction"]["every_kept_has_partner"] is True and s["per_kept_cell_partner_counts"]["1931553044"]["partners"] == 1

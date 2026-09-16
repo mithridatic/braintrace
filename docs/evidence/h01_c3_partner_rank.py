@@ -189,13 +189,19 @@ def rank_candidates(partners, table, excluded, vocab, top_n=TOP_N):
     return out, eligible
 
 
+def label_counts(rows):
+    """Counts of ``type``, ``pre_class`` and ``post_class`` over graph rows (recorded, not interpreted)."""
+    return {key: dict(sorted(collections.Counter(str(r.get(key)) for r in rows).items()))
+            for key in ("type", "pre_class", "post_class")}
+
+
 def induced_subgraph(rows, ids):
     """Graph rows with both ends in ``ids``."""
     return [r for r in rows if r["pre"] in ids and r["post"] in ids]
 
 
-def summarize(partners, per_kept, internal, kept, candidates, eligible, excluded_hits, n_rows):
-    """Summary block with the registered prediction's verdict."""
+def summarize(partners, per_kept, internal, kept, candidates, eligible, excluded_hits, n_rows, row_labels=None):
+    """Summary block with the registered prediction's verdict; ``row_labels`` are the graph's label counts."""
     ge2_to = sum(1 for c in partners.values() if c["to_kept"] >= 2)
     ge2_either = sum(1 for c in partners.values() if c["to_kept"] + c["from_kept"] >= 2)
     per = {str(k["c3_id"]): {"released_id": k["released_id"], "partners": len(per_kept[k["c3_id"]]["partners"]),
@@ -203,7 +209,7 @@ def summarize(partners, per_kept, internal, kept, candidates, eligible, excluded
                              "synapses_in": per_kept[k["c3_id"]]["synapses_in"],
                              "synapses_out": per_kept[k["c3_id"]]["synapses_out"]} for k in kept}
     every = all(v["partners"] > 0 for v in per.values())
-    return {"graph_rows": n_rows, "partners_total": len(partners), "partners_ge2_to_kept": ge2_to,
+    return {"graph_rows": n_rows, "row_labels": row_labels, "partners_total": len(partners), "partners_ge2_to_kept": ge2_to,
             "partners_ge2_either_direction": ge2_either, "kept_internal_rows": internal,
             "per_kept_cell_partner_counts": per, "eligible_partners": eligible,
             "partners_excluded_as_proofread": excluded_hits,
@@ -249,7 +255,8 @@ def build(rows, table_rows, audit_rows, population_rows, vocab, released=KEPT_RE
     excluded_hits = sorted(cid for cid in partners if cid in excluded)
     candidates, eligible = rank_candidates(partners, table, excluded, vocab)
     ids = kept_set | {c["c3_id"] for c in candidates}
-    summary = summarize(partners, per_kept, internal, kept, candidates, eligible, excluded_hits, len(rows))
+    summary = summarize(partners, per_kept, internal, kept, candidates, eligible, excluded_hits, len(rows),
+                        label_counts(rows))
     return {"kept": kept, "candidates": candidates, "subgraph": induced_subgraph(rows, ids), "summary": summary}
 
 
