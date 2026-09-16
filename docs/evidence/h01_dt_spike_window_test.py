@@ -62,3 +62,13 @@ def test_build_report_joins_arms():
     assert document['verdict']['coarsest_passing_dt_ms'] == .4
     assert document['reference_spikes'] == {'a': 1}
     assert '0.4' in document['comparisons']
+
+
+def test_parity_report_same_dt(tmp_path):
+    from docs.evidence.h01_dt_spike_window import parity_report
+    fine = np.stack([_spike(800, 20., .05)], axis=1)
+    report = dict(arm='a', cells=['a'], settings=dict(dt_ms=.05), forward=None)
+    document = parity_report((report, fine), (dict(report, arm='b'), fine))
+    assert document['comparison']['max_abs_mv'] == 0. and document['comparison']['all_counts_equal']
+    with pytest.raises(ValueError):
+        parity_report((report, fine), (dict(report, settings=dict(dt_ms=.1)), fine[1::2]))

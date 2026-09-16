@@ -12,7 +12,12 @@ encoder. Soma voltages are recorded at every cable substep so that spike times
 are resolved at the finer clock's resolution.
 
 ``arm``
-    GPU. One timestep; writes ``report.json`` and ``soma_mv.npz``.
+    GPU. One timestep; writes ``report.json`` and ``soma_mv.npz``. ``--fused``
+    builds the forest population, ``--contacts N`` adds N synthetic contacts
+    (cell i -> cell i+1, ``H01Topology.add_contact``, 0.5 ms delay, E 0 mV / 2 ms
+    or I -80 mV / 5 ms by the pre cell's polarity) so that delivery is exercised
+    across the spikes; the fused/per-cell parity of deliverable 1 compares two
+    such arms at the same timestep.
 ``report``
     Pure. Joins arms against the reference arm: max |dV| per cell over the
     window, spike counts, spike-time shifts; writes the evidence JSON and MD.
@@ -134,7 +139,8 @@ def _arm_command(args):
     events = int(round(args.window_ms/EVENT_MS))
     report = dict(status='running', arm=args.name, settings=dict(dt_ms=args.dt_ms, substeps=substeps,
         window_ms=args.window_ms, events=events, pulse_delay_ms=args.pulse_delay_ms,
-        currents=str(args.currents), precision=args.precision, manifest=str(args.manifest)), stages={})
+        currents=str(args.currents), precision=args.precision, manifest=str(args.manifest),
+        fused=args.fused, contacts=args.contacts, contact_weight_us=args.contact_weight_us), stages={})
 
     def save():
         (args.output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
@@ -154,13 +160,19 @@ def _arm_command(args):
             settings = adapter.document['settings']
             topology = adapter.initial_topology
             cells = topology.to_dict()['active_cells']
+            for index in range(args.contacts):
+                topology = topology.add_contact(cells[index % len(cells)], cells[(index+1) % len(cells)],
+                                                stage='dt-window', weight_us=args.contact_weight_us)
+            report['contacts'] = {k: dict(pre=v['pre'], post=v['post'], reversal_mv=v['reversal_mv'], tau_ms=v['tau_ms'],
+                                          delay_ms=v['delay_ms'], weight_us=v['initial_weight_us'])
+                                  for k, v in topology.to_dict()['contacts'].items()}
             currents = json.loads(Path(args.currents).read_text())
             amplitude = np.asarray([float(currents[identity]) for identity in cells])
             report['cells'] = cells
             report['current_na'] = amplitude.tolist()
             archive = stage('archive_open', adapter._archive)
             network, records = stage('build_network', lambda: build_network(topology, archive,
-                solver=settings['solver'], max_cv_length_um=settings['max_cv_length_um']))
+                solver=settings['solver'], max_cv_length_um=settings['max_cv_length_um'], fused=args.fused))
             report['compartments'] = int(sum(r['n_compartments'] for r in records.values()))
             del records
             stage('init_state', lambda: init_h01_network_states(network))
@@ -172,7 +184,10 @@ def _arm_command(args):
             def cable_step(_):
                 model.drive.value = jnp.where(model.stepper.tick.value >= delay_substeps, drive, 0.)
                 model.stepper.update(sample_probes=False)
-                spikes = jnp.stack([jnp.sum(cell.spike.value > .5) for cell in model.stepper.cells])
+                if model.forest is not None:
+                    spikes = (model.forest.spike.value[0, np.asarray(model.forest.output_cv_ids)] > .5).astype(jnp.int32)
+                else:
+                    spikes = jnp.stack([jnp.sum(cell.spike.value > .5) for cell in model.stepper.cells])
                 return model._soma(), spikes
 
             def event():
@@ -289,6 +304,9 @@ def _parser():
     arm.add_argument('--window-ms', type=float, default=40.)
     arm.add_argument('--pulse-delay-ms', type=float, default=2.)
     arm.add_argument('--precision', type=int, choices=(32, 64), default=64)
+    arm.add_argument('--fused', action='store_true', help='one forest population')
+    arm.add_argument('--contacts', type=int, default=0, help='synthetic contacts cell i -> cell i+1')
+    arm.add_argument('--contact-weight-us', type=float, default=.05)
     report = sub.add_parser('report')
     report.add_argument('--arms', type=Path, nargs='+', required=True)
     report.add_argument('--reference-dt', type=float, default=.000625)
@@ -296,17 +314,70 @@ def _parser():
     return parser
 
 
+
+
+def parity_report(reference, other):
+    """Same-timestep comparison of two arms (fused against per-cell).
+
+    Parameters
+    ----------
+    reference, other : tuple
+        ``(report dict, soma voltages)`` of each arm; timesteps must be equal.
+
+    Returns
+    -------
+    dict
+        :func:`compare_cells` output plus both arms' settings, forward timing
+        and the contacts they carried.
+    """
+    ref_report, ref_mv = reference
+    oth_report, oth_mv = other
+    dt = float(ref_report['settings']['dt_ms'])
+    if float(oth_report['settings']['dt_ms']) != dt:
+        raise ValueError('Parity arms must share the timestep')
+    comparison = compare_cells(ref_mv, dt, oth_mv, dt, ref_report['cells'])
+    return dict(schema='h01-fused-parity-v1', dt_ms=dt, reference=ref_report['arm'], other=oth_report['arm'],
+                settings=dict(reference=ref_report['settings'], other=oth_report['settings']),
+                forward=dict(reference=ref_report.get('forward'), other=oth_report.get('forward')),
+                contacts=ref_report.get('contacts'), comparison=comparison)
+
+
+def _parity_command(args):
+    arms = []
+    for directory in (args.reference, args.other):
+        report = json.loads((directory/'report.json').read_text())
+        with np.load(directory/'soma_mv.npz') as npz:
+            arms.append((report, np.asarray(npz['soma_mv'])))
+    document = parity_report(*arms)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(document, indent=2)+'\n')
+    c = document['comparison']
+    print(json.dumps(dict(max_abs_mv=c['max_abs_mv'], counts_equal=c['all_counts_equal'],
+                          max_abs_spike_shift_ms=c['max_abs_spike_shift_ms'], spikes=c['total_reference_spikes'])))
+
+
+def _parser_with_parity():
+    parser = _parser()
+    parity = parser._subparsers._group_actions[0].add_parser('parity')
+    parity.add_argument('--reference', type=Path, required=True)
+    parity.add_argument('--other', type=Path, required=True)
+    parity.add_argument('--output', type=Path, required=True)
+    return parser
+
+
 def main(argv=None):
-    """Dispatch one subcommand.
+    """Dispatch one subcommand (``arm``, ``report`` or ``parity``).
 
     Parameters
     ----------
     argv : sequence of str, optional
         Command line; ``None`` reads ``sys.argv``.
     """
-    args = _parser().parse_args(argv)
+    args = _parser_with_parity().parse_args(argv)
     if args.command == 'arm':
         _arm_command(args)
+    elif args.command == 'parity':
+        _parity_command(args)
     else:
         _report_command(args)
 

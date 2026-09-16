@@ -78,7 +78,7 @@ def test_forest_delivery_equals_per_cell_delivery(traces):
     cells, percell, forest, fused, no_contact = traces
     for index, cell in enumerate(cells):
         lo, hi = forest.forest_offsets.cv[index], forest.forest_offsets.cv[index+1]
-        np.testing.assert_allclose(fused[:, lo:hi], percell[index], rtol=0., atol=1e-9)
+        np.testing.assert_allclose(fused[:, lo:hi], percell[index], rtol=0., atol=1e-12)
     assert percell[0].max() > 0.   # the pre cell spiked
     for index in (1, 2):   # the contacts changed the post cells: delivery is live on both paths
         lo, hi = forest.forest_offsets.cv[index], forest.forest_offsets.cv[index+1]
