@@ -36,8 +36,8 @@ def audit_runtime(build, reference, plan, arrays):
             failures.append(message)
 
     identities = reference.get('simulated_cell_ids', [])
-    require(len(identities) == len(set(identities)) == plan.get('cells') == 104,
-            'reference and plan must cover exactly 104 unique cells')
+    require(len(identities) > 0 and len(identities) == len(set(identities)) == plan.get('cells'),
+            'reference and plan must cover exactly the same unique cells')
     for key in _MODEL_FIELDS:
         require(build.get(key) == reference.get(key), 'model metadata differs: '+key)
     control = plan.get('control')

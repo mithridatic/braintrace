@@ -79,6 +79,25 @@ def filter_network(topology, components, kept_ids):
     return new_topology, new_components, report
 
 
+def filter_imports(imports, kept_ids):
+    """Return the import audit restricted to ``kept_ids`` (rows of ``cells``); other keys are preserved.
+
+    Raises ``ValueError`` for a kept id absent from the audit. ``status``, ``passed`` and
+    ``archive_sha256`` are carried through unchanged; a ``summary`` block, if present,
+    has its ``cells`` count recomputed.
+    """
+    kept = {str(k) for k in kept_ids}
+    row_ids = {str(r["cell_id"]) for r in imports["cells"]}
+    unknown = sorted(kept-row_ids, key=int)
+    if unknown:
+        raise ValueError("kept ids missing from import audit: "+", ".join(unknown))
+    rows = [deepcopy(r) for r in imports["cells"] if str(r["cell_id"]) in kept]
+    filtered = dict(imports, cells=rows)
+    if "summary" in imports:
+        filtered["summary"] = dict(imports["summary"], cells=len(rows))
+    return filtered
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--topology", type=Path, default=Path("docs/evidence/h01-verified-network.json"))
@@ -86,6 +105,8 @@ def main():
     parser.add_argument("--decision", type=Path, default=Path("docs/evidence/h01-keep-drop/decision.json"))
     parser.add_argument("--out-topology", type=Path, default=Path("docs/evidence/h01-kept-network.json"))
     parser.add_argument("--out-components", type=Path, default=Path("docs/evidence/h01-kept-components.json"))
+    parser.add_argument("--imports", type=Path, help="full-population import audit to filter (optional)")
+    parser.add_argument("--out-imports", type=Path, default=Path("docs/evidence/h01-kept-imports.json"))
     args = parser.parse_args()
     kept = json.loads(args.decision.read_text())["kept"]
     topology, components, report = filter_network(json.loads(args.topology.read_text()),
@@ -94,7 +115,13 @@ def main():
                       components=str(args.components), components_sha256=sha256(args.components),
                       decision=str(args.decision), decision_sha256=sha256(args.decision))
     topology["filtered_from"] = components["filtered_from"] = provenance
-    for path, payload in ((args.out_topology, topology), (args.out_components, components)):
+    outputs = [(args.out_topology, topology), (args.out_components, components)]
+    if args.imports is not None:
+        imports = filter_imports(json.loads(args.imports.read_text()), kept)
+        imports["filtered_from"] = dict(provenance, imports=str(args.imports), imports_sha256=sha256(args.imports))
+        report["imports_after"] = len(imports["cells"])
+        outputs.append((args.out_imports, imports))
+    for path, payload in outputs:
         path.write_text(json.dumps(payload, indent=2)+"\n", newline="\n")
     print(json.dumps(report))
 

@@ -42,8 +42,9 @@ def decide(reference_path, runs, refinement):
     return dict(
         driven_window=1. if passed else 0.,
         verdict="PASS" if passed else "FAIL",
-        scope="104-cell driven window on the Vast executor: runtime, matched-control and timestep gates only; "
-              "physiology, functional inhibition and human provenance are not qualified by this decision",
+        scope=f"{len(reference.get('simulated_cell_ids', []))}-cell driven window on the Vast executor: runtime, "
+              "matched-control and timestep gates only; physiology, functional inhibition and human provenance "
+              "are not qualified by this decision",
         runtime={c: dict(status=v["status"], failures=v["failures"]) for c, v in runtime.items()},
         controls=None if controls is None else dict(status=controls["status"], failures=controls["failures"]),
         refinement=dict(status=refined["status"], failures=refined["failures"],

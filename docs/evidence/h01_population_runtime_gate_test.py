@@ -109,3 +109,30 @@ def test_cli_binds_reference_hash_and_writes_decision(evidence, tmp_path, monkey
         result = json.loads(paths['output'].read_text())
         assert result['status'] == ('passed' if outcome=='pass' else 'failed')
         assert result['inputs']['reference']['sha256'] == digest
+
+
+def _shrink(evidence, count):
+    build, reference, plan, arrays = evidence
+    ids = [str(i) for i in range(count)]
+    for record in (reference, build):
+        record['simulated_cell_ids'] = ids
+        for key in ('cells', 'donors', 'compartments_by_cell'):
+            record[key] = {i: record[key][i] for i in ids}
+        record['n_compartments'] = count
+    for name in list(arrays):
+        if name != 'time_ms' and name.split('_', 2)[1] not in ids:
+            arrays.pop(name)
+    plan['cells'] = count
+
+
+def test_kept_subset_passes_when_plan_count_matches(evidence):
+    _shrink(evidence, 4)
+    result = gate.audit_runtime(*evidence)
+    assert result['status'] == 'passed' and len(result['observations']) == 4
+
+
+def test_kept_subset_rejects_plan_count_mismatch(evidence):
+    _shrink(evidence, 4)
+    evidence[2]['cells'] = 5
+    result = gate.audit_runtime(*evidence)
+    assert 'reference and plan must cover exactly the same unique cells' in result['failures']

@@ -85,3 +85,47 @@ def test_cli_writes_both_files(tmp_path, capsys):
     assert provenance == written_components["filtered_from"]
     assert all(len(provenance[k]) == 64 for k in ("topology_sha256", "components_sha256", "decision_sha256"))
     assert json.loads(capsys.readouterr().out.strip())["kept"] == 2
+
+
+def _imports():
+    rows = [dict(cell_id=c, component=1, source_segments=5, imported_segments=5, missing_segments=0,
+                 extra_segments=0, passed=True, source_sha256="h"+c, seconds=.1) for c in ("10", "20", "30", "40")]
+    return dict(status="completed", archive_sha256="x", scope="s", seconds=1., passed=True, cells=rows)
+
+
+def test_filter_imports_keeps_rows_and_flags():
+    imports = _imports()
+    filtered = network.filter_imports(imports, ["20", "40"])
+    assert [r["cell_id"] for r in filtered["cells"]] == ["20", "40"]
+    assert filtered["status"] == "completed" and filtered["passed"] is True and filtered["archive_sha256"] == "x"
+    assert len(imports["cells"]) == 4
+    with pytest.raises(ValueError, match="99"):
+        network.filter_imports(imports, ["20", "99"])
+
+
+def test_filter_imports_recomputes_summary_cells():
+    imports = dict(_imports(), summary=dict(cells=4, other=7))
+    assert network.filter_imports(imports, ["10"])["summary"] == dict(cells=1, other=7)
+
+
+def test_cli_filters_imports_when_asked(tmp_path, capsys):
+    topology, components = _toy()
+    paths = {name: tmp_path/(name+".json") for name in ("topology", "components", "decision", "imports",
+                                                        "out-t", "out-c", "out-i")}
+    paths["topology"].write_text(json.dumps(topology))
+    paths["components"].write_text(json.dumps(components))
+    paths["decision"].write_text(json.dumps(dict(kept=["10", "20"])))
+    paths["imports"].write_text(json.dumps(_imports()))
+    argv = sys.argv
+    sys.argv = ["x", "--topology", str(paths["topology"]), "--components", str(paths["components"]),
+                "--decision", str(paths["decision"]), "--out-topology", str(paths["out-t"]),
+                "--out-components", str(paths["out-c"]), "--imports", str(paths["imports"]),
+                "--out-imports", str(paths["out-i"])]
+    try:
+        network.main()
+    finally:
+        sys.argv = argv
+    written = json.loads(paths["out-i"].read_text())
+    assert [r["cell_id"] for r in written["cells"]] == ["10", "20"] and written["passed"] is True
+    assert len(written["filtered_from"]["imports_sha256"]) == 64
+    assert json.loads(capsys.readouterr().out.strip())["imports_after"] == 2

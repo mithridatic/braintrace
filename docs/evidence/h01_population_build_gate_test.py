@@ -111,3 +111,28 @@ def test_cli_writes_hashed_verdict_and_rejects_failure(evidence, tmp_path, monke
     result = json.loads(output.read_text())
     assert result['status'] == ('passed' if valid else 'failed')
     assert all(len(record['sha256']) == 64 for record in result['inputs'].values())
+
+
+def _shrink(evidence, ids):
+    build, imports, topology = evidence
+    imports['cells'] = [row for row in imports['cells'] if row['cell_id'] in ids]
+    topology['nodes'] = [node for node in topology['nodes'] if node['cell_id'] in ids]
+    build['simulated_cell_ids'] = list(ids)
+    for key in ('cells', 'compartments_by_cell', 'donors'):
+        build[key] = {i: build[key][i] for i in ids}
+    build['n_compartments'] = len(ids)
+
+
+def test_kept_subset_build_passes_with_its_own_count(evidence):
+    _shrink(evidence, ['0', '1', '2'])
+    result = gate.audit_build(*evidence)
+    assert result['status'] == 'passed', result['failures']
+    assert result['expected_cells'] == result['simulated_cells'] == 3
+    assert result['scope'] == '3-cell construction only'
+
+
+def test_duplicate_import_rows_fail(evidence):
+    _shrink(evidence, ['0', '1', '2'])
+    evidence[1]['cells'].append(deepcopy(evidence[1]['cells'][0]))
+    result = gate.audit_build(*evidence)
+    assert 'import audit must contain unique cells' in result['failures']

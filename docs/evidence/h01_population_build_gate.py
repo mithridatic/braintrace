@@ -40,7 +40,7 @@ def audit_build(build, imports, topology):
     expected = set(source_ids)
     require(imports.get('status') == 'completed' and imports.get('passed') is True,
             'import audit is not a completed pass')
-    require(len(source_ids) == len(expected) == 104, 'import audit must contain 104 unique cells')
+    require(len(source_ids) == len(expected) > 0, 'import audit must contain unique cells')
     require(all(row.get('passed') is True for row in source_rows), 'a source component failed import')
     require(_sha256(imports.get('archive_sha256')), 'source archive hash is missing or malformed')
     topology_ids = [row['cell_id'] for row in topology.get('nodes', [])]
@@ -87,7 +87,7 @@ def audit_build(build, imports, topology):
         require(edge.get('enabled') is True, edge['annotation_id']+': supported contact disabled')
         require(all(edge.get(k) == original.get(k) for k in ('pre_cell', 'post_cell', 'dale_sign')),
                 edge['annotation_id']+': contact endpoints or sign differ')
-    return dict(status='passed' if not failures else 'failed', scope='104-cell construction only',
+    return dict(status='passed' if not failures else 'failed', scope=f'{len(expected)}-cell construction only',
                 expected_cells=len(expected), simulated_cells=len(simulated),
                 n_compartments=build.get('n_compartments'), failures=failures,
                 runtime_qualified=False, physiology_qualified=False)
