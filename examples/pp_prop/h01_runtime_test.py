@@ -13,7 +13,7 @@ from braintrace.datasets.h01_ei_cell import make_h01_ei_cell
 from braintrace.datasets.h01_network import _regions
 from braintrace.datasets.h01_network_init import init_h01_network_states
 from .h01_topology import H01Topology
-from .h01_runtime import build_network, topology_from_evidence
+from .h01_runtime import build_network, release_shared_construction_data, topology_from_evidence
 from .h01_arc_model import H01ArcModel
 
 
@@ -155,3 +155,11 @@ def test_exported_manifest_keeps_source_and_anatomical_contact_evidence(imported
         records['12']['measured_anatomy']['source_sha256'] = 'a'*64
         with pytest.raises(ValueError, match='differs'):
             topology_from_evidence(evidence, {'contacts': [audited]}, archive)
+
+
+def test_release_handoff_clears_loaded_components_without_a_global_geometry_cache():
+    from braintrace.datasets import h01, h01_construction
+    assert not hasattr(h01_construction, '_GEOMETRY_CACHE')
+    h01._GLOBAL_LOADED_COMPONENTS['x'] = object()
+    release_shared_construction_data()
+    assert h01._GLOBAL_LOADED_COMPONENTS == {}

@@ -162,10 +162,16 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         network.add_edges(name=name, pre='cell_'+edge['pre'], post='cell_'+edge['post'], method=pairs([(0, 0)]))
         network.add_projection(name=name, edges=name, synapse=name,
             weight=edge['initial_weight_us']*u.uS, delay=edge['delay_ms']*u.ms)
-    # Share immutable data across clones while building, then match the source
-    # builder's bounded-memory handoff before allocating channel states.
-    from braintrace.datasets.h01 import _GLOBAL_LOADED_COMPONENTS
-    from braintrace.datasets.h01_construction import _GEOMETRY_CACHE
-    _GLOBAL_LOADED_COMPONENTS.clear()
-    _GEOMETRY_CACHE.clear()
+    release_shared_construction_data()
     return network, records
+
+
+def release_shared_construction_data():
+    """Match the source builder's bounded-memory handoff before allocating channel states.
+
+    Immutable component data is shared across clones while building; the loaded-component
+    table is released here. The CV geometry cache is owner-scoped on each morphology since
+    commit 43bd52b5 (no module-level table remains), so nothing else is cleared.
+    """
+    from braintrace.datasets.h01 import _GLOBAL_LOADED_COMPONENTS
+    _GLOBAL_LOADED_COMPONENTS.clear()
