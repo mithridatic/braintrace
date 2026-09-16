@@ -160,6 +160,12 @@ def _check_contact(edge, nodes):
             raise ValueError("Contact endpoint evidence changed.")
 
 
+def _placement_limit(topology):
+    """Projection limit a placement was accepted under: the blocker distance when recorded."""
+    blocker = topology.get("blocker_distance_um")
+    return topology["max_distance_um"] if blocker is None else blocker
+
+
 def _load_contact_cells(contacts, nodes, topology, archive, emit):
     imported, locations, source_sites, seen = {}, {}, {}, set()
     for edge in contacts:
@@ -176,7 +182,7 @@ def _load_contact_cells(contacts, nodes, topology, archive, emit):
             if imported[identity].component_id != site["component"]:
                 raise ValueError("Cannot join disconnected components of a cell.")
             emit(f"Checking {side} cable location for contact {annotation}")
-            locations[annotation, side] = _location(imported[identity], site, topology["max_distance_um"])
+            locations[annotation, side] = _location(imported[identity], site, _placement_limit(topology))
             if side == "pre":
                 point = site["cable_location"]
                 if identity in source_sites and source_sites[identity] != point:

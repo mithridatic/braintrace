@@ -303,3 +303,15 @@ def test_nearest_cv_resolves_platform_ties_to_the_lowest_index():
     assert _nearest_cv(midpoints, 0.30) == 1                   # a real nearest still wins
     assert _nearest_cv([0.1, 0.5, 0.9], 0.9) == 2
     assert _nearest_cv([0.25], 0.7) == 0
+
+
+def test_contact_placement_is_checked_under_the_recorded_blocker_distance(arguments, monkeypatch):
+    from . import h01_network as module
+    limits, real = [], module._location
+    monkeypatch.setattr(module, "_location", lambda imported, site, limit: limits.append(limit) or real(imported, site, 1.))
+    assert module._placement_limit(dict(max_distance_um=1.)) == 1.
+    assert module._placement_limit(dict(max_distance_um=1., blocker_distance_um=None)) == 1.
+    arguments["topology"]["blocker_distance_um"] = 3.
+    with brainstate.environ.context(precision=64):
+        make_h01_network(**arguments)
+    assert limits and set(limits) == {3.}
