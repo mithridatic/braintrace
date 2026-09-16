@@ -78,9 +78,14 @@ def test_forest_layout_is_segmented_and_per_cell_sized(learners):
     percell, plearner, forest, flearner = learners
     p, f = plearner.graph.layout, flearner.graph.layout
     assert f.slots is not None and p.slots is None
-    assert f.elements <= p.elements   # the forest's cable blocks cost what the per-cell blocks cost
-    assert f.color_count <= p.color_count
-    assert f.color_count < len(IDS)+2   # not one colour per output
+    assert f.colors == p.colors   # same conflict structure: cell 0 alone, cells 1 and 2 each with their contact
+    width = max(f.widths)
+    assert width == 3 and f.elements == sum(int(np.prod(shape))*w for shape, w in zip(f.shapes, f.widths))
+    assert f.elements < sum(int(np.prod(shape)) for shape in f.shapes)*len(f.colors)   # not one slot per output
+    for table in f.slots:
+        if table is not None and table.shape[-1] == width:
+            rows = {tuple(r) for r in table.reshape(-1, width).tolist()}
+            assert rows == {(0, -1, -1), (0, 1, 3), (0, 2, 4)}
 
 
 def test_forest_gradients_equal_per_cell_gradients(learners):
