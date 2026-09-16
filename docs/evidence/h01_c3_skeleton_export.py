@@ -357,11 +357,16 @@ def staged_members(stage, records):
     return members
 
 
-def run(ids, output, provenance, fetcher, stage=None, log=print):
-    """Export ``ids`` to ``output`` (zip) and ``provenance`` (json); returns the provenance."""
+def run(ids, output, provenance, fetcher, stage=None, log=print, superseded=None):
+    """Export ``ids`` to ``output`` (zip) and ``provenance`` (json); returns the provenance.
+
+    ``superseded`` names an earlier archive this one replaces (``{"archive_sha256": ..., "note": ...}``);
+    staged cells shared with it are reused byte-for-byte rather than re-fetched.
+    """
     output, provenance = Path(output), Path(provenance)
     stage = Path(stage) if stage else output.with_name(output.stem + ".stage")
     started = time.perf_counter()
+    staged_before = {c3_id for c3_id in ids if (stage / f"{c3_id}.json").exists()}
     records = [stage_cell(stage, fetcher, c3_id, log) for c3_id in ids]
     digest = write_archive(output, staged_members(stage, records))
     document = {"archive": output.name, "archive_sha256": digest, "source": SOURCE,
@@ -372,6 +377,7 @@ def run(ids, output, provenance, fetcher, stage=None, log=print):
                                        "0 (unlabelled) and any other value -> -1", "root_parent": -1,
                                "member": "{c3_id}.{k}.swc, k in descending component size"},
                 "root_policy": ROOT_POLICY, "singleton_components": "dropped (importer rejects them)",
+                "reused_from_stage": sorted(staged_before, key=int), "superseded": superseded,
                 "generated": time.strftime("%Y-%m-%dT%H:%M:%S"), "seconds": time.perf_counter() - started,
                 "cells": records}
     provenance.parent.mkdir(parents=True, exist_ok=True)
@@ -390,13 +396,17 @@ def main(argv=None, fetcher=None):
     parser.add_argument("--stage", type=Path, help="per-cell staging directory (default: beside --output)")
     parser.add_argument("--mip", type=int, default=0)
     parser.add_argument("--workers", type=int, default=32)
+    parser.add_argument("--superseded-sha256", help="sha256 of the archive this export replaces")
+    parser.add_argument("--superseded-note", default="", help="why the earlier archive is superseded")
     args = parser.parse_args(argv)
     ids = candidate_ids(json.loads(args.candidates.read_text(encoding="utf-8"))) if args.candidates else []
     ids += [i for i in map(str, args.ids) if i not in ids]
     if not ids:
         parser.error("no C3 ids: give --candidates and/or --ids")
     fetcher = fetcher or CloudFetcher(mip=args.mip, workers=args.workers)
-    run(ids, args.output, args.provenance, fetcher, args.stage)
+    superseded = ({"archive_sha256": args.superseded_sha256, "note": args.superseded_note}
+                  if args.superseded_sha256 else None)
+    run(ids, args.output, args.provenance, fetcher, args.stage, superseded=superseded)
 
 
 if __name__ == "__main__":

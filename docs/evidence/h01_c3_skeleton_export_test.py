@@ -143,8 +143,12 @@ def test_main_writes_a_loadable_archive_and_provenance_and_resumes_from_stage(tm
     loaded = archive.load(7, component=0)
     assert loaded.provenance["source"] == "c3_test" and loaded.source_rows.shape == (5, 7)
     first_digest = document["archive_sha256"]
-    main(["--ids", "7", "8", "--output", str(output), "--provenance", str(provenance)], fetcher=fetcher)
-    assert fetcher.calls == 2 and json.loads(provenance.read_text())["archive_sha256"] == first_digest
+    assert document["reused_from_stage"] == [] and document["superseded"] is None
+    main(["--ids", "7", "8", "--output", str(output), "--provenance", str(provenance),
+          "--superseded-sha256", first_digest, "--superseded-note", "same cells"], fetcher=fetcher)
+    again = json.loads(provenance.read_text())
+    assert fetcher.calls == 2 and again["archive_sha256"] == first_digest
+    assert again["reused_from_stage"] == ["7", "8"] and again["superseded"] == {"archive_sha256": first_digest, "note": "same cells"}
 
 
 def test_main_requires_at_least_one_id(tmp_path):
