@@ -685,11 +685,277 @@
         }
       },
       "finite": true
+    },
+    "mut-contact": {
+      "arm": "mut-contact",
+      "settings": {
+        "dt_ms": 0.000625,
+        "substeps": 160,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null
+      },
+      "status": "pass",
+      "cells": 17,
+      "compartments": 107537,
+      "stage_seconds": {
+        "manifest_and_archive": 0.06003829091787338,
+        "build_network": 20.198546937666833,
+        "init_state": 22.87425776850432,
+        "model_setup": 2.574315769597888,
+        "first_update_compile_and_run": 38.961344740353525,
+        "learner_compile_graph": 7.814050165936351,
+        "learner_first_update_compile_and_run": null,
+        "real_update_compile_and_run": null,
+        "score_query_compile_and_run": null
+      },
+      "forward_seconds_per_event": 1.4234493840485811,
+      "forward_events": 2,
+      "learner_seconds_per_event": null,
+      "learner_fixed_seconds_per_update": null,
+      "learner_refused": null,
+      "real_update": null,
+      "score_query": null,
+      "throughput": {
+        "compartment_updates_per_second": 12087482.837684643,
+        "flops_per_event": 124580784.0,
+        "gflops_per_second": 0.08752034697971962,
+        "fraction_of_fp64_peak": 6.784523021683693e-05,
+        "fraction_of_fp32_peak": 1.0595683653719083e-06
+      },
+      "cost_analysis": {
+        "bytes accessed": 490784160.0,
+        "flops": 124580784.0,
+        "transcendentals": 11733021.0
+      },
+      "eligibility": null,
+      "substep_alone": null,
+      "profile_substep": null,
+      "profile_event": null,
+      "recompile_check": {
+        "events": 2,
+        "calls": [
+          {
+            "call": 1,
+            "seconds": 358.8493237551302,
+            "compile_messages": 1308,
+            "messages": [
+              "Compiling jit(broadcast_in_dim) with global shapes and types (ShapedArray(float64[], weak_type=True),). Argument mapping: (UnspecifiedValue,).",
+              "Finished XLA compilation of jit(broadcast_in_dim) in 0.050554991 sec",
+              "Compiling jit(subtract) with global shapes and types (ShapedArray(float64[1,1608], weak_type=True), ShapedArray(float64[1,1608])). Argument mapping: (Unspecifie",
+              "Finished XLA compilation of jit(subtract) in 0.040731907 sec",
+              "Compiling jit(true_divide) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[])). Argument mapping: (UnspecifiedValue, Unspecified",
+              "Finished XLA compilation of jit(true_divide) in 0.048928261 sec",
+              "Compiling jit(abs) with global shapes and types (ShapedArray(float64[1,1608]),). Argument mapping: (UnspecifiedValue,).",
+              "Finished XLA compilation of jit(abs) in 0.043256521 sec",
+              "Compiling jit(multiply) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[], weak_type=True)). Argument mapping: (UnspecifiedValue",
+              "Finished XLA compilation of jit(multiply) in 0.042064428 sec"
+            ]
+          },
+          {
+            "call": 2,
+            "seconds": 24.958521977998316,
+            "compile_messages": 0,
+            "messages": []
+          },
+          {
+            "call": 3,
+            "seconds": 25.13834640663117,
+            "compile_messages": 0,
+            "messages": []
+          }
+        ]
+      },
+      "learner_compile_graph_is": "braintrace ETP compiler: jaxpr trace of the model plus eligibility-graph analysis on the host (graph_executor.compile_graph); no XLA executable is built here",
+      "peak_device_bytes": 73821440,
+      "peak_host_rss_mb": 4317.16015625,
+      "memory": {
+        "manifest_load": {
+          "host_peak_rss_mb": 913.21484375,
+          "bytes_in_use": 1792,
+          "peak_bytes_in_use": 2048
+        },
+        "archive_open": {
+          "host_peak_rss_mb": 917.19921875,
+          "bytes_in_use": 1792,
+          "peak_bytes_in_use": 2048
+        },
+        "build_network": {
+          "host_peak_rss_mb": 1658.625,
+          "bytes_in_use": 1792,
+          "peak_bytes_in_use": 2048
+        },
+        "init_state": {
+          "host_peak_rss_mb": 2090.6015625,
+          "bytes_in_use": 13364224,
+          "peak_bytes_in_use": 13472512
+        },
+        "model_setup": {
+          "host_peak_rss_mb": 2148.375,
+          "bytes_in_use": 13528320,
+          "peak_bytes_in_use": 13731072
+        },
+        "first_update_compile_and_run": {
+          "host_peak_rss_mb": 4180.00390625,
+          "bytes_in_use": 37049600,
+          "peak_bytes_in_use": 73650176
+        },
+        "compile_object": {
+          "host_peak_rss_mb": 4255.70703125,
+          "bytes_in_use": 37049600,
+          "peak_bytes_in_use": 73650176
+        },
+        "steady_state": {
+          "host_peak_rss_mb": 4317.16015625,
+          "bytes_in_use": 37132032,
+          "peak_bytes_in_use": 73821440
+        },
+        "learner_compile_graph": {
+          "host_peak_rss_mb": 4317.16015625,
+          "bytes_in_use": 66808576,
+          "peak_bytes_in_use": 73821440
+        }
+      },
+      "finite": true
+    },
+    "mut-clone": {
+      "arm": "mut-clone",
+      "settings": {
+        "dt_ms": 0.000625,
+        "substeps": 160,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null
+      },
+      "status": "pass",
+      "cells": 18,
+      "compartments": 109145,
+      "stage_seconds": {
+        "manifest_and_archive": 0.06533500552177429,
+        "build_network": 20.266365863382816,
+        "init_state": 26.097235795110464,
+        "model_setup": 2.4359894413501024,
+        "first_update_compile_and_run": 39.985536836087704,
+        "learner_compile_graph": 7.962613228708506,
+        "learner_first_update_compile_and_run": null,
+        "real_update_compile_and_run": null,
+        "score_query_compile_and_run": null
+      },
+      "forward_seconds_per_event": 1.4930317290127277,
+      "forward_events": 2,
+      "learner_seconds_per_event": null,
+      "learner_fixed_seconds_per_update": null,
+      "learner_refused": null,
+      "real_update": null,
+      "score_query": null,
+      "throughput": {
+        "compartment_updates_per_second": 11696469.4457951,
+        "flops_per_event": 126528008.0,
+        "gflops_per_second": 0.08474569263418606,
+        "fraction_of_fp64_peak": 6.569433537533803e-05,
+        "fraction_of_fp32_peak": 1.0259769084041898e-06
+      },
+      "cost_analysis": {
+        "flops": 126528008.0,
+        "transcendentals": 11902706.0,
+        "bytes accessed": 498396736.0
+      },
+      "eligibility": null,
+      "substep_alone": null,
+      "profile_substep": null,
+      "profile_event": null,
+      "recompile_check": {
+        "events": 2,
+        "calls": [
+          {
+            "call": 1,
+            "seconds": 406.13096045330167,
+            "compile_messages": 1294,
+            "messages": [
+              "Compiling jit(broadcast_in_dim) with global shapes and types (ShapedArray(float64[], weak_type=True),). Argument mapping: (UnspecifiedValue,).",
+              "Finished XLA compilation of jit(broadcast_in_dim) in 0.040501833 sec",
+              "Compiling jit(subtract) with global shapes and types (ShapedArray(float64[1,1608], weak_type=True), ShapedArray(float64[1,1608])). Argument mapping: (Unspecifie",
+              "Finished XLA compilation of jit(subtract) in 0.045342207 sec",
+              "Compiling jit(true_divide) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[])). Argument mapping: (UnspecifiedValue, Unspecified",
+              "Finished XLA compilation of jit(true_divide) in 0.048306465 sec",
+              "Compiling jit(abs) with global shapes and types (ShapedArray(float64[1,1608]),). Argument mapping: (UnspecifiedValue,).",
+              "Finished XLA compilation of jit(abs) in 0.056207418 sec",
+              "Compiling jit(multiply) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[], weak_type=True)). Argument mapping: (UnspecifiedValue",
+              "Finished XLA compilation of jit(multiply) in 0.042651176 sec"
+            ]
+          },
+          {
+            "call": 2,
+            "seconds": 54.52892395760864,
+            "compile_messages": 0,
+            "messages": []
+          },
+          {
+            "call": 3,
+            "seconds": 54.566397320479155,
+            "compile_messages": 0,
+            "messages": []
+          }
+        ]
+      },
+      "learner_compile_graph_is": "braintrace ETP compiler: jaxpr trace of the model plus eligibility-graph analysis on the host (graph_executor.compile_graph); no XLA executable is built here",
+      "peak_device_bytes": 66964736,
+      "peak_host_rss_mb": 4354.90625,
+      "memory": {
+        "manifest_load": {
+          "host_peak_rss_mb": 911.17578125,
+          "bytes_in_use": 1792,
+          "peak_bytes_in_use": 2048
+        },
+        "archive_open": {
+          "host_peak_rss_mb": 913.16796875,
+          "bytes_in_use": 1792,
+          "peak_bytes_in_use": 2048
+        },
+        "build_network": {
+          "host_peak_rss_mb": 1657.97265625,
+          "bytes_in_use": 1792,
+          "peak_bytes_in_use": 2048
+        },
+        "init_state": {
+          "host_peak_rss_mb": 2090.953125,
+          "bytes_in_use": 13628416,
+          "peak_bytes_in_use": 13659136
+        },
+        "model_setup": {
+          "host_peak_rss_mb": 2142.75,
+          "bytes_in_use": 13796352,
+          "peak_bytes_in_use": 13984768
+        },
+        "first_update_compile_and_run": {
+          "host_peak_rss_mb": 4214.80078125,
+          "bytes_in_use": 37642240,
+          "peak_bytes_in_use": 66964736
+        },
+        "compile_object": {
+          "host_peak_rss_mb": 4291.15625,
+          "bytes_in_use": 37642240,
+          "peak_bytes_in_use": 66964736
+        },
+        "steady_state": {
+          "host_peak_rss_mb": 4354.90625,
+          "bytes_in_use": 37638400,
+          "peak_bytes_in_use": 66964736
+        },
+        "learner_compile_graph": {
+          "host_peak_rss_mb": 4354.90625,
+          "bytes_in_use": 65620992,
+          "peak_bytes_in_use": 66964736
+        }
+      },
+      "finite": true
     }
   },
   "voltage_differences_vs_reference": {
     "dt0005": {
-      "events": 21,
+      "events": 20,
       "max_abs_mv": 0.0012946423637316684,
       "per_cell_max_abs_mv": [
         0.0008609295718855492,
@@ -711,23 +977,23 @@
         0.00032042255458009095
       ],
       "final_event_abs_mv": [
-        0.0002069426939499408,
-        0.00011827799835373298,
-        0.0006591944887617274,
-        3.518122269952073e-06,
-        0.0003657521000519637,
-        0.00019905371743789146,
-        7.764338916160796e-05,
-        0.00011993711987656752,
-        0.00011641667887829499,
-        0.00024623558444147875,
-        0.000433691553951121,
-        0.00014312653983949986,
-        0.00010440520159704647,
-        0.0005073317986585835,
-        9.375615404394466e-05,
-        0.0002947386275309327,
-        0.00023370772642294924
+        0.00014688468942836153,
+        9.280685712553804e-05,
+        0.000573619797805236,
+        2.5771653042738762e-06,
+        0.0003127696146236758,
+        0.00019248577527264388,
+        5.326101097580249e-05,
+        0.00013679437101643543,
+        0.000367207675040504,
+        5.6416206220433196e-05,
+        0.0007242414143320275,
+        0.0001624958022290457,
+        0.0001038409521356698,
+        0.0006616835968031864,
+        2.547903920913086e-05,
+        0.000503915437278124,
+        0.00031943863953642904
       ]
     },
     "pinned-recompile": {
@@ -770,6 +1036,48 @@
         1.6910917111090384e-12,
         5.400124791776761e-13,
         2.4158453015843406e-13
+      ]
+    },
+    "mut-contact": {
+      "events": 3,
+      "max_abs_mv": 3.7829295251867734e-11,
+      "per_cell_max_abs_mv": [
+        2.3035795493342448e-11,
+        1.9895196601282805e-12,
+        1.6342482922482304e-12,
+        3.7829295251867734e-11,
+        2.1742607714259066e-12,
+        1.0231815394945443e-11,
+        2.9842794901924208e-12,
+        1.5774048733874224e-12,
+        1.0942358130705543e-11,
+        2.0321522242738865e-12,
+        3.083755473198835e-12,
+        1.4352963262354024e-12,
+        7.389644451905042e-13,
+        4.817479748453479e-12,
+        3.140598892059643e-12,
+        1.0658141036401503e-12,
+        6.536993168992922e-13
+      ],
+      "final_event_abs_mv": [
+        2.3035795493342448e-11,
+        1.9895196601282805e-12,
+        1.6342482922482304e-12,
+        3.7829295251867734e-11,
+        1.6200374375330284e-12,
+        1.0231815394945443e-11,
+        2.9132252166164108e-12,
+        1.5774048733874224e-12,
+        7.290168468898628e-12,
+        4.263256414560601e-14,
+        3.083755473198835e-12,
+        4.263256414560601e-13,
+        1.7053025658242404e-13,
+        1.4779288903810084e-12,
+        3.140598892059643e-12,
+        9.237055564881302e-13,
+        3.836930773104541e-13
       ]
     }
   },
@@ -838,6 +1146,16 @@
       "per_event_basis": "forward only",
       "screen_scoring_seconds": 1087.9462077934295,
       "corpus_scoring_seconds": 164079.2431410849,
+      "corpus_scoring_fits_under_cap": false
+    },
+    "mut-contact": {
+      "fixed_seconds": 92.48255367297679,
+      "forward_seconds_per_event": 1.4234493840485811,
+      "learner_seconds_per_event": null,
+      "learner_measured": false,
+      "per_event_basis": "forward only",
+      "screen_scoring_seconds": 1096.0560257174075,
+      "corpus_scoring_seconds": 165302.33007079363,
       "corpus_scoring_fits_under_cap": false
     }
   },

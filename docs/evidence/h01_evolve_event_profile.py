@@ -31,7 +31,6 @@ import glob
 import json
 from pathlib import Path
 import re
-import resource
 import time
 
 import numpy as np
@@ -383,6 +382,7 @@ def corpus_denominators(queries, schedule_entries, screen_ids):
 
 
 def _rss_mb():
+    import resource   # POSIX only; the arm subcommand runs on the Linux box
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024.
 
 
@@ -492,6 +492,12 @@ def _arm_command(args):
             topology = adapter.initial_topology
             if args.cell_index is not None:
                 topology = _single_cell_topology(topology, args.cell_index)
+            if args.mutate:
+                cells = topology.to_dict()['active_cells']
+                topology = (topology.add_contact(cells[0], cells[1], stage='profile') if args.mutate == 'add-contact'
+                            else topology.clone(cells[0], stage='profile'))
+                report['mutation'] = dict(kind=args.mutate, cells=len(topology.to_dict()['active_cells']),
+                                          contacts=len(topology.to_dict()['active_contacts']))
             archive = stage('archive_open', adapter._archive)
             network, records = stage('build_network', lambda: build_network(topology, archive,
                 solver=settings['solver'], max_cv_length_um=args.max_cv_length_um))
@@ -767,7 +773,8 @@ def _report_command(args):
     for directory in args.arms:
         directory = Path(directory)
         report = json.loads((directory/'report.json').read_text())
-        volts = np.load(directory/'voltages_mv.npy') if (directory/'voltages_mv.npy').exists() else None
+        volts = (np.load(directory/'voltages_mv.npy') if (directory/'voltages_mv.npy').exists()
+                 else np.asarray(report['voltages_mv_first_20']) if report.get('voltages_mv_first_20') else None)
         arms[report['arm']] = (report, volts)
     corpus = json.loads(Path(args.corpus).read_text())
     document = build_report(arms, corpus, reference=args.reference, cap_seconds=args.cap_seconds)
@@ -853,6 +860,8 @@ def _parser():
     arm.add_argument('--no-checkpoint', action='store_true')
     arm.add_argument('--events', type=int, default=21)
     arm.add_argument('--cell-index', type=int, default=None)
+    arm.add_argument('--mutate', choices=('add-contact', 'clone'), default=None,
+                     help='apply one grow mutation to the manifest topology before building (recompile cost)')
     arm.add_argument('--profile', action='store_true', help='trace one whole ARC event (CUPTI may drop events)')
     arm.add_argument('--profile-substep', type=int, default=0, help='trace this many single cable substeps')
     arm.add_argument('--learner', action='store_true')

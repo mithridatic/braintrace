@@ -28,8 +28,9 @@ At the pinned settings one forward ARC event costs 1.36 s and one learner event 
 cells; `initialize()` scores the whole training corpus (116,128 advancing events, 43.8 h)
 before the first training arm exists, and one 128-update block is 35,648 learner events
 (130 h). The 60 min run spent about 100 s building and compiling and the remaining ~58 min
-inside the initial scoring pass, roughly 2,500 of 116,128 events (about 9 of 416 queries); it
-could not have reached its first arm. At dt 0.005 ms / 20 substeps the same numbers are
+inside `score_queries` of the initial scoring pass (compiling it or stepping it: at most
+2,500 of its 116,128 events, about 9 of 416 queries, if stepping began at once); it could not
+have reached its first arm. At dt 0.005 ms / 20 substeps the same numbers are
 0.18 s, 1.6 s (real update), 5.8 h for the corpus pass and 15.8 h per block: still zero
 blocks per hour. The GPU is launch-bound (about 4,300 stream launches per cable substep,
 17 cells stepped as 17 separate kernel sets), at 12-13 million compartment-updates per second.
@@ -54,7 +55,7 @@ Wall seconds, one process per arm. "Compile" columns include one execution.
 | learner update, 2 events, warm (5 runs, median) | 26.7 | 3.6 |
 | learner s/event (slope 8 vs 2 events) | 13.18 | 1.34 |
 | learner fixed s/update (intercept) | 0.32 | 0.93 |
-| real `update_episode` (705-event payload, 385 advancing), compile + 1 run | not run (est. 1.4 h) | 1035.6 |
+| real `update_episode` (705-event payload, 385 advancing), compile + 1 run | not run (13.18 s/event x 385 = 1.4 h derived) | 1035.6 |
 | real `update_episode`, warm | not run | 614.3 = 1.595 s per advancing event |
 | real `score_episode` (705 events, 385 advancing), compile + 1 run | not run | 122.0 |
 | real `score_episode`, warm | not run | 62.2 = 0.162 s per advancing event |
@@ -95,13 +96,42 @@ processes (26.7 s versus 20.6 s per 2-event update): the `pinned` arm ran while 
 (`h01_c3_kept_partner_graph.py`) shared the box and the run is launch-bound, so host CPU
 contention shows up in GPU-side wall time.
 
+Where the "fixed ~330 s, marginal <10 s/event" reading came from: comparing the
+compile-and-run rows of two arms (402.6 / 347.8 s pinned, 313.7 / 343.6 s at dt 0.005). Those
+rows are each dominated by a one-time XLA compile of about 320 s; the warm rows (105.8 / 26.7 s
+pinned, 11.6 / 3.6 s at dt 0.005) are the run time, and they were not in that comparison. What
+this settles: `dt` and the event count reach the timed region. What it does not say
+anything about: `precision=32`, `max_cv_length_um` and `--no-checkpoint`, which remain
+unmeasured (section "What was not run").
+
 What one evolve arm pays before its first event, from these stages: build 20 s + init 23 s +
 forward compile 41 s + learner compile ~320 s (cold; ~120 s cache hit) + `score_queries`
 compile ~60 s (dt 0.005 arm: 122.0 - 62.2): about 7-8 minutes per rebuilt runtime. Every arm
 (`train_parent`, `run_candidate`) rebuilds from a checkpoint, and a mutated topology changes
-array shapes, so a grow/prune arm is a cache miss. Per-mutation recompile was not timed
-separately (the coordinator's item 4 was conditional on the third call being near-free,
-which it is not).
+array shapes, so a grow/prune arm is a cache miss. Per-mutation recompile cost: see
+section 2a.
+
+## 2a. Per-mutation recompile cost
+
+Two grow mutations applied to the manifest topology before building (`--mutate`), each in
+a fresh process with the persistent cache warm from the 17-cell / 0-contact program, so a
+cache hit would show as the 16.8 s / 118 s numbers of `pinned-recompile`:
+
+| Arm | Topology | Compartments | forward s/event | forward compile + 1 run | learner 2-event update, call 1 (compile + run) | calls 2, 3 (warm) | compiles on calls 2, 3 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `pinned-recompile` (cache hit) | 17 cells, 0 contacts | 107,537 | 1.413 | 16.8 | 139.2 | 20.6, 20.7 | 0 |
+| `mut-contact` | 17 cells + 1 synthetic contact (`add_contact`) | 107,537 | 1.423 | 39.0 | 358.8 | 25.0, 25.1 | 0 |
+| `mut-clone` | 18 cells (`clone` of cell 0), 0 contacts | 109,145 | 1.493 | 40.0 | 406.1 | 54.5, 54.6 | 0 |
+
+Both mutations were cache misses, as the shape change predicts: a grow/prune arm pays about
+40 s of forward compile plus 330-350 s of learner compile (358.8 - 25.0; 406.1 - 54.5) before
+its first event, on top of build + init (43-46 s) and the `score_queries` compile. Per
+mutation that is 7-8 minutes of fixed cost against 3,671 s x 128 = 130 h of block run time at
+the pinned dt: the recompile is real but is not what bounds a stage. One unexplained
+observation: the 18-cell clone's warm 2-event update (54.5 s) is 2.6x the 17-cell one
+(20.6 s) for 1.5 percent more compartments, while its forward event is only 6 percent
+slower; the recompile arms did not record the eligibility layout, so whether the clone changed
+the sparse pp-prop layout is not measured here.
 
 ## 3. What one stage consumes (from `example21_evolve.py`, verified on the corpus)
 
@@ -136,11 +166,15 @@ Screen-subset scoring (770 events) costs 1,045 s pinned, 138 s at dt 0.005.
 Could the 60 minute run have reached its first arm: no. `run.err` holds only the two
 `compile_graph` warnings, which fire in the last statement of `H01Session.build`, and the
 first stdout line comes from `ConsoleProgressReporter` in `_run_parent_training`, after
-`initialize()` returns. Build, init, model and the two compiles took about 100-150 s of the
-cap (the 93 percent GPU utilisation at 6 min in the record is the scoring loop); the
-remaining ~3,450 s covered about 2,500 of the 116,128 advancing events of the initial scoring
-pass (about 9 of 416 queries). The first arm (`train_parent`) is 128 updates further, 130 h
-away at the pinned dt.
+`initialize()` returns. Build, init, model and the forward compile took about 100 s of the
+cap; the remaining ~3,450 s were inside `score_queries`: one jitted `for_loop` over all 416
+stacked queries (0.96 GiB of float64 events), whose compile was not measured here (the
+single-query `score_episode` compile is 60 s at dt 0.005; the stacked program has the same
+scan body under one more loop). If its compile was of that order, the 93 percent GPU
+utilisation at 6 min was the scoring loop and the run stepped at most ~2,500 of the 116,128
+advancing events (about 9 of 416 queries) at 1.357 s each; if the stacked compile was longer,
+fewer. Either way the first arm (`train_parent`) is the whole corpus pass (43.8 h) plus 128
+updates (130 h) away at the pinned dt.
 
 ## 4. Where a steady-state event goes (XLA profile)
 
@@ -197,7 +231,7 @@ level scans of a few kernels each).
 
 ## 5. The 1 mV contract: what the 8x buys and costs
 
-Over the 21 profiled events (2.1 ms of simulated time, same 385-event ARC episode, all 17
+Over the first 20 profiled events (2.0 ms of simulated time, same 385-event ARC episode, all 17
 cells subthreshold between -86.4 and -79.3 mV) the soma voltage difference between
 dt 0.005 / 20 substeps and dt 0.000625 / 160 substeps is 0.0013 mV maximum over all cells and
 events (per-cell maxima 0.0001-0.0013 mV, final-event differences 4e-6 to 7e-4 mV). This
@@ -218,11 +252,13 @@ profile, one-cell 400-event windows at 0.000625 / 0.0025 / 0.005 ms, `max_cv_len
 and 40, precision 32, no checkpoint rematerialisation) was killed at the coordinator's request
 after the pinned and dt 0.005 arms, on the reading that the fixed cost swamped every lever;
 the dt 0.005 arm was allowed to finish its last two stages (real update warm, score query),
-and the `pinned-recompile` arm was run to answer the compile-versus-run question
-([queue-log.txt](h01-evolve-event-profile/queue-log.txt)). The compile-versus-run split in
-section 2 shows the levers do reach the timed region, so the remaining arms carry the per-arm
-fixed cost of section 2 but no false null; they remain unmeasured here. The pinned real
-705-event `update_episode` was not run (estimated 1.4 h from the slope).
+and the `pinned-recompile`, `mut-contact` and `mut-clone` arms were run afterwards to answer the
+compile-versus-run and per-mutation questions
+([queue-log.txt](h01-evolve-event-profile/queue-log.txt)). Section 2 shows that `dt` and the
+event count reach the timed region; it says nothing about `precision=32`,
+`max_cv_length_um` 20/40 or `--no-checkpoint`, which remain unmeasured, as do the
+command-buffer-free op attribution and the 400-event single-cell dt windows. The pinned real
+705-event `update_episode` was not run (1.4 h derived from the slope).
 
 ## Deviations and caveats
 
