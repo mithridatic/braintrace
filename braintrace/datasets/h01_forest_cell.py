@@ -63,7 +63,10 @@ def _copy_states(source, target, point_offset, point_index):
         if not hasattr(u.get_mantissa(value), 'shape') or u.get_mantissa(value).shape[-1:] != (target.varshape[-1],):
             continue
         rows = point_offset+np.asarray(point_index)
-        destination.value = value.at[..., rows].set(incoming[..., np.asarray(point_index)])
+        unit = u.get_unit(value)
+        merged = np.array(u.get_mantissa(value), dtype=np.float64)
+        merged[..., rows] = np.asarray(u.get_mantissa(incoming if unit == u.UNITLESS else incoming.in_unit(unit)))[..., np.asarray(point_index)]
+        destination.value = merged if unit == u.UNITLESS else u.Quantity(merged, unit)
 
 
 class H01ForestCell(H01Cell):
