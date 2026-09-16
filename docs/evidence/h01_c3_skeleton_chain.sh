@@ -19,7 +19,9 @@ rm -f "$R/chain.done" "$R/chain.failed"
 trap 'echo "$(date -u +%FT%TZ) failed at line $LINENO" > "$R/chain.failed"' ERR
 echo "$(date -u +%FT%TZ) start" > "$R/chain.log"
 
-"$V3" $OUT/h01_c3_skeleton_export.py --candidates "$CAND" --output "$ZIP" \
+SUPERSEDED_ARGS=()
+if [ -n "${SUPERSEDED_SHA:-}" ]; then SUPERSEDED_ARGS=(--superseded-sha256 "$SUPERSEDED_SHA" --superseded-note "${SUPERSEDED_NOTE:-}"); fi
+"$V3" $OUT/h01_c3_skeleton_export.py --candidates "$CAND" --output "$ZIP" "${SUPERSEDED_ARGS[@]}" \
   --provenance $OUT/h01-c3-candidates-archive.json --stage "$CACHE/c3-candidates-20260916.stage" > "$R/export.log" 2>&1
 SHA=$(python3 -c "import json;print(json.load(open('$OUT/h01-c3-candidates-archive.json'))['archive_sha256'])")
 echo "$(date -u +%FT%TZ) exported $SHA" >> "$R/chain.log"
@@ -29,11 +31,13 @@ PYTHONPATH=. "$V14" $OUT/h01_population_components.py --archive "$ZIP" --no-netw
 PYTHONPATH=. "$V14" $OUT/h01_population_import_audit.py --archive "$ZIP" --components $OUT/h01-c3-candidates-components.json \
   --output $OUT/h01-c3-candidates-import.json --expected-sha256 "$SHA" --source $LABEL --soma-bearing > "$R/import.log" 2>&1
 echo "$(date -u +%FT%TZ) import audit done" >> "$R/chain.log"
+rm -f $OUT/h01-c3-candidates-construct.json
 PYTHONPATH=. "$V14" $OUT/h01_c3_construct_check.py --archive "$ZIP" --expected-sha256 "$SHA" --source $LABEL \
   --components $OUT/h01-c3-candidates-components.json --candidates "$CAND" \
   --cell-table "$CACHE/c3-segment-properties.json" --output $OUT/h01-c3-candidates-construct.json > "$R/construct.log" 2>&1
 echo "$(date -u +%FT%TZ) construct check done" >> "$R/chain.log"
 
+if [ -n "${SKIP_CONTROL:-}" ]; then touch "$R/chain.done"; exit 0; fi
 "$V3" $OUT/h01_c3_skeleton_export.py --ids 1684504313 --output "$CTRL" --provenance "$R/c3-control-archive.json" \
   --stage "$CACHE/c3-candidates-20260916.stage" > "$R/control-export.log" 2>&1
 CSHA=$(python3 -c "import json;print(json.load(open('$R/c3-control-archive.json'))['archive_sha256'])")
