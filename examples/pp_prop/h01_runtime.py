@@ -98,6 +98,64 @@ def open_archives(asset_root, digests):
     return H01ArchiveSet(archives)
 
 
+def open_archive_paths(paths):
+    """Open archives named by path, pinning each to the digest of its file.
+
+    Parameters
+    ----------
+    paths : sequence of path-like
+        Archive files; one gives a single archive, more give a set.
+
+    Returns
+    -------
+    tuple
+        ``(archive, digests)`` where ``digests`` maps each path string to its
+        SHA256 and ``archive`` is an ``H01Archive`` or ``H01ArchiveSet``.
+    """
+    import hashlib
+    from pathlib import Path
+    digests = {}
+    for path in paths:
+        path = Path(path)
+        digests[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
+    if not digests:
+        raise ValueError('Name at least one morphology archive')
+    archives = [_open_archive(Path(path), digest) for path, digest in digests.items()]
+    if len(archives) == 1:
+        return archives[0], digests
+    from braintrace.datasets.h01 import H01ArchiveSet
+    return H01ArchiveSet(archives), digests
+
+
+class H01CellArchives:
+    """Present an archive set through the single-archive ``load`` interface.
+
+    Builders written for one archive call ``load(cell, component=...)``; this
+    view chooses each cell's archive from a per-cell digest map, so a network
+    whose nodes come from several archives constructs unchanged.
+
+    Parameters
+    ----------
+    archives : H01Archive or H01ArchiveSet
+        Source archives.
+    digest_by_cell : mapping
+        Cell identifier to the ``archive_sha256`` of the archive holding it.
+    """
+
+    def __init__(self, archives, digest_by_cell):
+        self.archives = archives
+        self.digest_by_cell = {str(k): v for k, v in digest_by_cell.items()}
+
+    @property
+    def neuron_ids(self):
+        """Cells the view can resolve, in numeric order."""
+        return tuple(sorted(self.digest_by_cell, key=int))
+
+    def load(self, neuron_id, *, component):
+        """Load one component of a cell from the archive its digest names."""
+        return load_source(self.archives, str(neuron_id), component, self.digest_by_cell[str(neuron_id)])
+
+
 def topology_from_evidence(evidence, contact_audit, archive):
     """Pin selected source components and anatomical placements for evolution.
 

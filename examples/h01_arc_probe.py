@@ -18,11 +18,12 @@ import jax.numpy as jnp
 import numpy as np
 import psutil
 
-from braintrace.datasets.h01 import H01Archive
+from braintrace.datasets.h01 import ARCHIVE_SHA256
 from braintrace.datasets.h01_annotations import H01Annotations
 from braintrace.datasets.h01_network import make_h01_network
 from braintrace.datasets.h01_network_init import init_h01_network_states, process_rss_mb
 from examples.pp_prop.h01_arc_model import H01ArcModel
+from examples.pp_prop.h01_runtime import H01CellArchives, is_archive_set, open_archive_paths
 
 
 def _sparse_learning_probe(model, report, phase):
@@ -62,6 +63,85 @@ def _sparse_learning_probe(model, report, phase):
         and all(np.isfinite(np.asarray(value)).all() for value in jax.tree.leaves(learner.factors.value)))
 
 
+def restrict_topology(topology, cell_ids):
+    """Keep only the named nodes and the contacts among them.
+
+    Parameters
+    ----------
+    topology : dict
+        Output of ``prepare_connectivity`` (``nodes`` and ``contacts``).
+    cell_ids : sequence of str
+        Cells to build; every one must be a node.
+
+    Returns
+    -------
+    dict
+        Copy of ``topology`` with ``nodes`` in their original order and only
+        contacts whose two endpoints are both listed.
+    """
+    wanted = [str(c) for c in cell_ids]
+    known = {n["cell_id"] for n in topology["nodes"]}
+    missing = sorted(set(wanted)-known)
+    if not wanted:
+        raise ValueError("The cell id list must name at least one cell")
+    if missing:
+        raise ValueError("Cells absent from the network nodes: "+", ".join(missing))
+    keep = set(wanted)
+    result = dict(topology)
+    result["nodes"] = [n for n in topology["nodes"] if n["cell_id"] in keep]
+    result["contacts"] = [e for e in topology["contacts"] if e["pre_cell"] in keep and e["post_cell"] in keep]
+    return result
+
+
+class OverlaidAnnotations:
+    """Cell tags from an explicit overlay first, then the pinned annotation cache.
+
+    Parameters
+    ----------
+    base : H01Annotations
+        Pinned released annotations.
+    overlay : mapping
+        Cell identifier to a list of tags for cells the cache does not carry.
+    """
+
+    def __init__(self, base, overlay):
+        self.base = base
+        self.overlay = {str(k): tuple(v) for k, v in overlay.items()}
+
+    def metadata(self, neuron_id):
+        """Tags of one cell as an object with a ``tags`` attribute."""
+        from types import SimpleNamespace
+        if str(neuron_id) in self.overlay:
+            return SimpleNamespace(tags=self.overlay[str(neuron_id)])
+        return self.base.metadata(neuron_id)
+
+
+def source_archives(paths, topology):
+    """Open the archives and, for several, route each node through its own digest.
+
+    Parameters
+    ----------
+    paths : sequence of path-like
+        Archive files.
+    topology : dict
+        Network whose nodes may carry ``archive_sha256``; absent means the
+        pinned proofread archive.
+
+    Returns
+    -------
+    tuple
+        ``(archive, digests)``; a single archive is returned unchanged.
+    """
+    archive, digests = open_archive_paths(paths)
+    if not is_archive_set(archive):
+        return archive, digests
+    view = H01CellArchives(archive, {n["cell_id"]: n.get("archive_sha256", ARCHIVE_SHA256) for n in topology["nodes"]})
+    unknown = sorted(d for d in set(view.digest_by_cell.values()) if d not in digests.values())
+    if unknown:
+        raise ValueError("Nodes name archives that were not opened: "+", ".join(unknown))
+    return view, digests
+
+
 def main():
     """Run one bounded population probe and retain each completed phase.
 
@@ -72,7 +152,15 @@ def main():
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, required=True)
-    parser.add_argument("--cells", type=int, choices=(4, 12, 40, 104), required=True)
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--cells", type=int, choices=(4, 12, 40, 104))
+    selection.add_argument("--cell-ids", type=Path, help="JSON list of cell ids (or an object with a 'cells' list).")
+    parser.add_argument("--archive", type=Path, action="append", default=None,
+                        help="Morphology archive; repeat for several (default: <cache>/proofread104.zip).")
+    parser.add_argument("--topology", type=Path, default=Path("docs/evidence/h01-verified-network.json"))
+    parser.add_argument("--components", type=Path, default=Path("docs/evidence/h01-population-components-soma.json"))
+    parser.add_argument("--annotations", type=Path, default=None,
+                        help="JSON object of cell id to tag list for cells the annotation cache lacks.")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--compile-learning", action="store_true")
     parser.add_argument("--sparse-learning", action="store_true")
@@ -82,7 +170,13 @@ def main():
     if not np.isfinite([args.wall_limit_seconds, args.rss_limit_gib]).all() or min(
             args.wall_limit_seconds, args.rss_limit_gib) <= 0:
         parser.error("Resource limits must be finite and positive")
-    report = {"status": "running", "cells": args.cells, "phases": {},
+    cell_ids = None
+    if args.cell_ids is not None:
+        listed = json.loads(args.cell_ids.read_text())
+        cell_ids = [str(c) for c in (listed["cells"] if isinstance(listed, dict) else listed)]
+    archives = args.archive or [args.cache/"proofread104.zip"]
+    report = {"status": "running", "cells": args.cells if cell_ids is None else len(cell_ids), "phases": {},
+              "cell_ids": cell_ids, "archives": [str(path) for path in archives],
               "event_ms": .1, "dt_ms": .005, "substeps": 20,
               "solver": "h01_staggered_calcium_implicit", "physiology": "unqualified"}
     report['devices'] = [str(device) for device in jax.devices()]
@@ -142,10 +236,17 @@ def main():
 
     try:
         with brainstate.environ.context(precision=64):
-            topology = json.loads(Path("docs/evidence/h01-verified-network.json").read_text())
-            components = json.loads(Path("docs/evidence/h01-population-components-soma.json").read_text())
+            topology = json.loads(args.topology.read_text())
+            components = json.loads(args.components.read_text())
+            if cell_ids is not None:
+                topology = restrict_topology(topology, cell_ids)
+            archive, digests = source_archives(archives, topology)
+            report["archive_sha256"] = digests
+            annotations = H01Annotations(args.cache)
+            if args.annotations is not None:
+                annotations = OverlaidAnnotations(annotations, json.loads(args.annotations.read_text()))
             network, evidence = phase("construction", lambda: make_h01_network(
-                topology, H01Archive(args.cache/"proofread104.zip"), H01Annotations(args.cache),
+                topology, archive, annotations,
                 include_isolated=True, cells=args.cells, components=components,
                 solver=report["solver"], progress=lambda text: print(text, flush=True)))
             report["evidence"] = evidence

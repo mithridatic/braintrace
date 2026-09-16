@@ -252,3 +252,25 @@ def test_open_archives_gives_one_archive_or_a_digest_keyed_set(monkeypatch, tmp_
     assert opened == [('a'*64, 'a'*64), ('a'*64, 'a'*64), ('b'*64, 'b'*64)]
     with pytest.raises(ValueError, match='at least one'):
         h01_runtime.open_archives(tmp_path, [])
+
+
+def test_open_archive_paths_pins_each_file_to_its_own_digest(monkeypatch, tmp_path):
+    import hashlib
+    from braintrace.datasets import h01
+    from . import h01_runtime
+    first, second = tmp_path/'first.zip', tmp_path/'second.zip'
+    first.write_bytes(b'one')
+    second.write_bytes(b'two')
+    monkeypatch.setattr(h01_runtime, 'H01Archive', lambda path, expected_sha256: SimpleNamespace(
+        path=path, sha256=expected_sha256, load=lambda identity, component: (path.name, identity)))
+    monkeypatch.setattr(h01, 'H01ArchiveSet', lambda archives: _ArchiveSet({a.sha256: a for a in archives}),
+                        raising=False)
+    archive, digests = h01_runtime.open_archive_paths([first])
+    assert digests == {str(first): hashlib.sha256(b'one').hexdigest()} and archive.sha256 == digests[str(first)]
+    archives, digests = h01_runtime.open_archive_paths([first, second])
+    assert h01_runtime.is_archive_set(archives) and list(digests) == [str(first), str(second)]
+    view = h01_runtime.H01CellArchives(archives, {'12': digests[str(second)], '7': digests[str(first)]})
+    assert view.neuron_ids == ('7', '12')
+    assert view.load(12, component=0) == ('second.zip', '12') and view.load('7', component=1) == ('first.zip', '7')
+    with pytest.raises(ValueError, match='at least one'):
+        h01_runtime.open_archive_paths([])
