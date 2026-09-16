@@ -1,0 +1,53 @@
+{
+  "definition": "Mean and sd of the recorded voltage over samples with onset-100 <= t < onset ms, in the recording's own clock; corrected voltages where the source stores the LJP uncorrected.",
+  "donors": {
+    "l2-pyramidal-allen-541563728": {
+      "rest_mv": -84.26339717358351,
+      "sd_mv": 0.043503910650872765,
+      "n": 5000,
+      "window_ms": [
+        920.0,
+        1020.0
+      ],
+      "source": "human-pyramidal-l2/sweep-50.npz",
+      "sha256": "6b47857fca79b0f2aafbce255822311d05462c982aa9f449b3c6624561c66d61",
+      "convention": "corrected_voltage_mv = reported - 14 mV LJP, as exported"
+    },
+    "l4-pyramidal-allen-527952884": {
+      "rest_mv": -81.00987869203091,
+      "sd_mv": 0.07918855796384443,
+      "n": 5000,
+      "window_ms": [
+        920.0,
+        1020.0
+      ],
+      "source": "human-pyramidal-l4/527952752_ephys.nwb",
+      "sha256": "e321fe93fb63c6af9118ff72df30756bf2e5599fecc54ab8f6f58c51d14fff5a",
+      "convention": "NWB reported - 14 mV LJP"
+    },
+    "l3-sst-interneuron-hl5mn1": {
+      "rest_mv": -77.14978379160166,
+      "sd_mv": 0.07835313204498247,
+      "n": 5000,
+      "window_ms": [
+        920.0,
+        1020.0
+      ],
+      "source": "human-sst-l3/571700399_ephys.nwb",
+      "sha256": "218aa144e2e3b63dbcb3fe57072572a7e305a89a57b69ddb36618a4ed9d5c45b",
+      "convention": "NWB reported - 14 mV LJP"
+    },
+    "l5-pv-basket-hl5bn1": {
+      "rest_mv": -86.75835944213867,
+      "sd_mv": 0.15344038624127523,
+      "n": 5000,
+      "window_ms": [
+        170.0,
+        270.0
+      ],
+      "source": "human-pv/active-0.npz",
+      "sha256": "abf25bcfc8ec9e8b21f8c9599a1d0a7844d5dcba46a7269fc7ef6c0356244182",
+      "convention": "as exported (already the comparison convention used by the PV campaign)"
+    }
+  }
+}

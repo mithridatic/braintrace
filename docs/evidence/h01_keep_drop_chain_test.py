@@ -1,0 +1,78 @@
+"""Tests for the keep/drop chain generator."""
+
+import json
+
+from docs.evidence import h01_keep_drop_chain as chain
+
+L2, L4, PV, SST = ("l2-pyramidal-allen-541563728", "l4-pyramidal-allen-527952884",
+                   "l5-pv-basket-hl5bn1", "l3-sst-interneuron-hl5mn1")
+
+
+def test_protocol_matches_the_spec():
+    p = chain.PROTOCOL
+    assert (p[L2]["current_na"], p[L4]["current_na"], p[PV]["current_na"], p[SST]["current_na"]) == (.31, .09, .19, .10)
+    assert (p[L2]["registered_count"], p[L4]["registered_count"], p[PV]["registered_count"],
+            p[SST]["registered_count"]) == (10, 12, 12, 14)
+    assert (p[L2]["donor_model_count"], p[L4]["donor_model_count"], p[PV]["donor_model_count"],
+            p[SST]["donor_model_count"]) == (10, 8, 14, 16)
+    assert p[L2]["duration_ms"] == p[L4]["duration_ms"] == 2300 and p[L2]["pulse_on_ms"] == 1020
+    assert p[PV]["duration_ms"] == p[SST]["duration_ms"] == 1500 and p[PV]["pulse_on_ms"] == 270
+    assert p[SST]["repeat_counts"] == (14, 14, 13, 12) and all(p[k]["repeat_counts"] is None for k in (L2, L4, PV))
+    assert all(p[k]["pulse_ms"] == 1000 for k in p)
+
+
+def test_primary_command_for_an_e_cell():
+    line = chain.command("955432427", L2)
+    assert line.startswith("$R transfer-all-955432427 1800 -- --cell 955432427 --donor " + L2 + " --polarity E")
+    assert "--pulse-on-ms 1020 --pulse-ms 1000 --duration-ms 2300" in line
+    assert "--current-na 0.31 --registered-count 10 --donor-model-count 10" in line
+    assert "--dt-ms" not in line and "--repeat-counts" not in line
+
+
+def test_dthalf_command_label_cap_and_dt():
+    line = chain.command("3761379470", L4, dt_half=True)
+    assert line.startswith("$R transfer-all-3761379470-dthalf 3600 --")
+    assert line.endswith("--donor-model-count 8 --dt-ms 0.0025")
+
+
+def test_sst_command_carries_repeat_counts():
+    line = chain.command("4420044370", SST)
+    assert "--registered-count 14 --repeat-counts 14 14 13 12 --donor-model-count 16" in line
+    assert "--polarity I --pulse-on-ms 270 --pulse-ms 1000 --duration-ms 1500 --current-na 0.1 " in line
+
+
+def test_chains_deal_sorted_cells_round_robin():
+    rows = [(str(1000+i*7), L2 if i % 2 else PV) for i in range(104)]
+    dealt = chain.chains(rows, 4)
+    assert [len(c) for c in dealt] == [26, 26, 26, 26]
+    flat = [cell for c in dealt for cell, _ in c]
+    assert len(set(flat)) == 104
+    ordered = sorted(rows, key=lambda pair: pair[0])
+    assert dealt[0][0] == ordered[0] and dealt[1][0] == ordered[1] and dealt[0][1] == ordered[4]
+
+
+def test_write_chains_primary_and_dthalf(tmp_path):
+    rows = [("a1", L2), ("a2", L4), ("a3", PV), ("a4", SST), ("a5", L2)]
+    paths = chain.write_chains(rows, tmp_path, "primary", 4)
+    assert [p.name for p in paths] == [f"keep-chain-{k}.sh" for k in (1, 2, 3, 4)]
+    text = paths[0].read_bytes().decode()
+    assert "\r" not in text
+    lines = text.splitlines()
+    assert lines[:5] == ["#!/usr/bin/env bash", f"# Keep/drop primary chain 1 of 4; rule and protocol in {chain.SPEC}.",
+                         "cd /workspace/braintrace", f"R={chain.RUNNER}", "export CPUSET=0-31 MEMFRAC=.2"]
+    assert len(lines) == 5+2+1 and lines[-1] == "echo CHAIN-DONE > var/h01-driven/keep-chain-1.done"
+    assert paths[3].read_text().splitlines()[4] == "export CPUSET=96-127 MEMFRAC=.2"
+    assert len(paths[1].read_text().splitlines()) == 5+1+1
+
+    decision = tmp_path/"decision.json"
+    decision.write_text(json.dumps({"candidates": ["a2", "a4"]}))
+    types = tmp_path/"types.json"
+    types.write_text(json.dumps({"rows": [{"cell_id": c, "donor_key": d} for c, d in rows]}))
+    filtered = chain.rows_from_types(types, json.loads(decision.read_text())["candidates"])
+    assert filtered == [("a2", L4), ("a4", SST)]
+    half = chain.write_chains(filtered, tmp_path/"half", "dthalf", 4)
+    assert [p.name for p in half] == [f"keep-chain-{k}-dthalf.sh" for k in (1, 2, 3, 4)]
+    first = half[0].read_text().splitlines()
+    assert first[5].startswith("$R transfer-all-a2-dthalf 3600 --") and first[5].endswith("--dt-ms 0.0025")
+    assert first[-1] == "echo CHAIN-DONE > var/h01-driven/keep-chain-1-dthalf.done"
+    assert len(half[2].read_text().splitlines()) == 5+0+1

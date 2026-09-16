@@ -45,6 +45,26 @@ def crossings(time_ms, voltage_mv, pulse_ms, detection_mv=-20.):
                 crossing_times_ms=[e["rise_crossing_ms"] for e in events])
 
 
+def windows(time_ms, voltage_mv, pulse_ms, rest_ms=100., return_ms=200., detection_mv=-20.):
+    """Keep-rule observations outside the pulse: pre/post-pulse crossings, rest and return levels.
+
+    ``rest_mean_mv`` averages the ``rest_ms`` before onset; ``return_mv`` averages the 10 ms
+    ending ``return_ms`` after the pulse and is None when the trace ends before that.
+    """
+    time_ms, voltage_mv = np.asarray(time_ms, float), np.asarray(voltage_mv, float)
+    clean = np.nan_to_num(voltage_mv, nan=-1e3)
+    before, after = time_ms < pulse_ms[0], time_ms >= pulse_ms[1]
+    pre = len(spike_datums(time_ms[before], clean[before], detection_mv)) if before.any() else 0
+    post = len(spike_datums(time_ms[after], clean[after], detection_mv)) if after.any() else 0
+    rest = (time_ms >= pulse_ms[0]-rest_ms) & before
+    return_end = pulse_ms[1]+return_ms
+    available = bool(len(time_ms) and time_ms[-1] >= return_end)
+    back = (time_ms >= return_end-10.) & (time_ms <= return_end)
+    return dict(pre_pulse_count=int(pre), rest_mean_mv=float(voltage_mv[rest].mean()) if rest.any() else None,
+                return_mv=float(voltage_mv[back].mean()) if available and back.any() else None,
+                return_available=available, post_pulse_count=int(post))
+
+
 def count_verdict(model, registered, repeat_counts):
     """Exact/within-one/rejected against a registered count; band verdict against repeats."""
     difference = abs(model-registered)
@@ -117,6 +137,7 @@ def main():
     pulse = (args.pulse_on_ms, args.pulse_on_ms+args.pulse_ms)
     observed = crossings(arrays["time_ms"], arrays["output_voltage"], pulse)
     soma = crossings(arrays["time_ms"], arrays["voltage"], pulse)
+    observed_windows = windows(arrays["time_ms"], arrays["output_voltage"], pulse)
     verdict = count_verdict(observed["count"], args.registered_count, args.repeat_counts)
     summary = dict(
         cell=args.cell, donor=args.donor, polarity=args.polarity, component=evidence["component"],
@@ -129,6 +150,7 @@ def main():
         verdict_vs_donor_model=(count_verdict(observed["count"], args.donor_model_count, None)
                                 if args.donor_model_count is not None else None),
         rest_before_pulse_mv=float(arrays["output_voltage"][int(args.pulse_on_ms/args.dt_ms)-1]),
+        **observed_windows,
         peak_mv=float(np.nanmax(arrays["output_voltage"])), min_mv=float(np.nanmin(arrays["output_voltage"])),
         construction_seconds=evidence["construction_seconds"], init_seconds=init["init_seconds_by_population"],
         run_seconds=run_seconds, steps=int(len(time_ms)), peak_rss_mb=process_rss_mb(peak=True),
