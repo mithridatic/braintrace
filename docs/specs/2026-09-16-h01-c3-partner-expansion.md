@@ -84,18 +84,38 @@ test current over the pulse window) and reports rheobase and, where it occurs, t
 current; the step run and the dt-half repeat are unchanged. Chains from
 `h01_keep_drop_chain.py`, follower and receipts unchanged.
 
-The gate is three failure edges with datums from the human recording and tolerances from the
-recording's own spread. The former bands (rest within 10 mV, count within max(2, 30 percent))
-are recorded beside them for comparison and are not the gate.
+The gate splits in two (J, 2026-09-16, while the chains ran; the raw measurements and the
+runs are unchanged, only the verdict). (a) Hard failure edges, with datums from the human
+recording and a tolerance of one sweep step of drive. (b) Plausibility rules, whose datum is
+the donor's own value and whose tolerance is the across-cell spread of the human cells of the
+donor's type in the Allen Cell Types database: 2 sd (sample sd across cells; the 5-95 percent
+range is recorded beside it, not used). The single-donor bands (count band across the sweeps
+within one step of the primary; 3 across-sweep sd of the donor's own pre-pulse and post-pulse
+family levels) and the former bands (rest within 10 mV, count within max(2, 30 percent)) are
+recorded beside every verdict for comparison and are not the gate.
 
 | Edge | Model reading | Human datum | Tolerance | Pass |
 | --- | ---: | --- | --- | --- |
-| Firing range | rheobase from the ramp; firing at the human's highest recorded amplitude; step count at the primary input | lowest firing and highest still-firing long-square amplitude (`long-square-index.json` / NWB stimulus, LJP-corrected); count band = the counts of every long-square sweep whose amplitude lies within one `sweep_step_pa` of `primary_pa` (inclusive, the primary's own repeats included; `human-datums.json` `count_band` with the contributing sweeps: L2 290/310/330 pA -> [9, 12]; L4 90/110 pA -> [12, 17], the family has no 70 pA sweep; PV 170/190/210 pA -> [4, 23]; SST 90/100 x4/110 pA -> [12, 21]) | one human sweep step of drive for all three readings: a single sweep at one amplitude carries no repeat spread, so the count band is read across the sweeps within one step (correction 2026-09-16, before any run) | rheobase within the step; still fires at the human's highest amplitude; step count inside [min, max] of the count band |
-| Rest | two legs, each against the family's own reading of the same window: mean over the 100 ms before the pulse; mean over the 10 ms ending 200 ms after the pulse (`h01_anatomy_transfer_run.windows`) | pre-pulse leg: donor rest across the long-square family (`human-datums.json` `rest_repeat_mean_mv`: L2 -84.01, L4 -80.60, PV -87.12, SST -77.50 mV); return leg: the family's mean over the 10 ms ending 200 ms after offset (`after_repeat_mean_mv`: L2 -84.94, L4 -81.03, PV -87.18, SST -79.18 mV; every sweep of all four families reaches that window). The single-sweep `donor-rest.json` value is kept beside them for the legacy verdict | 3 across-sweep sd of each leg's own family reading (`rest_repeat_sd_mv` 0.31-0.47 mV, bands 0.92-1.42 mV; `after_repeat_sd_mv` L2 0.96, L4 1.83, PV 0.45, SST 2.27 mV, bands 2.87, 5.49, 1.34, 6.82 mV); datum and tolerance come from one repeat set, the within-trace sd of one sweep is not the repeat level. Scoring the return leg against the pre-pulse datum was a datum-construction error corrected 2026-09-16 before any run; a leg the recording does not reach is not scored | both legs inside; no -20 mV crossing before the pulse |
-| Numerical | dt-half repeat | primary run | exact count | reproduces |
+| Hard: finite, no spike before the pulse | output and soma traces; -20 mV crossings before onset (step and ramp) | — | — | finite; zero crossings |
+| Hard: firing range | rheobase from the ramp; last spike current on the ramp; block current | lowest firing and highest still-firing long-square amplitude (`long-square-index.json` / NWB stimulus, LJP-corrected) | one human sweep step | rheobase within the step; still fires at the human's highest amplitude; no depolarisation block at or below it (`no_block_in_recorded_range`); the block edge above it is recorded, not scored |
+| Hard: numerical | dt-half repeat | primary run | exact count | reproduces |
+| Plausibility: count | step count at the primary input | the donor's own count at the primary (`measured_counts_at_primary` mean: L2 10, L4 12, PV 12, SST 13.25) | 2 across-cell sd of `num_spikes` on the type population's 1 s long-square sweeps within one step of the primary drive (null = 0 spikes; `type_population.count.tolerance`: spiny L2/3 at 310 pA 14.2 over 147 cells, spiny L4 at 90 pA 20.1 over 37, aspiny at 190 pA 62.2 over 67, aspiny at 100 pA 43.1 over 77) | inside |
+| Plausibility: pre-pulse rest | mean over the 100 ms before the pulse | `rest_repeat_mean_mv` (L2 -84.01, L4 -80.60, PV -87.12, SST -77.50 mV) | 2 across-cell sd of ipfx `pre_vm_mv` (500 ms before onset) on the same matched sweeps, -14 mV LJP: L2/3 7.7, L4 8.3, aspiny 9.4 / 9.8 mV | inside |
+| Plausibility: post-pulse level | mean over the 10 ms ending 200 ms after the pulse (`h01_anatomy_transfer_run.windows`) | `after_repeat_mean_mv` (L2 -84.94, L4 -81.03, PV -87.18, SST -79.18 mV; every sweep of all four families reaches the window) | 2 across-cell sd of ipfx `post_vm_mv` on the matched sweeps: L2/3 7.6, L4 8.2, aspiny 9.3 / 9.7 mV. The Allen table has no field for the 10 ms ending 200 ms after offset; `post_vm_mv` is the mean over the last 500 ms of the recording (5-7 s after offset), the closest documented post-stimulus level, and is named as the fallback | inside; a trace that does not reach the window fails |
 
-The block edge above the recorded range is a model measurement and is recorded, not scored.
-Usable-tier features (`h01_usable_tier.py`) are recorded on every cell. The 17 kept cells get
+Type populations (`h01_allen_type_population.py`, sha-pinned pulls `.cache/h01/allen-human-ephys-features.json`
+b19ed0b5... and `allen-human-ephys-sweeps.json` b3bd3d51..., `human-datums.json` `type_population`
+/ `allen_population`): human specimens by `tag__dendrite_type` and `structure__layer` — spiny
+layer 2/3 for the L2 donor (199 cells), spiny layer 4 for the L4 donor (37), aspiny of every
+layer for both interneuron donors (79): the API exposes no fast-spiking / non-fast-spiking
+label for human cells, so the split J named is not available and the aspiny population is the
+closest label. Both single-donor count bands (L2 290/310/330 pA -> [9, 12]; L4 90/110 -> [12, 17];
+PV 170/190/210 -> [4, 23]; SST 90/100 x4/110 -> [12, 21]) and both single-donor rest bands
+(3 across-sweep sd: pre-pulse 0.92-1.42 mV, post-pulse 2.87 / 5.49 / 1.34 / 6.82 mV) stay in the
+receipts as `donor_band_rules`.
+
+The block edge above the recorded range is a model measurement and is recorded, not scored;
+a block edge at or below the human's highest recorded amplitude is a hard failure. Usable-tier features (`h01_usable_tier.py`) are recorded on every cell. The 17 kept cells get
 the same ramp; a kept cell failing the firing-range gate is reported to J, not dropped.
 
 Prediction C-E: 1-4 of 20 pyramidal candidates pass (the former bands alone would pass 3-6).

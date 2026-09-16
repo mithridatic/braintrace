@@ -101,18 +101,23 @@ def keep_verdict(primary, half, donor_rest_mv):
                 rules=rules, keep=keep, drop_reason=None if keep else ",".join(failed))
 
 
-FAILURE_RULE_NAMES = ("finite", "rheobase_in_step", "fires_at_highest", "count_in_repeat_range",
-                      "rest_in_donor_spread", "no_spike_before_pulse", "dt_half_reproduces")
-FAILURE_RULE = ("keep = finite output and soma traces; firing range: the ramp rheobase within one human sweep "
-                "step of the human rheobase, the ramp still firing at the human's highest recorded amplitude, and "
-                "the step count at the primary input inside the human count band (min to max of the counts of every "
-                "long-square sweep within one sweep step of the primary amplitude, inclusive, the primary's repeats "
-                "included: a single sweep carries no repeat spread); rest: mean output voltage over the 100 ms before "
-                "the pulse within 3 across-sweep sd of the recording's across-sweep pre-pulse mean, and over the 10 ms "
-                "ending 200 ms after the pulse within 3 across-sweep sd of the recording's across-sweep mean over that "
-                "same window (a leg the recording does not reach is not scored), no -20 mV crossing before the pulse; "
-                "numerical: the dt-half repeat (0.0025 ms) is finite and reproduces the count. The block current "
-                "above the recorded range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).")
+HARD_RULE_NAMES = ("finite", "no_spike_before_pulse", "rheobase_in_step", "fires_at_highest",
+                   "no_block_in_recorded_range", "dt_half_reproduces")
+PLAUSIBILITY_RULE_NAMES = ("count_in_type_spread", "rest_in_type_spread", "return_in_type_spread")
+FAILURE_RULE_NAMES = HARD_RULE_NAMES + PLAUSIBILITY_RULE_NAMES
+DONOR_BAND_RULE_NAMES = ("count_in_repeat_range", "rest_in_donor_spread")
+FAILURE_RULE = ("keep = every hard failure edge holds and every plausibility rule holds. Hard edges: finite output "
+                "and soma traces; no -20 mV crossing before the pulse; the ramp rheobase within one human sweep step "
+                "of the human rheobase; the ramp still firing at the human's highest recorded amplitude; no "
+                "depolarisation block at or below that amplitude (the block current above it is recorded, not "
+                "scored); the dt-half repeat (0.0025 ms) finite and reproducing the count. Plausibility rules "
+                "(J, 2026-09-16): the step count at the primary input, the mean output voltage over the 100 ms "
+                "before the pulse, and over the 10 ms ending 200 ms after it, each within 2 across-cell sd of the "
+                "same reading over the human cells of the donor's type in the Allen Cell Types database "
+                "(human-datums.json type_population; datum = the donor's own value). The single-donor bands "
+                "(count_band across the sweeps within one step of the primary; 3 across-sweep sd of the donor's own "
+                "pre-pulse and post-pulse family levels) and the former 10 mV / 30 percent bands are recorded beside "
+                "the verdict for comparison and are not the gate (spec 2026-09-16-h01-c3-partner-expansion, step C).")
 REST_SD_FACTOR = 3.
 
 
@@ -167,8 +172,43 @@ def firing_range_rules(primary, ramp, datums):
     return rules, readings
 
 
+def _type_rule(value, datum, population, key):
+    """One plausibility rule: |value - datum| <= the type population's tolerance; None when unavailable."""
+    stats = (population or {}).get(key) or {}
+    tolerance = stats.get("tolerance")
+    if value is None or datum is None or tolerance is None:
+        return None, tolerance
+    return bool(abs(value-datum) <= tolerance), tolerance
+
+
+def plausibility_rules(primary, donor):
+    """The three plausibility rules against the donor's type population, with their readings."""
+    population = donor.get("type_population")
+    measured = list(donor.get("measured_counts_at_primary") or donor.get("repeat_counts") or [])
+    count_datum = float(sum(measured))/len(measured) if measured else None
+    rest_datum, after_datum = donor.get("rest_repeat_mean_mv"), donor.get("after_repeat_mean_mv")
+    count, rest_mv = primary["output_site"]["count"], primary.get("rest_mean_mv")
+    return_mv = primary.get("return_mv") if primary.get("return_available") else None
+    count_ok, count_tol = _type_rule(count, count_datum, population, "count")
+    rest_ok, rest_tol = _type_rule(rest_mv, rest_datum, population, "rest_mv")
+    return_ok, after_tol = _type_rule(return_mv, after_datum, population, "after_mv")
+    if return_ok is None and after_tol is not None and after_datum is not None:
+        return_ok = False    # the trace does not reach the window: the leg is measured as absent
+    rules = dict(count_in_type_spread=count_ok, rest_in_type_spread=rest_ok, return_in_type_spread=return_ok)
+    readings = dict(type_population=None if population is None else population.get("population"),
+                    type_population_label=None if population is None else population.get("label"),
+                    type_cells=None if population is None else population.get("cells_with_matched_sweeps"),
+                    type_tolerance_rule=None if population is None else population.get("tolerance_rule"),
+                    count_datum=count_datum, count_tolerance=count_tol,
+                    type_count_mean=None if population is None else population["count"].get("mean"),
+                    rest_type_datum_mv=rest_datum, rest_type_tolerance_mv=rest_tol,
+                    after_type_datum_mv=after_datum, after_type_tolerance_mv=after_tol,
+                    type_windows=None if population is None else population.get("windows"))
+    return rules, readings
+
+
 def keep_verdict_failure(primary, ramp, half, donor):
-    """One cell's test-to-failure verdict; the former five-rule verdict is written beside it.
+    """One cell's test-to-failure verdict under the split gate; the single-donor bands beside it.
 
     Parameters
     ----------
@@ -177,24 +217,25 @@ def keep_verdict_failure(primary, ramp, half, donor):
     donor : dict
         ``rest_mv`` and ``sd_mv`` from donor-rest.json merged with the donor's human datums
         (``rheobase_pa``, ``sweep_step_pa``, ``highest_firing_pa``, ``count_band``,
-        ``repeat_counts``, ``rest_repeat_mean_mv``, ``rest_repeat_sd_mv``,
-        ``after_repeat_mean_mv``, ``after_repeat_sd_mv``). Each rest leg is scored against
-        the across-sweep mean of its own window with 3 x that window's across-sweep sd: the
-        pre-pulse leg against the pre-pulse family, the return leg against the family's mean
-        over the 10 ms ending 200 ms after offset. A return leg without a datum (the recording
-        does not reach the window, or a single sweep with no spread) is not scored and is
-        recorded as such. donor-rest's single-sweep ``rest_mv``/``sd_mv`` are the pre-pulse
-        fallback and feed the legacy verdict.
+        ``repeat_counts``, ``measured_counts_at_primary``, ``rest_repeat_mean_mv``,
+        ``rest_repeat_sd_mv``, ``after_repeat_mean_mv``, ``after_repeat_sd_mv`` and
+        ``type_population``). Hard edges use the human firing-range datums; plausibility
+        rules use the donor's own value as the datum and 2 across-cell sd of the type
+        population as the tolerance; the single-donor bands (``count_band``, 3 across-sweep
+        sd of each rest leg) are written under ``donor_band_rules`` for comparison only.
 
     Returns
     -------
     dict
-        Rules, readings, ``keep``, ``drop_reason`` and ``legacy_verdict``; a missing ramp or
-        dt-half repeat is a named reason, never a keep.
+        ``rules`` (hard + plausibility), ``hard_rules``, ``plausibility_rules``,
+        ``donor_band_rules``, readings, ``keep``, ``drop_reason``, ``pending`` and
+        ``legacy_verdict``; a missing ramp or dt-half repeat is pending, never a keep; an
+        unavailable datum is never a pass.
     """
     count = primary["output_site"]["count"]
     repeat_sd = donor.get("rest_repeat_sd_mv")
-    rest_sd_source = "across-sweep repeat sd (human-datums rest_repeat_sd_mv)" if repeat_sd is not None else         "within-trace sd (donor-rest sd_mv; repeat sd absent)"
+    rest_sd_source = ("across-sweep repeat sd (human-datums rest_repeat_sd_mv)" if repeat_sd is not None
+                      else "within-trace sd (donor-rest sd_mv; repeat sd absent)")
     tolerance = REST_SD_FACTOR*(donor["sd_mv"] if repeat_sd is None else repeat_sd)
     repeat_mean = donor.get("rest_repeat_mean_mv")
     rest_datum = donor["rest_mv"] if repeat_mean is None else repeat_mean   # datum and tolerance from one sweep set
@@ -212,24 +253,32 @@ def keep_verdict_failure(primary, ramp, half, donor):
         return_leg = ("not scored: the recording carries no across-sweep datum for the 10 ms ending 200 ms after offset"
                       + (" (no sweep reaches it)" if after_mean is None else " (one sweep, no repeat spread)"))
     firing, readings = firing_range_rules(primary, ramp, donor)
+    plausible, type_readings = plausibility_rules(primary, donor)
+    readings.update(type_readings)
     readings.update(rest_datum_mv=rest_datum, rest_sd_mv=donor["sd_mv"] if repeat_sd is None else repeat_sd,
                     rest_sd_source=rest_sd_source, donor_single_sweep_rest_mv=donor["rest_mv"],
                     after_datum_mv=after_mean, after_sd_mv=after_sd, after_tolerance_mv=after_tolerance,
                     return_leg_scored=return_scored, return_leg=return_leg,
                     rest_leg_held=bool(rest_ok), return_leg_held=bool(return_ok) if return_scored else None)
-    rules = dict(finite=bool(primary["output_site"]["finite"] and primary["soma_site"]["finite"]
-                             and (ramp is None or ramp.get("finite", True))),
-                 **firing,
-                 rest_in_donor_spread=bool(rest_ok and return_ok),
-                 no_spike_before_pulse=primary["pre_pulse_count"] == 0 and (ramp is None or ramp.get("pre_pulse_count", 0) == 0),
-                 dt_half_reproduces=None if half is None else bool(half["output_site"]["finite"]
-                                                                   and half["output_site"]["count"] == count))
+    highest, block = readings["human_highest_firing_pa"], readings["model_block_pa"]
+    no_block = None if ramp is None or highest is None else not (block is not None and block <= highest)
+    hard = dict(finite=bool(primary["output_site"]["finite"] and primary["soma_site"]["finite"]
+                            and (ramp is None or ramp.get("finite", True))),
+                no_spike_before_pulse=primary["pre_pulse_count"] == 0 and (ramp is None or ramp.get("pre_pulse_count", 0) == 0),
+                rheobase_in_step=firing["rheobase_in_step"], fires_at_highest=firing["fires_at_highest"],
+                no_block_in_recorded_range=no_block,
+                dt_half_reproduces=None if half is None else bool(half["output_site"]["finite"]
+                                                                  and half["output_site"]["count"] == count))
+    donor_band = dict(count_in_repeat_range=firing["count_in_repeat_range"], rest_in_donor_spread=bool(rest_ok and return_ok))
+    rules = dict(hard, **plausible)
     failed = [name for name in FAILURE_RULE_NAMES if rules[name] is False]
     pending = []
     if ramp is None:
-        pending.append("ramp_missing")   # not yet measured: the firing-range rules stay None
-    elif any(rules[name] is None for name in ("rheobase_in_step", "fires_at_highest", "count_in_repeat_range")):
+        pending.append("ramp_missing")   # not yet measured: the ramp edges stay None
+    elif any(rules[name] is None for name in ("rheobase_in_step", "fires_at_highest", "no_block_in_recorded_range")):
         failed.append("firing_datum_unavailable")   # an unavailable row is not a pass (qualification rules)
+    if any(rules[name] is None for name in PLAUSIBILITY_RULE_NAMES):
+        failed.append("plausibility_datum_unavailable")
     if rules["dt_half_reproduces"] is None and not failed:
         pending.append("dt_half_missing")   # the repeat only runs for cells holding the measured rules
     keep = not failed and not pending
@@ -237,9 +286,11 @@ def keep_verdict_failure(primary, ramp, half, donor):
                 rest_mean_mv=rest_mv, return_mv=return_mv, rest_tolerance_mv=tolerance, donor_rest_mv=rest_datum,
                 pre_pulse_count=primary["pre_pulse_count"], readings=readings,
                 dt_half_count=None if half is None else half["output_site"]["count"],
-                rules=rules, keep=keep, drop_reason=",".join(failed) or None, pending=",".join(pending) or None,
+                rules=rules, hard_rules=hard, plausibility_rules=plausible, donor_band_rules=donor_band,
+                keep=keep, drop_reason=",".join(failed) or None, pending=",".join(pending) or None,
                 measured_rules=[name for name in FAILURE_RULE_NAMES if rules[name] is not None],
                 unmeasured_rules=[name for name in FAILURE_RULE_NAMES if rules[name] is None],
+                donor_band_failed=[name for name in DONOR_BAND_RULE_NAMES if donor_band[name] is False],
                 legacy_verdict=keep_verdict(primary, half, donor["rest_mv"]))
 
 
@@ -274,8 +325,7 @@ def _failure_status(verdict, phase):
     """'held', 'dropped' (a measured rule is False) or 'pending' (a run is still missing), with the reason."""
     names = [name for name in verdict["rules"] if phase == "final" or name != "dt_half_reproduces"]
     failed = [name for name in names if verdict["rules"][name] is False]
-    if verdict["drop_reason"] and "firing_datum_unavailable" in verdict["drop_reason"]:
-        failed.append("firing_datum_unavailable")
+    failed += [reason for reason in (verdict["drop_reason"] or "").split(",") if reason.endswith("_datum_unavailable")]
     if failed:
         return "dropped", ",".join(failed)
     if verdict["pending"] and (phase == "final" or "ramp_missing" in verdict["pending"]):
@@ -345,7 +395,20 @@ def decide_keep(folder, types_path, rests_path, phase="final", gate="bands", dat
     if gate == "failure":
         result["counts"]["pending"] = len(pending)
         result["datums_sha256"] = sha256(datums_path)
+        result["rule_counts"] = rule_counts(cells)
     return result
+
+
+def rule_counts(cells):
+    """Per-rule held / failed / unmeasured counts for the gate rules, the single-donor bands and the legacy bands."""
+    def tally(name, pick):
+        values = [pick(v).get(name) for v in cells.values()]
+        return dict(held=sum(1 for x in values if x is True), failed=sum(1 for x in values if x is False),
+                    unmeasured=sum(1 for x in values if x is None))
+    return dict(hard={n: tally(n, lambda v: v["hard_rules"]) for n in HARD_RULE_NAMES},
+                plausibility={n: tally(n, lambda v: v["plausibility_rules"]) for n in PLAUSIBILITY_RULE_NAMES},
+                donor_band={n: tally(n, lambda v: v["donor_band_rules"]) for n in DONOR_BAND_RULE_NAMES},
+                legacy={n: tally(n, lambda v: v["legacy_verdict"]["rules"]) for n in KEEP_RULE_NAMES})
 
 
 def _print_keep(decision):

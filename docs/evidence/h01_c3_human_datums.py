@@ -11,7 +11,11 @@ at one amplitude carries no repeat spread. Rest datums are read over the two win
 transfer runner scores: ``rest_mv`` over the 100 ms before onset and ``after_mv`` over the
 10 ms ending 200 ms after offset (``h01_anatomy_transfer_run.windows``), each averaged across
 the family with its across-sweep sd. NWB voltages are corrected by the -14 mV liquid junction
-potential once, as ``h01_keep_drop_rest.py`` does. Read-only analysis; runs on the laptop.
+potential once, as ``h01_keep_drop_rest.py`` does. With ``--allen-features`` / ``--allen-sweeps``
+(sha-pinned Allen Cell Types pulls under ``.cache/h01/``) every donor also carries
+``type_population``: the across-cell spread of the same three readings over the human cells of
+the donor's type (``h01_allen_type_population.py``), the tolerance of the gate's plausibility
+rules. Read-only analysis; runs on the laptop.
 """
 
 import argparse
@@ -24,6 +28,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from h01_allen_type_population import donor_type_populations, load as load_allen  # noqa: E402
 from h01_keep_drop_rest import load_nwb_sweep, rest_window  # noqa: E402
 from h01_pv_human_datums import spike_datums  # noqa: E402
 
@@ -236,11 +241,20 @@ def export_counts(cache, exports, pulse_ms):
     return rows
 
 
-def measure(cache, donors=None):
-    """Datums for every donor from the recordings under ``cache``."""
+def measure(cache, donors=None, allen=None):
+    """Datums for every donor from the recordings under ``cache``.
+
+    ``allen`` = ``(features_doc, sweeps_doc, provenance)`` from ``h01_allen_type_population.load``
+    adds ``type_population`` to every donor whose type is registered there.
+    """
     cache = Path(cache)
     donors = DONORS if donors is None else donors
     result = {}
+    populations = {}
+    if allen is not None:
+        features, sweeps, _ = allen
+        primaries = {donor: spec["primary_pa"] for donor, spec in donors.items()}
+        populations = donor_type_populations(features, sweeps, primaries)
     for donor, spec in donors.items():
         path = cache/spec["nwb"]
         rows = read_long_square_sweeps(path)
@@ -250,8 +264,10 @@ def measure(cache, donors=None):
                      **derive_datums(rows, spec["primary_pa"], spec["repeat_counts"]))
         if "exports" in spec:
             entry["donor_exports"] = export_counts(cache, spec["exports"], spec["export_pulse_ms"])
+        if donor in populations:
+            entry["type_population"] = populations[donor]
         result[donor] = entry
-    return dict(
+    report = dict(
         definition=("Long-square family per donor: amplitude (aibs_stimulus_amplitude_pa, measured deviation "
                     "beside it), pulse window from the command, -20 mV crossing count inside the window on "
                     "LJP-corrected voltage, rest over the 100 ms before onset. rheobase_pa = lowest firing "
@@ -267,8 +283,16 @@ def measure(cache, donors=None):
                     "after_repeat_sd_mv = mean and sd, across the same sweeps, of the voltage over the 10 ms ending "
                     "200 ms after the pulse offset, the window the transfer runner scores as return_mv. Each leg's "
                     "datum and tolerance (3 sd) come from its own window; donor-rest.json keeps the single-sweep "
-                    "value for the legacy verdict."),
+                    "value for the legacy verdict. type_population (when present) = the across-cell spread of the "
+                    "count at the primary drive, the pre-pulse level and the post-stimulus level over the human cells "
+                    "of the donor's type in the Allen Cell Types database (h01_allen_type_population.py): the "
+                    "tolerance (2 sd across cells) of the gate's plausibility rules, whose datum stays the donor's own "
+                    "value; count_band and the 3 sd single-donor rest bands stay beside it as the comparison column."),
         donors=result)
+    if allen is not None:
+        report["allen_population"] = dict(allen[2], species="Homo Sapiens",
+                                          type_labels="tag__dendrite_type and structure__layer (no fast-spiking label for human cells)")
+    return report
 
 
 def render(report):
@@ -290,8 +314,20 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, default=Path(".cache"))
     parser.add_argument("--output", type=Path, default=Path("docs/evidence/h01-c3-keep-drop/human-datums.json"))
+    parser.add_argument("--allen-features", type=Path, default=None,
+                        help="sha-pinned pull of model::ApiCellTypesSpecimenDetail (human) under .cache/h01/")
+    parser.add_argument("--allen-sweeps", type=Path, default=None,
+                        help="sha-pinned pull of the populations' long-square EphysSweep rows under .cache/h01/")
+    parser.add_argument("--allen-features-sha256", default=None)
+    parser.add_argument("--allen-sweeps-sha256", default=None)
     args = parser.parse_args(argv)
-    report = measure(args.cache)
+    allen = None
+    if args.allen_features is not None or args.allen_sweeps is not None:
+        if args.allen_features is None or args.allen_sweeps is None:
+            parser.error("--allen-features and --allen-sweeps go together")
+        allen = load_allen(args.allen_features, args.allen_sweeps,
+                           expected=dict(features=args.allen_features_sha256, sweeps=args.allen_sweeps_sha256))
+    report = measure(args.cache, allen=allen)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2)+"\n", newline="\n")
     print(render(report))

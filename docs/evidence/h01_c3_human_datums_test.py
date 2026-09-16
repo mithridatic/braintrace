@@ -182,3 +182,32 @@ def test_measure_and_main_write_one_entry_per_donor(tmp_path, monkeypatch, capsy
     written = json.loads(output.read_text())
     assert set(written["donors"]) == {"donor-a"} and "definition" in written
     assert "donor-a" in capsys.readouterr().out
+
+
+def test_measure_adds_the_type_population_when_the_allen_pulls_are_given(tmp_path, monkeypatch, capsys):
+    pytest.importorskip("h5py")
+    (tmp_path/"cells").mkdir()
+    _write_nwb(tmp_path/"cells"/"a.nwb", {1: ("Long Square", 70., [1100.]), 2: ("Long Square", 90., [1100., 1200.])})
+    donors = {"l4-pyramidal-allen-527952884": dict(nwb="cells/a.nwb", primary_pa=90., repeat_counts=[2], source_cell="synthetic")}
+    features = tmp_path/"allen-human-ephys-features.json"
+    sweeps = tmp_path/"allen-human-ephys-sweeps.json"
+    features.write_text(json.dumps(dict(source="f", fetched_utc="t", rows=[
+        dict(specimen__id=1, tag__dendrite_type="spiny", structure__layer="4"),
+        dict(specimen__id=2, tag__dendrite_type="spiny", structure__layer="4")])))
+    sweeps.write_text(json.dumps(dict(source="s", fetched_utc="t", rows=[
+        dict(specimen_id=1, stimulus_absolute_amplitude=90., num_spikes=12, pre_vm_mv=-70., post_vm_mv=-70.5, stimulus_duration=1.),
+        dict(specimen_id=2, stimulus_absolute_amplitude=110., num_spikes=None, pre_vm_mv=-66., post_vm_mv=-67., stimulus_duration=1.)])))
+    from h01_allen_type_population import load as load_allen
+    report = measure(tmp_path, donors, allen=load_allen(features, sweeps))
+    pop = report["donors"]["l4-pyramidal-allen-527952884"]["type_population"]
+    assert pop["population"] == "spiny_l4" and pop["count"]["n"] == 2 and pop["count"]["tolerance"] == pytest.approx(2*12/2**.5)
+    assert pop["rest_mv"]["mean"] == pytest.approx(-82.) and report["allen_population"]["features"]["path"] == features.name
+    assert "type_population" in report["definition"]
+    assert "type_population" not in measure(tmp_path, donors)["donors"]["l4-pyramidal-allen-527952884"]
+    monkeypatch.setattr("h01_c3_human_datums.DONORS", donors)
+    output = tmp_path/"out"/"human-datums.json"
+    main(["--cache", str(tmp_path), "--output", str(output), "--allen-features", str(features), "--allen-sweeps", str(sweeps)])
+    assert json.loads(output.read_text())["allen_population"]["species"] == "Homo Sapiens"
+    with pytest.raises(SystemExit):
+        main(["--cache", str(tmp_path), "--output", str(output), "--allen-features", str(features)])
+    capsys.readouterr()

@@ -169,9 +169,15 @@ def test_keep_cli_writes_decision(tmp_path, capsys):
 
 
 AFTER = REST-.8    # the family's level over the 10 ms ending 200 ms after offset sits below its pre-pulse rest
+TYPE = dict(population="spiny_l4", label="human spiny (pyramidal) layer 4", cells_with_matched_sweeps=37,
+            tolerance_rule="2 sd across cells", count=dict(n=37, mean=12.75, sd=10.04, tolerance=20.08),
+            rest_mv=dict(n=37, mean=-82.18, sd=4.15, tolerance=8.30), after_mv=dict(n=37, mean=-82., sd=4.10, tolerance=8.20),
+            windows=dict(count="num_spikes", rest_mv="pre_vm_mv", after_mv="post_vm_mv"))
 DONOR = dict(rest_mv=REST-.4, sd_mv=.02, rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1, rheobase_pa=50., sweep_step_pa=20.,
-             highest_firing_pa=170., repeat_counts=[12], after_repeat_mean_mv=AFTER, after_repeat_sd_mv=.2,
-             count_band=dict(min=11, max=15, counts=[11, 12, 15], sweeps=[38, 39, 40], amplitudes_pa=[70., 90., 110.]))
+             highest_firing_pa=170., repeat_counts=[12], measured_counts_at_primary=[12],
+             after_repeat_mean_mv=AFTER, after_repeat_sd_mv=.2,
+             count_band=dict(min=11, max=15, counts=[11, 12, 15], sweeps=[38, 39, 40], amplitudes_pa=[70., 90., 110.]),
+             type_population=TYPE)
 
 
 def _ramp(rheobase_na=.055, block_na=None, spikes=(1100., 1500., 1900., 2010.), ramp_max_na=.27, finite=True, pre=0):
@@ -186,42 +192,72 @@ def _cell_run_failure(**overrides):
     return run
 
 
-def test_failure_verdict_all_rules_hold_and_carries_the_legacy_verdict():
+def test_failure_verdict_all_rules_hold_and_carries_the_comparison_columns():
     verdict = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), DONOR)
-    assert verdict["keep"] is True and verdict["drop_reason"] is None
-    assert all(v is True for v in verdict["rules"].values()) and verdict["legacy_verdict"]["keep"] is True
-    assert verdict["rest_tolerance_mv"] == pytest.approx(.3)   # 3 x the across-sweep repeat sd, not the within-trace sd
+    assert verdict["keep"] is True and verdict["drop_reason"] is None and verdict["pending"] is None
+    assert tuple(verdict["rules"]) == decision.FAILURE_RULE_NAMES and all(v is True for v in verdict["rules"].values())
+    assert tuple(verdict["hard_rules"]) == decision.HARD_RULE_NAMES
+    assert tuple(verdict["plausibility_rules"]) == decision.PLAUSIBILITY_RULE_NAMES
+    assert verdict["donor_band_rules"] == dict(count_in_repeat_range=True, rest_in_donor_spread=True)
+    assert verdict["donor_band_failed"] == [] and verdict["legacy_verdict"]["keep"] is True
     readings = verdict["readings"]
-    assert readings["rest_sd_mv"] == .1 and readings["rest_sd_source"].startswith("across-sweep")
-    assert readings["rest_datum_mv"] == REST and readings["donor_single_sweep_rest_mv"] == REST-.4
-    assert verdict["donor_rest_mv"] == REST and verdict["legacy_verdict"]["keep"] is True   # legacy: single sweep
-    assert readings["model_rheobase_pa"] == pytest.approx(55.) and readings["ramp_max_pa"] == pytest.approx(270.)
-    assert readings["model_last_spike_pa"] == pytest.approx(267.3) and readings["block_above_recorded_range"] is None
-    assert readings["after_datum_mv"] == AFTER and readings["after_tolerance_mv"] == pytest.approx(.6)
-    assert readings["return_leg_scored"] is True and readings["rest_leg_held"] and readings["return_leg_held"]
-    assert readings["human_count_band"] == [11, 15] and readings["human_count_band_sweeps"] == [38, 39, 40]
-    assert readings["human_count_band_source"].startswith("count_band")
+    assert readings["count_datum"] == 12. and readings["count_tolerance"] == 20.08 and readings["type_population"] == "spiny_l4"
+    assert readings["rest_type_datum_mv"] == REST and readings["rest_type_tolerance_mv"] == 8.3
+    assert readings["after_type_datum_mv"] == AFTER and readings["after_type_tolerance_mv"] == 8.2
+    assert readings["type_cells"] == 37 and readings["type_tolerance_rule"] == "2 sd across cells"
+    assert verdict["rest_tolerance_mv"] == pytest.approx(.3)   # single-donor family band, comparison column
+    assert readings["human_count_band"] == [11, 15] and readings["model_rheobase_pa"] == pytest.approx(55.)
+    assert readings["block_above_recorded_range"] is None and readings["return_leg_scored"] is True
 
 
 @pytest.mark.parametrize("primary, ramp, half, reason", [
     (_cell_run_failure(finite=False), _ramp(), _cell_run_failure(), "finite"),
     (_cell_run_failure(), _ramp(finite=False), _cell_run_failure(), "finite"),
-    (_cell_run_failure(), _ramp(rheobase_na=.0701), _cell_run_failure(), "rheobase_in_step"),
-    (_cell_run_failure(), _ramp(rheobase_na=None, spikes=()), _cell_run_failure(), "rheobase_in_step,fires_at_highest"),
-    (_cell_run_failure(), _ramp(block_na=.15, spikes=(1100., 1500.)), _cell_run_failure(), "fires_at_highest"),
-    (_cell_run_failure(count=16), _ramp(), _cell_run_failure(count=16), "count_in_repeat_range"),
-    (_cell_run_failure(count=10), _ramp(), _cell_run_failure(count=10), "count_in_repeat_range"),
-    (_cell_run_failure(rest=REST-.31), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),
-    (_cell_run_failure(ret=AFTER+.61), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),
-    (_cell_run_failure(ret=REST), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),   # at the pre-pulse level, 0.8 above the after datum
-    (_cell_run_failure(ret_available=False), _ramp(), _cell_run_failure(), "rest_in_donor_spread"),
     (_cell_run_failure(pre=1), _ramp(), _cell_run_failure(), "no_spike_before_pulse"),
     (_cell_run_failure(), _ramp(pre=1), _cell_run_failure(), "no_spike_before_pulse"),
+    (_cell_run_failure(), _ramp(rheobase_na=.0701), _cell_run_failure(), "rheobase_in_step"),
+    (_cell_run_failure(), _ramp(rheobase_na=None, spikes=()), _cell_run_failure(), "rheobase_in_step,fires_at_highest"),
+    (_cell_run_failure(), _ramp(block_na=.15, spikes=(1100., 1500.)), _cell_run_failure(),
+     "fires_at_highest,no_block_in_recorded_range"),
     (_cell_run_failure(), _ramp(), _cell_run_failure(count=11), "dt_half_reproduces"),
+    (_cell_run_failure(count=33), _ramp(), _cell_run_failure(count=33), "count_in_type_spread"),
+    (_cell_run_failure(rest=REST-8.31), _ramp(), _cell_run_failure(), "rest_in_type_spread"),
+    (_cell_run_failure(ret=AFTER+8.21), _ramp(), _cell_run_failure(), "return_in_type_spread"),
+    (_cell_run_failure(ret_available=False), _ramp(), _cell_run_failure(), "return_in_type_spread"),
 ])
 def test_failure_verdict_each_rule_failing_alone(primary, ramp, half, reason):
     verdict = decision.keep_verdict_failure(primary, ramp, half, DONOR)
     assert verdict["keep"] is False and verdict["drop_reason"] == reason and verdict["pending"] is None
+
+
+def test_failure_verdict_plausibility_is_the_type_spread_and_the_donor_band_is_only_recorded():
+    # count 32: inside 12 +- 20.08, outside the single-donor band [11, 15] -> keep, donor band failed, recorded
+    wide = decision.keep_verdict_failure(_cell_run_failure(count=32), _ramp(), _cell_run_failure(count=32), DONOR)
+    assert wide["keep"] is True and wide["donor_band_rules"]["count_in_repeat_range"] is False
+    assert wide["donor_band_failed"] == ["count_in_repeat_range"] and wide["legacy_verdict"]["rules"]["count_in_band"] is False
+    # return 5 mV below the after datum: inside the type spread (8.2), outside the donor family band (0.6)
+    low = decision.keep_verdict_failure(_cell_run_failure(ret=AFTER-5.), _ramp(), _cell_run_failure(), DONOR)
+    assert low["keep"] is True and low["donor_band_rules"]["rest_in_donor_spread"] is False
+    assert low["readings"]["return_leg_held"] is False and low["rules"]["return_in_type_spread"] is True
+    # the datum is the donor's own value, not the type mean: count 12 with the type mean at 12.75
+    assert wide["readings"]["count_datum"] == 12. and wide["readings"]["type_count_mean"] == 12.75
+    # SST-style repeats: the datum is the mean of the donor's measured counts at the primary
+    sst = dict(DONOR, measured_counts_at_primary=[14, 14, 13, 12], repeat_counts=[14, 14, 13, 12])
+    assert decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), sst)["readings"]["count_datum"] == 13.25
+
+
+def test_failure_verdict_block_edge_is_a_hard_failure_inside_the_recorded_range_and_recorded_above_it():
+    below = decision.keep_verdict_failure(_cell_run_failure(), _ramp(block_na=.16, spikes=(1100., 1500., 1612.)),
+                                          _cell_run_failure(), DONOR)
+    assert below["hard_rules"]["no_block_in_recorded_range"] is False and below["hard_rules"]["fires_at_highest"] is False
+    assert below["readings"]["block_above_recorded_range"] is False and below["keep"] is False
+    at_edge = decision.keep_verdict_failure(_cell_run_failure(), _ramp(block_na=.17, spikes=(1100., 1500., 1650.)),
+                                            _cell_run_failure(), DONOR)
+    assert at_edge["hard_rules"]["no_block_in_recorded_range"] is False   # at the highest amplitude is inside the range
+    above = decision.keep_verdict_failure(_cell_run_failure(), _ramp(block_na=.2, spikes=(1100., 1500., 1800.)),
+                                          _cell_run_failure(), DONOR)
+    assert above["keep"] is True and above["readings"]["block_above_recorded_range"] is True
+    assert above["hard_rules"]["no_block_in_recorded_range"] is True and above["readings"]["model_block_pa"] == pytest.approx(200.)
 
 
 def test_failure_verdict_missing_runs_are_pending_not_dropped():
@@ -230,92 +266,45 @@ def test_failure_verdict_missing_runs_are_pending_not_dropped():
     assert no_half["unmeasured_rules"] == ["dt_half_reproduces"]
     no_ramp = decision.keep_verdict_failure(_cell_run_failure(), None, _cell_run_failure(), DONOR)
     assert no_ramp["keep"] is False and no_ramp["drop_reason"] is None and no_ramp["pending"] == "ramp_missing"
-    assert no_ramp["rules"]["rheobase_in_step"] is None and no_ramp["rules"]["fires_at_highest"] is None
-    assert no_ramp["rules"]["count_in_repeat_range"] is True   # read from the primary run, ramp or not
-    assert no_ramp["unmeasured_rules"] == ["rheobase_in_step", "fires_at_highest"]
-    assert set(no_ramp["measured_rules"]) == {"finite", "count_in_repeat_range", "rest_in_donor_spread",
-                                             "no_spike_before_pulse", "dt_half_reproduces"}
+    assert no_ramp["unmeasured_rules"] == ["rheobase_in_step", "fires_at_highest", "no_block_in_recorded_range"]
+    assert no_ramp["rules"]["count_in_type_spread"] is True   # read from the primary run, ramp or not
     # a measured failure is a drop even while the ramp is pending
-    both = decision.keep_verdict_failure(_cell_run_failure(count=16), None, _cell_run_failure(count=16), DONOR)
-    assert both["drop_reason"] == "count_in_repeat_range" and both["pending"] == "ramp_missing" and both["keep"] is False
-
-
-def test_failure_verdict_block_inside_the_recorded_range_fails_and_above_it_is_recorded_only():
-    below = decision.keep_verdict_failure(_cell_run_failure(), _ramp(block_na=.16, spikes=(1100., 1500., 1612.)),
-                                          _cell_run_failure(), DONOR)
-    assert below["rules"]["fires_at_highest"] is False and below["readings"]["block_above_recorded_range"] is False
-    above = decision.keep_verdict_failure(_cell_run_failure(), _ramp(block_na=.2, spikes=(1100., 1500., 1800.)),
-                                          _cell_run_failure(), DONOR)
-    assert above["keep"] is True and above["readings"]["block_above_recorded_range"] is True
-    assert above["readings"]["model_block_pa"] == pytest.approx(200.)
-
-
-def test_failure_verdict_count_band_is_inclusive_and_read_across_the_sweeps_within_one_step():
-    for count in (11, 12, 13, 14, 15):
-        assert decision.keep_verdict_failure(_cell_run_failure(count=count), _ramp(), _cell_run_failure(count=count),
-                                             DONOR)["rules"]["count_in_repeat_range"]
-    for count in (10, 16):
-        assert not decision.keep_verdict_failure(_cell_run_failure(count=count), _ramp(), _cell_run_failure(count=count),
-                                                 DONOR)["rules"]["count_in_repeat_range"]
-
-
-def test_failure_verdict_count_falls_back_to_the_registered_repeats_without_a_count_band():
-    donor = {k: v for k, v in DONOR.items() if k != "count_band"}
-    donor["repeat_counts"] = [14, 14, 13, 12]
-    for count in (12, 13, 14):
-        verdict = decision.keep_verdict_failure(_cell_run_failure(count=count), _ramp(), _cell_run_failure(count=count), donor)
-        assert verdict["rules"]["count_in_repeat_range"] and verdict["readings"]["human_count_band"] == [12, 14]
-        assert verdict["readings"]["human_count_band_source"].startswith("repeat_counts")
-    assert not decision.keep_verdict_failure(_cell_run_failure(count=15), _ramp(), _cell_run_failure(count=15),
-                                             donor)["rules"]["count_in_repeat_range"]
-    empty = dict(donor, count_band=dict(min=None, max=None, counts=[]), repeat_counts=[])
-    verdict = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), empty)
-    assert verdict["rules"]["count_in_repeat_range"] is None and verdict["readings"]["human_count_band"] is None
-
-
-def test_failure_verdict_return_leg_is_scored_against_its_own_window_datum():
-    # return at the pre-pulse datum (REST) is 0.8 mV above the after datum: outside 3 x 0.2 -> fails
-    at_rest = decision.keep_verdict_failure(_cell_run_failure(ret=REST), _ramp(), _cell_run_failure(), DONOR)
-    assert at_rest["rules"]["rest_in_donor_spread"] is False and at_rest["readings"]["return_leg_held"] is False
-    assert at_rest["readings"]["rest_leg_held"] is True and at_rest["legacy_verdict"]["rules"]["rest_and_return"] is True
-    inside = decision.keep_verdict_failure(_cell_run_failure(ret=AFTER-.6), _ramp(), _cell_run_failure(), DONOR)
-    assert inside["rules"]["rest_in_donor_spread"] is True and inside["readings"]["after_tolerance_mv"] == pytest.approx(.6)
-    # no across-sweep datum for the window: the leg is not scored, the pre-pulse leg still is
-    for donor in (dict(DONOR, after_repeat_mean_mv=None, after_repeat_sd_mv=None), dict(DONOR, after_repeat_sd_mv=None)):
-        unscored = decision.keep_verdict_failure(_cell_run_failure(ret=REST+5.), _ramp(), _cell_run_failure(), donor)
-        assert unscored["rules"]["rest_in_donor_spread"] is True and unscored["readings"]["return_leg_scored"] is False
-        assert unscored["readings"]["return_leg_held"] is None and unscored["readings"]["return_leg"].startswith("not scored")
-        assert unscored["readings"]["after_tolerance_mv"] is None
-        assert decision.keep_verdict_failure(_cell_run_failure(rest=REST-.31, ret=REST), _ramp(), _cell_run_failure(),
-                                             donor)["rules"]["rest_in_donor_spread"] is False
-
-
-def test_failure_verdict_rest_falls_back_to_the_single_sweep_when_no_repeat_set():
-    donor = {k: v for k, v in DONOR.items() if k not in ("rest_repeat_sd_mv", "rest_repeat_mean_mv")}
-    single = REST-.4
-    verdict = decision.keep_verdict_failure(_cell_run_failure(rest=single+.05), _ramp(), _cell_run_failure(), donor)
-    assert verdict["rest_tolerance_mv"] == pytest.approx(.06) and verdict["readings"]["rest_sd_mv"] == .02
-    assert verdict["readings"]["rest_sd_source"].startswith("within-trace") and verdict["readings"]["rest_datum_mv"] == single
-    assert verdict["keep"] is True
-    assert decision.keep_verdict_failure(_cell_run_failure(rest=single+.07), _ramp(), _cell_run_failure(),
-                                         donor)["keep"] is False
-
-
-def test_failure_verdict_rest_band_is_centred_on_the_family_mean_not_the_single_sweep():
-    # REST-.55 is within 10 mV of the single sweep (legacy holds) but outside the family band REST +- .3.
-    verdict = decision.keep_verdict_failure(_cell_run_failure(rest=REST-.55), _ramp(), _cell_run_failure(), DONOR)
-    assert verdict["rules"]["rest_in_donor_spread"] is False and verdict["legacy_verdict"]["rules"]["rest_and_return"] is True
+    both = decision.keep_verdict_failure(_cell_run_failure(count=40), None, _cell_run_failure(count=40), DONOR)
+    assert both["drop_reason"] == "count_in_type_spread" and both["pending"] == "ramp_missing" and both["keep"] is False
 
 
 def test_failure_verdict_unavailable_datum_is_never_a_keep():
     short = decision.keep_verdict_failure(_cell_run_failure(), _ramp(ramp_max_na=.15), _cell_run_failure(), DONOR)
     assert short["rules"]["fires_at_highest"] is None and short["drop_reason"] == "firing_datum_unavailable"
-    no_human = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
-                                             dict(DONOR, rheobase_pa=None))
+    no_human = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), dict(DONOR, rheobase_pa=None))
     assert no_human["rules"]["rheobase_in_step"] is None and no_human["keep"] is False
-    no_repeats = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
-                                               dict(DONOR, repeat_counts=[], count_band=None))
-    assert no_repeats["rules"]["count_in_repeat_range"] is None and no_repeats["keep"] is False
+    no_type = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
+                                            {k: v for k, v in DONOR.items() if k != "type_population"})
+    assert all(no_type["rules"][n] is None for n in decision.PLAUSIBILITY_RULE_NAMES)
+    assert no_type["drop_reason"] == "plausibility_datum_unavailable" and no_type["keep"] is False
+    assert no_type["readings"]["type_population"] is None and no_type["donor_band_rules"]["count_in_repeat_range"] is True
+    no_count = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
+                                             dict(DONOR, measured_counts_at_primary=[], repeat_counts=[]))
+    assert no_count["rules"]["count_in_type_spread"] is None and no_count["readings"]["count_datum"] is None
+    no_after = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
+                                             dict(DONOR, after_repeat_mean_mv=None, after_repeat_sd_mv=None))
+    assert no_after["rules"]["return_in_type_spread"] is None and no_after["keep"] is False
+    assert no_after["donor_band_rules"]["rest_in_donor_spread"] is True and no_after["readings"]["return_leg_scored"] is False
+
+
+def test_donor_band_columns_keep_their_own_datums():
+    # single-donor count band [11, 15] is inclusive; the family rest bands are 3 across-sweep sd around each leg's own datum
+    for count in (11, 15):
+        assert decision.keep_verdict_failure(_cell_run_failure(count=count), _ramp(), _cell_run_failure(count=count),
+                                             DONOR)["donor_band_rules"]["count_in_repeat_range"] is True
+    at_rest = decision.keep_verdict_failure(_cell_run_failure(ret=REST), _ramp(), _cell_run_failure(), DONOR)
+    assert at_rest["donor_band_rules"]["rest_in_donor_spread"] is False and at_rest["readings"]["rest_leg_held"] is True
+    assert at_rest["legacy_verdict"]["rules"]["rest_and_return"] is True and at_rest["keep"] is True
+    single = {k: v for k, v in DONOR.items() if k not in ("rest_repeat_sd_mv", "rest_repeat_mean_mv")}
+    fallback = decision.keep_verdict_failure(_cell_run_failure(rest=REST-.4+.05), _ramp(), _cell_run_failure(), single)
+    assert fallback["rest_tolerance_mv"] == pytest.approx(.06) and fallback["readings"]["rest_sd_source"].startswith("within-trace")
+    assert fallback["readings"]["rest_datum_mv"] == REST-.4 and fallback["readings"]["rest_type_datum_mv"] is None
+    assert fallback["rules"]["rest_in_type_spread"] is None   # the type rule needs the family datum
 
 
 def _failure_population(tmp_path, with_ramp=True, with_half=True):
@@ -327,11 +316,13 @@ def _failure_population(tmp_path, with_ramp=True, with_half=True):
     rests.write_text(json.dumps(dict(donors={l4: dict(rest_mv=REST-.4, sd_mv=.02)})))
     datums = tmp_path/"datums.json"
     datums.write_text(json.dumps(dict(donors={l4: dict(rheobase_pa=50., sweep_step_pa=20., highest_firing_pa=170.,
-                                                        repeat_counts=[12], rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1,
+                                                        repeat_counts=[12], measured_counts_at_primary=[12],
+                                                        rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1,
                                                         after_repeat_mean_mv=AFTER, after_repeat_sd_mv=.2,
-                                                        count_band=dict(min=12, max=14, counts=[12, 14], sweeps=[39, 40]))})))
+                                                        count_band=dict(min=12, max=14, counts=[12, 14], sweeps=[39, 40]),
+                                                        type_population=TYPE)})))
     runs = tmp_path/"runs"
-    for cell, count in (("200", 12), ("300", 15)):
+    for cell, count in (("200", 12), ("300", 40)):
         (runs/f"transfer-all-{cell}").mkdir(parents=True)
         (runs/f"transfer-all-{cell}"/"run.json").write_text(json.dumps(_cell_run_failure(cell=cell, count=count)))
         if with_ramp:
@@ -347,27 +338,28 @@ def test_decide_keep_failure_gate_reads_ramps_and_datums(tmp_path):
     runs, types, rests, datums = _failure_population(tmp_path)
     result = decision.decide_keep(runs, types, rests, gate="failure", datums_path=datums)
     assert result["gate"] == "failure" and result["kept"] == ["200"]
-    assert result["dropped"] == {"300": "count_in_repeat_range"} and result["rule"] == decision.FAILURE_RULE
+    assert result["dropped"] == {"300": "count_in_type_spread"} and result["rule"] == decision.FAILURE_RULE
     assert set(result["input_hashes"]) == {"transfer-all-200", "transfer-all-200-ramp", "transfer-all-200-dthalf",
                                            "transfer-all-300", "transfer-all-300-ramp", "transfer-all-300-dthalf"}
     assert result["cells"]["200"]["legacy_verdict"]["keep"] is True and len(result["datums_sha256"]) == 64
-    assert result["cells"]["200"]["rest_tolerance_mv"] == pytest.approx(.3)   # datums repeat sd, not donor-rest sd
-    assert result["cells"]["200"]["donor_rest_mv"] == REST
-    assert result["cells"]["200"]["readings"]["donor_single_sweep_rest_mv"] == REST-.4
+    counts = result["rule_counts"]
+    assert counts["hard"]["finite"] == dict(held=2, failed=0, unmeasured=0)
+    assert counts["plausibility"]["count_in_type_spread"] == dict(held=1, failed=1, unmeasured=0)
+    assert counts["donor_band"]["count_in_repeat_range"] == dict(held=1, failed=1, unmeasured=0)
+    assert counts["legacy"]["count_in_band"] == dict(held=1, failed=1, unmeasured=0)
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
-    assert primary["candidates"] == ["200"] and primary["dropped"] == {"300": "count_in_repeat_range"}
+    assert primary["candidates"] == ["200"] and primary["dropped"] == {"300": "count_in_type_spread"}
 
 
 def test_decide_keep_failure_gate_without_ramp_or_datums(tmp_path):
     runs, types, rests, datums = _failure_population(tmp_path, with_ramp=False)
     result = decision.decide_keep(runs, types, rests, gate="failure", datums_path=datums)
     assert result["kept"] == [] and result["pending"] == {"200": "ramp_missing"}
-    assert result["dropped"] == {"300": "count_in_repeat_range"}   # a measured failure drops before the ramp runs
+    assert result["dropped"] == {"300": "count_in_type_spread"}   # a measured failure drops before the ramp runs
     assert result["counts"] == dict(kept=0, dropped=1, missing=0, total=2, pending=1)
     assert result["cells"]["200"]["rules"]["rheobase_in_step"] is None and result["cells"]["200"]["keep"] is False
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["candidates"] == [] and primary["pending"] == {"200": "ramp_missing"}
-    assert primary["dropped"] == {"300": "count_in_repeat_range"}
     with pytest.raises(ValueError, match="datums"):
         decision.decide_keep(runs, types, rests, gate="failure")
 
@@ -379,11 +371,25 @@ def test_decide_keep_primary_phase_drops_a_cell_whose_ramp_fails_so_no_repeat_is
     (runs/"transfer-all-200-ramp"/"run.json").write_text(json.dumps(dict(cell="200", **blocked)))
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["candidates"] == [] and primary["pending"] == {}
-    assert primary["dropped"] == {"200": "fires_at_highest", "300": "count_in_repeat_range"}
+    assert primary["dropped"] == {"200": "fires_at_highest,no_block_in_recorded_range", "300": "count_in_type_spread"}
     silent = _ramp(rheobase_na=None, spikes=())
     (runs/"transfer-all-200-ramp"/"run.json").write_text(json.dumps(dict(cell="200", **silent)))
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["dropped"]["200"] == "rheobase_in_step,fires_at_highest" and primary["candidates"] == []
+
+
+def test_decide_keep_primary_phase_never_lists_a_cell_with_an_unavailable_datum(tmp_path):
+    runs, types, rests, datums = _failure_population(tmp_path, with_half=False)
+    doc = json.loads(datums.read_text())
+    del doc["donors"]["l4-pyramidal-allen-527952884"]["type_population"]
+    datums.write_text(json.dumps(doc))
+    primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
+    assert primary["candidates"] == [] and primary["dropped"]["200"] == "plausibility_datum_unavailable"
+    doc["donors"]["l4-pyramidal-allen-527952884"]["type_population"] = TYPE
+    doc["donors"]["l4-pyramidal-allen-527952884"]["rheobase_pa"] = None
+    datums.write_text(json.dumps(doc))
+    primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
+    assert primary["candidates"] == [] and primary["dropped"]["200"] == "firing_datum_unavailable"
 
 
 def test_decide_keep_failure_gate_dt_half_missing_is_pending_in_the_final_phase_only(tmp_path):
@@ -410,8 +416,8 @@ def test_decide_keep_failure_gate_reads_ramps_from_a_separate_folder(tmp_path):
 def test_bands_gate_is_unchanged_by_the_failure_gate(tmp_path):
     runs, types, rests, _ = _failure_population(tmp_path)
     result = decision.decide_keep(runs, types, rests)
-    assert result["gate"] == "bands" and result["kept"] == ["200", "300"]   # 15 is inside the old band of 12
-    assert "legacy_verdict" not in result["cells"]["200"]
+    assert result["gate"] == "bands" and result["kept"] == ["200"]   # 40 is outside the old band of 12
+    assert "legacy_verdict" not in result["cells"]["200"] and "rule_counts" not in result
 
 
 def test_cli_failure_gate_writes_the_decision(tmp_path, monkeypatch, capsys):
@@ -435,7 +441,7 @@ def test_cli_failure_gate_reports_pending_ramps_and_takes_a_ramp_folder(tmp_path
     decision.main()
     out = capsys.readouterr().out
     assert "kept 0 / dropped 1 / missing 0 of 2; 1 pending (not yet measured)" in out
-    assert "pending 200: ramp_missing" in out and "drop 300: count_in_repeat_range" in out
+    assert "pending 200: ramp_missing" in out and "drop 300: count_in_type_spread" in out
     ramps = tmp_path/"ramps"
     (ramps/"transfer-all-200-ramp").mkdir(parents=True)
     (ramps/"transfer-all-200-ramp"/"run.json").write_text(json.dumps(dict(cell="200", **_ramp())))

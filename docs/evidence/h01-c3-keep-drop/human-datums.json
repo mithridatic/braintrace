@@ -1,5 +1,5 @@
 {
-  "definition": "Long-square family per donor: amplitude (aibs_stimulus_amplitude_pa, measured deviation beside it), pulse window from the command, -20 mV crossing count inside the window on LJP-corrected voltage, rest over the 100 ms before onset. rheobase_pa = lowest firing amplitude; sweep_step_pa = median upward step between consecutive positive sweeps in recording order; highest_firing_pa = highest amplitude with a crossing; repeat_counts = registered counts at the primary input (spec 2026-09-16-h01-keep-drop); measured counts at that input are recorded beside them and are not the gate's datum. count_band = min/max of the counts of every sweep whose amplitude lies within one sweep_step_pa of primary_pa (inclusive, the primary's repeats included): the count datum of the test-to-failure gate, because a single sweep carries no repeat spread. rest_repeat_mean_mv / rest_repeat_sd_mv = mean and sd of the pre-pulse rest (100 ms before onset) across the long-square sweeps; after_repeat_mean_mv / after_repeat_sd_mv = mean and sd, across the same sweeps, of the voltage over the 10 ms ending 200 ms after the pulse offset, the window the transfer runner scores as return_mv. Each leg's datum and tolerance (3 sd) come from its own window; donor-rest.json keeps the single-sweep value for the legacy verdict.",
+  "definition": "Long-square family per donor: amplitude (aibs_stimulus_amplitude_pa, measured deviation beside it), pulse window from the command, -20 mV crossing count inside the window on LJP-corrected voltage, rest over the 100 ms before onset. rheobase_pa = lowest firing amplitude; sweep_step_pa = median upward step between consecutive positive sweeps in recording order; highest_firing_pa = highest amplitude with a crossing; repeat_counts = registered counts at the primary input (spec 2026-09-16-h01-keep-drop); measured counts at that input are recorded beside them and are not the gate's datum. count_band = min/max of the counts of every sweep whose amplitude lies within one sweep_step_pa of primary_pa (inclusive, the primary's repeats included): the count datum of the test-to-failure gate, because a single sweep carries no repeat spread. rest_repeat_mean_mv / rest_repeat_sd_mv = mean and sd of the pre-pulse rest (100 ms before onset) across the long-square sweeps; after_repeat_mean_mv / after_repeat_sd_mv = mean and sd, across the same sweeps, of the voltage over the 10 ms ending 200 ms after the pulse offset, the window the transfer runner scores as return_mv. Each leg's datum and tolerance (3 sd) come from its own window; donor-rest.json keeps the single-sweep value for the legacy verdict. type_population (when present) = the across-cell spread of the count at the primary drive, the pre-pulse level and the post-stimulus level over the human cells of the donor's type in the Allen Cell Types database (h01_allen_type_population.py): the tolerance (2 sd across cells) of the gate's plausibility rules, whose datum stays the donor's own value; count_band and the 3 sd single-donor rest bands stay beside it as the comparison column.",
   "donors": {
     "l2-pyramidal-allen-541563728": {
       "source": "human-pyramidal-l2/recording.nwb",
@@ -505,7 +505,52 @@
         350.0
       ],
       "rest_repeat_mean_mv": -84.00724285831375,
-      "rest_repeat_sd_mv": 0.30552479705306806
+      "rest_repeat_sd_mv": 0.30552479705306806,
+      "type_population": {
+        "population": "spiny_l23",
+        "label": "human spiny (pyramidal) layer 2/3",
+        "cells_in_population": 199,
+        "cells_with_matched_sweeps": 147,
+        "primary_pa": 310.0,
+        "step_pa": 20.0,
+        "matched_sweeps": 490,
+        "tolerance_rule": "2 sd across cells",
+        "count": {
+          "n": 147,
+          "mean": 5.993824240763016,
+          "sd": 7.124533028693339,
+          "tolerance": 14.249066057386678,
+          "p5": 0.0,
+          "p95": 21.0,
+          "min": 0.0,
+          "max": 33.0
+        },
+        "rest_mv": {
+          "n": 147,
+          "mean": -86.06872928569709,
+          "sd": 3.831162155302628,
+          "tolerance": 7.662324310605256,
+          "p5": -91.60210202534994,
+          "p95": -78.92100418090821,
+          "min": -94.870122273763,
+          "max": -74.29463450113931
+        },
+        "after_mv": {
+          "n": 147,
+          "mean": -85.87873705265332,
+          "sd": 3.789430597506942,
+          "tolerance": 7.578861195013884,
+          "p5": -91.57953453063963,
+          "p95": -78.86167160034181,
+          "min": -94.37515767415367,
+          "max": -74.52361170450845
+        },
+        "windows": {
+          "count": "num_spikes on 1 s long-square sweeps within one step of primary_pa; null = 0 spikes",
+          "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
+          "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
+        }
+      }
     },
     "l4-pyramidal-allen-527952884": {
       "source": "human-pyramidal-l4/527952752_ephys.nwb",
@@ -788,7 +833,52 @@
         170.0
       ],
       "rest_repeat_mean_mv": -80.60354306502268,
-      "rest_repeat_sd_mv": 0.47205698193400286
+      "rest_repeat_sd_mv": 0.47205698193400286,
+      "type_population": {
+        "population": "spiny_l4",
+        "label": "human spiny (pyramidal) layer 4",
+        "cells_in_population": 37,
+        "cells_with_matched_sweeps": 37,
+        "primary_pa": 90.0,
+        "step_pa": 20.0,
+        "matched_sweeps": 213,
+        "tolerance_rule": "2 sd across cells",
+        "count": {
+          "n": 37,
+          "mean": 12.745591195591196,
+          "sd": 10.03832618191412,
+          "tolerance": 20.07665236382824,
+          "p5": 0.16000000000000003,
+          "p95": 31.228571428571406,
+          "min": 0.0,
+          "max": 35.25
+        },
+        "rest_mv": {
+          "n": 37,
+          "mean": -82.18288956660939,
+          "sd": 4.147898332954325,
+          "tolerance": 8.29579666590865,
+          "p5": -86.82949905395508,
+          "p95": -75.66453552246094,
+          "min": -93.53751288519965,
+          "max": -74.79843235015869
+        },
+        "after_mv": {
+          "n": 37,
+          "mean": -82.00481246421035,
+          "sd": 4.097661107344029,
+          "tolerance": 8.195322214688058,
+          "p5": -86.68277221679688,
+          "p95": -75.52675145467124,
+          "min": -93.46404647827146,
+          "max": -74.6951847076416
+        },
+        "windows": {
+          "count": "num_spikes on 1 s long-square sweeps within one step of primary_pa; null = 0 spikes",
+          "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
+          "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
+        }
+      }
     },
     "l5-pv-basket-hl5bn1": {
       "source": "human-pv/528687507_ephys.nwb",
@@ -1169,7 +1259,52 @@
           "count": 43,
           "sha256": "faeac03e076c7aa344e4c32b66a400ddf46da6c8de8f19421b08db76324e3b91"
         }
-      ]
+      ],
+      "type_population": {
+        "population": "aspiny",
+        "label": "human aspiny (interneuron), all layers; the API exposes no fast-spiking label for human cells",
+        "cells_in_population": 79,
+        "cells_with_matched_sweeps": 67,
+        "primary_pa": 190.0,
+        "step_pa": 20.0,
+        "matched_sweeps": 229,
+        "tolerance_rule": "2 sd across cells",
+        "count": {
+          "n": 67,
+          "mean": 35.64027266266072,
+          "sd": 31.117704518973476,
+          "tolerance": 62.23540903794695,
+          "p5": 0.0,
+          "p95": 92.06666666666663,
+          "min": 0.0,
+          "max": 126.0
+        },
+        "rest_mv": {
+          "n": 67,
+          "mean": -82.52305045199654,
+          "sd": 4.69611475659174,
+          "tolerance": 9.39222951318348,
+          "p5": -90.08799667358399,
+          "p95": -74.5891368865967,
+          "min": -96.57919057210286,
+          "max": -71.8614616394043
+        },
+        "after_mv": {
+          "n": 67,
+          "mean": -82.47560343315455,
+          "sd": 4.633067473357296,
+          "tolerance": 9.266134946714592,
+          "p5": -90.09263025919594,
+          "p95": -74.70002326965336,
+          "min": -96.46807098388669,
+          "max": -72.13510513305665
+        },
+        "windows": {
+          "count": "num_spikes on 1 s long-square sweeps within one step of primary_pa; null = 0 spikes",
+          "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
+          "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
+        }
+      }
     },
     "l3-sst-interneuron-hl5mn1": {
       "source": "human-sst-l3/571700399_ephys.nwb",
@@ -1603,7 +1738,70 @@
         190.0
       ],
       "rest_repeat_mean_mv": -77.49631212460994,
-      "rest_repeat_sd_mv": 0.38610632745690165
+      "rest_repeat_sd_mv": 0.38610632745690165,
+      "type_population": {
+        "population": "aspiny",
+        "label": "human aspiny (interneuron), all layers; the API exposes no fast-spiking label for human cells",
+        "cells_in_population": 79,
+        "cells_with_matched_sweeps": 77,
+        "primary_pa": 100.0,
+        "step_pa": 20.0,
+        "matched_sweeps": 287,
+        "tolerance_rule": "2 sd across cells",
+        "count": {
+          "n": 77,
+          "mean": 16.108753584078258,
+          "sd": 21.528382865812738,
+          "tolerance": 43.056765731625475,
+          "p5": 0.0,
+          "p95": 64.0,
+          "min": 0.0,
+          "max": 92.66666666666667
+        },
+        "rest_mv": {
+          "n": 77,
+          "mean": -82.13332691816363,
+          "sd": 4.918306670038121,
+          "tolerance": 9.836613340076243,
+          "p5": -89.96307296752931,
+          "p95": -74.27918434143066,
+          "min": -96.97742462158205,
+          "max": -72.0764350891113
+        },
+        "after_mv": {
+          "n": 77,
+          "mean": -82.11646303339624,
+          "sd": 4.832254011267424,
+          "tolerance": 9.664508022534848,
+          "p5": -89.8434824625651,
+          "p95": -74.4036224365234,
+          "min": -96.7926445007324,
+          "max": -71.907901763916
+        },
+        "windows": {
+          "count": "num_spikes on 1 s long-square sweeps within one step of primary_pa; null = 0 spikes",
+          "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
+          "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
+        }
+      }
     }
+  },
+  "allen_population": {
+    "features": {
+      "path": "allen-human-ephys-features.json",
+      "sha256": "b19ed0b513ba3b8ebc74d7deff48a677b8cb61c0fbd8b2a796c45d4f89f8fc54",
+      "source": "http://api.brain-map.org/api/v2/data/query.json model::ApiCellTypesSpecimenDetail donor__species='Homo Sapiens'",
+      "fetched_utc": "2026-09-16T21:05:07Z",
+      "rows": 413
+    },
+    "sweeps": {
+      "path": "allen-human-ephys-sweeps.json",
+      "sha256": "b3bd3d51bf464e67de55b2025c64faddf210b68a662fd2c8248cefabc212190f",
+      "source": "http://api.brain-map.org/api/v2/data/query.json model::EphysSweep stimulus_name='Long Square' for the human spiny L2/3, spiny L4 and aspiny populations of allen-human-ephys-features.json",
+      "fetched_utc": "2026-09-16T21:05:38Z",
+      "rows": 8443
+    },
+    "species": "Homo Sapiens",
+    "type_labels": "tag__dendrite_type and structure__layer (no fast-spiking label for human cells)"
   }
 }

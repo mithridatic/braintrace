@@ -6,16 +6,31 @@ section C. Register: `qc3_e`, `qc3_i` (search tree), `io_gate`, `datum_fire`, `d
 `/workspace/braintrace-c3-keep` on branch `campaign/h01-c3-c3-keep-20260916`; receipts under
 `var/c3-keep/` there. Nothing below has run yet: this page is the preparation record.
 
-## Gate
+## Gate (split, J 2026-09-16; runs unchanged)
 
-`h01_anatomy_transfer_decision.py --keep --gate failure --datums human-datums.json`. Rules
-`finite / rheobase_in_step / fires_at_highest / count_in_repeat_range / rest_in_donor_spread /
-no_spike_before_pulse / dt_half_reproduces`; datums and tolerances in
-[human-datums.json](human-datums.json) (LJP-corrected long-square families of the four donor
-recordings). The former 10 mV / 30 percent bands are written beside every verdict as
-`legacy_verdict` and are not the gate. A cell whose ramp or dt-half repeat has not run is
-`pending` (its unmeasured rules `None`), never kept and never counted as dropped; a measured
-rule that fails drops the cell whether or not the ramp has run.
+`h01_anatomy_transfer_decision.py --keep --gate failure --datums human-datums.json`.
+(a) Hard failure edges: `finite`, `no_spike_before_pulse`, `rheobase_in_step`,
+`fires_at_highest`, `no_block_in_recorded_range`, `dt_half_reproduces` (human firing-range
+datums, one sweep step of drive). (b) Plausibility rules: `count_in_type_spread`,
+`rest_in_type_spread`, `return_in_type_spread` — datum the donor's own value, tolerance 2 sd
+across the human cells of the donor's type in the Allen Cell Types database
+(`human-datums.json` `type_population`, from the sha-pinned pulls
+`.cache/h01/allen-human-ephys-features.json` b19ed0b5... (413 human specimens) and
+`allen-human-ephys-sweeps.json` b3bd3d51... (8,443 long-square sweeps);
+`h01_allen_type_population.py`). Populations by `tag__dendrite_type` and `structure__layer`:
+spiny L2/3 (199 cells, L2 donor), spiny L4 (37, L4 donor), aspiny all layers (79, both
+interneuron donors — the API exposes no fast-spiking / non-fast-spiking label for human cells,
+so the split J named is not available). Per cell the readings are on its 1 s long-square sweeps
+within one step (20 pA) of the donor's primary drive: `num_spikes` (null = 0), ipfx
+`pre_vm_mv` (500 ms before onset) and `post_vm_mv` (last 500 ms of the recording, 5-7 s after
+offset — the table has no field for the 10 ms ending 200 ms after offset; `post_vm_mv` is the
+closest documented post-stimulus level and is named as the fallback). Tolerances (2 sd): count
+L2/3 14.2 (n 147), L4 20.1 (37), aspiny at 190 pA 62.2 (67), aspiny at 100 pA 43.1 (77); rest
+7.7 / 8.3 / 9.4 / 9.8 mV; post-pulse 7.6 / 8.2 / 9.3 / 9.7 mV. Every receipt also carries
+`donor_band_rules` (the single-donor bands: `count_band` across the sweeps within one step of
+the primary, 3 across-sweep sd of each rest leg) and `legacy_verdict` (10 mV / 30 percent) as
+comparison columns; `decision.json` `rule_counts` tallies all four sets. A cell whose ramp or
+dt-half repeat has not run is `pending`; an unavailable datum is never a pass.
 
 ## Inputs
 
@@ -57,22 +72,17 @@ cc180b29..., e321fe93..., b6412208..., 218aa144...). The spec gate table, the re
 nodes `datum_fire` / `datum_rest` and the causal model's qualification rules carry the
 band construction.
 
-## Preflight reading on the 17 kept cells with the corrected datums (no ramp yet)
+## Preflight reading on the 17 kept cells under the split gate (ramps pending)
 
 `--folder ../h01-keep-drop/runs --ramp-folder runs` on [kept-types.json](kept-types.json)
-([kept-gate-preflight.json](kept-gate-preflight.json), not a decision): 0 kept, 15 dropped,
-2 pending on the ramp. Per rule: `finite` 17/17, `no_spike_before_pulse` 17/17,
-`dt_half_reproduces` 17/17, `count_in_repeat_range` 7/17 (L2 5 of 13: counts 9, 10, 11 x3
-inside [9, 12], eight cells at 7-8 outside; L4 2 of 4: 13 and 15 inside [12, 17], 9 and 11
-outside), `rest_in_donor_spread` 5/17 (pre-pulse leg 15/17; return leg 6/17: every L4 cell
-holds at -81.8 to -82.2 mV against -81.03 +- 5.49, two L2 cells hold at -87.2 and -87.7 mV
-against -84.94 +- 2.87, the other eleven L2 cells return 3.6 to 8.6 mV below the datum at
--88.5 to -93.5 mV), `rheobase_in_step` and `fires_at_highest` unmeasured (17 pending on the
-ramp). Cells holding every measured rule: 3761379470 and 5439194879 (both L4).
-
-The count band is not touched. Ten kept cells still fail it (eight L2 at 7-8 spikes, two L4
-at 9 and 11) and eleven L2 cells still return
-below the family's post-pulse level; those are readings on the cells, reported as such.
+([kept-gate-preflight.json](kept-gate-preflight.json), not a decision): 0 kept, 1 dropped,
+16 pending on the ramp. Hard edges: `finite` 17/17, `no_spike_before_pulse` 17/17,
+`dt_half_reproduces` 17/17, the three ramp edges unmeasured. Plausibility: `count_in_type_spread`
+17/17 (counts 7-15 against donor datums 10 / 12 with tolerances 14.2 / 20.1),
+`rest_in_type_spread` 17/17, `return_in_type_spread` 16/17 (5013648003 returns to -93.46 mV,
+8.5 mV below the L2 family's -84.94 mV against a 7.6 mV tolerance). Single-donor comparison
+columns on the same receipts: `count_in_repeat_range` 7/17, `rest_in_donor_spread` 5/17
+(pre-pulse leg 15/17, post-pulse leg 6/17); legacy bands 17/17 on every rule.
 
 ## Launch recipe (only on "GO")
 
