@@ -1,0 +1,1228 @@
+{
+  "definition": "Long-square family per donor: amplitude (aibs_stimulus_amplitude_pa, measured deviation beside it), pulse window from the command, -20 mV crossing count inside the window on LJP-corrected voltage, rest over the 100 ms before onset. rheobase_pa = lowest firing amplitude; sweep_step_pa = median upward step between consecutive positive sweeps in recording order; highest_firing_pa = highest amplitude with a crossing; repeat_counts = registered counts at the primary input (spec 2026-09-16-h01-keep-drop); measured counts at that input are recorded beside them and are not the gate's datum.",
+  "donors": {
+    "l2-pyramidal-allen-541563728": {
+      "source": "human-pyramidal-l2/recording.nwb",
+      "sha256": "cc180b297d762cb82833eb044566e21f77708c562295f86827ff3ed9ebcf3e0f",
+      "source_cell": "Allen 541563728, the deployed donor's own recording",
+      "convention": "NWB reported -14 mV LJP",
+      "crossing_threshold_mv": -20.0,
+      "sweeps": [
+        {
+          "sweep": 32,
+          "stimulus": "Long Square",
+          "amplitude_pa": -110.000002162547,
+          "measured_amplitude_pa": -110.0000021625469,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.72170323282481,
+          "rest_sd_mv": 0.05015518302954072
+        },
+        {
+          "sweep": 33,
+          "stimulus": "Long Square",
+          "amplitude_pa": -90.0000005077395,
+          "measured_amplitude_pa": -90.00000050773949,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.6902404949069,
+          "rest_sd_mv": 0.04277903202472296
+        },
+        {
+          "sweep": 34,
+          "stimulus": "Long Square",
+          "amplitude_pa": -69.9999988529321,
+          "measured_amplitude_pa": -69.99999885293207,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.71109686940909,
+          "rest_sd_mv": 0.052128606419081076
+        },
+        {
+          "sweep": 35,
+          "stimulus": "Long Square",
+          "amplitude_pa": -50.0000006675716,
+          "measured_amplitude_pa": -50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.78734110295773,
+          "rest_sd_mv": 0.0430488479939817
+        },
+        {
+          "sweep": 36,
+          "stimulus": "Long Square",
+          "amplitude_pa": -29.9999990127642,
+          "measured_amplitude_pa": -29.999999012764178,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.80532223433256,
+          "rest_sd_mv": 0.05444464591045765
+        },
+        {
+          "sweep": 37,
+          "stimulus": "Long Square",
+          "amplitude_pa": -9.99999996004197,
+          "measured_amplitude_pa": -9.999999960041972,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.8675841987133,
+          "rest_sd_mv": 0.05307127279153904
+        },
+        {
+          "sweep": 38,
+          "stimulus": "Long Square",
+          "amplitude_pa": 9.99999996004197,
+          "measured_amplitude_pa": 9.999999960041972,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.821841083467,
+          "rest_sd_mv": 0.04643425431123195
+        },
+        {
+          "sweep": 39,
+          "stimulus": "Long Square",
+          "amplitude_pa": 29.9999990127642,
+          "measured_amplitude_pa": 29.999999012764178,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.74868457317352,
+          "rest_sd_mv": 0.0632337407999268
+        },
+        {
+          "sweep": 40,
+          "stimulus": "Long Square",
+          "amplitude_pa": 50.0000006675716,
+          "measured_amplitude_pa": 50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.92628986686468,
+          "rest_sd_mv": 0.04518706336307872
+        },
+        {
+          "sweep": 41,
+          "stimulus": "Long Square",
+          "amplitude_pa": 69.9999988529321,
+          "measured_amplitude_pa": 69.99999885293207,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.82166567444801,
+          "rest_sd_mv": 0.059604619622120915
+        },
+        {
+          "sweep": 42,
+          "stimulus": "Long Square",
+          "amplitude_pa": 90.0000005077395,
+          "measured_amplitude_pa": 90.00000050773949,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -84.37079048901796,
+          "rest_sd_mv": 0.05472472798867413
+        },
+        {
+          "sweep": 43,
+          "stimulus": "Long Square",
+          "amplitude_pa": 110.000002162547,
+          "measured_amplitude_pa": 110.0000021625469,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -84.48238476365805,
+          "rest_sd_mv": 0.04552590337331034
+        },
+        {
+          "sweep": 44,
+          "stimulus": "Long Square",
+          "amplitude_pa": 129.99999687846,
+          "measured_amplitude_pa": 129.99999687846042,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -84.55372879058123,
+          "rest_sd_mv": 0.038465432824493065
+        },
+        {
+          "sweep": 45,
+          "stimulus": "Long Square",
+          "amplitude_pa": 149.999998533268,
+          "measured_amplitude_pa": 149.99999853326784,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -84.50513481497765,
+          "rest_sd_mv": 0.04553986244286753
+        },
+        {
+          "sweep": 46,
+          "stimulus": "Long Square",
+          "amplitude_pa": 170.000000188075,
+          "measured_amplitude_pa": 170.00000018807526,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -84.54826002269984,
+          "rest_sd_mv": 0.04288437819171713
+        },
+        {
+          "sweep": 47,
+          "stimulus": "Long Square",
+          "amplitude_pa": 190.000001842883,
+          "measured_amplitude_pa": 190.00000184288268,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -84.3796592772007,
+          "rest_sd_mv": 0.06058992667965119
+        },
+        {
+          "sweep": 48,
+          "stimulus": "Long Square",
+          "amplitude_pa": 210.00000349769,
+          "measured_amplitude_pa": 210.0000034976901,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -84.51898501515389,
+          "rest_sd_mv": 0.03825403949657335
+        },
+        {
+          "sweep": 49,
+          "stimulus": "Long Square",
+          "amplitude_pa": 230.000005152498,
+          "measured_amplitude_pa": 230.00000515249752,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 3,
+          "rest_mv": -84.49564728140831,
+          "rest_sd_mv": 0.04515572513062576
+        },
+        {
+          "sweep": 50,
+          "stimulus": "Long Square",
+          "amplitude_pa": 249.999992929517,
+          "measured_amplitude_pa": 249.99999292951713,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 5,
+          "rest_mv": -84.26339717358351,
+          "rest_sd_mv": 0.043503910650872765
+        },
+        {
+          "sweep": 51,
+          "stimulus": "Long Square",
+          "amplitude_pa": 269.999994584325,
+          "measured_amplitude_pa": 269.99999458432455,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 7,
+          "rest_mv": -83.97994021475316,
+          "rest_sd_mv": 0.05974459980650982
+        },
+        {
+          "sweep": 52,
+          "stimulus": "Long Square",
+          "amplitude_pa": 289.999996239132,
+          "measured_amplitude_pa": 289.999996239132,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 9,
+          "rest_mv": -83.69064047783613,
+          "rest_sd_mv": 0.04271036853232046
+        },
+        {
+          "sweep": 53,
+          "stimulus": "Long Square",
+          "amplitude_pa": 309.999997893939,
+          "measured_amplitude_pa": 309.9999978939394,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 10,
+          "rest_mv": -83.89627738147973,
+          "rest_sd_mv": 0.04253771128477194
+        },
+        {
+          "sweep": 54,
+          "stimulus": "Long Square",
+          "amplitude_pa": 329.999999548747,
+          "measured_amplitude_pa": 329.9999995487468,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 12,
+          "rest_mv": -83.98893406838178,
+          "rest_sd_mv": 0.0527375226064277
+        },
+        {
+          "sweep": 55,
+          "stimulus": "Long Square",
+          "amplitude_pa": 350.000001203554,
+          "measured_amplitude_pa": 350.00000120355423,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 13,
+          "rest_mv": -83.95520249903203,
+          "rest_sd_mv": 0.041688088780852076
+        },
+        {
+          "sweep": 56,
+          "stimulus": "Long Square",
+          "amplitude_pa": 200.000002670286,
+          "measured_amplitude_pa": 200.0000026702864,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -83.85765915215015,
+          "rest_sd_mv": 0.05866757317653443
+        },
+        {
+          "sweep": 57,
+          "stimulus": "Long Square",
+          "amplitude_pa": 200.000002670286,
+          "measured_amplitude_pa": 200.0000026702864,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.92860855907202,
+          "rest_sd_mv": 0.042061507650423546
+        },
+        {
+          "sweep": 58,
+          "stimulus": "Long Square",
+          "amplitude_pa": 200.000002670286,
+          "measured_amplitude_pa": 200.0000026702864,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -83.84161598980427,
+          "rest_sd_mv": 0.042196183263200904
+        },
+        {
+          "sweep": 59,
+          "stimulus": "Long Square",
+          "amplitude_pa": 200.000002670286,
+          "measured_amplitude_pa": 200.0000026702864,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -83.96687763780355,
+          "rest_sd_mv": 0.04452897877599144
+        },
+        {
+          "sweep": 60,
+          "stimulus": "Long Square",
+          "amplitude_pa": 200.000002670286,
+          "measured_amplitude_pa": 200.0000026702864,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -83.74147837013007,
+          "rest_sd_mv": 0.04531139819283993
+        },
+        {
+          "sweep": 61,
+          "stimulus": "Long Square",
+          "amplitude_pa": 200.000002670286,
+          "measured_amplitude_pa": 200.0000026702864,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -83.60510891079903,
+          "rest_sd_mv": 0.0631413866147771
+        },
+        {
+          "sweep": 62,
+          "stimulus": "Long Square",
+          "amplitude_pa": 200.000002670286,
+          "measured_amplitude_pa": 200.0000026702864,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -83.75242838710547,
+          "rest_sd_mv": 0.05159569284612324
+        }
+      ],
+      "primary_pa": 310.0,
+      "repeat_counts": [
+        10
+      ],
+      "rheobase_pa": 200.000002670286,
+      "rheobase_count": 1,
+      "sweep_step_pa": 20.000001654807022,
+      "highest_firing_pa": 350.000001203554,
+      "highest_firing_count": 13,
+      "highest_recorded_pa": 350.000001203554,
+      "measured_counts_at_primary": [
+        10
+      ],
+      "measured_sweeps_at_primary": [
+        53
+      ],
+      "family_amplitudes_pa": [
+        10.0,
+        30.0,
+        50.0,
+        70.0,
+        90.0,
+        110.0,
+        130.0,
+        150.0,
+        170.0,
+        190.0,
+        200.0,
+        210.0,
+        230.0,
+        250.0,
+        270.0,
+        290.0,
+        310.0,
+        330.0,
+        350.0
+      ],
+      "rest_mean_mv": -84.00724285831375,
+      "rest_repeat_sd_mv": 0.30552479705306806
+    },
+    "l4-pyramidal-allen-527952884": {
+      "source": "human-pyramidal-l4/527952752_ephys.nwb",
+      "sha256": "e321fe93fb63c6af9118ff72df30756bf2e5599fecc54ab8f6f58c51d14fff5a",
+      "source_cell": "Allen 527952884 (ephys 527952752), the deployed donor's own recording",
+      "convention": "NWB reported -14 mV LJP",
+      "crossing_threshold_mv": -20.0,
+      "sweeps": [
+        {
+          "sweep": 29,
+          "stimulus": "Long Square",
+          "amplitude_pa": -110.000002162547,
+          "measured_amplitude_pa": -110.0000021625469,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -80.77080274671316,
+          "rest_sd_mv": 0.08406784151339759
+        },
+        {
+          "sweep": 31,
+          "stimulus": "Long Square",
+          "amplitude_pa": -69.9999988529321,
+          "measured_amplitude_pa": -69.99999885293207,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -80.20302202403545,
+          "rest_sd_mv": 0.09648937131964698
+        },
+        {
+          "sweep": 32,
+          "stimulus": "Long Square",
+          "amplitude_pa": -50.0000006675716,
+          "measured_amplitude_pa": -50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -80.91700348854064,
+          "rest_sd_mv": 0.06548568722464398
+        },
+        {
+          "sweep": 33,
+          "stimulus": "Long Square",
+          "amplitude_pa": -29.9999990127642,
+          "measured_amplitude_pa": -29.999999012764178,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -79.73669077455997,
+          "rest_sd_mv": 0.11445566861843524
+        },
+        {
+          "sweep": 34,
+          "stimulus": "Long Square",
+          "amplitude_pa": -9.99999996004197,
+          "measured_amplitude_pa": -9.999999960041972,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -79.99249671548606,
+          "rest_sd_mv": 0.08346761146396305
+        },
+        {
+          "sweep": 35,
+          "stimulus": "Long Square",
+          "amplitude_pa": 9.99999996004197,
+          "measured_amplitude_pa": 9.999999960041972,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -80.531259585917,
+          "rest_sd_mv": 0.05641501986974826
+        },
+        {
+          "sweep": 36,
+          "stimulus": "Long Square",
+          "amplitude_pa": 29.9999990127642,
+          "measured_amplitude_pa": 29.999999012764178,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -80.31007177233695,
+          "rest_sd_mv": 0.1490376528770158
+        },
+        {
+          "sweep": 37,
+          "stimulus": "Long Square",
+          "amplitude_pa": 50.0000006675716,
+          "measured_amplitude_pa": 50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 3,
+          "rest_mv": -79.76096542030572,
+          "rest_sd_mv": 0.07914693918916894
+        },
+        {
+          "sweep": 39,
+          "stimulus": "Long Square",
+          "amplitude_pa": 90.0000005077395,
+          "measured_amplitude_pa": 90.00000050773949,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 12,
+          "rest_mv": -81.00987869203091,
+          "rest_sd_mv": 0.07918855796384443
+        },
+        {
+          "sweep": 40,
+          "stimulus": "Long Square",
+          "amplitude_pa": 110.000002162547,
+          "measured_amplitude_pa": 110.0000021625469,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 17,
+          "rest_mv": -80.83673426359891,
+          "rest_sd_mv": 0.09544846000173063
+        },
+        {
+          "sweep": 41,
+          "stimulus": "Long Square",
+          "amplitude_pa": 129.99999687846,
+          "measured_amplitude_pa": 129.99999687846042,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 21,
+          "rest_mv": -81.1868846833706,
+          "rest_sd_mv": 0.17825409071372464
+        },
+        {
+          "sweep": 42,
+          "stimulus": "Long Square",
+          "amplitude_pa": 149.999998533268,
+          "measured_amplitude_pa": 149.99999853326784,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 25,
+          "rest_mv": -80.6625594496727,
+          "rest_sd_mv": 0.08842915065092125
+        },
+        {
+          "sweep": 43,
+          "stimulus": "Long Square",
+          "amplitude_pa": 170.000000188075,
+          "measured_amplitude_pa": 170.00000018807526,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 29,
+          "rest_mv": -80.55207813680173,
+          "rest_sd_mv": 0.08018488279593142
+        },
+        {
+          "sweep": 48,
+          "stimulus": "Long Square",
+          "amplitude_pa": 50.0000006675716,
+          "measured_amplitude_pa": 50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -81.03370329588651,
+          "rest_sd_mv": 0.6940587664516189
+        },
+        {
+          "sweep": 50,
+          "stimulus": "Long Square",
+          "amplitude_pa": 59.9999980255284,
+          "measured_amplitude_pa": 59.999998025528356,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -80.79808451235294,
+          "rest_sd_mv": 0.22382976759398066
+        },
+        {
+          "sweep": 51,
+          "stimulus": "Long Square",
+          "amplitude_pa": 59.9999980255284,
+          "measured_amplitude_pa": 59.999998025528356,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 2,
+          "rest_mv": -81.35445347875357,
+          "rest_sd_mv": 0.08678008283851019
+        }
+      ],
+      "primary_pa": 90.0,
+      "repeat_counts": [
+        12
+      ],
+      "rheobase_pa": 50.0000006675716,
+      "rheobase_count": 3,
+      "sweep_step_pa": 20.000001654807196,
+      "highest_firing_pa": 170.000000188075,
+      "highest_firing_count": 29,
+      "highest_recorded_pa": 170.000000188075,
+      "measured_counts_at_primary": [
+        12
+      ],
+      "measured_sweeps_at_primary": [
+        39
+      ],
+      "family_amplitudes_pa": [
+        10.0,
+        30.0,
+        50.0,
+        60.0,
+        90.0,
+        110.0,
+        130.0,
+        150.0,
+        170.0
+      ],
+      "rest_mean_mv": -80.60354306502268,
+      "rest_repeat_sd_mv": 0.47205698193400286
+    },
+    "l5-pv-basket-hl5bn1": {
+      "source": "human-pv/528687507_ephys.nwb",
+      "sha256": "b6412208aaeee590bfe73cbbc3f3e3d4da0622252d0a7b09961d3dc3595f27a4",
+      "source_cell": "Allen 528687520 (ephys 528687507), the human PV recording the campaign's PV repeat spread comes from; the deployed HL5BN1 donor's own protocol datums are the ModelDB exports listed under donor_exports (0.19/0.23/0.27 nA, all firing)",
+      "convention": "NWB reported -14 mV LJP",
+      "crossing_threshold_mv": -20.0,
+      "sweeps": [
+        {
+          "sweep": 20,
+          "stimulus": "Long Square",
+          "amplitude_pa": -110.000002162547,
+          "measured_amplitude_pa": -110.0000021625469,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.4774154677987,
+          "rest_sd_mv": 0.18683393924631353
+        },
+        {
+          "sweep": 21,
+          "stimulus": "Long Square",
+          "amplitude_pa": -90.0000005077395,
+          "measured_amplitude_pa": -90.00000050773949,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.20017186999321,
+          "rest_sd_mv": 0.27621863119265166
+        },
+        {
+          "sweep": 22,
+          "stimulus": "Long Square",
+          "amplitude_pa": -69.9999988529321,
+          "measured_amplitude_pa": -69.99999885293207,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -86.94529734551907,
+          "rest_sd_mv": 0.3593720412753493
+        },
+        {
+          "sweep": 23,
+          "stimulus": "Long Square",
+          "amplitude_pa": -50.0000006675716,
+          "measured_amplitude_pa": -50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.99355369061232,
+          "rest_sd_mv": 0.0712406893200899
+        },
+        {
+          "sweep": 26,
+          "stimulus": "Long Square",
+          "amplitude_pa": 9.99999996004197,
+          "measured_amplitude_pa": 9.999999960041972,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.28998476713896,
+          "rest_sd_mv": 0.1530792731829868
+        },
+        {
+          "sweep": 28,
+          "stimulus": "Long Square",
+          "amplitude_pa": 50.0000006675716,
+          "measured_amplitude_pa": 50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.42143437862396,
+          "rest_sd_mv": 0.12590200369333615
+        },
+        {
+          "sweep": 29,
+          "stimulus": "Long Square",
+          "amplitude_pa": 69.9999988529321,
+          "measured_amplitude_pa": 69.99999885293207,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.27916571497917,
+          "rest_sd_mv": 0.12081713342201912
+        },
+        {
+          "sweep": 30,
+          "stimulus": "Long Square",
+          "amplitude_pa": 90.0000005077395,
+          "measured_amplitude_pa": 90.00000050773949,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.27548487484455,
+          "rest_sd_mv": 0.16140190023353013
+        },
+        {
+          "sweep": 31,
+          "stimulus": "Long Square",
+          "amplitude_pa": 110.000002162547,
+          "measured_amplitude_pa": 110.0000021625469,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -87.45820901691914,
+          "rest_sd_mv": 0.10764468621636741
+        },
+        {
+          "sweep": 32,
+          "stimulus": "Long Square",
+          "amplitude_pa": 129.99999687846,
+          "measured_amplitude_pa": 129.99999687846042,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 2,
+          "rest_mv": -87.30164051651954,
+          "rest_sd_mv": 0.1940496669580256
+        },
+        {
+          "sweep": 33,
+          "stimulus": "Long Square",
+          "amplitude_pa": 149.999998533268,
+          "measured_amplitude_pa": 149.99999853326784,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 2,
+          "rest_mv": -87.22338457852602,
+          "rest_sd_mv": 0.09486731929013201
+        },
+        {
+          "sweep": 34,
+          "stimulus": "Long Square",
+          "amplitude_pa": 170.000000188075,
+          "measured_amplitude_pa": 170.00000018807526,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 4,
+          "rest_mv": -87.40308497399091,
+          "rest_sd_mv": 0.05929817874454087
+        },
+        {
+          "sweep": 35,
+          "stimulus": "Long Square",
+          "amplitude_pa": 190.000001842883,
+          "measured_amplitude_pa": 190.00000184288268,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 12,
+          "rest_mv": -86.75835941135884,
+          "rest_sd_mv": 0.15344049055603146
+        },
+        {
+          "sweep": 36,
+          "stimulus": "Long Square",
+          "amplitude_pa": 210.00000349769,
+          "measured_amplitude_pa": 210.0000034976901,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 23,
+          "rest_mv": -86.79485311359167,
+          "rest_sd_mv": 0.11603726879419347
+        },
+        {
+          "sweep": 37,
+          "stimulus": "Long Square",
+          "amplitude_pa": 230.000005152498,
+          "measured_amplitude_pa": 230.00000515249752,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 31,
+          "rest_mv": -87.17406584918498,
+          "rest_sd_mv": 0.06872888626598626
+        },
+        {
+          "sweep": 38,
+          "stimulus": "Long Square",
+          "amplitude_pa": 249.999992929517,
+          "measured_amplitude_pa": 249.99999292951713,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 38,
+          "rest_mv": -86.81829681843519,
+          "rest_sd_mv": 0.09388651240602255
+        },
+        {
+          "sweep": 39,
+          "stimulus": "Long Square",
+          "amplitude_pa": 269.999994584325,
+          "measured_amplitude_pa": 269.99999458432455,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 43,
+          "rest_mv": -86.91892843544483,
+          "rest_sd_mv": 0.07653624006496655
+        },
+        {
+          "sweep": 40,
+          "stimulus": "Long Square",
+          "amplitude_pa": 119.999996051057,
+          "measured_amplitude_pa": 119.99999605105671,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -87.02210424691438,
+          "rest_sd_mv": 0.0625648076680086
+        },
+        {
+          "sweep": 41,
+          "stimulus": "Long Square",
+          "amplitude_pa": 119.999996051057,
+          "measured_amplitude_pa": 119.99999605105671,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -87.10692269206046,
+          "rest_sd_mv": 0.06047777948478195
+        },
+        {
+          "sweep": 42,
+          "stimulus": "Long Square",
+          "amplitude_pa": 119.999996051057,
+          "measured_amplitude_pa": 119.99999605105671,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -86.41679128408433,
+          "rest_sd_mv": 0.1441632045281403
+        },
+        {
+          "sweep": 43,
+          "stimulus": "Long Square",
+          "amplitude_pa": 119.999996051057,
+          "measured_amplitude_pa": 119.99999605105671,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -86.17494080364705,
+          "rest_sd_mv": 0.2406364453806536
+        }
+      ],
+      "primary_pa": 190.0,
+      "repeat_counts": [
+        12
+      ],
+      "rheobase_pa": 119.999996051057,
+      "rheobase_count": 1,
+      "sweep_step_pa": 20.000001654807456,
+      "highest_firing_pa": 269.999994584325,
+      "highest_firing_count": 43,
+      "highest_recorded_pa": 269.999994584325,
+      "measured_counts_at_primary": [
+        12
+      ],
+      "measured_sweeps_at_primary": [
+        35
+      ],
+      "family_amplitudes_pa": [
+        10.0,
+        50.0,
+        70.0,
+        90.0,
+        110.0,
+        120.0,
+        130.0,
+        150.0,
+        170.0,
+        190.0,
+        210.0,
+        230.0,
+        250.0,
+        270.0
+      ],
+      "rest_mean_mv": -87.11686142143749,
+      "rest_repeat_sd_mv": 0.3844185780393772,
+      "donor_exports": [
+        {
+          "source": "human-pv/active-0.npz",
+          "amplitude_pa": 190.0,
+          "count": 12,
+          "sha256": "abf25bcfc8ec9e8b21f8c9599a1d0a7844d5dcba46a7269fc7ef6c0356244182"
+        },
+        {
+          "source": "human-pv/active-1.npz",
+          "amplitude_pa": 230.0,
+          "count": 31,
+          "sha256": "45e41f12afd6c4e225de252323ff824c8ab90a05efaddb6081fe3054f7f2be12"
+        },
+        {
+          "source": "human-pv/active-2.npz",
+          "amplitude_pa": 270.0,
+          "count": 43,
+          "sha256": "faeac03e076c7aa344e4c32b66a400ddf46da6c8de8f19421b08db76324e3b91"
+        }
+      ]
+    },
+    "l3-sst-interneuron-hl5mn1": {
+      "source": "human-sst-l3/571700399_ephys.nwb",
+      "sha256": "218aa144e2e3b63dbcb3fe57072572a7e305a89a57b69ddb36618a4ed9d5c45b",
+      "source_cell": "Allen 571700399 (HL5MN1 donor recording)",
+      "convention": "NWB reported -14 mV LJP",
+      "crossing_threshold_mv": -20.0,
+      "sweeps": [
+        {
+          "sweep": 23,
+          "stimulus": "Long Square",
+          "amplitude_pa": -90.0000005077395,
+          "measured_amplitude_pa": -90.00000050773949,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -77.82693385481835,
+          "rest_sd_mv": 0.1334195438710907
+        },
+        {
+          "sweep": 24,
+          "stimulus": "Long Square",
+          "amplitude_pa": -69.9999988529321,
+          "measured_amplitude_pa": -69.99999885293207,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -77.79609025716782,
+          "rest_sd_mv": 0.1179879771514037
+        },
+        {
+          "sweep": 25,
+          "stimulus": "Long Square",
+          "amplitude_pa": -50.0000006675716,
+          "measured_amplitude_pa": -50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -78.01132709234953,
+          "rest_sd_mv": 0.05754309470129346
+        },
+        {
+          "sweep": 26,
+          "stimulus": "Long Square",
+          "amplitude_pa": -29.9999990127642,
+          "measured_amplitude_pa": -29.999999012764178,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -77.8159027993679,
+          "rest_sd_mv": 0.1358493641536378
+        },
+        {
+          "sweep": 27,
+          "stimulus": "Long Square",
+          "amplitude_pa": -9.99999996004197,
+          "measured_amplitude_pa": -9.999999960041972,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -77.55267817676068,
+          "rest_sd_mv": 0.12593216543521446
+        },
+        {
+          "sweep": 28,
+          "stimulus": "Long Square",
+          "amplitude_pa": 9.99999996004197,
+          "measured_amplitude_pa": 9.999999960041972,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -78.17755959928036,
+          "rest_sd_mv": 0.07502679595063168
+        },
+        {
+          "sweep": 29,
+          "stimulus": "Long Square",
+          "amplitude_pa": 29.9999990127642,
+          "measured_amplitude_pa": 29.999999012764178,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -77.88767100721597,
+          "rest_sd_mv": 0.08483090840398398
+        },
+        {
+          "sweep": 30,
+          "stimulus": "Long Square",
+          "amplitude_pa": 50.0000006675716,
+          "measured_amplitude_pa": 50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 4,
+          "rest_mv": -78.06125247627497,
+          "rest_sd_mv": 0.05917168454562295
+        },
+        {
+          "sweep": 31,
+          "stimulus": "Long Square",
+          "amplitude_pa": 69.9999988529321,
+          "measured_amplitude_pa": 69.99999885293207,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 9,
+          "rest_mv": -77.59275901913642,
+          "rest_sd_mv": 0.06183752062737518
+        },
+        {
+          "sweep": 32,
+          "stimulus": "Long Square",
+          "amplitude_pa": 90.0000005077395,
+          "measured_amplitude_pa": 90.00000050773949,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 15,
+          "rest_mv": -77.5015218526125,
+          "rest_sd_mv": 0.06520519267279158
+        },
+        {
+          "sweep": 33,
+          "stimulus": "Long Square",
+          "amplitude_pa": 110.000002162547,
+          "measured_amplitude_pa": 110.0000021625469,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 21,
+          "rest_mv": -77.4384473785758,
+          "rest_sd_mv": 0.0660407329215415
+        },
+        {
+          "sweep": 34,
+          "stimulus": "Long Square",
+          "amplitude_pa": 129.99999687846,
+          "measured_amplitude_pa": 129.99999687846042,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 27,
+          "rest_mv": -77.8797022342682,
+          "rest_sd_mv": 0.0650824124685488
+        },
+        {
+          "sweep": 35,
+          "stimulus": "Long Square",
+          "amplitude_pa": 149.999998533268,
+          "measured_amplitude_pa": 149.99999853326784,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 34,
+          "rest_mv": -76.89989033341408,
+          "rest_sd_mv": 0.05186528579127435
+        },
+        {
+          "sweep": 36,
+          "stimulus": "Long Square",
+          "amplitude_pa": 170.000000188075,
+          "measured_amplitude_pa": 170.00000018807526,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 40,
+          "rest_mv": -77.40905986428261,
+          "rest_sd_mv": 0.06931959384602276
+        },
+        {
+          "sweep": 37,
+          "stimulus": "Long Square",
+          "amplitude_pa": 190.000001842883,
+          "measured_amplitude_pa": 190.00000184288268,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 46,
+          "rest_mv": -77.38033465445042,
+          "rest_sd_mv": 0.08566314905069557
+        },
+        {
+          "sweep": 38,
+          "stimulus": "Long Square",
+          "amplitude_pa": 39.9999998401679,
+          "measured_amplitude_pa": 39.99999984016789,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -76.86379030048847,
+          "rest_sd_mv": 0.06914713105036184
+        },
+        {
+          "sweep": 39,
+          "stimulus": "Long Square",
+          "amplitude_pa": 50.0000006675716,
+          "measured_amplitude_pa": 50.0000006675716,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 0,
+          "rest_mv": -77.40334725826979,
+          "rest_sd_mv": 0.08592519328652194
+        },
+        {
+          "sweep": 40,
+          "stimulus": "Long Square",
+          "amplitude_pa": 59.9999980255284,
+          "measured_amplitude_pa": 59.999998025528356,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -77.24306525290012,
+          "rest_sd_mv": 0.0728278235430607
+        },
+        {
+          "sweep": 41,
+          "stimulus": "Long Square",
+          "amplitude_pa": 59.9999980255284,
+          "measured_amplitude_pa": 59.999998025528356,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -77.10897130817175,
+          "rest_sd_mv": 0.07376452876471865
+        },
+        {
+          "sweep": 42,
+          "stimulus": "Long Square",
+          "amplitude_pa": 59.9999980255284,
+          "measured_amplitude_pa": 59.999998025528356,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -77.73187220841646,
+          "rest_sd_mv": 0.05180685797817387
+        },
+        {
+          "sweep": 43,
+          "stimulus": "Long Square",
+          "amplitude_pa": 59.9999980255284,
+          "measured_amplitude_pa": 59.999998025528356,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 1,
+          "rest_mv": -77.68180275112391,
+          "rest_sd_mv": 0.12719918891966106
+        },
+        {
+          "sweep": 44,
+          "stimulus": "Long Square",
+          "amplitude_pa": 100.000001335143,
+          "measured_amplitude_pa": 100.0000013351432,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 14,
+          "rest_mv": -77.14978379160166,
+          "rest_sd_mv": 0.07835313204498247
+        },
+        {
+          "sweep": 45,
+          "stimulus": "Long Square",
+          "amplitude_pa": 100.000001335143,
+          "measured_amplitude_pa": 100.0000013351432,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 14,
+          "rest_mv": -77.2632341131568,
+          "rest_sd_mv": 0.06566518519223959
+        },
+        {
+          "sweep": 46,
+          "stimulus": "Long Square",
+          "amplitude_pa": 100.000001335143,
+          "measured_amplitude_pa": 100.0000013351432,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 13,
+          "rest_mv": -76.84233388602733,
+          "rest_sd_mv": 0.060338758347121685
+        },
+        {
+          "sweep": 47,
+          "stimulus": "Long Square",
+          "amplitude_pa": 100.000001335143,
+          "measured_amplitude_pa": 100.0000013351432,
+          "on_ms": 1020.0,
+          "off_ms": 2019.9999999999998,
+          "count": 12,
+          "rest_mv": -76.88847164511681,
+          "rest_sd_mv": 0.09100366954376145
+        }
+      ],
+      "primary_pa": 100.0,
+      "repeat_counts": [
+        14,
+        14,
+        13,
+        12
+      ],
+      "rheobase_pa": 50.0000006675716,
+      "rheobase_count": 4,
+      "sweep_step_pa": 20.000001654807196,
+      "highest_firing_pa": 190.000001842883,
+      "highest_firing_count": 46,
+      "highest_recorded_pa": 190.000001842883,
+      "measured_counts_at_primary": [
+        14,
+        14,
+        13,
+        12
+      ],
+      "measured_sweeps_at_primary": [
+        44,
+        45,
+        46,
+        47
+      ],
+      "family_amplitudes_pa": [
+        10.0,
+        30.0,
+        40.0,
+        50.0,
+        60.0,
+        70.0,
+        90.0,
+        100.0,
+        110.0,
+        130.0,
+        150.0,
+        170.0,
+        190.0
+      ],
+      "rest_mean_mv": -77.49631212460994,
+      "rest_repeat_sd_mv": 0.38610632745690165
+    }
+  }
+}
