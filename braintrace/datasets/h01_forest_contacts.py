@@ -25,6 +25,30 @@ KINDS = {'exc': dict(name='contact_exc', reversal_mv=0., tau_ms=2.),
          'inh': dict(name='contact_inh', reversal_mv=-80., tau_ms=5.)}
 
 
+def host_write(state, index, value):
+    """Write ``value`` at ``index`` of a state through the host.
+
+    Parameters
+    ----------
+    state : brainstate.State
+        State whose array is replaced.
+    index : int or tuple
+        NumPy index.
+    value : scalar
+        New value.
+
+    Notes
+    -----
+    A device-side ``.at[].set`` returns an array committed to a device; a
+    later ``jit`` call then sees a different input signature and recompiles.
+    Writing through NumPy keeps the state uncommitted, exactly as it was
+    created, so mutations never trigger a recompile.
+    """
+    array = np.array(state.value)
+    array[index] = value
+    state.value = jnp.asarray(array)
+
+
 def contact_kind(reversal_mv, tau_ms):
     """Kind index (0 excitatory, 1 inhibitory) of a contact's reversal and time constant.
 
@@ -125,20 +149,20 @@ class ForestContactTable(brainstate.nn.Module):
             raise ValueError('Contact delay outside the table capacity')
         steps = int(math.ceil(delay_ms/self.dt_ms-1e-9))
         row = int(row)
-        self.pre.value = self.pre.value.at[row].set(int(pre))
-        self.target.value = self.target.value.at[row].set(self.position(int(kind), post_point))
-        self.kind.value = self.kind.value.at[row].set(int(kind))
-        self.delay.value = self.delay.value.at[row].set(steps)
-        self.weight.value = self.weight.value.at[row].set(float(weight_us))
-        self.active.value = self.active.value.at[row].set(1.)
+        host_write(self.pre, row, int(pre))
+        host_write(self.target, row, self.position(int(kind), post_point))
+        host_write(self.kind, row, int(kind))
+        host_write(self.delay, row, steps)
+        host_write(self.weight, row, float(weight_us))
+        host_write(self.active, row, 1.)
         self.rows[row] = dict(identity=identity, pre=int(pre), post_point=int(post_point), kind=int(kind),
                               delay_steps=steps)
 
     def clear(self, row):
         """Return one row to dormancy (its queued events are dropped)."""
         row = int(row)
-        self.active.value = self.active.value.at[row].set(0.)
-        self.ring.value = self.ring.value.at[:, row].set(0.)
+        host_write(self.active, row, 0.)
+        host_write(self.ring, (slice(None), row), 0.)
         self.rows.pop(row, None)
 
     def write_arrivals(self, forest):

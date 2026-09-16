@@ -179,7 +179,8 @@ class H01ForestCell(H01Cell):
         on : bool, optional
             ``False`` returns the slot to dormancy.
         """
-        self.active.value = self.active.value.at[int(forest_index)].set(1. if on else 0.)
+        from .h01_forest_contacts import host_write
+        host_write(self.active, int(forest_index), 1. if on else 0.)
 
     @property
     def _discretization(self):
