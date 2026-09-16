@@ -106,8 +106,8 @@ FAILURE_RULE_NAMES = ("finite", "rheobase_in_step", "fires_at_highest", "count_i
 FAILURE_RULE = ("keep = finite output and soma traces; firing range: the ramp rheobase within one human sweep "
                 "step of the human rheobase, the ramp still firing at the human's highest recorded amplitude, and "
                 "the step count at the primary input inside the human repeat range; rest: mean output voltage "
-                "over the 100 ms before the pulse and over the 10 ms ending 200 ms after it both within 3 sd "
-                "of the donor recording's rest, no -20 mV crossing before the pulse; numerical: the dt-half "
+                "over the 100 ms before the pulse and over the 10 ms ending 200 ms after it both within 3 across-sweep "
+                "repeat sd of the donor recording's rest, no -20 mV crossing before the pulse; numerical: the dt-half "
                 "repeat (0.0025 ms) is finite and reproduces the count. The block current above the recorded "
                 "range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).")
 REST_SD_FACTOR = 3.
@@ -152,7 +152,9 @@ def keep_verdict_failure(primary, ramp, half, donor):
         Run JSON of the donor step run, the ramp run and the dt-half repeat.
     donor : dict
         ``rest_mv`` and ``sd_mv`` from donor-rest.json merged with the donor's human datums
-        (``rheobase_pa``, ``sweep_step_pa``, ``highest_firing_pa``, ``repeat_counts``).
+        (``rheobase_pa``, ``sweep_step_pa``, ``highest_firing_pa``, ``repeat_counts``,
+        ``rest_repeat_sd_mv``). The rest tolerance is 3 x the across-sweep repeat sd; the
+        within-trace ``sd_mv`` is the fallback when no repeat sd is recorded.
 
     Returns
     -------
@@ -161,12 +163,15 @@ def keep_verdict_failure(primary, ramp, half, donor):
         dt-half repeat is a named reason, never a keep.
     """
     count = primary["output_site"]["count"]
-    tolerance = REST_SD_FACTOR*donor["sd_mv"]
+    repeat_sd = donor.get("rest_repeat_sd_mv")
+    rest_sd_source = "across-sweep repeat sd (human-datums rest_repeat_sd_mv)" if repeat_sd is not None else         "within-trace sd (donor-rest sd_mv; repeat sd absent)"
+    tolerance = REST_SD_FACTOR*(donor["sd_mv"] if repeat_sd is None else repeat_sd)
     rest_mv, return_mv = primary.get("rest_mean_mv"), primary.get("return_mv")
     rest_ok = rest_mv is not None and abs(rest_mv-donor["rest_mv"]) <= tolerance
     return_ok = (bool(primary.get("return_available")) and return_mv is not None
                  and abs(return_mv-donor["rest_mv"]) <= tolerance)
     firing, readings = firing_range_rules(primary, ramp, donor)
+    readings.update(rest_sd_mv=donor["sd_mv"] if repeat_sd is None else repeat_sd, rest_sd_source=rest_sd_source)
     rules = dict(finite=bool(primary["output_site"]["finite"] and primary["soma_site"]["finite"]
                              and (ramp is None or ramp.get("finite", True))),
                  **firing,

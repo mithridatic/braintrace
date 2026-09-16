@@ -91,7 +91,7 @@ are recorded beside them for comparison and are not the gate.
 | Edge | Model reading | Human datum | Tolerance | Pass |
 | --- | ---: | --- | --- | --- |
 | Firing range | rheobase from the ramp; firing at the human's highest recorded amplitude | lowest firing and highest still-firing long-square amplitude (`long-square-index.json` / NWB stimulus, LJP-corrected) | one human sweep step | rheobase within the step; still fires at the human's highest amplitude; step count at the primary input inside the human repeat range |
-| Rest | mean over the 100 ms before the pulse and the 10 ms ending 200 ms after | donor rest (`donor-rest.json`) | 3 sd of the donor's repeat level | both inside; no -20 mV crossing before the pulse |
+| Rest | mean over the 100 ms before the pulse and the 10 ms ending 200 ms after | donor rest (`donor-rest.json`) | 3 sd of the donor's repeat level: the across-sweep sd of the pre-pulse rest over the long-square family (`human-datums.json` `rest_repeat_sd_mv`, 0.31-0.47 mV, band 0.9-1.4 mV); the within-trace sd of one sweep is not the repeat level | both inside; no -20 mV crossing before the pulse |
 | Numerical | dt-half repeat | primary run | exact count | reproduces |
 
 The block edge above the recorded range is a model measurement and is recorded, not scored.
