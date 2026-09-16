@@ -1,10 +1,17 @@
 import numpy as np
 import pytest
+import brainstate
 import jax
 import jax.numpy as jnp
 
 from braintrace.datasets import h01_dhs_contraction
 from braintrace.datasets.h01_dhs_forest import build_schedule, dense_matrix, forest_roots, solve
+
+
+@pytest.fixture(autouse=True)
+def _precision():
+    with brainstate.environ.context(precision=64):
+        yield
 
 
 def _random_tree(rng, n, offset):
