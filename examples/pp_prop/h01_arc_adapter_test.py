@@ -99,6 +99,19 @@ def test_production_population_and_dale_identity_guards(tmp_path):
         assert 'identities cannot change' in attempt.reason
 
 
+def test_initialize_accepts_the_manifest_declared_cell_count(tmp_path, monkeypatch):
+    from .example21_arc_adapter import Example21ArcAdapter
+    adapter, _ = _candidate(tmp_path)
+    count = len(adapter.initial_topology.to_dict()['active_cells'])
+    assert count != 104
+    adapter.document['original_cells'] = count
+    monkeypatch.setattr(Example21ArcAdapter, 'initialize', lambda self, config, output_dir: 'initialized')
+    assert adapter.initialize(PipelineConfig(), tmp_path) == 'initialized'
+    adapter.document['original_cells'] = count+1
+    with pytest.raises(ValueError, match=f'all {count+1} original cells'):
+        adapter.initialize(PipelineConfig(), tmp_path)
+
+
 def test_cli_exposes_h01_and_requires_manifest(tmp_path, monkeypatch):
     from .example21_arc_adapter import Example21ArcAdapter
     module = Example21ArcAdapter(Path('.'))._model()

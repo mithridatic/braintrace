@@ -108,7 +108,7 @@ class H01ArcAdapter(Example21ArcAdapter):
         return candidate
 
     def initialize(self, config, output_dir):
-        """Initialize all 104 original cells through the existing coordinator.
+        """Initialize all original cells of the manifest through the existing coordinator.
 
         Parameters
         ----------
@@ -122,8 +122,9 @@ class H01ArcAdapter(Example21ArcAdapter):
         CandidateSnapshot
             Directly scored initial continuation.
         """
-        if len(self.initial_topology.to_dict()['active_cells']) != 104:
-            raise ValueError('Production H01 evolution must start with all 104 selected source cells')
+        expected = int(self.document.get('original_cells', 104))
+        if len(self.initial_topology.to_dict()['active_cells']) != expected:
+            raise ValueError(f'Production H01 evolution must start with all {expected} original cells of the manifest')
         return super().initialize(config, output_dir)
 
     def restore(self, candidate):
