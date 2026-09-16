@@ -123,8 +123,13 @@ def free_bytes(root=ROOT):
 
 
 def curl_command(shard, part):
-    """curl argv for one shard: fail on HTTP errors, abort a stalled stream, cap the wall time."""
-    return ["curl", "-sS", "-L", "--fail", "--retry", "2", "--max-time", str(CURL_MAX_S), *CURL_STALL,
+    """curl argv for one shard: IPv4 only, fail on HTTP errors, abort a stalled stream, cap the wall time.
+
+    ``-4`` because the box resolves storage.googleapis.com to IPv6 first and that
+    path throttled to about 1 MB/s after ~33 GB on 2026-09-16 while the IPv4 path
+    to the same object ran at 11.7 MB/s (probe recorded in the progress notes).
+    """
+    return ["curl", "-4", "-sS", "-L", "--fail", "--retry", "2", "--max-time", str(CURL_MAX_S), *CURL_STALL,
             "-o", str(part), BASE_URL + shard]
 
 

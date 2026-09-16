@@ -73,6 +73,6 @@ def test_write_json_is_atomic_and_new_progress_carries_the_layout(tmp_path):
 
 def test_curl_command_fails_on_http_errors_aborts_stalls_and_caps_wall_time(tmp_path):
     argv = curl_command("export000000000005", tmp_path / "x.part")
-    assert argv[0] == "curl" and "--fail" in argv and argv[-1] == BASE_URL + "export000000000005"
+    assert argv[0] == "curl" and "-4" in argv and "--fail" in argv and argv[-1] == BASE_URL + "export000000000005"
     assert "--max-time" in argv and "--speed-limit" in argv and "--speed-time" in argv
     assert argv[argv.index("-o") + 1] == str(tmp_path / "x.part")
