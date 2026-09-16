@@ -18,8 +18,8 @@ def _morphology(dendrite_um):
                           radii_distal=np.array([6.])*u.um)
     morpho = braincell.Morphology(root_name='soma', root_branch=soma)
     dendrite = braincell.Branch(lengths=np.array([dendrite_um])*u.um, radii_proximal=np.array([1.])*u.um,
-                                radii_distal=np.array([.8])*u.um, btype='basal_dendrite')
-    morpho.attach(dendrite, parent='soma', name='dend')
+                                radii_distal=np.array([.8])*u.um, type='dendrite')
+    morpho.attach(parent='soma', child_branch=dendrite, child_name='dend')
     return morpho
 
 
