@@ -11,7 +11,8 @@ Executor: Vast 50616476 (RTX 4090), `/workspace/braintrace`, branch
 17 of 104 cells kept (13 on the L2 donor, 4 on the L4 donor, none on PV or SST); the
 kept network has no contact, so the driven-window control term is
 delivery-unobservable; runtime and refinement gates pass on the kept set; the
-Example 21 grow/prune run on the kept manifest is recorded in Step 3 below.
+Example 21 grow/prune run on the kept manifest reached its 60 min cap with no candidate
+(empty grow/prune ledger, no pass@1).
 
 ## Step 1: every cell under its donor's protocol
 
@@ -106,7 +107,25 @@ that commit 43bd52b5 (2026-09-14, also on main) had removed, so the H01 backend 
 been unlaunchable since then (fix b94d2f38, with a test); and the manifest pins the
 implementation hash, so it was rebuilt against the fixed runtime.
 
-STEP3_PLACEHOLDER
+Run ([evolve/evolve-record.json](evolve/evolve-record.json), source commit b94d2f38,
+11:31:18-12:31:18 UTC, `timeout 3600`, exit 124): the wall cap was reached with no
+candidate, no stage output, an empty `.candidates` directory and no checkpoint; stderr
+holds only the two compiler warnings about `readout_bias` and `readout_weight` not being
+in the compiled model. The GPU ran at 93 percent with 2.6 GB. Measured as registered:
+
+| Quantity | Value |
+| --- | --- |
+| pass@1 (pipeline's own) | not produced (no candidate reached scoring) |
+| arm ledger | empty |
+| grow/prune ledger | 0 cells twinned, 0 pruned |
+| wall | 3,600 s cap; box time for Step 3 including the two aborted launches 1.1 h |
+
+Prediction registered before launch: the 104-cell machinery run produced no candidate in
+2 h 46 min and the per-event cost falls with compartments. Measured: on 17 cells (13
+percent of the compartments) the first stage still does not complete in 60 min. An empty
+ledger at the cap is the recorded outcome. Note that the earlier 2 h 46 min run predates
+commit 43bd52b5; every H01-backend launch between 2026-09-14 and this fix failed at
+import, so no learning outcome from that interval exists.
 
 ## What this does not claim
 

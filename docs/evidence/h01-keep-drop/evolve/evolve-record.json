@@ -1,0 +1,24 @@
+{
+  "status": "wall cap reached; no candidate, no stage output",
+  "source_commit": "b94d2f38fcc47f8126b19d8fcb28fe1727632b1e",
+  "started_utc": "2026-09-16T11:31:18Z",
+  "finished_utc": "2026-09-16T12:31:18Z",
+  "exit_code": 124,
+  "wall_cap_seconds": 3600,
+  "command": "examples/pp_prop/21-braincell-arc.py evolve --model-backend h01 --h01-manifest docs/evidence/h01-keep-drop/arc-manifest/manifest.json --arc-root var/arc-agi-1 --output-dir var/h01-driven/kept-evolve --device gpu --rounds 1 --patience 1 --topology-operations-per-stage 1 --screen-tasks 2",
+  "manifest_sha256": "dd2f3150ea46ff86b0fb3f286b5e65d8dcfb184f9b80e8688421c6f19eb5dd5b",
+  "outputs": {
+    "stdout_bytes": 0,
+    "stderr": "two compiler warnings only (readout_bias, readout_weight not in the compiled model)",
+    "candidates_dir_entries": 0,
+    "checkpoints": 0
+  },
+  "pass_at_1": null,
+  "arm_ledger": null,
+  "grow_prune_ledger": {
+    "cells_twinned": 0,
+    "cells_pruned": 0
+  },
+  "gpu": "RTX 4090, 93 percent utilisation, 2.6 GB at 6 min",
+  "previous_run": "104-cell machinery run: no candidate in 2 h 46 min (before commit 43bd52b5 broke the backend)"
+}

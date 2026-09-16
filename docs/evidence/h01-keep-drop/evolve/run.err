@@ -1,0 +1,4 @@
+/workspace/braintrace/braintrace/_compiler/module_info.py:210: UserWarning: The state ('readout_bias',) is not found in the compiled model.
+  _check_consistent_states_between_model_and_compiler(
+/workspace/braintrace/braintrace/_compiler/module_info.py:210: UserWarning: The state ('readout_weight',) is not found in the compiled model.
+  _check_consistent_states_between_model_and_compiler(
