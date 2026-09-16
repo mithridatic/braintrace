@@ -95,8 +95,10 @@ def main():
     parser.add_argument('--components', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--topology', type=Path, help='Also check soma/region membership using these cell polarities.')
+    parser.add_argument('--expected-sha256', help='Archive digest other than the pinned proofread release.')
+    parser.add_argument('--source', help='Source label recorded for a non-proofread archive.')
     args = parser.parse_args()
-    archive = H01Archive(args.archive)
+    archive = H01Archive(args.archive, expected_sha256=args.expected_sha256, source=args.source)
     inventory = json.loads(args.components.read_text())
     polarities = None
     if args.topology:
@@ -105,7 +107,9 @@ def main():
         if set(polarities) != {c['cell_id'] for c in inventory['cells']}:
             raise ValueError('Topology and component inventory populations differ.')
     result = dict(status='running', archive_sha256=hashlib.sha256(args.archive.read_bytes()).hexdigest(),
-                  cells=[], scope='largest soma-bearing component of each anatomical identity')
+                  source=archive.source, cells=[],
+                  scope='largest soma-bearing component of each anatomical identity')
+    expected = len(inventory['cells'])
     started = time.perf_counter()
     for row in inventory['cells']:
         record = dict(cell_id=row['cell_id'], component=row['largest_component'])
@@ -122,9 +126,9 @@ def main():
         record['seconds'] = time.perf_counter()-tick
         result['cells'].append(record)
         args.output.write_text(json.dumps(result, indent=2)+'\n')
-        print(f"{len(result['cells'])}/104 {record}", flush=True)
+        print(f"{len(result['cells'])}/{expected} {record}", flush=True)
     result.update(status='completed', seconds=time.perf_counter()-started,
-                  passed=len(result['cells']) == 104 and all(r['passed'] for r in result['cells']))
+                  passed=len(result['cells']) == expected and all(r['passed'] for r in result['cells']))
     args.output.write_text(json.dumps(result, indent=2)+'\n')
 
 
