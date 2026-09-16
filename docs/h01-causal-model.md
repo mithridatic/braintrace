@@ -783,6 +783,33 @@ Evidence: [ledger](evidence/h01-population-accuracy-ledger.md),
 [timestep ladder](evidence/h01-ready-cell7196644737-implicit-decision.json),
 [anatomy transfer](evidence/h01-e-morphology/stage-1-decision.json).
 
+### Population execution cost and the cable timestep (2026-09-16)
+
+**Established.** The 17-cell Example 21 runtime was launch-bound: each cell was its own
+BrainCell population, so one cable substep issued 17 kernel sets (5,104 stream launches,
+136 while loops) and the device did 12.7 M compartment-updates per second. One forest
+population (`H01ForestCell`: the 17 discretizations concatenated, one runtime node per
+mechanism with per-point donor parameters, one axial contraction over the forest) runs the
+same equations with the same parameters at every compartment: soma voltages agree with the
+per-cell path to 7e-10 mV over 21 events at both timesteps, and the substep issues 327
+launches in 8 while loops. Forward cost fell from 0.180 to at most 0.129 s per event at
+dt 0.005 (measured under GPU contention); compiles fell 6-10x. The remaining substep time
+is the per-mechanism channel kernels, still unattributed behind command buffers.
+
+**Established.** Across a 40 ms window in which every kept cell fires, coarser cable
+timesteps reproduce every spike count and shift each spike first-order in dt (<= 0.064,
+0.029, 0.0087 ms at dt 0.005, 0.0025, 0.00125). A pointwise 1 mV band across a spike
+upstroke is a spike-time band of about 3 us, which none of those timesteps meets; the pinned
+0.000625 ms remains the session default.
+
+**Not established.** Contact delivery on the fused path (it raises on any contact), the
+uncontended fused timing, static capacity (a clone still recompiles), and the learner on
+the forest (its sparse eligibility layout grows 17x).
+
+Evidence: [fused population profile](evidence/h01-fused-population-profile.md),
+[dt spike window](evidence/h01-dt-spike-window.md),
+[spec](specs/2026-09-16-h01-fused-population.md).
+
 ## Y6. Additional donor fits do not reproduce all recorded counts
 
 The imported HL5MN1 fit produced 16 and 30 spikes against recorded counts of 14 and 34.

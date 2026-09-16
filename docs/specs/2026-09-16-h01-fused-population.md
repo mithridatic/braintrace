@@ -203,9 +203,11 @@ comparison run is the per-cell path under the same rebuilt manifest.
 - Lever 0 ([h01-dt-spike-window.md](../evidence/h01-dt-spike-window.md)): dt 0.005 fails the
   contract across the spikes: spike counts identical on all 17 cells (30 / 30) and spike
   times shifted by at most 0.064 ms, but that shift on a spike upstroke is up to 17.8 mV of
-  instantaneous |dV| (per cell 0.49-17.8 mV). The contract "max |dV| <= 1 mV" is a spike-time
-  contract of about 10 us at 100 mV/ms, which the ladder (0.0025, 0.00125) is measuring; until
-  it passes, `dt_ms` stays 0.000625 and `numerical_settings()` is unchanged.
+  instantaneous |dV| (per cell 0.49-17.8 mV). The ladder: dt 0.0025 shifts spikes by <= 0.029 ms
+  (max |dV| 7.9 mV), dt 0.00125 by <= 0.0087 ms (2.65 mV), counts identical at every rung, so
+  the pointwise 1 mV band (a spike-time band of about 3 us) fails everywhere and its edge lies
+  below 0.00125 ms: `dt_ms` stays 0.000625 and `numerical_settings()` is unchanged. Spike
+  counts plus a spike-time band would admit dt 0.00125 (2x) or 0.005 (8x); that is J's call.
 - Levers 1+2 ([h01-fused-population-profile.md](../evidence/h01-fused-population-profile.md)):
   implemented (`H01ForestCell`, `build_network(fused=True)`, `fused_population` setting,
   default False). 5,104 -> 327 launches per substep, 136 -> 8 while loops, GPU busy 8.3 ->
