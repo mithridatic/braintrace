@@ -69,7 +69,8 @@ def test_keep_row_emits_the_column_layout_per_kind():
     assert keep_row(_record(None, 22, 1, 99), 0, CTX, 0)[0] == "kept_to_kept"
     assert keep_row(_record(21, 21, 1, 2), 0, CTX, 0)[0] == "same_cell"
     assert keep_row(_record(30, 31, 98, 99), 0, CTX, 0) is None
-    assert keep_row(_record(None, 99, 1, 99), 0, CTX, 0) is None
+    assert keep_row(_record(None, 99, 1, 99), 0, CTX, 0) == ("untabulated_partner", None)
+    assert keep_row(_record(None, None, 99, 4), 0, CTX, 0) == ("untabulated_partner", None)
     assert keep_row(_record(None, 30, 1, 99, confidence=None), 0, CTX, 0)[1][10] is None
 
 
@@ -80,6 +81,8 @@ def test_kind_totals_sums_receipts_over_every_kind():
     assert out["rows"] == {"kept_to_kept": 1, "same_cell": 2, "kept_to_tabulated": 4, "tabulated_to_kept": 0}
     assert out["axon_pre_rows"] == {"kept_to_kept": 0, "same_cell": 0, "kept_to_tabulated": 3, "tabulated_to_kept": 0}
     assert set(out["rows"]) == set(KINDS)
+    entries[0]["dropped"] = {"pre_kept": 8, "post_kept": 181}
+    assert kind_totals(entries)["dropped_untabulated_partner"] == {"pre_kept": 8, "post_kept": 181}
 
 
 def test_new_progress_carries_the_layout_and_merge_uses_the_thirteen_columns(tmp_path):

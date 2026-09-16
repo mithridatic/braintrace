@@ -161,7 +161,8 @@ def classify(pre_owner, post_owner, pre_c3, post_c3, neuron_ids):
 
 
 def keep_row(record, index, context, shard):
-    """``(kind, row)`` for one export record, or ``None``.
+    """``(kind, row)`` for one export record; ``("untabulated_partner", None)`` when a
+    kept side meets a partner that is neither kept nor tabulated; ``None`` when no side is kept.
 
     Parameters
     ----------
@@ -187,6 +188,9 @@ def keep_row(record, index, context, shard):
         ...        "type": 2, "location": {"x": 10, "y": 20, "z": 3}, "confidence": 0.98765}
         >>> keep_row(rec, 5, ctx, 7)
         ('kept_to_tabulated', [11, None, None, 30, 2, 10, 20, 3, 'AXON', 'DENDRITE', 0.9877, 7, 5])
+        >>> rec["post_synaptic_partner"]["neuron_id"] = 99
+        >>> keep_row(rec, 5, ctx, 7)
+        ('untabulated_partner', None)
     """
     pre, post = record["pre_synaptic_site"], record["post_synaptic_partner"]
     pre_owner, post_owner = side_owner(pre, context), side_owner(post, context)
@@ -197,7 +201,7 @@ def keep_row(record, index, context, shard):
     post_c3 = None if post_c3 is None else int(post_c3)
     kind = classify(pre_owner, post_owner, pre_c3, post_c3, context["neuron_ids"])
     if kind is None:
-        return None
+        return "untabulated_partner", None
     loc = record["location"]
     conf = record.get("confidence")
     return kind, [pre_owner, post_owner, pre_c3, post_c3, record.get("type"), loc["x"], loc["y"], loc["z"],
@@ -209,9 +213,11 @@ def scan_shard(path, shard, context, cache=CACHE):
     """Scan one downloaded shard in a worker process.
 
     Writes the kept rows to ``part_path(shard, cache)`` and returns the receipt
-    ``{id, bytes, sha256, records, kept, kinds, axon_pre, scan_seconds}`` where
-    ``kinds`` counts rows per ``KINDS`` and ``axon_pre`` the subset with
-    ``pre_class == "AXON"``. Imports fastavro lazily (absent on the laptop).
+    ``{id, bytes, sha256, records, kept, kinds, axon_pre, dropped, scan_seconds}``
+    where ``kinds`` counts rows per ``KINDS``, ``axon_pre`` the subset with
+    ``pre_class == "AXON"`` and ``dropped`` the rows with a kept side whose
+    partner is neither kept nor tabulated (``pre_kept`` / ``post_kept`` by which
+    side was kept). Imports fastavro lazily (absent on the laptop).
     """
     from fastavro import reader
 
@@ -219,7 +225,7 @@ def scan_shard(path, shard, context, cache=CACHE):
     t0 = time.monotonic()
     digest = sha256_path(path)
     idx = shard_index(shard)
-    kept, kinds, axon = [], collections.Counter(), collections.Counter()
+    kept, kinds, axon, dropped = [], collections.Counter(), collections.Counter(), collections.Counter()
     records = 0
     with path.open("rb") as f:
         for index, record in enumerate(reader(f)):
@@ -228,6 +234,9 @@ def scan_shard(path, shard, context, cache=CACHE):
             if hit is None:
                 continue
             kind, row = hit
+            if row is None:
+                dropped["pre_kept" if side_owner(record["pre_synaptic_site"], context) is not None else "post_kept"] += 1
+                continue
             kept.append(row)
             kinds[kind] += 1
             if row[8] == "AXON":
@@ -238,6 +247,7 @@ def scan_shard(path, shard, context, cache=CACHE):
     tmp.replace(out)
     return {"id": shard, "bytes": path.stat().st_size, "sha256": digest, "records": records, "kept": len(kept),
             "kinds": {k: kinds.get(k, 0) for k in KINDS}, "axon_pre": {k: axon.get(k, 0) for k in KINDS},
+            "dropped": {k: dropped.get(k, 0) for k in ("pre_kept", "post_kept")},
             "scan_seconds": round(time.monotonic() - t0, 3)}
 
 
@@ -251,10 +261,12 @@ def kind_totals(entries):
         >>> from docs.evidence.h01_c3_kept_partner_graph import kind_totals
         >>> kind_totals([{"kinds": {"kept_to_kept": 1}, "axon_pre": {"kept_to_kept": 1}},
         ...              {"kinds": {"kept_to_kept": 2, "same_cell": 3}, "axon_pre": {"same_cell": 1}}])
-        {'rows': {'kept_to_kept': 3, 'same_cell': 3, 'kept_to_tabulated': 0, 'tabulated_to_kept': 0}, 'axon_pre_rows': {'kept_to_kept': 1, 'same_cell': 1, 'kept_to_tabulated': 0, 'tabulated_to_kept': 0}}
+        {'rows': {'kept_to_kept': 3, 'same_cell': 3, 'kept_to_tabulated': 0, 'tabulated_to_kept': 0}, 'axon_pre_rows': {'kept_to_kept': 1, 'same_cell': 1, 'kept_to_tabulated': 0, 'tabulated_to_kept': 0}, 'dropped_untabulated_partner': {'pre_kept': 0, 'post_kept': 0}}
     """
     return {"rows": {k: sum(e.get("kinds", {}).get(k, 0) for e in entries) for k in KINDS},
-            "axon_pre_rows": {k: sum(e.get("axon_pre", {}).get(k, 0) for e in entries) for k in KINDS}}
+            "axon_pre_rows": {k: sum(e.get("axon_pre", {}).get(k, 0) for e in entries) for k in KINDS},
+            "dropped_untabulated_partner": {k: sum(e.get("dropped", {}).get(k, 0) for e in entries)
+                                            for k in ("pre_kept", "post_kept")}}
 
 
 def new_progress(listing, workers, inputs):
