@@ -7,7 +7,7 @@ import pytest
 from braincell.filter import AllRegion, BranchSlice, RootLocation
 from braincell.mech import Channel, Ion, StateProbe
 
-from . import h01_calcium_solver  # noqa: F401  registers the pinned integrator
+from . import h01_calcium_solver, h01_pv_channels  # noqa: F401  registers the integrator and channels
 from .h01_construction import H01Cell
 from .h01_forest_cell import H01ForestCell
 from .h01_spike_output import restrict_spike_output
