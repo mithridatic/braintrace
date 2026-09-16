@@ -1,0 +1,699 @@
+{
+  "nodes": [
+    {
+      "index": 0,
+      "cell_id": "751294744",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 1,
+      "cell_id": "1669770671",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 2,
+      "cell_id": "1684504313",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 3,
+      "cell_id": "2001418787",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 4,
+      "cell_id": "2103991145",
+      "tags": [
+        "L3",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 5,
+      "cell_id": "2252715458",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 6,
+      "cell_id": "2848552900",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 7,
+      "cell_id": "3111823553",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 8,
+      "cell_id": "3571083397",
+      "tags": [
+        "L5",
+        "pyramidal",
+        "neuron",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 9,
+      "cell_id": "3761379470",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 10,
+      "cell_id": "4010150634",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron",
+        "sparsely-spiny"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 11,
+      "cell_id": "4197933517",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 12,
+      "cell_id": "4437316933",
+      "tags": [
+        "L2",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 13,
+      "cell_id": "5013648003",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 14,
+      "cell_id": "5173982155",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 15,
+      "cell_id": "5439194879",
+      "tags": [
+        "L4",
+        "pyramidal",
+        "neuron"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    },
+    {
+      "index": 16,
+      "cell_id": "6833911543",
+      "tags": [
+        "L5",
+        "neuron",
+        "excitatory/spiny-with-atypical-tree",
+        "bipolar"
+      ],
+      "polarity": "E",
+      "dale_sign": 1
+    }
+  ],
+  "contacts": [],
+  "excluded_contacts": [
+    {
+      "annotation_id": "100144637",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "102259144",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "102305670",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "103822813",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "10478123",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "108171241",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "108301250",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "108471882",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "109360923",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "109893121",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "109899789",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "112467397",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "114952934",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "116483373",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "116688884",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "11673508",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "11715445",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "117174015",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "118020119",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "119340808",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "120849133",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "120953297",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "121188567",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "121199763",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "12305356",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "123559497",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "12477026",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "125375686",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "125872198",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "125917741",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "126091183",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "126593420",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "127829892",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "129934473",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "1303006",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "130313441",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "133886731",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "13530230",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "135616405",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "136569133",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "140313087",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "141682179",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "142989097",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "143441773",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "14477816",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "145249060",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "14528103",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "145666376",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "146026453",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "146771403",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "15650999",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "16232487",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "16284236",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "17585238",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "19690278",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "20470362",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "2067517",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "25747388",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "27195516",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "28728132",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "32136349",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "3283527",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "34428532",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "34902484",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "43561472",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "43970566",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "45852953",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "47199952",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "47964556",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "48296985",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "51821909",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "53267084",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "54906016",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "582047",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "59528985",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "59723160",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "59727895",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "6178378",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "62374479",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "63967920",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "63977941",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "64580496",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "66270803",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "67651832",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "68575152",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "68870053",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "71527686",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "71808175",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "72534918",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "73184052",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "73723691",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "75320335",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "77120253",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "78369788",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "79265497",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "81131902",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "81192657",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "82122302",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "82518017",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "84290094",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "85204895",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "85787101",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "86294644",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "87007535",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "87527105",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89000653",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89339102",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89815959",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "89875505",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "90446184",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "91718495",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "92529008",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "93139913",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "93316465",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "94974176",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "95566965",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "95907584",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "96502623",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "97611677",
+      "reason": "exact endpoints not verified"
+    },
+    {
+      "annotation_id": "99500285",
+      "reason": "exact endpoints not verified"
+    }
+  ],
+  "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+  "scope": "Observed subset only. Missing connections do not establish biological absence.",
+  "endpoint_audit_sha256": "3063d29c3e24f05b6e546a0160c9514970f5d630f51e9ce693bc671cf28c3ca2",
+  "max_distance_um": 1.0,
+  "counts": {
+    "nodes": 17,
+    "excitatory": 17,
+    "inhibitory": 0,
+    "verified_contacts": 0,
+    "construction_ready": 0
+  },
+  "filtered_from": {
+    "topology": "docs\\evidence\\h01-verified-network.json",
+    "topology_sha256": "cabe8f8f9176b76cb8c99f40a52c2d94bc4b66c9229dfa25d80399c6f76bde07",
+    "components": "docs\\evidence\\h01-population-components.json",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8",
+    "decision": "docs\\evidence\\h01-keep-drop\\decision.json",
+    "decision_sha256": "e9f058b05f5a5600d715946645d40d65c5d678d8367125da136884775276f15a"
+  }
+}

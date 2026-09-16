@@ -1,0 +1,86 @@
+{
+  "cell": "1669770671",
+  "donor": "l2-pyramidal-allen-541563728",
+  "polarity": "E",
+  "component": 0,
+  "source_sha256": "2cba669e3d5a3704359874f7d8cdcbddb54cbf9e764c8e7e03746081596c1f93",
+  "component_nodes": 28625,
+  "n_compartments": 8814,
+  "dt_ms": 0.0025,
+  "duration_ms": 2300.0,
+  "solver": "h01_staggered_calcium_implicit",
+  "max_cv_um": 10.0,
+  "current_na": 0.31,
+  "pulse_ms": [
+    1020.0,
+    2020.0
+  ],
+  "registered_human_count": 10,
+  "repeat_counts": null,
+  "donor_model_count_on_own_anatomy": 10,
+  "output_site": {
+    "count": 11,
+    "first_spike_ms": 13.377281293970782,
+    "finite": true,
+    "crossing_times_ms": [
+      1033.3772812939708,
+      1042.186860684625,
+      1054.6391957687238,
+      1205.6091034987462,
+      1332.4697993410093,
+      1453.136149220017,
+      1568.894464698856,
+      1681.044986771649,
+      1790.4305600158527,
+      1897.680654112668,
+      2003.2612633629742
+    ]
+  },
+  "soma_site": {
+    "count": 11,
+    "first_spike_ms": 13.377283957761392,
+    "finite": true,
+    "crossing_times_ms": [
+      1033.3772839577614,
+      1042.186863556912,
+      1054.639198541202,
+      1205.609106031449,
+      1332.4698018856725,
+      1453.1361517418434,
+      1568.894467235536,
+      1681.0449893177483,
+      1790.4305625247891,
+      1897.6806566229593,
+      2003.2612658844016
+    ]
+  },
+  "verdict_vs_human": {
+    "exact": "missed_within_one",
+    "repeat_band": null
+  },
+  "verdict_vs_donor_model": {
+    "exact": "missed_within_one",
+    "repeat_band": null
+  },
+  "rest_before_pulse_mv": -83.16853001777524,
+  "pre_pulse_count": 0,
+  "rest_mean_mv": -83.16852777051051,
+  "return_mv": -91.01659268297149,
+  "return_available": true,
+  "post_pulse_count": 0,
+  "peak_mv": 38.849215778065606,
+  "min_mv": -94.35292538978184,
+  "construction_seconds": 1.68601727578789,
+  "init_seconds": {
+    "cell_1669770671": 1.6072930907830596
+  },
+  "run_seconds": 1478.413112374954,
+  "steps": 920000,
+  "peak_rss_mb": 1312.2421875,
+  "inputs": {
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8"
+  },
+  "traces_sha256": "8ebc83634ae71b4e868724b0b1d6a09fd34cb0588f5e7e75d52b43978e0c1b3a",
+  "scope": "One deployed donor on retained production-imported H01 anatomy under the donor recording's step protocol. A physiological transfer reading; not a measurement of the H01 donor's own cell."
+}

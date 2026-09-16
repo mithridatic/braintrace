@@ -1,0 +1,66 @@
+{
+  "cell": "3836078296",
+  "donor": "l4-pyramidal-allen-527952884",
+  "polarity": "E",
+  "component": 0,
+  "source_sha256": "bd25db9986a61484c1d48541b5e4820f209dfec0b39998e984d396b99bbff1fe",
+  "component_nodes": 23571,
+  "n_compartments": 5114,
+  "dt_ms": 0.005,
+  "duration_ms": 2300.0,
+  "solver": "h01_staggered_calcium_implicit",
+  "max_cv_um": 10.0,
+  "current_na": 0.09,
+  "pulse_ms": [
+    1020.0,
+    2020.0
+  ],
+  "registered_human_count": 12,
+  "repeat_counts": null,
+  "donor_model_count_on_own_anatomy": 8,
+  "output_site": {
+    "count": 1,
+    "first_spike_ms": 75.06059969435205,
+    "finite": true,
+    "crossing_times_ms": [
+      1095.060599694352
+    ]
+  },
+  "soma_site": {
+    "count": 1,
+    "first_spike_ms": 75.06059969435205,
+    "finite": true,
+    "crossing_times_ms": [
+      1095.060599694352
+    ]
+  },
+  "verdict_vs_human": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "verdict_vs_donor_model": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "rest_before_pulse_mv": -80.96574338681258,
+  "pre_pulse_count": 0,
+  "rest_mean_mv": -80.9657444428742,
+  "return_mv": -33.91228087439218,
+  "return_available": true,
+  "post_pulse_count": 0,
+  "peak_mv": 14.13612562956633,
+  "min_mv": -80.9861845201745,
+  "construction_seconds": 1.1785536650568247,
+  "init_seconds": {
+    "cell_3836078296": 1.2964306836947799
+  },
+  "run_seconds": 1045.6805898379534,
+  "steps": 460000,
+  "peak_rss_mb": 1164.80859375,
+  "inputs": {
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8"
+  },
+  "traces_sha256": "424b642885084c1afcb274c3092154076be47fc377a634f4f21788cb8181e7b8",
+  "scope": "One deployed donor on retained production-imported H01 anatomy under the donor recording's step protocol. A physiological transfer reading; not a measurement of the H01 donor's own cell."
+}

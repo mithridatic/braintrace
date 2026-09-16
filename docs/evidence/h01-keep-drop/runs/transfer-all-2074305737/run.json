@@ -1,0 +1,70 @@
+{
+  "cell": "2074305737",
+  "donor": "l4-pyramidal-allen-527952884",
+  "polarity": "E",
+  "component": 0,
+  "source_sha256": "d27d6cdce2b73ad3e0b29a988a86fcd7040f28d18f8ce80f83bbb651cdb269d0",
+  "component_nodes": 26684,
+  "n_compartments": 6179,
+  "dt_ms": 0.005,
+  "duration_ms": 2300.0,
+  "solver": "h01_staggered_calcium_implicit",
+  "max_cv_um": 10.0,
+  "current_na": 0.09,
+  "pulse_ms": [
+    1020.0,
+    2020.0
+  ],
+  "registered_human_count": 12,
+  "repeat_counts": null,
+  "donor_model_count_on_own_anatomy": 8,
+  "output_site": {
+    "count": 3,
+    "first_spike_ms": 73.55156066080781,
+    "finite": true,
+    "crossing_times_ms": [
+      1093.5515606608078,
+      1102.3200540877658,
+      1107.2097402217676
+    ]
+  },
+  "soma_site": {
+    "count": 3,
+    "first_spike_ms": 73.55156054510189,
+    "finite": true,
+    "crossing_times_ms": [
+      1093.551560545102,
+      1102.3200539587574,
+      1107.209739814937
+    ]
+  },
+  "verdict_vs_human": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "verdict_vs_donor_model": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "rest_before_pulse_mv": -80.96119817064404,
+  "pre_pulse_count": 0,
+  "rest_mean_mv": -80.96119914992313,
+  "return_mv": -33.92438334451719,
+  "return_available": true,
+  "post_pulse_count": 0,
+  "peak_mv": 21.117936999806147,
+  "min_mv": -80.98048235038883,
+  "construction_seconds": 1.294314693659544,
+  "init_seconds": {
+    "cell_2074305737": 1.4106146786361933
+  },
+  "run_seconds": 1027.559452966787,
+  "steps": 460000,
+  "peak_rss_mb": 1157.5703125,
+  "inputs": {
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8"
+  },
+  "traces_sha256": "6ab5efe8353e8a1a85d5ec3117f47bbaec46a8c249d19ce16bf0caa7ae955b91",
+  "scope": "One deployed donor on retained production-imported H01 anatomy under the donor recording's step protocol. A physiological transfer reading; not a measurement of the H01 donor's own cell."
+}

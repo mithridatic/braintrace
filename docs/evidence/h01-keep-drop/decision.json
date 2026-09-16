@@ -1,0 +1,2759 @@
+{
+  "phase": "final",
+  "dropped": {
+    "546925828": "rest_and_return,count_in_band",
+    "547114083": "rest_and_return,count_in_band",
+    "620880207": "rest_and_return,count_in_band",
+    "678539249": "count_in_band",
+    "810151953": "rest_and_return,count_in_band",
+    "810970127": "count_in_band",
+    "883843993": "rest_and_return,count_in_band",
+    "955432427": "rest_and_return,count_in_band",
+    "1072605926": "rest_and_return,count_in_band",
+    "1304599410": "rest_and_return,count_in_band",
+    "1465400601": "rest_and_return,count_in_band",
+    "1787105373": "count_in_band",
+    "1830470325": "rest_and_return,count_in_band",
+    "1874244336": "count_in_band",
+    "1900905433": "rest_and_return,no_spike_before_pulse",
+    "1930502394": "count_in_band",
+    "2047644309": "rest_and_return,count_in_band",
+    "2074305737": "rest_and_return,count_in_band",
+    "2104047922": "rest_and_return,no_spike_before_pulse,count_in_band",
+    "2195261734": "rest_and_return,count_in_band",
+    "2306214824": "rest_and_return,count_in_band",
+    "2325998949": "count_in_band",
+    "2451406889": "count_in_band",
+    "2530864375": "count_in_band",
+    "2820958695": "rest_and_return,count_in_band",
+    "2888180252": "rest_and_return,count_in_band",
+    "2889815798": "count_in_band",
+    "2903686765": "rest_and_return,count_in_band",
+    "3093748739": "rest_and_return,count_in_band",
+    "3139317430": "count_in_band",
+    "3178243558": "rest_and_return",
+    "3329117097": "count_in_band",
+    "3383650350": "rest_and_return,count_in_band",
+    "3432315514": "rest_and_return,count_in_band",
+    "3470629528": "count_in_band",
+    "3503540481": "count_in_band",
+    "3519995546": "rest_and_return,count_in_band",
+    "3680152874": "count_in_band",
+    "3751392341": "count_in_band",
+    "3812058320": "rest_and_return,count_in_band",
+    "3836078296": "rest_and_return,count_in_band",
+    "3954491075": "count_in_band",
+    "3955003482": "count_in_band",
+    "4039221194": "count_in_band",
+    "4125702786": "count_in_band",
+    "4138580687": "count_in_band",
+    "4157825456": "count_in_band",
+    "4188575291": "count_in_band",
+    "4260528559": "rest_and_return,no_spike_before_pulse,count_in_band",
+    "4365276903": "rest_and_return,count_in_band",
+    "4420044370": "rest_and_return,no_spike_before_pulse,count_in_band",
+    "4467761196": "count_in_band",
+    "4476359994": "count_in_band",
+    "4522237537": "rest_and_return,count_in_band",
+    "4535129012": "rest_and_return,count_in_band",
+    "4554213569": "rest_and_return,count_in_band",
+    "4582188328": "count_in_band",
+    "4607885827": "count_in_band",
+    "4641147055": "rest_and_return,count_in_band",
+    "4668874666": "count_in_band",
+    "4711567524": "count_in_band",
+    "4711641825": "rest_and_return,no_spike_before_pulse,count_in_band",
+    "4830551047": "count_in_band",
+    "4853956860": "count_in_band",
+    "4873639924": "count_in_band",
+    "4932057570": "rest_and_return,count_in_band",
+    "5015035926": "count_in_band",
+    "5060444657": "count_in_band",
+    "5061320552": "rest_and_return,no_spike_before_pulse,count_in_band",
+    "5136107765": "rest_and_return,count_in_band",
+    "5175880292": "count_in_band",
+    "5215113731": "count_in_band",
+    "5216806368": "count_in_band",
+    "5319188363": "rest_and_return,count_in_band",
+    "5352961465": "count_in_band",
+    "5355296383": "rest_and_return,count_in_band",
+    "5536146025": "count_in_band",
+    "5584343344": "count_in_band",
+    "5654281423": "count_in_band",
+    "5687162964": "rest_and_return,count_in_band",
+    "5805562981": "count_in_band",
+    "5832764277": "count_in_band",
+    "5965472721": "rest_and_return,no_spike_before_pulse,count_in_band",
+    "6126390733": "count_in_band",
+    "7052969349": "count_in_band",
+    "7196644737": "count_in_band",
+    "7893125555": "count_in_band"
+  },
+  "missing": [],
+  "cells": {
+    "546925828": {
+      "cell": "546925828",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.34217563523653,
+      "return_mv": -29.651909653851916,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "547114083": {
+      "cell": "547114083",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 1,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.96080937602694,
+      "return_mv": -29.79118816047229,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "620880207": {
+      "cell": "620880207",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 1,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.62196908662919,
+      "return_mv": -30.178989826341564,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "678539249": {
+      "cell": "678539249",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.98244605545747,
+      "return_mv": -87.72476552922186,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "751294744": {
+      "cell": "751294744",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.0707274512731,
+      "return_mv": -87.17096870179982,
+      "pre_pulse_count": 0,
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "810151953": {
+      "cell": "810151953",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 16,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.36285197685922,
+      "return_mv": -94.99482539155079,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "810970127": {
+      "cell": "810970127",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.25685556645621,
+      "return_mv": -86.50254306126888,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "883843993": {
+      "cell": "883843993",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 1,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.93535640589423,
+      "return_mv": -29.757058417107903,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "955432427": {
+      "cell": "955432427",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.49588627902779,
+      "return_mv": -29.50680559374112,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "1072605926": {
+      "cell": "1072605926",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 3,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.06526189464076,
+      "return_mv": -29.590654402484887,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "1304599410": {
+      "cell": "1304599410",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.88378611054148,
+      "return_mv": -29.787717307746373,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "1465400601": {
+      "cell": "1465400601",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.90072808367043,
+      "return_mv": -29.82497705316019,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "1669770671": {
+      "cell": "1669770671",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 11,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.16852777057642,
+      "return_mv": -91.01311864126671,
+      "pre_pulse_count": 0,
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "1684504313": {
+      "cell": "1684504313",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.18369466027949,
+      "return_mv": -88.56595203039132,
+      "pre_pulse_count": 0,
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "1787105373": {
+      "cell": "1787105373",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.99885256179817,
+      "return_mv": -88.15194873303513,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "1830470325": {
+      "cell": "1830470325",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 83,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.29999665349433,
+      "return_mv": -95.2892499064242,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "1874244336": {
+      "cell": "1874244336",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.80438244735453,
+      "return_mv": -85.10312248277383,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "1900905433": {
+      "cell": "1900905433",
+      "donor": "l3-sst-interneuron-hl5mn1",
+      "count": 11,
+      "human_count": 14,
+      "count_band": [
+        10,
+        18
+      ],
+      "finite": true,
+      "rest_mean_mv": -56.11229274515227,
+      "return_mv": -66.03283983096536,
+      "pre_pulse_count": 19,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": false,
+        "count_in_band": true,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,no_spike_before_pulse"
+    },
+    "1930502394": {
+      "cell": "1930502394",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 4,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.95649343761572,
+      "return_mv": -84.07065952294842,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "2001418787": {
+      "cell": "2001418787",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 11,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.9836609607026,
+      "return_mv": -81.77931479650846,
+      "pre_pulse_count": 0,
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "2047644309": {
+      "cell": "2047644309",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.21532793522675,
+      "return_mv": -29.57085525066698,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "2074305737": {
+      "cell": "2074305737",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 3,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96119914992313,
+      "return_mv": -33.92438334451719,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "2103991145": {
+      "cell": "2103991145",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.25233719927854,
+      "return_mv": -87.66168793782352,
+      "pre_pulse_count": 0,
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "2104047922": {
+      "cell": "2104047922",
+      "donor": "l3-sst-interneuron-hl5mn1",
+      "count": 99,
+      "human_count": 14,
+      "count_band": [
+        10,
+        18
+      ],
+      "finite": true,
+      "rest_mean_mv": -63.66370426790975,
+      "return_mv": -57.36379631810135,
+      "pre_pulse_count": 13,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": false,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,no_spike_before_pulse,count_in_band"
+    },
+    "2195261734": {
+      "cell": "2195261734",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 1,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.68210963977616,
+      "return_mv": -30.138055988546597,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "2252715458": {
+      "cell": "2252715458",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 9,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.07338280536817,
+      "return_mv": -89.39326032656862,
+      "pre_pulse_count": 0,
+      "dt_half_count": 9,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "2306214824": {
+      "cell": "2306214824",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96555666993845,
+      "return_mv": -33.89931966112714,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "2325998949": {
+      "cell": "2325998949",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.99983848098918,
+      "return_mv": -88.92181569378732,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "2451406889": {
+      "cell": "2451406889",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.95262368952261,
+      "return_mv": -87.35959774691413,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "2530864375": {
+      "cell": "2530864375",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.99509268838366,
+      "return_mv": -87.29339490902092,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "2820958695": {
+      "cell": "2820958695",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.97857391985814,
+      "return_mv": -38.167303876809044,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "2848552900": {
+      "cell": "2848552900",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 8,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.10023000879013,
+      "return_mv": -88.46814379906031,
+      "pre_pulse_count": 0,
+      "dt_half_count": 8,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "2888180252": {
+      "cell": "2888180252",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.97383938295083,
+      "return_mv": -33.85511191844054,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "2889815798": {
+      "cell": "2889815798",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.96966619037856,
+      "return_mv": -86.94215802244949,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "2903686765": {
+      "cell": "2903686765",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96291694701071,
+      "return_mv": -33.91490603860312,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "3093748739": {
+      "cell": "3093748739",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.9613804226252,
+      "return_mv": -33.93844759496244,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "3111823553": {
+      "cell": "3111823553",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 11,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.3528511766224,
+      "return_mv": -92.1855021277831,
+      "pre_pulse_count": 0,
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "3139317430": {
+      "cell": "3139317430",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 4,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.98543268481706,
+      "return_mv": -81.45696860465218,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "3178243558": {
+      "cell": "3178243558",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 10,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -84.67866076151098,
+      "return_mv": -96.40601386458567,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return"
+    },
+    "3329117097": {
+      "cell": "3329117097",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 5,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.05275671074357,
+      "return_mv": -85.05593281151478,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "3383650350": {
+      "cell": "3383650350",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96533383310752,
+      "return_mv": -33.903086144767144,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "3432315514": {
+      "cell": "3432315514",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 4,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.08138100173257,
+      "return_mv": -29.621988267850508,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "3470629528": {
+      "cell": "3470629528",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 145,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.50898904336267,
+      "return_mv": -90.77082660281359,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "3503540481": {
+      "cell": "3503540481",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96068170292584,
+      "return_mv": -81.02186979066504,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "3519995546": {
+      "cell": "3519995546",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.94761441157647,
+      "return_mv": -29.67637321940286,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "3571083397": {
+      "cell": "3571083397",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.85470523908052,
+      "return_mv": -90.56078950229552,
+      "pre_pulse_count": 0,
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "3680152874": {
+      "cell": "3680152874",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.97649207979913,
+      "return_mv": -87.73529373249961,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "3751392341": {
+      "cell": "3751392341",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.99404722810597,
+      "return_mv": -88.48887461746092,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "3761379470": {
+      "cell": "3761379470",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 13,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.99067628684442,
+      "return_mv": -82.11590305693264,
+      "pre_pulse_count": 0,
+      "dt_half_count": 13,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "3812058320": {
+      "cell": "3812058320",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.73269190830707,
+      "return_mv": -30.147838400184554,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "3836078296": {
+      "cell": "3836078296",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.9657444428742,
+      "return_mv": -33.91228087439218,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "3954491075": {
+      "cell": "3954491075",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 7,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.97693809692363,
+      "return_mv": -81.75750378600709,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "3955003482": {
+      "cell": "3955003482",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96425917380654,
+      "return_mv": -81.00914121761512,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4010150634": {
+      "cell": "4010150634",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 9,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.97932926714176,
+      "return_mv": -81.91670973717424,
+      "pre_pulse_count": 0,
+      "dt_half_count": 9,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "4039221194": {
+      "cell": "4039221194",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 0,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.87022024416083,
+      "return_mv": -84.07354224208218,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4125702786": {
+      "cell": "4125702786",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.97422654291756,
+      "return_mv": -87.20508038632276,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4138580687": {
+      "cell": "4138580687",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 0,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.08229503947688,
+      "return_mv": -82.24438732202009,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4157825456": {
+      "cell": "4157825456",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 4,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.65062237521614,
+      "return_mv": -85.15068920927143,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4188575291": {
+      "cell": "4188575291",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.27935061899142,
+      "return_mv": -87.00265027270451,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4197933517": {
+      "cell": "4197933517",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -84.01432584814934,
+      "return_mv": -91.94424873633437,
+      "pre_pulse_count": 0,
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "4260528559": {
+      "cell": "4260528559",
+      "donor": "l3-sst-interneuron-hl5mn1",
+      "count": 3,
+      "human_count": 14,
+      "count_band": [
+        10,
+        18
+      ],
+      "finite": true,
+      "rest_mean_mv": -57.40799502869046,
+      "return_mv": -38.75513928780549,
+      "pre_pulse_count": 16,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": false,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,no_spike_before_pulse,count_in_band"
+    },
+    "4365276903": {
+      "cell": "4365276903",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.80224589761505,
+      "return_mv": -30.239605380638164,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "4420044370": {
+      "cell": "4420044370",
+      "donor": "l3-sst-interneuron-hl5mn1",
+      "count": 4,
+      "human_count": 14,
+      "count_band": [
+        10,
+        18
+      ],
+      "finite": true,
+      "rest_mean_mv": -54.75200558786809,
+      "return_mv": -38.62815658611797,
+      "pre_pulse_count": 21,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": false,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,no_spike_before_pulse,count_in_band"
+    },
+    "4437316933": {
+      "cell": "4437316933",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 10,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.12761719683455,
+      "return_mv": -92.05275814917671,
+      "pre_pulse_count": 0,
+      "dt_half_count": 10,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "4467761196": {
+      "cell": "4467761196",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.93300307529611,
+      "return_mv": -87.63662090910613,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4476359994": {
+      "cell": "4476359994",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.97257701280478,
+      "return_mv": -87.34567425057918,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4522237537": {
+      "cell": "4522237537",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.94879073150587,
+      "return_mv": -34.005265137032474,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "4535129012": {
+      "cell": "4535129012",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.94364799401036,
+      "return_mv": -34.069855927860225,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "4554213569": {
+      "cell": "4554213569",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 1,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.39196968839038,
+      "return_mv": -31.227094746174437,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "4582188328": {
+      "cell": "4582188328",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.87080794816264,
+      "return_mv": -85.47647090399305,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4607885827": {
+      "cell": "4607885827",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.90466808121081,
+      "return_mv": -88.65768183029411,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4641147055": {
+      "cell": "4641147055",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.07225472000283,
+      "return_mv": -29.74540692518985,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "4668874666": {
+      "cell": "4668874666",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.84234342114623,
+      "return_mv": -81.20764011496559,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4711567524": {
+      "cell": "4711567524",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 5,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.34997093059494,
+      "return_mv": -85.42916028231302,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4711641825": {
+      "cell": "4711641825",
+      "donor": "l3-sst-interneuron-hl5mn1",
+      "count": 2,
+      "human_count": 14,
+      "count_band": [
+        10,
+        18
+      ],
+      "finite": true,
+      "rest_mean_mv": -55.19587636250177,
+      "return_mv": -65.4180609412983,
+      "pre_pulse_count": 15,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": false,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,no_spike_before_pulse,count_in_band"
+    },
+    "4830551047": {
+      "cell": "4830551047",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.96402063593851,
+      "return_mv": -87.48003292167358,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4853956860": {
+      "cell": "4853956860",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.98681383703101,
+      "return_mv": -88.18994358351856,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4873639924": {
+      "cell": "4873639924",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 4,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.37037744132361,
+      "return_mv": -84.6662051222671,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "4932057570": {
+      "cell": "4932057570",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.28699252060382,
+      "return_mv": -29.783691421427626,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "5013648003": {
+      "cell": "5013648003",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 11,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.50763477950699,
+      "return_mv": -93.45770191011022,
+      "pre_pulse_count": 0,
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "5015035926": {
+      "cell": "5015035926",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.37180530786313,
+      "return_mv": -83.8746605674419,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5060444657": {
+      "cell": "5060444657",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.9575692367971,
+      "return_mv": -87.65643904584029,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5061320552": {
+      "cell": "5061320552",
+      "donor": "l3-sst-interneuron-hl5mn1",
+      "count": 96,
+      "human_count": 14,
+      "count_band": [
+        10,
+        18
+      ],
+      "finite": true,
+      "rest_mean_mv": -56.538262638683406,
+      "return_mv": -50.03575401970488,
+      "pre_pulse_count": 15,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": false,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,no_spike_before_pulse,count_in_band"
+    },
+    "5136107765": {
+      "cell": "5136107765",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 1,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.81156601590453,
+      "return_mv": -30.37060007514924,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "5173982155": {
+      "cell": "5173982155",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -84.30220090703631,
+      "return_mv": -91.85277453623102,
+      "pre_pulse_count": 0,
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "5175880292": {
+      "cell": "5175880292",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.9747885296969,
+      "return_mv": -81.0092153816737,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5215113731": {
+      "cell": "5215113731",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.4240296452542,
+      "return_mv": -87.07803212994415,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5216806368": {
+      "cell": "5216806368",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.33475541146981,
+      "return_mv": -86.57537878584142,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5319188363": {
+      "cell": "5319188363",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 2,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.94417959229743,
+      "return_mv": -29.80791275745032,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "5352961465": {
+      "cell": "5352961465",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96113072323344,
+      "return_mv": -81.09039056968983,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5355296383": {
+      "cell": "5355296383",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 1,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.87629311698512,
+      "return_mv": -29.969592602917967,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "5439194879": {
+      "cell": "5439194879",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 15,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.96881192872058,
+      "return_mv": -82.20132202271259,
+      "pre_pulse_count": 0,
+      "dt_half_count": 15,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "5536146025": {
+      "cell": "5536146025",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.84523296761967,
+      "return_mv": -87.91896166633879,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5584343344": {
+      "cell": "5584343344",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.97995659102216,
+      "return_mv": -86.98823263984944,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5654281423": {
+      "cell": "5654281423",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 4,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.26967453726171,
+      "return_mv": -84.35870712453492,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5687162964": {
+      "cell": "5687162964",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 1,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.94986556492535,
+      "return_mv": -34.02292440502031,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,count_in_band"
+    },
+    "5805562981": {
+      "cell": "5805562981",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.96819017739881,
+      "return_mv": -88.512742275264,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5832764277": {
+      "cell": "5832764277",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -80.9725259800832,
+      "return_mv": -81.00563402536771,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "5965472721": {
+      "cell": "5965472721",
+      "donor": "l3-sst-interneuron-hl5mn1",
+      "count": 0,
+      "human_count": 14,
+      "count_band": [
+        10,
+        18
+      ],
+      "finite": true,
+      "rest_mean_mv": -39.70753121362874,
+      "return_mv": -40.44293639015728,
+      "pre_pulse_count": 1,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": false,
+        "no_spike_before_pulse": false,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "rest_and_return,no_spike_before_pulse,count_in_band"
+    },
+    "6126390733": {
+      "cell": "6126390733",
+      "donor": "l5-pv-basket-hl5bn1",
+      "count": 0,
+      "human_count": 12,
+      "count_band": [
+        9,
+        15
+      ],
+      "finite": true,
+      "rest_mean_mv": -86.98411338424175,
+      "return_mv": -88.05232042975727,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "6833911543": {
+      "cell": "6833911543",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 8,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.62745885366085,
+      "return_mv": -91.27133490474637,
+      "pre_pulse_count": 0,
+      "dt_half_count": 8,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": true,
+        "dt_half_reproduces": true
+      },
+      "keep": true,
+      "drop_reason": null
+    },
+    "7052969349": {
+      "cell": "7052969349",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.036875403357,
+      "return_mv": -86.57338160689841,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "7196644737": {
+      "cell": "7196644737",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 0,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -82.73568205400318,
+      "return_mv": -84.10306791186554,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    },
+    "7893125555": {
+      "cell": "7893125555",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 6,
+      "human_count": 10,
+      "count_band": [
+        7,
+        13
+      ],
+      "finite": true,
+      "rest_mean_mv": -83.82127946947503,
+      "return_mv": -88.72175299391238,
+      "pre_pulse_count": 0,
+      "dt_half_count": null,
+      "rules": {
+        "finite": true,
+        "rest_and_return": true,
+        "no_spike_before_pulse": true,
+        "count_in_band": false,
+        "dt_half_reproduces": null
+      },
+      "keep": false,
+      "drop_reason": "count_in_band"
+    }
+  },
+  "input_hashes": {
+    "transfer-all-546925828": "e03e81e5f6914fc497ea2bf6fb32957732bd6a62563064afd44f265bde2b5b28",
+    "transfer-all-547114083": "279c3850ee0e813ed2750885f6914dfcb73b98b75f94587045ec70c78e972370",
+    "transfer-all-620880207": "26cba902e59cc1c18f528a012ae816ee8fae0193b8e5bf21690271b53f4a5f3e",
+    "transfer-all-678539249": "c36d5f8bd3dd3ad51df85fb55d647db733a3b937619ac77e7e5c7fe8c565a63c",
+    "transfer-all-751294744": "c62f5f920fcbb20774350fb659a51da32d3bd7e066715154bb44b4f81ff3c8a0",
+    "transfer-all-751294744-dthalf": "aaded468b8d7c9ff0fc6d31e60c621a0a10a55b0854b9130150e62ca2aa513e9",
+    "transfer-all-810151953": "4d789fce9f088b04c4dc83a42e14c296dd5fe9ca186c625dbac59369115f4585",
+    "transfer-all-810970127": "36a6506121b7a7333d1454301785caa6c92ee21ee62c671ed3fec4498fd932e5",
+    "transfer-all-883843993": "2e06646b676e039383cc1b15fb7b86a92f1ae57cc0aa0459ea2bb87e7cf01dc4",
+    "transfer-all-955432427": "3072d78da87f279034389b3b82af1d970f85d026dc9536f2f03201bb4873b32a",
+    "transfer-all-1072605926": "8fb047ed95094580a68b62a68d8c7dfad093ddffc711ac1ad6baa1f50bba1623",
+    "transfer-all-1304599410": "df04f535105bdd366bbfc8158db09bba994bbe6fdf3d468119413d57ccbddfd9",
+    "transfer-all-1465400601": "f1e8fffaeb84ce3226c56a5c1df8129b8321e6257d577e311ff34f74405d052c",
+    "transfer-all-1669770671": "827dc509a8a67fd1e1f3ace0d9cfe1e5df36abca7f1ce536c0a1960da8fe20c6",
+    "transfer-all-1669770671-dthalf": "30222238543151226ae2cc1fbd90ba8e8cffcb0d265722bf5806bfe1a8c948d9",
+    "transfer-all-1684504313": "f9b455a09ea054104e03321c4839e2c0b8d160f977ca57160317c165d2e1aea4",
+    "transfer-all-1684504313-dthalf": "b475e8c2242e5d53f2dd1cc775dc53cf1bfa748316fb8750dbe22d1311df39e4",
+    "transfer-all-1787105373": "82632afe1a95c4aec2522b467c5bd4e878c96de375d442d6a9dff3eb62ebf0e1",
+    "transfer-all-1830470325": "e2151c47626b33ade4f96e247a94b0bd3ddb8cf3eb2ff3881ee04a202fe3b7c7",
+    "transfer-all-1874244336": "e06bc0208eb15bcacaf2445f168bfa262ec6157ad41e731f02786aa4a1ad1c87",
+    "transfer-all-1900905433": "da1ceb6edb43a52608b5a02c22696eb3cbf544a044e443f9c93d94a57b498154",
+    "transfer-all-1930502394": "901b02b9c9e771feafe6e88cd49ee277ff591fab908ce4d7bee7298f846566e5",
+    "transfer-all-2001418787": "fdc490fe9e90480c437e3b65c612a0b418bfb26b047f00fc60a2d56c9d0ce4d0",
+    "transfer-all-2001418787-dthalf": "ff7317c4d2007d0f33b87314239887bfed1e58eae35f8c707de9d421cbc3a8c2",
+    "transfer-all-2047644309": "56bd0d07bbc4611b8da80e2551a00716e55d387ec911eeb92c1e27c50da1ec0b",
+    "transfer-all-2074305737": "2ea7871b650ca79b88842097a05a50f770ae95b5d9f06debd4952afebe5eaf54",
+    "transfer-all-2103991145": "e04f7a52f6cf3bd0995e40c4f4e47495a9e162e674aa6bc0bb462d504828647c",
+    "transfer-all-2103991145-dthalf": "2502450a60c438a4fdcef5c278e1388fd7174734f14ebfc151224144c1ad894b",
+    "transfer-all-2104047922": "ed881a6c7d2c8c57bd14e572bb62f21d9fcc667b02f06cde0379a1f8e0cd720e",
+    "transfer-all-2195261734": "6215f00dc04dc6770c01edfea0d437fe7c4b1dd702c9650e966e7c634a0eb81a",
+    "transfer-all-2252715458": "e30a9e9be0c42a2428e462dabe50274e8f21717ea6b07b82a52850695a57dfc0",
+    "transfer-all-2252715458-dthalf": "326dd32edf7b751b104104d9ad11f36266ee03f339d7c712c360bfa7818827f2",
+    "transfer-all-2306214824": "f2a7da3a2c1d35bb9eb97f3c62b665c4ba2ff6a8c660de2faa4a8651c8f847fd",
+    "transfer-all-2325998949": "aaa22eacdae7527c8d145ee8178e3141513ea52147febe2f6f222db4c4e9ff0b",
+    "transfer-all-2451406889": "ca772076eb51e542ac6ae4e0517f8e6d0e65042ea5e52b08d6d718932c97ee3b",
+    "transfer-all-2530864375": "19f8392e50e1ebfa404e8326c441193edc01163762cfe31faed98226c0c75f34",
+    "transfer-all-2820958695": "b4979eb9156056e9352136ef6896d5143f5bd57d879ecad29333d0d287aa86f3",
+    "transfer-all-2848552900": "8339d180fd4f6ec7cda6773b9e6f1050c53fb6dce95878930a3eb7fe752f4540",
+    "transfer-all-2848552900-dthalf": "e4466e338e47df45e876bbe5ea9474e8f95cd887d74e22b3ef1218661860ea9a",
+    "transfer-all-2888180252": "1f9ee6710941b9d10d83cec6007a88cd249181eaff8620b08ec608ccfb3e659c",
+    "transfer-all-2889815798": "01cdfab638b3f705dd9662681370034a6c3b0655b2784283aef2e01fd08a25a8",
+    "transfer-all-2903686765": "0760f523285a3828890da21931fad51e6bcf8aa8a02125d8d5e631f08b5a17d7",
+    "transfer-all-3093748739": "af4a2d61443ec55534361f72dfbcc5fe9e6af3c6accae09579ab32f208de84f5",
+    "transfer-all-3111823553": "abf05b101157fbbf49eabd444cc83f7901f8448d52762cc9329a400e2dfc8369",
+    "transfer-all-3111823553-dthalf": "2b0c88a5272a4eab1974a786d95ae92e7bba15ef6d5bc9bdfd780452cce2934e",
+    "transfer-all-3139317430": "1cb60bb35d907a3c63972f61fe74bba2abd84723041744d77ad9ebf9a750c7c0",
+    "transfer-all-3178243558": "d84c0ea13eceb3a80736788e76961538428208d58f2fe37b610c2ed3236d91e9",
+    "transfer-all-3329117097": "bb6e768f7d10fa6029582d114114e49869ccf6bf4debd374dc317c715bb84acf",
+    "transfer-all-3383650350": "8f87cab8f286d5948903408e13e3aa62597460c78ddbb99352be3dcbfcc6d03f",
+    "transfer-all-3432315514": "f48032b21a7df3ef36bd7b960bd5375f6f6e0eb7188bfd463923cf8fef4f26c4",
+    "transfer-all-3470629528": "9a00349a1d750456a113a991496c7d748268b1e3ee73e32e1b29cf5cd0fab756",
+    "transfer-all-3503540481": "7f866a796c3e748d08d4b2d16b687650db0d26fc739088ac779ff4da57d2d086",
+    "transfer-all-3519995546": "f36ab9b1ee052c63e75c5b48a3061edd26a25ae6b432e92705249a0d854a028d",
+    "transfer-all-3571083397": "7be049206445d1d2d85002aa8af421edaf48a0a16618a55da2cf4e78251986d3",
+    "transfer-all-3571083397-dthalf": "2c1d7ba91e94a2b86f75e867dc315df10e8a4bbaf3fa804cf52337336c371a19",
+    "transfer-all-3680152874": "3dbcf46d7e98d871593206e4b865dd60585a865c4238bf3d1b459efdfa659868",
+    "transfer-all-3751392341": "c1d368627a743e833670997ebcdefb5f80323f1dadfd5c0d53b0c5f4f9cc1484",
+    "transfer-all-3761379470": "8d16882b33675ad87845bf1f68825471b0e10f2ea1a97c19b530fda72438660f",
+    "transfer-all-3761379470-dthalf": "825c732742e015d52f410e4e7c45839eaff922dd6b8ea660d3967b06e1caeb83",
+    "transfer-all-3812058320": "11e6f726ba1c4ac66a0f1c18f6695a43e0abc29b70432ec6591f004e72f1c091",
+    "transfer-all-3836078296": "e8485cc4d19f81a79d170234e7b7a446a01533839798cb6f5ff621157ac95615",
+    "transfer-all-3954491075": "64827552e97c81e03e897e03b5dbe76a253a3ca2a39812257362653445a4b412",
+    "transfer-all-3955003482": "e7176f357ea330e8f074c204026c9d9a015498ce15802ec97f7745e559b31727",
+    "transfer-all-4010150634": "147e6de444e092471519860093af5eccd382c027fc0691853ddb8ae1af485758",
+    "transfer-all-4010150634-dthalf": "d56eb8b7eb88822d3cdd2337122885629650770a14ac9f4a667aa240ee8f8cc6",
+    "transfer-all-4039221194": "88b665f4eff57f3d1445f909070eed2f21b4b362629977cfff9bab08f776fb4d",
+    "transfer-all-4125702786": "608b5565d357c61dc0ecdcf2df8a962850eedbdfea1489a5ff61d147e1d4d88d",
+    "transfer-all-4138580687": "987c3de06e1a5dc4a3b02219c93f942554d0ec4c398c1d1257fa3ef8323025c8",
+    "transfer-all-4157825456": "1f8dd906ceba4fccb4e054885ce18bd2cb4dd7f07df5c3448f9ad6f5e20de118",
+    "transfer-all-4188575291": "235a6807e4bd10085fbe2667afc23ae2f37e7fbf9632639e9aafbc821a8312f1",
+    "transfer-all-4197933517": "f9d94fb36c4d4bc68b08aeb83d7cbc467bb49f5bf512fe184527c605bf96deee",
+    "transfer-all-4197933517-dthalf": "ba25a89e33c9ca3895b6a797fe18d62fdcdf0b08c508bddb39431b0e96a51796",
+    "transfer-all-4260528559": "d9cad6c660dc3c3fce39961b591bdfd8e3f1e06e07ffbd29bcef0b082393e9a4",
+    "transfer-all-4365276903": "a1f7f77d08ebbd8238a7acd0ed71331feb3dfe66408f2bf1620711ea861e0047",
+    "transfer-all-4420044370": "72b1dd582a52e24c736d378d3e03b5d157c4c4711f57bdfc03852bf17bb27064",
+    "transfer-all-4437316933": "308b62874f67e149ac766f7746576d51eab9636275f647377e0fb96b4c2b7b29",
+    "transfer-all-4437316933-dthalf": "e3afca412f0f55b24f0e5c94ee7016120c130a3ef25a2a434e9295fab6634e9b",
+    "transfer-all-4467761196": "5674b5a1a30218493d63cfd50eb67da4bf4c7e1f23be03f2f2479ee810b4d9a4",
+    "transfer-all-4476359994": "fe65d80c4d90b80d2f355d9d2a00a5ef7195bba3b387601077eadd1197cd22fa",
+    "transfer-all-4522237537": "5a688b54c6ece0fea8ac604fa6b52795aa81c3df033182ccbe2819928d25fd60",
+    "transfer-all-4535129012": "c1ae8411dac79acbcddf385fdba39d1c48525624cdca35467c97fe691bdf3986",
+    "transfer-all-4554213569": "d457730a04a57265e646943a7f77043229b5e981205da002fc9bdc16c14b5a47",
+    "transfer-all-4582188328": "51628f48ab6e431bfdb00ed0581abf21d1af143f540803d620889547f27e8392",
+    "transfer-all-4607885827": "2c78973baf41da0fa36ab0a3193802fc380fc4a38b9338b29ce575102bc8f646",
+    "transfer-all-4641147055": "7bf311ea499d3fc2b3c2890f3da6ce1de542f3b38c18753e82d947df4a44670a",
+    "transfer-all-4668874666": "e2b04f2b4c46b88e3686d7bef6ac4598cf00cd2775728d079b92d9e9339f777a",
+    "transfer-all-4711567524": "5d75123f4c2c02ff3316ede2dcbb5fec6667bbb68e07fbc27952c8701573a8d6",
+    "transfer-all-4711641825": "253cae80ccb80c60c00b3f92056cfc7c706c249e3974a85a2d50e59ea7bed0d8",
+    "transfer-all-4830551047": "1a9f27e4002163c7502a44f6a62eca5e5792decfd366ab8fbdbf51b74f780e5d",
+    "transfer-all-4853956860": "6cdc3bb225ab6f9be549abd5cc0a2fdd254ff6f83000da17906916ecb4238da3",
+    "transfer-all-4873639924": "f03ae1000ec1277638c8e912977835421bbf84dc904acdb6c70270cfa8dfbb04",
+    "transfer-all-4932057570": "cc9d84a1d732eefe28869b8a88f6f88eba46594659d61d46f97353463d304f67",
+    "transfer-all-5013648003": "2ff5fbb3a5684f16e8aeb5d8fbd21bc0a097eb6d0a5c7da09ac5b8d318b2e585",
+    "transfer-all-5013648003-dthalf": "8e7103276cacb0b6623470fd1cd81d507893f7d9d9c77d466e37ab19ba88764e",
+    "transfer-all-5015035926": "df825a0235e0904698123f28ddba245de7f7815ac41e8a4b11ef0eefe89ebb0f",
+    "transfer-all-5060444657": "a33e36c8a05b838479eb8f6bbad089c2fd29a096273604d1e944bfc17797132f",
+    "transfer-all-5061320552": "4970cef590659a997b2640ab362b788b22fe8c58cdb552b7eca1d7e304988043",
+    "transfer-all-5136107765": "70b86e67035063acafc109f9c6df088dc0d7068513064bf59162ad9d18b3f1ae",
+    "transfer-all-5173982155": "985eab818f166a38e668f92b74e928ecd322ae8ecce2e2651bb1f3c885c35633",
+    "transfer-all-5173982155-dthalf": "d046190888d69c19fa348deb73c9d7584bba199d3ef7137f5e483e34aa2a817b",
+    "transfer-all-5175880292": "0100c31662e353c45ad16206526dcfff580ee73552a749454352b9087aaaf8b1",
+    "transfer-all-5215113731": "0d8f53df198ed8dee28a1ed17fb9bd61f22bbb6711c65f6cbe29c26bab5f4c32",
+    "transfer-all-5216806368": "9d059cbff18630f9d776fc7989414d3ce20f1088ae1fbe775addd6e40869c669",
+    "transfer-all-5319188363": "cc2de118384e12dffffcc9fc5214762b9afd211a27e32c8aaee19745b349b286",
+    "transfer-all-5352961465": "9e0a0d3fabd1e46525637ecd05f3f91587f4d0665966e97f543255b8194bd867",
+    "transfer-all-5355296383": "fe8e67806579fd0b6f7dcfce1dea1b202249fb709c1a0abb5a77e189bb6eb0d3",
+    "transfer-all-5439194879": "2363013e25b9c3e5f6f1a92191c116225a03b1126a2c6feb318a845a397c595e",
+    "transfer-all-5439194879-dthalf": "3ea03bb4955d0ebc987f8bd843dee63de6548d22253ab2b2ff47080c8967afd8",
+    "transfer-all-5536146025": "71bcc2c992636afd63a85b7091092cf9aff34a1c5bde242cb12c26b7ac4130c4",
+    "transfer-all-5584343344": "5e944e4c899553abf38e9fd119afc362485825dea1b1113e359dc449898af79b",
+    "transfer-all-5654281423": "5cc996746f65f737972f7b1983a4a3fd9cc448b05aa865c7b0263cdfc700b08d",
+    "transfer-all-5687162964": "23073a3752d12071ddb5fb49e3386a7d33c2c43a2e889970ed07752a586561d7",
+    "transfer-all-5805562981": "88a529ff652f10ae270056368345375bec9cc461c37a692d91fcb3f7ae9af7c3",
+    "transfer-all-5832764277": "be513e1f859ecfe06c9fac8beffb43f157d3084d0e737aee80a38f797a34e325",
+    "transfer-all-5965472721": "0faeb2dfd24fb94e3e5e6e753d543bcf70ccee90accb92d58c5c7893a8198c59",
+    "transfer-all-6126390733": "214ee34267ba75ab9a07536993a8f379dbbce39fc60f66dc1391d97671407da4",
+    "transfer-all-6833911543": "44f68bd51940f411f980644f82e00296aa12aaf87dcdecaea1b936e001bbc8d3",
+    "transfer-all-6833911543-dthalf": "33dd3cc730898d0d1c707d6e956da419a074cfbde092520e8ad0dc1745e39cf5",
+    "transfer-all-7052969349": "f833cedc4c969219877d214e9096aaaa285b0058fa771749a84af508c661572e",
+    "transfer-all-7196644737": "63258dd6886aaf9c2261695dbc2d99165ed95ffb57b8c061b79249e486433d21",
+    "transfer-all-7893125555": "9d331c81cbb474f049e7f36d4d9752ee3315404deaac109ad6e1b5389d763c01"
+  },
+  "kept": [
+    "1669770671",
+    "1684504313",
+    "2001418787",
+    "2103991145",
+    "2252715458",
+    "2848552900",
+    "3111823553",
+    "3571083397",
+    "3761379470",
+    "4010150634",
+    "4197933517",
+    "4437316933",
+    "5013648003",
+    "5173982155",
+    "5439194879",
+    "6833911543",
+    "751294744"
+  ],
+  "rule": "keep = finite output and soma traces; mean output voltage over the 100 ms before the pulse and over the 10 ms ending 200 ms after it both within 10 mV of the donor recording's rest; no -20 mV crossing before the pulse; count within max(2, 30 percent) of the human count at the primary input; and the dt-half repeat (0.0025 ms) is finite and reproduces the count",
+  "scope": "A kept cell reproduces a count and a resting level from another human donor's recording on retained H01 anatomy under that donor's step protocol; it is not a measurement of the H01 donor's own cell, and no channel provenance is qualified.",
+  "by_donor": {
+    "l2-pyramidal-allen-541563728": {
+      "kept": 13,
+      "dropped": 44
+    },
+    "l5-pv-basket-hl5bn1": {
+      "kept": 0,
+      "dropped": 18
+    },
+    "l3-sst-interneuron-hl5mn1": {
+      "kept": 0,
+      "dropped": 7
+    },
+    "l4-pyramidal-allen-527952884": {
+      "kept": 4,
+      "dropped": 18
+    }
+  },
+  "counts": {
+    "kept": 17,
+    "dropped": 87,
+    "missing": 0,
+    "total": 104
+  }
+}

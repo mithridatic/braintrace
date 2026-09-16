@@ -1,0 +1,72 @@
+{
+  "cell": "1930502394",
+  "donor": "l2-pyramidal-allen-541563728",
+  "polarity": "E",
+  "component": 0,
+  "source_sha256": "8966adfd3f92595f6bbf78c55a0b21ba4a0a3a62ad8de2c0217cdfc695f39f62",
+  "component_nodes": 89483,
+  "n_compartments": 24462,
+  "dt_ms": 0.005,
+  "duration_ms": 2300.0,
+  "solver": "h01_staggered_calcium_implicit",
+  "max_cv_um": 10.0,
+  "current_na": 0.31,
+  "pulse_ms": [
+    1020.0,
+    2020.0
+  ],
+  "registered_human_count": 10,
+  "repeat_counts": null,
+  "donor_model_count_on_own_anatomy": 10,
+  "output_site": {
+    "count": 4,
+    "first_spike_ms": 90.09294924079518,
+    "finite": true,
+    "crossing_times_ms": [
+      1110.0929492407952,
+      1141.9589669925492,
+      1491.6722623702165,
+      1852.4984890437042
+    ]
+  },
+  "soma_site": {
+    "count": 4,
+    "first_spike_ms": 90.09292803689482,
+    "finite": true,
+    "crossing_times_ms": [
+      1110.0929280368948,
+      1141.9589456436756,
+      1491.6722411654193,
+      1852.4984676603776
+    ]
+  },
+  "verdict_vs_human": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "verdict_vs_donor_model": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "rest_before_pulse_mv": -82.95649575691107,
+  "pre_pulse_count": 0,
+  "rest_mean_mv": -82.95649343761572,
+  "return_mv": -84.07065952294842,
+  "return_available": true,
+  "post_pulse_count": 0,
+  "peak_mv": 27.988669534709057,
+  "min_mv": -84.79618884496253,
+  "construction_seconds": 5.425797050818801,
+  "init_seconds": {
+    "cell_1930502394": 3.974666870199144
+  },
+  "run_seconds": 1331.5092731565237,
+  "steps": 460000,
+  "peak_rss_mb": 1432.4296875,
+  "inputs": {
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8"
+  },
+  "traces_sha256": "18e35d41e679d6669a2bdb36e13dca366c9d4fe8a1d5790ce541c94aff5a7819",
+  "scope": "One deployed donor on retained production-imported H01 anatomy under the donor recording's step protocol. A physiological transfer reading; not a measurement of the H01 donor's own cell."
+}

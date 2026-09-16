@@ -1,0 +1,260 @@
+{
+  "archive": "proofread104.zip",
+  "summary": {
+    "cells": 17,
+    "components": 3327,
+    "cells_with_one_soma_component": 31,
+    "cells_with_several_soma_components": 73,
+    "cells_without_soma": 0,
+    "cells_where_largest_lacks_soma": 0,
+    "largest_share_median": 0.7697998906243099,
+    "largest_share_min": 0.2471178568466451,
+    "contact_endpoints": 6,
+    "contact_endpoints_on_soma_component": 5
+  },
+  "cells": [
+    {
+      "cell_id": "751294744",
+      "components": 22,
+      "nodes": 43927,
+      "soma_components": [
+        0,
+        12,
+        16
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7840280465317458,
+      "largest_has_soma": true,
+      "fragments_without_soma": 19
+    },
+    {
+      "cell_id": "1669770671",
+      "components": 28,
+      "nodes": 51560,
+      "soma_components": [
+        0,
+        10,
+        11,
+        14,
+        18,
+        2,
+        21,
+        26
+      ],
+      "largest_component": 0,
+      "largest_share": 0.555178432893716,
+      "largest_has_soma": true,
+      "fragments_without_soma": 20
+    },
+    {
+      "cell_id": "1684504313",
+      "components": 267,
+      "nodes": 63526,
+      "soma_components": [
+        0,
+        234,
+        8
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5887510625570632,
+      "largest_has_soma": true,
+      "fragments_without_soma": 264
+    },
+    {
+      "cell_id": "2001418787",
+      "components": 15,
+      "nodes": 16610,
+      "soma_components": [
+        0,
+        4
+      ],
+      "largest_component": 0,
+      "largest_share": 0.6355809753160746,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "2103991145",
+      "components": 15,
+      "nodes": 60203,
+      "soma_components": [
+        0,
+        1
+      ],
+      "largest_component": 1,
+      "largest_share": 0.6337890138365198,
+      "largest_has_soma": true,
+      "fragments_without_soma": 13
+    },
+    {
+      "cell_id": "2252715458",
+      "components": 20,
+      "nodes": 36376,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.971657136573565,
+      "largest_has_soma": true,
+      "fragments_without_soma": 19
+    },
+    {
+      "cell_id": "2848552900",
+      "components": 5,
+      "nodes": 40907,
+      "soma_components": [
+        0,
+        2
+      ],
+      "largest_component": 0,
+      "largest_share": 0.9146845283203364,
+      "largest_has_soma": true,
+      "fragments_without_soma": 3
+    },
+    {
+      "cell_id": "3111823553",
+      "components": 23,
+      "nodes": 35870,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7895734597156399,
+      "largest_has_soma": true,
+      "fragments_without_soma": 22
+    },
+    {
+      "cell_id": "3571083397",
+      "components": 14,
+      "nodes": 21583,
+      "soma_components": [
+        0,
+        3,
+        9
+      ],
+      "largest_component": 0,
+      "largest_share": 0.49279525552518183,
+      "largest_has_soma": true,
+      "fragments_without_soma": 11
+    },
+    {
+      "cell_id": "3761379470",
+      "components": 5,
+      "nodes": 8620,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7142691415313225,
+      "largest_has_soma": true,
+      "fragments_without_soma": 4
+    },
+    {
+      "cell_id": "4010150634",
+      "components": 9,
+      "nodes": 13299,
+      "soma_components": [
+        0
+      ],
+      "largest_component": 0,
+      "largest_share": 0.8777351680577486,
+      "largest_has_soma": true,
+      "fragments_without_soma": 8
+    },
+    {
+      "cell_id": "4197933517",
+      "components": 16,
+      "nodes": 22785,
+      "soma_components": [
+        0,
+        2
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5145929339477726,
+      "largest_has_soma": true,
+      "fragments_without_soma": 14
+    },
+    {
+      "cell_id": "4437316933",
+      "components": 30,
+      "nodes": 30909,
+      "soma_components": [
+        0,
+        2,
+        23
+      ],
+      "largest_component": 0,
+      "largest_share": 0.750137500404413,
+      "largest_has_soma": true,
+      "fragments_without_soma": 27
+    },
+    {
+      "cell_id": "5013648003",
+      "components": 15,
+      "nodes": 20159,
+      "soma_components": [
+        0,
+        5,
+        9
+      ],
+      "largest_component": 0,
+      "largest_share": 0.5138151694032442,
+      "largest_has_soma": true,
+      "fragments_without_soma": 12
+    },
+    {
+      "cell_id": "5173982155",
+      "components": 19,
+      "nodes": 29170,
+      "soma_components": [
+        0,
+        11,
+        12,
+        15,
+        17,
+        3,
+        5
+      ],
+      "largest_component": 3,
+      "largest_share": 0.3481659238944121,
+      "largest_has_soma": true,
+      "fragments_without_soma": 12
+    },
+    {
+      "cell_id": "5439194879",
+      "components": 11,
+      "nodes": 22094,
+      "soma_components": [
+        0,
+        4
+      ],
+      "largest_component": 0,
+      "largest_share": 0.7231827645514619,
+      "largest_has_soma": true,
+      "fragments_without_soma": 9
+    },
+    {
+      "cell_id": "6833911543",
+      "components": 10,
+      "nodes": 22536,
+      "soma_components": [
+        0,
+        1,
+        6
+      ],
+      "largest_component": 1,
+      "largest_share": 0.6870784522541711,
+      "largest_has_soma": true,
+      "fragments_without_soma": 7
+    }
+  ],
+  "contacts": [],
+  "filtered_from": {
+    "topology": "docs\\evidence\\h01-verified-network.json",
+    "topology_sha256": "cabe8f8f9176b76cb8c99f40a52c2d94bc4b66c9229dfa25d80399c6f76bde07",
+    "components": "docs\\evidence\\h01-population-components.json",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8",
+    "decision": "docs\\evidence\\h01-keep-drop\\decision.json",
+    "decision_sha256": "e9f058b05f5a5600d715946645d40d65c5d678d8367125da136884775276f15a"
+  }
+}

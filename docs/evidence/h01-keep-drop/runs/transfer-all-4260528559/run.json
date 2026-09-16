@@ -1,0 +1,75 @@
+{
+  "cell": "4260528559",
+  "donor": "l3-sst-interneuron-hl5mn1",
+  "polarity": "I",
+  "component": 0,
+  "source_sha256": "106aad507574b535891b377d864d95abdec27d0924c77bb80935923ed789ef06",
+  "component_nodes": 4790,
+  "n_compartments": 1207,
+  "dt_ms": 0.005,
+  "duration_ms": 1500.0,
+  "solver": "h01_staggered_calcium_implicit",
+  "max_cv_um": 10.0,
+  "current_na": 0.1,
+  "pulse_ms": [
+    270.0,
+    1270.0
+  ],
+  "registered_human_count": 14,
+  "repeat_counts": [
+    14,
+    14,
+    13,
+    12
+  ],
+  "donor_model_count_on_own_anatomy": 16,
+  "output_site": {
+    "count": 3,
+    "first_spike_ms": 1.5509381682064145,
+    "finite": true,
+    "crossing_times_ms": [
+      271.5509381682064,
+      278.12537313601786,
+      283.6797440196133
+    ]
+  },
+  "soma_site": {
+    "count": 3,
+    "first_spike_ms": 1.5509347766706014,
+    "finite": true,
+    "crossing_times_ms": [
+      271.5509347766706,
+      278.1253683750054,
+      283.6797238922759
+    ]
+  },
+  "verdict_vs_human": {
+    "exact": "rejected",
+    "repeat_band": "missed"
+  },
+  "verdict_vs_donor_model": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "rest_before_pulse_mv": -59.99803368265238,
+  "pre_pulse_count": 16,
+  "rest_mean_mv": -57.40799502869046,
+  "return_mv": -38.75513928780549,
+  "return_available": true,
+  "post_pulse_count": 0,
+  "peak_mv": 6.159032823408532,
+  "min_mv": -81.4891633652806,
+  "construction_seconds": 0.31005426961928606,
+  "init_seconds": {
+    "cell_4260528559": 0.919305888004601
+  },
+  "run_seconds": 656.6932134861127,
+  "steps": 300000,
+  "peak_rss_mb": 1115.203125,
+  "inputs": {
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8"
+  },
+  "traces_sha256": "2d81db2e12a0f828d095bfc7c62e796cd55f9c43c4df1c8d1f619fe6036da667",
+  "scope": "One deployed donor on retained production-imported H01 anatomy under the donor recording's step protocol. A physiological transfer reading; not a measurement of the H01 donor's own cell."
+}

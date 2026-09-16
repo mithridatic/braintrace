@@ -1,0 +1,206 @@
+{
+  "status": "completed",
+  "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+  "cells": [
+    {
+      "cell_id": "751294744",
+      "component": 0,
+      "source_segments": 34439,
+      "imported_segments": 34439,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "6368e97bbe10382b3c6516812ca3e54349ce7f6bb0ab7275cd1d64cff94bc4b0",
+      "seconds": 7.884770799981197
+    },
+    {
+      "cell_id": "1669770671",
+      "component": 0,
+      "source_segments": 28624,
+      "imported_segments": 28624,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "2cba669e3d5a3704359874f7d8cdcbddb54cbf9e764c8e7e03746081596c1f93",
+      "seconds": 5.710695300018415
+    },
+    {
+      "cell_id": "1684504313",
+      "component": 0,
+      "source_segments": 37400,
+      "imported_segments": 37400,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "741501bbd5b04fa92cb9f3bdccfd9e415fed2f48a96500495eaaecdd55f61fb8",
+      "seconds": 8.861332300002687
+    },
+    {
+      "cell_id": "2001418787",
+      "component": 0,
+      "source_segments": 10556,
+      "imported_segments": 10556,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "576f1c30b778f6ad277219b9cf9ce5380afadb9ab3f69ed549f3be74ac7fb676",
+      "seconds": 1.519456000009086
+    },
+    {
+      "cell_id": "2103991145",
+      "component": 1,
+      "source_segments": 38155,
+      "imported_segments": 38155,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "73d7b7fba69b0cd1805730d457cf09388943cba36026fb9a1b162deb847e6f78",
+      "seconds": 5.622765500011155
+    },
+    {
+      "cell_id": "2252715458",
+      "component": 0,
+      "source_segments": 35344,
+      "imported_segments": 35344,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "f706f201542e2d719d1a3276ca0459d84380684c4c14f3a8f52ab7567d0f8839",
+      "seconds": 5.410726400004933
+    },
+    {
+      "cell_id": "2848552900",
+      "component": 0,
+      "source_segments": 37416,
+      "imported_segments": 37416,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "fb2fbf43d639aabe1492b9518c85746135ebe20ea16ecc4eba0327d3307f5399",
+      "seconds": 7.897332299995469
+    },
+    {
+      "cell_id": "3111823553",
+      "component": 0,
+      "source_segments": 28321,
+      "imported_segments": 28321,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "8eabac427c0e14977058d2ebb1c94ba5e12ef517393542e5b686d0822ae67c8c",
+      "seconds": 7.100359300005948
+    },
+    {
+      "cell_id": "3571083397",
+      "component": 0,
+      "source_segments": 10635,
+      "imported_segments": 10635,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "bd8be2e54aeb71ddba331afa0b6e8ef7aa70d8eda8d6b7ca60974db267805084",
+      "seconds": 1.6793559999787249
+    },
+    {
+      "cell_id": "3761379470",
+      "component": 0,
+      "source_segments": 6156,
+      "imported_segments": 6156,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "6406bac3f4a2ab48ad236a466fb2772c19904c0b48f2082bc61204740037b309",
+      "seconds": 0.9353805999853648
+    },
+    {
+      "cell_id": "4010150634",
+      "component": 0,
+      "source_segments": 11672,
+      "imported_segments": 11672,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "18f346c122bebe7ef0d4bdbad3087b397837e8954083e6fb07aa025b9cb339db",
+      "seconds": 1.2510560000082478
+    },
+    {
+      "cell_id": "4197933517",
+      "component": 0,
+      "source_segments": 11724,
+      "imported_segments": 11724,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "1940842d29e25767c307407104076c88e99ce810b1d48be0838aa1d06d4906ec",
+      "seconds": 1.9942910999816377
+    },
+    {
+      "cell_id": "4437316933",
+      "component": 0,
+      "source_segments": 23185,
+      "imported_segments": 23185,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "886d36c05f4c31333f3d2b436f695fe6e8ed53d5f01f720f1b5cbb1163fd8768",
+      "seconds": 4.564065600017784
+    },
+    {
+      "cell_id": "5013648003",
+      "component": 0,
+      "source_segments": 10357,
+      "imported_segments": 10357,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "1f28ce91bd91105334242765e95b9ce6954fb6001dbb7b5912590be24b78e00d",
+      "seconds": 1.607918299996527
+    },
+    {
+      "cell_id": "5173982155",
+      "component": 3,
+      "source_segments": 10155,
+      "imported_segments": 10155,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "451720ea9b8d5d6f2614b07cafff4b5b518512cdc0d61216425f1509ea33bdda",
+      "seconds": 1.4588225999905262
+    },
+    {
+      "cell_id": "5439194879",
+      "component": 0,
+      "source_segments": 15977,
+      "imported_segments": 15977,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "8315dd7fc939a50ac547cacaad2fad0b42e0819a52a07d761c05fc10c7cb78f7",
+      "seconds": 1.8225355999893509
+    },
+    {
+      "cell_id": "6833911543",
+      "component": 1,
+      "source_segments": 15483,
+      "imported_segments": 15483,
+      "missing_segments": 0,
+      "extra_segments": 0,
+      "passed": true,
+      "source_sha256": "705300cc07b9e00d185fd4d765bc069298caf0733a0c1c17e84360a5c99f344d",
+      "seconds": 2.7232549999898765
+    }
+  ],
+  "scope": "largest soma-bearing component of each anatomical identity",
+  "seconds": 509.2390990999993,
+  "passed": true,
+  "filtered_from": {
+    "topology": "docs\\evidence\\h01-verified-network.json",
+    "topology_sha256": "cabe8f8f9176b76cb8c99f40a52c2d94bc4b66c9229dfa25d80399c6f76bde07",
+    "components": "docs\\evidence\\h01-population-components.json",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8",
+    "decision": "docs\\evidence\\h01-keep-drop\\decision.json",
+    "decision_sha256": "e9f058b05f5a5600d715946645d40d65c5d678d8367125da136884775276f15a",
+    "imports": "docs\\evidence\\h01-population-import-104.json",
+    "imports_sha256": "00eed7674ad05add04051044439bc9d241b6096df050f41b0ceacc22de4ee301"
+  }
+}

@@ -842,6 +842,42 @@ Evidence: [decision](evidence/h01-driven-window-20260915/anatomy-transfer-decisi
 [load split](evidence/h01_transfer_load_split.py),
 [stage record](evidence/h01-driven-window-20260915/README.md).
 
+### Keep/drop over all 104 cells, 2026-09-16
+
+Every type-matched cell was run under its donor's step protocol (rule and receipts:
+[decision](evidence/h01-keep-drop/decision.json), [spec](specs/2026-09-16-h01-keep-drop.md)).
+The rule is registered: finite traces; rest and 200 ms post-pulse return within 10 mV of
+the donor's own rest; no spike before the pulse; count within max(2, 30 percent) of the
+human count; a dt-half repeat reproducing the count. 17 of 104 kept; the registered
+prediction was 20, with L4 the only donor expected to transfer.
+
+| Donor | Cells | Kept | Kept counts (human) | Dropped: counts seen | Drop rules |
+| --- | ---: | ---: | --- | --- | --- |
+| L2 Allen 541563728, 0.31 nA | 57 | 13 | 7 x6, 8 x2, 9, 10, 11 x3 (10) | 0-6 in 40 cells, 10, 16, 83, 145 | return 23, count 43 |
+| L4 Allen 527952884, 0.09 nA | 22 | 4 | 9, 11, 13, 15 (12) | 0 x6, 1 x9, 3, 4, 7 | return 10, count 18 |
+| L5 PV HL5BN1, 0.19 nA | 18 | 0 | | 0 in all 18 | count 18, return 1 |
+| L3 SST HL5MN1, 0.10 nA | 7 | 0 | | 0-11 and 96, 99 | spikes before the pulse in all 7 |
+
+Every dt-half repeat (17 of 17) reproduced the primary count exactly. All 104 primary
+traces are finite. The 12 previously reported keep verdicts stand; five late L2 candidates
+were confirmed by their repeats.
+
+**What the population adds to the four-cell reading.** The L2 block seen on 955432427 is
+not the typical L2 response: 955432427 itself drops (count 2, return -29 mV), but 13 L2
+cells hold rest, fire 7-11 spikes and return; 23 of the 44 dropped L2 cells fail the
+rest/return rule (20 of them hold a post-pulse level above -74 mV) and 21 simply fire too
+few spikes and return. The PV donor is silent on every one of 18 cells at 0.19 nA (rest -87 mV held; one
+cell returns to -38 mV). The SST donor fires before the pulse on every one of 7 cells from a
+-40 to -64 mV level. The L4 donor keeps 4 of 22; 15 of its drops are 0-1 spikes.
+
+**Consequence for the programme.** The kept set is 17 pyramidal cells on two Allen donors
+and no interneuron. The three construction-ready contacts each lose an endpoint
+at both ends (3955003482 is a silent L4 cell, 5584343344 and 3680152874 silent PV cells,
+and the L2 cells 4188575291, 3519995546 and 4157825456 fire 6, 2 and 4 spikes), so the
+kept network has no contact: the driven-window control term is delivery-unobservable on this set, and
+functional inhibition cannot be measured on it. J's rule closes the cells: no new fitting,
+no new donors, no tuning to rescue a dropped cell.
+
 ## Concepts and truth conditions
 
 A causal model explains how a change produces a response.

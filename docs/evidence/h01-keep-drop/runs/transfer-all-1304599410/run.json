@@ -1,0 +1,68 @@
+{
+  "cell": "1304599410",
+  "donor": "l2-pyramidal-allen-541563728",
+  "polarity": "E",
+  "component": 0,
+  "source_sha256": "0b70627080666463a3e358ff63b381858cc8e143de06c7177d56e87d87f7d2f6",
+  "component_nodes": 39794,
+  "n_compartments": 9830,
+  "dt_ms": 0.005,
+  "duration_ms": 2300.0,
+  "solver": "h01_staggered_calcium_implicit",
+  "max_cv_um": 10.0,
+  "current_na": 0.31,
+  "pulse_ms": [
+    1020.0,
+    2020.0
+  ],
+  "registered_human_count": 10,
+  "repeat_counts": null,
+  "donor_model_count_on_own_anatomy": 10,
+  "output_site": {
+    "count": 2,
+    "first_spike_ms": 28.485694296079828,
+    "finite": true,
+    "crossing_times_ms": [
+      1048.4856942960798,
+      1053.0256886693116
+    ]
+  },
+  "soma_site": {
+    "count": 2,
+    "first_spike_ms": 28.485682910086098,
+    "finite": true,
+    "crossing_times_ms": [
+      1048.485682910086,
+      1053.0256533289519
+    ]
+  },
+  "verdict_vs_human": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "verdict_vs_donor_model": {
+    "exact": "rejected",
+    "repeat_band": null
+  },
+  "rest_before_pulse_mv": -82.88378838489237,
+  "pre_pulse_count": 0,
+  "rest_mean_mv": -82.88378611054148,
+  "return_mv": -29.787717307746373,
+  "return_available": true,
+  "post_pulse_count": 0,
+  "peak_mv": 23.850990427051528,
+  "min_mv": -83.98230095050694,
+  "construction_seconds": 2.176438140682876,
+  "init_seconds": {
+    "cell_1304599410": 1.8724657939746976
+  },
+  "run_seconds": 933.4021145608276,
+  "steps": 460000,
+  "peak_rss_mb": 1214.5546875,
+  "inputs": {
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "components_sha256": "4a2fcfa9a9e1f8704856ed7966bc792e44f56c9ed6f43d5038c8882ba972ffd8"
+  },
+  "traces_sha256": "36eb89f2b691035f5fcb12f783214c54669b227604ef1c9fbf28fea2307c7230",
+  "scope": "One deployed donor on retained production-imported H01 anatomy under the donor recording's step protocol. A physiological transfer reading; not a measurement of the H01 donor's own cell."
+}
