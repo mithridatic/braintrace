@@ -47,9 +47,11 @@ def make_cell(seed, *, dendrite_um=40., na=1.2, k=.6, current_na=.25, m_open=1.,
 
 
 def _run(step, cells, steps, dt_ms):
-    def body(_):
-        with brainstate.environ.context(dt=dt_ms*u.ms):
+    def body(index):
+        with brainstate.environ.context(dt=dt_ms*u.ms, t=index*dt_ms*u.ms):
             step()
+            for cell in cells:
+                cell._set_current_time((index+1)*dt_ms*u.ms)
         return tuple(c.V.value.to_decimal(u.mV)[0] for c in cells), tuple(u.get_mantissa(c.spike.value)[0] for c in cells)
     return brainstate.transform.for_loop(body, np.arange(steps))
 
