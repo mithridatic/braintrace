@@ -21,8 +21,10 @@ WEIGHT_US, DELAY_MS = .02, .5
 
 
 def _cells():
-    cells = (make_cell(0, na=1.2, k=.6), make_cell(1, dendrite_um=25., current_na=.05, calcium=False),
-             make_cell(2, dendrite_um=30., current_na=0.))
+    # Clamp onsets off the step grid: an onset on a step boundary sits on the floating-point
+    # edge of the clamp's ``t - delay >= 0`` test, which XLA may fuse differently per program.
+    cells = (make_cell(0, na=1.2, k=.6, delay_ms=.2025), make_cell(1, dendrite_um=25., current_na=.05, calcium=False, delay_ms=.2025),
+             make_cell(2, dendrite_um=30., current_na=0., delay_ms=.2025))
     for cell in cells:
         for kind in KINDS.values():
             cell.place(RootLocation(.5), Synapse('ExpSyn', name=kind['name'], e=kind['reversal_mv']*u.mV,

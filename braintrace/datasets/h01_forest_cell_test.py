@@ -23,7 +23,7 @@ def _morphology(dendrite_um):
     return morpho
 
 
-def make_cell(seed, *, dendrite_um=40., na=1.2, k=.6, current_na=.25, m_open=1., calcium=True):
+def make_cell(seed, *, dendrite_um=40., na=1.2, k=.6, current_na=.25, m_open=1., calcium=True, delay_ms=.2):
     """A two-branch cell with donor-like densities; ``seed`` only labels it."""
     cell = H01Cell(_morphology(dendrite_um), cv_policy=braincell.MaxCVLen(10.*u.um), V_init=-70.*u.mV,
                    solver='h01_staggered_calcium_implicit', pop_size=(1,), name=f'cell{seed}')
@@ -41,7 +41,7 @@ def make_cell(seed, *, dendrite_um=40., na=1.2, k=.6, current_na=.25, m_open=1.,
         cell.paint(soma, Channel('H01PV_Ca_HVA', name='pv_Ca_HVA', g_max=.5*u.mS/u.cm**2))
         cell.paint(soma, Channel('H01PV_SK', name='pv_SK', g_max=1.*u.mS/u.cm**2))
     cell.place(RootLocation(.5), StateProbe(field='v', name='voltage'))
-    cell.place(RootLocation(.5), braincell.CurrentClamp(delay=.2*u.ms, durations=3.*u.ms, amplitudes=current_na*u.nA))
+    cell.place(RootLocation(.5), braincell.CurrentClamp(delay=delay_ms*u.ms, durations=3.*u.ms, amplitudes=current_na*u.nA))
     restrict_spike_output(cell, RootLocation(.5))
     return cell
 
