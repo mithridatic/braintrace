@@ -1,5 +1,5 @@
 {
-  "id": "doc_81b58b83-9f3",
+  "id": "doc_2dec6e7d-244",
   "title": "H01 progressive search tree",
   "graph": {
     "classes": [
@@ -524,7 +524,7 @@
             "id": "y_ev0",
             "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-gain/g0-b3-usable.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -532,7 +532,7 @@
             "id": "y_ev1",
             "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -540,7 +540,7 @@
             "id": "y_ev2",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -559,7 +559,7 @@
             "id": "q1_ev0",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -578,7 +578,7 @@
             "id": "q1_elemental_ev0",
             "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -586,7 +586,7 @@
             "id": "q1_elemental_ev1",
             "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -594,7 +594,7 @@
             "id": "q1_elemental_ev2",
             "title": "docs/evidence/h01-e-gain/stage-g0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-gain/stage-g0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-gain/stage-g0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -613,7 +613,7 @@
             "id": "q1_cyclical_ev0",
             "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -621,7 +621,7 @@
             "id": "q1_cyclical_ev1",
             "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-gain/g0-b3-usable.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -629,7 +629,7 @@
             "id": "q1_cyclical_ev2",
             "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -648,7 +648,7 @@
             "id": "q1_structural_ev0",
             "title": "docs/evidence/h01-i-sk-result.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-i-sk-result.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-i-sk-result.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -656,7 +656,7 @@
             "id": "q1_structural_ev1",
             "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-currents/stage-close-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-currents/stage-close-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -664,7 +664,7 @@
             "id": "q1_structural_ev2",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -683,7 +683,7 @@
             "id": "q1_temporal_ev0",
             "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -691,7 +691,7 @@
             "id": "q1_temporal_ev1",
             "title": "docs/evidence/h01-e-gain/g0-b3-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-gain/g0-b3-usable.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-gain/g0-b3-usable.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -699,7 +699,7 @@
             "id": "q1_temporal_ev2",
             "title": "docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-i-sk/s0-finalist-usable.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-i-sk/s0-finalist-usable.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -718,7 +718,7 @@
             "id": "q2_ev0",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -737,7 +737,7 @@
             "id": "q2_inputs_ev0",
             "title": "docs/evidence/h01-e-gain/stage-g0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-gain/stage-g0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-gain/stage-g0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -745,7 +745,7 @@
             "id": "q2_inputs_ev1",
             "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-gain/stage-close-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -764,7 +764,7 @@
             "id": "q2_function_ev0",
             "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -772,7 +772,7 @@
             "id": "q2_function_ev1",
             "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -780,7 +780,7 @@
             "id": "q2_function_ev2",
             "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-currents/stage-close-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-currents/stage-close-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -799,7 +799,7 @@
             "id": "q2_swap_ev0",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -818,7 +818,7 @@
             "id": "q3_ev0",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -837,7 +837,7 @@
             "id": "q3_v_ev0",
             "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -856,7 +856,7 @@
             "id": "q3_t_ev0",
             "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -864,7 +864,7 @@
             "id": "q3_t_ev1",
             "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -872,7 +872,7 @@
             "id": "q3_t_ev2",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -891,7 +891,7 @@
             "id": "levers_ev0",
             "title": "docs/evidence/h01-e-gain/stage-close-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-gain/stage-close-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-gain/stage-close-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -899,7 +899,7 @@
             "id": "levers_ev1",
             "title": "docs/evidence/h01-e-currents/stage-close-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-currents/stage-close-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-currents/stage-close-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -907,7 +907,7 @@
             "id": "levers_ev2",
             "title": "docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-sahp/stage-0-reanalysis.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -915,7 +915,7 @@
             "id": "levers_ev3",
             "title": "docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-sahp-tail/stage-1-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -934,7 +934,7 @@
             "id": "q4_ev0",
             "title": "docs/evidence/h01-topographic/cycle-tables.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/cycle-tables.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/cycle-tables.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -953,7 +953,7 @@
             "id": "q4_e_ev0",
             "title": "docs/evidence/h01-topographic/cycle-tables.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/cycle-tables.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/cycle-tables.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -972,7 +972,7 @@
             "id": "q4_i_ev0",
             "title": "docs/evidence/h01-topographic/cycle-tables.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/cycle-tables.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/cycle-tables.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -991,7 +991,7 @@
             "id": "sp16_ev0",
             "title": "docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-sodium-slow-inactivation.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -999,7 +999,7 @@
             "id": "sp16_ev1",
             "title": "docs/evidence/h01-e-sodium-slow/stage-1-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-sodium-slow/stage-1-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-sodium-slow/stage-1-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1007,7 +1007,7 @@
             "id": "sp16_ev2",
             "title": "docs/evidence/h01-i-sodium-slow/stage-2-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-i-sodium-slow/stage-2-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-i-sodium-slow/stage-2-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1026,7 +1026,7 @@
             "id": "q5_ev0",
             "title": "docs/evidence/h01-topographic/threshold-approach.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/threshold-approach.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/threshold-approach.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1034,7 +1034,7 @@
             "id": "q5_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1053,7 +1053,7 @@
             "id": "q5_e_ev0",
             "title": "docs/evidence/h01-topographic/threshold-approach.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/threshold-approach.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/threshold-approach.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1061,7 +1061,7 @@
             "id": "q5_e_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1080,7 +1080,7 @@
             "id": "q5_i_ev0",
             "title": "docs/evidence/h01-topographic/threshold-approach.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/threshold-approach.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/threshold-approach.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1099,7 +1099,7 @@
             "id": "q6_ev0",
             "title": "docs/evidence/h01-topographic/onset-shape.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/onset-shape.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/onset-shape.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1107,7 +1107,7 @@
             "id": "q6_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1126,7 +1126,7 @@
             "id": "q6_e_ev0",
             "title": "docs/evidence/h01-topographic/onset-shape.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/onset-shape.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/onset-shape.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1134,7 +1134,7 @@
             "id": "q6_e_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1153,7 +1153,7 @@
             "id": "q6_i_ev0",
             "title": "docs/evidence/h01-topographic/onset-shape.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/onset-shape.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/onset-shape.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1161,7 +1161,7 @@
             "id": "q6_i_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1180,7 +1180,7 @@
             "id": "q7_ev0",
             "title": "docs/evidence/h01-topographic/stage-9.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-9.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-9.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1188,7 +1188,7 @@
             "id": "q7_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1207,7 +1207,7 @@
             "id": "q7_e_ev0",
             "title": "docs/evidence/h01-topographic/stage-9.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-9.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-9.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1215,7 +1215,7 @@
             "id": "q7_e_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1234,7 +1234,7 @@
             "id": "q7_i_ev0",
             "title": "docs/evidence/h01-topographic/stage-9.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-9.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-9.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1242,7 +1242,7 @@
             "id": "q7_i_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1261,7 +1261,7 @@
             "id": "q8_ev0",
             "title": "docs/evidence/h01-topographic/stage-10.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-10.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-10.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1269,7 +1269,7 @@
             "id": "q8_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1288,7 +1288,7 @@
             "id": "q8_e_ev0",
             "title": "docs/evidence/h01-topographic/stage-10.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-10.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-10.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1296,7 +1296,7 @@
             "id": "q8_e_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1315,7 +1315,7 @@
             "id": "q9_ev0",
             "title": "docs/evidence/h01-topographic/stage-11.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-11.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-11.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1323,7 +1323,7 @@
             "id": "q9_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1342,7 +1342,7 @@
             "id": "q9_rise_ev0",
             "title": "docs/evidence/h01-topographic/stage-11.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-11.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-11.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1350,7 +1350,7 @@
             "id": "q9_rise_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1369,7 +1369,7 @@
             "id": "q9_step_ev0",
             "title": "docs/evidence/h01-topographic/stage-11.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-11.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-11.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1377,7 +1377,7 @@
             "id": "q9_step_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1396,7 +1396,7 @@
             "id": "q10_ev0",
             "title": "docs/evidence/h01-topographic/stage-12.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-12.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-12.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1404,7 +1404,7 @@
             "id": "q10_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1423,7 +1423,7 @@
             "id": "q10_chain_ev0",
             "title": "docs/evidence/h01-topographic/stage-12.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-12.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-12.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1431,7 +1431,7 @@
             "id": "q10_chain_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1450,7 +1450,7 @@
             "id": "q11_ev0",
             "title": "docs/evidence/h01-topographic/stage-13.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-13.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-13.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1458,7 +1458,7 @@
             "id": "q11_ev1",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1477,7 +1477,7 @@
             "id": "q11_rise_ev0",
             "title": "docs/evidence/h01-topographic/stage-13.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-13.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-13.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1485,7 +1485,7 @@
             "id": "q11_rise_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1504,7 +1504,7 @@
             "id": "q12_ev0",
             "title": "docs/evidence/h01-topographic/stage-14.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-14.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-14.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1512,7 +1512,7 @@
             "id": "q12_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1531,7 +1531,7 @@
             "id": "q11_climb_ev0",
             "title": "docs/evidence/h01-topographic/stage-13.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-13.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-13.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1539,7 +1539,7 @@
             "id": "q11_climb_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1558,7 +1558,7 @@
             "id": "q13_ev0",
             "title": "docs/evidence/h01-topographic/stage-15.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-15.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-15.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1566,7 +1566,7 @@
             "id": "q13_ev1",
             "title": "docs/evidence/h01-topographic/human-vs-rodent-accuracy.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/human-vs-rodent-accuracy.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/human-vs-rodent-accuracy.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1585,7 +1585,7 @@
             "id": "q14_ev0",
             "title": "docs/evidence/h01-topographic/stage-16-observation.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-16-observation.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-16-observation.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1593,7 +1593,7 @@
             "id": "q14_ev1",
             "title": "docs/evidence/h01-topographic/stage-14.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-14.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-14.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1612,7 +1612,7 @@
             "id": "q15_ev0",
             "title": "docs/evidence/h01-topographic/stage-16.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-16.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-16.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1620,7 +1620,7 @@
             "id": "q15_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1639,7 +1639,7 @@
             "id": "next_ev0",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1658,7 +1658,7 @@
             "id": "q2_upstroke_ev0",
             "title": "docs/evidence/h01-topographic/stage-0-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-topographic/stage-0-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-topographic/stage-0-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1666,7 +1666,7 @@
             "id": "q2_upstroke_ev1",
             "title": "docs/evidence/h01-e-morphology/stage-1-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-e-morphology/stage-1-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-e-morphology/stage-1-decision.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1674,7 +1674,7 @@
             "id": "q2_upstroke_ev2",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1693,7 +1693,7 @@
             "id": "policy_ev0",
             "title": "docs/specs/2026-09-12-h01-topographic-strategy.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-12-h01-topographic-strategy.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-12-h01-topographic-strategy.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1712,7 +1712,7 @@
             "id": "qc3_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1720,7 +1720,7 @@
             "id": "qc3_ev1",
             "title": "docs/evidence/h01-keep-drop/decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-keep-drop/decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-keep-drop/decision.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1728,7 +1728,7 @@
             "id": "qc3_ev2",
             "title": "docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1747,7 +1747,7 @@
             "id": "qc3_graph_ev0",
             "title": "docs/evidence/h01-c3-candidates.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-c3-candidates.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-c3-candidates.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1755,7 +1755,7 @@
             "id": "qc3_graph_ev1",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1766,16 +1766,24 @@
         "id": "qc3_import",
         "type": "Branch open",
         "text": "C3-B: candidate skeletons import through the unchanged proofread SWC path (subcompartment labels = SWC type codes + 100). Prediction: 40 of 40 import, construct, initialise. Control: kept cell 1684504313 exported from C3 beside its proofread SWC (recorded, not a gate).",
-        "status": "unverified",
+        "status": "supported",
         "confidence": null,
-        "notes": "Non-proofread segments carry merge and split errors; the import audit and the gate are the filter.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "notes": "Non-proofread segments carry merge and split errors; the import audit and the gate are the filter. Result 2026-09-16 (h01-c3-candidates-import.json, -construct.json, -components.json, -archive.json): the pool from A is 32 (20 E + 12 I), not 40; 32 of 32 import (0 missing / 0 extra segments, 28 s), 32 of 32 construct and initialise with the deployed donor profile (316-12,995 compartments, 90 s). Archive sha256 1b4d232b: 704 components from 1,165,714 vertices (21 singletons dropped, 0 cycle edges), 352 mm cable, every cell's largest component carries the soma (19 have more than one soma-bearing component). 152 vertices carried the out-of-vocabulary label 99 and were written as unclassified. Export 30 min on the box (10-149 s per cell; label-volume chunks, mip 0). Control 1684504313 (h01-c3-control-1684504313.json): C3 / proofread = components 24 / 267, nodes 28,642 / 63,526, cable 8.6 / 18.2 mm, soma-labelled nodes 197 / 48 (the label volume marks a contiguous soma blob; the proofread SWC annotates 48 nodes); imports and constructs (5,151 compartments). The prediction held on every candidate that exists; the 40 was the pool size, refuted in A.\n\nEvidence: docs/evidence/h01-c3-candidates-components.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md",
         "evidence": [
           {
             "id": "qc3_import_ev0",
+            "title": "docs/evidence/h01-c3-candidates-components.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-c3-candidates-components.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "qc3_import_ev1",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
-            "stance": "context",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
         ],
@@ -1793,7 +1801,7 @@
             "id": "qc3_e_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1801,7 +1809,7 @@
             "id": "qc3_e_ev1",
             "title": "docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1820,7 +1828,7 @@
             "id": "qc3_i_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -1828,7 +1836,7 @@
             "id": "qc3_i_ev1",
             "title": "docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -1847,7 +1855,7 @@
             "id": "qc3_net_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }

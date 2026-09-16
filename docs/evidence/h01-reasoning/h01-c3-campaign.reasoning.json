@@ -1,5 +1,5 @@
 {
-  "id": "doc_ff8d10dd-eb3",
+  "id": "doc_fa9d4ad6-bef",
   "title": "H01 C3 partner expansion: campaign prerequisites",
   "graph": {
     "classes": [
@@ -217,16 +217,32 @@
         "id": "io_skel",
         "type": "Intermediate objective",
         "text": "B: candidate C3 skeletons written as proofread-format SWC (type = subcompartment label - 100; x,y,z in 32/32/33 nm voxels; radius nm), archived with sha256 and non-proofread provenance. H01Archive accepts an explicit digest; H01ArchiveSet resolves a source by archive_sha256. Import audit through the unchanged path.",
-        "status": "unverified",
+        "status": "supported",
         "confidence": null,
-        "notes": "Prediction: 40 of 40 import, construct, initialise. Control: kept cell 1684504313 exported from C3 beside its proofread SWC (28,643 vs 63,526 nodes), recorded, not a gate.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "notes": "Prediction: 40 of 40 import, construct, initialise. Control: kept cell 1684504313 exported from C3 beside its proofread SWC (28,643 vs 63,526 nodes), recorded, not a gate. Result 2026-09-16 (h01-c3-candidates-import.json, -construct.json, -components.json, -archive.json): the pool from A is 32 (20 E + 12 I), not 40; 32 of 32 import (0 missing / 0 extra segments, 28 s), 32 of 32 construct and initialise with the deployed donor profile (316-12,995 compartments, 90 s). Archive sha256 1b4d232b: 704 components from 1,165,714 vertices (21 singletons dropped, 0 cycle edges), 352 mm cable, every cell's largest component carries the soma (19 have more than one soma-bearing component). 152 vertices carried the out-of-vocabulary label 99 and were written as unclassified. Export 30 min on the box (10-149 s per cell; label-volume chunks, mip 0). Control 1684504313 (h01-c3-control-1684504313.json): C3 / proofread = components 24 / 267, nodes 28,642 / 63,526, cable 8.6 / 18.2 mm, soma-labelled nodes 197 / 48 (the label volume marks a contiguous soma blob; the proofread SWC annotates 48 nodes); imports and constructs (5,151 compartments). The prediction held on every candidate that exists; the 40 was the pool size, refuted in A.\n\nEvidence: docs/evidence/h01-c3-candidates-components.json; docs/evidence/h01-c3-control-1684504313.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md",
         "evidence": [
           {
             "id": "io_skel_ev0",
+            "title": "docs/evidence/h01-c3-candidates-components.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-c3-candidates-components.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_skel_ev1",
+            "title": "docs/evidence/h01-c3-control-1684504313.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-c3-control-1684504313.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_skel_ev2",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
-            "stance": "context",
+            "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
         ],
