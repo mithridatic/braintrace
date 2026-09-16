@@ -43,20 +43,20 @@ def command(cell, donor_key, dt_half=False):
     return " ".join(parts)
 
 
-def chains(cells_with_donors, n=4):
-    """Sort (cell, donor) pairs by cell id and deal them round-robin into ``n`` lists."""
-    ordered = sorted(cells_with_donors, key=lambda pair: pair[0])
+def chains(cells_with_donors, n=4, keep_order=False):
+    """Deal (cell, donor) pairs round-robin into ``n`` lists, sorted by cell id unless ``keep_order``."""
+    ordered = list(cells_with_donors) if keep_order else sorted(cells_with_donors, key=lambda pair: pair[0])
     return [ordered[k::n] for k in range(n)]
 
 
-def write_chains(rows, out_dir, phase, n=4):
+def write_chains(rows, out_dir, phase, n=4, keep_order=False):
     """Write keep-chain-<k>.sh for k = 1..n; returns the written paths."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     dt_half = phase == "dthalf"
     suffix = "-dthalf" if dt_half else ""
     paths = []
-    for k, chain in enumerate(chains(rows, n), start=1):
+    for k, chain in enumerate(chains(rows, n, keep_order), start=1):
         lines = ["#!/usr/bin/env bash", f"# Keep/drop {phase} chain {k} of {n}; rule and protocol in {SPEC}.",
                  "cd /workspace/braintrace", f"R={RUNNER}", f"export CPUSET={CPU_SETS[k-1]} MEMFRAC=.2"]
         lines += [command(cell, donor, dt_half) for cell, donor in chain]
@@ -72,12 +72,23 @@ def currents_for(rows):
     return {cell: PROTOCOL[donor]["current_na"] for cell, donor in rows}
 
 
-def rows_from_types(types_path, candidates=None):
+PRIORITY = ("l4-pyramidal-allen-527952884", "l5-pv-basket-hl5bn1", "l3-sst-interneuron-hl5mn1",
+            "l2-pyramidal-allen-541563728")
+
+
+def rows_from_types(types_path, candidates=None, skip_done=None, priority=False):
+    """(cell, donor) pairs from the types file; optionally only ``candidates``, minus cells whose
+    ``<skip_done>/transfer-all-<cell>/launch.json`` exists (started or done), ordered by donor priority (predicted
+    keepers first) when ``priority`` is set."""
     rows = json.loads(Path(types_path).read_text())["rows"]
     pairs = [(row["cell_id"], row["donor_key"]) for row in rows]
     if candidates is not None:
         wanted = set(candidates)
         pairs = [pair for pair in pairs if pair[0] in wanted]
+    if skip_done is not None:
+        pairs = [pair for pair in pairs if not (Path(skip_done)/f"transfer-all-{pair[0]}"/"launch.json").exists()]
+    if priority:
+        pairs.sort(key=lambda pair: (PRIORITY.index(pair[1]), pair[0]))
     return pairs
 
 
@@ -90,12 +101,14 @@ def main():
     parser.add_argument("--out-dir", type=Path, help="chain scripts directory (primary, dthalf)")
     parser.add_argument("--currents-out", type=Path, help="JSON {cell_id: nA} for --currents-json (currents phase)")
     parser.add_argument("--chains", type=int, default=4)
+    parser.add_argument("--skip-done", type=Path, help="run folder; cells already launched there (launch.json) are omitted")
+    parser.add_argument("--priority", action="store_true", help="order cells L4, PV, SST, then L2 (predicted keepers first)")
     args = parser.parse_args()
     if args.phase != "primary" and args.candidates is None:
         parser.error("--candidates is required for the dthalf and currents phases")
     key = "kept" if args.phase == "currents" else "candidates"
     candidates = None if args.candidates is None else json.loads(args.candidates.read_text())[key]
-    rows = rows_from_types(args.types, candidates)
+    rows = rows_from_types(args.types, candidates, args.skip_done, args.priority)
     if args.phase == "currents":
         if args.currents_out is None:
             parser.error("--currents-out is required for the currents phase")
@@ -104,7 +117,7 @@ def main():
         return
     if args.out_dir is None:
         parser.error("--out-dir is required for chain phases")
-    for path in write_chains(rows, args.out_dir, args.phase, args.chains):
+    for path in write_chains(rows, args.out_dir, args.phase, args.chains, keep_order=args.priority):
         print(path)
 
 

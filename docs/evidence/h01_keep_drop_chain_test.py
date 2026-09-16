@@ -96,3 +96,16 @@ def test_currents_phase_writes_kept_cells_only(tmp_path, monkeypatch):
                                       "--candidates", str(decision), "--currents-out", str(out)])
     chain.main()
     assert json.loads(out.read_text()) == {"b": .09}
+
+
+def test_priority_order_and_skip_started(tmp_path):
+    types = tmp_path/"types.json"
+    types.write_text(json.dumps(dict(rows=[dict(cell_id="9", donor_key=L2), dict(cell_id="5", donor_key=L4),
+                                          dict(cell_id="7", donor_key=SST), dict(cell_id="1", donor_key=PV),
+                                          dict(cell_id="3", donor_key=L4)])))
+    (tmp_path/"transfer-all-3").mkdir()
+    (tmp_path/"transfer-all-3"/"launch.json").write_text("{}")
+    rows = chain.rows_from_types(types, skip_done=tmp_path, priority=True)
+    assert rows == [("5", L4), ("1", PV), ("7", SST), ("9", L2)]
+    assert chain.chains(rows, 2, keep_order=True) == [[("5", L4), ("7", SST)], [("1", PV), ("9", L2)]]
+    assert chain.chains(rows, 2) == [[("1", PV), ("7", SST)], [("5", L4), ("9", L2)]]
