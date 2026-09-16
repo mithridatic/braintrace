@@ -102,3 +102,105 @@ def test_forest_gradients_equal_per_cell_gradients(learners):
         np.testing.assert_allclose(got[name], expected[name], rtol=0., atol=1e-9*scale,
                                    err_msg=name)
     assert any(np.abs(expected[name]).max() > 0. for name in ('input', 'recurrent'))
+
+
+def _pattern(neurons, fanout=3):
+    """Fixed encoder pattern over the first ``fanout`` neurons so that models of different width match."""
+    targets = np.tile(np.arange(fanout, dtype=np.int32), 441)
+    indptr = np.arange(442, dtype=np.int32)*fanout
+    return targets, indptr
+
+
+def _static_model(slots, capacity):
+    from braintrace.datasets.h01_forest_contacts_test import _cells as shared_cells
+    cells = shared_cells()
+    for cell in cells:
+        cell.init_state()
+    forest = H01ForestCell(cells, slots=slots)
+    forest.contact_spec = dict(capacity=capacity, max_delay_ms=DELAY_MS, rows=[
+        dict(pre=0, post=1, kind=0, weight_us=WEIGHT_US, delay_ms=DELAY_MS),
+        dict(pre=0, post=2, kind=1, weight_us=WEIGHT_US, delay_ms=DELAY_MS)])
+    network = braincell.Network(name='forest')
+    network.add_population('forest', forest)
+    return H01ArcModel(network, IDS, dt_ms=DT_MS, checkpoint_substeps=False, input_pattern=_pattern(3*slots))
+
+
+def _percell_shared_model():
+    from braintrace.datasets.h01_forest_contacts_test import _cells as shared_cells
+    cells = shared_cells()
+    network = braincell.Network(name='percell')
+    for index, cell in enumerate(cells):
+        network.add_population(f'cell_{index}', cell)
+    for name, kind, post in (('e', 'contact_exc', 1), ('i', 'contact_inh', 2)):
+        network.add_edges(name=name, pre='cell_0', post=f'cell_{post}', method=pairs([(0, 0)]))
+        network.add_projection(name=name, edges=name, synapse=kind, weight=WEIGHT_US*u.uS, delay=DELAY_MS*u.ms)
+    return H01ArcModel(network, IDS, dt_ms=DT_MS, checkpoint_substeps=False, input_pattern=_pattern(3))
+
+
+def _align(reference, wide):
+    """Copy the reference parameters into the wide (slotted) model's leading rows."""
+    wide.input_weight.value = reference.input_weight.value
+    wide.readout_bias.value = reference.readout_bias.value
+    wide.readout_weight.value = wide.readout_weight.value.at[:3].set(reference.readout_weight.value)
+    wide.recurrent_weight.value = wide.recurrent_weight.value.at[:2].set(reference.recurrent_weight.value)
+    wide.contact_magnitude.value = jnp.abs(wide.recurrent_weight.value)
+
+
+@pytest.fixture(scope='module')
+def static_pair():
+    with brainstate.environ.context(precision=64):
+        reference = _percell_shared_model()
+        wide = _static_model(2, 4)
+        _align(reference, wide)
+        return reference, _learner(reference), wide, _learner(wide)
+
+
+def test_static_model_forward_and_gradients_equal_per_cell(static_pair):
+    reference, rlearner, wide, wlearner = static_pair
+    rng = np.random.default_rng(1)
+    with brainstate.environ.context(precision=64):
+        events = [jnp.asarray(rng.normal(size=441)*3., dtype=jnp.float64) for _ in range(2)]
+        reference.reset_episode(rlearner)
+        wide.reset_episode(wlearner)
+        soma_r = np.asarray(brainstate.transform.for_loop(lambda e: reference.update(e), jnp.stack(events)))
+        soma_w = np.asarray(brainstate.transform.for_loop(lambda e: wide.update(e), jnp.stack(events)))
+        np.testing.assert_allclose(soma_w[:, :3], soma_r, rtol=0., atol=1e-10)
+        reference.reset_episode(rlearner)
+        wide.reset_episode(wlearner)
+        expected = _gradients(reference, rlearner, events)
+        got = _gradients(wide, wlearner, events)
+    scale = lambda name: max(np.abs(expected[name]).max(), 1e-30)   # noqa: E731
+    np.testing.assert_allclose(got['input'], expected['input'], rtol=0., atol=1e-9*scale('input'))
+    np.testing.assert_allclose(got['readout_bias'], expected['readout_bias'], rtol=0., atol=1e-9*scale('readout_bias'))
+    np.testing.assert_allclose(got['readout_weight'][:3], expected['readout_weight'], rtol=0., atol=1e-9*scale('readout_weight'))
+    assert np.abs(got['readout_weight'][3:]).max() == 0.   # dormant slots carry no credit
+    np.testing.assert_allclose(got['recurrent'][:2], expected['recurrent'], rtol=0., atol=1e-9*max(scale('recurrent'), 1e-12))
+    assert np.abs(got['recurrent'][2:]).max() == 0.
+    layout = wlearner.graph.layout
+    assert layout.slots is not None and layout.color_count <= rlearner.graph.layout.color_count
+
+
+def test_static_model_clone_and_contact_in_place(static_pair):
+    reference, rlearner, wide, wlearner = static_pair
+    with brainstate.environ.context(precision=64):
+        step = brainstate.transform.jit(wide.update)
+        event = jnp.zeros(441)
+        jax.block_until_ready(step(event))
+        clone = wide.clone(0)
+        row = wide.add_contact(clone, 2, kind=0, weight_us=.03)
+        assert clone == 3 and row == 2
+        assert wide.sparse_structure_signature() == ((0, 0, 1, 0), (1, 0, 2, 1), (2, 3, 2, 0))
+        import logging
+        records = []
+
+        class Handler(logging.Handler):
+            def emit(self, record):
+                records.append(record.getMessage())
+        handler = Handler()
+        logging.getLogger().addHandler(handler)
+        with jax.log_compiles(True):
+            jax.block_until_ready(step(event))
+        logging.getLogger().removeHandler(handler)
+        assert not [m for m in records if 'ompil' in m]
+        with pytest.raises(ValueError, match='No dormant slot'):
+            wide.clone(0)
