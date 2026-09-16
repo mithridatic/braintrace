@@ -78,9 +78,12 @@ def test_restrict_topology_keeps_listed_nodes_and_contacts_among_them():
 
 def test_source_archives_routes_each_node_through_its_digest(monkeypatch, tmp_path):
     from types import SimpleNamespace
+    from braintrace.datasets.h01_archive_set import H01ArchiveSet
     calls = []
-    archive_set = SimpleNamespace(archives=lambda: [], load=lambda identity, component, digest:
-                                  calls.append((identity, component, digest)) or "component")
+    def stub(digest):
+        return SimpleNamespace(archive_sha256=digest, source="stub", load=lambda identity, component:
+                               calls.append((identity, component, digest)) or "component")
+    archive_set = H01ArchiveSet([stub("a"*64), stub("b"*64)])
     monkeypatch.setattr(h01_arc_probe, "open_archive_paths",
                         lambda paths: (archive_set, {str(p): d for p, d in zip(paths, ("a"*64, "b"*64))}))
     monkeypatch.setattr(h01_arc_probe, "ARCHIVE_SHA256", "a"*64)

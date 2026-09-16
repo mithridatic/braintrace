@@ -213,16 +213,15 @@ def _c3_selection(tmp_path):
     return path
 
 
-class _Set:
-    def __init__(self, by_digest, load):
-        self.by_digest, self._load, self.calls = by_digest, load, []
-
-    def archives(self):
-        return dict(self.by_digest)
-
-    def load(self, cell, component, digest):
-        self.calls.append((cell, component, digest))
-        return self._load(cell, component)
+def _archive_set(inventories, load, calls):
+    """Real ``H01ArchiveSet`` over stand-in archives: {digest: neuron_ids} with a recording ``load``."""
+    from .h01_archive_set import H01ArchiveSet
+    def stub(digest, neuron_ids):
+        def record(cell, component=None):
+            calls.append((str(cell), component, digest))
+            return load(cell, component)
+        return SimpleNamespace(archive_sha256=digest, source="stub", neuron_ids=neuron_ids, load=record)
+    return H01ArchiveSet([stub(d, ids) for d, ids in inventories.items()])
 
 
 @pytest.mark.parametrize("distance, blocker, ready, within", [
@@ -231,8 +230,8 @@ def test_prepare_c3_selection_records_distance_and_blocks_only_beyond_the_blocke
         imported, tmp_path, monkeypatch, distance, blocker, ready, within):
     path = _c3_selection(tmp_path)
     load = lambda identity, component: replace(imported, neuron_id=identity)
-    archives = _Set({module.ARCHIVE_SHA256: SimpleNamespace(neuron_ids=("12",)),
-                     "b"*64: SimpleNamespace(neuron_ids=("13", "14"))}, load)
+    calls = []
+    archives = _archive_set({module.ARCHIVE_SHA256: ("12",), "b"*64: ("13", "14")}, load, calls)
     limits, real_project = [], type(imported.anatomy()).project
     def project(anatomy, points, max_distance_um):
         limits.append(max_distance_um)
@@ -247,11 +246,11 @@ def test_prepare_c3_selection_records_distance_and_blocks_only_beyond_the_blocke
     assert result["max_distance_um"] == 1. and result["blocker_distance_um"] == blocker
     assert result["counts"]["beyond_max_distance"] == (0 if within else 2)
     if ready:
-        assert archives.calls == [("12", 0, module.ARCHIVE_SHA256), ("13", 0, "b"*64)]
+        assert calls == [("12", 0, module.ARCHIVE_SHA256), ("13", 0, "b"*64)]
         assert set(limits) == {1. if blocker is None else blocker}
         assert "cable_location" in edge["post_placement"]
     else:
-        assert archives.calls == [] and edge["blockers"][0].startswith("pre:")
+        assert calls == [] and edge["blockers"][0].startswith("pre:")
 
 
 def test_prepare_c3_selection_needs_a_set_holding_every_node(tmp_path, monkeypatch):
@@ -259,8 +258,8 @@ def test_prepare_c3_selection_needs_a_set_holding_every_node(tmp_path, monkeypat
     with pytest.raises(ValueError, match="archive set"):
         module.prepare_connectivity(tmp_path, path)
     with pytest.raises(ValueError, match="does not hold"):
-        module.prepare_connectivity(tmp_path, path, archive_set=_Set({module.ARCHIVE_SHA256: SimpleNamespace(neuron_ids=("12",))}, None))
-    absent = _Set({module.ARCHIVE_SHA256: SimpleNamespace(neuron_ids=("12",)), "b"*64: SimpleNamespace(neuron_ids=("13",))}, None)
+        module.prepare_connectivity(tmp_path, path, archive_set=_archive_set({module.ARCHIVE_SHA256: ("12",)}, None, []))
+    absent = _archive_set({module.ARCHIVE_SHA256: ("12",), "b"*64: ("13",)}, None, [])
     with pytest.raises(ValueError, match="absent from its archive"):
         module.prepare_connectivity(tmp_path, path, archive_set=absent)
     with pytest.raises(ValueError, match="Blocker distance"):

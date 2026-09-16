@@ -10,6 +10,7 @@ from braincell.network import pairs
 import brainunit as u
 
 from braintrace.datasets.h01 import H01Archive
+from braintrace.datasets.h01_archive_set import H01ArchiveSet
 from braintrace.datasets.h01_ei_cell import make_h01_ei_cell
 from braintrace.datasets.h01_network import _regions, _register_cell
 from braintrace.datasets.h01_biology import H01SpatialManifest
@@ -78,12 +79,7 @@ def open_archive(path, digest):
     H01Archive
         Verified archive.
     """
-    # Transitional shim until the H01ArchiveSet reader lands: the pinned-only reader
-    # takes no expected digest. Remove once ``H01Archive(path, expected_sha256=...)`` exists.
-    import inspect
-    if 'expected_sha256' in inspect.signature(H01Archive).parameters:
-        return H01Archive(path, expected_sha256=digest)
-    return H01Archive(path)
+    return H01Archive(path, expected_sha256=digest)
 
 
 def open_archives(asset_root, digests):
@@ -108,7 +104,6 @@ def open_archives(asset_root, digests):
     archives = [open_archive(Path(asset_root)/digest, digest) for digest in digests]
     if len(archives) == 1:
         return archives[0]
-    from braintrace.datasets.h01 import H01ArchiveSet
     return H01ArchiveSet(archives)
 
 
@@ -137,7 +132,6 @@ def open_archive_paths(paths):
     archives = [open_archive(Path(path), digest) for path, digest in digests.items()]
     if len(archives) == 1:
         return archives[0], digests
-    from braintrace.datasets.h01 import H01ArchiveSet
     return H01ArchiveSet(archives), digests
 
 
