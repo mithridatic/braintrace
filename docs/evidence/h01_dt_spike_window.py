@@ -351,6 +351,9 @@ def _parity_command(args):
     document = parity_report(*arms)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(document, indent=2)+'\n')
+    if args.plot is not None:
+        plot_parity(arms[0][1], arms[1][1], arms[0][0]['cells'], document['dt_ms'], args.plot,
+                    f"{document['other']} against {document['reference']} at dt {document['dt_ms']} ms (soma, own units)")
     c = document['comparison']
     print(json.dumps(dict(max_abs_mv=c['max_abs_mv'], counts_equal=c['all_counts_equal'],
                           max_abs_spike_shift_ms=c['max_abs_spike_shift_ms'], spikes=c['total_reference_spikes'])))
@@ -362,6 +365,7 @@ def _parser_with_parity():
     parity.add_argument('--reference', type=Path, required=True)
     parity.add_argument('--other', type=Path, required=True)
     parity.add_argument('--output', type=Path, required=True)
+    parity.add_argument('--plot', type=Path, default=None)
     return parser
 
 
