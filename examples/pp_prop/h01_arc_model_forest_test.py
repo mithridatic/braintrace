@@ -185,7 +185,8 @@ def test_static_model_clone_and_contact_in_place(static_pair):
     with brainstate.environ.context(precision=64):
         step = brainstate.transform.jit(wide.update)
         event = jnp.zeros(441)
-        jax.block_until_ready(step(event))
+        for _ in range(2):   # the second call re-keys on device-placed state values from the first
+            jax.block_until_ready(step(event))
         clone = wide.clone(0)
         row = wide.add_contact(clone, 2, kind=0, weight_us=.03)
         assert clone == 3 and row == 2
