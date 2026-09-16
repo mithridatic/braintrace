@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 import brainstate
 import brainunit as u
+import jax.numpy as jnp
 import numpy as np
 from braincell.mech._density import Density
 
@@ -28,23 +29,30 @@ from .h01_spike_output import _SiteSpike
 
 @dataclass(frozen=True)
 class _ForestSpike:
-    """Emit spikes only from the source cells' output CVs."""
+    """Emit spikes only from the active cells' output CVs."""
 
     base: object
     output_cv_ids: tuple
     n_cv: int
     mask: object = None
+    active: object = None
 
-    def __init__(self, base, output_cv_ids, n_cv):
+    def __init__(self, base, output_cv_ids, n_cv, active=None):
         mask = np.zeros(int(n_cv), dtype=bool)
         mask[list(output_cv_ids)] = True
-        for name, value in (('base', base), ('output_cv_ids', tuple(output_cv_ids)), ('n_cv', int(n_cv)), ('mask', mask)):
+        for name, value in (('base', base), ('output_cv_ids', tuple(output_cv_ids)), ('n_cv', int(n_cv)),
+                            ('mask', mask), ('active', active)):
             object.__setattr__(self, name, value)
 
     def __call__(self, voltage):
         if voltage.shape[-1] != self.n_cv:
             raise ValueError('Forest output mask no longer matches the mesh')
-        return self.base(voltage)*self.mask
+        spikes = self.base(voltage)*self.mask
+        if self.active is not None:
+            gate = np.zeros(self.n_cv)
+            index = np.asarray(self.output_cv_ids)
+            spikes = spikes*jnp.zeros(self.n_cv).at[index].set(self.active()).astype(spikes.dtype)
+        return spikes
 
 
 def _source_layouts(cell):
@@ -87,17 +95,29 @@ class H01ForestCell(H01Cell):
     solver : str, optional
         Integrator; the pinned ``h01_staggered_calcium_implicit`` detects the
         forest pack on the runtime and solves the forest once.
+    slots : int, optional
+        Static capacity: every source cell is laid out ``slots`` times (slot
+        ``s`` of source ``i`` is forest cell ``s*len(cells)+i``). Slot 0 is
+        active; the other slots are dormant copies (same anatomy, parameters
+        and initial state, integrated every substep, masked out of the drive,
+        spike output and readout) that a clone activates in place, so no array
+        changes shape and no program recompiles.
 
     Notes
     -----
-    ``forest_offsets`` gives each cell's CV/point/branch offsets;
-    ``soma_cv_ids`` and ``output_cv_ids`` the per-cell readout and emission CVs.
+    ``forest_offsets`` gives each forest cell's CV/point/branch offsets;
+    ``soma_cv_ids`` and ``output_cv_ids`` the per-cell readout and emission
+    CVs; ``active`` the per-cell mask.
     """
 
-    def __init__(self, cells, *, solver='h01_staggered_calcium_implicit'):
-        cells = tuple(cells)
-        if not cells or any(not getattr(c, '_initialized', False) for c in cells):
+    def __init__(self, cells, *, solver='h01_staggered_calcium_implicit', slots=1):
+        sources = tuple(cells)
+        if not sources or any(not getattr(c, '_initialized', False) for c in sources):
             raise ValueError('The forest needs at least one initialized source cell')
+        if int(slots) < 1:
+            raise ValueError('slots must be at least one')
+        self.slots, self.source_count = int(slots), len(sources)
+        cells = sources*int(slots)
         forest, offsets, canonical = fuse_discretizations([c._discretization for c in cells])
         self._forest = forest
         self.forest_offsets = offsets
@@ -111,11 +131,55 @@ class H01ForestCell(H01Cell):
             outputs.append(int(cell.spk_fun.cv_id)+int(offsets.cv[index]))
         self.output_cv_ids = tuple(outputs)
         self.contacts = ()
+        self.contact_table = None
         super().__init__(cells[0].morpho, cv_policy=cells[0].cv_policy, V_init=v_init*u.mV,
                          V_th=cells[0]._V_th_declaration, solver=solver, pop_size=(1,), name='forest')
-        self.spk_fun = _ForestSpike(cells[0].spk_fun.base, self.output_cv_ids, len(forest.cvs))
+        mask = np.zeros(len(cells))
+        mask[:len(sources)] = 1.
+        self.active = brainstate.ShortTermState(jnp.asarray(mask))
+        self.spk_fun = _ForestSpike(cells[0].spk_fun.base, self.output_cv_ids, len(forest.cvs),
+                                    active=(lambda: self.active.value) if slots > 1 else None)
         self._discretization_cache = forest
         self.soma_cv_ids = tuple(int(o)+_soma_cv(c) for o, c in zip(offsets.cv[:-1], cells))
+        self.cell_of_cv = np.repeat(np.arange(len(cells)), np.diff(offsets.cv))
+        self.cell_of_point = np.repeat(np.arange(len(cells)), np.diff(offsets.point))
+
+    @property
+    def cells(self):
+        """Number of forest cells (sources times slots)."""
+        return self.forest_offsets.cells
+
+    def slot_of(self, source_index, slot):
+        """Forest cell index of ``slot`` of source ``source_index``."""
+        return int(slot)*self.source_count+int(source_index)
+
+    def free_slot(self, forest_index):
+        """First dormant slot of the source cell that forest cell ``forest_index`` copies.
+
+        Returns
+        -------
+        int or None
+            Forest cell index, or ``None`` when every slot of that source is active.
+        """
+        active = np.asarray(self.active.value)
+        source = int(forest_index) % self.source_count
+        for slot in range(1, self.slots):
+            candidate = self.slot_of(source, slot)
+            if active[candidate] == 0.:
+                return candidate
+        return None
+
+    def activate(self, forest_index, on=True):
+        """Switch one forest cell's drive, spike output and readout on or off.
+
+        Parameters
+        ----------
+        forest_index : int
+            Forest cell index.
+        on : bool, optional
+            ``False`` returns the slot to dormancy.
+        """
+        self.active.value = self.active.value.at[int(forest_index)].set(1. if on else 0.)
 
     @property
     def _discretization(self):
