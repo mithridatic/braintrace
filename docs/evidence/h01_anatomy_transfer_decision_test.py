@@ -332,6 +332,20 @@ def test_decide_keep_failure_gate_without_ramp_or_datums(tmp_path):
         decision.decide_keep(runs, types, rests, gate="failure")
 
 
+def test_decide_keep_primary_phase_drops_a_cell_whose_ramp_fails_so_no_repeat_is_spent(tmp_path):
+    runs, types, rests, datums = _failure_population(tmp_path, with_ramp=False, with_half=False)
+    blocked = _ramp(block_na=.15, spikes=(1100., 1500.))   # stops firing below the human's highest amplitude
+    (runs/"transfer-all-200-ramp").mkdir()
+    (runs/"transfer-all-200-ramp"/"run.json").write_text(json.dumps(dict(cell="200", **blocked)))
+    primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
+    assert primary["candidates"] == [] and primary["pending"] == {}
+    assert primary["dropped"] == {"200": "fires_at_highest", "300": "count_in_repeat_range"}
+    silent = _ramp(rheobase_na=None, spikes=())
+    (runs/"transfer-all-200-ramp"/"run.json").write_text(json.dumps(dict(cell="200", **silent)))
+    primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
+    assert primary["dropped"]["200"] == "rheobase_in_step,fires_at_highest" and primary["candidates"] == []
+
+
 def test_decide_keep_failure_gate_dt_half_missing_is_pending_in_the_final_phase_only(tmp_path):
     runs, types, rests, datums = _failure_population(tmp_path, with_half=False)
     final = decision.decide_keep(runs, types, rests, gate="failure", datums_path=datums)

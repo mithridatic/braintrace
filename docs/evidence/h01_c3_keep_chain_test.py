@@ -3,7 +3,7 @@
 import json
 
 from docs.evidence import h01_c3_keep_chain as chain
-from docs.evidence.h01_keep_drop_chain import CAP_S
+from docs.evidence.h01_keep_drop_chain import CAP_S, PROTOCOL, RAMP_FACTOR
 
 L2, L4, PV, SST = ("l2-pyramidal-allen-541563728", "l4-pyramidal-allen-527952884", "l5-pv-basket-hl5bn1",
                    "l3-sst-interneuron-hl5mn1")
@@ -28,10 +28,17 @@ def test_jobs_pair_primary_and_ramp_per_candidate_and_ramp_only_per_kept_cell():
     assert primary.startswith(f"$R transfer-all-21 {CAP_S['primary']} -- --cell 21 --donor {PV} --polarity I")
     assert "--current-na 0.19 --registered-count 12" in primary and primary.endswith(EXTRA)
     assert ramp.startswith(f"$R transfer-all-21-ramp {CAP_S['ramp']} -- --cell 21 --donor {PV} --polarity I")
-    assert "--ramp-na 0.57" in ramp and "--current-na" not in ramp and ramp.endswith(EXTRA)
+    assert f"--ramp-na {_ramp_max(PV)}" in ramp and "--current-na" not in ramp and ramp.endswith(EXTRA)
     kept_ramp = job_list[5][3][0]
-    assert "--ramp-na 0.93" in kept_ramp and "--archive" not in kept_ramp and "--cell-table" not in kept_ramp
-    assert "--ramp-na 0.27" in job_list[6][3][0] and "--ramp-na 0.3 " in job_list[1][3][1]
+    assert f"--ramp-na {_ramp_max(L2)}" in kept_ramp and "--archive" not in kept_ramp and "--cell-table" not in kept_ramp
+    assert kept_ramp.split()[1] == "transfer-all-7-ramp"
+    assert job_list[6][3][0].split("--ramp-na ")[1] == _ramp_max(L4)
+    assert job_list[1][3][1].split("--ramp-na ")[1].split(" ")[0] == _ramp_max(SST)
+
+
+def _ramp_max(donor):
+    """Ramp maximum as ``command`` formats it: RAMP_FACTOR x the donor's test current, %g."""
+    return f"{RAMP_FACTOR*PROTOCOL[donor]['current_na']:g}"
 
 
 def test_jobs_skip_runs_already_launched(tmp_path):
@@ -100,8 +107,9 @@ def test_main_writes_the_two_chains(tmp_path):
     runs = [l for l in one+two if l.startswith("$R ")]
     assert len(runs) == 97 and len({l.split()[1] for l in runs}) == 97
     interneurons = [l for l in runs if "--polarity I" in l]
-    assert len(interneurons) == 40 and all("--ramp-na 0.57" in l or "--ramp-na 0.3 " in l or "--current-na" in l
-                                           for l in interneurons)
+    assert len(interneurons) == 40
+    ramps = [l for l in interneurons if "--ramp-na" in l]
+    assert len(ramps) == 20 and {l.split("--ramp-na ")[1].split(" ")[0] for l in ramps} == {_ramp_max(PV), _ramp_max(SST)}
     kept = [l for l in runs if "--archive" not in l]
     assert len(kept) == 17 and all("-ramp " in l for l in kept)
     # order inside each chain: interneuron candidates, pyramidal candidates, kept ramps
