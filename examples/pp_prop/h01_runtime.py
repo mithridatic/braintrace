@@ -71,7 +71,8 @@ def topology_from_evidence(evidence, contact_audit, archive):
 
 
 def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
-                  max_cv_length_um=10., progress=None, environment_potassium=False, biology=None):
+                  max_cv_length_um=10., progress=None, environment_potassium=False, biology=None,
+                  fused=False):
     """Build real selected cables and placed conductance contacts for a topology.
 
     Parameters
@@ -90,12 +91,21 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         Declare external K pools; caller must bind chemistry after initialization.
     biology : H01SpatialManifest or dict or None, optional
         Explicit topology-pinned spine additions and contact-head assignments.
+    fused : bool, optional
+        Register the cells as one forest population
+        (``braintrace.datasets.h01_forest_cell.H01ForestCell``): every cell is
+        built and initialized as usual, then fused so that each mechanism runs
+        as one kernel over all compartments. Spec:
+        docs/specs/2026-09-16-h01-fused-population.md. Contacts are not yet
+        delivered on the fused path.
 
     Returns
     -------
     tuple
         BrainCell network and per-instance construction records. Initialization
-        is separate so its time and memory can be measured independently.
+        is separate so its time and memory can be measured independently; on the
+        fused path the source cells are initialized here and the forest in
+        ``init_state``. Records carry ``forest`` offsets when fused.
     """
     doc = topology.to_dict()
     manifest = None if biology is None else H01SpatialManifest(
@@ -157,6 +167,8 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
                        {identity: assembled_location(records[identity], site)}, 0., emit)
         if manifest is not None:
             records[identity]['original_output_site'] = list(site)
+    if fused:
+        network = _fuse_populations(network, doc, records, solver, emit)
     for identity in doc['active_contacts']:
         edge, name = doc['contacts'][identity], 'syn_'+identity
         network.add_edges(name=name, pre='cell_'+edge['pre'], post='cell_'+edge['post'], method=pairs([(0, 0)]))
@@ -164,6 +176,27 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
             weight=edge['initial_weight_us']*u.uS, delay=edge['delay_ms']*u.ms)
     release_shared_construction_data()
     return network, records
+
+
+def _fuse_populations(network, doc, records, solver, emit):
+    """Initialize every registered cell and return a network with one forest population."""
+    from braintrace.datasets.h01_forest_cell import H01ForestCell
+    if doc['active_contacts']:
+        raise ValueError('The fused population does not deliver contacts yet (spec section 3)')
+    cells = []
+    for identity in doc['active_cells']:
+        cell = network.populations['cell_'+identity].cell
+        emit('Initializing source cell '+identity)
+        cell.init_state()
+        cells.append(cell)
+    forest = H01ForestCell(cells, solver=solver)
+    for index, identity in enumerate(doc['active_cells']):
+        records[identity]['forest'] = dict(index=index, cv_offset=int(forest.forest_offsets.cv[index]),
+            point_offset=int(forest.forest_offsets.point[index]), soma_cv=int(forest.soma_cv_ids[index]),
+            output_cv=int(forest.output_cv_ids[index]))
+    fused = braincell.Network(name='h01_evolved_forest')
+    fused.add_population('forest', forest)
+    return fused
 
 
 def release_shared_construction_data():

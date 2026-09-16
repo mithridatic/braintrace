@@ -107,7 +107,7 @@ def test_forest_voltages_equal_per_cell_voltages(pair):
     got = np.asarray(got[0])
     for index, cell in enumerate(cells):
         lo, hi = forest.forest_offsets.cv[index], forest.forest_offsets.cv[index+1]
-        np.testing.assert_allclose(got[:, lo:hi], np.asarray(expected[index]), rtol=0., atol=1e-9)
+        np.testing.assert_allclose(got[:, lo:hi], np.asarray(expected[index]), rtol=0., atol=1e-12)
         out = forest.output_cv_ids[index]
         np.testing.assert_array_equal(np.asarray(got_spikes[0])[:, out], np.asarray(expected_spikes[index])[:, cell.spk_fun.cv_id])
     assert np.asarray(expected[0]).max() > 0.   # the window contains a spike

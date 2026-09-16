@@ -12,6 +12,14 @@ import numpy as np
 from braintrace.datasets.h01_network_step import H01NetworkStep
 
 
+def _forest_cell(network):
+    """The forest cell when the network is one fused population, else ``None``."""
+    if len(network.populations) != 1:
+        return None
+    cell = next(iter(network.populations.values())).cell
+    return cell if hasattr(cell, 'forest_offsets') else None
+
+
 class H01ArcModel(brainstate.nn.Module):
     """Encode ARC events into held soma currents on multicompartment cells.
 
@@ -48,8 +56,11 @@ class H01ArcModel(brainstate.nn.Module):
             raise ValueError("Nonempty string source IDs are required")
         if len(set(self.source_ids)) != len(self.source_ids):
             raise ValueError("Source IDs must be unique")
-        if len(self.source_ids) != len(network.populations):
+        self.forest = _forest_cell(network)
+        if self.forest is None and len(self.source_ids) != len(network.populations):
             raise ValueError("Source IDs must match network populations")
+        if self.forest is not None and len(self.source_ids) != self.forest.forest_offsets.cells:
+            raise ValueError("Source IDs must match the forest's cells")
         if dt_ms is None:
             env_dt = brainstate.environ.get('dt', None)
             if env_dt is not None:
@@ -103,14 +114,15 @@ class H01ArcModel(brainstate.nn.Module):
                                         ring_buffers=self.stepper.ring_buffers)
         for index, cell in enumerate(self.stepper.cells):
             table = cell.runtime.clamp_routing_table
-            if table is None or len(table.midpoint_ids) + len(table.boundary_ids) != 1:
+            routes = self.neuron_count if self.forest is not None else 1
+            if table is None or len(table.midpoint_ids) + len(table.boundary_ids) != routes:
                 raise ValueError("Each H01 cell must have exactly one soma clamp route")
             cell.runtime.evaluate_point_clamps = self._current_op(index, cell, table)
             # A native run may have cached a voltage derivative before encoder attachment.
             if hasattr(cell.runtime, "_voltage_linearizer_cache"):
                 cell.runtime._voltage_linearizer_cache = None
         soma_cv_ids = []
-        for cell in self.stepper.cells:
+        for cell in () if self.forest is not None else self.stepper.cells:
             found_cv = None
             for layout in cell.runtime.layouts:
                 decl = cell.runtime.get_layout_mechanism(layout.id)
@@ -119,7 +131,7 @@ class H01ArcModel(brainstate.nn.Module):
                     found_cv = _representative_cv_id(cell.runtime, point_id=int(layout.point_index[0]))
                     break
             soma_cv_ids.append(found_cv)
-        self._soma_cv_ids = tuple(soma_cv_ids)
+        self._soma_cv_ids = tuple(self.forest.soma_cv_ids) if self.forest is not None else tuple(soma_cv_ids)
 
     def _contact_op(self, index, block):
         def deliver(spikes):
@@ -133,7 +145,15 @@ class H01ArcModel(brainstate.nn.Module):
 
     def _current_op(self, index, cell, table):
         original = cell.runtime.evaluate_point_clamps
-        point = int(np.concatenate((table.midpoint_ids, table.boundary_ids))[0])
+        points = np.sort(np.concatenate((table.midpoint_ids, table.boundary_ids)).astype(int))
+        if self.forest is not None:
+            # One route per cell, in cell order (each soma point lies in its cell's point range).
+            def current(*, t, point_ids=None):
+                value = original(t=t, point_ids=point_ids)
+                routed = np.ones(len(points), dtype=bool) if point_ids is None else np.isin(points, np.asarray(point_ids))
+                return value.at[..., points[routed]].add(self.drive.value[np.flatnonzero(routed)]*u.nA)
+            return current
+        point = int(points[0])
         def current(*, t, point_ids=None):
             value = original(t=t, point_ids=point_ids)
             if point_ids is None or point in point_ids or (isinstance(point_ids, np.ndarray) and point in point_ids):
@@ -170,6 +190,8 @@ class H01ArcModel(brainstate.nn.Module):
         return self._soma()
 
     def _soma(self):
+        if self.forest is not None:
+            return self.forest.V.value[..., np.asarray(self._soma_cv_ids)].to_decimal(u.mV).reshape(-1)
         if hasattr(self, '_soma_cv_ids') and all(cv is not None for cv in self._soma_cv_ids):
             return jnp.stack([cell.V.value[..., cv].to_decimal(u.mV).reshape(())
                               for cell, cv in zip(self.stepper.cells, self._soma_cv_ids)])
