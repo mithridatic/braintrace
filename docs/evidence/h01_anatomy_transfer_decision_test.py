@@ -168,8 +168,8 @@ def test_keep_cli_writes_decision(tmp_path, capsys):
     assert "kept 1 / dropped 1 / missing 1 of 3" in out and "drop 100: rest_and_return,count_in_band" in out
 
 
-DONOR = dict(rest_mv=REST, sd_mv=.02, rest_repeat_sd_mv=.1, rheobase_pa=50., sweep_step_pa=20., highest_firing_pa=170.,
-             repeat_counts=[12])
+DONOR = dict(rest_mv=REST-.4, sd_mv=.02, rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1, rheobase_pa=50., sweep_step_pa=20.,
+             highest_firing_pa=170., repeat_counts=[12])   # single-sweep rest 0.4 mV below the family mean
 
 
 def _ramp(rheobase_na=.055, block_na=None, spikes=(1100., 1500., 1900., 2010.), ramp_max_na=.27, finite=True, pre=0):
@@ -190,6 +190,8 @@ def test_failure_verdict_all_rules_hold_and_carries_the_legacy_verdict():
     assert verdict["rest_tolerance_mv"] == pytest.approx(.3)   # 3 x the across-sweep repeat sd, not the within-trace sd
     readings = verdict["readings"]
     assert readings["rest_sd_mv"] == .1 and readings["rest_sd_source"].startswith("across-sweep")
+    assert readings["rest_datum_mv"] == REST and readings["donor_single_sweep_rest_mv"] == REST-.4
+    assert verdict["donor_rest_mv"] == REST and verdict["legacy_verdict"]["keep"] is True   # legacy: single sweep
     assert readings["model_rheobase_pa"] == pytest.approx(55.) and readings["ramp_max_pa"] == pytest.approx(270.)
     assert readings["model_last_spike_pa"] == pytest.approx(267.3) and readings["block_above_recorded_range"] is None
 
@@ -236,12 +238,21 @@ def test_failure_verdict_repeat_range_is_inclusive_and_single_repeat_is_exact():
                                              DONOR)["rules"]["count_in_repeat_range"]
 
 
-def test_failure_verdict_rest_falls_back_to_the_within_trace_sd_when_no_repeat_sd():
-    donor = {k: v for k, v in DONOR.items() if k != "rest_repeat_sd_mv"}
-    verdict = decision.keep_verdict_failure(_cell_run_failure(rest=REST+.05), _ramp(), _cell_run_failure(), donor)
+def test_failure_verdict_rest_falls_back_to_the_single_sweep_when_no_repeat_set():
+    donor = {k: v for k, v in DONOR.items() if k not in ("rest_repeat_sd_mv", "rest_repeat_mean_mv")}
+    single = REST-.4
+    verdict = decision.keep_verdict_failure(_cell_run_failure(rest=single+.05, ret=single), _ramp(), _cell_run_failure(), donor)
     assert verdict["rest_tolerance_mv"] == pytest.approx(.06) and verdict["readings"]["rest_sd_mv"] == .02
-    assert verdict["readings"]["rest_sd_source"].startswith("within-trace") and verdict["keep"] is True
-    assert decision.keep_verdict_failure(_cell_run_failure(rest=REST+.07), _ramp(), _cell_run_failure(), donor)["keep"] is False
+    assert verdict["readings"]["rest_sd_source"].startswith("within-trace") and verdict["readings"]["rest_datum_mv"] == single
+    assert verdict["keep"] is True
+    assert decision.keep_verdict_failure(_cell_run_failure(rest=single+.07, ret=single), _ramp(), _cell_run_failure(),
+                                         donor)["keep"] is False
+
+
+def test_failure_verdict_rest_band_is_centred_on_the_family_mean_not_the_single_sweep():
+    # REST-.55 is within 10 mV of the single sweep (legacy holds) but outside the family band REST +- .3.
+    verdict = decision.keep_verdict_failure(_cell_run_failure(rest=REST-.55), _ramp(), _cell_run_failure(), DONOR)
+    assert verdict["rules"]["rest_in_donor_spread"] is False and verdict["legacy_verdict"]["rules"]["rest_and_return"] is True
 
 
 def test_failure_verdict_unavailable_datum_is_never_a_keep():
@@ -261,10 +272,10 @@ def _failure_population(tmp_path, with_ramp=True, with_half=True):
     types.write_text(json.dumps(dict(rows=[dict(cell_id="200", donor_key=l4, polarity="E"),
                                           dict(cell_id="300", donor_key=l4, polarity="E")])))
     rests = tmp_path/"rests.json"
-    rests.write_text(json.dumps(dict(donors={l4: dict(rest_mv=REST, sd_mv=.02)})))
+    rests.write_text(json.dumps(dict(donors={l4: dict(rest_mv=REST-.4, sd_mv=.02)})))
     datums = tmp_path/"datums.json"
     datums.write_text(json.dumps(dict(donors={l4: dict(rheobase_pa=50., sweep_step_pa=20., highest_firing_pa=170.,
-                                                        repeat_counts=[12], rest_repeat_sd_mv=.1)})))
+                                                        repeat_counts=[12], rest_repeat_mean_mv=REST, rest_repeat_sd_mv=.1)})))
     runs = tmp_path/"runs"
     for cell, count in (("200", 12), ("300", 15)):
         (runs/f"transfer-all-{cell}").mkdir(parents=True)
@@ -287,6 +298,8 @@ def test_decide_keep_failure_gate_reads_ramps_and_datums(tmp_path):
                                            "transfer-all-300", "transfer-all-300-ramp", "transfer-all-300-dthalf"}
     assert result["cells"]["200"]["legacy_verdict"]["keep"] is True and len(result["datums_sha256"]) == 64
     assert result["cells"]["200"]["rest_tolerance_mv"] == pytest.approx(.3)   # datums repeat sd, not donor-rest sd
+    assert result["cells"]["200"]["donor_rest_mv"] == REST
+    assert result["cells"]["200"]["readings"]["donor_single_sweep_rest_mv"] == REST-.4
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["candidates"] == ["200"] and primary["dropped"] == {"300": "count_in_repeat_range"}
 

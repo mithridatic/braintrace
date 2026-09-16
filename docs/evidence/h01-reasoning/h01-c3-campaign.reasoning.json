@@ -1,5 +1,5 @@
 {
-  "id": "doc_284ca8ae-03b",
+  "id": "doc_5c73e2fb-52c",
   "title": "H01 C3 partner expansion: campaign prerequisites",
   "graph": {
     "classes": [
@@ -308,7 +308,7 @@
       {
         "id": "datum_rest",
         "type": "Datum",
-        "text": "Datum, rest: donor rest from donor-rest.json (L2 -84.26, L4 -81.01, PV -86.76, SST -77.15 mV); tolerance 3 sd of the donor's repeat level, the across-sweep sd of the pre-pulse rest over the long-square family (human-datums.json rest_repeat_sd_mv: L2 0.31, L4 0.47, PV 0.38, SST 0.39 mV; bands 0.92, 1.42, 1.15, 1.16 mV), on the 100 ms before the pulse and the 10 ms ending 200 ms after it. The within-trace sd of one sweep (0.04-0.15 mV) is not the repeat level and is only the fallback where no repeat sd is recorded. Failure: any -20 mV crossing before the pulse.",
+        "text": "Datum, rest: donor rest across the long-square family (human-datums.json rest_repeat_mean_mv: L2 -84.01, L4 -80.60, PV -87.12, SST -77.50 mV); tolerance 3 sd of the donor's repeat level, the across-sweep sd of the same family (rest_repeat_sd_mv: L2 0.31, L4 0.47, PV 0.38, SST 0.39 mV; bands 0.92, 1.42, 1.15, 1.16 mV), on the 100 ms before the pulse and the 10 ms ending 200 ms after it. Datum and tolerance come from one repeat set; the single-sweep donor-rest.json value (L2 -84.26, L4 -81.01, PV -86.76, SST -77.15 mV) is kept beside it for the legacy verdict. The within-trace sd of one sweep (0.04-0.15 mV) is not the repeat level and is only the fallback where no repeat sd is recorded. Failure: any -20 mV crossing before the pulse.",
         "status": "unverified",
         "confidence": null,
         "notes": "The former 10 mV band and the max(2, 30 percent) count band are recorded beside the new readings for comparison and are not the gate.\n\nEvidence: docs/evidence/h01-keep-drop/donor-rest.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md",

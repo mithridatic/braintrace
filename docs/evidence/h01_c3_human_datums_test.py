@@ -67,7 +67,7 @@ def test_derive_datums_reads_the_firing_edges_and_the_family_step():
     assert datums["measured_counts_at_primary"] == [5, 5, 6, 4] and datums["measured_sweeps_at_primary"] == [25, 30, 31, 32]
     assert datums["repeat_counts"] == [5, 5, 4] and datums["primary_pa"] == 90.
     assert datums["family_amplitudes_pa"] == [10., 30., 50., 70., 90., 110., 130., 150.]
-    assert datums["rest_repeat_sd_mv"] > 0. and datums["rest_mean_mv"] == pytest.approx(-69.925)
+    assert datums["rest_repeat_sd_mv"] > 0. and datums["rest_repeat_mean_mv"] == pytest.approx(-69.925)
 
 
 def test_derive_datums_without_firing_sweeps_leaves_the_edges_empty():

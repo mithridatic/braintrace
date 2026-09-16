@@ -159,7 +159,7 @@ def derive_datums(rows, primary_pa, repeat_counts):
         measured_counts_at_primary=[r["count"] for r in at_primary],
         measured_sweeps_at_primary=[r.get("sweep") for r in at_primary],
         family_amplitudes_pa=levels,
-        rest_mean_mv=float(np.mean(rests)) if rests else None,
+        rest_repeat_mean_mv=float(np.mean(rests)) if rests else None,
         rest_repeat_sd_mv=float(np.std(rests)) if len(rests) >= 2 else None)
 
 
@@ -199,7 +199,9 @@ def measure(cache, donors=None):
                     "order; highest_firing_pa = "
                     "highest amplitude with a crossing; repeat_counts = registered counts at the primary "
                     "input (spec 2026-09-16-h01-keep-drop); measured counts at that input are recorded beside "
-                    "them and are not the gate's datum."),
+                    "them and are not the gate's datum. rest_repeat_mean_mv / rest_repeat_sd_mv = mean and sd of the "
+                    "pre-pulse rest across the long-square sweeps: the rest datum and its tolerance for the "
+                    "test-to-failure gate; donor-rest.json keeps the single-sweep value for the legacy verdict."),
         donors=result)
 
 
@@ -210,7 +212,7 @@ def render(report):
     for donor, row in report["donors"].items():
         lines.append(f"{donor} | {row['rheobase_pa']} | {row['sweep_step_pa']} | {row['highest_firing_pa']} | "
                      f"{row['highest_recorded_pa']} | {row['primary_pa']} | {row['repeat_counts']} | "
-                     f"{row['measured_counts_at_primary']} | {row['rest_mean_mv']:.2f} ({row['rest_repeat_sd_mv']:.2f})")
+                     f"{row['measured_counts_at_primary']} | {row['rest_repeat_mean_mv']:.2f} ({row['rest_repeat_sd_mv']:.2f})")
     return "\n".join(lines)
 
 

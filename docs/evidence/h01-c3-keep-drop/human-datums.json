@@ -1,5 +1,5 @@
 {
-  "definition": "Long-square family per donor: amplitude (aibs_stimulus_amplitude_pa, measured deviation beside it), pulse window from the command, -20 mV crossing count inside the window on LJP-corrected voltage, rest over the 100 ms before onset. rheobase_pa = lowest firing amplitude; sweep_step_pa = median upward step between consecutive positive sweeps in recording order; highest_firing_pa = highest amplitude with a crossing; repeat_counts = registered counts at the primary input (spec 2026-09-16-h01-keep-drop); measured counts at that input are recorded beside them and are not the gate's datum.",
+  "definition": "Long-square family per donor: amplitude (aibs_stimulus_amplitude_pa, measured deviation beside it), pulse window from the command, -20 mV crossing count inside the window on LJP-corrected voltage, rest over the 100 ms before onset. rheobase_pa = lowest firing amplitude; sweep_step_pa = median upward step between consecutive positive sweeps in recording order; highest_firing_pa = highest amplitude with a crossing; repeat_counts = registered counts at the primary input (spec 2026-09-16-h01-keep-drop); measured counts at that input are recorded beside them and are not the gate's datum. rest_repeat_mean_mv / rest_repeat_sd_mv = mean and sd of the pre-pulse rest across the long-square sweeps: the rest datum and its tolerance for the test-to-failure gate; donor-rest.json keeps the single-sweep value for the legacy verdict.",
   "donors": {
     "l2-pyramidal-allen-541563728": {
       "source": "human-pyramidal-l2/recording.nwb",
@@ -387,7 +387,7 @@
         330.0,
         350.0
       ],
-      "rest_mean_mv": -84.00724285831375,
+      "rest_repeat_mean_mv": -84.00724285831375,
       "rest_repeat_sd_mv": 0.30552479705306806
     },
     "l4-pyramidal-allen-527952884": {
@@ -601,7 +601,7 @@
         150.0,
         170.0
       ],
-      "rest_mean_mv": -80.60354306502268,
+      "rest_repeat_mean_mv": -80.60354306502268,
       "rest_repeat_sd_mv": 0.47205698193400286
     },
     "l5-pv-basket-hl5bn1": {
@@ -875,7 +875,7 @@
         250.0,
         270.0
       ],
-      "rest_mean_mv": -87.11686142143749,
+      "rest_repeat_mean_mv": -87.11686142143749,
       "rest_repeat_sd_mv": 0.3844185780393772,
       "donor_exports": [
         {
@@ -1221,7 +1221,7 @@
         170.0,
         190.0
       ],
-      "rest_mean_mv": -77.49631212460994,
+      "rest_repeat_mean_mv": -77.49631212460994,
       "rest_repeat_sd_mv": 0.38610632745690165
     }
   }

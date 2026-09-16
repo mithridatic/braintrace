@@ -107,7 +107,7 @@ FAILURE_RULE = ("keep = finite output and soma traces; firing range: the ramp rh
                 "step of the human rheobase, the ramp still firing at the human's highest recorded amplitude, and "
                 "the step count at the primary input inside the human repeat range; rest: mean output voltage "
                 "over the 100 ms before the pulse and over the 10 ms ending 200 ms after it both within 3 across-sweep "
-                "repeat sd of the donor recording's rest, no -20 mV crossing before the pulse; numerical: the dt-half "
+                "repeat sd of the donor recording's across-sweep rest mean, no -20 mV crossing before the pulse; numerical: the dt-half "
                 "repeat (0.0025 ms) is finite and reproduces the count. The block current above the recorded "
                 "range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).")
 REST_SD_FACTOR = 3.
@@ -153,8 +153,9 @@ def keep_verdict_failure(primary, ramp, half, donor):
     donor : dict
         ``rest_mv`` and ``sd_mv`` from donor-rest.json merged with the donor's human datums
         (``rheobase_pa``, ``sweep_step_pa``, ``highest_firing_pa``, ``repeat_counts``,
-        ``rest_repeat_sd_mv``). The rest tolerance is 3 x the across-sweep repeat sd; the
-        within-trace ``sd_mv`` is the fallback when no repeat sd is recorded.
+        ``rest_repeat_mean_mv``, ``rest_repeat_sd_mv``). The rest datum is the across-sweep
+        family mean and the tolerance 3 x its sd, both from the same repeat set; donor-rest's
+        single-sweep ``rest_mv``/``sd_mv`` are the fallback and feed the legacy verdict.
 
     Returns
     -------
@@ -166,12 +167,15 @@ def keep_verdict_failure(primary, ramp, half, donor):
     repeat_sd = donor.get("rest_repeat_sd_mv")
     rest_sd_source = "across-sweep repeat sd (human-datums rest_repeat_sd_mv)" if repeat_sd is not None else         "within-trace sd (donor-rest sd_mv; repeat sd absent)"
     tolerance = REST_SD_FACTOR*(donor["sd_mv"] if repeat_sd is None else repeat_sd)
+    repeat_mean = donor.get("rest_repeat_mean_mv")
+    rest_datum = donor["rest_mv"] if repeat_mean is None else repeat_mean   # datum and tolerance from one sweep set
     rest_mv, return_mv = primary.get("rest_mean_mv"), primary.get("return_mv")
-    rest_ok = rest_mv is not None and abs(rest_mv-donor["rest_mv"]) <= tolerance
+    rest_ok = rest_mv is not None and abs(rest_mv-rest_datum) <= tolerance
     return_ok = (bool(primary.get("return_available")) and return_mv is not None
-                 and abs(return_mv-donor["rest_mv"]) <= tolerance)
+                 and abs(return_mv-rest_datum) <= tolerance)
     firing, readings = firing_range_rules(primary, ramp, donor)
-    readings.update(rest_sd_mv=donor["sd_mv"] if repeat_sd is None else repeat_sd, rest_sd_source=rest_sd_source)
+    readings.update(rest_datum_mv=rest_datum, rest_sd_mv=donor["sd_mv"] if repeat_sd is None else repeat_sd,
+                    rest_sd_source=rest_sd_source, donor_single_sweep_rest_mv=donor["rest_mv"])
     rules = dict(finite=bool(primary["output_site"]["finite"] and primary["soma_site"]["finite"]
                              and (ramp is None or ramp.get("finite", True))),
                  **firing,
@@ -188,7 +192,7 @@ def keep_verdict_failure(primary, ramp, half, donor):
         failed.append("dt_half_missing")
     keep = not failed
     return dict(cell=primary["cell"], donor=primary["donor"], count=count, human_repeat_counts=readings["human_repeat_counts"],
-                rest_mean_mv=rest_mv, return_mv=return_mv, rest_tolerance_mv=tolerance, donor_rest_mv=donor["rest_mv"],
+                rest_mean_mv=rest_mv, return_mv=return_mv, rest_tolerance_mv=tolerance, donor_rest_mv=rest_datum,
                 pre_pulse_count=primary["pre_pulse_count"], readings=readings,
                 dt_half_count=None if half is None else half["output_site"]["count"],
                 rules=rules, keep=keep, drop_reason=None if keep else ",".join(failed),
