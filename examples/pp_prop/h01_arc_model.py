@@ -241,6 +241,74 @@ class H01ArcModel(brainstate.nn.Module):
             raise ValueError("H01 cable refinement requires a matched dt_ms model")
         return self.step(event, advance)
 
+    def sparse_structure(self, paths, shapes, operations):
+        """Declare how the forest's state blocks split into per-cell segments.
+
+        Parameters
+        ----------
+        paths : tuple of tuples
+            Model paths of the learner's floating-point state blocks.
+        shapes : tuple of tuples
+            Their shapes.
+        operations : tuple of (start, stop)
+            ETP output ranges: the encoder drive (one per cell) then the
+            contact magnitudes (one per placed contact).
+
+        Returns
+        -------
+        tuple or None
+            ``(blocks, output_labels)`` for ``SparseInfluence.build_segmented``
+            on the fused path; ``None`` on the per-cell path (whole blocks).
+
+        Notes
+        -----
+        Labels are cell indices and ``('contact', c)``. A cable state
+        (last axis ``n_cv`` or ``n_point``) is segmented by the forest offsets;
+        contact ``c``'s ring buffer reads the pre cell and feeds the post cell;
+        its synapse states read and feed the post cell; every other block is
+        unrestricted. The drive output of cell ``k`` is labelled ``k``; contact
+        output ``c`` is labelled ``('contact', c)``. The compiler's block-level
+        analysis still decides which blocks interact; this only refines where.
+        """
+        if self.forest is None:
+            return None
+        forest, offsets = self.forest, self.forest.forest_offsets
+        runtime = forest.runtime
+        n_cv, n_point, cells = forest.n_cv, runtime.n_point, list(range(offsets.cells))
+        contacts, by_layout = [], {}
+        for index, block in enumerate(self.stepper.setup.delivery_blocks):
+            layout = runtime.layouts[int(block.source.layout_id)]
+            post = int(np.searchsorted(offsets.point, int(layout.point_index[0]), side='right')-1)
+            contacts.append((int(block.pre_index[0]), post))
+            by_layout['layout_%d' % int(block.source.layout_id)] = index
+        blocks = []
+        for path, shape in zip(paths, shapes):
+            layout_key = next((p for p in path if isinstance(p, str) and p in by_layout), None)
+            if path[:2] == ('stepper', 'ring_buffers') and int(path[2]) < len(contacts):
+                pre, post = contacts[int(path[2])]
+                blocks.append(('block', {pre, ('contact', int(path[2]))}, {post, ('contact', int(path[2]))}))
+            elif layout_key is not None:
+                pre, post = contacts[by_layout[layout_key]]
+                blocks.append(('block', {post, ('contact', by_layout[layout_key])}, {post}))
+            elif shape and shape[-1] == n_cv and path[0] == 'forest':
+                blocks.append(('segments', offsets.cv, cells))
+            elif shape and shape[-1] == n_point and path[0] == 'forest':
+                blocks.append(('segments', offsets.point, cells))
+            else:
+                blocks.append(('block', None, None))
+        labels = []
+        for index, (start, stop) in enumerate(operations):
+            if index == 0:
+                if stop-start != len(cells):
+                    raise ValueError('The first ETP output must be the per-cell drive')
+                labels.extend({k} for k in cells)
+            else:
+                labels.extend({('contact', c)} for c in range(stop-start))
+        if len(labels) != sum(stop-start for start, stop in operations) or (
+                len(operations) > 1 and operations[1][1]-operations[1][0] != len(contacts)):
+            raise ValueError('ETP outputs do not match the forest drive and contact table')
+        return tuple(blocks), tuple(labels)
+
     def readout_features(self):
         """Return normalized soma features.
 

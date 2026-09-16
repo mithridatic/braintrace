@@ -125,8 +125,8 @@ class SparsePPProp(SequenceDriverMixin, brainstate.nn.Module):
             raise ValueError('Compile sparse pp-prop before initializing traces')
         dtype = self.graph.operations[0].y.aval.dtype
         self.factors = brainstate.ShortTermState(tuple(
-            jnp.zeros(shape + (len(row),), dtype=dtype)
-            for shape, row in zip(self.graph.layout.shapes, self.graph.layout.outputs)))
+            jnp.zeros(shape + (width,), dtype=dtype)
+            for shape, width in zip(self.graph.layout.shapes, self.graph.layout.widths)))
         self.inputs_trace = brainstate.ShortTermState(tuple(
             None if op.x is None else jnp.zeros(op.x.aval.shape, dtype=op.x.aval.dtype)
             for op in self.graph.operations))
