@@ -70,7 +70,9 @@ superseded by the spike-window evidence, which must be said in the ladder record
 ## 2. Levers 1+2: one forest cell, one kernel set
 
 New module `braintrace/datasets/h01_forest_cell.py` (+ `_test.py`), class
-`H01ForestCell(H01Cell)`; builder `fuse_cells(cells, records) -> (forest, map)`.
+`H01ForestCell(cells)` (an `H01Cell` over initialized source cells); `build_network(...,
+fused=True)` in `examples/pp_prop/h01_runtime.py` builds and initializes the N cells as
+today, fuses them and registers one population `forest` (records carry the offsets).
 
 Forest discretization (`h01_forest_discretization.py`): concatenate the N per-cell
 `Discretization`s: CV ids, node ids, branch ids and `CVEdge`/`NodeEdge` endpoints offset by
@@ -97,10 +99,11 @@ channel nodes, 3 ions, 1 leak, 1 clamp layout with 17 active points) instead of 
 Forest solve (`h01_dhs_forest.py`): the existing contraction schedule requires one tree
 (`h01_dhs_contraction._build`: "connected and acyclic", `edges.shape == (n-1, 2)`), so a
 forest variant builds the same Schur stages with every root kept active and terminates when
-only roots remain; `solve` writes `rhs/d` for every root row. Registered integrator
-`h01_forest_calcium_implicit` = `h01_calcium_solver._implicit_step` with a `_voltage_step`
-that takes the forest pack from `runtime.h01_dhs_forest_pack`. Stage count = the max over
-cells, so the scan depth is that of the deepest cell, run once for all cells.
+only roots remain; `solve` writes `rhs/d` for every root row. The pinned integrator
+`h01_staggered_calcium_implicit` is unchanged; `h01_dhs_scan._voltage_step` takes the forest
+schedule from `runtime.h01_dhs_forest` when the forest cell has set it and otherwise runs
+the single-tree contraction as before. Stage count = the max over cells, so the scan depth
+is that of the deepest cell, run once for all cells.
 
 Spike output: `_ForestSpike(base, output_cv_ids, n_cv)` masks to the N output CVs; per-cell
 spikes = `spike[..., output_cv_ids]` (one gather, no `any` reduction per cell).
