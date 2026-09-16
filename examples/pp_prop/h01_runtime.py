@@ -63,7 +63,21 @@ def load_source(archive, identity, component, archive_sha256):
     return archive.load(identity, component=component)
 
 
-def _open_archive(path, digest):
+def open_archive(path, digest):
+    """Open one archive pinned to an expected digest.
+
+    Parameters
+    ----------
+    path : path-like
+        Archive file.
+    digest : str
+        Expected SHA256 of the file.
+
+    Returns
+    -------
+    H01Archive
+        Verified archive.
+    """
     # Transitional shim until the H01ArchiveSet reader lands: the pinned-only reader
     # takes no expected digest. Remove once ``H01Archive(path, expected_sha256=...)`` exists.
     import inspect
@@ -91,7 +105,7 @@ def open_archives(asset_root, digests):
     digests = list(dict.fromkeys(digests))
     if not digests:
         raise ValueError('A manifest must list at least one morphology archive asset')
-    archives = [_open_archive(Path(asset_root)/digest, digest) for digest in digests]
+    archives = [open_archive(Path(asset_root)/digest, digest) for digest in digests]
     if len(archives) == 1:
         return archives[0]
     from braintrace.datasets.h01 import H01ArchiveSet
@@ -120,7 +134,7 @@ def open_archive_paths(paths):
         digests[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
     if not digests:
         raise ValueError('Name at least one morphology archive')
-    archives = [_open_archive(Path(path), digest) for path, digest in digests.items()]
+    archives = [open_archive(Path(path), digest) for path, digest in digests.items()]
     if len(archives) == 1:
         return archives[0], digests
     from braintrace.datasets.h01 import H01ArchiveSet
