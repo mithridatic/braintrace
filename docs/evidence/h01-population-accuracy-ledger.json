@@ -39,10 +39,11 @@
     {
       "term": "driven_window",
       "value": 0.0,
-      "measured": false,
-      "statement": "No qualified driven window at 104 cells. The 10 ms explicit run failed on Nonfinite trace: cell_7196644737/output_voltage after 2705 s; the implicit retry aborted at the wall cap after 21286 s with exit code 15 and no result.",
-      "cause": "Construction is not simulation. Until a driven window of physiological length completes, no population number describes anything the cells do.",
+      "measured": true,
+      "statement": "104-cell 50 ms window on the Vast executor: runtime gate {'ei': {'status': 'passed', 'failures': []}, 'e_only': {'status': 'passed', 'failures': []}, 'i_only': {'status': 'passed', 'failures': []}, 'disconnected': {'status': 'passed', 'failures': []}}, control gate failed, refinement gate failed (worst 1.009273768227402 mV, 0.0012499999999988631 ms).",
+      "cause": "Delivery, control isolation and timestep convergence only; the 1 nA 2-5 ms probe is the programme's assumed input, not a physiological stimulus, and no physiology is qualified.",
       "evidence": [
+        "h01-driven-window-20260915/driven-window-decision.json",
         "h01-ready-104-ei-10ms-decision.json",
         "h01-ready-104-implicit-ei-10ms-r2-launch.json"
       ]
@@ -60,11 +61,12 @@
     },
     {
       "term": "anatomy_transfer",
-      "value": 0.0,
-      "measured": false,
-      "statement": "No valid physiological transfer reading on corrected H01 anatomy. The historical silent run used a malformed conversion and cannot establish an inherent H01 load failure.",
-      "cause": "The diagnostic conversion collapsed H01 dendrite code 1 as soma and mislabeled astrocyte code 2 as axon. The corrected export preserves 11524 nodes and 11523 edges, but has not been physiologically qualified. The historical run and its failure remain recorded.",
+      "value": 0.25,
+      "measured": true,
+      "statement": "Measured on retained production-imported H01 anatomy: 1 of 4 deployed donors hold their human count on retained H01 anatomy (l2-pyramidal 2 vs human 10; l4-pyramidal 13 vs human 12; l3-sst 4 vs human 14; l5-pv 0 vs human 12).",
+      "cause": "Each deployed donor was driven on one type-matched H01 component under its own recording's step protocol. Failures are depolarisation block or spontaneous firing; the pass is within one spike of the human count. A transfer reading, not a measurement of the H01 donor.",
       "evidence": [
+        "h01-driven-window-20260915/anatomy-transfer-decision.json",
         "h01-human-unity-20260914/conversion-correction.json",
         "h01-e-morphology/stage-1-decision.json"
       ]
@@ -101,7 +103,7 @@
       },
       {
         "term": "anatomy_transfer",
-        "used": 0.0,
+        "used": 0.25,
         "assumed": false
       }
     ]

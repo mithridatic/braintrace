@@ -1,5 +1,16 @@
 # H01 population readiness
 
+## Continuation evidence (2026-09-15, Vast executor)
+
+The full 104-cell network has now stepped a 50 ms driven window with four matched
+controls and a dt-halving pair on the Vast RTX 4090, every array finite
+([stage record](h01-driven-window-20260915/README.md)). Runtime gate 4/4 pass,
+refinement 103/104, control gate fail (the 1 nA probe never fires the two
+presynaptic cells; GPU atomics leave 9e-7 mV run-to-run differences against
+bitwise equality). Deployed donor densities on retained H01 anatomy: 1 of 4
+donors holds its human count ([decision](h01-driven-window-20260915/anatomy-transfer-decision.json)).
+The 2026-09-08 text below is superseded where it says no driven window exists.
+
 ## Current continuation evidence (2026-09-08)
 
 All 104 largest soma-bearing components now import with every one of their

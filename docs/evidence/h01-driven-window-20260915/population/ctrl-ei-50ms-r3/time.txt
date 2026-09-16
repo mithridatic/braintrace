@@ -1,0 +1,23 @@
+	Command being timed: "env PYTHONPATH=/workspace/braintrace XLA_PYTHON_CLIENT_MEM_FRACTION=.92 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 taskset -c 0-63 /workspace/venv314/bin/python3 -u -m examples.h01_verified_network --topology docs/evidence/h01-verified-network.json --cache .cache/h01 --solver h01_staggered_calcium_implicit --include-isolated --cells 104 --current-na 1 --components docs/evidence/h01-population-components.json --heartbeat-s 60 --duration-ms 50 --dt-ms 0.000625 --control ei --output /workspace/braintrace/var/h01-driven/ctrl-ei-50ms-r3/run"
+	User time (seconds): 7114.91
+	System time (seconds): 3473.06
+	Percent of CPU this job got: 103%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:50:57
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 18854068
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 160
+	Minor (reclaiming a frame) page faults: 40019857
+	Voluntary context switches: 1329087
+	Involuntary context switches: 32362
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 799768
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

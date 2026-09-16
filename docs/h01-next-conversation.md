@@ -12,7 +12,7 @@ Stage record: `docs/evidence/h01-driven-window-20260915/README.md`.
 | donor_accuracy | 0.718 | B3 ten-element score against its own recording; donor for 28/104 cells. The score has no tolerance plateau, so an unrounded 1.000 needs zero discrepancy; the recording has no 310 pA repeat to measure its own ceiling. Unchanged. |
 | type_coverage | 55/104 | layer-and-class donor matches. Unchanged. |
 | construction | 1.000 | 104 cells, 808,495 compartments, now also built and gated on Vast. |
-| driven_window | DRIVEN_WINDOW_VALUE | four 50 ms controls + refinement pair on Vast through the existing gates. |
+| driven_window | 0.000 measured | four 50 ms controls + refinement pair completed on Vast, all finite; runtime gate 4/4, refinement 103/104 (4138580687 at 1.009 mV), control gate fails because the 1 nA probe never makes the two presynaptic cells fire and because GPU atomics leave 1e-6 mV run-to-run differences against an exact-equality test. |
 | timestep | 1.000 | isolated-cell ladder; population refinement pair adds the 104-cell reading. |
 | anatomy_transfer | 0.250 measured | 1 of 4 deployed donors holds its human count on retained H01 anatomy (L4). L2 and PV block, SST fires spontaneously. |
 
@@ -37,6 +37,12 @@ Stage record: `docs/evidence/h01-driven-window-20260915/README.md`.
    falsifier: `docs/specs/2026-09-15-h01-per-cell-human-fit.md`.
 
 ## Next decision
+
+Three decisions belong to the user before driven_window can move, none of them
+a quiet edit: (a) a registered probe that makes 4188575291 and 5584343344 fire
+(their counts under 1 nA are 0); (b) a control-comparison tolerance at the level
+of the measured GPU nondeterminism (9e-7 mV) instead of bitwise equality;
+(c) whether 1.009 mV on one cell of 104 stands or a finer step is run.
 
 Run the 10-cell per-cell fit pilot under the registered acceptance. Its
 deliverable is per-cell scores against type-matched human recordings on the

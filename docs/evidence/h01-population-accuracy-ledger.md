@@ -1,5 +1,18 @@
 # The population accuracy ledger
 
+## 2026-09-15 update: two terms now have readings
+
+Regenerated from [h01-population-accuracy-ledger.json](h01-population-accuracy-ledger.json) after
+the Vast stage ([record](h01-driven-window-20260915/README.md)). Both previously unmeasured terms
+are now measured; neither is 1.000.
+
+| Term | Value | Reading |
+| --- | ---: | --- |
+| driven_window | 0.000 measured | 104 cells, 50 ms, four matched controls and a dt-halving pair completed on the Vast 4090, all arrays finite. Runtime gate 4/4 pass; refinement 103/104 (cell 4138580687 at 1.009 mV against 1.000); control gate fails because the registered 1 nA probe never fires the two presynaptic cells and because GPU atomic accumulation leaves 9e-7 mV run-to-run differences against a bitwise-equality test. [Decision](h01-driven-window-20260915/driven-window-decision.json). |
+| anatomy_transfer | 0.250 measured | One of four deployed donors (L4) holds its human count on retained H01 anatomy; L2 and PV enter depolarisation block, SST fires spontaneously; dt-half confirmed. [Decision](h01-driven-window-20260915/anatomy-transfer-decision.json). |
+
+The product as measured is still 0. The section below is the 2026-09-14 text, kept as written.
+
 Updated 2026-09-14 from [h01-population-accuracy-ledger.json](h01-population-accuracy-ledger.json)
 by [h01_population_ledger.py](h01_population_ledger.py). The anatomy interpretation is corrected
 by the new [source-geometry verification](h01-human-unity-20260914/conversion-correction.json).

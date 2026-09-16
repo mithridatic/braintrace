@@ -11,7 +11,7 @@ in each section.
 
 | Term | Before | After this stage | Basis |
 | --- | ---: | ---: | --- |
-| driven_window | 0.000 | PENDING | four 50 ms controls + refinement pair, existing gates |
+| driven_window | 0.000 (no run ever completed) | **0.000, now measured**: runtime gate 4/4 PASS, refinement 103/104 (worst 1.009 mV), control gate FAIL | four 50 ms controls + refinement pair on Vast, existing gates unchanged |
 | anatomy_transfer | 0.000 (unavailable) | **0.250 measured** | 1 of 4 deployed donors holds its human count on retained H01 anatomy |
 
 The other four terms are unchanged (donor 0.718, coverage 55/104, construction
@@ -52,7 +52,63 @@ reference for every Vast run below and records the sites actually probed.
 Registered plans: `plan-ctrl-{ei,e_only,i_only,disconnected}-50ms.json`,
 `plan-refine-ei-10ms-dt{000625,0003125}.json`.
 
-PENDING — filled in when the runs complete.
+All six runs completed with exit 0 and every one of the 317 arrays finite
+(`population-run-summary.json`, `population-build-digests.json`; full 63 MB build
+records and full traces stay on the box, receipts and 40x-decimated traces for
+`ei` and the refinement pair are under `population/`). Every build reproduces the
+reference model fields exactly (same `model_fields_sha256` on all seven builds).
+
+| Run | Control | dt (ms) | Steps | Compile + run (s) | Wall (s) | Host peak (GB) | Cells firing / events |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| ctrl-ei-50ms-r3 | ei | 0.000625 | 80,000 | 9,882 | 10,257 | 18.2 | 43 / 61 |
+| ctrl-i_only-50ms-r3 | i_only | 0.000625 | 80,000 | 9,895 | 10,272 | 18.3 | 43 / 61 |
+| ctrl-e_only-50ms-r4 | e_only | 0.000625 | 80,000 | 7,533 | 7,892 | 14.5 | 43 / 61 |
+| ctrl-disconnected-50ms-r4 | disconnected | 0.000625 | 80,000 | 7,575 | 7,971 | 14.5 | 43 / 61 |
+| refine-ei-10ms-dt000625-r4 | ei | 0.000625 | 16,000 | 951 | 1,322 | 14.8 | 43 / 43 |
+| refine-ei-10ms-dt0003125-r4 | ei | 0.0003125 | 32,000 | 1,772 | 2,158 | 14.8 | 43 / 43 |
+
+Runs were paired on one GPU (two at a time), so per-step times are 90-120 ms
+against 62 ms alone.
+
+**Gate decision: `driven-window-decision.json` → FAIL, term stays 0.000.**
+
+- Runtime gate (`h01_population_runtime_gate`): **passed for all four controls**.
+  104 unique cells, model metadata equal to the Vast reference, end-of-step
+  grid, every voltage/output/event array finite over 50 ms.
+- Refinement gate (`h01_population_refinement_gate`, dt 0.000625 against
+  0.0003125 over 10 ms, all 104 cells): **103 of 104 pass**. Cell 4138580687
+  reads 1.009 mV against the 1.000 mV allowance; the next are 7196644737 at
+  0.933 mV (the ladder cell) and 2903686765 at 0.529 mV; 101 cells are under
+  0.5 mV. Event timing agrees within 0.00125 ms everywhere
+  (`refinement-per-cell.json`). One cell over by 0.9 percent fails the gate as
+  written; the allowance is not relaxed here.
+- Control gate (`h01_population_control_gate`): **failed**, for two reasons that
+  are findings about the registered design, not about the cells.
+  1. *The probe never exercises the contacts.* The two construction-ready
+     contacts are 4188575291 → 3955003482 (E) and 5584343344 → 4157825456 (I).
+     Neither presynaptic cell fires under the registered 1 nA 2-5 ms pulse (43 of
+     104 cells fire at all; these two are among the 61 silent), so no event is
+     ever delivered and the gate reports "no source event with an observable
+     delivery window" for both contacts. Delivery and isolation cannot be
+     qualified by this input.
+  2. *Run-to-run traces are not bit-identical.* The gate requires cells outside a
+     removed receiver to be `array_equal` across controls. Between `ei` and each
+     other control, 210 of 312 arrays differ by up to 9.0e-7 mV (worst cell
+     2903686765). The production DHS elimination kernel accumulates with GPU
+     `atomic_add`, whose summation order is not deterministic, so exact equality
+     across separate processes is not available on this executor. The
+     differences are six orders of magnitude below the 1 mV contract.
+
+**What this establishes.** The 104-cell human-anatomy network steps a 50 ms
+window with four matched controls, finite everywhere, on a reproducible build,
+and converges to the 1 mV contract on 103 of 104 cells. The term is 0.000 under
+the registered gates because the assumed 1 nA probe does not drive the two
+connected cells and because the control gate's equality test cannot be met on a
+GPU with atomic accumulation. Both need a decision from the user, not a quiet
+edit: a registered input that makes the two presynaptic cells fire (their own
+counts under the probe are 0), and a tolerance for the control comparison at
+the level of the measured nondeterminism. The refinement miss on 4138580687 is
+a second decision (a finer population step, or the 1.009 mV reading stands).
 
 **Execution failures preserved.** The first launch ran six population processes
 and the transfer chain concurrently. Each unpinned JAX process holds ~1,300

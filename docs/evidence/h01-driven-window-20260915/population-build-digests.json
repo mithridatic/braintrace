@@ -1,0 +1,169 @@
+{
+ "note": "Full 104-cell build records (63 MB each) stay outside git at var/h01-driven/<label>/run-build.json on the Vast box (also bench-104-ei-1ms as the gate reference); every gate ran on the box against the full records. model_fields_sha256 covers simulated_cell_ids, cells, donors, compartments_by_cell, n_compartments.",
+ "all_runs_share_model_fields": true,
+ "runs": {
+  "bench-104-ei-1ms": {
+   "sha256": "cfe59fe9a16b3a94275d2f0b7576c3fcaf6eca1c484df54d8e5ea041dbbf8a15",
+   "bytes": 65413596,
+   "control": "ei",
+   "dt_ms": 0.000625,
+   "duration_ms": 1.0,
+   "n_compartments": 808495,
+   "cells": 104,
+   "execution": "finite compiled smoke run",
+   "construction_seconds": 169.2,
+   "init_state_seconds": 177.4,
+   "compile_and_run_seconds": 478.6,
+   "run_peak_rss_mb": 18135,
+   "wall_seconds": 859,
+   "exit_code": 0,
+   "gpu_mem_max_mib": 1580,
+   "enabled_contacts": [
+    "124698307",
+    "8105899"
+   ],
+   "removed_contacts": [],
+   "model_fields_sha256": "691447d18fb5b66225090292626a6ca56e7e7ff907f79b6a3cb37a25fed09414"
+  },
+  "ctrl-ei-50ms-r3": {
+   "sha256": "f283f45e1474d990178c70aa03a474601d0096bc7ab4ef73c35d6f5ee2c4a287",
+   "bytes": 65413608,
+   "control": "ei",
+   "dt_ms": 0.000625,
+   "duration_ms": 50.0,
+   "n_compartments": 808495,
+   "cells": 104,
+   "execution": "finite compiled smoke run",
+   "construction_seconds": 165.7,
+   "init_state_seconds": 172.3,
+   "compile_and_run_seconds": 9882.1,
+   "run_peak_rss_mb": 18194,
+   "wall_seconds": 10257,
+   "exit_code": 0,
+   "gpu_mem_max_mib": 6794,
+   "enabled_contacts": [
+    "124698307",
+    "8105899"
+   ],
+   "removed_contacts": [],
+   "model_fields_sha256": "691447d18fb5b66225090292626a6ca56e7e7ff907f79b6a3cb37a25fed09414"
+  },
+  "ctrl-e_only-50ms-r4": {
+   "sha256": "ffcd60f055fee715dd62fc53925e91923b7fcf97bf54430011cdf0c46ed2bc6c",
+   "bytes": 65413619,
+   "control": "e_only",
+   "dt_ms": 0.000625,
+   "duration_ms": 50.0,
+   "n_compartments": 808495,
+   "cells": 104,
+   "execution": "finite compiled smoke run",
+   "construction_seconds": 163.6,
+   "init_state_seconds": 163.0,
+   "compile_and_run_seconds": 7533.4,
+   "run_peak_rss_mb": 14469,
+   "wall_seconds": 7892,
+   "exit_code": 0,
+   "gpu_mem_max_mib": 3165,
+   "enabled_contacts": [
+    "124698307"
+   ],
+   "removed_contacts": [
+    "8105899"
+   ],
+   "model_fields_sha256": "691447d18fb5b66225090292626a6ca56e7e7ff907f79b6a3cb37a25fed09414"
+  },
+  "ctrl-i_only-50ms-r3": {
+   "sha256": "db219435bd13375017c48b413f8a51e5bcfecfbe5d3ac587433ebe8e3a581e0b",
+   "bytes": 65413616,
+   "control": "i_only",
+   "dt_ms": 0.000625,
+   "duration_ms": 50.0,
+   "n_compartments": 808495,
+   "cells": 104,
+   "execution": "finite compiled smoke run",
+   "construction_seconds": 163.7,
+   "init_state_seconds": 176.3,
+   "compile_and_run_seconds": 9894.6,
+   "run_peak_rss_mb": 18257,
+   "wall_seconds": 10272,
+   "exit_code": 0,
+   "gpu_mem_max_mib": 6794,
+   "enabled_contacts": [
+    "8105899"
+   ],
+   "removed_contacts": [
+    "124698307"
+   ],
+   "model_fields_sha256": "691447d18fb5b66225090292626a6ca56e7e7ff907f79b6a3cb37a25fed09414"
+  },
+  "ctrl-disconnected-50ms-r4": {
+   "sha256": "3aed40629a79df838265aa256161bb75277306762b6c8ff03f31c5cb98e4c56d",
+   "bytes": 65413611,
+   "control": "disconnected",
+   "dt_ms": 0.000625,
+   "duration_ms": 50.0,
+   "n_compartments": 808495,
+   "cells": 104,
+   "execution": "finite compiled smoke run",
+   "construction_seconds": 166.3,
+   "init_state_seconds": 187.6,
+   "compile_and_run_seconds": 7574.8,
+   "run_peak_rss_mb": 14462,
+   "wall_seconds": 7971,
+   "exit_code": 0,
+   "gpu_mem_max_mib": 3165,
+   "enabled_contacts": [],
+   "removed_contacts": [
+    "124698307",
+    "8105899"
+   ],
+   "model_fields_sha256": "691447d18fb5b66225090292626a6ca56e7e7ff907f79b6a3cb37a25fed09414"
+  },
+  "refine-ei-10ms-dt000625-r4": {
+   "sha256": "381dae221732833aa3d61c621897be79df643994bb7aa3f254ad8c350d10c188",
+   "bytes": 65413601,
+   "control": "ei",
+   "dt_ms": 0.000625,
+   "duration_ms": 10.0,
+   "n_compartments": 808495,
+   "cells": 104,
+   "execution": "finite compiled smoke run",
+   "construction_seconds": 167.5,
+   "init_state_seconds": 166.7,
+   "compile_and_run_seconds": 950.9,
+   "run_peak_rss_mb": 14770,
+   "wall_seconds": 1322,
+   "exit_code": 0,
+   "gpu_mem_max_mib": 2119,
+   "enabled_contacts": [
+    "124698307",
+    "8105899"
+   ],
+   "removed_contacts": [],
+   "model_fields_sha256": "691447d18fb5b66225090292626a6ca56e7e7ff907f79b6a3cb37a25fed09414"
+  },
+  "refine-ei-10ms-dt0003125-r4": {
+   "sha256": "cf948db6a4b5602962bbe2d428332289335b0e298d94931b0cc392948c9ce1df",
+   "bytes": 65413615,
+   "control": "ei",
+   "dt_ms": 0.0003125,
+   "duration_ms": 10.0,
+   "n_compartments": 808495,
+   "cells": 104,
+   "execution": "finite compiled smoke run",
+   "construction_seconds": 172.3,
+   "init_state_seconds": 178.4,
+   "compile_and_run_seconds": 1772.2,
+   "run_peak_rss_mb": 14782,
+   "wall_seconds": 2158,
+   "exit_code": 0,
+   "gpu_mem_max_mib": 2119,
+   "enabled_contacts": [
+    "124698307",
+    "8105899"
+   ],
+   "removed_contacts": [],
+   "model_fields_sha256": "691447d18fb5b66225090292626a6ca56e7e7ff907f79b6a3cb37a25fed09414"
+  }
+ }
+}
