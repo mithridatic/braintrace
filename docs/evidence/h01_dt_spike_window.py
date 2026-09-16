@@ -386,8 +386,6 @@ def main(argv=None):
         _report_command(args)
 
 
-if __name__ == '__main__':
-    main()
 
 
 def plot_parity(reference, other, cells, dt_ms, path, title):
@@ -427,3 +425,7 @@ def plot_parity(reference, other, cells, dt_ms, path, title):
     fig.tight_layout()
     fig.savefig(path, dpi=110)
     plt.close(fig)
+
+
+if __name__ == '__main__':
+    main()
