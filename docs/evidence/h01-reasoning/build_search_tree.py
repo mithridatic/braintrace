@@ -46,6 +46,14 @@ STAGE15 = "docs/evidence/h01-topographic/stage-15.json"
 ACCJSON = "docs/evidence/h01-topographic/human-vs-rodent-accuracy.json"
 OBS16 = "docs/evidence/h01-topographic/stage-16-observation.json"
 STAGE16 = "docs/evidence/h01-topographic/stage-16.json"
+KEEPDROP = "docs/evidence/h01-keep-drop/decision.json"
+Y7 = "docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json"
+C3SPEC = "docs/specs/2026-09-16-h01-c3-partner-expansion.md"
+# Closing agents swap C3SPEC for these once the evidence files exist:
+C3GRAPH = "docs/evidence/h01-c3-candidates.json"
+C3IMPORT = "docs/evidence/h01-c3-candidates-components.json"
+C3KEEP = "docs/evidence/h01-c3-keep-drop/decision.json"
+C3NET = "docs/evidence/h01-c3-verified-network.json"
 
 COLORS = {
     "Search question": "#4f76a3",
@@ -157,6 +165,19 @@ def build_nodes():
         # policies
         n("policy", P, "Policies: contrasts > 3 sigma of the repeat envelope; samples of three; Y only; every split written before its data; fail fast under the cap; both tiers; sweeps 54 and 48 sealed.",
           "From Hartshorne chapters 1-5 and the campaign's own AGENTS rules.", [STRATEGY], "supported"),
+        # Q-C3: the population branch after keep/drop (registered 2026-09-16, before any run)
+        n("qc3", Q, "Q-C3 (registered 2026-09-16, no run yet). Keep/drop left 17 pyramidal cells, 0 interneurons, 0 contacts (Y7: donor densities do not transfer onto 2-4e3 um2 components). Does the non-proofread C3 release supply partners of the kept 17 that hold a test-to-failure gate at the deployed donor densities, and anatomical synapses among them? A dissection over 40 more anatomies with every profile held; no donor, no fit, no tuning.",
+          "Gate: firing range (model rheobase within one human sweep step of the human's; still fires at the human's highest recorded amplitude; count at the primary input inside the human repeat range), rest within 3 sd of the donor level, dt-half repeat. The former 10 mV / 30 percent bands are recorded beside it, not scored.", [C3SPEC, KEEPDROP, Y7], "unverified"),
+        n("qc3_graph", O, "C3-A: partners exist. Prediction: every kept cell has a neuron partner in the 166-shard synapse export (NSI 300-2,300 per kept cell); at least 40 partners with >= 2 synapses to the kept set. Falsifier: fewer than 20 partners in total.",
+          "Identity is the export's C3 neuron_id, the same segmentation as the skeletons; the proofread voxel-verification gate that excluded 120 of 123 edges does not apply.", [C3SPEC], "unverified"),
+        n("qc3_import", O, "C3-B: candidate skeletons import through the unchanged proofread SWC path (subcompartment labels = SWC type codes + 100). Prediction: 40 of 40 import, construct, initialise. Control: kept cell 1684504313 exported from C3 beside its proofread SWC (recorded, not a gate).",
+          "Non-proofread segments carry merge and split errors; the import audit and the gate are the filter.", [C3SPEC], "unverified"),
+        n("qc3_e", O, "C3-C (E): 1-4 of 20 pyramidal candidates pass the test-to-failure gate (the former bands alone would pass 3-6, the proofread rate). Kept 17 under the same ramp: about half the 13 L2 show a block edge under 3x input; the 4 L4 hold. A kept cell that fails is reported to J, not dropped.",
+          "Y7 named the somatic active profile on a 107-315 um2 soma region as the surviving condition; this branch measures how often that condition falls in the transferring range.", [C3SPEC, Y7], "unverified"),
+        n("qc3_i", O, "C3-C (I): 0-2 of 20 interneuron candidates pass at the HL5BN1 / HL5MN1 densities. Falsifier for the interneuron route: 0 of 20 -> a fit-pilot decision request is written for J (per-cell human fit spec, 2026-09-15); no tolerance is widened and no cell is re-run.",
+          "PV was silent on all 18 proofread cells at 0.19 nA; SST fired before the pulse on all 7.", [C3SPEC, Y7], "unverified"),
+        n("qc3_net", O, "C3-D: at least one construction-ready contact among the passing cells, each with a delivery weight sweep (unresolvable edge under 3 sd of the post cell's rest noise; fires-alone edge; literature pin 3.1 nS, 0.5-1 mV; I->E swept with the post cell held depolarised because the -80 mV reversal sits above the -84 mV rest). Falsifier: none -> the campaign stops at the network JSON.",
+          "Y5: identity, placement and electrical parameters are three separate checks; an anatomical contact alone predicts neither suppression nor recruitment.", [C3SPEC], "unverified"),
     ]
 
 
@@ -211,6 +232,15 @@ def build_edges():
         cm.edge("q9_step", "next", "describes", "a 1-3 s per-spike process"),
         cm.edge("levers", "q3", "describes", "why the dose scans stop here"),
         cm.edge("policy", "q1", "describes", "applies to every split"),
+        cm.edge("next", "qc3", "describes", "the population build, on the cells the keep rule left"),
+        cm.edge("qc3", "qc3_graph", "describes", "A: partners"),
+        cm.edge("qc3", "qc3_import", "describes", "B: skeletons"),
+        cm.edge("qc3_graph", "qc3_e", "describes", "C: E candidates"),
+        cm.edge("qc3_graph", "qc3_i", "describes", "C: I candidates"),
+        cm.edge("qc3_import", "qc3_e", "describes", "C: E candidates"),
+        cm.edge("qc3_import", "qc3_i", "describes", "C: I candidates"),
+        cm.edge("qc3_e", "qc3_net", "describes", "D: contacts and manifest"),
+        cm.edge("qc3_i", "qc3_net", "describes", "D: contacts and manifest"),
     ]
 
 

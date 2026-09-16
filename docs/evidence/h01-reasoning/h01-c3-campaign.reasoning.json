@@ -1,0 +1,548 @@
+{
+  "id": "doc_293c84ac-b0a",
+  "title": "H01 C3 partner expansion: campaign prerequisites",
+  "graph": {
+    "classes": [
+      {
+        "id": "Goal",
+        "label": "Goal",
+        "color": "#477a67"
+      },
+      {
+        "id": "Intermediate objective",
+        "label": "Intermediate objective",
+        "color": "#5b79ab"
+      },
+      {
+        "id": "Datum",
+        "label": "Datum",
+        "color": "#83709c"
+      },
+      {
+        "id": "Obstacle",
+        "label": "Obstacle",
+        "color": "#b86e52"
+      }
+    ],
+    "direction": "DOWN",
+    "edges": [
+      {
+        "id": "io_graph__io_gate",
+        "source": "io_graph",
+        "target": "io_gate",
+        "relation": "prerequisite",
+        "label": "candidate pool"
+      },
+      {
+        "id": "io_skel__io_gate",
+        "source": "io_skel",
+        "target": "io_gate",
+        "relation": "prerequisite",
+        "label": "candidate archive"
+      },
+      {
+        "id": "datum_fire__io_gate",
+        "source": "datum_fire",
+        "target": "io_gate",
+        "relation": "prerequisite",
+        "label": "acceptance"
+      },
+      {
+        "id": "datum_rest__io_gate",
+        "source": "datum_rest",
+        "target": "io_gate",
+        "relation": "prerequisite",
+        "label": "acceptance"
+      },
+      {
+        "id": "io_gate__io_net",
+        "source": "io_gate",
+        "target": "io_net",
+        "relation": "prerequisite",
+        "label": "passing cells"
+      },
+      {
+        "id": "datum_syn__io_net",
+        "source": "datum_syn",
+        "target": "io_net",
+        "relation": "prerequisite",
+        "label": "acceptance"
+      },
+      {
+        "id": "io_net__goal",
+        "source": "io_net",
+        "target": "goal",
+        "relation": "prerequisite",
+        "label": "manifest and launch"
+      },
+      {
+        "id": "ob_archive__io_skel",
+        "source": "ob_archive",
+        "target": "io_skel",
+        "relation": "describes",
+        "label": "obstacle addressed by this task"
+      },
+      {
+        "id": "ob_partners__io_graph",
+        "source": "ob_partners",
+        "target": "io_graph",
+        "relation": "describes",
+        "label": "obstacle addressed by this task"
+      },
+      {
+        "id": "ob_box__io_graph",
+        "source": "ob_box",
+        "target": "io_graph",
+        "relation": "describes",
+        "label": "obstacle addressed by this task"
+      },
+      {
+        "id": "ob_runtime__goal",
+        "source": "ob_runtime",
+        "target": "goal",
+        "relation": "describes",
+        "label": "obstacle recorded, not removed"
+      }
+    ],
+    "events": [],
+    "explanations": [
+      {
+        "id": "c3_campaign",
+        "title": "H01 C3 partner expansion: campaign prerequisites",
+        "effect": "A connected human E/I core for Example 21",
+        "conditions": "17 kept proofread cells; the C3 release's cell table, skeletons, subcompartments and synapse export; deployed donor profiles held fixed; Vast 50616476 as the only executor.",
+        "narrative": "A prerequisite tree: green is the goal, blue the intermediate objectives (workstreams A-D), purple the datums that define acceptance by testing to failure, orange the obstacles. Each objective carries its registered prediction and falsifier; the closing agent sets its status and evidence file.",
+        "uncertainties": "Y7 predicts that most interneuron candidates fail at donor densities; the per-event runtime of the evolve step is not addressed.",
+        "predictions": "A: partners exist for every kept cell. B: 40 of 40 import. C: E 1-4 of 20, I 0-2 of 20, about half the kept L2 block under 3x. D: at least one construction-ready contact.",
+        "nodeIds": [
+          "goal",
+          "io_graph",
+          "io_skel",
+          "io_gate",
+          "io_net",
+          "datum_fire",
+          "datum_rest",
+          "datum_syn",
+          "ob_archive",
+          "ob_partners",
+          "ob_box",
+          "ob_runtime"
+        ],
+        "testIds": [],
+        "evidence": [],
+        "status": "unverified",
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "goal",
+        "type": "Goal",
+        "text": "Goal: Example 21's H01 backend starts from a connected human E/I core: kept pyramidal cells, interneurons that hold a test-to-failure gate at the deployed donor densities, and anatomical synapses among them, in one two-archive manifest.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Outcome condition only: it does not claim Example 21 learns and it does not repair the Y7 anatomy-transfer condition. No donor is imported, nothing is fitted, no density or anatomy is tuned; the 87 dropped cells stay dropped.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/evidence/h01-keep-drop/decision.json; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "goal_ev0",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "goal_ev1",
+            "title": "docs/evidence/h01-keep-drop/decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-keep-drop/decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "goal_ev2",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/h01-causal-model.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "io_graph",
+        "type": "Intermediate objective",
+        "text": "A: C3 neuron synapse graph and ranked partners of the kept 17 (box, /workspace/venv-c3). h01_c3_cell_table.py; h01_c3_neuron_graph.py over all 166 export shards keeping neuron-to-neuron rows; h01_c3_partner_rank.py -> top 20 E + top 20 I by synapse count with the kept set.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Prediction: every kept cell has a neuron partner (NSI 300-2,300); at least 40 partners with two or more synapses to the kept set. Falsifier: fewer than 20 partners in total. Identity is the export's C3 neuron_id, so the proofread voxel-verification gate that excluded 120 of 123 edges does not apply.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/evidence/h01-full-export-join-progress.json; docs/evidence/h01-cellmatrix-mapping-audit.json",
+        "evidence": [
+          {
+            "id": "io_graph_ev0",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_graph_ev1",
+            "title": "docs/evidence/h01-full-export-join-progress.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-full-export-join-progress.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_graph_ev2",
+            "title": "docs/evidence/h01-cellmatrix-mapping-audit.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-cellmatrix-mapping-audit.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "io_skel",
+        "type": "Intermediate objective",
+        "text": "B: candidate C3 skeletons written as proofread-format SWC (type = subcompartment label - 100; x,y,z in 32/32/33 nm voxels; radius nm), archived with sha256 and non-proofread provenance. H01Archive accepts an explicit digest; H01ArchiveSet resolves a source by archive_sha256. Import audit through the unchanged path.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Prediction: 40 of 40 import, construct, initialise. Control: kept cell 1684504313 exported from C3 beside its proofread SWC (28,643 vs 63,526 nodes), recorded, not a gate.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "evidence": [
+          {
+            "id": "io_skel_ev0",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "io_gate",
+        "type": "Intermediate objective",
+        "text": "C: test-to-failure on the 40 candidates and the 17 kept cells (box, two chains): the donor step run, a ramp run (--ramp-na, 0 to 3x the donor test current) reading rheobase and block current, the dt-half repeat. decision.json under docs/evidence/h01-c3-keep-drop/.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Predictions: E 1-4 of 20 pass (the former bands alone would pass 3-6); I 0-2 of 20; about half the 13 kept L2 show a block edge under 3x, the 4 L4 hold. Falsifier for the interneuron route: 0 of 20 -> a fit-pilot decision request to J; no tolerance widened, no re-run. A kept cell that fails is reported, not dropped.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
+        "evidence": [
+          {
+            "id": "io_gate_ev0",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_gate_ev1",
+            "title": "docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "io_net",
+        "type": "Intermediate objective",
+        "text": "D: contacts among passing cells from the C3 graph (identity by neuron_id; placement as recorded projection distance, blocker beyond 3 um on the proofread 17; delivery weight sweep per contact), probe evidence, two-archive manifest, one receipted evolve launch under timeout 3600.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Prediction: at least one construction-ready contact. Falsifier: none -> stop at the network JSON and report. Y5: identity, placement and electrical parameters are three separate checks; an anatomical contact alone predicts neither suppression nor recruitment.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/h01-causal-model.md",
+        "evidence": [
+          {
+            "id": "io_net_ev0",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_net_ev1",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/h01-causal-model.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "datum_fire",
+        "type": "Datum",
+        "text": "Datum, firing range: the human sweep set's lowest firing and highest still-firing long-square amplitude per donor (long-square-index.json / NWB stimulus, LJP-corrected); tolerance one human sweep step. Model reading: rheobase from the ramp; still fires at the human's highest amplitude; count at the primary input inside the human repeat range.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Qualification rule: a dose outside the recorded cell's range measures the model, not the difference from the recording, so the block edge above the human range is recorded and not scored. At rheobase the human repeats give 0 or 1; the information there is the rheobase and the level, not a count.\n\nEvidence: docs/h01-causal-model.md; docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "evidence": [
+          {
+            "id": "datum_fire_ev0",
+            "title": "docs/h01-causal-model.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/h01-causal-model.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "datum_fire_ev1",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "datum_rest",
+        "type": "Datum",
+        "text": "Datum, rest: donor rest from donor-rest.json (L2 -84.26, L4 -81.01, PV -86.76, SST -77.15 mV); tolerance 3 sd of the donor's repeat level (0.04-0.15 mV measured) on the 100 ms before the pulse and the 10 ms ending 200 ms after it. Failure: any -20 mV crossing before the pulse.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "The former 10 mV band and the max(2, 30 percent) count band are recorded beside the new readings for comparison and are not the gate.\n\nEvidence: docs/evidence/h01-keep-drop/donor-rest.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "evidence": [
+          {
+            "id": "datum_rest_ev0",
+            "title": "docs/evidence/h01-keep-drop/donor-rest.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-keep-drop/donor-rest.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "datum_rest_ev1",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "datum_syn",
+        "type": "Datum",
+        "text": "Datum, delivery: literature pin 3.1 nS (1.4-3.9), decay 4.18 ms, delay 2.3 ms, reversal about -75 mV, somatic PSP about 0.5-1 mV. Edges from a weight sweep per contact at the post soma: unresolvable (PSP under 3 sd of the post cell's rest noise) and fires-alone. The manifest weight must lie inside the resolvable range.",
+        "status": "unverified",
+        "confidence": null,
+        "notes": "Manifest kinetics are forced by H01Topology._validate (E 0 mV / 2 ms, I -80 mV / 5 ms, delay 0.5 ms); only the weight is chosen. I->E contacts are swept with the post cell held depolarised because -80 mV sits above the -84 mV model rest.\n\nEvidence: docs/evidence/h01-ie-synapse-literature.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "evidence": [
+          {
+            "id": "datum_syn_ev0",
+            "title": "docs/evidence/h01-ie-synapse-literature.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-ie-synapse-literature.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "datum_syn_ev1",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "ob_archive",
+        "type": "Obstacle",
+        "text": "Obstacle: the shipped runtime knows one sha-pinned archive of 104 proofread cells; a C3 candidate has no path into make_h01_ei_cell or the manifest. Addressed by B; the implementation_sha256 pin then forces a manifest rebuild.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Existence: H01Archive._verify pins ARCHIVE_SHA256 3e0534df...; no H01ArchiveSet exists.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "evidence": [
+          {
+            "id": "ob_archive_ev0",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "ob_partners",
+        "type": "Obstacle",
+        "text": "Obstacle: no partner index exists. The released per-cell synapse CSV lists partner_neuron_id as missing, and the earlier 166-shard scan kept only pairs among the 104. Addressed by A.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Seven kept cells carry C3 ids that differ from their released ids (cellmatrix mapping audit); ranking uses the C3 ids.\n\nEvidence: docs/evidence/h01-full-export-join-progress.json; docs/evidence/h01-cellmatrix-mapping-audit.json",
+        "evidence": [
+          {
+            "id": "ob_partners_ev0",
+            "title": "docs/evidence/h01-full-export-join-progress.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-full-export-join-progress.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "ob_partners_ev1",
+            "title": "docs/evidence/h01-cellmatrix-mapping-audit.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-cellmatrix-mapping-audit.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "ob_box",
+        "type": "Obstacle",
+        "text": "Obstacle: the box has no cloud-volume/fastavro venv (venv314 checked 2026-09-16), a 7,680-thread cgroup ceiling, and at most two population processes at a time. Addressed by A step 0 (/workspace/venv-c3, separate from the pinned venv314) and the two-chain rule in C.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "128 GB disk: shards are deleted after scanning; keep ps -eo nlwp under ~4,200 before launching.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+        "evidence": [
+          {
+            "id": "ob_box_ev0",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      },
+      {
+        "id": "ob_runtime",
+        "type": "Obstacle",
+        "text": "Obstacle NOT removed by this campaign: per-event runtime is the binding cost of the evolve step. 17 cells at 160 substeps per 0.1 ms ARC event produced no candidate in 60 min on the 4090 (exit 124); more cells raise it. D delivers one capped, receipted launch; finishing a stage inside a cap is a separate registered problem.",
+        "status": "supported",
+        "confidence": null,
+        "notes": "Levers, not chosen here: cell count, substeps per event, event count per stage.\n\nEvidence: docs/evidence/h01-keep-drop/evolve/evolve-record.json",
+        "evidence": [
+          {
+            "id": "ob_runtime_ev0",
+            "title": "docs/evidence/h01-keep-drop/evolve/evolve-record.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-campaign/docs/evidence/h01-keep-drop/evolve/evolve-record.json",
+            "stance": "supports",
+            "origin": "repository file inspected 2026-09-12"
+          }
+        ],
+        "origin": "H01 C3 partner-expansion prerequisite tree; registered 2026-09-16 before any run"
+      }
+    ],
+    "project": {
+      "calendar": {
+        "exceptions": [],
+        "hours": 8,
+        "weekdays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "date": "2026-09-16",
+      "direction": "forward",
+      "resources": []
+    },
+    "relationshipReviews": [
+      {
+        "id": "review_ob_archive__io_skel",
+        "edgeId": "ob_archive__io_skel",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ob_archive__io_skel",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ob_partners__io_graph",
+        "edgeId": "ob_partners__io_graph",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ob_partners__io_graph",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ob_box__io_graph",
+        "edgeId": "ob_box__io_graph",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ob_box__io_graph",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      },
+      {
+        "id": "review_ob_runtime__goal",
+        "edgeId": "ob_runtime__goal",
+        "assumptions": "The link is a claim to scrutinise against the evidence files named on both nodes, not an observed result.",
+        "evidence": [],
+        "reservations": [
+          {
+            "id": "reservation_ob_runtime__goal",
+            "category": "Entity existence",
+            "concern": "Does the described condition exist as stated in the named evidence file, or is it assumed?",
+            "status": "open",
+            "rationale": "",
+            "responses": []
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "end": 10000,
+      "step": 100
+    },
+    "tests": [],
+    "summaries": [],
+    "characteristics": [],
+    "verifications": []
+  },
+  "scenarios": [],
+  "revision": 0,
+  "history": [],
+  "undo": [],
+  "redo": [],
+  "proposals": [],
+  "jobs": [],
+  "access": {
+    "direct": true
+  }
+}
