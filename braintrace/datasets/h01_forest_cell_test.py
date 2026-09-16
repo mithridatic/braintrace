@@ -50,7 +50,7 @@ def _run(step, cells, steps, dt_ms):
     def body(_):
         with brainstate.environ.context(dt=dt_ms*u.ms):
             step()
-        return tuple(c.V.value.to_decimal(u.mV)[0] for c in cells), tuple(np.asarray(c.spike.value)[0] for c in cells)
+        return tuple(c.V.value.to_decimal(u.mV)[0] for c in cells), tuple(u.get_mantissa(c.spike.value)[0] for c in cells)
     return brainstate.transform.for_loop(body, np.arange(steps))
 
 
