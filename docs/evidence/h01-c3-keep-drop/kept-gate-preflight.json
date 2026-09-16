@@ -76,13 +76,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 11,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -93,7 +101,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -107,6 +115,9 @@
         "count_in_repeat_range": true,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -119,7 +130,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -221,13 +232,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 7,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -238,7 +257,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -252,6 +271,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -264,7 +286,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -364,13 +386,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": true
+        "return_leg_held": true,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 52.0833333333333,
+        "human_threshold_i_long_square_pa": 50.0,
+        "human_step_to_ramp_offset_pa": 2.0833333333333,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 3.11276 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 11,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -381,7 +411,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -395,6 +425,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": true
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -407,7 +440,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -509,13 +542,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": true
+        "return_leg_held": true,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 7,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -526,7 +567,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -540,6 +581,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": true
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -552,7 +596,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -654,13 +698,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": false,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 9,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -671,7 +723,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -685,6 +737,9 @@
         "count_in_repeat_range": true,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -697,7 +752,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -799,13 +854,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 8,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -816,7 +879,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -830,6 +893,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -842,7 +908,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -945,13 +1011,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 11,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -962,7 +1036,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -976,6 +1050,9 @@
         "count_in_repeat_range": true,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -988,7 +1065,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -1090,13 +1167,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 7,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -1107,7 +1192,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -1121,6 +1206,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -1133,7 +1221,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -1233,13 +1321,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": true
+        "return_leg_held": true,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 52.0833333333333,
+        "human_threshold_i_long_square_pa": 50.0,
+        "human_step_to_ramp_offset_pa": 2.0833333333333,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 3.11276 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 13,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -1250,7 +1346,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -1264,6 +1360,9 @@
         "count_in_repeat_range": true,
         "rest_in_donor_spread": true
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -1276,7 +1375,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -1373,13 +1472,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": true
+        "return_leg_held": true,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 52.0833333333333,
+        "human_threshold_i_long_square_pa": 50.0,
+        "human_step_to_ramp_offset_pa": 2.0833333333333,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 3.11276 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 9,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -1390,7 +1497,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -1404,6 +1511,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": true
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -1416,7 +1526,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -1518,13 +1628,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 7,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -1535,7 +1653,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -1549,6 +1667,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -1561,7 +1682,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -1664,13 +1785,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 10,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -1681,7 +1810,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -1695,6 +1824,9 @@
         "count_in_repeat_range": true,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -1707,7 +1839,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -1809,13 +1941,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 11,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -1826,7 +1966,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -1840,6 +1980,9 @@
         "count_in_repeat_range": true,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": "return_in_type_spread",
       "pending": "ramp_missing",
@@ -1852,7 +1995,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -1954,13 +2097,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 7,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -1971,7 +2122,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -1985,6 +2136,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -1997,7 +2151,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -2097,13 +2251,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": true
+        "return_leg_held": true,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 52.0833333333333,
+        "human_threshold_i_long_square_pa": 50.0,
+        "human_step_to_ramp_offset_pa": 2.0833333333333,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 3.11276 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 15,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -2114,7 +2276,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -2128,6 +2290,9 @@
         "count_in_repeat_range": true,
         "rest_in_donor_spread": true
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -2140,7 +2305,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -2240,13 +2405,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": true,
-        "return_leg_held": false
+        "return_leg_held": false,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 8,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -2257,7 +2430,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -2271,6 +2444,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -2283,7 +2459,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -2386,13 +2562,21 @@
         "return_leg_scored": true,
         "return_leg": "scored against after_repeat_mean_mv +- 3 after_repeat_sd_mv (the family's 10 ms ending 200 ms after offset)",
         "rest_leg_held": false,
-        "return_leg_held": true
+        "return_leg_held": true,
+        "rheobase_in_step": null,
+        "rheobase_in_step_note": "recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+        "human_threshold_i_ramp_pa": 235.75,
+        "human_threshold_i_long_square_pa": 200.0,
+        "human_step_to_ramp_offset_pa": 35.75,
+        "human_ramp_slope_note": "Allen slow ramp, rheobase 10.44994 s after onset",
+        "model_ramp_slope_pa_per_s": null,
+        "fires_at_primary_step": true
       },
       "dt_half_count": 7,
       "rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true,
@@ -2403,7 +2587,7 @@
       "hard_rules": {
         "finite": true,
         "no_spike_before_pulse": true,
-        "rheobase_in_step": null,
+        "recruitable_in_human_range": null,
         "fires_at_highest": null,
         "no_block_in_recorded_range": null,
         "dt_half_reproduces": true
@@ -2417,6 +2601,9 @@
         "count_in_repeat_range": false,
         "rest_in_donor_spread": false
       },
+      "recorded_readings": {
+        "rheobase_in_step": null
+      },
       "keep": false,
       "drop_reason": null,
       "pending": "ramp_missing",
@@ -2429,7 +2616,7 @@
         "return_in_type_spread"
       ],
       "unmeasured_rules": [
-        "rheobase_in_step",
+        "recruitable_in_human_range",
         "fires_at_highest",
         "no_block_in_recorded_range"
       ],
@@ -2519,7 +2706,7 @@
   },
   "ramp_folder": "docs/evidence/h01-c3-keep-drop/runs",
   "kept": [],
-  "rule": "keep = every hard failure edge holds and every plausibility rule holds. Hard edges: finite output and soma traces; no -20 mV crossing before the pulse; the ramp rheobase within one human sweep step of the human rheobase; the ramp still firing at the human's highest recorded amplitude; no depolarisation block at or below that amplitude (the block current above it is recorded, not scored); the dt-half repeat (0.0025 ms) finite and reproducing the count. Plausibility rules (J, 2026-09-16): the step count at the primary input, the mean output voltage over the 100 ms before the pulse, and over the 10 ms ending 200 ms after it, each within 2 across-cell sd of the same reading over the human cells of the donor's type in the Allen Cell Types database (human-datums.json type_population; datum = the donor's own value). The single-donor bands (count_band across the sweeps within one step of the primary; 3 across-sweep sd of the donor's own pre-pulse and post-pulse family levels) and the former 10 mV / 30 percent bands are recorded beside the verdict for comparison and are not the gate (spec 2026-09-16-h01-c3-partner-expansion, step C).",
+  "rule": "keep = every hard failure edge holds and every plausibility rule holds. Hard edges: finite output and soma traces; no -20 mV crossing before the pulse; recruitable in the human range (the ramp rheobase at or below the human's highest recorded amplitude and the step run at the primary drive firing at least once); the ramp still firing at the human's highest recorded amplitude; no depolarisation block at or below that amplitude (the block current above it is recorded, not scored); the dt-half repeat (0.0025 ms) finite and reproducing the count. Plausibility rules (J, 2026-09-16): the step count at the primary input, the mean output voltage over the 100 ms before the pulse, and over the 10 ms ending 200 ms after it, each within 2 across-cell sd of the same reading over the human cells of the donor's type in the Allen Cell Types database (human-datums.json type_population; datum = the donor's own value). The single-donor bands (count_band across the sweeps within one step of the primary; 3 across-sweep sd of the donor's own pre-pulse and post-pulse family levels) and the former 10 mV / 30 percent bands are recorded beside the verdict for comparison and are not the gate. rheobase_in_step (the 1 s ramp rheobase within one sweep step of the human long-square rheobase) is a recorded reading, not a rule: a 570 pA/s ramp and a step are different measurement chains and the donors' own Allen recordings document a step-to-ramp offset (spec 2026-09-16-h01-c3-partner-expansion, step C).",
   "scope": "A kept cell reproduces a count and a resting level from another human donor's recording on retained H01 anatomy under that donor's step protocol; it is not a measurement of the H01 donor's own cell, and no channel provenance is qualified.",
   "by_donor": {
     "l2-pyramidal-allen-541563728": {
@@ -2538,7 +2725,7 @@
     "total": 17,
     "pending": 16
   },
-  "datums_sha256": "605b05c0e5f343f55e915b863e46135cb293539699cb8ee9f979afd022e1c2b8",
+  "datums_sha256": "c66719bd84fb540202c61d4fd032654697c6b83724952aa9ff3873f1b38e721f",
   "rule_counts": {
     "hard": {
       "finite": {
@@ -2551,7 +2738,7 @@
         "failed": 0,
         "unmeasured": 0
       },
-      "rheobase_in_step": {
+      "recruitable_in_human_range": {
         "held": 0,
         "failed": 0,
         "unmeasured": 17
@@ -2599,6 +2786,13 @@
         "held": 5,
         "failed": 12,
         "unmeasured": 0
+      }
+    },
+    "recorded": {
+      "rheobase_in_step": {
+        "held": 0,
+        "failed": 0,
+        "unmeasured": 17
       }
     },
     "legacy": {

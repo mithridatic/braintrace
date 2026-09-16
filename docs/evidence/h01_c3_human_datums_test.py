@@ -211,3 +211,26 @@ def test_measure_adds_the_type_population_when_the_allen_pulls_are_given(tmp_pat
     with pytest.raises(SystemExit):
         main(["--cache", str(tmp_path), "--output", str(output), "--allen-features", str(features)])
     capsys.readouterr()
+
+
+def test_measure_adds_the_allen_ramp_threshold_of_each_donor(tmp_path, monkeypatch, capsys):
+    pytest.importorskip("h5py")
+    (tmp_path/"cells").mkdir()
+    _write_nwb(tmp_path/"cells"/"a.nwb", {1: ("Long Square", 90., [1100.])})
+    donors = {"l4-pyramidal-allen-527952884": dict(nwb="cells/a.nwb", primary_pa=90., repeat_counts=[1], source_cell="synthetic")}
+    features = dict(source="ef", fetched_utc="t", donors={"l4-pyramidal-allen-527952884": dict(
+        specimen_id=527952884, threshold_i_long_square=50., threshold_i_ramp=52.0833, peak_t_ramp=3.11)})
+    report = measure(tmp_path, donors, donor_features=dict(features, _path="x.json", _sha256="a"*64))
+    thr = report["donors"]["l4-pyramidal-allen-527952884"]["allen_ramp_threshold"]
+    assert thr["threshold_i_long_square_pa"] == 50. and thr["threshold_i_ramp_pa"] == 52.0833
+    assert thr["step_to_ramp_offset_pa"] == pytest.approx(2.0833) and report["allen_donor_features"]["sha256"] == "a"*64
+    path = tmp_path/"allen-donor-ephys-features.json"
+    path.write_text(json.dumps(features))
+    monkeypatch.setattr("h01_c3_human_datums.DONORS", donors)
+    output = tmp_path/"out"/"human-datums.json"
+    main(["--cache", str(tmp_path), "--output", str(output), "--allen-donor-features", str(path)])
+    assert json.loads(output.read_text())["donors"]["l4-pyramidal-allen-527952884"]["allen_ramp_threshold"]["specimen_id"] == 527952884
+    with pytest.raises(SystemExit):
+        main(["--cache", str(tmp_path), "--output", str(output), "--allen-donor-features", str(path),
+              "--allen-donor-features-sha256", "0"*64])
+    capsys.readouterr()

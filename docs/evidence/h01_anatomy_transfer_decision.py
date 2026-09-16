@@ -101,14 +101,16 @@ def keep_verdict(primary, half, donor_rest_mv):
                 rules=rules, keep=keep, drop_reason=None if keep else ",".join(failed))
 
 
-HARD_RULE_NAMES = ("finite", "no_spike_before_pulse", "rheobase_in_step", "fires_at_highest",
+HARD_RULE_NAMES = ("finite", "no_spike_before_pulse", "recruitable_in_human_range", "fires_at_highest",
                    "no_block_in_recorded_range", "dt_half_reproduces")
+RECORDED_READING_NAMES = ("rheobase_in_step",)   # recorded beside the verdict, not a rule (coordinator, 2026-09-16)
 PLAUSIBILITY_RULE_NAMES = ("count_in_type_spread", "rest_in_type_spread", "return_in_type_spread")
 FAILURE_RULE_NAMES = HARD_RULE_NAMES + PLAUSIBILITY_RULE_NAMES
 DONOR_BAND_RULE_NAMES = ("count_in_repeat_range", "rest_in_donor_spread")
 FAILURE_RULE = ("keep = every hard failure edge holds and every plausibility rule holds. Hard edges: finite output "
-                "and soma traces; no -20 mV crossing before the pulse; the ramp rheobase within one human sweep step "
-                "of the human rheobase; the ramp still firing at the human's highest recorded amplitude; no "
+                "and soma traces; no -20 mV crossing before the pulse; recruitable in the human range (the ramp "
+                "rheobase at or below the human's highest recorded amplitude and the step run at the primary drive "
+                "firing at least once); the ramp still firing at the human's highest recorded amplitude; no "
                 "depolarisation block at or below that amplitude (the block current above it is recorded, not "
                 "scored); the dt-half repeat (0.0025 ms) finite and reproducing the count. Plausibility rules "
                 "(J, 2026-09-16): the step count at the primary input, the mean output voltage over the 100 ms "
@@ -117,7 +119,10 @@ FAILURE_RULE = ("keep = every hard failure edge holds and every plausibility rul
                 "(human-datums.json type_population; datum = the donor's own value). The single-donor bands "
                 "(count_band across the sweeps within one step of the primary; 3 across-sweep sd of the donor's own "
                 "pre-pulse and post-pulse family levels) and the former 10 mV / 30 percent bands are recorded beside "
-                "the verdict for comparison and are not the gate (spec 2026-09-16-h01-c3-partner-expansion, step C).")
+                "the verdict for comparison and are not the gate. rheobase_in_step (the 1 s ramp rheobase within one "
+                "sweep step of the human long-square rheobase) is a recorded reading, not a rule: a 570 pA/s ramp and "
+                "a step are different measurement chains and the donors' own Allen recordings document a step-to-ramp "
+                "offset (spec 2026-09-16-h01-c3-partner-expansion, step C).")
 REST_SD_FACTOR = 3.
 
 
@@ -283,10 +288,23 @@ def keep_verdict_failure(primary, ramp, half, donor):
                     rest_leg_held=bool(rest_ok), return_leg_held=bool(return_ok) if return_scored else None)
     highest, block = readings["human_highest_firing_pa"], readings["model_block_pa"]
     no_block = None if ramp is None or highest is None else not (block is not None and block <= highest)
+    model_rheobase = readings["model_rheobase_pa"]
+    recruitable = (None if ramp is None or highest is None
+                   else bool(model_rheobase is not None and model_rheobase <= highest and count >= 1))
+    allen = donor.get("allen_ramp_threshold") or {}
+    window_s = (primary["pulse_ms"][1]-primary["pulse_ms"][0])/1e3
+    readings.update(rheobase_in_step=firing["rheobase_in_step"],
+                    rheobase_in_step_note="recorded, not a rule: 1 s ramp rheobase vs the human long-square rheobase",
+                    human_threshold_i_ramp_pa=allen.get("threshold_i_ramp_pa"),
+                    human_threshold_i_long_square_pa=allen.get("threshold_i_long_square_pa"),
+                    human_step_to_ramp_offset_pa=allen.get("step_to_ramp_offset_pa"),
+                    human_ramp_slope_note=None if not allen else f"Allen slow ramp, rheobase {allen.get('peak_t_ramp_s')} s after onset",
+                    model_ramp_slope_pa_per_s=None if ramp is None else readings["ramp_max_pa"]/window_s,
+                    fires_at_primary_step=count >= 1)
     hard = dict(finite=bool(primary["output_site"]["finite"] and primary["soma_site"]["finite"]
                             and (ramp is None or ramp.get("finite", True))),
                 no_spike_before_pulse=primary["pre_pulse_count"] == 0 and (ramp is None or ramp.get("pre_pulse_count", 0) == 0),
-                rheobase_in_step=firing["rheobase_in_step"], fires_at_highest=firing["fires_at_highest"],
+                recruitable_in_human_range=recruitable, fires_at_highest=firing["fires_at_highest"],
                 no_block_in_recorded_range=no_block,
                 dt_half_reproduces=None if half is None else bool(half["output_site"]["finite"]
                                                                   and half["output_site"]["count"] == count))
@@ -296,7 +314,7 @@ def keep_verdict_failure(primary, ramp, half, donor):
     pending = []
     if ramp is None:
         pending.append("ramp_missing")   # not yet measured: the ramp edges stay None
-    elif any(rules[name] is None for name in ("rheobase_in_step", "fires_at_highest", "no_block_in_recorded_range")):
+    elif any(rules[name] is None for name in ("recruitable_in_human_range", "fires_at_highest", "no_block_in_recorded_range")):
         failed.append("firing_datum_unavailable")   # an unavailable row is not a pass (qualification rules)
     if any(rules[name] is None for name in PLAUSIBILITY_RULE_NAMES):
         failed.append("plausibility_datum_unavailable")
@@ -308,6 +326,7 @@ def keep_verdict_failure(primary, ramp, half, donor):
                 pre_pulse_count=primary["pre_pulse_count"], readings=readings,
                 dt_half_count=None if half is None else half["output_site"]["count"],
                 rules=rules, hard_rules=hard, plausibility_rules=plausible, donor_band_rules=donor_band,
+                recorded_readings=dict(rheobase_in_step=firing["rheobase_in_step"]),
                 keep=keep, drop_reason=",".join(failed) or None, pending=",".join(pending) or None,
                 measured_rules=[name for name in FAILURE_RULE_NAMES if rules[name] is not None],
                 unmeasured_rules=[name for name in FAILURE_RULE_NAMES if rules[name] is None],
@@ -429,6 +448,7 @@ def rule_counts(cells):
     return dict(hard={n: tally(n, lambda v: v["hard_rules"]) for n in HARD_RULE_NAMES},
                 plausibility={n: tally(n, lambda v: v["plausibility_rules"]) for n in PLAUSIBILITY_RULE_NAMES},
                 donor_band={n: tally(n, lambda v: v["donor_band_rules"]) for n in DONOR_BAND_RULE_NAMES},
+                recorded={n: tally(n, lambda v: v["recorded_readings"]) for n in RECORDED_READING_NAMES},
                 legacy={n: tally(n, lambda v: v["legacy_verdict"]["rules"]) for n in KEEP_RULE_NAMES})
 
 

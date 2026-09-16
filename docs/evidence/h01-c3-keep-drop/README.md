@@ -9,9 +9,15 @@ section C. Register: `qc3_e`, `qc3_i` (search tree), `io_gate`, `datum_fire`, `d
 ## Gate (split, J 2026-09-16; runs unchanged)
 
 `h01_anatomy_transfer_decision.py --keep --gate failure --datums human-datums.json`.
-(a) Hard failure edges: `finite`, `no_spike_before_pulse`, `rheobase_in_step`,
-`fires_at_highest`, `no_block_in_recorded_range`, `dt_half_reproduces` (human firing-range
-datums, one sweep step of drive). (b) Plausibility rules: `count_in_type_spread`,
+(a) Hard failure edges: `finite`, `no_spike_before_pulse`, `recruitable_in_human_range` (ramp
+rheobase at or below the human's highest recorded amplitude and the step run at the primary
+drive firing at least once), `fires_at_highest`, `no_block_in_recorded_range`,
+`dt_half_reproduces`. `rheobase_in_step` (1 s ramp rheobase within one sweep step of the human
+long-square rheobase) is a recorded reading, not a rule (coordinator 2026-09-16, flagged to J:
+different measurement chains; the donors' Allen rows document step-to-ramp offsets of +36 / +2 /
++72 / +27 pA, `human-datums.json` `allen_ramp_threshold`, pull
+`.cache/h01/allen-donor-ephys-features.json` a701d082...); it sits in every receipt beside the
+human step and slow-ramp thresholds. (b) Plausibility rules: `count_in_type_spread`,
 `rest_in_type_spread`, `return_in_type_spread` — datum the donor's own value, tolerance 2 sd
 across the human cells of the donor's type in the Allen Cell Types database
 (`human-datums.json` `type_population`, from the sha-pinned pulls

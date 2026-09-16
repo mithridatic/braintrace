@@ -550,6 +550,14 @@
           "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
           "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
         }
+      },
+      "allen_ramp_threshold": {
+        "specimen_id": 541563728,
+        "threshold_i_long_square_pa": 200.0,
+        "threshold_i_ramp_pa": 235.75,
+        "peak_t_ramp_s": 10.44994,
+        "step_to_ramp_offset_pa": 35.75,
+        "note": "Allen slow ramp (rheobase reached peak_t_ramp s after onset), not the campaign 1 s ramp to 3x the primary; the offset documents that a ramp and a step rheobase differ on the same cell"
       }
     },
     "l4-pyramidal-allen-527952884": {
@@ -878,6 +886,14 @@
           "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
           "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
         }
+      },
+      "allen_ramp_threshold": {
+        "specimen_id": 527952884,
+        "threshold_i_long_square_pa": 50.0,
+        "threshold_i_ramp_pa": 52.0833333333333,
+        "peak_t_ramp_s": 3.11276,
+        "step_to_ramp_offset_pa": 2.0833333333333,
+        "note": "Allen slow ramp (rheobase reached peak_t_ramp s after onset), not the campaign 1 s ramp to 3x the primary; the offset documents that a ramp and a step rheobase differ on the same cell"
       }
     },
     "l5-pv-basket-hl5bn1": {
@@ -1304,6 +1320,14 @@
           "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
           "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
         }
+      },
+      "allen_ramp_threshold": {
+        "specimen_id": 528687520,
+        "threshold_i_long_square_pa": 120.0,
+        "threshold_i_ramp_pa": 191.875,
+        "peak_t_ramp_s": 8.68938666666667,
+        "step_to_ramp_offset_pa": 71.875,
+        "note": "Allen slow ramp (rheobase reached peak_t_ramp s after onset), not the campaign 1 s ramp to 3x the primary; the offset documents that a ramp and a step rheobase differ on the same cell"
       }
     },
     "l3-sst-interneuron-hl5mn1": {
@@ -1783,8 +1807,22 @@
           "rest_mv": "ipfx pre_vm_mv: mean over the 500 ms before onset, -14 mV LJP",
           "after_mv": "ipfx post_vm_mv: mean over the last 500 ms of the recording (5-7 s after offset), -14 mV LJP; the Allen table has no field for the 10 ms ending 200 ms after offset"
         }
+      },
+      "allen_ramp_threshold": {
+        "specimen_id": 571700636,
+        "threshold_i_long_square_pa": 50.0,
+        "threshold_i_ramp_pa": 76.7083333333333,
+        "peak_t_ramp_s": 4.08788666666667,
+        "step_to_ramp_offset_pa": 26.7083333333333,
+        "note": "Allen slow ramp (rheobase reached peak_t_ramp s after onset), not the campaign 1 s ramp to 3x the primary; the offset documents that a ramp and a step rheobase differ on the same cell"
       }
     }
+  },
+  "allen_donor_features": {
+    "path": "allen-donor-ephys-features.json",
+    "sha256": "a701d08227818d7ff5d11b493af14d8ac2c4949ac17381126601becb5327f7ed",
+    "source": "http://api.brain-map.org/api/v2/data/query.json model::EphysFeature per donor specimen (Allen Cell Types, human)",
+    "fetched_utc": "2026-09-16T21:22:42Z"
   },
   "allen_population": {
     "features": {

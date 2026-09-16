@@ -177,7 +177,9 @@ DONOR = dict(rest_mv=REST-.4, sd_mv=.02, rest_repeat_mean_mv=REST, rest_repeat_s
              highest_firing_pa=170., repeat_counts=[12], measured_counts_at_primary=[12],
              after_repeat_mean_mv=AFTER, after_repeat_sd_mv=.2,
              count_band=dict(min=11, max=15, counts=[11, 12, 15], sweeps=[38, 39, 40], amplitudes_pa=[70., 90., 110.]),
-             type_population=TYPE)
+             type_population=TYPE,
+             allen_ramp_threshold=dict(specimen_id=527952884, threshold_i_long_square_pa=50., threshold_i_ramp_pa=52.08,
+                                       peak_t_ramp_s=3.11, step_to_ramp_offset_pa=2.08))
 
 
 def _ramp(rheobase_na=.055, block_na=None, spikes=(1100., 1500., 1900., 2010.), ramp_max_na=.27, finite=True, pre=0):
@@ -207,7 +209,8 @@ def test_failure_verdict_reads_the_runner_layout_of_a_ramp_run():
                             dict(component=0, source_sha256="x"*64, component_nodes=1, n_compartments=1))
     assert summary["ramp"]["rheobase_na"] is not None and "rheobase_na" not in summary   # the layout under test
     verdict = decision.keep_verdict_failure(_cell_run_failure(), summary, _cell_run_failure(), DONOR)
-    assert verdict["hard_rules"]["rheobase_in_step"] is False    # 21.6 pA rheobase vs human 50 +- 20
+    assert verdict["recorded_readings"]["rheobase_in_step"] is False    # 21.6 pA rheobase vs human 50 +- 20, recorded only
+    assert verdict["hard_rules"]["recruitable_in_human_range"] is True
     assert verdict["hard_rules"]["fires_at_highest"] is True and verdict["hard_rules"]["no_block_in_recorded_range"] is True
     assert verdict["readings"]["model_rheobase_pa"] == pytest.approx(21.6, abs=.01) and verdict["readings"]["model_last_spike_pa"] > 170.
     assert verdict["rules"]["finite"] is True and verdict["rules"]["no_spike_before_pulse"] is True
@@ -236,6 +239,25 @@ def test_failure_verdict_all_rules_hold_and_carries_the_comparison_columns():
     assert verdict["rest_tolerance_mv"] == pytest.approx(.3)   # single-donor family band, comparison column
     assert readings["human_count_band"] == [11, 15] and readings["model_rheobase_pa"] == pytest.approx(55.)
     assert readings["block_above_recorded_range"] is None and readings["return_leg_scored"] is True
+    assert verdict["recorded_readings"] == dict(rheobase_in_step=True) and readings["rheobase_in_step"] is True
+    assert readings["human_threshold_i_ramp_pa"] == 52.08 and readings["human_step_to_ramp_offset_pa"] == 2.08
+    assert readings["model_ramp_slope_pa_per_s"] == pytest.approx(270.) and readings["fires_at_primary_step"] is True
+
+
+def test_rheobase_in_step_is_recorded_not_scored_and_recruitable_uses_the_step_run():
+    # ramp rheobase 169.9 pA: outside the human step window 50 +- 20 but at or below the highest amplitude (170) -> keep
+    wide = decision.keep_verdict_failure(_cell_run_failure(), _ramp(rheobase_na=.1699, spikes=(1650., 1900., 2010.)),
+                                         _cell_run_failure(), DONOR)
+    assert wide["keep"] is True and wide["recorded_readings"]["rheobase_in_step"] is False
+    assert wide["hard_rules"]["recruitable_in_human_range"] is True and "rheobase_in_step" not in wide["rules"]
+    # a cell whose ramp fires but whose step run at the primary drive is silent is not recruitable
+    silent_step = decision.keep_verdict_failure(_cell_run_failure(count=0), _ramp(), _cell_run_failure(count=0), DONOR)
+    assert silent_step["hard_rules"]["recruitable_in_human_range"] is False and silent_step["readings"]["fires_at_primary_step"] is False
+    no_allen = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
+                                             {k: v for k, v in DONOR.items() if k != "allen_ramp_threshold"})
+    assert no_allen["keep"] is True and no_allen["readings"]["human_threshold_i_ramp_pa"] is None
+    pending = decision.keep_verdict_failure(_cell_run_failure(), None, _cell_run_failure(), DONOR)
+    assert pending["hard_rules"]["recruitable_in_human_range"] is None and pending["pending"] == "ramp_missing"
 
 
 @pytest.mark.parametrize("primary, ramp, half, reason", [
@@ -243,8 +265,9 @@ def test_failure_verdict_all_rules_hold_and_carries_the_comparison_columns():
     (_cell_run_failure(), _ramp(finite=False), _cell_run_failure(), "finite"),
     (_cell_run_failure(pre=1), _ramp(), _cell_run_failure(), "no_spike_before_pulse"),
     (_cell_run_failure(), _ramp(pre=1), _cell_run_failure(), "no_spike_before_pulse"),
-    (_cell_run_failure(), _ramp(rheobase_na=.0701), _cell_run_failure(), "rheobase_in_step"),
-    (_cell_run_failure(), _ramp(rheobase_na=None, spikes=()), _cell_run_failure(), "rheobase_in_step,fires_at_highest"),
+    (_cell_run_failure(), _ramp(rheobase_na=.1701, spikes=(1650., 1900., 2010.)), _cell_run_failure(), "recruitable_in_human_range"),
+    (_cell_run_failure(count=0), _ramp(), _cell_run_failure(count=0), "recruitable_in_human_range"),
+    (_cell_run_failure(), _ramp(rheobase_na=None, spikes=()), _cell_run_failure(), "recruitable_in_human_range,fires_at_highest"),
     (_cell_run_failure(), _ramp(block_na=.15, spikes=(1100., 1500.)), _cell_run_failure(),
      "fires_at_highest,no_block_in_recorded_range"),
     (_cell_run_failure(), _ramp(), _cell_run_failure(count=11), "dt_half_reproduces"),
@@ -294,7 +317,7 @@ def test_failure_verdict_missing_runs_are_pending_not_dropped():
     assert no_half["unmeasured_rules"] == ["dt_half_reproduces"]
     no_ramp = decision.keep_verdict_failure(_cell_run_failure(), None, _cell_run_failure(), DONOR)
     assert no_ramp["keep"] is False and no_ramp["drop_reason"] is None and no_ramp["pending"] == "ramp_missing"
-    assert no_ramp["unmeasured_rules"] == ["rheobase_in_step", "fires_at_highest", "no_block_in_recorded_range"]
+    assert no_ramp["unmeasured_rules"] == ["recruitable_in_human_range", "fires_at_highest", "no_block_in_recorded_range"]
     assert no_ramp["rules"]["count_in_type_spread"] is True   # read from the primary run, ramp or not
     # a measured failure is a drop even while the ramp is pending
     both = decision.keep_verdict_failure(_cell_run_failure(count=40), None, _cell_run_failure(count=40), DONOR)
@@ -304,8 +327,10 @@ def test_failure_verdict_missing_runs_are_pending_not_dropped():
 def test_failure_verdict_unavailable_datum_is_never_a_keep():
     short = decision.keep_verdict_failure(_cell_run_failure(), _ramp(ramp_max_na=.15), _cell_run_failure(), DONOR)
     assert short["rules"]["fires_at_highest"] is None and short["drop_reason"] == "firing_datum_unavailable"
-    no_human = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), dict(DONOR, rheobase_pa=None))
-    assert no_human["rules"]["rheobase_in_step"] is None and no_human["keep"] is False
+    no_human = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), dict(DONOR, highest_firing_pa=None))
+    assert no_human["rules"]["recruitable_in_human_range"] is None and no_human["keep"] is False
+    no_step = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(), dict(DONOR, rheobase_pa=None))
+    assert no_step["readings"]["rheobase_in_step"] is None and no_step["keep"] is True   # a recorded reading, not a rule
     no_type = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), _cell_run_failure(),
                                             {k: v for k, v in DONOR.items() if k != "type_population"})
     assert all(no_type["rules"][n] is None for n in decision.PLAUSIBILITY_RULE_NAMES)
@@ -375,6 +400,7 @@ def test_decide_keep_failure_gate_reads_ramps_and_datums(tmp_path):
     assert counts["plausibility"]["count_in_type_spread"] == dict(held=1, failed=1, unmeasured=0)
     assert counts["donor_band"]["count_in_repeat_range"] == dict(held=1, failed=1, unmeasured=0)
     assert counts["legacy"]["count_in_band"] == dict(held=1, failed=1, unmeasured=0)
+    assert counts["recorded"]["rheobase_in_step"] == dict(held=2, failed=0, unmeasured=0)
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["candidates"] == ["200"] and primary["dropped"] == {"300": "count_in_type_spread"}
 
@@ -385,7 +411,7 @@ def test_decide_keep_failure_gate_without_ramp_or_datums(tmp_path):
     assert result["kept"] == [] and result["pending"] == {"200": "ramp_missing"}
     assert result["dropped"] == {"300": "count_in_type_spread"}   # a measured failure drops before the ramp runs
     assert result["counts"] == dict(kept=0, dropped=1, missing=0, total=2, pending=1)
-    assert result["cells"]["200"]["rules"]["rheobase_in_step"] is None and result["cells"]["200"]["keep"] is False
+    assert result["cells"]["200"]["rules"]["recruitable_in_human_range"] is None and result["cells"]["200"]["keep"] is False
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["candidates"] == [] and primary["pending"] == {"200": "ramp_missing"}
     with pytest.raises(ValueError, match="datums"):
@@ -403,7 +429,7 @@ def test_decide_keep_primary_phase_drops_a_cell_whose_ramp_fails_so_no_repeat_is
     silent = _ramp(rheobase_na=None, spikes=())
     (runs/"transfer-all-200-ramp"/"run.json").write_text(json.dumps(dict(cell="200", **silent)))
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
-    assert primary["dropped"]["200"] == "rheobase_in_step,fires_at_highest" and primary["candidates"] == []
+    assert primary["dropped"]["200"] == "recruitable_in_human_range,fires_at_highest" and primary["candidates"] == []
 
 
 def test_decide_keep_primary_phase_never_lists_a_cell_with_an_unavailable_datum(tmp_path):
@@ -414,7 +440,7 @@ def test_decide_keep_primary_phase_never_lists_a_cell_with_an_unavailable_datum(
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["candidates"] == [] and primary["dropped"]["200"] == "plausibility_datum_unavailable"
     doc["donors"]["l4-pyramidal-allen-527952884"]["type_population"] = TYPE
-    doc["donors"]["l4-pyramidal-allen-527952884"]["rheobase_pa"] = None
+    doc["donors"]["l4-pyramidal-allen-527952884"]["highest_firing_pa"] = None
     datums.write_text(json.dumps(doc))
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
     assert primary["candidates"] == [] and primary["dropped"]["200"] == "firing_datum_unavailable"

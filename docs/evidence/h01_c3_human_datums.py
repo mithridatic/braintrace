@@ -241,11 +241,13 @@ def export_counts(cache, exports, pulse_ms):
     return rows
 
 
-def measure(cache, donors=None, allen=None):
+def measure(cache, donors=None, allen=None, donor_features=None):
     """Datums for every donor from the recordings under ``cache``.
 
     ``allen`` = ``(features_doc, sweeps_doc, provenance)`` from ``h01_allen_type_population.load``
-    adds ``type_population`` to every donor whose type is registered there.
+    adds ``type_population`` to every donor whose type is registered there; ``donor_features``
+    (the pinned per-donor ``model::EphysFeature`` pull) adds ``allen_ramp_threshold``: the Allen
+    long-square and slow-ramp rheobases of the donor's own recording and their offset.
     """
     cache = Path(cache)
     donors = DONORS if donors is None else donors
@@ -289,6 +291,19 @@ def measure(cache, donors=None, allen=None):
                     "tolerance (2 sd across cells) of the gate's plausibility rules, whose datum stays the donor's own "
                     "value; count_band and the 3 sd single-donor rest bands stay beside it as the comparison column."),
         donors=result)
+    if donor_features is not None:
+        for donor, entry in result.items():
+            row = donor_features.get("donors", {}).get(donor)
+            if row is not None:
+                entry["allen_ramp_threshold"] = dict(
+                    specimen_id=row.get("specimen_id"), threshold_i_long_square_pa=row.get("threshold_i_long_square"),
+                    threshold_i_ramp_pa=row.get("threshold_i_ramp"), peak_t_ramp_s=row.get("peak_t_ramp"),
+                    step_to_ramp_offset_pa=(None if row.get("threshold_i_ramp") is None or row.get("threshold_i_long_square") is None
+                                            else row["threshold_i_ramp"]-row["threshold_i_long_square"]),
+                    note="Allen slow ramp (rheobase reached peak_t_ramp s after onset), not the campaign 1 s ramp to "
+                         "3x the primary; the offset documents that a ramp and a step rheobase differ on the same cell")
+        report["allen_donor_features"] = dict(path=donor_features.get("_path"), sha256=donor_features.get("_sha256"),
+                                              source=donor_features.get("source"), fetched_utc=donor_features.get("fetched_utc"))
     if allen is not None:
         report["allen_population"] = dict(allen[2], species="Homo Sapiens",
                                           type_labels="tag__dendrite_type and structure__layer (no fast-spiking label for human cells)")
@@ -320,14 +335,24 @@ def main(argv=None):
                         help="sha-pinned pull of the populations' long-square EphysSweep rows under .cache/h01/")
     parser.add_argument("--allen-features-sha256", default=None)
     parser.add_argument("--allen-sweeps-sha256", default=None)
+    parser.add_argument("--allen-donor-features", type=Path, default=None,
+                        help="sha-pinned pull of model::EphysFeature for the four donor specimens under .cache/h01/")
+    parser.add_argument("--allen-donor-features-sha256", default=None)
     args = parser.parse_args(argv)
+    donor_features = None
+    if args.allen_donor_features is not None:
+        digest = hashlib.sha256(args.allen_donor_features.read_bytes()).hexdigest()
+        if args.allen_donor_features_sha256 and digest != args.allen_donor_features_sha256:
+            parser.error(f"--allen-donor-features digest mismatch: {digest}")
+        donor_features = dict(json.loads(args.allen_donor_features.read_text(encoding="utf-8")),
+                              _path=args.allen_donor_features.name, _sha256=digest)
     allen = None
     if args.allen_features is not None or args.allen_sweeps is not None:
         if args.allen_features is None or args.allen_sweeps is None:
             parser.error("--allen-features and --allen-sweeps go together")
         allen = load_allen(args.allen_features, args.allen_sweeps,
                            expected=dict(features=args.allen_features_sha256, sweeps=args.allen_sweeps_sha256))
-    report = measure(args.cache, allen=allen)
+    report = measure(args.cache, allen=allen, donor_features=donor_features)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2)+"\n", newline="\n")
     print(render(report))
