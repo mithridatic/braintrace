@@ -22,6 +22,10 @@ compared element by element. Recorded, in the variable's own units:
 
 ``plot`` draws the overlaid traces and the raw difference traces per variable for
 selected cells from ``sites.npz``.
+
+``run --mode parity`` runs the per-cell model (``fused=False``) and the fused model
+at the pinned timestep side by side instead of the timestep ladder, comparing the
+same variables (per-cell states concatenated in forest order).
 """
 
 import argparse
@@ -67,18 +71,22 @@ def _site_cvs(forest, records, cells):
     return sites
 
 
-def _variables(model):
-    """Named floating-point forest states with last axis n_cv or n_point, plus synapse conductances."""
+def _cell_variables(cell):
+    """Named floating-point states of one BrainCell cell (last axis n_cv or n_point), plus synapse ``g``."""
     import brainstate
     import brainunit as u
-    forest = model.forest
-    n_cv, n_point = forest.n_cv, forest.runtime.n_point
+    n_cv, n_point = cell.n_cv, cell.runtime.n_point
+    names = {}
+    for layout in cell.runtime.layouts:
+        declaration = cell.runtime.layout_mechanisms[layout.id]
+        names[f'layout_{layout.id}'] = getattr(declaration, 'instance_name', f'layout_{layout.id}')
     found = {}
-    for path, state in brainstate.graph.states(forest).items():
+    for path, state in brainstate.graph.states(cell).items():
         value = u.get_mantissa(state.value)
         if not hasattr(value, 'shape') or not np.issubdtype(np.asarray(value).dtype, np.floating):
             continue
-        name = '.'.join(str(p) for p in path if p not in ('ion_channels', 'channels', '_channel'))
+        parts = [names.get(str(p), str(p)) for p in path if p not in ('ion_channels', 'channels', '_channel')]
+        name = '.'.join(parts)
         if name in ('spike', '_current_time_state') or path[0] == '_source_cells':
             continue
         last = value.shape[-1] if value.ndim else None
@@ -89,10 +97,73 @@ def _variables(model):
     return found
 
 
-def _axial_rate(forest):
+def _variables(model):
+    """Named floating-point forest states with last axis n_cv or n_point, plus synapse conductances."""
+    return _cell_variables(model.forest)
+
+
+class _PerCellView:
+    """Read the per-cell model's states as forest-ordered arrays, variable by variable.
+
+    Parameters
+    ----------
+    model : H01ArcModel
+        Per-cell model (one population per cell, ``fused=False``).
+    template : dict
+        ``_variables`` of the fused model built from the same topology.
+    offsets : dict
+        Forest ``cv`` and ``point`` offsets.
+
+    Notes
+    -----
+    A cell without a mechanism contributes zeros and a ``present`` mask of
+    zeros for that variable; the fused forest holds those points at the
+    canonical initial state with zero density, so they are excluded from the
+    comparison.
+    """
+
+    def __init__(self, model, template, offsets):
+        self.model, self.offsets = model, offsets
+        self.cells = list(model.stepper.cells)
+        self.per_cell = [_cell_variables(cell) for cell in self.cells]
+        self.template = template
+        self.present = {}
+        for name, spec in template.items():
+            if spec['axis'] == 'contact':
+                continue
+            key = 'cv' if spec['axis'] == 'cv' else 'point'
+            mask = np.zeros(offsets[key][-1], dtype=bool)
+            for index, table in enumerate(self.per_cell):
+                if name in table:
+                    mask[offsets[key][index]:offsets[key][index+1]] = True
+            self.present[name] = mask
+
+    def values(self):
+        import jax.numpy as jnp
+        import brainunit as u
+        out = {}
+        for name, spec in self.template.items():
+            if spec['axis'] == 'contact':
+                for table in self.per_cell:
+                    if name in table:
+                        out[name] = u.get_mantissa(table[name]['state'].value)
+                        break
+                continue
+            pieces = []
+            for index, (cell, table) in enumerate(zip(self.cells, self.per_cell)):
+                size = cell.n_cv if spec['axis'] == 'cv' else cell.runtime.n_point
+                pieces.append(u.get_mantissa(table[name]['state'].value)[0] if name in table else jnp.zeros(size))
+            out[name] = jnp.concatenate(pieces)[None, :]
+        out['axial_rate'] = jnp.concatenate([_axial_rate(cell)[0] for cell in self.cells])[None, :]
+        out['syn_current'] = _synaptic_current(self.model)
+        return out
+
+
+def _axial_rate(cell):
     """Cable term of dV/dt per CV (mV/ms) from the DHS coefficients (midpoint rows only)."""
     import jax.numpy as jnp
     import brainunit as u
+    forest = cell
     source = forest.runtime.dhs_static_source_np
     point_v = u.get_mantissa(forest._cv_to_point_unchecked(forest.V.value).in_unit(u.mV)).reshape(-1)
     v = point_v[jnp.asarray(source.row_to_point_id_np)]   # DHS rows carry the boundary (algebraic) points too
@@ -107,25 +178,25 @@ def _synaptic_current(model):
     """Per-contact synaptic current (nA) = g (uS) * (V_post_point - E)."""
     import jax.numpy as jnp
     import brainunit as u
-    forest = model.forest
     currents = []
     for block in model.stepper.setup.delivery_blocks:
-        layout = forest.runtime.layouts[int(block.source.layout_id)]
-        node = forest.runtime.runtime_nodes[layout.id]
+        cell = model.forest if model.forest is not None else model.stepper.network.populations[block.source.post_population].cell
+        layout = cell.runtime.layouts[int(block.source.layout_id)]
+        node = cell.runtime.runtime_nodes[layout.id]
         point = int(layout.point_index[0])
-        cv = int(np.flatnonzero(forest.runtime.node_tree.cv_to_mid_node_id == point)[0])
+        cv = int(np.flatnonzero(cell.runtime.node_tree.cv_to_mid_node_id == point)[0])
         g = u.get_mantissa(node.g.value.in_unit(u.uS)).reshape(-1)[0]
-        e = float(u.get_mantissa(node.E.in_unit(u.mV)).reshape(-1)[0]) if hasattr(node, 'E') else 0.
-        currents.append(g*(forest.V.value.to_decimal(u.mV).reshape(-1)[cv]-e))
+        e = float(u.get_mantissa(node.e.in_unit(u.mV)).reshape(-1)[0]) if hasattr(node, 'e') else 0.
+        currents.append(g*(cell.V.value.to_decimal(u.mV).reshape(-1)[cv]-e))
     return jnp.stack(currents)[None, :] if currents else jnp.zeros((1, 0))
 
 
-def _build(args, dt_ms, settings, topology, archive, cells):
+def _build(args, dt_ms, settings, topology, archive, cells, fused=True):
     from braintrace.datasets.h01_network_init import init_h01_network_states
     from examples.pp_prop.h01_arc_model import H01ArcModel
     from examples.pp_prop.h01_runtime import build_network
     network, records = build_network(topology, archive, solver=settings['solver'],
-                                     max_cv_length_um=settings['max_cv_length_um'], fused=True)
+                                     max_cv_length_um=settings['max_cv_length_um'], fused=fused)
     init_h01_network_states(network)
     model = H01ArcModel(network, cells, seed=settings['seed'], dt_ms=dt_ms, checkpoint_substeps=False)
     return model, records
@@ -163,25 +234,39 @@ def _run(args):
         currents = json.loads(Path(args.currents).read_text())
         amplitude = jnp.asarray([float(currents[identity]) for identity in cells])
         archive = adapter._archive()
-        dts = (REFERENCE_DT,)+tuple(args.ladder)
+        if args.mode == 'ladder':
+            labels = {str(dt): dt for dt in (REFERENCE_DT,)+tuple(args.ladder)}
+            reference = str(REFERENCE_DT)
+            pairs = [(str(dt), reference) for dt in args.ladder]
+            if '0.005' in labels and '0.0025' in labels:
+                pairs.append(('0.005', '0.0025'))
+        else:
+            labels = {'percell': REFERENCE_DT, 'fused': REFERENCE_DT}
+            reference, pairs = 'percell', [('fused', 'percell')]
+        report['settings'].update(mode=args.mode, labels=labels, reference=reference, pairs=pairs)
         models = {}
-        for dt in dts:
-            models[dt], records = _build(args, dt, settings, topology, archive, cells)
-            print('built', dt, round(time.perf_counter()-started, 1), 's', flush=True)
+        for label, dt in labels.items():
+            models[label], records = _build(args, dt, settings, topology, archive, cells, fused=(label != 'percell'))
+            print('built', label, round(time.perf_counter()-started, 1), 's', flush=True)
         report['stages']['build_all'] = time.perf_counter()-started
-        report['compartments'] = int(models[REFERENCE_DT].forest.n_cv)
-        sites = _site_cvs(models[REFERENCE_DT].forest, records, cells)
+        fused_label = next(label for label in labels if label != 'percell')
+        forest0 = models[fused_label].forest
+        report['compartments'] = int(forest0.n_cv)
+        sites = _site_cvs(forest0, records, cells)
         report['sites'] = sites
-        report['forest_offsets'] = dict(cv=models[REFERENCE_DT].forest.forest_offsets.cv.tolist(),
-                                        point=models[REFERENCE_DT].forest.forest_offsets.point.tolist())
-        variables = {dt: _variables(model) for dt, model in models.items()}
-        names = list(variables[REFERENCE_DT])
-        report['variables'] = {name: dict(axis=variables[REFERENCE_DT][name]['axis'], unit=variables[REFERENCE_DT][name]['unit'],
-                                          shape=list(np.shape(u.get_mantissa(variables[REFERENCE_DT][name]['state'].value))))
+        report['forest_offsets'] = dict(cv=forest0.forest_offsets.cv.tolist(), point=forest0.forest_offsets.point.tolist())
+        template = _variables(models[fused_label])
+        views = {}
+        for label, model in models.items():
+            views[label] = _PerCellView(model, template, report['forest_offsets']) if label == 'percell' else None
+        names = list(template)
+        report['variables'] = {name: dict(axis=template[name]['axis'], unit=template[name]['unit'],
+                                          shape=list(np.shape(u.get_mantissa(template[name]['state'].value))))
                                for name in names}
-        report['variables']['axial_rate'] = dict(axis='cv', unit='mV/ms', shape=[1, models[REFERENCE_DT].forest.n_cv])
+        report['variables']['axial_rate'] = dict(axis='cv', unit='mV/ms', shape=[1, forest0.n_cv])
         report['variables']['syn_current'] = dict(axis='contact', unit='nA', shape=[1, args.contacts])
-        forest0 = models[REFERENCE_DT].forest
+        present = {name: mask for view in views.values() if view is not None for name, mask in view.present.items()}
+        report['percell_absent_positions'] = {name: int((~mask).sum()) for name, mask in present.items() if not mask.all()}
         point_of_cv = np.asarray(forest0.runtime.node_tree.cv_to_mid_node_id)
         site_index = {}
         for identity, row in sites.items():
@@ -190,27 +275,29 @@ def _run(args):
         site_cv = np.asarray([v['cv'] for v in site_index.values()])
         site_point = np.asarray([v['point'] for v in site_index.values()])
         report['site_order'] = [list(k) for k in site_index]
-        coarse_step = max(dts)   # the lockstep clock: every model lands here
-        ratios = {dt: int(round(coarse_step/dt)) for dt in dts}
+        coarse_step = max(labels.values())   # the lockstep clock: every model lands here
+        ratios = {label: int(round(coarse_step/dt)) for label, dt in labels.items()}
         steps = int(round(args.window_ms/coarse_step))
         frame_every = int(round(args.frame_ms/coarse_step))
-        delay_substeps = {dt: int(round(args.pulse_delay_ms/dt)) for dt in dts}
+        delay_substeps = {label: int(round(args.pulse_delay_ms/dt)) for label, dt in labels.items()}
 
-        def values(dt):
-            model = models[dt]
+        def values(label):
+            model = models[label]
+            if views[label] is not None:
+                return views[label].values()
             out = {}
-            for name, var in variables[dt].items():
+            for name, var in _variables(model).items():
                 out[name] = u.get_mantissa(var['state'].value)
             out['axial_rate'] = _axial_rate(model.forest)
             out['syn_current'] = _synaptic_current(model)
             return out
 
-        def advance(dt):
-            model = models[dt]
+        def advance(label):
+            model = models[label]
             def substep(_):
-                model.drive.value = jnp.where(model.stepper.tick.value >= delay_substeps[dt], amplitude, 0.)
+                model.drive.value = jnp.where(model.stepper.tick.value >= delay_substeps[label], amplitude, 0.)
                 model.stepper.update(sample_probes=False)
-            brainstate.transform.for_loop(substep, jnp.arange(ratios[dt]))
+            brainstate.transform.for_loop(substep, jnp.arange(ratios[label]))
 
         def gather(vals):
             out = {}
@@ -225,26 +312,26 @@ def _run(args):
             return out
 
         def step(_):
-            for dt in dts:
-                advance(dt)
-            current = {dt: values(dt) for dt in dts}
-            return {str(dt): gather(current[dt]) for dt in dts}
+            for label in labels:
+                advance(label)
+            current = {label: values(label) for label in labels}
+            return {label: gather(current[label]) for label in labels}
 
         def chunk(count):
             return brainstate.transform.for_loop(step, jnp.arange(count))
 
         chunks = {}
         def snapshot():
-            current = {dt: values(dt) for dt in dts}
+            current = {label: values(label) for label in labels}
             frame = {}
-            for name in current[REFERENCE_DT]:
-                frame[f'ref/{name}'] = np.asarray(current[REFERENCE_DT][name], dtype=np.float32)[0]
-            for dt in args.ladder:
-                for name in current[dt]:
-                    frame[f'{dt}-vs-ref/{name}'] = np.asarray(current[dt][name]-current[REFERENCE_DT][name], dtype=np.float32)[0]
-            for name in current[.005]:
-                if .005 in dts and .0025 in dts:
-                    frame[f'0.005-vs-0.0025/{name}'] = np.asarray(current[.005][name]-current[.0025][name], dtype=np.float32)[0]
+            for name in current[reference]:
+                frame[f'ref/{name}'] = np.asarray(current[reference][name], dtype=np.float32)[0]
+            for other, base in pairs:
+                for name in current[other]:
+                    delta = np.asarray(current[other][name]-current[base][name], dtype=np.float32)[0]
+                    if name in present:
+                        delta = np.where(present[name], delta, 0.)
+                    frame[f'{other}-vs-{base}/{name}'] = delta
             return frame
         frames, frame_times, site_traces = [], [], []
         frames.append(snapshot()); frame_times.append(0.)
@@ -266,19 +353,20 @@ def _run(args):
         report['stages']['lockstep_seconds'] = time.perf_counter()-stage_started
         merged = jax.tree.map(lambda *xs: np.concatenate(xs), *site_traces)
         site_time = (np.arange(steps)+1)*coarse_step
-        end_values = {str(dt): {name: np.asarray(u.get_mantissa(v), dtype=np.float64)[0] for name, v in values(dt).items()} for dt in dts}
+        end_values = {label: {name: np.asarray(u.get_mantissa(v), dtype=np.float64)[0] for name, v in values(label).items()}
+                      for label in labels}
     np.savez_compressed(args.output/'sites.npz', time_ms=site_time, site_cv=site_cv, site_point=site_point,
-        **{f'{dt}/{name}': merged[dt][name] for dt in merged for name in merged[dt]})
+        **{f'{label}/{name}': merged[label][name] for label in merged for name in merged[label]})
     stacked = {key: np.stack([frame[key] for frame in frames]) for key in frames[0]}
     np.savez_compressed(args.output/'frames.npz', time_ms=np.asarray(frame_times), **stacked)
     report['ranges'] = {key.split('/', 1)[1]: float(value.max()-value.min()) for key, value in stacked.items() if key.startswith('ref/')}
     stacked = {key: value for key, value in stacked.items() if not key.startswith('ref/')}
-    np.savez_compressed(args.output/'end_values.npz', **{f'{dt}/{name}': value for dt, row in end_values.items() for name, value in row.items()})
+    np.savez_compressed(args.output/'end_values.npz', **{f'{label}/{name}': value for label, row in end_values.items() for name, value in row.items()})
     report['files'] = {name: dict(sha256=hashlib.sha256((args.output/name).read_bytes()).hexdigest(), bytes=(args.output/name).stat().st_size)
                        for name in ('sites.npz', 'frames.npz', 'end_values.npz')}
     soma_rows = [i for i, key in enumerate(site_index) if key[1] == 'soma']
-    report['spikes'] = {str(dt): {cells[j]: spike_times(merged[str(dt)]['V'][:, row], coarse_step).tolist()
-                                  for j, row in enumerate(soma_rows)} for dt in dts}
+    report['spikes'] = {label: {cells[j]: spike_times(merged[label]['V'][:, row], coarse_step).tolist()
+                                for j, row in enumerate(soma_rows)} for label in labels}
     report['index'] = index_table(report, stacked, np.asarray(frame_times), end_values, cells, sites, point_of_cv)
     report['status'] = 'pass'
     save()
@@ -321,14 +409,14 @@ def index_table(report, stacked, frame_times, end_values, cells, sites, point_of
         variable's own units.
     """
     offsets = report['forest_offsets']
-    reference = end_values[str(REFERENCE_DT)]
+    reference = end_values[report['settings']['reference']]
     table = {}
     for key, frames in stacked.items():
         pair, name = key.split('/', 1)
         axis = report['variables'][name]['axis']
         owner = _cell_of_positions(axis, offsets, frames.shape[1], sites, cells, point_of_cv)
         near = np.zeros(frames.shape, dtype=bool)
-        spikes = report['spikes'][str(REFERENCE_DT)]
+        spikes = report['spikes'][report['settings']['reference']]
         for index, identity in enumerate(cells):
             times = np.asarray(spikes.get(identity, []))
             if not len(times):
@@ -364,12 +452,12 @@ def _plot(args):
     sites = np.load(args.output/'sites.npz')
     order = [tuple(k) for k in report['site_order']]
     time_ms = sites['time_ms']
-    dts = [REFERENCE_DT]+list(report['settings']['ladder_dt_ms'])
+    dts = list(report['settings']['labels'])
     names = [n for n in report['variables'] if report['variables'][n]['axis'] != 'contact']
     contact_names = [n for n in report['variables'] if report['variables'][n]['axis'] == 'contact']
     args.plots.mkdir(parents=True, exist_ok=True)
     for identity in args.cells or report['cells']:
-        for pair in [(dt, REFERENCE_DT) for dt in report['settings']['ladder_dt_ms']]+[(.005, .0025)]:
+        for pair in [tuple(p) for p in report['settings']['pairs']]:
             fig, axes = plt.subplots(len(names), 3, figsize=(15, 2.2*len(names)), sharex=True, squeeze=False)
             for row, name in enumerate(names):
                 for col, site in enumerate(('soma', 'ais', 'distal')):
@@ -377,8 +465,8 @@ def _plot(args):
                     ax = axes[row, col]
                     a = sites[f'{pair[1]}/{name}'][:, index]
                     b = sites[f'{pair[0]}/{name}'][:, index]
-                    ax.plot(time_ms, a, lw=.8, label=f'dt {pair[1]}')
-                    ax.plot(time_ms, b, lw=.8, ls='--', label=f'dt {pair[0]}')
+                    ax.plot(time_ms, a, lw=.8, label=str(pair[1]))
+                    ax.plot(time_ms, b, lw=.8, ls='--', label=str(pair[0]))
                     twin = ax.twinx()
                     twin.plot(time_ms, b-a, lw=.6, color='crimson', alpha=.7)
                     twin.set_ylabel('diff', color='crimson', fontsize=7)
@@ -390,16 +478,16 @@ def _plot(args):
                     ax.tick_params(labelsize=6)
             axes[0, 0].legend(fontsize=7)
             axes[-1, 0].set_xlabel('ms')
-            fig.suptitle(f'{identity}: dt {pair[0]} against dt {pair[1]} ms, overlay and raw difference (own units)', fontsize=10)
+            fig.suptitle(f'{identity}: {pair[0]} against {pair[1]}, overlay and raw difference (own units)', fontsize=10)
             fig.tight_layout()
-            fig.savefig(args.plots/f'{identity}-dt{pair[0]}-vs-{pair[1]}.png', dpi=110)
+            fig.savefig(args.plots/f'{identity}-{pair[0]}-vs-{pair[1]}.png', dpi=110)
             plt.close(fig)
     if contact_names:
         fig, axes = plt.subplots(len(contact_names), 1, figsize=(12, 2.5*len(contact_names)), squeeze=False)
         for row, name in enumerate(contact_names):
             ax = axes[row, 0]
             for dt in dts:
-                ax.plot(time_ms, sites[f'{dt}/{name}'], lw=.7, label=f'dt {dt}')
+                ax.plot(time_ms, sites[f'{dt}/{name}'], lw=.7, label=str(dt))
             ax.set_ylabel(f'{name} [{report["variables"][name]["unit"]}]', fontsize=7)
         axes[0, 0].legend(fontsize=7)
         fig.tight_layout()
@@ -416,6 +504,8 @@ def _parser():
     run.add_argument('--currents', type=Path, default=Path('docs/evidence/h01-keep-drop/kept-currents.json'))
     run.add_argument('--output', type=Path, required=True)
     run.add_argument('--ladder', type=float, nargs='+', default=list(LADDER))
+    run.add_argument('--mode', choices=('ladder', 'parity'), default='ladder',
+                     help='ladder: fused model at each timestep; parity: per-cell against fused at the pinned timestep')
     run.add_argument('--window-ms', type=float, default=40.)
     run.add_argument('--frame-ms', type=float, default=.5)
     run.add_argument('--pulse-delay-ms', type=float, default=2.)
