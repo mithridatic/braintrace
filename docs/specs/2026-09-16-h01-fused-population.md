@@ -186,17 +186,20 @@ first suspects. Expected 2x on memory-bound kernels, 1x on launch-bound ones.
 
 ## 5. Files and manifest consequence
 
-New: `braintrace/datasets/h01_forest_discretization.py`, `h01_forest_cell.py`,
-`h01_dhs_forest.py`, `h01_forest_solver.py`, `h01_forest_delivery.py`, `h01_forest_state.py`
-(lever 3), each with a co-located `_test.py`; `docs/evidence/h01_dt_spike_window.py`.
+New (on the branch): `braintrace/datasets/h01_forest_discretization.py`, `h01_forest_cell.py`,
+`h01_dhs_forest.py`, each with a co-located `_test.py`; `docs/evidence/h01_dt_spike_window.py`.
 Changed: `examples/pp_prop/h01_runtime.py` (`build_network(..., fused=)`),
-`h01_session.py` (`fused_population`, dt), `h01_arc_model.py` (fused drive/soma routing),
-`braintrace/datasets/h01_pv_channels.py` (`_on_param_updated`), `h01_pv_calcium.py` (per-point
-constants already supported). Every one of these is in `implementation_sha256`
-(`h01_session.py`, `_numerical_settings_cached`: all `braintrace/datasets/h01*.py`), so any
-edit forces a manifest rebuild; the kept manifest is rebuilt once with
-`examples/h01_arc_manifest.py` after the last edit of the campaign, and the pinned
-comparison run is the per-cell path under the same rebuilt manifest.
+`h01_session.py` (`fused_population`, default False), `h01_arc_model.py` (fused drive/soma
+routing), `braintrace/datasets/h01_dhs_scan.py` (forest schedule hook in `_voltage_step`),
+`h01_pv_channels.py` (`_on_param_updated`). Deferred to lever 3: `h01_forest_delivery.py`
+(contacts on the fused path) and `h01_forest_state.py` (capacity-padded states). Every
+changed or added file is in `implementation_sha256` (`h01_session.py`,
+`_numerical_settings_cached`: all `braintrace/datasets/h01*.py`), so the kept manifest
+`docs/evidence/h01-keep-drop/arc-manifest/manifest.json` was rebuilt with
+`examples/h01_arc_manifest.py --cells docs/evidence/h01-keep-drop/decision.json` on the
+branch (topology unchanged; only the hashes and the new `fused_population: false` key
+differ); `H01Session.build` validates against it. Any further runtime edit repeats that
+rebuild.
 
 ## 6. Results of this campaign
 
