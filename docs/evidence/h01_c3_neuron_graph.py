@@ -224,11 +224,11 @@ def pending_shards(listing, progress, cache=CACHE):
     return [s for s in sorted(listing) if s not in done]
 
 
-def merge_parts(shards, out=GRAPH, cache=CACHE, progress=None):
-    """Concatenate the part files in shard order into one gzip JSON document."""
+def merge_parts(shards, out=GRAPH, cache=CACHE, progress=None, columns=COLUMNS):
+    """Concatenate the part files in shard order into one gzip JSON document (``columns`` header, then ``rows``)."""
     rows = 0
     with gzip.open(out, "wt", encoding="utf-8", compresslevel=6) as f:
-        f.write('{"columns":' + json.dumps(list(COLUMNS)) + ',"rows":[')
+        f.write('{"columns":' + json.dumps(list(columns)) + ',"rows":[')
         first = True
         for shard in shards:
             part = json.loads(part_path(shard, cache).read_text(encoding="utf-8"))
@@ -241,8 +241,15 @@ def merge_parts(shards, out=GRAPH, cache=CACHE, progress=None):
             "rows": rows, "bytes": Path(out).stat().st_size, "sha256": sha256_path(out)}
 
 
-def run(workers, downloads, listing, neuron_ids, progress, cache=CACHE, wall_limit=WALL_LIMIT_S):
-    """Drive the download threads and scan processes until the queue is empty or a guard trips."""
+def run(workers, downloads, listing, neuron_ids, progress, cache=CACHE, wall_limit=WALL_LIMIT_S,
+        scan=scan_shard, progress_path=PROGRESS):
+    """Drive the download threads and scan processes until the queue is empty or a guard trips.
+
+    ``scan(path, shard, neuron_ids, cache)`` runs in a worker process and returns
+    the shard receipt; ``neuron_ids`` is passed through opaquely, so a caller may
+    hand a different scan function its own keep context (``h01_c3_kept_partner_graph``).
+    ``progress_path`` is where the checkpoint is rewritten after every shard.
+    """
     queue = collections.deque(pending_shards(listing, progress, cache))
     start = time.monotonic()
     wall_prior = progress.get("wall_seconds", 0.0)
@@ -253,7 +260,7 @@ def run(workers, downloads, listing, neuron_ids, progress, cache=CACHE, wall_lim
         progress["stopped_reason"] = reason
         progress["wall_seconds"] = round(wall_prior + time.monotonic() - start, 3)
         progress["totals"] = totals(progress["shards"])
-        write_json(PROGRESS, progress)
+        write_json(progress_path, progress)
 
     reason = None
     spawn = multiprocessing.get_context("spawn")  # fork would copy a live curl's pipe fds into the workers
@@ -278,7 +285,7 @@ def run(workers, downloads, listing, neuron_ids, progress, cache=CACHE, wall_lim
                     if path is None:
                         reason = reason or f"download of {shard} failed twice: {dl}"
                         continue
-                    scan_futs[scan_pool.submit(scan_shard, str(path), shard, neuron_ids, cache)] = (shard, dl, path)
+                    scan_futs[scan_pool.submit(scan, str(path), shard, neuron_ids, cache)] = (shard, dl, path)
                 else:
                     shard, dl, path = scan_futs.pop(fut)
                     try:

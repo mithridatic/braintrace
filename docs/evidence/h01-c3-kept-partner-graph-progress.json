@@ -1,0 +1,4289 @@
+{
+ "scope": "H01 C3 synapse export (166 Avro shards) reduced to rows between a kept proofread cell (base-segment ownership or kept C3 id) and a tabulated C3 neuron, or between two kept cells; shards deleted after scanning",
+ "source_prefix": "https://storage.googleapis.com/h01-release/data/20210729/c3/synapses/exported/",
+ "input_hashes": {
+  "docs/evidence/h01-c3-export-listing.json": "b32d3a915944c7e1137548b960eb5b0f0022b16f21f755e34557106ec92d7ccb",
+  "docs/evidence/h01-c3-cell-table.json": "291518be8af54708a816d4e8f44a83e5d8d00505060880b81111594d08860d98",
+  "docs/evidence/h01-cellmatrix-mapping-audit.json": "0df4a3d64103758af4f14eeb2fff3134e94b7c49996ff0d5c3fe141525b1f46b",
+  ".cache/h01/proofread-base-membership.json": "3201df49269d31b8e788a91607f5b07ed14c3f0d7cd2dfbae7d51fef3c287a9f"
+ },
+ "columns": [
+  "pre_owner",
+  "post_owner",
+  "pre_c3",
+  "post_c3",
+  "type",
+  "x",
+  "y",
+  "z",
+  "pre_class",
+  "post_class",
+  "confidence",
+  "shard",
+  "index"
+ ],
+ "kinds": [
+  "kept_to_kept",
+  "same_cell",
+  "kept_to_tabulated",
+  "tabulated_to_kept"
+ ],
+ "units": {
+  "type": "1 inhibitory, 2 excitatory",
+  "xyz": "8/8/33 nm voxels",
+  "shard": "integer N of export{N:012d}",
+  "index": "record index within the shard",
+  "confidence": "rounded to 4 decimals",
+  "owner": "kept released id"
+ },
+ "kept_released_ids": [
+  1669770671,
+  1684504313,
+  2001418787,
+  2103991145,
+  2252715458,
+  2848552900,
+  3111823553,
+  3571083397,
+  3761379470,
+  4010150634,
+  4197933517,
+  4437316933,
+  5013648003,
+  5173982155,
+  5439194879,
+  6833911543,
+  751294744
+ ],
+ "workers": 6,
+ "shards_total": 166,
+ "shards": [
+  {
+   "id": "export000000000000",
+   "bytes": 197344616,
+   "sha256": "e6176e0c282a408faa4c804bd63ab50998143f7203d0937cde13746b427123cd",
+   "records": 998235,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 188
+   },
+   "scan_seconds": 35.322,
+   "download_seconds": 6.353
+  },
+  {
+   "id": "export000000000001",
+   "bytes": 197434059,
+   "sha256": "76c9edfbd4e34ed6fad206173ee2238586ebc404fedea68a5967b30ed44d716d",
+   "records": 998694,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 206
+   },
+   "scan_seconds": 35.093,
+   "download_seconds": 6.284
+  },
+  {
+   "id": "export000000000002",
+   "bytes": 197615584,
+   "sha256": "55e1148cb8e11e359d58d3f290e2b93d7f167f14df0853d6cd2388c637a5550c",
+   "records": 999623,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 181
+   },
+   "scan_seconds": 36.125,
+   "download_seconds": 6.792
+  },
+  {
+   "id": "export000000000003",
+   "bytes": 197572341,
+   "sha256": "5a2bc4329511897c1cafe277046c14151308a23b6a718514c3baa4c02a136740",
+   "records": 999391,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 203
+   },
+   "scan_seconds": 36.145,
+   "download_seconds": 6.724
+  },
+  {
+   "id": "export000000000004",
+   "bytes": 197453479,
+   "sha256": "60d7318ce18427afa43139036f865e818654c9f22b40796603245689326791d7",
+   "records": 998795,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 210
+   },
+   "scan_seconds": 35.698,
+   "download_seconds": 6.57
+  },
+  {
+   "id": "export000000000005",
+   "bytes": 197468963,
+   "sha256": "a8faffd3374ab6fda1388387e7357f66d146bdaf3caae1d4b587a146b6002450",
+   "records": 998857,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 188
+   },
+   "scan_seconds": 34.793,
+   "download_seconds": 6.26
+  },
+  {
+   "id": "export000000000006",
+   "bytes": 197543486,
+   "sha256": "2d4c57b4dc0bb67877e7fe69e36d1b8ee47b8de070bac9649ad9e056405c7f46",
+   "records": 999223,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 185
+   },
+   "scan_seconds": 35.225,
+   "download_seconds": 6.928
+  },
+  {
+   "id": "export000000000007",
+   "bytes": 197567224,
+   "sha256": "bf4b33ef8fa7852b54cb78507e2ba2d354064cb501391aa0dcd15a0fac7504a0",
+   "records": 999368,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 210
+   },
+   "scan_seconds": 35.556,
+   "download_seconds": 8.081
+  },
+  {
+   "id": "export000000000008",
+   "bytes": 197601675,
+   "sha256": "4d5cf3131b11edd038af3ee76d76bbbbfb88c8d2fc26f628274d70d0d775bb83",
+   "records": 999533,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 214
+   },
+   "scan_seconds": 36.218,
+   "download_seconds": 6.585
+  },
+  {
+   "id": "export000000000009",
+   "bytes": 197625536,
+   "sha256": "c72f5739d8cee0442db8952f0491262ff4f06e38dcb2003c64e1bd086c000302",
+   "records": 999666,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 209
+   },
+   "scan_seconds": 36.712,
+   "download_seconds": 6.327
+  },
+  {
+   "id": "export000000000010",
+   "bytes": 197672557,
+   "sha256": "2d4672aa182deadea5c0a26dac48cfb7e900d18a628e3286cc21ef199c57a60f",
+   "records": 999870,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 190
+   },
+   "scan_seconds": 35.0,
+   "download_seconds": 7.354
+  },
+  {
+   "id": "export000000000011",
+   "bytes": 197655588,
+   "sha256": "75deaa731afde5976267046660545257b72f9997c5237303fc1d0bcf7ab13a69",
+   "records": 999780,
+   "kept": 5,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 3,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 223
+   },
+   "scan_seconds": 36.289,
+   "download_seconds": 7.363
+  },
+  {
+   "id": "export000000000012",
+   "bytes": 197628022,
+   "sha256": "164dd70196c392a290ed0a12273afbfc2219c403f60fff9cda211175e39e676d",
+   "records": 999656,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 189
+   },
+   "scan_seconds": 35.309,
+   "download_seconds": 6.434
+  },
+  {
+   "id": "export000000000013",
+   "bytes": 197686883,
+   "sha256": "8f4e60003e2583d6d1a741baf2698188289e847a4bec618dff47dd827985bca0",
+   "records": 999967,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 2
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 209
+   },
+   "scan_seconds": 35.548,
+   "download_seconds": 6.447
+  },
+  {
+   "id": "export000000000014",
+   "bytes": 197664969,
+   "sha256": "c7bffcdb93b0d0b161b18f1c84fcccf7b7fcda00c2764776a089a33ce0cc8c9d",
+   "records": 999843,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 215
+   },
+   "scan_seconds": 36.249,
+   "download_seconds": 6.988
+  },
+  {
+   "id": "export000000000015",
+   "bytes": 197659603,
+   "sha256": "23189269fe462489c83e6bdfcc49039a01744f53a0bd6fe8147742d086fdf142",
+   "records": 999814,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 191
+   },
+   "scan_seconds": 36.534,
+   "download_seconds": 6.519
+  },
+  {
+   "id": "export000000000016",
+   "bytes": 197701091,
+   "sha256": "0b96fb04fe7705d3d6bb88358c53759a20e90064225e94c015d6676df1303ca3",
+   "records": 1000051,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 218
+   },
+   "scan_seconds": 34.882,
+   "download_seconds": 6.502
+  },
+  {
+   "id": "export000000000017",
+   "bytes": 197681667,
+   "sha256": "b883a796fc216ba54bf2899936fba86b206c529bbb59aebd995d96beb4e2c3ba",
+   "records": 999943,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 3,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 214
+   },
+   "scan_seconds": 36.087,
+   "download_seconds": 6.29
+  },
+  {
+   "id": "export000000000018",
+   "bytes": 197666864,
+   "sha256": "343dfd1c115378a3dd5c25ce59553746aa4ccdfaf75b898fd7c2e241b3ae8344",
+   "records": 999853,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 195
+   },
+   "scan_seconds": 35.338,
+   "download_seconds": 6.566
+  },
+  {
+   "id": "export000000000019",
+   "bytes": 197656054,
+   "sha256": "a6e98242a66d4eaaf02cc6c90c507e6928b22cee788bbeb070c974309faa8c44",
+   "records": 999836,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 193
+   },
+   "scan_seconds": 35.348,
+   "download_seconds": 6.686
+  },
+  {
+   "id": "export000000000020",
+   "bytes": 197719846,
+   "sha256": "9d6ae5006f05fa5570df02fb20e25e1c111c8c941a9fdb6378bea113022571f4",
+   "records": 1000104,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 211
+   },
+   "scan_seconds": 36.094,
+   "download_seconds": 6.368
+  },
+  {
+   "id": "export000000000021",
+   "bytes": 197720092,
+   "sha256": "8807f7dab15dda5fc698af581cdd05b16247210e21064c579975b8d82819df03",
+   "records": 1000132,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 226
+   },
+   "scan_seconds": 36.74,
+   "download_seconds": 6.51
+  },
+  {
+   "id": "export000000000022",
+   "bytes": 197719232,
+   "sha256": "75f82fa2942eca9ea228faf6625f79a125c2438f50ecd15f400f37513f4976e3",
+   "records": 1000123,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 149
+   },
+   "scan_seconds": 34.868,
+   "download_seconds": 6.327
+  },
+  {
+   "id": "export000000000023",
+   "bytes": 197735503,
+   "sha256": "5cabcc3e4a0004082fac683ee4fad78246153b75dde0839c5d22eb3314177e7d",
+   "records": 1000228,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 224
+   },
+   "scan_seconds": 36.142,
+   "download_seconds": 7.477
+  },
+  {
+   "id": "export000000000024",
+   "bytes": 197725136,
+   "sha256": "affef0c2fc801a78efed931eaf5c4e4944d594b224e824934afa34a219ac7f38",
+   "records": 1000137,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 206
+   },
+   "scan_seconds": 35.375,
+   "download_seconds": 6.576
+  },
+  {
+   "id": "export000000000025",
+   "bytes": 197774248,
+   "sha256": "40f21ef975e7453185b887accd5bb49f74c53899c2eb22c41d6a709690982831",
+   "records": 1000410,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 200
+   },
+   "scan_seconds": 35.489,
+   "download_seconds": 6.257
+  },
+  {
+   "id": "export000000000026",
+   "bytes": 197771634,
+   "sha256": "2e08d0654dc5dde10b70a623bf16f5ce7f4b9f37cd6d9bc5615cf7f85d4c58d3",
+   "records": 1000420,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 195
+   },
+   "scan_seconds": 36.478,
+   "download_seconds": 7.354
+  },
+  {
+   "id": "export000000000027",
+   "bytes": 197759867,
+   "sha256": "d9482179fb741d4b6e440aaf9c9ab104b365e768c235c5a409d09fb6d914fddf",
+   "records": 1000312,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 199
+   },
+   "scan_seconds": 36.437,
+   "download_seconds": 7.414
+  },
+  {
+   "id": "export000000000028",
+   "bytes": 197717596,
+   "sha256": "9c4c573c486c42b0b4789bfbda7efbd3697c8f95c4db6d56c3d2e64a3571c95b",
+   "records": 1000117,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 198
+   },
+   "scan_seconds": 34.944,
+   "download_seconds": 7.356
+  },
+  {
+   "id": "export000000000029",
+   "bytes": 197776928,
+   "sha256": "2cbd701a4033d4ce24788c3b04f1616cad7dcd6e4c0b2a79f750db6f59d4f451",
+   "records": 1000401,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 211
+   },
+   "scan_seconds": 36.016,
+   "download_seconds": 7.012
+  },
+  {
+   "id": "export000000000030",
+   "bytes": 197753774,
+   "sha256": "ec14a62b5adabf764798b85e91e9313bf14b892fae3c80aafde5fe59b09af6c0",
+   "records": 1000307,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 190
+   },
+   "scan_seconds": 35.362,
+   "download_seconds": 6.769
+  },
+  {
+   "id": "export000000000031",
+   "bytes": 197774715,
+   "sha256": "882b77e0486de679243de479df4b3c34361d64e67628d772711d8f9dbc176d6c",
+   "records": 1000426,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 195
+   },
+   "scan_seconds": 35.496,
+   "download_seconds": 7.665
+  },
+  {
+   "id": "export000000000032",
+   "bytes": 197761910,
+   "sha256": "0b334040000fb7a86684ee0af520bf14e3e40bc8c1aea5deda7ac6dba6ddec1c",
+   "records": 1000345,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 187
+   },
+   "scan_seconds": 36.282,
+   "download_seconds": 6.418
+  },
+  {
+   "id": "export000000000033",
+   "bytes": 197803491,
+   "sha256": "76c09d81b3c04cd4f983d86818724c57dfbb59da16719ea1c568857df035c1fa",
+   "records": 1000565,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 196
+   },
+   "scan_seconds": 36.281,
+   "download_seconds": 6.527
+  },
+  {
+   "id": "export000000000034",
+   "bytes": 197814749,
+   "sha256": "77c1ebc76704a9101a910db55c8cb69b52ff6efc86d845a1e4e2b8044a8da8fe",
+   "records": 1000629,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 217
+   },
+   "scan_seconds": 35.039,
+   "download_seconds": 6.344
+  },
+  {
+   "id": "export000000000035",
+   "bytes": 197838970,
+   "sha256": "753426ef199b9343bd84ba5d836f8e7e264fc57a29b94a2cfd713f922b5880c2",
+   "records": 1000770,
+   "kept": 5,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 200
+   },
+   "scan_seconds": 36.58,
+   "download_seconds": 6.422
+  },
+  {
+   "id": "export000000000036",
+   "bytes": 197772588,
+   "sha256": "7727d71ba162e146d2f556720de2a723be25cec3e2e4d5e249899b232a7351bd",
+   "records": 1000371,
+   "kept": 8,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 5
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 2
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 205
+   },
+   "scan_seconds": 35.324,
+   "download_seconds": 6.856
+  },
+  {
+   "id": "export000000000037",
+   "bytes": 197771582,
+   "sha256": "a01f4b620989721db761c1dd06749c3196ca93007f5211a65f2d1053304cb187",
+   "records": 1000415,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 185
+   },
+   "scan_seconds": 35.76,
+   "download_seconds": 7.122
+  },
+  {
+   "id": "export000000000038",
+   "bytes": 197786546,
+   "sha256": "de24203e6ab9aeeba43273ffce0ebd090205a81bf77628cb80857812355acbd5",
+   "records": 1000451,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 189
+   },
+   "scan_seconds": 36.141,
+   "download_seconds": 7.441
+  },
+  {
+   "id": "export000000000039",
+   "bytes": 197872271,
+   "sha256": "e7a00cafd783429b330a9635955df0d5cf4da0c3a7a6063eacc116d97438d674",
+   "records": 1000896,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 1,
+    "post_kept": 193
+   },
+   "scan_seconds": 36.671,
+   "download_seconds": 6.955
+  },
+  {
+   "id": "export000000000040",
+   "bytes": 197824417,
+   "sha256": "a64b4fc84959bc238ae12ebca636406b4bd754556496efaa373a18f6c316c23d",
+   "records": 1000681,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 196
+   },
+   "scan_seconds": 34.911,
+   "download_seconds": 7.493
+  },
+  {
+   "id": "export000000000041",
+   "bytes": 197796506,
+   "sha256": "0a44cfc7013cdf810e6091c6d82d24b610a024f76ad9d9af5c45a3e39f1f05b7",
+   "records": 1000500,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 4,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 199
+   },
+   "scan_seconds": 35.967,
+   "download_seconds": 6.782
+  },
+  {
+   "id": "export000000000042",
+   "bytes": 197788590,
+   "sha256": "9499443a4ca2bb4701d40cb1ab91511545a25814ea35c5168469dc9dec295adb",
+   "records": 1000487,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 210
+   },
+   "scan_seconds": 35.276,
+   "download_seconds": 7.762
+  },
+  {
+   "id": "export000000000043",
+   "bytes": 197886712,
+   "sha256": "1e2058754827b35bba91cafa5d40b6eacf1b5c725f673588107cdeb54274302a",
+   "records": 1001027,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 194
+   },
+   "scan_seconds": 35.144,
+   "download_seconds": 6.375
+  },
+  {
+   "id": "export000000000044",
+   "bytes": 197818345,
+   "sha256": "ff0cf111846aecfb717d11a48053799c9585e958ba114dc54e574ff9a5dc70d2",
+   "records": 1000607,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 173
+   },
+   "scan_seconds": 36.061,
+   "download_seconds": 6.695
+  },
+  {
+   "id": "export000000000045",
+   "bytes": 197833985,
+   "sha256": "cab2a86a72fbf3dfa42c8aa94e2e771f0131d3ff10365d013ebfbfcaa922ff28",
+   "records": 1000679,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 189
+   },
+   "scan_seconds": 36.162,
+   "download_seconds": 6.671
+  },
+  {
+   "id": "export000000000046",
+   "bytes": 197840386,
+   "sha256": "e516ddbd2dd52b404b07cd7834b86db046ab9d1c53d61973c119652a3311f5b9",
+   "records": 1000706,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 183
+   },
+   "scan_seconds": 34.638,
+   "download_seconds": 7.014
+  },
+  {
+   "id": "export000000000047",
+   "bytes": 197819303,
+   "sha256": "38a9636b73fd0edeab368ded06baf94ba9a699b0ab429a82258789106792c1e8",
+   "records": 1000664,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 195
+   },
+   "scan_seconds": 35.615,
+   "download_seconds": 6.483
+  },
+  {
+   "id": "export000000000048",
+   "bytes": 197869845,
+   "sha256": "aafa667100e916e07305f0da20fd28104aaca154cb479e8b5342bd642e812748",
+   "records": 1000924,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 188
+   },
+   "scan_seconds": 35.055,
+   "download_seconds": 6.328
+  },
+  {
+   "id": "export000000000049",
+   "bytes": 197815725,
+   "sha256": "e1c1777844f82a30c7b6db9c5c7259eb191fa7d90bb90712f16c2ae084d4bc21",
+   "records": 1000656,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 206
+   },
+   "scan_seconds": 35.341,
+   "download_seconds": 6.58
+  },
+  {
+   "id": "export000000000050",
+   "bytes": 197832221,
+   "sha256": "1b1acf723e080efe36ecf22c9aaf701c9f46114d79a642ff209d514cb2ddb523",
+   "records": 1000721,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 196
+   },
+   "scan_seconds": 36.21,
+   "download_seconds": 6.361
+  },
+  {
+   "id": "export000000000051",
+   "bytes": 197813866,
+   "sha256": "a9c674f5aa5380fb151d60a03ba58d5e4188e975be79a2f77bb4c936c44e8cba",
+   "records": 1000649,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 213
+   },
+   "scan_seconds": 36.556,
+   "download_seconds": 6.417
+  },
+  {
+   "id": "export000000000052",
+   "bytes": 197823726,
+   "sha256": "db3adb00cd26ad613e9442d7d9dc475e675b20e653a4a06436bcf603b8cecd37",
+   "records": 1000657,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 3
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 193
+   },
+   "scan_seconds": 34.837,
+   "download_seconds": 7.151
+  },
+  {
+   "id": "export000000000053",
+   "bytes": 197791201,
+   "sha256": "130c69fa9f7a01cba1ef69c161faed3110d940b6bc27d8556b2df03361264c13",
+   "records": 1000513,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 14,
+    "post_kept": 202
+   },
+   "scan_seconds": 35.765,
+   "download_seconds": 6.451
+  },
+  {
+   "id": "export000000000054",
+   "bytes": 197835569,
+   "sha256": "083c22276040b9426a4c82a88c6e1a261b195b72d337395bc6d99eee3b197c38",
+   "records": 1000714,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 205
+   },
+   "scan_seconds": 35.083,
+   "download_seconds": 6.545
+  },
+  {
+   "id": "export000000000055",
+   "bytes": 197823448,
+   "sha256": "f5190f1d5bfbe1d11512a18ec5a1b0e131486c5d036d1ac992bc7eda10f7316a",
+   "records": 1000660,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 205
+   },
+   "scan_seconds": 36.341,
+   "download_seconds": 8.09
+  },
+  {
+   "id": "export000000000056",
+   "bytes": 197829769,
+   "sha256": "2d593a7ec9616273832ad09b6caadcc10787628da4fbfd50fa189263da8f5362",
+   "records": 1000690,
+   "kept": 5,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 4,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 11,
+    "post_kept": 202
+   },
+   "scan_seconds": 36.276,
+   "download_seconds": 7.086
+  },
+  {
+   "id": "export000000000057",
+   "bytes": 197869881,
+   "sha256": "bdcd406c70755e3c6d0bd510ff8077934cbf068411121b8ac6bf838a45431344",
+   "records": 1000874,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 210
+   },
+   "scan_seconds": 36.03,
+   "download_seconds": 6.486
+  },
+  {
+   "id": "export000000000058",
+   "bytes": 197883956,
+   "sha256": "f5644bdc28e20910f8880b800753d780013ef4739106b63cd091e84d9d476edf",
+   "records": 1000932,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 169
+   },
+   "scan_seconds": 34.713,
+   "download_seconds": 7.438
+  },
+  {
+   "id": "export000000000059",
+   "bytes": 197872640,
+   "sha256": "a474ff2052e8c2f16f0ba041e1da398c43ca2183368d8b68b302b981949b0f75",
+   "records": 1000898,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 194
+   },
+   "scan_seconds": 35.813,
+   "download_seconds": 7.7
+  },
+  {
+   "id": "export000000000060",
+   "bytes": 197877017,
+   "sha256": "74f704a0155727986723ca75d7eab1ccd43605f7cfcda89a86da0ace9d2521c8",
+   "records": 1000910,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 198
+   },
+   "scan_seconds": 35.259,
+   "download_seconds": 6.321
+  },
+  {
+   "id": "export000000000061",
+   "bytes": 197851979,
+   "sha256": "d3de3a4e68dba5d4e048b342e89534106dd7a4cf7a5382f9ee0cb64bdcab1063",
+   "records": 1000770,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 197
+   },
+   "scan_seconds": 35.199,
+   "download_seconds": 6.577
+  },
+  {
+   "id": "export000000000062",
+   "bytes": 197874120,
+   "sha256": "b4acbdbec69cbde0096785816d628895456ebea150eaa9f5375f8997c3d3a806",
+   "records": 1000892,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 197
+   },
+   "scan_seconds": 36.289,
+   "download_seconds": 7.172
+  },
+  {
+   "id": "export000000000063",
+   "bytes": 197849421,
+   "sha256": "ae4254a929f6654bb30d3f8239006eb36f9bcc3a9b9332f9a560828bbaab1053",
+   "records": 1000788,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 215
+   },
+   "scan_seconds": 36.666,
+   "download_seconds": 6.721
+  },
+  {
+   "id": "export000000000064",
+   "bytes": 197860323,
+   "sha256": "f597ca02b45733fd938114ea88707e449bb044f26a292c2cc78b0c914f252e6e",
+   "records": 1000845,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 188
+   },
+   "scan_seconds": 34.908,
+   "download_seconds": 6.773
+  },
+  {
+   "id": "export000000000065",
+   "bytes": 197888714,
+   "sha256": "270aa9ee021e1909c493e2578a24128df67b58e9dcc7231ec43e604b9edfcd0a",
+   "records": 1001016,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 184
+   },
+   "scan_seconds": 36.225,
+   "download_seconds": 6.472
+  },
+  {
+   "id": "export000000000066",
+   "bytes": 197891727,
+   "sha256": "9115e93ea3ba63d894d17913ed5bad0bd44d672595957ff73993664e08b705c1",
+   "records": 1000992,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 11,
+    "post_kept": 209
+   },
+   "scan_seconds": 35.489,
+   "download_seconds": 7.457
+  },
+  {
+   "id": "export000000000067",
+   "bytes": 197890461,
+   "sha256": "6250d47d3f862f052d93ac6e7064c5cd935f9d95c520daf46fb6d1a9a1ec7e6c",
+   "records": 1001000,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 189
+   },
+   "scan_seconds": 35.823,
+   "download_seconds": 6.469
+  },
+  {
+   "id": "export000000000068",
+   "bytes": 197939230,
+   "sha256": "83146963ef13fdb8ac9aa06154a73fa8511b21b7a236c9a596aa04955146490a",
+   "records": 1001233,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 186
+   },
+   "scan_seconds": 36.357,
+   "download_seconds": 6.476
+  },
+  {
+   "id": "export000000000069",
+   "bytes": 197930060,
+   "sha256": "dce77dcc99dcb34cde0245bfc745341ca9c588cfc0db7ccdeca63c60d58ab7f6",
+   "records": 1001207,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 199
+   },
+   "scan_seconds": 36.544,
+   "download_seconds": 6.762
+  },
+  {
+   "id": "export000000000070",
+   "bytes": 197921703,
+   "sha256": "e167788f02c276668adb4bbed19521c0b185d28d00b23eee86fa9515c42a4621",
+   "records": 1001161,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 156
+   },
+   "scan_seconds": 35.045,
+   "download_seconds": 9.139
+  },
+  {
+   "id": "export000000000071",
+   "bytes": 197927251,
+   "sha256": "9c0a9532c82245434c46aae63df079975050fe0e4dfd59f5c653c3b311661657",
+   "records": 1001216,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 198
+   },
+   "scan_seconds": 36.158,
+   "download_seconds": 7.794
+  },
+  {
+   "id": "export000000000072",
+   "bytes": 197948541,
+   "sha256": "c6e3ad6ca3c06da103d82d770e7f14238a888737b11d877883834c87a49e9451",
+   "records": 1001305,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 192
+   },
+   "scan_seconds": 35.474,
+   "download_seconds": 6.63
+  },
+  {
+   "id": "export000000000073",
+   "bytes": 197902379,
+   "sha256": "2102a351f0cf8db8f32c5b1abe4e4653498beb43a3544478b0778aaf952ed3eb",
+   "records": 1001078,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 196
+   },
+   "scan_seconds": 35.585,
+   "download_seconds": 6.981
+  },
+  {
+   "id": "export000000000074",
+   "bytes": 197925633,
+   "sha256": "f798c58ba189773269a568088b3cb64fed73acddf01c7c781cda37727cc8f126",
+   "records": 1001178,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 3
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 200
+   },
+   "scan_seconds": 36.51,
+   "download_seconds": 7.554
+  },
+  {
+   "id": "export000000000075",
+   "bytes": 197931397,
+   "sha256": "3bf782d839bce156ecbb187c373adf23ccb5c6edecb99cfff32c233931b7e3ce",
+   "records": 1001207,
+   "kept": 7,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 3
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 207
+   },
+   "scan_seconds": 36.167,
+   "download_seconds": 6.595
+  },
+  {
+   "id": "export000000000076",
+   "bytes": 197925849,
+   "sha256": "6881f8d15d18ec73175b298c5d4ea799636e30adc51d0dde79ebe32a18d73f72",
+   "records": 1001143,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 206
+   },
+   "scan_seconds": 35.039,
+   "download_seconds": 6.65
+  },
+  {
+   "id": "export000000000077",
+   "bytes": 197957443,
+   "sha256": "26f5073e32c6ce7e45accca305f4e98e3ff42a91a62a0d59f8ff9a0e95ed7e1f",
+   "records": 1001321,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 191
+   },
+   "scan_seconds": 35.707,
+   "download_seconds": 6.821
+  },
+  {
+   "id": "export000000000078",
+   "bytes": 197939656,
+   "sha256": "1382c36daebf02bda358df38617aab7ac32ab0346c49f4d560f3a68579e292f5",
+   "records": 1001249,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 203
+   },
+   "scan_seconds": 35.256,
+   "download_seconds": 7.316
+  },
+  {
+   "id": "export000000000079",
+   "bytes": 197887413,
+   "sha256": "700d9d51dd555b4c674a0af4acc285c935b731772846a392c68544d17a8fd5f5",
+   "records": 1000982,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 195
+   },
+   "scan_seconds": 35.21,
+   "download_seconds": 6.536
+  },
+  {
+   "id": "export000000000080",
+   "bytes": 197944909,
+   "sha256": "51aabef1b5f62fe082a7580b3ce4853c79fb1c90f7db950540cf65001e790183",
+   "records": 1001286,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 192
+   },
+   "scan_seconds": 36.426,
+   "download_seconds": 6.615
+  },
+  {
+   "id": "export000000000081",
+   "bytes": 197935967,
+   "sha256": "d12e86a24b9f4ef14f71d888d6085e3c5c26a09c96332d7340f497f542365ca8",
+   "records": 1001281,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 202
+   },
+   "scan_seconds": 36.162,
+   "download_seconds": 6.869
+  },
+  {
+   "id": "export000000000082",
+   "bytes": 197955173,
+   "sha256": "f98c46cc54575ddcdfdf90ea182391d4fbf67c9989ff37f729e80d064adb849a",
+   "records": 1001351,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 172
+   },
+   "scan_seconds": 34.744,
+   "download_seconds": 6.45
+  },
+  {
+   "id": "export000000000083",
+   "bytes": 197983026,
+   "sha256": "2db067c88c04506194a6abbaa679ada5a7c54cc7a1e141a1ced197bc73671252",
+   "records": 1001474,
+   "kept": 7,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 192
+   },
+   "scan_seconds": 35.856,
+   "download_seconds": 6.414
+  },
+  {
+   "id": "export000000000084",
+   "bytes": 197942653,
+   "sha256": "debb1d69e48d8080a7d972fb844345442f7d62cf62d63bf106282bd9db5639d1",
+   "records": 1001292,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 223
+   },
+   "scan_seconds": 35.467,
+   "download_seconds": 6.678
+  },
+  {
+   "id": "export000000000085",
+   "bytes": 197941753,
+   "sha256": "ab422c78733167eeae6bb51e23251764db1e8ec4b88d9997de8f3140ba8464fd",
+   "records": 1001279,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 220
+   },
+   "scan_seconds": 35.378,
+   "download_seconds": 7.16
+  },
+  {
+   "id": "export000000000086",
+   "bytes": 197958538,
+   "sha256": "7827600269916c58f68b83d33f676e8632caaaa63e97d8d8c3b1ebec8bfceef2",
+   "records": 1001331,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 193
+   },
+   "scan_seconds": 36.306,
+   "download_seconds": 6.27
+  },
+  {
+   "id": "export000000000087",
+   "bytes": 197948393,
+   "sha256": "d73451d111f05fc9b5ea94631eaf64c5981db739337e0f766ff78ceb0e8560a8",
+   "records": 1001290,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 176
+   },
+   "scan_seconds": 36.337,
+   "download_seconds": 6.853
+  },
+  {
+   "id": "export000000000088",
+   "bytes": 197983142,
+   "sha256": "5e0b866133c2db69c4f0ae08b2a96048c5f3e276b3d7e7ed556db38d35b1eca0",
+   "records": 1001460,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 169
+   },
+   "scan_seconds": 34.868,
+   "download_seconds": 6.345
+  },
+  {
+   "id": "export000000000089",
+   "bytes": 197938996,
+   "sha256": "099df65e90029ff1cafbc80a332a70fb6bee3db364be1a61fab2f88bf966b83d",
+   "records": 1001244,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 177
+   },
+   "scan_seconds": 35.94,
+   "download_seconds": 7.257
+  },
+  {
+   "id": "export000000000090",
+   "bytes": 197933418,
+   "sha256": "0fd82b25dfa71e2bf697549acf8685730da1eba147c9aee78b20b4e8addfe409",
+   "records": 1001187,
+   "kept": 6,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 193
+   },
+   "scan_seconds": 35.27,
+   "download_seconds": 6.481
+  },
+  {
+   "id": "export000000000091",
+   "bytes": 197945808,
+   "sha256": "85599d329451b1350e71984558ebf5f76350c6863dcdaab8bbdf2d9a37cc3389",
+   "records": 1001272,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 206
+   },
+   "scan_seconds": 35.516,
+   "download_seconds": 6.842
+  },
+  {
+   "id": "export000000000092",
+   "bytes": 197957711,
+   "sha256": "e63952a67d729cd9871746c14c547853014440df6eb597f6f97b047ec1fc412e",
+   "records": 1001359,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 10,
+    "post_kept": 219
+   },
+   "scan_seconds": 36.598,
+   "download_seconds": 6.476
+  },
+  {
+   "id": "export000000000093",
+   "bytes": 197942568,
+   "sha256": "2d37cc40841be8a6885486fcde8ccaad8f35ef262bb47f0780bac436a10a486d",
+   "records": 1001304,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 185
+   },
+   "scan_seconds": 36.894,
+   "download_seconds": 6.494
+  },
+  {
+   "id": "export000000000094",
+   "bytes": 197949390,
+   "sha256": "fd8620f994a4bf722774b547ebd0687e8040ab4b0419d6e21497c6b25c57e4fc",
+   "records": 1001311,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 221
+   },
+   "scan_seconds": 35.234,
+   "download_seconds": 6.386
+  },
+  {
+   "id": "export000000000095",
+   "bytes": 198015511,
+   "sha256": "22de98bc6034549ca4109b87f4b3ea407a6c8fc35af7564ff886a9384455d7a3",
+   "records": 1001616,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 190
+   },
+   "scan_seconds": 36.266,
+   "download_seconds": 7.589
+  },
+  {
+   "id": "export000000000096",
+   "bytes": 197997372,
+   "sha256": "2ff0983f4a786a5216a10591d1cbe8dc48028feaf8761da006a6b6a2df4517b8",
+   "records": 1001527,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 194
+   },
+   "scan_seconds": 35.244,
+   "download_seconds": 6.524
+  },
+  {
+   "id": "export000000000097",
+   "bytes": 198039035,
+   "sha256": "bb1ad4fe3ab22a0c093e60474a2044bc5fd4ee05f16639330628d384998d4214",
+   "records": 1001717,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 0,
+    "post_kept": 207
+   },
+   "scan_seconds": 35.729,
+   "download_seconds": 7.306
+  },
+  {
+   "id": "export000000000098",
+   "bytes": 198008061,
+   "sha256": "3facb414843965140848bc4da77e728bbe25131d9580d909bca0557df28f782f",
+   "records": 1001601,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 179
+   },
+   "scan_seconds": 37.098,
+   "download_seconds": 6.348
+  },
+  {
+   "id": "export000000000099",
+   "bytes": 198043771,
+   "sha256": "1d1f114ce991251d57f12c8250b3f42e68349e6878ca101e8abb5bdeb3b109c8",
+   "records": 1001749,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 1,
+    "post_kept": 205
+   },
+   "scan_seconds": 36.954,
+   "download_seconds": 6.653
+  },
+  {
+   "id": "export000000000100",
+   "bytes": 197980582,
+   "sha256": "c7bf07c522a1aadc33ef7d2c33257e8aef96154e737b131c96f6844ac08aa6cd",
+   "records": 1001467,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 191
+   },
+   "scan_seconds": 35.481,
+   "download_seconds": 7.252
+  },
+  {
+   "id": "export000000000101",
+   "bytes": 197937171,
+   "sha256": "ec911a79ca43ccb5bc3109a0e16415858ca36123bca58d291f89ff2f6ddb6dc0",
+   "records": 1001218,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 241
+   },
+   "scan_seconds": 36.19,
+   "download_seconds": 6.512
+  },
+  {
+   "id": "export000000000102",
+   "bytes": 198045526,
+   "sha256": "338e2f2cf6c01cf9d5d5ee3eb6d7b4a8d1f62c44b52517a3b40bd862062816c3",
+   "records": 1001791,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 204
+   },
+   "scan_seconds": 35.493,
+   "download_seconds": 6.571
+  },
+  {
+   "id": "export000000000103",
+   "bytes": 198021814,
+   "sha256": "34498fc90b19c2a0d632be01409f75df5e1c2bc02301837fd1f6530555d89c28",
+   "records": 1001661,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 193
+   },
+   "scan_seconds": 35.773,
+   "download_seconds": 8.113
+  },
+  {
+   "id": "export000000000104",
+   "bytes": 198040364,
+   "sha256": "e30e440451c6f82905777a13dfe6a5d1f1ce461c128811803f6ad6c7553ef972",
+   "records": 1001754,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 209
+   },
+   "scan_seconds": 36.114,
+   "download_seconds": 6.598
+  },
+  {
+   "id": "export000000000105",
+   "bytes": 198031830,
+   "sha256": "d5aac3aa23ae8af39b0cabe48823a323c1e1e1fd566442f4d0a1f55b4f58eeb2",
+   "records": 1001719,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 200
+   },
+   "scan_seconds": 36.709,
+   "download_seconds": 7.514
+  },
+  {
+   "id": "export000000000106",
+   "bytes": 198021812,
+   "sha256": "dce60e3e7d0d287d5b1e91815e61ca22a365174fbe1e453fa4fdbf789a20e51e",
+   "records": 1001637,
+   "kept": 5,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 10,
+    "post_kept": 178
+   },
+   "scan_seconds": 34.959,
+   "download_seconds": 6.405
+  },
+  {
+   "id": "export000000000107",
+   "bytes": 198032894,
+   "sha256": "b8c40d5a2cd2323e5fb3710d05f687e68c1c3e7a7fdbc19ab57896fb29f9046f",
+   "records": 1001710,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 217
+   },
+   "scan_seconds": 35.897,
+   "download_seconds": 6.98
+  },
+  {
+   "id": "export000000000108",
+   "bytes": 198051699,
+   "sha256": "52071ec4c93d6c521fd72f8534783c946d46a8f8918903f4fb2a4f2eb495b90c",
+   "records": 1001807,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 200
+   },
+   "scan_seconds": 35.226,
+   "download_seconds": 27.356
+  },
+  {
+   "id": "export000000000109",
+   "bytes": 198049847,
+   "sha256": "b590c5845231bf6c90c4944351d855150f179c695e1af224d47ccde00027cfbd",
+   "records": 1001796,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 194
+   },
+   "scan_seconds": 35.911,
+   "download_seconds": 29.468
+  },
+  {
+   "id": "export000000000110",
+   "bytes": 198049220,
+   "sha256": "e10ec7790b192284e2ce9ccf926c5023f0a2ec6c31e0d56bb60a94e4ca6061d7",
+   "records": 1001836,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 170
+   },
+   "scan_seconds": 36.668,
+   "download_seconds": 28.91
+  },
+  {
+   "id": "export000000000111",
+   "bytes": 198058258,
+   "sha256": "02ad78cb782732353686c47702c4710f0cc0e9636eb917a98509a1e5b5e1560e",
+   "records": 1001839,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 182
+   },
+   "scan_seconds": 35.372,
+   "download_seconds": 21.638
+  },
+  {
+   "id": "export000000000112",
+   "bytes": 198043416,
+   "sha256": "065d33269e0fecbb5512fa36c0ea3fe1e0a35bf3cf97cc97e70d474607b69874",
+   "records": 1001763,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 232
+   },
+   "scan_seconds": 34.813,
+   "download_seconds": 6.859
+  },
+  {
+   "id": "export000000000113",
+   "bytes": 198061589,
+   "sha256": "0817c07a5233c85098ea9fc8d87d002ee0bcd157457c7b85db36081434c286ca",
+   "records": 1001862,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 212
+   },
+   "scan_seconds": 36.155,
+   "download_seconds": 6.408
+  },
+  {
+   "id": "export000000000114",
+   "bytes": 198049669,
+   "sha256": "7d54873c4b9d32eb035b2ffb5f476417045d53a96d2b05c40c2c355869aa0f78",
+   "records": 1001821,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 188
+   },
+   "scan_seconds": 35.186,
+   "download_seconds": 6.552
+  },
+  {
+   "id": "export000000000115",
+   "bytes": 198048614,
+   "sha256": "f7258a8523a9c6c42b81629d701978b540f8d110b5acebc77feda8508ca4882b",
+   "records": 1001801,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 12,
+    "post_kept": 179
+   },
+   "scan_seconds": 35.477,
+   "download_seconds": 7.56
+  },
+  {
+   "id": "export000000000116",
+   "bytes": 198028455,
+   "sha256": "fabf41a8815ec0e1c38f6199e0828129f47803f167e166d0d3e77a72e15afff6",
+   "records": 1001699,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 226
+   },
+   "scan_seconds": 36.215,
+   "download_seconds": 6.812
+  },
+  {
+   "id": "export000000000117",
+   "bytes": 198046127,
+   "sha256": "8051f81eb2ede307012d6ac8928f065e50d6de8fe9856c7a1471ae2b9af0fc43",
+   "records": 1001766,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 227
+   },
+   "scan_seconds": 36.403,
+   "download_seconds": 6.841
+  },
+  {
+   "id": "export000000000118",
+   "bytes": 198085987,
+   "sha256": "838b7da824e65e68b782dcd63ec1964b6e620bc8e1640e18055e0f38753e2f66",
+   "records": 1002000,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 214
+   },
+   "scan_seconds": 34.832,
+   "download_seconds": 7.125
+  },
+  {
+   "id": "export000000000119",
+   "bytes": 198081830,
+   "sha256": "548bddae37afadc7e481bee27ef92620cfce04a2a53942d06fde35c78b4b5894",
+   "records": 1001962,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 203
+   },
+   "scan_seconds": 35.958,
+   "download_seconds": 6.436
+  },
+  {
+   "id": "export000000000120",
+   "bytes": 198043380,
+   "sha256": "b0619ace3e1fe492c016229b3c2d1ccefcd9b6710d4116f89e416bf2fa7a3a4c",
+   "records": 1001772,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 177
+   },
+   "scan_seconds": 35.832,
+   "download_seconds": 8.303
+  },
+  {
+   "id": "export000000000121",
+   "bytes": 198058018,
+   "sha256": "f9992109027f1435ce93eee948a83b6e4d6589ecda7e4607681b258018c93e78",
+   "records": 1001830,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 3,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 10,
+    "post_kept": 204
+   },
+   "scan_seconds": 36.246,
+   "download_seconds": 6.697
+  },
+  {
+   "id": "export000000000122",
+   "bytes": 198072057,
+   "sha256": "b088530bfa38d7d1b86fde3eeab99a8a321d3c777238c24b7545677ac9d8d7fd",
+   "records": 1001941,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 193
+   },
+   "scan_seconds": 36.786,
+   "download_seconds": 6.504
+  },
+  {
+   "id": "export000000000123",
+   "bytes": 198084908,
+   "sha256": "788590da57d2faedaaca52dc0da543de8eba250e1ced78c6aa2561590344a2ed",
+   "records": 1001990,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 195
+   },
+   "scan_seconds": 35.778,
+   "download_seconds": 6.54
+  },
+  {
+   "id": "export000000000124",
+   "bytes": 198078646,
+   "sha256": "a11a5b3d43118fee58cb683d8eae5ffbf05909e68d0bf9600d44e6a75db84584",
+   "records": 1001942,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 3,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 176
+   },
+   "scan_seconds": 36.965,
+   "download_seconds": 6.508
+  },
+  {
+   "id": "export000000000125",
+   "bytes": 198105265,
+   "sha256": "db818a0b9241d289d921761631bd31d37b7873a1a39c1adfac156ea67caf7b5c",
+   "records": 1002086,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 186
+   },
+   "scan_seconds": 36.683,
+   "download_seconds": 6.553
+  },
+  {
+   "id": "export000000000126",
+   "bytes": 198088295,
+   "sha256": "bd1f120b8536d9bb748e49dbe81c4b3a72c457ec69350d5febae8d3807739c1d",
+   "records": 1002006,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 187
+   },
+   "scan_seconds": 35.791,
+   "download_seconds": 6.737
+  },
+  {
+   "id": "export000000000127",
+   "bytes": 198098630,
+   "sha256": "2f9046a4d904cf353658e3c308e51d4be82c6c3e88aa4498abde908e32417248",
+   "records": 1002040,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 177
+   },
+   "scan_seconds": 36.154,
+   "download_seconds": 6.753
+  },
+  {
+   "id": "export000000000128",
+   "bytes": 198123245,
+   "sha256": "82400d4e70f26778b03f8d82d29c72ea3610095f9f4f8bf81ab4756d9d404fe4",
+   "records": 1002187,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 176
+   },
+   "scan_seconds": 36.563,
+   "download_seconds": 6.615
+  },
+  {
+   "id": "export000000000129",
+   "bytes": 198100748,
+   "sha256": "cc6e5bf835d4c1d71813a6eed7088e14447241da5614005464b23804a375fdb1",
+   "records": 1002081,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 193
+   },
+   "scan_seconds": 35.255,
+   "download_seconds": 6.409
+  },
+  {
+   "id": "export000000000130",
+   "bytes": 198115568,
+   "sha256": "1a9640957ec3583f23ef14d5b2e3ccaf8ad68359b94cac9e704988f588c01117",
+   "records": 1002108,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 13,
+    "post_kept": 206
+   },
+   "scan_seconds": 36.683,
+   "download_seconds": 6.4
+  },
+  {
+   "id": "export000000000131",
+   "bytes": 198102757,
+   "sha256": "f2902faa95b868120cf76fd8f2797fcd99dfe6cb6c4bffe09279fb8ec586d6ce",
+   "records": 1002036,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 196
+   },
+   "scan_seconds": 36.199,
+   "download_seconds": 6.431
+  },
+  {
+   "id": "export000000000132",
+   "bytes": 198131635,
+   "sha256": "736fbb516715389e8f9f5d9f2f4de1f69d8c183dab89dd7f99f74de446b96a9b",
+   "records": 1002228,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 10,
+    "post_kept": 186
+   },
+   "scan_seconds": 35.876,
+   "download_seconds": 6.394
+  },
+  {
+   "id": "export000000000133",
+   "bytes": 198122681,
+   "sha256": "9f19ce9822ea52d6eedcef70a28a11efabb40c99dcfac89668c85175fca90dc9",
+   "records": 1002201,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 2
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 212
+   },
+   "scan_seconds": 35.955,
+   "download_seconds": 6.889
+  },
+  {
+   "id": "export000000000134",
+   "bytes": 198138482,
+   "sha256": "36cd0385348192baab9fe45df50ff95dbe45399ef22705760502c03324ae32ca",
+   "records": 1002228,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 200
+   },
+   "scan_seconds": 36.605,
+   "download_seconds": 6.351
+  },
+  {
+   "id": "export000000000135",
+   "bytes": 198122484,
+   "sha256": "0f89cf6eb493e13f1d56248ba63954437bee03b189d274a63b30b440ac354257",
+   "records": 1002164,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 203
+   },
+   "scan_seconds": 35.259,
+   "download_seconds": 6.338
+  },
+  {
+   "id": "export000000000136",
+   "bytes": 198127271,
+   "sha256": "14b71ee4ec5a186ff38084d1acf91fafe300f3eadacc9162a3322d2c88a9a5b8",
+   "records": 1002169,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 180
+   },
+   "scan_seconds": 37.366,
+   "download_seconds": 6.303
+  },
+  {
+   "id": "export000000000137",
+   "bytes": 198149233,
+   "sha256": "9e50882fbd07a657692baafcf09fa16ab9cba08280847cd55b5ad84bc3eaf3b8",
+   "records": 1002294,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 210
+   },
+   "scan_seconds": 36.594,
+   "download_seconds": 7.018
+  },
+  {
+   "id": "export000000000138",
+   "bytes": 198119111,
+   "sha256": "4db79fe254f990752d9c00cd4451dd01e62af23422f6519a1876d5ee70eb6ebe",
+   "records": 1002118,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 216
+   },
+   "scan_seconds": 35.225,
+   "download_seconds": 6.723
+  },
+  {
+   "id": "export000000000139",
+   "bytes": 198163827,
+   "sha256": "77c19d3eb5ea60bb77fd45c00cd0981eede1040111f15b977b5d445034ebd4a4",
+   "records": 1002373,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 190
+   },
+   "scan_seconds": 35.461,
+   "download_seconds": 6.399
+  },
+  {
+   "id": "export000000000140",
+   "bytes": 198157380,
+   "sha256": "9afa9fd2d281633ebb08a5381689291f2f7b1981ff1580f8458df8fcb8a69e59",
+   "records": 1002356,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 9,
+    "post_kept": 206
+   },
+   "scan_seconds": 36.237,
+   "download_seconds": 6.351
+  },
+  {
+   "id": "export000000000141",
+   "bytes": 198199922,
+   "sha256": "d07ecac16376e81ec2bd64662704fa2face18f66edb5defcbadebe3c5dda0d9c",
+   "records": 1002548,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 183
+   },
+   "scan_seconds": 34.809,
+   "download_seconds": 6.504
+  },
+  {
+   "id": "export000000000142",
+   "bytes": 198161266,
+   "sha256": "fa86d18d79eb9f161ff1557f911a9becf0bf9df64ee44726730d3330b4b5b2fc",
+   "records": 1002326,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 3,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 225
+   },
+   "scan_seconds": 36.274,
+   "download_seconds": 6.427
+  },
+  {
+   "id": "export000000000143",
+   "bytes": 198141269,
+   "sha256": "396d91b38fb860699d9a3cf755dcf0af7acabc3bb657159c06399f1f42870494",
+   "records": 1002280,
+   "kept": 5,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 4,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 209
+   },
+   "scan_seconds": 36.093,
+   "download_seconds": 6.503
+  },
+  {
+   "id": "export000000000144",
+   "bytes": 198223415,
+   "sha256": "e069693ed5d9129206a3523716fd8e29c4ecc19c267497f2141dac7a8cfc815a",
+   "records": 1002662,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 180
+   },
+   "scan_seconds": 35.282,
+   "download_seconds": 6.805
+  },
+  {
+   "id": "export000000000145",
+   "bytes": 198280848,
+   "sha256": "9c493b9f150b476beef2cf2e014fc66079afd329ac907aa1a7fe391e65b58763",
+   "records": 1002983,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 180
+   },
+   "scan_seconds": 35.572,
+   "download_seconds": 6.455
+  },
+  {
+   "id": "export000000000146",
+   "bytes": 198218259,
+   "sha256": "d007c009219deb529efa99c06aa021622d89a30312b0f8a43a69e72750e2669d",
+   "records": 1002649,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 10,
+    "post_kept": 195
+   },
+   "scan_seconds": 36.252,
+   "download_seconds": 6.315
+  },
+  {
+   "id": "export000000000147",
+   "bytes": 198195274,
+   "sha256": "0356323121508ff476a29ba45beafa9156dfc67d85a1b1b70ae5c1181229044d",
+   "records": 1002524,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 208
+   },
+   "scan_seconds": 34.987,
+   "download_seconds": 7.509
+  },
+  {
+   "id": "export000000000148",
+   "bytes": 198210886,
+   "sha256": "818113eb3f386353dbb4d65f3800dbeee8e845cb175d9e9400c3f569df58c74a",
+   "records": 1002588,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 203
+   },
+   "scan_seconds": 37.016,
+   "download_seconds": 6.647
+  },
+  {
+   "id": "export000000000149",
+   "bytes": 198241111,
+   "sha256": "5eaae946ff6e0b20059fd0439e3afc4fc587c8eaf6d3474a18be00c5422a42c3",
+   "records": 1002772,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 179
+   },
+   "scan_seconds": 36.635,
+   "download_seconds": 6.729
+  },
+  {
+   "id": "export000000000150",
+   "bytes": 198224176,
+   "sha256": "338ac30a39f7f91f41ef4c111e67057d26849c60849dc40a64c46a931b5d7b92",
+   "records": 1002684,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 203
+   },
+   "scan_seconds": 35.534,
+   "download_seconds": 6.814
+  },
+  {
+   "id": "export000000000151",
+   "bytes": 198322444,
+   "sha256": "8cac55ed5d0e43a911e7a54b6839bfe5fe46d1b3b175531bbb6c92004a122518",
+   "records": 1003157,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 204
+   },
+   "scan_seconds": 36.032,
+   "download_seconds": 6.27
+  },
+  {
+   "id": "export000000000152",
+   "bytes": 198277884,
+   "sha256": "a73e1dbd4a9f362f5fbd0df79ac83d009ff43ffb423046d521f3a1b112b1422a",
+   "records": 1002972,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 3,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 185
+   },
+   "scan_seconds": 36.393,
+   "download_seconds": 6.383
+  },
+  {
+   "id": "export000000000153",
+   "bytes": 198307969,
+   "sha256": "8d7aeb3187f7b93568e1fad6d7e3a8b38daafec2443bb056077cceeee5b1ba83",
+   "records": 1003094,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 5,
+    "post_kept": 225
+   },
+   "scan_seconds": 35.216,
+   "download_seconds": 6.616
+  },
+  {
+   "id": "export000000000154",
+   "bytes": 198316318,
+   "sha256": "ad628b5880aa0eeeaf96b229ac04ad2107c7da8134e9c2f128b7200f03357d17",
+   "records": 1003120,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 3,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 2,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 203
+   },
+   "scan_seconds": 36.782,
+   "download_seconds": 6.27
+  },
+  {
+   "id": "export000000000155",
+   "bytes": 198273753,
+   "sha256": "a7636a0f14b9a189622de161122ffdf043ebbeade3d016327e3751c3cc1de77e",
+   "records": 1002924,
+   "kept": 1,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 3,
+    "post_kept": 180
+   },
+   "scan_seconds": 36.387,
+   "download_seconds": 6.342
+  },
+  {
+   "id": "export000000000156",
+   "bytes": 198317903,
+   "sha256": "04fbefd7b0dec333333b62b08f87b654fac944e35de445fc983e27554c503cf3",
+   "records": 1003123,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 2,
+    "post_kept": 196
+   },
+   "scan_seconds": 35.594,
+   "download_seconds": 6.148
+  },
+  {
+   "id": "export000000000157",
+   "bytes": 198330629,
+   "sha256": "3adcfcb53bd1355937ac63a14be0fdd7cde4d4fab381d29db5c172fb7b96ae2a",
+   "records": 1003200,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 200
+   },
+   "scan_seconds": 36.306,
+   "download_seconds": 6.548
+  },
+  {
+   "id": "export000000000158",
+   "bytes": 198343742,
+   "sha256": "d0d0713e2fa8fe9fbc0c222c9bac8ee14d4f76297c5cff0000cd113b3afbcb76",
+   "records": 1003260,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 188
+   },
+   "scan_seconds": 36.408,
+   "download_seconds": 7.086
+  },
+  {
+   "id": "export000000000159",
+   "bytes": 198344469,
+   "sha256": "d5911d196686969319e72c805de103477ebf31768a094c78dfbfeb96e4d79173",
+   "records": 1003285,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 4,
+    "post_kept": 209
+   },
+   "scan_seconds": 35.036,
+   "download_seconds": 6.771
+  },
+  {
+   "id": "export000000000160",
+   "bytes": 198384006,
+   "sha256": "e510e52f2d444c8199b797096da428c4cbe8feea5f25d5317ed902b54098a2e1",
+   "records": 1003492,
+   "kept": 4,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 3,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 8,
+    "post_kept": 215
+   },
+   "scan_seconds": 36.59,
+   "download_seconds": 6.754
+  },
+  {
+   "id": "export000000000161",
+   "bytes": 198372618,
+   "sha256": "0194d3db9c776989075c8b2e6987a2b9bab8607754cdc8633a8fcb168c7bbc85",
+   "records": 1003422,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 202
+   },
+   "scan_seconds": 36.143,
+   "download_seconds": 6.652
+  },
+  {
+   "id": "export000000000162",
+   "bytes": 198402887,
+   "sha256": "e9eee2bb877b9528eb78ae72175b2608c528d5fddd85517fadc1a6a5519d0253",
+   "records": 1003605,
+   "kept": 0,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 184
+   },
+   "scan_seconds": 35.373,
+   "download_seconds": 6.582
+  },
+  {
+   "id": "export000000000163",
+   "bytes": 198428649,
+   "sha256": "5e60398e80e9bf14ea5ee38c2714b6d953630575727767b90d050490acc08472",
+   "records": 1003715,
+   "kept": 3,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 2,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 0,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 6,
+    "post_kept": 201
+   },
+   "scan_seconds": 35.454,
+   "download_seconds": 7.61
+  },
+  {
+   "id": "export000000000164",
+   "bytes": 198403028,
+   "sha256": "299a34f5bb355fde479fe017a14f8f0a03ae6a6e6e10f2684cbed32fb12ac936",
+   "records": 1003588,
+   "kept": 2,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 1,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 1,
+    "tabulated_to_kept": 0
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 195
+   },
+   "scan_seconds": 34.992,
+   "download_seconds": 6.504
+  },
+  {
+   "id": "export000000000165",
+   "bytes": 198456495,
+   "sha256": "308eb1a1e5573388936a80db33922c2d0a969baeba7c20ac3151da21ce948298",
+   "records": 1003816,
+   "kept": 6,
+   "kinds": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 4,
+    "tabulated_to_kept": 2
+   },
+   "axon_pre": {
+    "kept_to_kept": 0,
+    "same_cell": 0,
+    "kept_to_tabulated": 4,
+    "tabulated_to_kept": 1
+   },
+   "dropped": {
+    "pre_kept": 7,
+    "post_kept": 192
+   },
+   "scan_seconds": 36.447,
+   "download_seconds": 6.248
+  }
+ ],
+ "totals": {
+  "bytes": 32859876087,
+  "records": 166216068,
+  "kept": 378,
+  "download_seconds": 1204.975,
+  "scan_seconds": 5947.933,
+  "shards": 166,
+  "rows": {
+   "kept_to_kept": 0,
+   "same_cell": 121,
+   "kept_to_tabulated": 167,
+   "tabulated_to_kept": 90
+  },
+  "axon_pre_rows": {
+   "kept_to_kept": 0,
+   "same_cell": 42,
+   "kept_to_tabulated": 102,
+   "tabulated_to_kept": 27
+  },
+  "dropped_untabulated_partner": {
+   "pre_kept": 910,
+   "post_kept": 32823
+  }
+ },
+ "started_utc": "2026-09-16T18:57:21Z",
+ "finished_utc": "2026-09-16T19:14:35Z",
+ "stopped_reason": "all shards scanned",
+ "wall_seconds": 1033.594,
+ "neuron_ids": 15567,
+ "kept_base_segments": 53367,
+ "kept_c3_ids": {
+  "751294744": 751294744,
+  "1684504313": 1684504313,
+  "1931553044": 1669770671,
+  "2103991145": 2103991145,
+  "2252715458": 2252715458,
+  "2757428565": 2001418787,
+  "2863125070": 2848552900,
+  "3111823918": 3111823553,
+  "3571083397": 3571083397,
+  "3761379470": 3761379470,
+  "4010150634": 4010150634,
+  "4445420826": 4197933517,
+  "4466811772": 4437316933,
+  "5013648003": 5013648003,
+  "5147072947": 5439194879,
+  "5421628756": 5173982155,
+  "6833911543": 6833911543
+ },
+ "output": {
+  "path": "docs/evidence/h01-c3-kept-partner-graph.json.gz",
+  "rows": 378,
+  "bytes": 11190,
+  "sha256": "f2d2d1ecccdf23ba11ef11fd13b27b3b7c73ac076e944db7c7152779917d3757",
+  "merge_seconds": 0.016
+ },
+ "run_notes": {
+  "executor": "Vast 50616476 (ssh braintrace-gpu), /workspace/braintrace-c3-graph, /workspace/venv-c3 (Python 3.12.14, fastavro 1.12.2); launched with nohup, receipts under var/c3-graph/kept-graph/",
+  "invocations": [
+   {
+    "name": "smoke",
+    "args": "--workers 1 --downloads 1 --limit 1",
+    "code": "fdb38a70",
+    "shards": 1,
+    "note": "export000000000000: download 6.36 s, scan 34.75 s, 998,235 records, 2 kept (1 kept_to_tabulated, 1 same_cell); wall 41.3 s; a raw re-read of the shard showed 183 post-owned and 9 pre-owned rows, 181 and 8 of them with an untabulated partner, so the dropped counters were added (f9fcc3ee) and the smoke outputs discarded"
+   },
+   {
+    "name": "main",
+    "args": "--workers 6 --downloads 4",
+    "code": "f9fcc3ee (spawn pool, curl -4)",
+    "shards": 166,
+    "note": "18:57:21Z to 19:14:35Z, no throttle, no retry: download median 6.6 s (max 29.5 s), scan median 35.9 s, about 9.7 shards/min at steady state; the ~65 min of the first graph included the IPv6 throttle and the fork-context hang, neither recurred"
+   }
+  ],
+  "wall_seconds_note": "wall_seconds 1,033.6 s = 17.2 min of box time for the single main invocation (the smoke run was discarded and re-scanned)",
+  "reading": "kept_to_tabulated 167 rows (102 AXON-pre), tabulated_to_kept 90 (27 AXON-pre), kept_to_kept 0, same_cell 121 (42 AXON-pre); dropped for an untabulated partner: 910 rows with the kept side presynaptic (the kept axons' output onto segments that are not tabulated neurons) and 32,823 with the kept side postsynaptic (inputs to the kept cells from untabulated axon fragments)"
+ }
+}
