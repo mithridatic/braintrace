@@ -220,6 +220,7 @@ rebuild.
   9.9 -> 0.6 s, learner compile 314-348 -> 36 s. Open: 90-94 % of the fused substep is
   unattributed command-buffer time (the per-mechanism channel kernels; `pinned-nocb` unrun);
   no contact delivery on the fused path yet (section 3's table); the sparse pp-prop layout
-  grows 17x on the forest (455 MB, 17 colours) and must be given the per-cell block
-  structure before training on it.
+  grows one colour per cell on the forest (455 MB at 17 cells, 489 MB at 18, the 512 MB
+  factor limit at 19) and must be given the per-cell block structure before training on it:
+  today the fused path is a scoring lever with an 18-cell training ceiling.
 - Lever 3: not implemented; a clone recompiles (5.4 s forward) and `add_contact` cannot run.

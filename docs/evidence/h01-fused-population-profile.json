@@ -435,6 +435,71 @@
       "learner_refused": null,
       "memory_peak_device_bytes": 2297779456,
       "memory_peak_host_rss_mb": 5073.3125
+    },
+    "fused-clone-learner": {
+      "status": "pass",
+      "settings": {
+        "dt_ms": 0.005,
+        "substeps": 20,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null,
+        "fused": true
+      },
+      "cells": 18,
+      "compartments": 109145,
+      "mutation": {
+        "kind": "clone",
+        "cells": 18,
+        "contacts": 0
+      },
+      "stages": {
+        "manifest_load": 0.002540498971939087,
+        "archive_open": 0.0562673294916749,
+        "build_network": 48.381136243231595,
+        "init_state": 6.265794952400029,
+        "model_setup": 2.633192392066121,
+        "first_update_compile_and_run": 2.4896116871386766,
+        "compile_object": 0.0007362803444266319,
+        "learner_compile_graph": 0.5618137996643782,
+        "optimizer_setup": 0.015071026049554348,
+        "learner_update_2_events_compile_and_run": 36.266007620841265
+      },
+      "forward": {
+        "events": 2,
+        "seconds_per_event_mean": 0.08294006064534187,
+        "seconds_per_event_median": 0.08294006064534187,
+        "seconds_per_event_min": 0.08262415044009686,
+        "seconds_per_event_max": 0.08325597085058689,
+        "total_seconds": 0.16588012129068375
+      },
+      "build_plus_init_seconds": 54.64693119563162,
+      "substep": null,
+      "while_loops": null,
+      "learner": {
+        "2": {
+          "events": 2,
+          "cold_seconds": 36.266007620841265,
+          "warm_seconds": [
+            5.581710790283978,
+            5.59363598190248
+          ],
+          "warm_median": 5.587673386093229,
+          "seconds_per_event_naive": 2.7938366930466145,
+          "finite": true,
+          "updates": 3
+        }
+      },
+      "eligibility": {
+        "elements": 61089732,
+        "bytes": 488717856,
+        "colors": 18,
+        "state_blocks": 19
+      },
+      "learner_refused": null,
+      "memory_peak_device_bytes": 2145386496,
+      "memory_peak_host_rss_mb": 5131.27734375
     }
   },
   "voltage_parity_fused_vs_percell": {
@@ -568,5 +633,13 @@
       "learner_seconds_per_event": null,
       "eligibility": null
     }
+  },
+  "learner_ceiling": {
+    "factor_limit_bytes": 536870912,
+    "bytes_17_cells": 454871312,
+    "bytes_18_cells": 488717856,
+    "bytes_per_added_cell": 33846544,
+    "projected_bytes_19_cells": 522564400,
+    "reading": "one colour per cell on the forest; 19 cells exceed the pinned factor limit"
   }
 }

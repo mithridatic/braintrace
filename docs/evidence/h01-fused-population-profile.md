@@ -33,7 +33,9 @@ falls from 27-42 s to 5-6 s, a clone's compile from 40 s to 5.4 s, the learner's
 analysis from 7.6-9.9 s to 0.6 s and its 2-event update compile from 314-348 s to 36 s.
 What remains: 90-94 % of the fused substep is still unattributed command-buffer time
 (236 launches: the per-mechanism channel kernels), the fused path delivers no contacts yet,
-and the sparse pp-prop eligibility layout grows 17x (455 MB, 17 colours) on the forest.
+and the sparse pp-prop eligibility layout grows 17x (455 MB, 17 colours) on the forest,
+one colour per cell: 18 cells take 489 MB and 19 would exceed the 512 MB factor limit, so
+the fused path is a scoring lever until the learner learns the forest's block structure.
 
 ## 1. Forward path, same session (contended)
 
@@ -83,7 +85,8 @@ the spec (same 17 cells over the 40 ms window) is not yet run on the fused path.
 | Arm | Cells / compartments | build + init s | forward compile + 1 run s | s/event | learner |
 | --- | ---: | ---: | ---: | ---: | --- |
 | `fused-clone` (`clone` of cell 0) | 18 / 109,145 | 47.8 + 5.6 | 5.4 | 0.137 | not run |
-| `fused-learner` | 17 / 107,537 | 48.9 + 5.4 | 5.1 | 0.128 | `compile_graph` 0.63 s; 2-event update compile + run 36.2 s, warm 3.85 s (per-cell uncontended: 9.9 s, 313.7-347.8 s, 3.6 s) |
+| `fused-learner` | 17 / 107,537 | 48.9 + 5.4 | 5.1 | 0.128 | `compile_graph` 0.63 s; 2-event update compile + run 36.2 s, warm 3.85 s (per-cell uncontended: 9.9 s, 313.7-347.8 s, 3.6 s); eligibility 455 MB, 17 colours |
+| `fused-clone-learner` (18 cells) | 18 / 109,145 | 48.4 + 5.6 | 5.4 | 0.137 | `compile_graph` 0.56 s; 2-event update compile + run 36.3 s, warm 5.59 s; eligibility 489 MB, 18 colours (512 MB limit) |
 
 A clone still changes the forest's shapes (the static-capacity lever is not implemented),
 so it recompiles: 5.4 s for the forward program against 40.0 s on the per-cell path
@@ -97,10 +100,15 @@ blocks per-cell. The forest's state blocks are 17x larger and the sparse-influen
 now colours per cell, so the factor allocation is 17x and sits at the 512 MB
 `factor_limit_bytes`; peak device memory 2.3 GB (per-cell learner at dt 0.005: 0.72 GB).
 The warm 2-event update (3.85 s contended) is not faster than the per-cell one (3.6 s
-uncontended): the forward substeps got cheaper but the eligibility update got bigger. The
-learner's sparse layout must be told the forest's per-cell block structure
-(`forest_offsets`) before the fused path is used for training; until then the fused
-population is a forward-path (scoring) lever only.
+uncontended): the forward substeps got cheaper but the eligibility update got bigger.
+`fused-clone-learner` (18 cells, 109,145 compartments) compiles the learner in the same
+36 s but allocates 61,089,732 elements = 488.7 MB, 18 colours, and its warm 2-event update
+is 5.59 s: the layout grows one colour per cell and about 28.7 MB per cloned cell, so
+**19 cells exceed the pinned 512 MB `factor_limit_bytes`** (projected 517 MB) and the
+sparse learner refuses. On the fused path the learner therefore caps at 18 cells at the
+pinned limit, which is the binding constraint on cloning. The learner's sparse layout must
+be told the forest's per-cell block structure (`forest_offsets`) before the fused path is
+used for training; until then the fused population is a forward-path (scoring) lever only.
 
 ## What was not run
 
