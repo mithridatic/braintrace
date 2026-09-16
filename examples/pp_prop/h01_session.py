@@ -44,6 +44,9 @@ def _numerical_settings_cached():
     return dict(optimizer_policy=POLICY, dt_ms=.000625, event_ms=.1, substeps=160, precision=64,
         solver='h01_staggered_calcium_implicit', max_cv_length_um=10., decay=.99,
         factor_limit_bytes=512*1024**2, seed=21, checkpoint_substeps=True,
+        # docs/specs/2026-09-16-h01-fused-population.md: one forest population per network.
+        # False keeps the per-cell populations selectable for the parity diff.
+        fused_population=False,
         implementation_sha256=implementation,
         dependencies={name: version(name) for name in
             ('jax', 'jaxlib', 'brainstate', 'brainunit', 'braincell', 'brainevent', 'optax', 'numpy')})
@@ -151,7 +154,7 @@ class H01Session:
             probabilities = None
         network, records = build_network(topology, archive, solver=settings['solver'],
             max_cv_length_um=settings['max_cv_length_um'], progress=progress, biology=spatial,
-            environment_potassium=neuroglial is not None)
+            environment_potassium=neuroglial is not None, fused=bool(settings.get('fused_population', False)))
         del records
         if neuroglial is not None:
             from .h01_neuroglial import prepare_neuroglia, attach_neuroglia
