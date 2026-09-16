@@ -38,20 +38,44 @@ def _digest(path):
 
 
 _VERIFIED_ARCHIVES = {}
+PROOFREAD_SOURCE = "proofread_104"
 
-def _verify(path):
+
+def _verify(path, expected=None):
+    """Check an archive's SHA-256 against ``expected`` (default: the pinned release).
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Archive to digest.
+    expected : str, optional
+        Lower-case hexadecimal SHA-256. ``None`` means the module constant
+        ``ARCHIVE_SHA256`` read at call time (so a test may monkeypatch it).
+
+    Returns
+    -------
+    str
+        The verified digest.
+
+    Raises
+    ------
+    ValueError
+        If the digest differs from ``expected``.
+    """
+    expected = ARCHIVE_SHA256 if expected is None else str(expected).lower()
     p = Path(path).resolve()
     try:
         stat = p.stat()
-        key = (str(p), stat.st_mtime, stat.st_size)
+        key = (str(p), stat.st_mtime, stat.st_size, expected)
         if key in _VERIFIED_ARCHIVES:
-            return
+            return expected
     except OSError:
         key = None
-    if _digest(p) != ARCHIVE_SHA256:
-        raise ValueError("H01 archive SHA-256 mismatch; use the pinned official release.")
+    if _digest(p) != expected:
+        raise ValueError(f"H01 archive SHA-256 mismatch: expected {expected} for {p.name}.")
     if key is not None:
         _VERIFIED_ARCHIVES[key] = True
+    return expected
 
 
 def fetch_h01(cache_dir, *, timeout=60):
@@ -108,6 +132,11 @@ class H01Component:
         BrainCell's import diagnostics, including applied standardizations.
     source_sha256 : str
         SHA-256 of this component's original SWC bytes.
+    archive_sha256 : str
+        Verified SHA-256 of the archive the member was read from.
+    source : str
+        Source label of that archive: ``"proofread_104"`` for the pinned
+        release, otherwise the label given to :class:`H01Archive`.
     """
 
     neuron_id: str
@@ -117,6 +146,8 @@ class H01Component:
     normalized_swc: str
     report: object
     source_sha256: str
+    archive_sha256: str = ARCHIVE_SHA256
+    source: str = PROOFREAD_SOURCE
 
     def anatomy(self):
         """Build reusable anatomical locations and cable selections.
@@ -148,9 +179,12 @@ class H01Component:
         dict
             Release, checksums, units, annotation policy and attribution.
         """
+        proofread = self.source == PROOFREAD_SOURCE
         return {
-            "release": RELEASE, "url": SOURCE_URL,
-            "archive_sha256": ARCHIVE_SHA256,
+            "release": RELEASE if proofread else self.source,
+            "url": SOURCE_URL if proofread else None,
+            "source": self.source,
+            "archive_sha256": self.archive_sha256,
             "member": f"{self.neuron_id}.{self.component_id}.swc",
             "source_sha256": self.source_sha256,
             "position_scale_um": [0.032, 0.032, 0.033], "radius_scale_um": 0.001,
@@ -503,7 +537,21 @@ class H01Archive:
     Parameters
     ----------
     path : str or pathlib.Path
-        Local official SWC archive. Validated against the pinned checksum.
+        Local SWC archive with ``{cell_id}.{component}.swc`` members.
+    expected_sha256 : str, optional
+        Digest the archive must have. ``None`` (default) means the pinned
+        official release, ``ARCHIVE_SHA256``; nothing existing changes.
+    source : str, optional
+        Label recorded in every component's provenance. Defaults to
+        ``"proofread_104"`` for the pinned release; pass a distinct label
+        (for example ``"c3_candidates_20260916"``) with a non-proofread digest.
+
+    Attributes
+    ----------
+    archive_sha256 : str
+        The verified digest.
+    source : str
+        The source label.
 
     Notes
     -----
@@ -511,9 +559,13 @@ class H01Archive:
     dropped, or presented as complete neurons. Choose a component explicitly.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, *, expected_sha256=None, source=None):
         self.path = Path(path).resolve()
-        _verify(self.path)
+        self.archive_sha256 = _verify(self.path, expected_sha256)
+        if source is None:
+            pinned = self.archive_sha256 == ARCHIVE_SHA256
+            source = PROOFREAD_SOURCE if pinned else f"sha256:{self.archive_sha256[:12]}"
+        self.source = str(source)
         with zipfile.ZipFile(self.path) as archive:
             self._members = {}
             for entry in archive.infolist():
@@ -591,17 +643,17 @@ class H01Archive:
         from ._h01_reader import _H01Reader
 
         name = self._members[(str(neuron_id), component)]
-        cache_key = (str(self.path), str(neuron_id), int(component))
+        cache_key = (str(self.path), self.archive_sha256, str(neuron_id), int(component))
         if cache_key in _GLOBAL_LOADED_COMPONENTS:
             return _GLOBAL_LOADED_COMPONENTS[cache_key]
-        _verify(self.path)
+        _verify(self.path, self.archive_sha256)
         with zipfile.ZipFile(self.path) as archive:
             source = archive.read(name)
         rows, converted = normalize(source)
         morphology, report = _fast_build_morpho_from_rows(rows, name)
         comp = H01Component(
             str(neuron_id), component, morphology, rows, converted, report,
-            hashlib.sha256(source).hexdigest(),
+            hashlib.sha256(source).hexdigest(), self.archive_sha256, self.source,
         )
         _GLOBAL_LOADED_COMPONENTS[cache_key] = comp
         return comp
