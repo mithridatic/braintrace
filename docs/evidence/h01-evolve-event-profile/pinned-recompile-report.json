@@ -1,0 +1,198 @@
+{
+  "status": "pass",
+  "arm": "pinned-recompile",
+  "settings": {
+    "dt_ms": 0.000625,
+    "substeps": 160,
+    "max_cv_length_um": 10.0,
+    "precision": 64,
+    "checkpoint_substeps": true,
+    "cell_index": null
+  },
+  "stages": {
+    "manifest_load": 0.0030703237280249596,
+    "archive_open": 0.06434290669858456,
+    "build_network": 20.542428070679307,
+    "init_state": 23.03853974863887,
+    "model_setup": 2.4044881612062454,
+    "first_update_compile_and_run": 16.83463408704847,
+    "compile_object": 7.878394389525056,
+    "learner_compile_graph": 6.781854714266956
+  },
+  "memory": {
+    "manifest_load": {
+      "host_peak_rss_mb": 915.22265625,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2048
+    },
+    "archive_open": {
+      "host_peak_rss_mb": 917.21484375,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2048
+    },
+    "build_network": {
+      "host_peak_rss_mb": 1659.4375,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2048
+    },
+    "init_state": {
+      "host_peak_rss_mb": 2094.6015625,
+      "bytes_in_use": 13122048,
+      "peak_bytes_in_use": 13230336
+    },
+    "model_setup": {
+      "host_peak_rss_mb": 2144.40625,
+      "bytes_in_use": 13284864,
+      "peak_bytes_in_use": 13488128
+    },
+    "first_update_compile_and_run": {
+      "host_peak_rss_mb": 3296.90625,
+      "bytes_in_use": 36904960,
+      "peak_bytes_in_use": 65718528
+    },
+    "compile_object": {
+      "host_peak_rss_mb": 3580.796875,
+      "bytes_in_use": 36904960,
+      "peak_bytes_in_use": 65718528
+    },
+    "steady_state": {
+      "host_peak_rss_mb": 3586.7734375,
+      "bytes_in_use": 37015040,
+      "peak_bytes_in_use": 66049280
+    },
+    "learner_compile_graph": {
+      "host_peak_rss_mb": 3626.6171875,
+      "bytes_in_use": 64454912,
+      "peak_bytes_in_use": 66049280
+    }
+  },
+  "active_stage": "learner_compile_graph",
+  "cells": 17,
+  "compartments": 107537,
+  "event_source": {
+    "task_id": "007bbfb7",
+    "query_index": 0,
+    "advancing_events": 385
+  },
+  "cost_analysis": {
+    "flops": 124577520.0,
+    "transcendentals": 11733021.0,
+    "bytes accessed": 490748160.0
+  },
+  "forward": {
+    "events": 2,
+    "seconds_per_event_mean": 1.4129171529784799,
+    "seconds_per_event_median": 1.4129171529784799,
+    "seconds_per_event_min": 1.346480437554419,
+    "seconds_per_event_max": 1.4793538684025407,
+    "total_seconds": 2.8258343059569597
+  },
+  "voltages_mv_first_20": [
+    [
+      -80.69281849455422,
+      -83.94357876919895,
+      -84.08721556965581,
+      -80.86943899582086,
+      -84.08458052132566,
+      -80.81068252489611,
+      -83.97571789280835,
+      -83.97444198014236,
+      -80.78170693527652,
+      -83.96663795253022,
+      -83.99483359723617,
+      -83.93571201783814,
+      -83.99568424487757,
+      -83.96899490600367,
+      -83.9243461280597,
+      -83.9784752171904,
+      -83.98274743661791
+    ],
+    [
+      -80.82048897068888,
+      -83.9553865504916,
+      -84.29315126446889,
+      -80.96016767387968,
+      -84.10121786270348,
+      -80.73572299692732,
+      -84.00520889919159,
+      -83.93404254334531,
+      -80.70647698483089,
+      -84.02636618855847,
+      -84.14529136439356,
+      -83.89134199254958,
+      -83.98591200431402,
+      -83.9919267252498,
+      -83.85566513383976,
+      -83.89585392885539,
+      -84.01836773170736
+    ],
+    [
+      -81.05973016101727,
+      -83.78266198391599,
+      -84.47648796860298,
+      -80.91996739860467,
+      -84.3046280949593,
+      -80.72856741359696,
+      -83.98293881446673,
+      -84.14686854815723,
+      -80.58395664584086,
+      -83.92970618512302,
+      -84.29889734584972,
+      -83.975616329713,
+      -84.06335180396809,
+      -84.08090521996627,
+      -83.93159335776426,
+      -83.75473069319584,
+      -83.98062605541082
+    ]
+  ],
+  "finite": true,
+  "throughput": {
+    "compartment_updates_per_second": 12177585.900014948,
+    "flops_per_event": 124577520.0,
+    "gflops_per_second": 0.08817043500207082,
+    "fraction_of_fp64_peak": 6.834917442020993e-05,
+    "fraction_of_fp32_peak": 1.0674386804124797e-06
+  },
+  "learner_compile_graph_is": "braintrace ETP compiler: jaxpr trace of the model plus eligibility-graph analysis on the host (graph_executor.compile_graph); no XLA executable is built here",
+  "recompile_check": {
+    "events": 2,
+    "calls": [
+      {
+        "call": 1,
+        "seconds": 139.16786585189402,
+        "compile_messages": 1295,
+        "messages": [
+          "Compiling jit(broadcast_in_dim) with global shapes and types (ShapedArray(float64[], weak_type=True),). Argument mapping: (UnspecifiedValue,).",
+          "Finished XLA compilation of jit(broadcast_in_dim) in 0.045219660 sec",
+          "Compiling jit(subtract) with global shapes and types (ShapedArray(float64[1,1608], weak_type=True), ShapedArray(float64[1,1608])). Argument mapping: (Unspecifie",
+          "Finished XLA compilation of jit(subtract) in 0.036503553 sec",
+          "Compiling jit(true_divide) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[])). Argument mapping: (UnspecifiedValue, Unspecified",
+          "Finished XLA compilation of jit(true_divide) in 0.053164959 sec",
+          "Compiling jit(abs) with global shapes and types (ShapedArray(float64[1,1608]),). Argument mapping: (UnspecifiedValue,).",
+          "Finished XLA compilation of jit(abs) in 0.050442219 sec",
+          "Compiling jit(multiply) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[], weak_type=True)). Argument mapping: (UnspecifiedValue",
+          "Finished XLA compilation of jit(multiply) in 0.037465096 sec"
+        ]
+      },
+      {
+        "call": 2,
+        "seconds": 20.58359349425882,
+        "compile_messages": 0,
+        "messages": []
+      },
+      {
+        "call": 3,
+        "seconds": 20.70888860989362,
+        "compile_messages": 0,
+        "messages": []
+      },
+      {
+        "call": 4,
+        "seconds": 20.657592273317277,
+        "compile_messages": 0,
+        "messages": []
+      }
+    ]
+  }
+}

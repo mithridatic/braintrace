@@ -1,0 +1,24 @@
+{
+  "training_queries": 416,
+  "training_tasks": 400,
+  "corpus_advancing_events": 116128,
+  "corpus_padding_events": 177152,
+  "mean_advancing_per_query": 279.15384615384613,
+  "block_updates": 128,
+  "block_advancing_events": 35648,
+  "block_mean_advancing": 278.5,
+  "screen_task_ids": [
+    "007bbfb7",
+    "00d62c1b"
+  ],
+  "screen_queries": 2,
+  "screen_advancing_events": 770,
+  "stacked_events_bytes_float64": 1034691840,
+  "encode_seconds": 1.8467935472726822,
+  "screen_tasks_flag": 2,
+  "block_unique_tasks": 122,
+  "schedule_first_entry": {
+    "task_id": "007bbfb7",
+    "query_index": 0
+  }
+}

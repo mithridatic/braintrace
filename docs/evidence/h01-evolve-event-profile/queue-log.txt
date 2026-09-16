@@ -1,0 +1,2 @@
+[2026-09-16T19:35:21Z] start dt0005 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 
+[2026-09-16T20:22:11Z] queue.sh killed (coordinator request) while dt0005 was in its real-update warm call; the dt0005 arm process was allowed to finish its last two stages (real update warm, score query); no further arm launched
