@@ -46,3 +46,18 @@ def test_copy_all_skips_unterminated_runs_and_writes_index(tmp_path, monkeypatch
     assert json.loads((out/"transfer-all-1"/"run.json").read_text()) == dict(cell="transfer-all-1")
     with np.load(out/"transfer-all-1-dthalf"/"trace.npz") as trace:
         assert trace["time_ms"].shape == (20,)
+
+
+def test_decimate_carries_the_ramp_current_of_a_ramp_run(tmp_path):
+    src = _run(tmp_path, "transfer-all-1-ramp")
+    with np.load(src/"run.npz") as npz:
+        assert "ramp_current_na" not in receipts.decimate(npz, 100)
+        arrays = dict(npz)
+    arrays["ramp_current_na"] = np.linspace(0., .93, len(arrays["time_ms"]))
+    np.savez(src/"run.npz", **arrays)
+    with np.load(src/"run.npz") as npz:
+        out = receipts.decimate(npz, 100)
+    assert out["ramp_current_na"].shape == (10,) and out["ramp_current_na"][0] == 0.
+    assert receipts.copy_run(src, tmp_path/"out"/"transfer-all-1-ramp", 100)
+    with np.load(tmp_path/"out"/"transfer-all-1-ramp"/"trace.npz") as trace:
+        assert trace["ramp_current_na"].shape == (10,)

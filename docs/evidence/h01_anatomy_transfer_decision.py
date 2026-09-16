@@ -184,18 +184,21 @@ def keep_verdict_failure(primary, ramp, half, donor):
                  dt_half_reproduces=None if half is None else bool(half["output_site"]["finite"]
                                                                    and half["output_site"]["count"] == count))
     failed = [name for name in FAILURE_RULE_NAMES if rules[name] is False]
+    pending = []
     if ramp is None:
-        failed.append("ramp_missing")
+        pending.append("ramp_missing")   # not yet measured: the firing-range rules stay None
     elif any(rules[name] is None for name in ("rheobase_in_step", "fires_at_highest", "count_in_repeat_range")):
-        failed.append("firing_datum_unavailable")
+        failed.append("firing_datum_unavailable")   # an unavailable row is not a pass (qualification rules)
     if rules["dt_half_reproduces"] is None and not failed:
-        failed.append("dt_half_missing")
-    keep = not failed
+        pending.append("dt_half_missing")   # the repeat only runs for cells holding the measured rules
+    keep = not failed and not pending
     return dict(cell=primary["cell"], donor=primary["donor"], count=count, human_repeat_counts=readings["human_repeat_counts"],
                 rest_mean_mv=rest_mv, return_mv=return_mv, rest_tolerance_mv=tolerance, donor_rest_mv=rest_datum,
                 pre_pulse_count=primary["pre_pulse_count"], readings=readings,
                 dt_half_count=None if half is None else half["output_site"]["count"],
-                rules=rules, keep=keep, drop_reason=None if keep else ",".join(failed),
+                rules=rules, keep=keep, drop_reason=",".join(failed) or None, pending=",".join(pending) or None,
+                measured_rules=[name for name in FAILURE_RULE_NAMES if rules[name] is not None],
+                unmeasured_rules=[name for name in FAILURE_RULE_NAMES if rules[name] is None],
                 legacy_verdict=keep_verdict(primary, half, donor["rest_mv"]))
 
 
@@ -208,7 +211,8 @@ def _primary_failures(verdict):
     return [name for name in verdict["rules"] if name != "dt_half_reproduces" and verdict["rules"][name] is not True]
 
 
-def _load_keep_runs(folder, cell, with_ramp=False):
+def _load_keep_runs(folder, cell, with_ramp=False, ramp_folder=None):
+    """Primary, dt-half (and ramp) run JSON of one cell with their hashes; the ramp may live in ``ramp_folder``."""
     label = f"transfer-all-{cell}"
     primary_path = folder/label/"run.json"
     if not primary_path.exists():
@@ -216,7 +220,7 @@ def _load_keep_runs(folder, cell, with_ramp=False):
     hashes = {label: sha256(primary_path)}
     extra = {}
     for suffix in ("-dthalf",)+(("-ramp",) if with_ramp else ()):
-        path = folder/(label+suffix)/"run.json"
+        path = (folder if suffix != "-ramp" or ramp_folder is None else Path(ramp_folder))/(label+suffix)/"run.json"
         extra[suffix] = None
         if path.exists():
             extra[suffix] = json.loads(path.read_text())
@@ -225,11 +229,27 @@ def _load_keep_runs(folder, cell, with_ramp=False):
     return loaded + ((extra["-ramp"],) if with_ramp else ())
 
 
-def decide_keep(folder, types_path, rests_path, phase="final", gate="bands", datums_path=None):
+def _failure_status(verdict, phase):
+    """'held', 'dropped' (a measured rule is False) or 'pending' (a run is still missing), with the reason."""
+    names = [name for name in verdict["rules"] if phase == "final" or name != "dt_half_reproduces"]
+    failed = [name for name in names if verdict["rules"][name] is False]
+    if verdict["drop_reason"] and "firing_datum_unavailable" in verdict["drop_reason"]:
+        failed.append("firing_datum_unavailable")
+    if failed:
+        return "dropped", ",".join(failed)
+    if verdict["pending"] and (phase == "final" or "ramp_missing" in verdict["pending"]):
+        return "pending", verdict["pending"]
+    return "held", None
+
+
+def decide_keep(folder, types_path, rests_path, phase="final", gate="bands", datums_path=None, ramp_folder=None):
     """Per-cell keep/drop over the population; 'primary' lists the dt-half candidates.
 
     ``gate="bands"`` is the former five-rule verdict; ``gate="failure"`` is the test-to-failure
-    verdict, which also reads ``transfer-all-<cell>-ramp/run.json`` and the human datums file.
+    verdict, which also reads ``transfer-all-<cell>-ramp/run.json`` (under ``ramp_folder`` when
+    given, else ``folder``) and the human datums file. Under the failure gate a cell whose ramp
+    (or, in the final phase, dt-half repeat) has not run is ``pending``: neither kept nor
+    dropped, its unmeasured rules ``None``.
     """
     folder = Path(folder)
     rows = json.loads(Path(types_path).read_text())["rows"]
@@ -239,11 +259,11 @@ def decide_keep(folder, types_path, rests_path, phase="final", gate="bands", dat
         if datums_path is None:
             raise ValueError("The test-to-failure gate needs --datums (human-datums.json)")
         datums = json.loads(Path(datums_path).read_text())["donors"]
-    cells, dropped, missing, hashes = {}, {}, [], {}
+    cells, dropped, pending, missing, hashes = {}, {}, {}, [], {}
     for row in rows:
         cell = row["cell_id"]
         if gate == "failure":
-            primary, half, run_hashes, ramp = _load_keep_runs(folder, cell, with_ramp=True)
+            primary, half, run_hashes, ramp = _load_keep_runs(folder, cell, with_ramp=True, ramp_folder=ramp_folder)
         else:
             primary, half, run_hashes = _load_keep_runs(folder, cell)
         if primary is None:
@@ -254,14 +274,22 @@ def decide_keep(folder, types_path, rests_path, phase="final", gate="bands", dat
             donor = dict(datums[row["donor_key"]], rest_mv=rests[row["donor_key"]]["rest_mv"],
                          sd_mv=rests[row["donor_key"]]["sd_mv"])
             verdict = keep_verdict_failure(primary, ramp, half, donor)
+            status, reason = _failure_status(verdict, phase)
+            if status == "dropped":
+                dropped[cell] = reason
+            elif status == "pending":
+                pending[cell] = reason
         else:
             verdict = keep_verdict(primary, half, rests[row["donor_key"]]["rest_mv"])
+            held = _primary_holds(verdict) if phase == "primary" else verdict["keep"]
+            if not held:
+                dropped[cell] = ",".join(_primary_failures(verdict)) if phase == "primary" else verdict["drop_reason"]
         cells[cell] = verdict
-        held = _primary_holds(verdict) if phase == "primary" else verdict["keep"]
-        if not held:
-            dropped[cell] = ",".join(_primary_failures(verdict)) if phase == "primary" else verdict["drop_reason"]
-    held_cells = sorted(cell for cell in cells if cell not in dropped)
+    held_cells = sorted(cell for cell in cells if cell not in dropped and cell not in pending)
     result = dict(phase=phase, gate=gate, dropped=dropped, missing=sorted(missing), cells=cells, input_hashes=hashes)
+    if gate == "failure":
+        result["pending"] = pending
+        result["ramp_folder"] = None if ramp_folder is None else str(ramp_folder)
     if phase == "primary":
         result["candidates"] = held_cells
         return result
@@ -274,19 +302,24 @@ def decide_keep(folder, types_path, rests_path, phase="final", gate="bands", dat
                   by_donor=by_donor,
                   counts=dict(kept=len(held_cells), dropped=len(dropped), missing=len(missing), total=len(rows)))
     if gate == "failure":
+        result["counts"]["pending"] = len(pending)
         result["datums_sha256"] = sha256(datums_path)
     return result
 
 
 def _print_keep(decision):
+    pending = decision.get("pending") or {}
+    tail = f"; {len(pending)} pending (not yet measured)" if pending else ""
     if decision["phase"] == "primary":
         print(f"{len(decision['candidates'])} candidates for the dt-half repeat; {len(decision['dropped'])} dropped; "
-              f"{len(decision['missing'])} missing")
+              f"{len(decision['missing'])} missing{tail}")
     else:
         counts = decision["counts"]
-        print(f"kept {counts['kept']} / dropped {counts['dropped']} / missing {counts['missing']} of {counts['total']}")
+        print(f"kept {counts['kept']} / dropped {counts['dropped']} / missing {counts['missing']} of {counts['total']}{tail}")
     for cell, reason in sorted(decision["dropped"].items()):
         print(f"  drop {cell}: {reason}")
+    for cell, reason in sorted(pending.items()):
+        print(f"  pending {cell}: {reason}")
 
 
 def main():
@@ -300,10 +333,14 @@ def main():
     parser.add_argument("--gate", choices=["bands", "failure"], default="bands",
                         help="'failure' is the test-to-failure gate (needs --datums and the -ramp runs).")
     parser.add_argument("--datums", default="docs/evidence/h01-c3-keep-drop/human-datums.json")
+    parser.add_argument("--ramp-folder", default=None,
+                        help="Folder holding transfer-all-<cell>-ramp runs when they are not beside the primaries "
+                             "(the 17 kept cells: primaries under h01-keep-drop/runs, ramps under h01-c3-keep-drop/runs).")
     args = parser.parse_args()
     if args.keep:
         decision = decide_keep(args.folder, args.types, args.rests, args.phase, gate=args.gate,
-                               datums_path=args.datums if args.gate == "failure" else None)
+                               datums_path=args.datums if args.gate == "failure" else None,
+                               ramp_folder=args.ramp_folder)
         Path(args.output).write_text(json.dumps(decision, indent=2)+"\n", newline="\n")
         _print_keep(decision)
         return

@@ -31,7 +31,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from braintrace.datasets.h01 import ARCHIVE_SHA256  # noqa: E402
-from braintrace.datasets.h01_annotations import H01Annotations  # noqa: E402
+from braintrace.datasets.h01_annotations import H01Annotations, H01SegmentProperties  # noqa: E402
 from braintrace.datasets.h01_ei_cell import make_h01_ei_cell  # noqa: E402
 from braintrace.datasets.h01_network import _regions, _register_cell  # noqa: E402
 from braintrace.datasets.h01_network_init import init_h01_network_states, process_rss_mb  # noqa: E402
@@ -172,12 +172,20 @@ def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def build(args, emit):
-    archive = open_archive(args.archive, args.archive_sha256)
-    annotations = H01Annotations(args.cache)
+def annotations_for(args):
+    """The tag source for the cell: ``--tags`` verbatim, else ``--cell-table`` (a released
+    segment-properties file, e.g. the C3 cell table), else the proofread annotation cache."""
     if args.tags:
         tags = tuple(args.tags)
-        annotations = SimpleNamespace(metadata=lambda _: SimpleNamespace(tags=tags))
+        return SimpleNamespace(metadata=lambda _: SimpleNamespace(tags=tags))
+    if args.cell_table is not None:
+        return H01SegmentProperties(args.cell_table, expected_sha256=args.cell_table_sha256)
+    return H01Annotations(args.cache)
+
+
+def build(args, emit):
+    archive = open_archive(args.archive, args.archive_sha256)
+    annotations = annotations_for(args)
     record = next(c for c in json.loads(args.components.read_text())["cells"] if c["cell_id"] == args.cell)
     imported = archive.load(args.cell, component=record["largest_component"])
     step_na = 0. if args.ramp_na is not None else args.current_na
@@ -215,6 +223,10 @@ def parse_args(argv=None):
     parser.add_argument("--archive-sha256", default=ARCHIVE_SHA256, help="Expected digest of --archive.")
     parser.add_argument("--tags", nargs="+", default=None,
                         help="Source tags for a cell the annotation cache lacks (e.g. pyramidal L3).")
+    parser.add_argument("--cell-table", type=Path, default=None,
+                        help="Released segment-properties file (e.g. the C3 cell table) supplying the tags of a "
+                             "cell the proofread cache lacks; --tags wins when both are given.")
+    parser.add_argument("--cell-table-sha256", default=None, help="Expected digest of --cell-table (optional pin).")
     parser.add_argument("--components", type=Path, default=Path("docs/evidence/h01-population-components.json"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--registered-count", type=int, default=None, help="Human recorded count at this input.")
@@ -257,7 +269,9 @@ def summarize(args, arrays, evidence):
         **observed_windows,
         usable_tier=usable_features(arrays["time_ms"], arrays["output_voltage"], pulse, label),
         peak_mv=float(np.nanmax(arrays["output_voltage"])), min_mv=float(np.nanmin(arrays["output_voltage"])),
-        tags=args.tags)
+        tags=list(evidence.get("source_tags") or []) if args.tags is None else args.tags,
+        tag_source=("--tags" if args.tags else ("cell table "+args.cell_table.name if args.cell_table is not None
+                                                 else "proofread annotation cache")))
 
 
 def main():
@@ -288,7 +302,9 @@ def main():
         construction_seconds=evidence["construction_seconds"], init_seconds=init["init_seconds_by_population"],
         run_seconds=run_seconds, steps=int(len(time_ms)), peak_rss_mb=process_rss_mb(peak=True),
         inputs=dict(archive=str(args.archive), archive_sha256=sha256(args.archive),
-                    expected_archive_sha256=args.archive_sha256, components_sha256=sha256(args.components)),
+                    expected_archive_sha256=args.archive_sha256, components_sha256=sha256(args.components),
+                    cell_table=None if args.cell_table is None else str(args.cell_table),
+                    cell_table_sha256=None if args.cell_table is None else sha256(args.cell_table)),
         traces_sha256=sha256(args.output.with_suffix(".npz")),
         scope="One deployed donor on retained production-imported H01 anatomy under the donor recording's "
               "step protocol (or a ramp to the stated maximum). A physiological transfer reading; not a "

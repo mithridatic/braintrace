@@ -209,12 +209,26 @@ def test_failure_verdict_all_rules_hold_and_carries_the_legacy_verdict():
     (_cell_run_failure(pre=1), _ramp(), _cell_run_failure(), "no_spike_before_pulse"),
     (_cell_run_failure(), _ramp(pre=1), _cell_run_failure(), "no_spike_before_pulse"),
     (_cell_run_failure(), _ramp(), _cell_run_failure(count=11), "dt_half_reproduces"),
-    (_cell_run_failure(), _ramp(), None, "dt_half_missing"),
-    (_cell_run_failure(), None, _cell_run_failure(), "ramp_missing"),
 ])
 def test_failure_verdict_each_rule_failing_alone(primary, ramp, half, reason):
     verdict = decision.keep_verdict_failure(primary, ramp, half, DONOR)
-    assert verdict["keep"] is False and verdict["drop_reason"] == reason
+    assert verdict["keep"] is False and verdict["drop_reason"] == reason and verdict["pending"] is None
+
+
+def test_failure_verdict_missing_runs_are_pending_not_dropped():
+    no_half = decision.keep_verdict_failure(_cell_run_failure(), _ramp(), None, DONOR)
+    assert no_half["keep"] is False and no_half["drop_reason"] is None and no_half["pending"] == "dt_half_missing"
+    assert no_half["unmeasured_rules"] == ["dt_half_reproduces"]
+    no_ramp = decision.keep_verdict_failure(_cell_run_failure(), None, _cell_run_failure(), DONOR)
+    assert no_ramp["keep"] is False and no_ramp["drop_reason"] is None and no_ramp["pending"] == "ramp_missing"
+    assert no_ramp["rules"]["rheobase_in_step"] is None and no_ramp["rules"]["fires_at_highest"] is None
+    assert no_ramp["rules"]["count_in_repeat_range"] is True   # read from the primary run, ramp or not
+    assert no_ramp["unmeasured_rules"] == ["rheobase_in_step", "fires_at_highest"]
+    assert set(no_ramp["measured_rules"]) == {"finite", "count_in_repeat_range", "rest_in_donor_spread",
+                                             "no_spike_before_pulse", "dt_half_reproduces"}
+    # a measured failure is a drop even while the ramp is pending
+    both = decision.keep_verdict_failure(_cell_run_failure(count=13), None, _cell_run_failure(count=13), DONOR)
+    assert both["drop_reason"] == "count_in_repeat_range" and both["pending"] == "ramp_missing" and both["keep"] is False
 
 
 def test_failure_verdict_block_inside_the_recorded_range_fails_and_above_it_is_recorded_only():
@@ -307,11 +321,36 @@ def test_decide_keep_failure_gate_reads_ramps_and_datums(tmp_path):
 def test_decide_keep_failure_gate_without_ramp_or_datums(tmp_path):
     runs, types, rests, datums = _failure_population(tmp_path, with_ramp=False)
     result = decision.decide_keep(runs, types, rests, gate="failure", datums_path=datums)
-    assert result["kept"] == [] and result["dropped"]["200"] == "ramp_missing"
+    assert result["kept"] == [] and result["pending"] == {"200": "ramp_missing"}
+    assert result["dropped"] == {"300": "count_in_repeat_range"}   # a measured failure drops before the ramp runs
+    assert result["counts"] == dict(kept=0, dropped=1, missing=0, total=2, pending=1)
+    assert result["cells"]["200"]["rules"]["rheobase_in_step"] is None and result["cells"]["200"]["keep"] is False
     primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
-    assert primary["candidates"] == [] and "rheobase_in_step" in primary["dropped"]["200"]
+    assert primary["candidates"] == [] and primary["pending"] == {"200": "ramp_missing"}
+    assert primary["dropped"] == {"300": "count_in_repeat_range"}
     with pytest.raises(ValueError, match="datums"):
         decision.decide_keep(runs, types, rests, gate="failure")
+
+
+def test_decide_keep_failure_gate_dt_half_missing_is_pending_in_the_final_phase_only(tmp_path):
+    runs, types, rests, datums = _failure_population(tmp_path, with_half=False)
+    final = decision.decide_keep(runs, types, rests, gate="failure", datums_path=datums)
+    assert final["kept"] == [] and final["pending"] == {"200": "dt_half_missing"}
+    primary = decision.decide_keep(runs, types, rests, phase="primary", gate="failure", datums_path=datums)
+    assert primary["candidates"] == ["200"] and primary["pending"] == {}   # the follower launches its repeat
+
+
+def test_decide_keep_failure_gate_reads_ramps_from_a_separate_folder(tmp_path):
+    runs, types, rests, datums = _failure_population(tmp_path, with_ramp=False)
+    ramps = tmp_path/"ramps"
+    for cell in ("200", "300"):
+        (ramps/f"transfer-all-{cell}-ramp").mkdir(parents=True)
+        (ramps/f"transfer-all-{cell}-ramp"/"run.json").write_text(json.dumps(dict(cell=cell, **_ramp())))
+    result = decision.decide_keep(runs, types, rests, gate="failure", datums_path=datums, ramp_folder=ramps)
+    assert result["kept"] == ["200"] and result["pending"] == {} and result["ramp_folder"] == str(ramps)
+    assert "transfer-all-200-ramp" in result["input_hashes"]
+    without = decision.decide_keep(runs, types, rests, gate="failure", datums_path=datums)
+    assert without["pending"] == {"200": "ramp_missing"}
 
 
 def test_bands_gate_is_unchanged_by_the_failure_gate(tmp_path):
@@ -331,3 +370,21 @@ def test_cli_failure_gate_writes_the_decision(tmp_path, monkeypatch, capsys):
     written = json.loads(output.read_text())
     assert written["gate"] == "failure" and written["kept"] == ["200"]
     assert "kept 1 / dropped 1 / missing 0 of 2" in capsys.readouterr().out
+
+
+def test_cli_failure_gate_reports_pending_ramps_and_takes_a_ramp_folder(tmp_path, monkeypatch, capsys):
+    runs, types, rests, datums = _failure_population(tmp_path, with_ramp=False)
+    output = tmp_path/"decision.json"
+    base = ["decide", "--folder", str(runs), "--output", str(output), "--keep", "--types", str(types),
+            "--rests", str(rests), "--gate", "failure", "--datums", str(datums)]
+    monkeypatch.setattr(sys, "argv", base)
+    decision.main()
+    out = capsys.readouterr().out
+    assert "kept 0 / dropped 1 / missing 0 of 2; 1 pending (not yet measured)" in out
+    assert "pending 200: ramp_missing" in out and "drop 300: count_in_repeat_range" in out
+    ramps = tmp_path/"ramps"
+    (ramps/"transfer-all-200-ramp").mkdir(parents=True)
+    (ramps/"transfer-all-200-ramp"/"run.json").write_text(json.dumps(dict(cell="200", **_ramp())))
+    monkeypatch.setattr(sys, "argv", base+["--ramp-folder", str(ramps)])
+    decision.main()
+    assert json.loads(output.read_text())["kept"] == ["200"]

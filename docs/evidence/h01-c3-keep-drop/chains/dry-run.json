@@ -1,0 +1,34 @@
+{
+ "chains": [
+  {
+   "chain": 1,
+   "cells": 29,
+   "runs": 49,
+   "first_commands": [
+    "$R transfer-all-3504577656 1800 -- --cell 3504577656 --donor l5-pv-basket-hl5bn1 --polarity I --pulse-on-ms 270 --pulse-ms 1000 --duration-ms 1500 --current-na 0.19 --registered-count 12 --donor-model-count 14 --archive .cache/h01/c3-candidates-20260916.zip --archive-sha256 75d15798e35cb1f111198f89c03e5210dec2cbd7f42f233783f46b1eb626faf7 --components docs/evidence/h01-c3-candidates-components.json --cell-table .cache/h01/c3-segment-properties.json --cell-table-sha256 6178bfe1c0a876001d02f641dda1d5af3b1d3512935b6114d4765e7988c44b3f",
+    "$R transfer-all-3504577656-ramp 1800 -- --cell 3504577656 --donor l5-pv-basket-hl5bn1 --polarity I --pulse-on-ms 270 --pulse-ms 1000 --duration-ms 1500 --ramp-na 0.57 --archive .cache/h01/c3-candidates-20260916.zip --archive-sha256 75d15798e35cb1f111198f89c03e5210dec2cbd7f42f233783f46b1eb626faf7 --components docs/evidence/h01-c3-candidates-components.json --cell-table .cache/h01/c3-segment-properties.json --cell-table-sha256 6178bfe1c0a876001d02f641dda1d5af3b1d3512935b6114d4765e7988c44b3f",
+    "$R transfer-all-3617981810 1800 -- --cell 3617981810 --donor l5-pv-basket-hl5bn1 --polarity I --pulse-on-ms 270 --pulse-ms 1000 --duration-ms 1500 --current-na 0.19 --registered-count 12 --donor-model-count 14 --archive .cache/h01/c3-candidates-20260916.zip --archive-sha256 75d15798e35cb1f111198f89c03e5210dec2cbd7f42f233783f46b1eb626faf7 --components docs/evidence/h01-c3-candidates-components.json --cell-table .cache/h01/c3-segment-properties.json --cell-table-sha256 6178bfe1c0a876001d02f641dda1d5af3b1d3512935b6114d4765e7988c44b3f"
+   ]
+  },
+  {
+   "chain": 2,
+   "cells": 28,
+   "runs": 48,
+   "first_commands": [
+    "$R transfer-all-3518943222 1800 -- --cell 3518943222 --donor l5-pv-basket-hl5bn1 --polarity I --pulse-on-ms 270 --pulse-ms 1000 --duration-ms 1500 --current-na 0.19 --registered-count 12 --donor-model-count 14 --archive .cache/h01/c3-candidates-20260916.zip --archive-sha256 75d15798e35cb1f111198f89c03e5210dec2cbd7f42f233783f46b1eb626faf7 --components docs/evidence/h01-c3-candidates-components.json --cell-table .cache/h01/c3-segment-properties.json --cell-table-sha256 6178bfe1c0a876001d02f641dda1d5af3b1d3512935b6114d4765e7988c44b3f",
+    "$R transfer-all-3518943222-ramp 1800 -- --cell 3518943222 --donor l5-pv-basket-hl5bn1 --polarity I --pulse-on-ms 270 --pulse-ms 1000 --duration-ms 1500 --ramp-na 0.57 --archive .cache/h01/c3-candidates-20260916.zip --archive-sha256 75d15798e35cb1f111198f89c03e5210dec2cbd7f42f233783f46b1eb626faf7 --components docs/evidence/h01-c3-candidates-components.json --cell-table .cache/h01/c3-segment-properties.json --cell-table-sha256 6178bfe1c0a876001d02f641dda1d5af3b1d3512935b6114d4765e7988c44b3f",
+    "$R transfer-all-2702762854 1800 -- --cell 2702762854 --donor l3-sst-interneuron-hl5mn1 --polarity I --pulse-on-ms 270 --pulse-ms 1000 --duration-ms 1500 --current-na 0.1 --registered-count 14 --repeat-counts 14 14 13 12 --donor-model-count 16 --archive .cache/h01/c3-candidates-20260916.zip --archive-sha256 75d15798e35cb1f111198f89c03e5210dec2cbd7f42f233783f46b1eb626faf7 --components docs/evidence/h01-c3-candidates-components.json --cell-table .cache/h01/c3-segment-properties.json --cell-table-sha256 6178bfe1c0a876001d02f641dda1d5af3b1d3512935b6114d4765e7988c44b3f"
+   ]
+  }
+ ],
+ "runs_total": 97,
+ "cells_total": 57,
+ "runs_by_kind": {
+  "candidate_primary": 40,
+  "candidate_ramp": 40,
+  "kept_ramp": 17
+ },
+ "seconds_per_run_estimate": 190.0,
+ "wall_estimate_s": 18430.0,
+ "estimate_basis": "190 s per run: the aggregate per-cell cost measured in the 2026-09-16 keep/drop campaign (launch-bound, independent of chain count); an estimate, not a measurement of these runs; dt-half repeats of passing cells come on top"
+}

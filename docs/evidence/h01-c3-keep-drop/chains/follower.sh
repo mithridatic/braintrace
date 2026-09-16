@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# dt-half follower of the C3 test-to-failure gate; waits for 2 chain done files under var/c3-keep/.
+cd /workspace/braintrace-c3-keep
+PYTHONPATH=. exec /workspace/venv314/bin/python docs/evidence/h01_keep_drop_follower.py --folder var/c3-keep --types docs/evidence/h01-c3-keep-drop/types.json --gate failure --datums docs/evidence/h01-c3-keep-drop/human-datums.json --chains 2 --runner docs/evidence/h01-c3-keep-drop/run_transfer.sh --output var/c3-keep/keep-primary-decision.json --cpuset 64-95 --memfrac .12 --extra-args "--archive .cache/h01/c3-candidates-20260916.zip --archive-sha256 75d15798e35cb1f111198f89c03e5210dec2cbd7f42f233783f46b1eb626faf7 --components docs/evidence/h01-c3-candidates-components.json --cell-table .cache/h01/c3-segment-properties.json --cell-table-sha256 6178bfe1c0a876001d02f641dda1d5af3b1d3512935b6114d4765e7988c44b3f"

@@ -1,9 +1,10 @@
 """Copy keep/drop run receipts into the evidence tree with decimated traces.
 
-Spec: docs/specs/2026-09-16-h01-keep-drop.md. For every ``transfer-all-<cell>[-dthalf]``
+Spec: docs/specs/2026-09-16-h01-keep-drop.md. For every ``transfer-all-<cell>[-dthalf|-ramp]``
 folder that holds a ``terminal.json`` this copies ``launch.json``, ``run.json`` and
 ``terminal.json`` unchanged and writes ``trace.npz`` with the voltages sampled every
-``--every`` steps (0.5 ms at the primary dt) plus the exact spike times, so the full
+``--every`` steps (0.5 ms at the primary dt) plus the exact spike times (and the decimated
+ramp current of a ramp run), so the full
 460,000-sample traces (5 MB per cell) stay on the box while the evidence tree keeps a
 reproducible summary of each run.
 """
@@ -25,9 +26,12 @@ def decimate(npz, every):
         raise ValueError(f"every must be >= 1, got {every}")
     time_ms = np.asarray(npz["time_ms"])
     events = np.asarray(npz["events"]).reshape(len(time_ms), -1).any(axis=1)
-    return dict(time_ms=time_ms[::every], voltage=np.asarray(npz["voltage"])[::every],
-                output_voltage=np.asarray(npz["output_voltage"])[::every],
-                spike_times_ms=time_ms[events], every=np.int64(every))
+    out = dict(time_ms=time_ms[::every], voltage=np.asarray(npz["voltage"])[::every],
+               output_voltage=np.asarray(npz["output_voltage"])[::every],
+               spike_times_ms=time_ms[events], every=np.int64(every))
+    if "ramp_current_na" in npz:   # ramp runs (--ramp-na) save the injected current beside the voltages
+        out["ramp_current_na"] = np.asarray(npz["ramp_current_na"])[::every]
+    return out
 
 
 def copy_run(src, dst, every):

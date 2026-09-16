@@ -1,0 +1,248 @@
+{
+ "source": "h01-population-types.json rows of the h01-keep-drop/decision.json kept list",
+ "archive": "proofread104.zip",
+ "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+ "summary": {
+  "cells": 17,
+  "by_donor": {
+   "l2-pyramidal-allen-541563728": 13,
+   "l4-pyramidal-allen-527952884": 4
+  },
+  "by_match": {
+   "modifier": 3,
+   "matched": 8,
+   "layer": 1,
+   "layer, modifier": 1,
+   "layer, class, modifier": 2,
+   "layer, class": 2
+  },
+  "by_polarity": {
+   "E": 17
+  },
+  "by_layer_class": {
+   "L2 pyramidal": 7,
+   "L4 pyramidal": 4,
+   "L3 pyramidal": 1,
+   "L5 pyramidal": 1,
+   "L5 excitatory/spiny-with-atypical-tree": 4
+  }
+ },
+ "rows": [
+  {
+   "cell_id": "1669770671",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "modifier",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "1684504313",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "2001418787",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l4-allen-527952884",
+   "donor_key": "l4-pyramidal-allen-527952884",
+   "match": "modifier",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "2103991145",
+   "layer": "L3",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "layer",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "2252715458",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "2848552900",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "3111823553",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "3571083397",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "layer, modifier",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "3761379470",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l4-allen-527952884",
+   "donor_key": "l4-pyramidal-allen-527952884",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "4010150634",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l4-allen-527952884",
+   "donor_key": "l4-pyramidal-allen-527952884",
+   "match": "modifier",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "4197933517",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "layer, class, modifier",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "4437316933",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "5013648003",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "layer, class",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "5173982155",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "layer, class",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "5439194879",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l4-allen-527952884",
+   "donor_key": "l4-pyramidal-allen-527952884",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "6833911543",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "layer, class, modifier",
+   "note": "",
+   "source": "proofread_104"
+  },
+  {
+   "cell_id": "751294744",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "donor_key": "l2-pyramidal-allen-541563728",
+   "match": "matched",
+   "note": "",
+   "source": "proofread_104"
+  }
+ ]
+}

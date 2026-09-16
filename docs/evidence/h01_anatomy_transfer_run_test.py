@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 from braintrace.datasets.h01_anatomy_test import imported  # noqa: F401 - fixture
-from h01_anatomy_transfer_run import (count_verdict, crossings, parse_args, ramp_clamp, ramp_current_na,
-                                      ramp_readings, summarize, usable_features, windows)
+from h01_anatomy_transfer_run import (annotations_for, count_verdict, crossings, parse_args, ramp_clamp,
+                                      ramp_current_na, ramp_readings, summarize, usable_features, windows)
 
 
 def _trace(spike_times_ms, duration_ms=100., dt=.01):
@@ -189,7 +189,7 @@ def test_ramp_clamp_drives_a_real_cell_inside_the_compiled_step(imported):
 def _args(**overrides):
     base = dict(cell="c", donor="d", polarity="E", current_na=.3, ramp_na=None, pulse_on_ms=20., pulse_ms=40.,
                 duration_ms=100., dt_ms=.01, solver="s", max_cv_um=10., registered_count=2, repeat_counts=None,
-                donor_model_count=None, tags=None)
+                donor_model_count=None, tags=None, cell_table=None)
     base.update(overrides)
     return SimpleNamespace(**base)
 
@@ -207,6 +207,17 @@ def test_summarize_step_run_keeps_the_former_readings_and_adds_rest_sd_and_usabl
     assert summary["rest_sd_mv"] == pytest.approx(0.) and summary["rest_mean_mv"] == pytest.approx(-70.)
     assert summary["usable_tier"]["available"] is True and summary["usable_tier"]["view"]["count"] == 2
     assert summary["peak_mv"] == 20. and summary["pre_pulse_count"] == 0
+    assert summary["tags"] == [] and summary["tag_source"] == "proofread annotation cache"
+
+
+def test_summarize_records_the_tags_the_builder_used_and_their_source(tmp_path):
+    evidence = dict(component=1, source_sha256="x"*64, component_nodes=5, n_compartments=7,
+                    source_tags=["L2", "interneuron", "neuron"])
+    from_table = summarize(_args(cell_table=tmp_path/"c3-segment-properties.json"), _arrays([30.]), evidence)
+    assert from_table["tags"] == ["L2", "interneuron", "neuron"]
+    assert from_table["tag_source"] == "cell table c3-segment-properties.json"
+    explicit = summarize(_args(tags=["L3", "pyramidal"]), _arrays([30.]), evidence)
+    assert explicit["tags"] == ["L3", "pyramidal"] and explicit["tag_source"] == "--tags"
 
 
 def test_summarize_ramp_run_reports_rheobase_block_and_no_human_verdict():
@@ -256,3 +267,35 @@ def test_parse_args_ramp_defaults_the_archive_pin_and_accepts_tags():
     assert args.ramp_na == .57 and args.current_na is None and args.registered_count is None
     assert args.archive_sha256 == ARCHIVE_SHA256 and str(args.archive).endswith("proofread104.zip")
     assert args.tags == ["interneuron", "L3"]
+
+
+def test_parse_args_accepts_a_cell_table_for_c3_ids(tmp_path):
+    table = tmp_path/"c3-segment-properties.json"
+    args = parse_args(["--cell", "693197378", "--donor", "d", "--polarity", "E", "--pulse-on-ms", "1020",
+                       "--pulse-ms", "1000", "--duration-ms", "2300", "--output", "out.json", "--ramp-na", ".93",
+                       "--cell-table", str(table), "--cell-table-sha256", "ab"*32])
+    assert args.cell_table == table and args.cell_table_sha256 == "ab"*32 and args.tags is None
+    assert parse_args(["--cell", "1", "--donor", "d", "--polarity", "E", "--pulse-on-ms", "1", "--pulse-ms", "1",
+                       "--duration-ms", "3", "--output", "o", "--ramp-na", "1"]).cell_table is None
+
+
+def test_annotations_for_prefers_tags_then_the_cell_table_then_the_proofread_cache(tmp_path):
+    import hashlib
+    import json
+
+    from braintrace.datasets.h01_annotations_test import METADATA
+    table = tmp_path/"c3-segment-properties.json"
+    payload = json.dumps(METADATA).encode()
+    table.write_bytes(payload)
+    digest = hashlib.sha256(payload).hexdigest()
+    explicit = annotations_for(SimpleNamespace(tags=["L4", "pyramidal"], cell_table=table, cache=tmp_path,
+                                               cell_table_sha256=None))
+    assert explicit.metadata("anything").tags == ("L4", "pyramidal")
+    from_table = annotations_for(SimpleNamespace(tags=None, cell_table=table, cache=tmp_path, cell_table_sha256=digest))
+    assert from_table.metadata("13").tags == ("L3", "interneuron")
+    with pytest.raises(KeyError):
+        from_table.metadata("99")
+    with pytest.raises(ValueError, match="SHA-256"):
+        annotations_for(SimpleNamespace(tags=None, cell_table=table, cache=tmp_path, cell_table_sha256="0"*64))
+    with pytest.raises(FileNotFoundError):   # the proofread cache is the fallback and this folder has none
+        annotations_for(SimpleNamespace(tags=None, cell_table=None, cache=tmp_path/"empty", cell_table_sha256=None))

@@ -1,0 +1,1411 @@
+{
+  "phase": "final",
+  "gate": "failure",
+  "dropped": {
+    "1669770671": "count_in_repeat_range,rest_in_donor_spread",
+    "1684504313": "count_in_repeat_range,rest_in_donor_spread",
+    "2001418787": "count_in_repeat_range",
+    "2103991145": "count_in_repeat_range,rest_in_donor_spread",
+    "2252715458": "count_in_repeat_range,rest_in_donor_spread",
+    "2848552900": "count_in_repeat_range,rest_in_donor_spread",
+    "3111823553": "count_in_repeat_range,rest_in_donor_spread",
+    "3571083397": "count_in_repeat_range,rest_in_donor_spread",
+    "3761379470": "count_in_repeat_range,rest_in_donor_spread",
+    "4010150634": "count_in_repeat_range",
+    "4197933517": "count_in_repeat_range,rest_in_donor_spread",
+    "4437316933": "rest_in_donor_spread",
+    "5013648003": "count_in_repeat_range,rest_in_donor_spread",
+    "5173982155": "count_in_repeat_range,rest_in_donor_spread",
+    "5439194879": "count_in_repeat_range,rest_in_donor_spread",
+    "6833911543": "count_in_repeat_range,rest_in_donor_spread",
+    "751294744": "count_in_repeat_range,rest_in_donor_spread"
+  },
+  "missing": [],
+  "cells": {
+    "1669770671": {
+      "cell": "1669770671",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 11,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.16852777057642,
+      "return_mv": -91.01311864126671,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "1669770671",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 11,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.16852777057642,
+        "return_mv": -91.01311864126671,
+        "pre_pulse_count": 0,
+        "dt_half_count": 11,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "1684504313": {
+      "cell": "1684504313",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.18369466027949,
+      "return_mv": -88.56595203039132,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "1684504313",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 7,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.18369466027949,
+        "return_mv": -88.56595203039132,
+        "pre_pulse_count": 0,
+        "dt_half_count": 7,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "2001418787": {
+      "cell": "2001418787",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 11,
+      "human_repeat_counts": [
+        12
+      ],
+      "rest_mean_mv": -80.9836609607026,
+      "return_mv": -81.77931479650846,
+      "rest_tolerance_mv": 1.4161709458020086,
+      "donor_rest_mv": -80.60354306502268,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 50.0000006675716,
+        "human_step_pa": 20.000001654807196,
+        "human_highest_firing_pa": 170.000000188075,
+        "human_repeat_counts": [
+          12
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -80.60354306502268,
+        "rest_sd_mv": 0.47205698193400286,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -81.00987869203091
+      },
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": true,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "2001418787",
+        "donor": "l4-pyramidal-allen-527952884",
+        "count": 11,
+        "human_count": 12,
+        "count_band": [
+          9,
+          15
+        ],
+        "finite": true,
+        "rest_mean_mv": -80.9836609607026,
+        "return_mv": -81.77931479650846,
+        "pre_pulse_count": 0,
+        "dt_half_count": 11,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "2103991145": {
+      "cell": "2103991145",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.25233719927854,
+      "return_mv": -87.66168793782352,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "2103991145",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 7,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.25233719927854,
+        "return_mv": -87.66168793782352,
+        "pre_pulse_count": 0,
+        "dt_half_count": 7,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "2252715458": {
+      "cell": "2252715458",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 9,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.07338280536817,
+      "return_mv": -89.39326032656862,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 9,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "2252715458",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 9,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.07338280536817,
+        "return_mv": -89.39326032656862,
+        "pre_pulse_count": 0,
+        "dt_half_count": 9,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "2848552900": {
+      "cell": "2848552900",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 8,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.10023000879013,
+      "return_mv": -88.46814379906031,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 8,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "2848552900",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 8,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.10023000879013,
+        "return_mv": -88.46814379906031,
+        "pre_pulse_count": 0,
+        "dt_half_count": 8,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "3111823553": {
+      "cell": "3111823553",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 11,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.3528511766224,
+      "return_mv": -92.1855021277831,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "3111823553",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 11,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.3528511766224,
+        "return_mv": -92.1855021277831,
+        "pre_pulse_count": 0,
+        "dt_half_count": 11,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "3571083397": {
+      "cell": "3571083397",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.85470523908052,
+      "return_mv": -90.56078950229552,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "3571083397",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 7,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.85470523908052,
+        "return_mv": -90.56078950229552,
+        "pre_pulse_count": 0,
+        "dt_half_count": 7,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "3761379470": {
+      "cell": "3761379470",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 13,
+      "human_repeat_counts": [
+        12
+      ],
+      "rest_mean_mv": -80.99067628684442,
+      "return_mv": -82.11590305693264,
+      "rest_tolerance_mv": 1.4161709458020086,
+      "donor_rest_mv": -80.60354306502268,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 50.0000006675716,
+        "human_step_pa": 20.000001654807196,
+        "human_highest_firing_pa": 170.000000188075,
+        "human_repeat_counts": [
+          12
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -80.60354306502268,
+        "rest_sd_mv": 0.47205698193400286,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -81.00987869203091
+      },
+      "dt_half_count": 13,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "3761379470",
+        "donor": "l4-pyramidal-allen-527952884",
+        "count": 13,
+        "human_count": 12,
+        "count_band": [
+          9,
+          15
+        ],
+        "finite": true,
+        "rest_mean_mv": -80.99067628684442,
+        "return_mv": -82.11590305693264,
+        "pre_pulse_count": 0,
+        "dt_half_count": 13,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "4010150634": {
+      "cell": "4010150634",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 9,
+      "human_repeat_counts": [
+        12
+      ],
+      "rest_mean_mv": -80.97932926714176,
+      "return_mv": -81.91670973717424,
+      "rest_tolerance_mv": 1.4161709458020086,
+      "donor_rest_mv": -80.60354306502268,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 50.0000006675716,
+        "human_step_pa": 20.000001654807196,
+        "human_highest_firing_pa": 170.000000188075,
+        "human_repeat_counts": [
+          12
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -80.60354306502268,
+        "rest_sd_mv": 0.47205698193400286,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -81.00987869203091
+      },
+      "dt_half_count": 9,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": true,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "4010150634",
+        "donor": "l4-pyramidal-allen-527952884",
+        "count": 9,
+        "human_count": 12,
+        "count_band": [
+          9,
+          15
+        ],
+        "finite": true,
+        "rest_mean_mv": -80.97932926714176,
+        "return_mv": -81.91670973717424,
+        "pre_pulse_count": 0,
+        "dt_half_count": 9,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "4197933517": {
+      "cell": "4197933517",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -84.01432584814934,
+      "return_mv": -91.94424873633437,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "4197933517",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 7,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -84.01432584814934,
+        "return_mv": -91.94424873633437,
+        "pre_pulse_count": 0,
+        "dt_half_count": 7,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "4437316933": {
+      "cell": "4437316933",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 10,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.12761719683455,
+      "return_mv": -92.05275814917671,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 10,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": true,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "4437316933",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 10,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.12761719683455,
+        "return_mv": -92.05275814917671,
+        "pre_pulse_count": 0,
+        "dt_half_count": 10,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "5013648003": {
+      "cell": "5013648003",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 11,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.50763477950699,
+      "return_mv": -93.45770191011022,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 11,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "5013648003",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 11,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.50763477950699,
+        "return_mv": -93.45770191011022,
+        "pre_pulse_count": 0,
+        "dt_half_count": 11,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "5173982155": {
+      "cell": "5173982155",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -84.30220090703631,
+      "return_mv": -91.85277453623102,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "5173982155",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 7,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -84.30220090703631,
+        "return_mv": -91.85277453623102,
+        "pre_pulse_count": 0,
+        "dt_half_count": 7,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "5439194879": {
+      "cell": "5439194879",
+      "donor": "l4-pyramidal-allen-527952884",
+      "count": 15,
+      "human_repeat_counts": [
+        12
+      ],
+      "rest_mean_mv": -80.96881192872058,
+      "return_mv": -82.20132202271259,
+      "rest_tolerance_mv": 1.4161709458020086,
+      "donor_rest_mv": -80.60354306502268,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 50.0000006675716,
+        "human_step_pa": 20.000001654807196,
+        "human_highest_firing_pa": 170.000000188075,
+        "human_repeat_counts": [
+          12
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -80.60354306502268,
+        "rest_sd_mv": 0.47205698193400286,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -81.00987869203091
+      },
+      "dt_half_count": 15,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "5439194879",
+        "donor": "l4-pyramidal-allen-527952884",
+        "count": 15,
+        "human_count": 12,
+        "count_band": [
+          9,
+          15
+        ],
+        "finite": true,
+        "rest_mean_mv": -80.96881192872058,
+        "return_mv": -82.20132202271259,
+        "pre_pulse_count": 0,
+        "dt_half_count": 15,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "6833911543": {
+      "cell": "6833911543",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 8,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.62745885366085,
+      "return_mv": -91.27133490474637,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 8,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "6833911543",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 8,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.62745885366085,
+        "return_mv": -91.27133490474637,
+        "pre_pulse_count": 0,
+        "dt_half_count": 8,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    },
+    "751294744": {
+      "cell": "751294744",
+      "donor": "l2-pyramidal-allen-541563728",
+      "count": 7,
+      "human_repeat_counts": [
+        10
+      ],
+      "rest_mean_mv": -83.0707274512731,
+      "return_mv": -87.17096870179982,
+      "rest_tolerance_mv": 0.9165743911592041,
+      "donor_rest_mv": -84.00724285831375,
+      "pre_pulse_count": 0,
+      "readings": {
+        "model_rheobase_pa": null,
+        "model_block_pa": null,
+        "model_last_spike_pa": null,
+        "ramp_max_pa": null,
+        "human_rheobase_pa": 200.000002670286,
+        "human_step_pa": 20.000001654807022,
+        "human_highest_firing_pa": 350.000001203554,
+        "human_repeat_counts": [
+          10
+        ],
+        "block_above_recorded_range": null,
+        "rest_datum_mv": -84.00724285831375,
+        "rest_sd_mv": 0.30552479705306806,
+        "rest_sd_source": "across-sweep repeat sd (human-datums rest_repeat_sd_mv)",
+        "donor_single_sweep_rest_mv": -84.26339717358351
+      },
+      "dt_half_count": 7,
+      "rules": {
+        "finite": true,
+        "rheobase_in_step": null,
+        "fires_at_highest": null,
+        "count_in_repeat_range": false,
+        "rest_in_donor_spread": false,
+        "no_spike_before_pulse": true,
+        "dt_half_reproduces": true
+      },
+      "keep": false,
+      "drop_reason": "count_in_repeat_range,rest_in_donor_spread",
+      "pending": "ramp_missing",
+      "measured_rules": [
+        "finite",
+        "count_in_repeat_range",
+        "rest_in_donor_spread",
+        "no_spike_before_pulse",
+        "dt_half_reproduces"
+      ],
+      "unmeasured_rules": [
+        "rheobase_in_step",
+        "fires_at_highest"
+      ],
+      "legacy_verdict": {
+        "cell": "751294744",
+        "donor": "l2-pyramidal-allen-541563728",
+        "count": 7,
+        "human_count": 10,
+        "count_band": [
+          7,
+          13
+        ],
+        "finite": true,
+        "rest_mean_mv": -83.0707274512731,
+        "return_mv": -87.17096870179982,
+        "pre_pulse_count": 0,
+        "dt_half_count": 7,
+        "rules": {
+          "finite": true,
+          "rest_and_return": true,
+          "no_spike_before_pulse": true,
+          "count_in_band": true,
+          "dt_half_reproduces": true
+        },
+        "keep": true,
+        "drop_reason": null
+      }
+    }
+  },
+  "input_hashes": {
+    "transfer-all-1669770671": "827dc509a8a67fd1e1f3ace0d9cfe1e5df36abca7f1ce536c0a1960da8fe20c6",
+    "transfer-all-1669770671-dthalf": "30222238543151226ae2cc1fbd90ba8e8cffcb0d265722bf5806bfe1a8c948d9",
+    "transfer-all-1684504313": "f9b455a09ea054104e03321c4839e2c0b8d160f977ca57160317c165d2e1aea4",
+    "transfer-all-1684504313-dthalf": "b475e8c2242e5d53f2dd1cc775dc53cf1bfa748316fb8750dbe22d1311df39e4",
+    "transfer-all-2001418787": "fdc490fe9e90480c437e3b65c612a0b418bfb26b047f00fc60a2d56c9d0ce4d0",
+    "transfer-all-2001418787-dthalf": "ff7317c4d2007d0f33b87314239887bfed1e58eae35f8c707de9d421cbc3a8c2",
+    "transfer-all-2103991145": "e04f7a52f6cf3bd0995e40c4f4e47495a9e162e674aa6bc0bb462d504828647c",
+    "transfer-all-2103991145-dthalf": "2502450a60c438a4fdcef5c278e1388fd7174734f14ebfc151224144c1ad894b",
+    "transfer-all-2252715458": "e30a9e9be0c42a2428e462dabe50274e8f21717ea6b07b82a52850695a57dfc0",
+    "transfer-all-2252715458-dthalf": "326dd32edf7b751b104104d9ad11f36266ee03f339d7c712c360bfa7818827f2",
+    "transfer-all-2848552900": "8339d180fd4f6ec7cda6773b9e6f1050c53fb6dce95878930a3eb7fe752f4540",
+    "transfer-all-2848552900-dthalf": "e4466e338e47df45e876bbe5ea9474e8f95cd887d74e22b3ef1218661860ea9a",
+    "transfer-all-3111823553": "abf05b101157fbbf49eabd444cc83f7901f8448d52762cc9329a400e2dfc8369",
+    "transfer-all-3111823553-dthalf": "2b0c88a5272a4eab1974a786d95ae92e7bba15ef6d5bc9bdfd780452cce2934e",
+    "transfer-all-3571083397": "7be049206445d1d2d85002aa8af421edaf48a0a16618a55da2cf4e78251986d3",
+    "transfer-all-3571083397-dthalf": "2c1d7ba91e94a2b86f75e867dc315df10e8a4bbaf3fa804cf52337336c371a19",
+    "transfer-all-3761379470": "8d16882b33675ad87845bf1f68825471b0e10f2ea1a97c19b530fda72438660f",
+    "transfer-all-3761379470-dthalf": "825c732742e015d52f410e4e7c45839eaff922dd6b8ea660d3967b06e1caeb83",
+    "transfer-all-4010150634": "147e6de444e092471519860093af5eccd382c027fc0691853ddb8ae1af485758",
+    "transfer-all-4010150634-dthalf": "d56eb8b7eb88822d3cdd2337122885629650770a14ac9f4a667aa240ee8f8cc6",
+    "transfer-all-4197933517": "f9d94fb36c4d4bc68b08aeb83d7cbc467bb49f5bf512fe184527c605bf96deee",
+    "transfer-all-4197933517-dthalf": "ba25a89e33c9ca3895b6a797fe18d62fdcdf0b08c508bddb39431b0e96a51796",
+    "transfer-all-4437316933": "308b62874f67e149ac766f7746576d51eab9636275f647377e0fb96b4c2b7b29",
+    "transfer-all-4437316933-dthalf": "e3afca412f0f55b24f0e5c94ee7016120c130a3ef25a2a434e9295fab6634e9b",
+    "transfer-all-5013648003": "2ff5fbb3a5684f16e8aeb5d8fbd21bc0a097eb6d0a5c7da09ac5b8d318b2e585",
+    "transfer-all-5013648003-dthalf": "8e7103276cacb0b6623470fd1cd81d507893f7d9d9c77d466e37ab19ba88764e",
+    "transfer-all-5173982155": "985eab818f166a38e668f92b74e928ecd322ae8ecce2e2651bb1f3c885c35633",
+    "transfer-all-5173982155-dthalf": "d046190888d69c19fa348deb73c9d7584bba199d3ef7137f5e483e34aa2a817b",
+    "transfer-all-5439194879": "2363013e25b9c3e5f6f1a92191c116225a03b1126a2c6feb318a845a397c595e",
+    "transfer-all-5439194879-dthalf": "3ea03bb4955d0ebc987f8bd843dee63de6548d22253ab2b2ff47080c8967afd8",
+    "transfer-all-6833911543": "44f68bd51940f411f980644f82e00296aa12aaf87dcdecaea1b936e001bbc8d3",
+    "transfer-all-6833911543-dthalf": "33dd3cc730898d0d1c707d6e956da419a074cfbde092520e8ad0dc1745e39cf5",
+    "transfer-all-751294744": "c62f5f920fcbb20774350fb659a51da32d3bd7e066715154bb44b4f81ff3c8a0",
+    "transfer-all-751294744-dthalf": "aaded468b8d7c9ff0fc6d31e60c621a0a10a55b0854b9130150e62ca2aa513e9"
+  },
+  "pending": {},
+  "ramp_folder": "docs/evidence/h01-c3-keep-drop/runs",
+  "kept": [],
+  "rule": "keep = finite output and soma traces; firing range: the ramp rheobase within one human sweep step of the human rheobase, the ramp still firing at the human's highest recorded amplitude, and the step count at the primary input inside the human repeat range; rest: mean output voltage over the 100 ms before the pulse and over the 10 ms ending 200 ms after it both within 3 across-sweep repeat sd of the donor recording's across-sweep rest mean, no -20 mV crossing before the pulse; numerical: the dt-half repeat (0.0025 ms) is finite and reproduces the count. The block current above the recorded range is recorded, not scored (spec 2026-09-16-h01-c3-partner-expansion, step C).",
+  "scope": "A kept cell reproduces a count and a resting level from another human donor's recording on retained H01 anatomy under that donor's step protocol; it is not a measurement of the H01 donor's own cell, and no channel provenance is qualified.",
+  "by_donor": {
+    "l2-pyramidal-allen-541563728": {
+      "kept": 0,
+      "dropped": 13
+    },
+    "l4-pyramidal-allen-527952884": {
+      "kept": 0,
+      "dropped": 4
+    }
+  },
+  "counts": {
+    "kept": 0,
+    "dropped": 17,
+    "missing": 0,
+    "total": 17,
+    "pending": 0
+  },
+  "datums_sha256": "7b8c59b7baf7f25d15d12c52331b387a4b514b11b2d964febef559527eb450d6"
+}
