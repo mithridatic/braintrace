@@ -30,6 +30,22 @@ class _PVChannel(HH):
         super().__init__(size=size, name=name)
         self.g_max = braintools.init.param(g_max, self.varshape, allow_none=False)
 
+    def _on_param_updated(self, name, value):
+        """Keep the per-gate phase factors in step with a runtime parameter write.
+
+        Parameters
+        ----------
+        name : str
+            Parameter name; ``m_open``, ``m_close``, ``h_open`` or ``h_close``
+            update ``phase_factors`` (per-point arrays are accepted).
+        value : array-like
+            New value, already masked/shaped by the runtime.
+        """
+        if name in ('m_open', 'm_close', 'h_open', 'h_close'):
+            gate, phase = name.split('_')
+            opening, closing = self.phase_factors[gate]
+            self.phase_factors[gate] = (value, closing) if phase == 'open' else (opening, value)
+
     def init_state(self, voltage, *ions, batch_size=None):
         """Allocate gate states at equilibrium.
 
