@@ -96,8 +96,8 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         (``braintrace.datasets.h01_forest_cell.H01ForestCell``): every cell is
         built and initialized as usual, then fused so that each mechanism runs
         as one kernel over all compartments. Spec:
-        docs/specs/2026-09-16-h01-fused-population.md. Contacts are not yet
-        delivered on the fused path.
+        docs/specs/2026-09-16-h01-fused-population.md. Contacts are delivered
+        inside the forest (``h01_forest_delivery``) from each pre cell's output CV.
 
     Returns
     -------
@@ -169,7 +169,7 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
             records[identity]['original_output_site'] = list(site)
     if fused:
         network = _fuse_populations(network, doc, records, solver, emit)
-    for identity in doc['active_contacts']:
+    for identity in () if fused else doc['active_contacts']:
         edge, name = doc['contacts'][identity], 'syn_'+identity
         network.add_edges(name=name, pre='cell_'+edge['pre'], post='cell_'+edge['post'], method=pairs([(0, 0)]))
         network.add_projection(name=name, edges=name, synapse=name,
@@ -181,8 +181,7 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
 def _fuse_populations(network, doc, records, solver, emit):
     """Initialize every registered cell and return a network with one forest population."""
     from braintrace.datasets.h01_forest_cell import H01ForestCell
-    if doc['active_contacts']:
-        raise ValueError('The fused population does not deliver contacts yet (spec section 3)')
+    from braintrace.datasets.h01_forest_delivery import ForestContact
     cells = []
     for identity in doc['active_cells']:
         cell = network.populations['cell_'+identity].cell
@@ -190,6 +189,10 @@ def _fuse_populations(network, doc, records, solver, emit):
         cell.init_state()
         cells.append(cell)
     forest = H01ForestCell(cells, solver=solver)
+    order = {identity: index for index, identity in enumerate(doc['active_cells'])}
+    forest.contacts = tuple(ForestContact(pre=order[doc['contacts'][identity]['pre']], synapse='syn_'+identity,
+        weight_us=float(doc['contacts'][identity]['initial_weight_us']), delay_ms=float(doc['contacts'][identity]['delay_ms']))
+        for identity in doc['active_contacts'])
     for index, identity in enumerate(doc['active_cells']):
         records[identity]['forest'] = dict(index=index, cv_offset=int(forest.forest_offsets.cv[index]),
             point_offset=int(forest.forest_offsets.point[index]), soma_cv=int(forest.soma_cv_ids[index]),

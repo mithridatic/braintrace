@@ -38,6 +38,12 @@ class H01NetworkStep(brainstate.nn.Module):
         self.cells = tuple(pop.cell for pop in network.populations.values())
         self.setup = network._run_setup(dt=dt_ms*u.ms, delay_quantization="ceil",
                                         event_backend="auto", brainevent_backend="jax_raw")
+        self.forest = self.cells[0] if len(self.cells) == 1 and hasattr(self.cells[0], 'forest_offsets') else None
+        if self.forest is not None and getattr(self.forest, 'contacts', ()):
+            from dataclasses import replace
+            from .h01_forest_delivery import forest_delivery
+            blocks, ops = forest_delivery(self.forest, self.forest.contacts, dt_ms=dt_ms)
+            self.setup = replace(self.setup, delivery_blocks=blocks, delivery_ops=ops)
         self.delivery = create_delivery_state(self.setup.delivery_blocks,
                                               populations=network.populations,
                                               delivery_ops=self.setup.delivery_ops)
@@ -94,7 +100,11 @@ class H01NetworkStep(brainstate.nn.Module):
                 self.chemistry.update(potassium_current)
             snapshots = {name: pop.cell.sample_probes()
                          for name, pop in self.network.populations.items()} if sample_probes else None
-            if self.has_delivery:
+            if self.has_delivery and self.forest is not None:
+                from .h01_forest_delivery import enqueue_forest_events
+                enqueue_forest_events(self.setup.delivery_blocks, self.delivery, self.forest)
+                advance_delivery_state(self.delivery)
+            elif self.has_delivery:
                 enqueue_future_events(self.setup.delivery_blocks, self.delivery,
                                       populations=self.network.populations)
                 advance_delivery_state(self.delivery)

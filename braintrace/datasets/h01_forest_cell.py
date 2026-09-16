@@ -110,6 +110,7 @@ class H01ForestCell(H01Cell):
                 raise ValueError('Every source cell must emit from one restricted output site')
             outputs.append(int(cell.spk_fun.cv_id)+int(offsets.cv[index]))
         self.output_cv_ids = tuple(outputs)
+        self.contacts = ()
         super().__init__(cells[0].morpho, cv_policy=cells[0].cv_policy, V_init=v_init*u.mV,
                          V_th=cells[0]._V_th_declaration, solver=solver, pop_size=(1,), name='forest')
         self.spk_fun = _ForestSpike(cells[0].spk_fun.base, self.output_cv_ids, len(forest.cvs))
