@@ -160,7 +160,16 @@ class H01ForestCell(H01Cell):
                     source = self._source_cells[index]._runtime.state_buffers[(source_layout.id, var)]
                     values = np.asarray(u.get_mantissa(source if unit is None else source.in_unit(unit)))
                     vector[..., offset+source_layout.point_index] = values[..., source_layout.point_index]
-            runtime.set_state(layout.id, var, vector if unit is None else u.Quantity(vector, unit))
+            value = vector if unit is None else u.Quantity(vector, unit)
+            if declaration.category == 'ion':
+                # BrainCell's ion re-sync ignores the population axis; write the attribute directly.
+                runtime.state_buffers[(layout.id, var)] = value
+                ion = runtime.ions[declaration.instance_name]
+                setattr(ion, var, value)
+                if callable(getattr(ion, '_update_reversal', None)):
+                    ion._update_reversal()
+            else:
+                runtime.set_state(layout.id, var, value)
 
     def _copy_layout_states(self, layout, key, tables):
         node = self._runtime.runtime_nodes.get(layout.id)
