@@ -1,0 +1,197 @@
+{
+  "status": "pass",
+  "arm": "mut-contact",
+  "settings": {
+    "dt_ms": 0.000625,
+    "substeps": 160,
+    "max_cv_length_um": 10.0,
+    "precision": 64,
+    "checkpoint_substeps": true,
+    "cell_index": null
+  },
+  "stages": {
+    "manifest_load": 0.0025269556790590286,
+    "archive_open": 0.057511335238814354,
+    "build_network": 20.198546937666833,
+    "init_state": 22.87425776850432,
+    "model_setup": 2.574315769597888,
+    "first_update_compile_and_run": 38.961344740353525,
+    "compile_object": 7.86926731467247,
+    "learner_compile_graph": 7.814050165936351
+  },
+  "memory": {
+    "manifest_load": {
+      "host_peak_rss_mb": 913.21484375,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2048
+    },
+    "archive_open": {
+      "host_peak_rss_mb": 917.19921875,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2048
+    },
+    "build_network": {
+      "host_peak_rss_mb": 1658.625,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2048
+    },
+    "init_state": {
+      "host_peak_rss_mb": 2090.6015625,
+      "bytes_in_use": 13364224,
+      "peak_bytes_in_use": 13472512
+    },
+    "model_setup": {
+      "host_peak_rss_mb": 2148.375,
+      "bytes_in_use": 13528320,
+      "peak_bytes_in_use": 13731072
+    },
+    "first_update_compile_and_run": {
+      "host_peak_rss_mb": 4180.00390625,
+      "bytes_in_use": 37049600,
+      "peak_bytes_in_use": 73650176
+    },
+    "compile_object": {
+      "host_peak_rss_mb": 4255.70703125,
+      "bytes_in_use": 37049600,
+      "peak_bytes_in_use": 73650176
+    },
+    "steady_state": {
+      "host_peak_rss_mb": 4317.16015625,
+      "bytes_in_use": 37132032,
+      "peak_bytes_in_use": 73821440
+    },
+    "learner_compile_graph": {
+      "host_peak_rss_mb": 4317.16015625,
+      "bytes_in_use": 66808576,
+      "peak_bytes_in_use": 73821440
+    }
+  },
+  "active_stage": "learner_compile_graph",
+  "mutation": {
+    "kind": "add-contact",
+    "cells": 17,
+    "contacts": 1
+  },
+  "cells": 17,
+  "compartments": 107537,
+  "event_source": {
+    "task_id": "007bbfb7",
+    "query_index": 0,
+    "advancing_events": 385
+  },
+  "cost_analysis": {
+    "bytes accessed": 490784160.0,
+    "flops": 124580784.0,
+    "transcendentals": 11733021.0
+  },
+  "forward": {
+    "events": 2,
+    "seconds_per_event_mean": 1.4234493840485811,
+    "seconds_per_event_median": 1.4234493840485811,
+    "seconds_per_event_min": 1.361853351816535,
+    "seconds_per_event_max": 1.4850454162806273,
+    "total_seconds": 2.8468987680971622
+  },
+  "voltages_mv_first_20": [
+    [
+      -80.69281849455928,
+      -83.94357876919831,
+      -84.08721556965487,
+      -80.86943899583409,
+      -84.0845805213264,
+      -80.81068252491117,
+      -83.97571789280858,
+      -83.97444198014139,
+      -80.7817069352871,
+      -83.96663795253001,
+      -83.99483359723895,
+      -83.93571201783912,
+      -83.99568424487752,
+      -83.96899490600367,
+      -83.92434612805963,
+      -83.97847521719157,
+      -83.98274743661665
+    ],
+    [
+      -80.82048897069268,
+      -83.95538655049066,
+      -84.29315126446795,
+      -80.9601676738435,
+      -84.10121786270169,
+      -80.73572299693244,
+      -84.00520889919308,
+      -83.93404254334399,
+      -80.70647698489408,
+      -84.02636618855846,
+      -84.1452913643956,
+      -83.89134199254934,
+      -83.98591200431281,
+      -83.99192672525126,
+      -83.85566513384204,
+      -83.89585392885611,
+      -84.01836773170625
+    ],
+    [
+      -81.05973016102277,
+      -83.78266198391427,
+      -84.47648796860311,
+      -80.91996739853062,
+      -84.30462809495751,
+      -80.72856741359467,
+      -83.98293881447009,
+      -84.14686854815696,
+      -80.583956645893,
+      -83.92970618512197,
+      -84.2988973458524,
+      -83.97561632971284,
+      -84.06335180396694,
+      -84.08090521996084,
+      -83.9315933577657,
+      -83.75473069319622,
+      -83.9806260554102
+    ]
+  ],
+  "finite": true,
+  "throughput": {
+    "compartment_updates_per_second": 12087482.837684643,
+    "flops_per_event": 124580784.0,
+    "gflops_per_second": 0.08752034697971962,
+    "fraction_of_fp64_peak": 6.784523021683693e-05,
+    "fraction_of_fp32_peak": 1.0595683653719083e-06
+  },
+  "learner_compile_graph_is": "braintrace ETP compiler: jaxpr trace of the model plus eligibility-graph analysis on the host (graph_executor.compile_graph); no XLA executable is built here",
+  "recompile_check": {
+    "events": 2,
+    "calls": [
+      {
+        "call": 1,
+        "seconds": 358.8493237551302,
+        "compile_messages": 1308,
+        "messages": [
+          "Compiling jit(broadcast_in_dim) with global shapes and types (ShapedArray(float64[], weak_type=True),). Argument mapping: (UnspecifiedValue,).",
+          "Finished XLA compilation of jit(broadcast_in_dim) in 0.050554991 sec",
+          "Compiling jit(subtract) with global shapes and types (ShapedArray(float64[1,1608], weak_type=True), ShapedArray(float64[1,1608])). Argument mapping: (Unspecifie",
+          "Finished XLA compilation of jit(subtract) in 0.040731907 sec",
+          "Compiling jit(true_divide) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[])). Argument mapping: (UnspecifiedValue, Unspecified",
+          "Finished XLA compilation of jit(true_divide) in 0.048928261 sec",
+          "Compiling jit(abs) with global shapes and types (ShapedArray(float64[1,1608]),). Argument mapping: (UnspecifiedValue,).",
+          "Finished XLA compilation of jit(abs) in 0.043256521 sec",
+          "Compiling jit(multiply) with global shapes and types (ShapedArray(float64[1,1608]), ShapedArray(float64[], weak_type=True)). Argument mapping: (UnspecifiedValue",
+          "Finished XLA compilation of jit(multiply) in 0.042064428 sec"
+        ]
+      },
+      {
+        "call": 2,
+        "seconds": 24.958521977998316,
+        "compile_messages": 0,
+        "messages": []
+      },
+      {
+        "call": 3,
+        "seconds": 25.13834640663117,
+        "compile_messages": 0,
+        "messages": []
+      }
+    ]
+  }
+}
