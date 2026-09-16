@@ -126,3 +126,28 @@ def test_invalid_synapse_rows(tmp_path, monkeypatch, csv):
     _assets(tmp_path, monkeypatch, csv=csv)
     with pytest.raises(ValueError):
         annotations.H01Annotations(tmp_path).synapses(12)
+
+
+def test_segment_properties_table_reads_any_release_and_has_no_synapses(tmp_path):
+    path = tmp_path / "c3-segment-properties.json"
+    payload = json.dumps(METADATA).encode()
+    path.write_bytes(payload)
+    digest = hashlib.sha256(payload).hexdigest()
+    table = annotations.H01SegmentProperties(path, expected_sha256=digest.upper(), release="20210601/c3")
+    assert table.sha256 == digest and table.select("L3", "interneuron") == ("13",)
+    cell = table.metadata(12)
+    assert cell.tags == ("L2", "pyramidal") and cell.measurements["NSI"] == 388
+    assert cell.provenance["sha256"] == digest and cell.provenance["release"] == "20210601/c3"
+    assert "non-proofread" in cell.provenance["verification"]
+    assert table.synapse_provenance["synapse_table"].startswith("not supplied")
+    with pytest.raises(LookupError):
+        table.synapses(12)
+    with pytest.raises(KeyError):
+        table.metadata("99")
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        annotations.H01SegmentProperties(path, expected_sha256="0" * 64)
+    unpinned = annotations.H01SegmentProperties(path)
+    assert unpinned.sha256 == digest
+    path.write_text(json.dumps({"@type": "wrong"}))
+    with pytest.raises(ValueError, match="segment properties"):
+        annotations.H01SegmentProperties(path)

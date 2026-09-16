@@ -104,9 +104,11 @@ def main(argv=None):
     parser.add_argument("--archive", type=Path, default=ROOT/".cache/h01/proofread104.zip")
     parser.add_argument("--network", type=Path, default=EVIDENCE/"h01-verified-network.json")
     parser.add_argument("--output", type=Path, default=EVIDENCE/"h01-population-components")
+    parser.add_argument("--no-network", action="store_true", help="No verified network yet (C3 candidates).")
     args = parser.parse_args(argv)
     rows = per_cell(inventory(args.archive))
-    checks = contact_check(json.loads(args.network.read_text(encoding="utf-8")), rows)
+    network = {} if args.no_network else json.loads(args.network.read_text(encoding="utf-8"))
+    checks = contact_check(network, rows)
     report = {"archive": args.archive.name, "summary": summarize(rows, checks), "cells": rows, "contacts": checks}
     args.output.with_suffix(".json").write_text(json.dumps(report, indent=1), encoding="utf-8")
     args.output.with_suffix(".md").write_text(render(report), encoding="utf-8")

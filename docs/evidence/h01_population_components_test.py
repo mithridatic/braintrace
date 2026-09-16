@@ -52,3 +52,10 @@ def test_main_writes_pages(archive, tmp_path):
     module.main(["--archive", str(archive), "--network", str(network), "--output", str(tmp_path/"out")])
     assert (tmp_path/"out.json").exists()
     assert "| 10 | 2 | 7 | [0] |" in (tmp_path/"out.md").read_text()
+
+
+def test_main_without_a_network_records_no_contacts(archive, tmp_path):
+    module.main(["--archive", str(archive), "--no-network", "--output", str(tmp_path/"out")])
+    report = json.loads((tmp_path/"out.json").read_text())
+    assert report["contacts"] == [] and report["summary"]["contact_endpoints"] == 0
+    assert [c["cell_id"] for c in report["cells"]] == ["10", "11"]

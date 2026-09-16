@@ -177,3 +177,31 @@ def test_released_attachment_regressions(identity):
     result = h01.H01Archive(path).load(identity, component=0)
     assert result.report.error_count == 0
     assert result.neuron_id == identity
+
+
+def test_explicit_digest_opens_a_non_pinned_archive_with_its_label(tmp_path, monkeypatch):
+    path, payload = _archive(tmp_path, monkeypatch)
+    digest = hashlib.sha256(payload).hexdigest()
+    monkeypatch.setattr(h01, "ARCHIVE_SHA256", "0" * 64)
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        h01.H01Archive(path)
+    archive = h01.H01Archive(path, expected_sha256=digest.upper(), source="c3_candidates_20260916")
+    assert archive.archive_sha256 == digest and archive.source == "c3_candidates_20260916"
+    result = archive.load(12, component=0)
+    assert result.archive_sha256 == digest
+    assert result.provenance["archive_sha256"] == digest
+    assert result.provenance["source"] == result.provenance["release"] == "c3_candidates_20260916"
+    assert result.provenance["url"] is None
+    unlabelled = h01.H01Archive(path, expected_sha256=digest)
+    assert unlabelled.source == f"sha256:{digest[:12]}"
+
+
+def test_wrong_explicit_digest_is_rejected_and_pinned_default_is_unchanged(tmp_path, monkeypatch):
+    path, payload = _archive(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        h01.H01Archive(path, expected_sha256="f" * 64)
+    archive = h01.H01Archive(path)
+    assert archive.archive_sha256 == h01.ARCHIVE_SHA256 and archive.source == "proofread_104"
+    loaded = archive.load(12, component=0)
+    assert loaded.provenance["source"] == "proofread_104"
+    assert loaded.provenance["release"] == h01.RELEASE and loaded.provenance["url"] == h01.SOURCE_URL

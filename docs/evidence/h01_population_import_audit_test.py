@@ -30,3 +30,12 @@ def test_soma_audit_rejects_probe_outside_soma_without_moving_it(imported, monke
     assert result['electrical_regions_valid']
     assert not result['soma_inside_region']
     assert result['soma_location'] == outside.evaluate(imported.morphology).points
+
+
+def test_selected_component_prefers_soma_bearing_only_when_asked():
+    from docs.evidence.h01_population_import_audit import selected_component
+    row = {'largest_component': 0, 'largest_has_soma': False, 'soma_components': [5, 9]}
+    assert selected_component(row, False) == 0 and selected_component(row, True) == 5
+    assert selected_component({'largest_component': 2, 'largest_has_soma': True, 'soma_components': [2]}, True) == 2
+    assert selected_component({'largest_component': 3, 'largest_has_soma': False, 'soma_components': []}, True) == 3
+    assert selected_component({'largest_component': 4}, True) == 4
