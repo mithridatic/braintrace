@@ -384,3 +384,42 @@ def main(argv=None):
 
 if __name__ == '__main__':
     main()
+
+
+def plot_parity(reference, other, cells, dt_ms, path, title):
+    """Overlay two arms' soma traces per cell with the raw difference underneath.
+
+    Parameters
+    ----------
+    reference, other : array
+        ``(substeps, cells)`` soma voltages in mV at the same timestep.
+    cells : sequence of str
+        Cell identities.
+    dt_ms : float
+        Substep length.
+    path : path-like
+        PNG destination.
+    title : str
+        Figure title.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    n = min(len(reference), len(other))
+    time_ms = (np.arange(n)+1)*dt_ms
+    fig, axes = plt.subplots(len(cells), 2, figsize=(14, 1.9*len(cells)), sharex=True, squeeze=False)
+    for row, identity in enumerate(cells):
+        axes[row, 0].plot(time_ms, reference[:n, row], lw=.7, label='reference')
+        axes[row, 0].plot(time_ms, other[:n, row], lw=.7, ls='--', label='other')
+        axes[row, 0].set_ylabel(f'{identity}\nV [mV]', fontsize=7)
+        axes[row, 1].plot(time_ms, other[:n, row]-reference[:n, row], lw=.7, color='crimson')
+        axes[row, 1].set_ylabel('other - reference [mV]', fontsize=7)
+        for ax in axes[row]:
+            ax.tick_params(labelsize=6)
+    axes[0, 0].legend(fontsize=7)
+    axes[-1, 0].set_xlabel('ms')
+    axes[-1, 1].set_xlabel('ms')
+    fig.suptitle(title, fontsize=10)
+    fig.tight_layout()
+    fig.savefig(path, dpi=110)
+    plt.close(fig)
