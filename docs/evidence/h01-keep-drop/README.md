@@ -42,8 +42,10 @@ Kept: 1669770671, 1684504313, 2001418787, 2103991145, 2252715458, 2848552900,
 3111823553, 3571083397, 3761379470, 4010150634, 4197933517, 4437316933, 5013648003,
 5173982155, 5439194879, 6833911543, 751294744. Every drop with its failed rule:
 [decision.json](decision.json). Receipts for all 121 runs (104 primaries, 17 repeats):
-[runs/](runs/) (launch, run and terminal JSON; `trace.npz` holds voltages every 0.5 ms
-and exact spike times; full traces stay on the box under `var/h01-driven/`).
+[runs/](runs/) (launch, run and terminal JSON). The repository ignores
+`docs/evidence/**/*.npz`, so the 0.5 ms decimated `trace.npz` files written by
+`h01_keep_drop_receipts.py` are not versioned; the full traces stay on the box under
+`var/h01-driven/transfer-all-*/run.npz`.
 
 Execution: launched 02:14 UTC as four chains; re-queued in donor priority at 02:40
 when the launch-bound throughput (about one cell per 190 s regardless of chain
@@ -91,8 +93,10 @@ Gates ([kept-build-gate.json](kept-build-gate.json),
   the same build and agree to 3.3e-6 mV (tolerance 1e-5 mV).
 
 Receipts: [population/](population/) (launch, terminal, time and GPU samples for the
-seven runs; 40x-decimated traces for `ei` and the refinement pair;
-`population-run-summary.json`, `population-build-digests.json`). Box time for Step 2:
+seven runs; `population-run-summary.json` with per-cell spike counts,
+`population-build-digests.json`). The 40x-decimated traces are not versioned
+(`docs/evidence/**/*.npz` is ignored); full traces stay on the box under
+`var/h01-driven/kept-*/run-traces.npz`. Box time for Step 2:
 1.05 h wall (10:17-11:20 UTC). The ledger is regenerated with a `kept_cells` field; the
 six terms and denominators are unchanged
 ([h01-population-accuracy-ledger.md](../h01-population-accuracy-ledger.md)).
