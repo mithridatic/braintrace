@@ -256,9 +256,10 @@ def _run(args):
         report['sites'] = sites
         report['forest_offsets'] = dict(cv=forest0.forest_offsets.cv.tolist(), point=forest0.forest_offsets.point.tolist())
         template = _variables(models[fused_label])
-        views = {}
+        views, fused_variables = {}, {}
         for label, model in models.items():
             views[label] = _PerCellView(model, template, report['forest_offsets']) if label == 'percell' else None
+            fused_variables[label] = None if label == 'percell' else _variables(model)
         names = list(template)
         report['variables'] = {name: dict(axis=template[name]['axis'], unit=template[name]['unit'],
                                           shape=list(np.shape(u.get_mantissa(template[name]['state'].value))))
@@ -286,7 +287,7 @@ def _run(args):
             if views[label] is not None:
                 return views[label].values()
             out = {}
-            for name, var in _variables(model).items():
+            for name, var in fused_variables[label].items():
                 out[name] = u.get_mantissa(var['state'].value)
             out['axial_rate'] = _axial_rate(model.forest)
             out['syn_current'] = _synaptic_current(model)
