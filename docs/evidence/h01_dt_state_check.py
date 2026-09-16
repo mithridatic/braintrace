@@ -94,8 +94,8 @@ def _axial_rate(forest):
     import jax.numpy as jnp
     import brainunit as u
     source = forest.runtime.dhs_static_source_np
-    v = jnp.zeros(source.n_point).at[jnp.asarray(source.dynamic_rows_np)].set(
-        forest.V.value.to_decimal(u.mV).reshape(-1))
+    point_v = u.get_mantissa(forest._cv_to_point_unchecked(forest.V.value).in_unit(u.mV)).reshape(-1)
+    v = point_v[jnp.asarray(source.row_to_point_id_np)]   # DHS rows carry the boundary (algebraic) points too
     child, parent = source.edges_np[:, 0], source.edges_np[:, 1]
     rate = -jnp.asarray(source.diag_ms_inv_np)*v
     rate = rate.at[child].add(-jnp.asarray(source.lowers_ms_inv_np)[child]*v[parent])
@@ -344,8 +344,11 @@ def index_table(report, stacked, frame_times, end_values, cells, sites, point_of
         def stat(mask):
             if not mask.any():
                 return None
-            value = float(magnitude[mask].max())
-            return dict(max_abs=value, max_rel_to_range=(value/span if span else None))
+            masked = np.where(mask, magnitude, -1.)
+            frame, position = np.unravel_index(int(np.argmax(masked)), masked.shape)
+            value = float(masked[frame, position])
+            return dict(max_abs=value, max_rel_to_range=(value/span if span else None),
+                        at_ms=float(frame_times[frame]), at_position=int(position))
         table.setdefault(pair, {})[name] = dict(unit=report['variables'][name]['unit'],
             near_spike=stat(near), between_spikes=stat(~near),
             end=dict(max_abs=float(magnitude[-1].max()), reference_end_min=float(reference[name].min()),

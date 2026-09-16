@@ -515,7 +515,7 @@ def _arm_command(args):
             stage('init_state', lambda: init_h01_network_states(network))
             model = stage('model_setup', lambda: H01ArcModel(network, topology.to_dict()['active_cells'],
                 seed=settings['seed'], dt_ms=args.dt_ms, checkpoint_substeps=not args.no_checkpoint))
-            if args.clone_in_place or args.contacts_in_place:
+            if (args.clone_in_place or args.contacts_in_place) and not args.mutate_after_compile:
                 clones = [model.clone(index) for index in range(args.clone_in_place)]
                 rows = [model.add_contact(index % model.neuron_count, (index+1) % model.neuron_count, kind=0)
                         for index in range(args.contacts_in_place)]
@@ -532,6 +532,8 @@ def _arm_command(args):
             step = brainstate.transform.jit(model.update)
             first = stage('first_update_compile_and_run', lambda: step(stream[0]))
             voltages = [np.asarray(first, dtype=float).tolist()]
+            if args.mutate_after_compile:
+                _mutate_after_compile(args, report, model, step, stream)
             compiled = stage('compile_object', lambda: step.compile(stream[0]))
             cost = compiled.cost_analysis() or {}
             report['cost_analysis'] = {key: float(value) for key, value in cost.items()
@@ -805,6 +807,38 @@ def _report_command(args):
     print(json.dumps(document['arithmetic'], indent=1))
 
 
+def _mutate_after_compile(args, report, model, step, stream):
+    """Clone/add contacts in place after the forward program compiled; count compiles of the next events."""
+    import logging
+    import jax
+    records = []
+
+    class Handler(logging.Handler):
+        def emit(self, record):
+            records.append(record.getMessage())
+    handler = logging.getLogger().addHandler(Handler())
+    with jax.log_compiles(True):
+        jax.block_until_ready(step(stream[1]))   # second call: state placement settles
+        settled = len(records)
+        jax.block_until_ready(step(stream[1]))
+        steady = [m for m in records[settled:] if 'ompil' in m]
+        clones = [model.clone(index) for index in range(args.clone_in_place)]
+        rows = [model.add_contact(index % model.neuron_count, (index+1) % model.neuron_count, kind=0)
+                for index in range(args.contacts_in_place)]
+        mutated = len(records)
+        timings = []
+        for index in range(3):
+            started = time.perf_counter()
+            jax.block_until_ready(step(stream[index]))
+            timings.append(time.perf_counter()-started)
+        after = [m for m in records[mutated:] if 'ompil' in m]
+    logging.getLogger().handlers = [h for h in logging.getLogger().handlers if h is not handler]
+    report['in_place'] = dict(clones=clones, contact_rows=rows, neurons=int(model.neuron_count),
+        active=int(np.asarray(model.forest.active.value).sum()), compiles_before_mutation_steady=len(steady),
+        compiles_after_mutation=len(after), messages_after_mutation=[m[:160] for m in after][:6],
+        seconds_per_event_after_mutation=timings)
+
+
 def _recompile_stages(args, report, stage, save, adapter, model, settings, query):
     """Call the same learner update repeatedly and count XLA compiles per call."""
     import logging
@@ -877,6 +911,8 @@ def _parser():
     arm.add_argument('--contact-capacity', type=int, default=None, help='static capacity: contact table rows (fused)')
     arm.add_argument('--clone-in-place', type=int, default=0, help='activate this many clone slots before timing')
     arm.add_argument('--contacts-in-place', type=int, default=0, help='write this many contacts before timing')
+    arm.add_argument('--mutate-after-compile', action='store_true',
+                     help='apply the in-place clones/contacts after the forward compile and count recompiles')
     arm.add_argument('--events', type=int, default=21)
     arm.add_argument('--cell-index', type=int, default=None)
     arm.add_argument('--mutate', choices=('add-contact', 'clone', 'clone-all'), default=None,
