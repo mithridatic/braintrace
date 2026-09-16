@@ -67,6 +67,11 @@ def write_chains(rows, out_dir, phase, n=4):
     return paths
 
 
+def currents_for(rows):
+    """Per-cell soma pulse amplitude (nA) for the kept-network probe: each cell's donor primary input."""
+    return {cell: PROTOCOL[donor]["current_na"] for cell, donor in rows}
+
+
 def rows_from_types(types_path, candidates=None):
     rows = json.loads(Path(types_path).read_text())["rows"]
     pairs = [(row["cell_id"], row["donor_key"]) for row in rows]
@@ -79,15 +84,26 @@ def rows_from_types(types_path, candidates=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--types", type=Path, default=Path("docs/evidence/h01-population-types.json"))
-    parser.add_argument("--phase", choices=["primary", "dthalf"], required=True)
-    parser.add_argument("--candidates", type=Path, help="decision.json whose 'candidates' list selects dt-half cells")
-    parser.add_argument("--out-dir", type=Path, required=True)
+    parser.add_argument("--phase", choices=["primary", "dthalf", "currents"], required=True)
+    parser.add_argument("--candidates", type=Path,
+                        help="decision.json whose 'candidates' (dthalf) or 'kept' (currents) list selects cells")
+    parser.add_argument("--out-dir", type=Path, help="chain scripts directory (primary, dthalf)")
+    parser.add_argument("--currents-out", type=Path, help="JSON {cell_id: nA} for --currents-json (currents phase)")
     parser.add_argument("--chains", type=int, default=4)
     args = parser.parse_args()
-    if args.phase == "dthalf" and args.candidates is None:
-        parser.error("--candidates is required for the dthalf phase")
-    candidates = None if args.candidates is None else json.loads(args.candidates.read_text())["candidates"]
+    if args.phase != "primary" and args.candidates is None:
+        parser.error("--candidates is required for the dthalf and currents phases")
+    key = "kept" if args.phase == "currents" else "candidates"
+    candidates = None if args.candidates is None else json.loads(args.candidates.read_text())[key]
     rows = rows_from_types(args.types, candidates)
+    if args.phase == "currents":
+        if args.currents_out is None:
+            parser.error("--currents-out is required for the currents phase")
+        args.currents_out.write_text(json.dumps(currents_for(rows), indent=2, sort_keys=True)+"\n", newline="\n")
+        print(args.currents_out, len(rows), "cells")
+        return
+    if args.out_dir is None:
+        parser.error("--out-dir is required for chain phases")
     for path in write_chains(rows, args.out_dir, args.phase, args.chains):
         print(path)
 

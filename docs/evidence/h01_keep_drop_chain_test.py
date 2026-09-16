@@ -1,6 +1,7 @@
 """Tests for the keep/drop chain generator."""
 
 import json
+import sys
 
 from docs.evidence import h01_keep_drop_chain as chain
 
@@ -76,3 +77,22 @@ def test_write_chains_primary_and_dthalf(tmp_path):
     assert first[5].startswith("$R transfer-all-a2-dthalf 3600 --") and first[5].endswith("--dt-ms 0.0025")
     assert first[-1] == "echo CHAIN-DONE > var/h01-driven/keep-chain-1-dthalf.done"
     assert len(half[2].read_text().splitlines()) == 5+0+1
+
+
+def test_currents_for_maps_each_cell_to_its_donor_primary_input():
+    rows = [("a", "l2-pyramidal-allen-541563728"), ("b", "l4-pyramidal-allen-527952884"),
+            ("c", "l5-pv-basket-hl5bn1"), ("d", "l3-sst-interneuron-hl5mn1")]
+    assert chain.currents_for(rows) == {"a": .31, "b": .09, "c": .19, "d": .10}
+
+
+def test_currents_phase_writes_kept_cells_only(tmp_path, monkeypatch):
+    types = tmp_path/"types.json"
+    types.write_text(json.dumps(dict(rows=[dict(cell_id="a", donor_key="l2-pyramidal-allen-541563728"),
+                                          dict(cell_id="b", donor_key="l4-pyramidal-allen-527952884")])))
+    decision = tmp_path/"decision.json"
+    decision.write_text(json.dumps(dict(kept=["b"])))
+    out = tmp_path/"currents.json"
+    monkeypatch.setattr(sys, "argv", ["x", "--types", str(types), "--phase", "currents",
+                                      "--candidates", str(decision), "--currents-out", str(out)])
+    chain.main()
+    assert json.loads(out.read_text()) == {"b": .09}
