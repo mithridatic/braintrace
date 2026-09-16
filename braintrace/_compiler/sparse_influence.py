@@ -126,12 +126,14 @@ class SparseInfluence:
         shapes, seeds, parents : sequences
             As for :meth:`build`, from the block-level program analysis.
         blocks : sequence
-            One declaration per block: ``('segments', offsets, labels)`` splits
-            the block's last axis at ``offsets`` into segments owned by
-            ``labels``; ``('block', reads, feeds)`` keeps the block whole,
-            ``reads`` naming the labels (segments or other blocks' ``feeds``)
-            that may influence it and ``feeds`` the labels it may influence
-            (``None`` for all).
+            One declaration per block: ``('segments', offsets, owners)`` splits
+            the block's last axis at ``offsets`` into segments; each owner is a
+            label (the segment reads and feeds that label) or a
+            ``(reads, feeds)`` pair of label sets. ``('block', reads, feeds)``
+            keeps the block whole. A parent may influence a child only where
+            the parent's ``feeds`` meet the child's ``reads`` (``None`` for
+            all labels); an output seeds a block or segment only where its
+            labels meet the ``reads``.
         output_labels : sequence of collections
             Labels each ETP output position belongs to; an output seeds only
             the segments and blocks of its labels.
@@ -159,6 +161,15 @@ class SparseInfluence:
         if len(output_labels) != output_size:
             raise ValueError('Every ETP output needs a label set')
         labels = [set(row) for row in output_labels]
+
+        def ports(owner):
+            # An owner is a label (reads = feeds = {label}) or a (reads, feeds) pair
+            # of label sets, None meaning every label.
+            if isinstance(owner, tuple) and len(owner) == 2 and all(
+                    part is None or isinstance(part, (set, frozenset, list, tuple)) for part in owner):
+                return (None if owner[0] is None else set(owner[0]), None if owner[1] is None else set(owner[1]))
+            return ({owner}, {owner})
+
         virtual, members = [], []
         for index, (shape, spec) in enumerate(zip(shapes, blocks)):
             members.append([])
@@ -168,34 +179,21 @@ class SparseInfluence:
                     raise ValueError('Segment offsets must tile the last axis of block %d' % index)
                 for segment, owner in enumerate(owners):
                     members[index].append(len(virtual))
-                    virtual.append((index, segment, owner, shape[:-1]+(int(offsets[segment+1]-offsets[segment]),)))
+                    virtual.append((index, segment, ports(owner), shape[:-1]+(int(offsets[segment+1]-offsets[segment]),)))
             elif spec[0] == 'block':
                 members[index].append(len(virtual))
-                virtual.append((index, None, (spec[1], spec[2]), shape))
+                virtual.append((index, None, ports((spec[1], spec[2])), shape))
             else:
                 raise ValueError('Unknown block declaration %r' % (spec[0],))
 
         vseeds, vparents = [], []
-        for index, segment, owner, _ in virtual:
-            if segment is None:
-                reads, feeds = owner
-                vseeds.append({o for o in seeds[index] if reads is None or labels[o] & set(reads)})
-            else:
-                vseeds.append({o for o in seeds[index] if owner in labels[o]})
+        for index, _, (reads, _), _ in virtual:
+            vseeds.append({o for o in seeds[index] if reads is None or labels[o] & reads})
             row = set()
             for parent in parents[index]:
                 for other in members[parent]:
-                    _, psegment, powner, _ = virtual[other]
-                    if segment is None and psegment is None:
-                        keep = (owner[0] is None or powner[1] is None
-                                or bool(set(owner[0]) & set(powner[1])))
-                    elif segment is None:
-                        keep = owner[0] is None or powner in owner[0]
-                    elif psegment is None:
-                        keep = powner[1] is None or owner in powner[1]
-                    else:
-                        keep = powner == owner
-                    if keep:
+                    feeds = virtual[other][2][1]
+                    if reads is None or feeds is None or reads & feeds:
                         row.add(other)
             vparents.append(row)
         rows = _close(vseeds, vparents)
