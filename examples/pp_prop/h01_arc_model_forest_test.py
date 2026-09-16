@@ -91,8 +91,8 @@ def test_forest_layout_is_segmented_and_per_cell_sized(learners):
 def test_forest_gradients_equal_per_cell_gradients(learners):
     percell, plearner, forest, flearner = learners
     rng = np.random.default_rng(0)
-    events = [jnp.asarray(rng.normal(size=441)*3.) for _ in range(2)]
     with brainstate.environ.context(precision=64):
+        events = [jnp.asarray(rng.normal(size=441)*3., dtype=jnp.float64) for _ in range(2)]
         percell.reset_episode(plearner)
         forest.reset_episode(flearner)
         expected = _gradients(percell, plearner, events)
