@@ -1,0 +1,464 @@
+{
+  "schema": "h01-dt-spike-window-v1",
+  "reference_dt_ms": 0.000625,
+  "cells": [
+    "3761379470",
+    "5173982155",
+    "5013648003",
+    "2001418787",
+    "3571083397",
+    "4010150634",
+    "4197933517",
+    "6833911543",
+    "5439194879",
+    "4437316933",
+    "3111823553",
+    "1669770671",
+    "751294744",
+    "2252715458",
+    "1684504313",
+    "2848552900",
+    "2103991145"
+  ],
+  "compartments": 107537,
+  "settings": {
+    "0.000625": {
+      "dt_ms": 0.000625,
+      "substeps": 160,
+      "window_ms": 40.0,
+      "events": 400,
+      "pulse_delay_ms": 2.0,
+      "currents": "docs/evidence/h01-keep-drop/kept-currents.json",
+      "precision": 64,
+      "manifest": "docs/evidence/h01-keep-drop/arc-manifest/manifest.json"
+    },
+    "0.005": {
+      "dt_ms": 0.005,
+      "substeps": 20,
+      "window_ms": 40.0,
+      "events": 400,
+      "pulse_delay_ms": 2.0,
+      "currents": "docs/evidence/h01-keep-drop/kept-currents.json",
+      "precision": 64,
+      "manifest": "docs/evidence/h01-keep-drop/arc-manifest/manifest.json"
+    }
+  },
+  "forward": {
+    "0.000625": {
+      "events": 400,
+      "seconds_per_event_median": 5.5549573339521885,
+      "total_seconds": 2176.4838118916377
+    },
+    "0.005": {
+      "events": 400,
+      "seconds_per_event_median": 0.5280267633497715,
+      "total_seconds": 211.7597430292517
+    }
+  },
+  "stages": {
+    "0.000625": {
+      "manifest_load": 0.0028048884123563766,
+      "archive_open": 0.07054220139980316,
+      "build_network": 21.19240395259112,
+      "init_state": 26.260689133778214,
+      "model_setup": 2.4423440266400576,
+      "first_event_compile_and_run": 50.01629498321563
+    },
+    "0.005": {
+      "manifest_load": 0.002444107085466385,
+      "archive_open": 0.05791905242949724,
+      "build_network": 20.250941410660744,
+      "init_state": 23.35213048942387,
+      "model_setup": 2.410386727191508,
+      "first_event_compile_and_run": 44.565661584958434
+    }
+  },
+  "reference_spikes": {
+    "3761379470": 1,
+    "5173982155": 2,
+    "5013648003": 2,
+    "2001418787": 1,
+    "3571083397": 2,
+    "4010150634": 1,
+    "4197933517": 2,
+    "6833911543": 2,
+    "5439194879": 1,
+    "4437316933": 3,
+    "3111823553": 2,
+    "1669770671": 3,
+    "751294744": 2,
+    "2252715458": 2,
+    "1684504313": 1,
+    "2848552900": 2,
+    "2103991145": 1
+  },
+  "comparisons": {
+    "0.005": {
+      "window_ms": 40.0,
+      "compared_substeps": 8000,
+      "stride": 8,
+      "cells": {
+        "3761379470": {
+          "max_abs_mv": 0.5570341694859042,
+          "reference_spikes": 1,
+          "other_spikes": 1,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            21.56625
+          ],
+          "other_spike_times_ms": [
+            21.565
+          ],
+          "spike_shift_ms": [
+            -0.0012499999999988631
+          ],
+          "max_abs_spike_shift_ms": 0.0012499999999988631,
+          "reference_min_mv": -80.84928208500212,
+          "reference_max_mv": 30.654255916516735
+        },
+        "5173982155": {
+          "max_abs_mv": 3.7864966463603675,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            12.021875,
+            26.505625000000002
+          ],
+          "other_spike_times_ms": [
+            12.025,
+            26.51
+          ],
+          "spike_shift_ms": [
+            0.0031250000000007105,
+            0.004374999999999574
+          ],
+          "max_abs_spike_shift_ms": 0.004374999999999574,
+          "reference_min_mv": -84.0446241344161,
+          "reference_max_mv": 44.68583808468004
+        },
+        "5013648003": {
+          "max_abs_mv": 3.712839550863441,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            12.41125,
+            22.838125
+          ],
+          "other_spike_times_ms": [
+            12.41,
+            22.845
+          ],
+          "spike_shift_ms": [
+            -0.0012500000000006395,
+            0.0068749999999973
+          ],
+          "max_abs_spike_shift_ms": 0.0068749999999973,
+          "reference_min_mv": -83.98997938975405,
+          "reference_max_mv": 38.74509299933547
+        },
+        "2001418787": {
+          "max_abs_mv": 0.7679137692527487,
+          "reference_spikes": 1,
+          "other_spikes": 1,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            26.63625
+          ],
+          "other_spike_times_ms": [
+            26.635
+          ],
+          "spike_shift_ms": [
+            -0.0012499999999988631
+          ],
+          "max_abs_spike_shift_ms": 0.0012499999999988631,
+          "reference_min_mv": -80.84972270731586,
+          "reference_max_mv": 29.85436980504904
+        },
+        "3571083397": {
+          "max_abs_mv": 5.957293421362634,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            17.625,
+            34.28875
+          ],
+          "other_spike_times_ms": [
+            17.625,
+            34.300000000000004
+          ],
+          "spike_shift_ms": [
+            0.0,
+            0.011250000000003979
+          ],
+          "max_abs_spike_shift_ms": 0.011250000000003979,
+          "reference_min_mv": -84.00611344541116,
+          "reference_max_mv": 39.38498352764239
+        },
+        "4010150634": {
+          "max_abs_mv": 0.49397153221094925,
+          "reference_spikes": 1,
+          "other_spikes": 1,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            38.035625
+          ],
+          "other_spike_times_ms": [
+            38.035000000000004
+          ],
+          "spike_shift_ms": [
+            -0.0006249999999994316
+          ],
+          "max_abs_spike_shift_ms": 0.0006249999999994316,
+          "reference_min_mv": -80.84828809334809,
+          "reference_max_mv": 26.751110228375985
+        },
+        "4197933517": {
+          "max_abs_mv": 5.106179435703741,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            15.113125,
+            30.8975
+          ],
+          "other_spike_times_ms": [
+            15.115,
+            30.905
+          ],
+          "spike_shift_ms": [
+            0.001875000000000071,
+            0.007500000000000284
+          ],
+          "max_abs_spike_shift_ms": 0.007500000000000284,
+          "reference_min_mv": -84.03221744994941,
+          "reference_max_mv": 42.31899862529153
+        },
+        "6833911543": {
+          "max_abs_mv": 4.713623277863513,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            15.590625000000001,
+            28.74125
+          ],
+          "other_spike_times_ms": [
+            15.59,
+            28.75
+          ],
+          "spike_shift_ms": [
+            -0.0006250000000012079,
+            0.008749999999999147
+          ],
+          "max_abs_spike_shift_ms": 0.008749999999999147,
+          "reference_min_mv": -84.0076268526068,
+          "reference_max_mv": 38.759982972988006
+        },
+        "5439194879": {
+          "max_abs_mv": 0.9152115754841734,
+          "reference_spikes": 1,
+          "other_spikes": 1,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            37.198125
+          ],
+          "other_spike_times_ms": [
+            37.2
+          ],
+          "spike_shift_ms": [
+            0.0018750000000054001
+          ],
+          "max_abs_spike_shift_ms": 0.0018750000000054001,
+          "reference_min_mv": -80.84537001013912,
+          "reference_max_mv": 26.837090036240042
+        },
+        "4437316933": {
+          "max_abs_mv": 17.80050163672359,
+          "reference_spikes": 3,
+          "other_spikes": 3,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            17.77625,
+            25.62375,
+            35.29625
+          ],
+          "other_spike_times_ms": [
+            17.78,
+            25.64,
+            35.36
+          ],
+          "spike_shift_ms": [
+            0.003750000000000142,
+            0.01624999999999943,
+            0.06374999999999886
+          ],
+          "max_abs_spike_shift_ms": 0.06374999999999886,
+          "reference_min_mv": -83.99141662300794,
+          "reference_max_mv": 34.14450911397842
+        },
+        "3111823553": {
+          "max_abs_mv": 4.27897261790959,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            11.611875,
+            21.2525
+          ],
+          "other_spike_times_ms": [
+            11.615,
+            21.26
+          ],
+          "spike_shift_ms": [
+            0.0031250000000007105,
+            0.007500000000000284
+          ],
+          "max_abs_spike_shift_ms": 0.007500000000000284,
+          "reference_min_mv": -83.99988345458304,
+          "reference_max_mv": 37.9037968298226
+        },
+        "1669770671": {
+          "max_abs_mv": 9.462605308432789,
+          "reference_spikes": 3,
+          "other_spikes": 3,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            15.93875,
+            24.7375,
+            38.04
+          ],
+          "other_spike_times_ms": [
+            15.94,
+            24.75,
+            38.065
+          ],
+          "spike_shift_ms": [
+            0.0012499999999988631,
+            0.01249999999999929,
+            0.02499999999999858
+          ],
+          "max_abs_spike_shift_ms": 0.02499999999999858,
+          "reference_min_mv": -83.99965202145432,
+          "reference_max_mv": 38.767005992119
+        },
+        "751294744": {
+          "max_abs_mv": 3.592387222305191,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            26.40875,
+            37.938125
+          ],
+          "other_spike_times_ms": [
+            26.41,
+            37.95
+          ],
+          "spike_shift_ms": [
+            0.0012499999999988631,
+            0.01187500000000341
+          ],
+          "max_abs_spike_shift_ms": 0.01187500000000341,
+          "reference_min_mv": -83.98551743476548,
+          "reference_max_mv": 31.639190680669742
+        },
+        "2252715458": {
+          "max_abs_mv": 6.836083363205034,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            17.073125,
+            26.504375
+          ],
+          "other_spike_times_ms": [
+            17.075,
+            26.52
+          ],
+          "spike_shift_ms": [
+            0.0018749999999982947,
+            0.015625
+          ],
+          "max_abs_spike_shift_ms": 0.015625,
+          "reference_min_mv": -83.99715099705973,
+          "reference_max_mv": 36.69343357212299
+        },
+        "1684504313": {
+          "max_abs_mv": 1.8543171357810264,
+          "reference_spikes": 1,
+          "other_spikes": 1,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            26.59
+          ],
+          "other_spike_times_ms": [
+            26.595
+          ],
+          "spike_shift_ms": [
+            0.004999999999999005
+          ],
+          "max_abs_spike_shift_ms": 0.004999999999999005,
+          "reference_min_mv": -83.99294406619596,
+          "reference_max_mv": 32.820725409416916
+        },
+        "2848552900": {
+          "max_abs_mv": 6.211452203660408,
+          "reference_spikes": 2,
+          "other_spikes": 2,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            22.69875,
+            36.445
+          ],
+          "other_spike_times_ms": [
+            22.7,
+            36.46
+          ],
+          "spike_shift_ms": [
+            0.0012499999999988631,
+            0.015000000000000568
+          ],
+          "max_abs_spike_shift_ms": 0.015000000000000568,
+          "reference_min_mv": -84.00569665911271,
+          "reference_max_mv": 37.54929742973272
+        },
+        "2103991145": {
+          "max_abs_mv": 1.8553282477697053,
+          "reference_spikes": 1,
+          "other_spikes": 1,
+          "counts_equal": true,
+          "reference_spike_times_ms": [
+            26.404375
+          ],
+          "other_spike_times_ms": [
+            26.405
+          ],
+          "spike_shift_ms": [
+            0.0006249999999994316
+          ],
+          "max_abs_spike_shift_ms": 0.0006249999999994316,
+          "reference_min_mv": -84.00413352358638,
+          "reference_max_mv": 35.789282369571396
+        }
+      },
+      "max_abs_mv": 17.80050163672359,
+      "cells_spiking_reference": 17,
+      "total_reference_spikes": 30,
+      "total_other_spikes": 30,
+      "all_counts_equal": true,
+      "max_abs_spike_shift_ms": 0.06374999999999886,
+      "within_1mv": false
+    }
+  },
+  "verdict": {
+    "passing_dt_ms": [],
+    "failing_dt_ms": [
+      0.005
+    ],
+    "coarsest_passing_dt_ms": null,
+    "contract": "max |dV| <= 1 mV on every cell and identical spike counts per cell"
+  }
+}

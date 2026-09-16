@@ -1,0 +1,160 @@
+{
+  "status": "pass",
+  "arm": "fused-clone",
+  "settings": {
+    "dt_ms": 0.005,
+    "substeps": 20,
+    "max_cv_length_um": 10.0,
+    "precision": 64,
+    "checkpoint_substeps": true,
+    "cell_index": null,
+    "fused": true
+  },
+  "stages": {
+    "manifest_load": 0.0025398582220077515,
+    "archive_open": 0.05618154909461737,
+    "build_network": 47.7740882076323,
+    "init_state": 5.607893913052976,
+    "model_setup": 2.5023511964827776,
+    "first_update_compile_and_run": 5.388066390529275,
+    "compile_object": 0.0010633990168571472
+  },
+  "memory": {
+    "manifest_load": {
+      "host_peak_rss_mb": 919.04296875,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2304
+    },
+    "archive_open": {
+      "host_peak_rss_mb": 921.03515625,
+      "bytes_in_use": 1792,
+      "peak_bytes_in_use": 2304
+    },
+    "build_network": {
+      "host_peak_rss_mb": 2703.2421875,
+      "bytes_in_use": 13615360,
+      "peak_bytes_in_use": 13723392
+    },
+    "init_state": {
+      "host_peak_rss_mb": 2846.1015625,
+      "bytes_in_use": 21098240,
+      "peak_bytes_in_use": 25004544
+    },
+    "model_setup": {
+      "host_peak_rss_mb": 2846.1015625,
+      "bytes_in_use": 21266176,
+      "peak_bytes_in_use": 25004544
+    },
+    "first_update_compile_and_run": {
+      "host_peak_rss_mb": 3636.6640625,
+      "bytes_in_use": 49353216,
+      "peak_bytes_in_use": 94691328
+    },
+    "compile_object": {
+      "host_peak_rss_mb": 3636.6640625,
+      "bytes_in_use": 49353216,
+      "peak_bytes_in_use": 94691328
+    },
+    "steady_state": {
+      "host_peak_rss_mb": 3638.65625,
+      "bytes_in_use": 49353472,
+      "peak_bytes_in_use": 94691840
+    }
+  },
+  "active_stage": "compile_object",
+  "mutation": {
+    "kind": "clone",
+    "cells": 18,
+    "contacts": 0
+  },
+  "cells": 18,
+  "compartments": 109145,
+  "event_source": {
+    "task_id": "007bbfb7",
+    "query_index": 0,
+    "advancing_events": 385
+  },
+  "cost_analysis": {
+    "bytes accessed": 494293536.0,
+    "flops": 121659416.0,
+    "transcendentals": 11908458.0
+  },
+  "forward": {
+    "events": 2,
+    "seconds_per_event_mean": 0.1370322797447443,
+    "seconds_per_event_median": 0.1370322797447443,
+    "seconds_per_event_min": 0.13394223246723413,
+    "seconds_per_event_max": 0.14012232702225447,
+    "total_seconds": 0.2740645594894886
+  },
+  "voltages_mv_first_20": [
+    [
+      -80.73409079145262,
+      -83.97586553716705,
+      -84.01710208193639,
+      -80.93712568485982,
+      -84.04010633341531,
+      -80.79567298387667,
+      -83.9488481698583,
+      -83.90443334137635,
+      -80.77449873277142,
+      -84.00678847990699,
+      -83.93033514557796,
+      -84.05201109668323,
+      -84.02796385140422,
+      -84.01939533465885,
+      -83.99567975395287,
+      -83.98335808138724,
+      -83.91770494252042,
+      -80.81384458487081
+    ],
+    [
+      -80.84476533884492,
+      -84.0314901254868,
+      -84.07399193588529,
+      -80.80649358954847,
+      -83.9376444408391,
+      -80.87890855295818,
+      -83.91356121899463,
+      -83.88403282255287,
+      -81.08048649312857,
+      -84.05077704267444,
+      -84.22151529351413,
+      -84.0335408629922,
+      -84.08371159449155,
+      -83.95359306190029,
+      -84.07037652394477,
+      -83.94955687392012,
+      -83.92014861561762,
+      -80.83149652909519
+    ],
+    [
+      -80.63460659313577,
+      -84.16658450338457,
+      -84.11366059946783,
+      -80.81035193111991,
+      -83.8737345026618,
+      -80.72542581903035,
+      -83.80037736439385,
+      -83.74953100532814,
+      -81.20989863174738,
+      -83.95214532547634,
+      -84.07155059816262,
+      -84.0282636392595,
+      -84.17362299725768,
+      -83.8001685408323,
+      -84.06789758916179,
+      -84.05083182363248,
+      -83.98245651732863,
+      -81.08007767090729
+    ]
+  ],
+  "finite": true,
+  "throughput": {
+    "compartment_updates_per_second": 15929823.280078081,
+    "flops_per_event": 121659416.0,
+    "gflops_per_second": 0.8878157484252618,
+    "fraction_of_fp64_peak": 0.0006882292623451642,
+    "fraction_of_fp32_peak": 1.0748374678271935e-05
+  }
+}

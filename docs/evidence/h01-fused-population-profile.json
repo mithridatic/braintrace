@@ -1,0 +1,572 @@
+{
+  "schema": "h01-fused-population-profile-v1",
+  "executor": "Vast 50616476 RTX 4090, /workspace/braintrace-fused, /workspace/venv314, taskset -c 160-223; two keep-test chains (transfer-all-*-ramp) and the dt spike-window arm shared the GPU during every arm here",
+  "contended": true,
+  "arms": {
+    "percell-dt0005": {
+      "status": "pass",
+      "settings": {
+        "dt_ms": 0.005,
+        "substeps": 20,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null,
+        "fused": false
+      },
+      "cells": 17,
+      "compartments": 107537,
+      "mutation": null,
+      "stages": {
+        "manifest_load": 0.0025155674666166306,
+        "archive_open": 0.057016268372535706,
+        "build_network": 20.30440858658403,
+        "init_state": 24.87936798390001,
+        "model_setup": 2.487562249414623,
+        "first_update_compile_and_run": 27.499697297811508,
+        "compile_object": 7.612272309139371,
+        "substep_compile_and_run": 21.082623132504523,
+        "profile_trace_substep": 3.8575064903125167
+      },
+      "forward": {
+        "events": 20,
+        "seconds_per_event_mean": 1.4411011802963913,
+        "seconds_per_event_median": 0.8742832061834633,
+        "seconds_per_event_min": 0.8651133216917515,
+        "seconds_per_event_max": 12.226168085820973,
+        "total_seconds": 28.822023605927825
+      },
+      "build_plus_init_seconds": 45.18377657048404,
+      "substep": {
+        "busy_ms": 25.37189040000068,
+        "launches": 5104.0,
+        "classes": {
+          "other": {
+            "ms": 21.66492620000075,
+            "share": 0.8538948363106664,
+            "launches": 3710.0
+          },
+          "axial-solve": {
+            "ms": 2.7538785999999362,
+            "share": 0.10854053665626202,
+            "launches": 701.0
+          },
+          "loop-control": {
+            "ms": 0.47246919999999637,
+            "share": 0.018621757880523702,
+            "launches": 303.0
+          },
+          "calcium-implicit": {
+            "ms": 0.3460563999999996,
+            "share": 0.013639362087106855,
+            "launches": 255.0
+          },
+          "memcpy": {
+            "ms": 0.11139199999999941,
+            "share": 0.004390370533840728,
+            "launches": 118.0
+          },
+          "cell-runtime": {
+            "ms": 0.023168,
+            "share": 0.0009131365316003171,
+            "launches": 17.0
+          }
+        }
+      },
+      "while_loops": {
+        "seconds_median": 0.043299488723278046,
+        "seconds_min": 0.02522705215960741,
+        "while_loops_in_event_hlo": 137,
+        "while_loops_in_substep_hlo": 136
+      },
+      "learner": null,
+      "eligibility": null,
+      "learner_refused": null,
+      "memory_peak_device_bytes": 66308608,
+      "memory_peak_host_rss_mb": 4644.59375
+    },
+    "fused-dt0005": {
+      "status": "pass",
+      "settings": {
+        "dt_ms": 0.005,
+        "substeps": 20,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null,
+        "fused": true
+      },
+      "cells": 17,
+      "compartments": 107537,
+      "mutation": null,
+      "stages": {
+        "manifest_load": 0.002159438095986843,
+        "archive_open": 0.06042362656444311,
+        "build_network": 48.310827473178506,
+        "init_state": 5.546565970405936,
+        "model_setup": 2.4414332872256637,
+        "first_update_compile_and_run": 5.353652552701533,
+        "compile_object": 0.0010733883827924728,
+        "substep_compile_and_run": 4.573431817814708,
+        "profile_trace_substep": 1.1349581824615598
+      },
+      "forward": {
+        "events": 20,
+        "seconds_per_event_mean": 0.1287500280421227,
+        "seconds_per_event_median": 0.12893023807555437,
+        "seconds_per_event_min": 0.12497887760400772,
+        "seconds_per_event_max": 0.1293762130662799,
+        "total_seconds": 2.5750005608424544
+      },
+      "build_plus_init_seconds": 53.85739344358444,
+      "substep": {
+        "busy_ms": 4.688015799999985,
+        "launches": 327.0,
+        "classes": {
+          "other": {
+            "ms": 4.400930199999986,
+            "share": 0.938761810487072,
+            "launches": 236.0
+          },
+          "loop-control": {
+            "ms": 0.13301139999999997,
+            "share": 0.028372643283326896,
+            "launches": 26.0
+          },
+          "axial-solve": {
+            "ms": 0.07462439999999987,
+            "share": 0.015918120412478153,
+            "launches": 42.0
+          },
+          "calcium-implicit": {
+            "ms": 0.06492819999999999,
+            "share": 0.013849825335486322,
+            "launches": 15.0
+          },
+          "cell-runtime": {
+            "ms": 0.008262400000000001,
+            "share": 0.0017624513978813862,
+            "launches": 2.0
+          },
+          "memcpy": {
+            "ms": 0.006259199999999999,
+            "share": 0.0013351490837552249,
+            "launches": 6.0
+          }
+        }
+      },
+      "while_loops": {
+        "seconds_median": 0.0011993632651865482,
+        "seconds_min": 0.0009561888873577118,
+        "while_loops_in_event_hlo": 9,
+        "while_loops_in_substep_hlo": 8
+      },
+      "learner": null,
+      "eligibility": null,
+      "learner_refused": null,
+      "memory_peak_device_bytes": 93970688,
+      "memory_peak_host_rss_mb": 4050.51953125
+    },
+    "percell-pinned": {
+      "status": "pass",
+      "settings": {
+        "dt_ms": 0.000625,
+        "substeps": 160,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null,
+        "fused": false
+      },
+      "cells": 17,
+      "compartments": 107537,
+      "mutation": null,
+      "stages": {
+        "manifest_load": 0.002571526914834976,
+        "archive_open": 0.0589176369830966,
+        "build_network": 20.40839498117566,
+        "init_state": 25.23880599346012,
+        "model_setup": 2.4576505878940225,
+        "first_update_compile_and_run": 33.826302360743284,
+        "compile_object": 7.758978785015643,
+        "substep_compile_and_run": 42.21788526792079,
+        "profile_trace_substep": 3.9810570683330297
+      },
+      "forward": {
+        "events": 20,
+        "seconds_per_event_mean": 7.293605861952528,
+        "seconds_per_event_median": 6.89068454131484,
+        "seconds_per_event_min": 5.506086238659918,
+        "seconds_per_event_max": 18.14581094030291,
+        "total_seconds": 145.87211723905057
+      },
+      "build_plus_init_seconds": 45.64720097463578,
+      "substep": {
+        "busy_ms": 19.721845400001126,
+        "launches": 5104.0,
+        "classes": {
+          "other": {
+            "ms": 17.762299800001124,
+            "share": 0.9006408599065537,
+            "launches": 3710.0
+          },
+          "axial-solve": {
+            "ms": 1.006568800000005,
+            "share": 0.05103826642916223,
+            "launches": 701.0
+          },
+          "loop-control": {
+            "ms": 0.47270639999999636,
+            "share": 0.023968669787867287,
+            "launches": 303.0
+          },
+          "calcium-implicit": {
+            "ms": 0.34581880000000015,
+            "share": 0.017534809394661434,
+            "launches": 255.0
+          },
+          "memcpy": {
+            "ms": 0.11140519999999934,
+            "share": 0.0056488222953006715,
+            "launches": 118.0
+          },
+          "cell-runtime": {
+            "ms": 0.023046399999999998,
+            "share": 0.001168572186454655,
+            "launches": 17.0
+          }
+        }
+      },
+      "while_loops": {
+        "seconds_median": 0.03462067758664489,
+        "seconds_min": 0.026621270924806595,
+        "while_loops_in_event_hlo": 137,
+        "while_loops_in_substep_hlo": 136
+      },
+      "learner": null,
+      "eligibility": null,
+      "learner_refused": null,
+      "memory_peak_device_bytes": 66308608,
+      "memory_peak_host_rss_mb": 5420.015625
+    },
+    "fused-pinned": {
+      "status": "pass",
+      "settings": {
+        "dt_ms": 0.000625,
+        "substeps": 160,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null,
+        "fused": true
+      },
+      "cells": 17,
+      "compartments": 107537,
+      "mutation": null,
+      "stages": {
+        "manifest_load": 0.0025356365367770195,
+        "archive_open": 0.05870296526700258,
+        "build_network": 48.08237406052649,
+        "init_state": 5.443968886509538,
+        "model_setup": 2.5425954768434167,
+        "first_update_compile_and_run": 5.994910390116274,
+        "compile_object": 0.0021073976531624794,
+        "substep_compile_and_run": 4.75040446780622,
+        "profile_trace_substep": 1.1396295297890902
+      },
+      "forward": {
+        "events": 20,
+        "seconds_per_event_mean": 1.0173939762171358,
+        "seconds_per_event_median": 1.0176931209862232,
+        "seconds_per_event_min": 1.0117266979068518,
+        "seconds_per_event_max": 1.0189423682168126,
+        "total_seconds": 20.347879524342716
+      },
+      "build_plus_init_seconds": 53.52634294703603,
+      "substep": {
+        "busy_ms": 2.947025000000003,
+        "launches": 327.0,
+        "classes": {
+          "other": {
+            "ms": 2.6597786000000037,
+            "share": 0.9025300430094758,
+            "launches": 236.0
+          },
+          "loop-control": {
+            "ms": 0.13291620000000007,
+            "share": 0.045101823024914924,
+            "launches": 26.0
+          },
+          "axial-solve": {
+            "ms": 0.07467519999999986,
+            "share": 0.02533918103850486,
+            "launches": 42.0
+          },
+          "calcium-implicit": {
+            "ms": 0.06496659999999996,
+            "share": 0.022044807899491824,
+            "launches": 15.0
+          },
+          "cell-runtime": {
+            "ms": 0.0084866,
+            "share": 0.002879717681390552,
+            "launches": 2.0
+          },
+          "memcpy": {
+            "ms": 0.006201799999999999,
+            "share": 0.002104427346222035,
+            "launches": 6.0
+          }
+        }
+      },
+      "while_loops": {
+        "seconds_median": 0.001184399239718914,
+        "seconds_min": 0.0009518992155790329,
+        "while_loops_in_event_hlo": 9,
+        "while_loops_in_substep_hlo": 8
+      },
+      "learner": null,
+      "eligibility": null,
+      "learner_refused": null,
+      "memory_peak_device_bytes": 93644288,
+      "memory_peak_host_rss_mb": 4045.046875
+    },
+    "fused-clone": {
+      "status": "pass",
+      "settings": {
+        "dt_ms": 0.005,
+        "substeps": 20,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null,
+        "fused": true
+      },
+      "cells": 18,
+      "compartments": 109145,
+      "mutation": {
+        "kind": "clone",
+        "cells": 18,
+        "contacts": 0
+      },
+      "stages": {
+        "manifest_load": 0.0025398582220077515,
+        "archive_open": 0.05618154909461737,
+        "build_network": 47.7740882076323,
+        "init_state": 5.607893913052976,
+        "model_setup": 2.5023511964827776,
+        "first_update_compile_and_run": 5.388066390529275,
+        "compile_object": 0.0010633990168571472
+      },
+      "forward": {
+        "events": 2,
+        "seconds_per_event_mean": 0.1370322797447443,
+        "seconds_per_event_median": 0.1370322797447443,
+        "seconds_per_event_min": 0.13394223246723413,
+        "seconds_per_event_max": 0.14012232702225447,
+        "total_seconds": 0.2740645594894886
+      },
+      "build_plus_init_seconds": 53.38198212068528,
+      "substep": null,
+      "while_loops": null,
+      "learner": null,
+      "eligibility": null,
+      "learner_refused": null,
+      "memory_peak_device_bytes": 94691840,
+      "memory_peak_host_rss_mb": 3638.65625
+    },
+    "fused-learner": {
+      "status": "pass",
+      "settings": {
+        "dt_ms": 0.005,
+        "substeps": 20,
+        "max_cv_length_um": 10.0,
+        "precision": 64,
+        "checkpoint_substeps": true,
+        "cell_index": null,
+        "fused": true
+      },
+      "cells": 17,
+      "compartments": 107537,
+      "mutation": null,
+      "stages": {
+        "manifest_load": 0.002568206749856472,
+        "archive_open": 0.07191630266606808,
+        "build_network": 48.8540409617126,
+        "init_state": 5.43434764444828,
+        "model_setup": 2.2967569371685386,
+        "first_update_compile_and_run": 5.059714682400227,
+        "compile_object": 0.000815429724752903,
+        "learner_compile_graph": 0.6308200173079967,
+        "optimizer_setup": 0.014359002001583576,
+        "learner_update_2_events_compile_and_run": 36.223449691198766
+      },
+      "forward": {
+        "events": 2,
+        "seconds_per_event_mean": 0.1275750445201993,
+        "seconds_per_event_median": 0.1275750445201993,
+        "seconds_per_event_min": 0.1263497220352292,
+        "seconds_per_event_max": 0.1288003670051694,
+        "total_seconds": 0.2551500890403986
+      },
+      "build_plus_init_seconds": 54.28838860616088,
+      "substep": null,
+      "while_loops": null,
+      "learner": {
+        "2": {
+          "events": 2,
+          "cold_seconds": 36.223449691198766,
+          "warm_seconds": [
+            3.844877856783569,
+            3.8510547103360295
+          ],
+          "warm_median": 3.847966283559799,
+          "seconds_per_event_naive": 1.9239831417798996,
+          "finite": true,
+          "updates": 3
+        }
+      },
+      "eligibility": {
+        "elements": 56858914,
+        "bytes": 454871312,
+        "colors": 17,
+        "state_blocks": 19
+      },
+      "learner_refused": null,
+      "memory_peak_device_bytes": 2297779456,
+      "memory_peak_host_rss_mb": 5073.3125
+    }
+  },
+  "voltage_parity_fused_vs_percell": {
+    "dt0005": {
+      "events": 21,
+      "max_abs_mv": 1.6751755538280122e-10,
+      "per_cell_max_abs_mv": [
+        6.343725544866174e-11,
+        7.688072400924284e-12,
+        1.4864554032101296e-11,
+        1.3062617654213682e-10,
+        2.4854784896888305e-11,
+        1.6513013179064728e-10,
+        2.6545876607997343e-11,
+        1.1709744285326451e-11,
+        1.6751755538280122e-10,
+        1.503508428868372e-11,
+        1.9241497284383513e-11,
+        7.261746759468224e-12,
+        7.503331289626658e-12,
+        3.7132963370822836e-11,
+        6.555467280122684e-11,
+        6.622258297284134e-12,
+        1.000444171950221e-11
+      ]
+    },
+    "pinned": {
+      "events": 21,
+      "max_abs_mv": 6.963034593354678e-10,
+      "per_cell_max_abs_mv": [
+        3.510081114654895e-11,
+        4.803268893738277e-12,
+        9.379164112033322e-12,
+        7.16369186193333e-11,
+        8.526512829121202e-12,
+        9.774225873115938e-11,
+        5.044853423896711e-12,
+        2.9416469260468148e-12,
+        6.963034593354678e-10,
+        2.0037305148434825e-12,
+        1.0913936421275139e-11,
+        1.9895196601282805e-12,
+        6.0111915445304476e-12,
+        1.1482370609883219e-11,
+        1.857358711276902e-11,
+        5.4569682106375694e-12,
+        2.0889956431346945e-12
+      ]
+    }
+  },
+  "uncontended_baseline_from_profile_branch": {
+    "pinned": {
+      "forward_seconds_per_event": 1.3567346297204494,
+      "stage_seconds": {
+        "manifest_and_archive": 0.056799253448843956,
+        "build_network": 20.249471177347004,
+        "init_state": 23.11817193776369,
+        "model_setup": 2.2205757228657603,
+        "first_update_compile_and_run": 41.30321696586907,
+        "learner_compile_graph": 7.621841127984226,
+        "learner_first_update_compile_and_run": 402.632647221908,
+        "real_update_compile_and_run": null,
+        "score_query_compile_and_run": null
+      },
+      "substep_busy_ms": 0.0,
+      "launches_per_substep": null,
+      "learner_seconds_per_event": 13.18038301775232,
+      "eligibility": {
+        "elements": 3344642,
+        "bytes": 26757136,
+        "colors": 1,
+        "state_blocks": 323
+      }
+    },
+    "dt0005": {
+      "forward_seconds_per_event": 0.17966430680826306,
+      "stage_seconds": {
+        "manifest_and_archive": 0.07761805970221758,
+        "build_network": 21.56504698097706,
+        "init_state": 28.08467304520309,
+        "model_setup": 2.5646885046735406,
+        "first_update_compile_and_run": 42.21238690055907,
+        "learner_compile_graph": 9.916016517207026,
+        "learner_first_update_compile_and_run": 313.6613905383274,
+        "real_update_compile_and_run": 1035.5582677349448,
+        "score_query_compile_and_run": 121.96199627313763
+      },
+      "substep_busy_ms": 8.335578999999864,
+      "launches_per_substep": 5104.0,
+      "learner_seconds_per_event": 1.337522776176532,
+      "eligibility": {
+        "elements": 3344642,
+        "bytes": 26757136,
+        "colors": 1,
+        "state_blocks": 323
+      }
+    },
+    "mut-clone": {
+      "forward_seconds_per_event": 1.4930317290127277,
+      "stage_seconds": {
+        "manifest_and_archive": 0.06533500552177429,
+        "build_network": 20.266365863382816,
+        "init_state": 26.097235795110464,
+        "model_setup": 2.4359894413501024,
+        "first_update_compile_and_run": 39.985536836087704,
+        "learner_compile_graph": 7.962613228708506,
+        "learner_first_update_compile_and_run": null,
+        "real_update_compile_and_run": null,
+        "score_query_compile_and_run": null
+      },
+      "substep_busy_ms": 0.0,
+      "launches_per_substep": null,
+      "learner_seconds_per_event": null,
+      "eligibility": null
+    },
+    "pinned-recompile": {
+      "forward_seconds_per_event": 1.4129171529784799,
+      "stage_seconds": {
+        "manifest_and_archive": 0.06741323042660952,
+        "build_network": 20.542428070679307,
+        "init_state": 23.03853974863887,
+        "model_setup": 2.4044881612062454,
+        "first_update_compile_and_run": 16.83463408704847,
+        "learner_compile_graph": 6.781854714266956,
+        "learner_first_update_compile_and_run": null,
+        "real_update_compile_and_run": null,
+        "score_query_compile_and_run": null
+      },
+      "substep_busy_ms": 0.0,
+      "launches_per_substep": null,
+      "learner_seconds_per_event": null,
+      "eligibility": null
+    }
+  }
+}

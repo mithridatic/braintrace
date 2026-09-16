@@ -197,9 +197,21 @@ comparison run is the per-cell path under the same rebuilt manifest.
 
 ## 6. Results of this campaign
 
-Filled in by the evidence files as they land:
-
-- Lever 0: [h01-dt-spike-window.md](../evidence/h01-dt-spike-window.md).
-- Command-buffer attribution (which kernels fill the 75 %): `pinned-nocb` arm of the profile.
-- Levers 1+2 before/after: [h01-fused-population-profile.md](../evidence/h01-fused-population-profile.md).
-- Lever 3 recompile check: same file.
+- Lever 0 ([h01-dt-spike-window.md](../evidence/h01-dt-spike-window.md)): dt 0.005 fails the
+  contract across the spikes: spike counts identical on all 17 cells (30 / 30) and spike
+  times shifted by at most 0.064 ms, but that shift on a spike upstroke is up to 17.8 mV of
+  instantaneous |dV| (per cell 0.49-17.8 mV). The contract "max |dV| <= 1 mV" is a spike-time
+  contract of about 10 us at 100 mV/ms, which the ladder (0.0025, 0.00125) is measuring; until
+  it passes, `dt_ms` stays 0.000625 and `numerical_settings()` is unchanged.
+- Levers 1+2 ([h01-fused-population-profile.md](../evidence/h01-fused-population-profile.md)):
+  implemented (`H01ForestCell`, `build_network(fused=True)`, `fused_population` setting,
+  default False). 5,104 -> 327 launches per substep, 136 -> 8 while loops, GPU busy 8.3 ->
+  <= 2.9-4.7 ms per substep, forward 0.180 -> 0.129 s/event at dt 0.005 (fused measured under
+  GPU contention, so a lower bound on the gain), voltages equal to the per-cell path to
+  7e-10 mV. Forward compile 42 -> 5-6 s, clone compile 40 -> 5.4 s, learner graph analysis
+  9.9 -> 0.6 s, learner compile 314-348 -> 36 s. Open: 90-94 % of the fused substep is
+  unattributed command-buffer time (the per-mechanism channel kernels; `pinned-nocb` unrun);
+  no contact delivery on the fused path yet (section 3's table); the sparse pp-prop layout
+  grows 17x on the forest (455 MB, 17 colours) and must be given the per-cell block
+  structure before training on it.
+- Lever 3: not implemented; a clone recompiles (5.4 s forward) and `add_contact` cannot run.
