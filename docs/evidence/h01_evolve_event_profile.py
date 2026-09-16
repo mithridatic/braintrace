@@ -468,7 +468,9 @@ def _arm_command(args):
     substeps = int(round(EVENT_MS/args.dt_ms))
     report = dict(status='running', arm=args.name, settings=dict(dt_ms=args.dt_ms, substeps=substeps,
         max_cv_length_um=args.max_cv_length_um, precision=args.precision,
-        checkpoint_substeps=not args.no_checkpoint, cell_index=args.cell_index, fused=args.fused), stages={}, memory={})
+        checkpoint_substeps=not args.no_checkpoint, cell_index=args.cell_index, fused=args.fused,
+        slots=args.slots, contact_capacity=args.contact_capacity, clone_in_place=args.clone_in_place,
+        contacts_in_place=args.contacts_in_place), stages={}, memory={})
 
     def save():
         (args.output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
@@ -505,13 +507,20 @@ def _arm_command(args):
                                           contacts=len(topology.to_dict()['active_contacts']))
             archive = stage('archive_open', adapter._archive)
             network, records = stage('build_network', lambda: build_network(topology, archive,
-                solver=settings['solver'], max_cv_length_um=args.max_cv_length_um, fused=args.fused))
+                solver=settings['solver'], max_cv_length_um=args.max_cv_length_um, fused=args.fused,
+                slots=args.slots, contact_capacity=args.contact_capacity))
             report['cells'] = len(topology.to_dict()['active_cells'])
             report['compartments'] = int(sum(r['n_compartments'] for r in records.values()))
             del records
             stage('init_state', lambda: init_h01_network_states(network))
             model = stage('model_setup', lambda: H01ArcModel(network, topology.to_dict()['active_cells'],
                 seed=settings['seed'], dt_ms=args.dt_ms, checkpoint_substeps=not args.no_checkpoint))
+            if args.clone_in_place or args.contacts_in_place:
+                clones = [model.clone(index) for index in range(args.clone_in_place)]
+                rows = [model.add_contact(index % model.neuron_count, (index+1) % model.neuron_count, kind=0)
+                        for index in range(args.contacts_in_place)]
+                report['in_place'] = dict(clones=clones, contact_rows=rows, neurons=int(model.neuron_count),
+                                          active=int(np.asarray(model.forest.active.value).sum()))
             manifest = adapter.training_manifest()
             entry = build_update_schedule(manifest, 0, 128).entries[0]
             query = next(q for q in adapter._encoded_queries('training')
@@ -864,6 +873,10 @@ def _parser():
     arm.add_argument('--precision', type=int, choices=(32, 64), default=64)
     arm.add_argument('--no-checkpoint', action='store_true')
     arm.add_argument('--fused', action='store_true', help='one forest population (spec 2026-09-16-h01-fused-population)')
+    arm.add_argument('--slots', type=int, default=1, help='static capacity: clone slots per cell (fused)')
+    arm.add_argument('--contact-capacity', type=int, default=None, help='static capacity: contact table rows (fused)')
+    arm.add_argument('--clone-in-place', type=int, default=0, help='activate this many clone slots before timing')
+    arm.add_argument('--contacts-in-place', type=int, default=0, help='write this many contacts before timing')
     arm.add_argument('--events', type=int, default=21)
     arm.add_argument('--cell-index', type=int, default=None)
     arm.add_argument('--mutate', choices=('add-contact', 'clone', 'clone-all'), default=None,
