@@ -134,12 +134,14 @@ def test_clone_and_contact_in_place_do_not_recompile(runs):
         row = step.contact_table.free_row()
         point = int(np.asarray(forest.runtime.node_tree.cv_to_mid_node_id)[forest.soma_cv_ids[slot]])
         step.contact_table.write(row, pre=1, post_point=point, kind=0, weight_us=WEIGHT_US, delay_ms=DELAY_MS)
+        jax.block_until_ready(forest.active.value)
+        written = len(records)   # the writes themselves are eager scatter ops; the step must not recompile
         with brainstate.environ.context(t=DT_MS*u.ms):
             jax.block_until_ready(advance())
-        compiled_after = len([m for m in records if 'ompil' in m])
+        compiled_after = len([m for m in records[written:] if 'ompil' in m])
         shapes_after = shapes()
     logging.getLogger().removeHandler(handler)
-    assert compiled_before >= 1 and compiled_after == compiled_before
+    assert compiled_before >= 1 and compiled_after == 0
     assert shapes_after == shapes_before
     assert np.asarray(forest.active.value)[slot] == 1. and step.contact_table.rows[row]['pre'] == 1
     with pytest.raises(ValueError, match='outside'):
