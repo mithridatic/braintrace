@@ -151,15 +151,16 @@ class H01ForestCell(H01Cell):
 
     def _write_parameters(self, layout, declaration, key, tables):
         runtime = self._runtime
+        node = runtime.runtime_nodes.get(layout.id) or runtime.ions.get(declaration.instance_name)
         for var in declaration.params.keys():
             buffer = runtime.state_buffers[(layout.id, var)]
             unit = buffer.unit if isinstance(buffer, u.Quantity) else None
-            vector = np.array(u.get_mantissa(buffer), dtype=np.float64)
+            vector = np.full(np.shape(u.get_mantissa(buffer)), _default_value(type(node), var, unit), dtype=np.float64)
             for index, table in enumerate(tables):
                 offset = int(self.forest_offsets.point[index])
                 for source_layout, source_declaration in table.get(key, ()):
                     if var not in source_declaration.params:
-                        continue
+                        continue   # the source used the class default, already in place
                     source = self._source_cells[index]._runtime.state_buffers[(source_layout.id, var)]
                     values = np.asarray(u.get_mantissa(source if unit is None else source.in_unit(unit)))
                     vector[..., offset+source_layout.point_index] = values[..., source_layout.point_index]
@@ -184,6 +185,18 @@ class H01ForestCell(H01Cell):
                 source_node = self._source_cells[index]._runtime.runtime_nodes.get(source_layout.id)
                 if source_node is not None:
                     _copy_states(source_node, node, offset, source_layout.point_index)
+
+
+def _default_value(node_cls, var, unit):
+    """Constructor default of ``var`` for ``node_cls`` in ``unit`` (0 when it has none)."""
+    import inspect
+    parameter = inspect.signature(node_cls.__init__).parameters.get(var)
+    if parameter is None or parameter.default is inspect.Parameter.empty:
+        return 0.
+    default = parameter.default
+    if isinstance(default, u.Quantity):
+        return float(default.to_decimal(unit))
+    return float(default)
 
 
 def _soma_cv(cell):
