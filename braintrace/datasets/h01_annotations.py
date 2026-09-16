@@ -142,6 +142,44 @@ class H01Synapse:
         return self.pre_um if self.role == "pre" else self.post_um
 
 
+def _parse_segment_properties(data, provenance):
+    """Validate a Neuroglancer segment-properties document; return (tag set, {id: H01CellMetadata})."""
+    if data.get("@type") != "neuroglancer_segment_properties":
+        raise ValueError("Expected Neuroglancer segment properties.")
+    inline = data["inline"]
+    ids = inline["ids"]
+    if len(set(ids)) != len(ids) or any(not isinstance(x, str) or not x.isdecimal() for x in ids):
+        raise ValueError("Cell IDs must be unique decimal strings.")
+    properties = inline["properties"]
+    names = [p["id"] for p in properties]
+    if len(set(names)) != len(names) or "tags" not in names:
+        raise ValueError("Expected unique properties including tags.")
+    for p in properties:
+        if len(p["values"]) != len(ids):
+            raise ValueError("Property values must align with cell IDs.")
+        if p["id"] == "tags":
+            if p["type"] != "tags" or any(
+                type(i) is not int or not 0 <= i < len(p["tags"])
+                for row in p["values"] for i in row
+            ):
+                raise ValueError("Invalid tag indices.")
+        elif p["type"] != "number" or not all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) and np.isfinite(v)
+            for v in p["values"]
+        ):
+            raise ValueError("Expected finite numeric cell properties.")
+    tags = properties[names.index("tags")]
+    cells = {}
+    for i, cell_id in enumerate(ids):
+        cells[cell_id] = H01CellMetadata(
+            cell_id, tuple(tags["tags"][j] for j in tags["values"][i]),
+            MappingProxyType({p["id"]: p["values"][i] for p in properties if p["id"] != "tags"}),
+            MappingProxyType({p["id"]: p.get("description", "") for p in properties}),
+            MappingProxyType(provenance),
+        )
+    return frozenset(tags["tags"]), cells
+
+
 class H01Annotations:
     """Read the official proofread-cell annotation files offline.
 
@@ -160,41 +198,7 @@ class H01Annotations:
         self.path = Path(cache_dir).resolve()
         payload = _verified_bytes(self.path / "cell_properties.json", ASSETS["cell_properties.json"][1])
         _verified_bytes(self.path / "synapse_locations.csv", ASSETS["synapse_locations.csv"][1])
-        data = json.loads(payload)
-        if data.get("@type") != "neuroglancer_segment_properties":
-            raise ValueError("Expected Neuroglancer segment properties.")
-        inline = data["inline"]
-        ids = inline["ids"]
-        if len(set(ids)) != len(ids) or any(not isinstance(x, str) or not x.isdecimal() for x in ids):
-            raise ValueError("Cell IDs must be unique decimal strings.")
-        properties = inline["properties"]
-        names = [p["id"] for p in properties]
-        if len(set(names)) != len(names) or "tags" not in names:
-            raise ValueError("Expected unique properties including tags.")
-        for p in properties:
-            if len(p["values"]) != len(ids):
-                raise ValueError("Property values must align with cell IDs.")
-            if p["id"] == "tags":
-                if p["type"] != "tags" or any(
-                    type(i) is not int or not 0 <= i < len(p["tags"])
-                    for row in p["values"] for i in row
-                ):
-                    raise ValueError("Invalid tag indices.")
-            elif p["type"] != "number" or not all(
-                isinstance(v, (int, float)) and not isinstance(v, bool) and np.isfinite(v)
-                for v in p["values"]
-            ):
-                raise ValueError("Expected finite numeric cell properties.")
-        tags = properties[names.index("tags")]
-        self._tags = frozenset(tags["tags"])
-        self._cells = {}
-        for i, cell_id in enumerate(ids):
-            self._cells[cell_id] = H01CellMetadata(
-                cell_id, tuple(tags["tags"][j] for j in tags["values"][i]),
-                MappingProxyType({p["id"]: p["values"][i] for p in properties if p["id"] != "tags"}),
-                MappingProxyType({p["id"]: p.get("description", "") for p in properties}),
-                MappingProxyType(_provenance("cell_properties.json")),
-            )
+        self._tags, self._cells = _parse_segment_properties(json.loads(payload), _provenance("cell_properties.json"))
 
     def select(self, *tags):
         """Select cell IDs containing all requested source tags.
@@ -277,3 +281,57 @@ class H01Annotations:
                     result.append(H01Synapse(neuron_id, line, row["prepost"],
                                              *(tuple(p) for p in xyz * _SYNAPSE_UM)))
         return tuple(result)
+
+
+class H01SegmentProperties(H01Annotations):
+    """Whole-cell tags and counts from any released segment-properties file (e.g. the C3 cell table).
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        A Neuroglancer ``segment_properties/info`` document (gunzipped JSON),
+        for example the C3 release's 46,637-segment cell table.
+    expected_sha256 : str, optional
+        Digest the file must have; ``None`` records the digest without pinning.
+    release : str, optional
+        Release label written into every cell's provenance.
+
+    Notes
+    -----
+    Same tag vocabulary and validation as the proofread table, but the
+    segments are not proofread and no synapse CSV accompanies them:
+    :meth:`synapses` raises and :attr:`synapse_provenance` says so.
+    """
+
+    def __init__(self, path, *, expected_sha256=None, release="20210601/c3"):
+        self.path = Path(path).resolve()
+        data = self.path.read_bytes()
+        self.sha256 = hashlib.sha256(data).hexdigest()
+        if expected_sha256 is not None and self.sha256 != str(expected_sha256).lower():
+            raise ValueError(f"H01 segment properties SHA-256 mismatch: {self.path.name}")
+        self.release = release
+        provenance = {"path": self.path.name, "sha256": self.sha256, "release": release,
+                      "attribution": ATTRIBUTION,
+                      "verification": "released annotation of a non-proofread segment; no manual review"}
+        self._tags, self._cells = _parse_segment_properties(json.loads(data), provenance)
+
+    @property
+    def synapse_provenance(self):
+        """No synapse CSV accompanies a segment-properties table.
+
+        Returns
+        -------
+        dict
+            The release and an explicit statement that no synapse table is supplied.
+        """
+        return {"release": self.release, "synapse_table": "not supplied with segment properties"}
+
+    def synapses(self, neuron_id, *, role=None):
+        """Raise: a segment-properties table carries no synapse rows.
+
+        Raises
+        ------
+        LookupError
+            Always; use the C3 synapse export for these segments.
+        """
+        raise LookupError(f"No synapse table for segment {neuron_id} in {self.path.name}.")

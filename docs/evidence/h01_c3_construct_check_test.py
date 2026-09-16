@@ -43,7 +43,8 @@ def test_check_records_failures_checkpoints_and_resumes(tmp_path):
     assert result["status"] == "completed" and result["passed"] is False and result["passed_count"] == 1
     assert result["cells"][1]["error"] == "RuntimeError: no axon" and result["cells"][0]["n_compartments"] == 3
     again = module.check(jobs + [{"cell_id": "7", "component": 0, "polarity": "E", "donor": "d"}], builder, output)
-    assert calls == ["5", "6", "7"] and again["cells_expected"] == 3 and again["passed_count"] == 2
+    assert calls == ["5", "6", "6", "7"] and again["cells_expected"] == 3 and again["passed_count"] == 2
+    assert [c["cell_id"] for c in again["cells"]] == ["5", "7", "6"]
     assert json.loads(output.read_text())["passed"] is False
 
 
@@ -59,3 +60,13 @@ def test_main_with_injected_builder_writes_the_report(tmp_path):
     assert json.loads((tmp_path / "out.json").read_text())["passed_count"] == 1
     with pytest.raises(SystemExit):
         module.main(["--components", str(tmp_path / "components.json"), "--output", str(tmp_path / "o.json")])
+
+
+def test_load_annotations_uses_the_c3_table_when_given(tmp_path):
+    table = {"@type": "neuroglancer_segment_properties", "inline": {"ids": ["9"], "properties": [
+        {"id": "tags", "type": "tags", "tags": ["L2", "pyramidal"], "values": [[0, 1]]}]}}
+    (tmp_path / "c3.json").write_text(json.dumps(table))
+    annotations = module.load_annotations(tmp_path, tmp_path / "c3.json")
+    assert annotations.metadata("9").tags == ("L2", "pyramidal")
+    with pytest.raises(OSError):
+        module.load_annotations(tmp_path)

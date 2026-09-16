@@ -7,9 +7,10 @@ implicit calcium solver, nothing tuned), registered in a one-cell ``braincell.Ne
 and initialised by ``init_h01_network_states``. Nothing is run. The record per cell is
 the component, polarity, donor, node and compartment counts, construction and
 initialisation seconds and the error text when a stage fails. Output is checkpointed
-after every cell; a rerun skips cells already recorded.
+after every cell; a rerun skips cells already passed and retries failures.
 
-Roles come from the candidates document (``polarity`` / ``donor`` / ``tags`` per cell,
+Tags for C3 ids come from the C3 cell table (``--cell-table``, ``H01SegmentProperties``);
+the proofread table does not know them. Roles come from the candidates document (``polarity`` / ``donor`` / ``tags`` per cell,
 ``donor_for_tags`` resolving the donor) or from ``--polarity`` / ``--donor`` overrides.
 """
 
@@ -68,17 +69,23 @@ def plan(inventory, candidates, polarity=None, donor=None):
     return jobs
 
 
-def production_builder(archive, cache, max_cv_um, solver, current_na, emit):
+def load_annotations(cache, cell_table=None):
+    """The proofread annotation store, or the C3 cell table (``H01SegmentProperties``) when given."""
+    from braintrace.datasets.h01_annotations import H01Annotations, H01SegmentProperties
+
+    if cell_table is not None:
+        return H01SegmentProperties(cell_table)
+    return H01Annotations(cache)
+
+
+def production_builder(archive, annotations, max_cv_um, solver, current_na, emit):
     """Closure that constructs and initialises one cell with the production path."""
     import braincell
     import brainstate
 
-    from braintrace.datasets.h01_annotations import H01Annotations
     from braintrace.datasets.h01_ei_cell import make_h01_ei_cell
     from braintrace.datasets.h01_network import _regions, _register_cell
     from braintrace.datasets.h01_network_init import init_h01_network_states, process_rss_mb
-
-    annotations = H01Annotations(cache)
 
     def build(job):
         with brainstate.environ.context(precision=64):
@@ -102,9 +109,10 @@ def production_builder(archive, cache, max_cv_um, solver, current_na, emit):
 
 
 def check(jobs, builder, output, emit=print):
-    """Run ``builder`` on every job not yet recorded in ``output``; checkpoint after each."""
+    """Run ``builder`` on every job not yet passed in ``output``; failures are retried; checkpoint after each."""
     output = Path(output)
     result = json.loads(output.read_text(encoding="utf-8")) if output.exists() else {"cells": []}
+    result["cells"] = [c for c in result["cells"] if c.get("passed")]
     done = {(c["cell_id"], c["component"]) for c in result["cells"]}
     result["status"] = "running"
     for job in jobs:
@@ -141,6 +149,8 @@ def main(argv=None, builder=None):
     parser.add_argument("--polarity", choices=["E", "I"])
     parser.add_argument("--donor")
     parser.add_argument("--cache", type=Path, default=ROOT / ".cache/h01")
+    parser.add_argument("--cell-table", type=Path,
+                        help="C3 segment-properties JSON supplying tags for C3 ids (else the proofread table).")
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--solver", default="h01_staggered_calcium_implicit")
     parser.add_argument("--current-na", type=float, default=0.1)
@@ -154,9 +164,11 @@ def main(argv=None, builder=None):
     if builder is None:
         from braintrace.datasets.h01 import H01Archive
         archive = H01Archive(args.archive, expected_sha256=args.expected_sha256, source=args.source)
-        builder = production_builder(archive, args.cache, args.max_cv_um, args.solver, args.current_na, emit)
+        annotations = load_annotations(args.cache, args.cell_table)
+        builder = production_builder(archive, annotations, args.max_cv_um, args.solver, args.current_na, emit)
     result = check(jobs, builder, args.output, emit)
     result.update(archive=args.archive.name, expected_sha256=args.expected_sha256, source=args.source,
+                  cell_table=args.cell_table.name if args.cell_table else "cell_properties.json (proofread_104)",
                   max_cv_um=args.max_cv_um, solver=args.solver, seconds=time.perf_counter() - started,
                   scope="construct + initialise only; largest component per cell; deployed donor profile unchanged")
     args.output.write_text(json.dumps(result, indent=1), encoding="utf-8")
