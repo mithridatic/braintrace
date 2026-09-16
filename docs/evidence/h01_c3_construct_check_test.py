@@ -44,7 +44,7 @@ def test_check_records_failures_checkpoints_and_resumes(tmp_path):
     assert result["cells"][1]["error"] == "RuntimeError: no axon" and result["cells"][0]["n_compartments"] == 3
     again = module.check(jobs + [{"cell_id": "7", "component": 0, "polarity": "E", "donor": "d"}], builder, output)
     assert calls == ["5", "6", "6", "7"] and again["cells_expected"] == 3 and again["passed_count"] == 2
-    assert [c["cell_id"] for c in again["cells"]] == ["5", "7", "6"]
+    assert [c["cell_id"] for c in again["cells"]] == ["5", "6", "7"]
     assert json.loads(output.read_text())["passed"] is False
 
 
