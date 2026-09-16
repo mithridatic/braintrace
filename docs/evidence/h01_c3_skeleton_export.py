@@ -201,6 +201,21 @@ def sample_labels(vertices_nm, resolution_nm, chunk_size, download, workers=32):
     return labels
 
 
+def clipped_block(lo, hi, bounds, download):
+    """Download ``[lo, hi)`` clipped to ``bounds``; voxels outside the volume are 0 (unlabelled).
+
+    The label volume's last chunk along each axis is partial, so a full-size chunk box
+    around a vertex near the edge would be out of bounds for the reader.
+    """
+    lo, hi = np.asarray(lo, dtype=np.int64), np.asarray(hi, dtype=np.int64)
+    clip_lo, clip_hi = np.maximum(lo, bounds[0]), np.minimum(hi, bounds[1])
+    block = np.zeros(tuple(hi - lo), dtype=np.int64)
+    if (clip_hi > clip_lo).all():
+        inner = np.asarray(download(clip_lo, clip_hi))
+        block[tuple(slice(a, b) for a, b in zip(clip_lo - lo, clip_hi - lo))] = inner
+    return block
+
+
 class CloudFetcher:
     """Skeletons and subcompartment labels from the released C3 precomputed volumes.
 
@@ -241,9 +256,10 @@ class CloudFetcher:
         from cloudvolume import Bbox
         self._open()
         volume = self._labels
+        bounds = (np.asarray(volume.bounds.minpt, dtype=np.int64), np.asarray(volume.bounds.maxpt, dtype=np.int64))
 
         def download(lo, hi):
-            return np.asarray(volume.download(Bbox(lo, hi), mip=self.mip))[..., 0]
+            return clipped_block(lo, hi, bounds, lambda a, b: np.asarray(volume.download(Bbox(a, b), mip=self.mip))[..., 0])
 
         return sample_labels(vertices_nm, volume.resolution, volume.chunk_size, download, self.workers)
 

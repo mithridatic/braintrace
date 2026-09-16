@@ -10,7 +10,7 @@ import pytest
 
 from braintrace.datasets._h01_swc import normalize
 from braintrace.datasets.h01 import H01Archive
-from docs.evidence.h01_c3_skeleton_export import (Skeleton, cable_um, candidate_ids, choose_root, component_tree,
+from docs.evidence.h01_c3_skeleton_export import (Skeleton, cable_um, candidate_ids, choose_root, clipped_block, component_tree,
                                                   export_cell, label_to_type, main, sample_labels, split_components,
                                                   swc_text)
 
@@ -150,3 +150,17 @@ def test_main_writes_a_loadable_archive_and_provenance_and_resumes_from_stage(tm
 def test_main_requires_at_least_one_id(tmp_path):
     with pytest.raises(SystemExit):
         main(["--output", str(tmp_path / "x.zip"), "--provenance", str(tmp_path / "p.json")], fetcher=FakeFetcher())
+
+
+def test_clipped_block_pads_the_partial_edge_chunk_with_unlabelled():
+    calls = []
+
+    def download(a, b):
+        calls.append((tuple(a), tuple(b)))
+        return np.full(tuple(np.asarray(b) - np.asarray(a)), 5, dtype=np.int64)
+
+    bounds = (np.array([0, 0, 0]), np.array([100, 100, 10]))
+    block = clipped_block([64, 64, 0], [128, 128, 64], bounds, download)
+    assert block.shape == (64, 64, 64) and calls == [((64, 64, 0), (100, 100, 10))]
+    assert block[:36, :36, :10].min() == 5 and block[36:].max() == 0 and block[:, :, 10:].max() == 0
+    assert clipped_block([200, 0, 0], [264, 64, 64], bounds, download).max() == 0 and len(calls) == 1
