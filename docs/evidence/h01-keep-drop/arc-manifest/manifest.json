@@ -1,0 +1,2417 @@
+{
+  "asset_root": "assets",
+  "assets": [
+    "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47"
+  ],
+  "kept_from": {
+    "path": "docs/evidence/h01-keep-drop/decision.json",
+    "sha256": "e9f058b05f5a5600d715946645d40d65c5d678d8367125da136884775276f15a",
+    "source_cells": 104
+  },
+  "original_cells": 17,
+  "schema": "h01-arc-manifest-v1",
+  "settings": {
+    "checkpoint_substeps": true,
+    "decay": 0.99,
+    "dependencies": {
+      "braincell": "0.1.0",
+      "brainevent": "0.2.1",
+      "brainstate": "0.5.3",
+      "brainunit": "0.5.2",
+      "jax": "0.11.0",
+      "jaxlib": "0.11.0",
+      "numpy": "2.4.6",
+      "optax": "0.2.8"
+    },
+    "dt_ms": 0.000625,
+    "event_ms": 0.1,
+    "factor_limit_bytes": 536870912,
+    "implementation_sha256": {
+      "braintrace/_algorithm/sparse_io.py": "f5b706a0026884d1894c6c0bce8f3804ee73656362143d0151cf86b6e4a3697e",
+      "braintrace/_algorithm/sparse_pp_prop.py": "44e25ae8aa47f436e8f60f099f8fcb2d04535466c353491cc14a0ab453d0c674",
+      "braintrace/_compiler/sparse_influence.py": "045427d819723a9f5a3873c3c1da5a730176e804b1e5e6e78c3a367a5fb18170",
+      "braintrace/_compiler/sparse_io_graph.py": "a21108167adba21a31a489987ca291fd77db579377ace171fd6b40d397d8b7a7",
+      "braintrace/_compiler/sparse_support.py": "89a59ae289435dd6c49639b71e19fa42457f98c4bcb5ec0eccc94c0fee39a9e8",
+      "braintrace/biophysics/__init__.py": "2f0b1e7db5fceb52a89fe3e704f1e876c0f7ed405f11ebd8a0152a14517ea8de",
+      "braintrace/biophysics/astrocyte.py": "f5ea0cc9ea43fcc0a9624d514c5f1da40e300aad18e65ea8cb8048b2028001b3",
+      "braintrace/biophysics/astrocyte_coupled.py": "d23f0f2a781330a2c60c5750789eb871639f07af1355fe2c4ed2f68a57236fab",
+      "braintrace/biophysics/astrocyte_network.py": "a034c265eddfea943750c29c13768fc6064fc92fa169926b41dc6345b5459dd4",
+      "braintrace/biophysics/cable_gaba.py": "f437d2f1d025592ad43ee0115a0eb65809d806d4469da6e18c0b64fc501f65c6",
+      "braintrace/biophysics/cable_geometry.py": "6b0bc05e55c570d3ba93b68b8c6d2d3523b4a57bb50d927b3681f42bba262bd6",
+      "braintrace/biophysics/cable_kir.py": "6d0beb08ee72734a460590d239617697a506594bdfcd67713710a41169851757",
+      "braintrace/biophysics/cable_potassium.py": "2f70733ba0e83ce0816cf5fa01069db71c86523d39cf215ff8b01c328d56d92f",
+      "braintrace/biophysics/environment.py": "6e8cf0ceb80bddd09df11a148ab4d05cd9d37f8c1facd2ca758459253db5c0a8",
+      "braintrace/biophysics/extracellular.py": "965302c2844eb752f9ec9accc0f32f1fe57936c105b6c1cf94bb285fbfabdf8e",
+      "braintrace/biophysics/gaba.py": "fb317fe6174ecc2dcf19fce579799f9fd70a0e78cc199fd72ef9544ea9ec7f30",
+      "braintrace/biophysics/myelin.py": "2e102e29f6f671dfefde6ebc73fc799a65eb2e6dce2579ff87c8b5505520fb11",
+      "braintrace/biophysics/neuroglial.py": "ffa6695427c2d87bed3c290bb061c1f0e4f8f23e4bfa0a080c7cd1e977c892e5",
+      "braintrace/biophysics/provenance.py": "eabdcf807d5a6256be4007a60e297c4ec1f8f413138e76175127a9afbaf5c96d",
+      "braintrace/biophysics/release.py": "f8c98b510ca0d824c995977f931bc86a5acfccf6de9ecb5443e828be08308fa2",
+      "braintrace/biophysics/shells.py": "612a5eda4bb4d3fff7328b58f8b50e25718e78484dd13153d2b46ca9aa18b186",
+      "braintrace/biophysics/spine_mapping.py": "b94266d845aa57efea39964c4ba3541a3e88fc03bb3a42d0f630479f189bc36c",
+      "braintrace/biophysics/spines.py": "e776edf36e789f92270f0fc1bda9ef673e2669af62b78598196dc5a1c2e2db83",
+      "braintrace/biophysics/transmitter.py": "b4d2fdd33a7f8d8573acc593e343b34c82dbce2c66dd647223648747520d5416",
+      "braintrace/biophysics/transport.py": "e5203154f5cdad5f913c623f34ee669fee54fe4bc68da4282803953cac2d9d30",
+      "braintrace/datasets/h01.py": "86b88bc399baffbe58b014ed8e02eeb17d3c35f7a15bc45379e20cd6f0114eea",
+      "braintrace/datasets/h01_active.py": "f6dd8a6772bb0efdf3b336930baad7de3cdb752c876e24fccc9046be2b679623",
+      "braintrace/datasets/h01_anatomy.py": "3cbec09536add38d2ad286365ac8a13883bf3597252472708b383b8c5a1173bd",
+      "braintrace/datasets/h01_annotated_demo.py": "f0316a45c606ac0cdef4b2169b87f3f08d647ca3e13169ea8286320b3d7d7791",
+      "braintrace/datasets/h01_annotations.py": "4b91aa96e0841b10ae93ca8533696844aad00f6f6c94602feb1c4281fda78c20",
+      "braintrace/datasets/h01_biology.py": "5cb2c38f4f403c4b19e17e10d832d7a07080587b0a452173e0da4f45794498c4",
+      "braintrace/datasets/h01_calcium_implicit.py": "dacc13d6661e008b5a71b9761879f26d16f528700758b2d86b89cccfdb8f5b5d",
+      "braintrace/datasets/h01_calcium_solver.py": "0d0ca81450c7c50c0a14cb92f5d2251c131c29d18dc17fa6019289ca2a571b2b",
+      "braintrace/datasets/h01_cell_types.py": "72cad4cf0ef0690d9ad14415f147bb41841adde19a00110a6ca8352683a5e179",
+      "braintrace/datasets/h01_channels.py": "bcbef72ca581e4a30ad13804035911aea916bc43dc144cf1aa40f279db235d63",
+      "braintrace/datasets/h01_connectivity.py": "19600d0817b601f6aad9ae72bb960d19943b09588189261d4d316411f020de98",
+      "braintrace/datasets/h01_construction.py": "94da565831c3acd8b3f06d41e6d1c9539c5a07a08f1b28361da40ede02e2ab94",
+      "braintrace/datasets/h01_demo.py": "261ae0b6c0711c21c37bf098512f2b0c9207ea85639c648fbdf5e0009befdc7a",
+      "braintrace/datasets/h01_dhs_contraction.py": "92063560dfb7d5aa24ceaf11f8cb38d39dd570694c1802381229c9906c6d25e1",
+      "braintrace/datasets/h01_dhs_gpu.py": "9ff1dc1a7b7548f08a50919181e51184c6bf3f5f227d5a76435e54076497bb7d",
+      "braintrace/datasets/h01_dhs_scan.py": "edfa9fb90bfa1d153976a1f216d94072a225365912b387842f2a25d4d455c864",
+      "braintrace/datasets/h01_discretization.py": "9b53809c2926009b351224a90baa302bc781a269a200d0eaa937d67bb63eff18",
+      "braintrace/datasets/h01_ei_cell.py": "b3e34248b30458d0b56d54ed8c7b2911b5bf86d1d611e34ecf6ab4030ccd596b",
+      "braintrace/datasets/h01_ei_circuit.py": "eb8a49f027360ebe148736581ec7fc18bd2dfd52575eefba3e8aa8237aed2677",
+      "braintrace/datasets/h01_ei_profiles.py": "4479f1897452479d529a20e444aa4437432194da9eb7cf14d28400662bb0b38d",
+      "braintrace/datasets/h01_glia.py": "57192b1841a47062bb4dcea191e98ab523a5d8105a811bdb8d623b0768c1aa4e",
+      "braintrace/datasets/h01_glial_cable.py": "b0680562de1013271ff3b42ab449133940c79923d3eb4f7fb2583ed15ea7f35b",
+      "braintrace/datasets/h01_l2_cell.py": "6b97996a20230df16f4bdb5479a14a7a9e1842d85467d0bd0d7a49521ff61764",
+      "braintrace/datasets/h01_l2_channels.py": "60408006f4e4175ae2ac9de5f2b8d7326d03c8c116715970af244dc245a99111",
+      "braintrace/datasets/h01_measured_contact.py": "fa9e4a47460f4618ec2d7eea40d0b612d71df169d74c63ed649ead20b108fa06",
+      "braintrace/datasets/h01_network.py": "ec852c872f25785ba160488dbfb76fdb9a61f073c3e7a355bbfde4e01cc15fbf",
+      "braintrace/datasets/h01_network_init.py": "459e2cc82796e576598ac08221d1c9e14f3eec993b795e8e0aba7bf330c5c2c6",
+      "braintrace/datasets/h01_network_step.py": "3923a3b5354f121eebd623de5fca7fb7626747c4f566aef3b721ea0b0e5e0bdf",
+      "braintrace/datasets/h01_neuroglia.py": "1d1c8d87273b27cf089b12b24e90ed3d496609d26ed68d537e37da998fd14a34",
+      "braintrace/datasets/h01_pv_calcium.py": "f836566196fe8b4eb366ede8f5637a12c10b2e05988524a1deb0dc7cfa8d6188",
+      "braintrace/datasets/h01_pv_cell.py": "62b60b5c753fde237ff338da4aebb633d5109abf67a3aadf75666b29ddf01a4e",
+      "braintrace/datasets/h01_pv_channels.py": "beaae51a60a42dbac6ca21f17e72c0aa20e063ca500a675cf4f4b70f366cb614",
+      "braintrace/datasets/h01_pv_morphology.py": "f0e43458d93fc905b29e9b69bce77a24ef4bebbfeae568006cabeba7e7e2ac68",
+      "braintrace/datasets/h01_pv_rates.py": "cd29eb8921470102a08bace46af17947fa191dd833b72d24cfce9c013be101f6",
+      "braintrace/datasets/h01_reference.py": "98d063ca2bdf65f36ea6380d9af2956d4b7f0f1849ef090cdef67b0dfc30981b",
+      "braintrace/datasets/h01_spike_output.py": "5a257751134ab434040fc67ca7ba657b997719a84b92e430236f4e10d5652ee8",
+      "braintrace/datasets/h01_spine_assembly.py": "05e012ef40ee5f8b4147cc6261cd1c873205455711915bf8d84453c8a365aaed",
+      "braintrace/datasets/h01_wilbers.py": "9934c6bd3ef6d441e2a60ee69d3217047e9f343e70fe99c5fbaca1879b4794e1",
+      "examples/pp_prop/21-braincell-arc.py": "556541e5aa190445eabdca962ea9e039d1bf2f09fc4a5d4cff37cc435f5cad33",
+      "examples/pp_prop/h01_arc_execution.py": "072d2d2a73c3d7c5df74a59f53fb0355e562dd794d4a5951d5fe5f5ebc659048",
+      "examples/pp_prop/h01_arc_model.py": "ed77004c724b5d72ba0cf41e3b2c36823e3880c1b6870e9c4b052d54076d543f",
+      "examples/pp_prop/h01_muon.py": "e3d9fd58dca155fc8c5319fc83b0d5ca33fdaa216760cee5ed3134f7922274dc",
+      "examples/pp_prop/h01_neuroglial.py": "c5ef34b103a54983a9b8f818cc92f48ccaae7773028cd4801690ee3a0e678e64",
+      "examples/pp_prop/h01_physical_checkpoint.py": "de789332a5d4142cb788dd1334e2273f928d765b29e3a707096006a911516252",
+      "examples/pp_prop/h01_physical_wait.py": "6819c6986fb572318e8182b0624ee9ca750d1aeb060324b144baa87a3a5e89fe",
+      "examples/pp_prop/h01_runtime.py": "2bf94193160932536d01c5bb3e894fc6deacfac96da43314cc65bfb716c745ea",
+      "examples/pp_prop/h01_session.py": "734b3647ffca5934a29f43237c9ba9d6b24fbe579d8c7eb436d8c67e9f2eaffa"
+    },
+    "max_cv_length_um": 10.0,
+    "optimizer_policy": {
+      "adaptive": false,
+      "beta": 0.95,
+      "bias": {
+        "algorithm": "adamw",
+        "b1": 0.9,
+        "b2": 0.999,
+        "eps": 1e-08,
+        "nesterov": true,
+        "weight_decay": 0.1
+      },
+      "eps": 1e-08,
+      "learning_rates": {
+        "input": 0.001,
+        "readout": 0.003,
+        "recurrent": 0.0003
+      },
+      "nesterov": true,
+      "ns_coeffs": [
+        3.4445,
+        -4.775,
+        2.0315
+      ],
+      "ns_steps": 5,
+      "preconditioning": "frobenius",
+      "shape_scaling": "width",
+      "version": "h01-masked-muon-v1",
+      "weight_decay": 0.1,
+      "workspace_limit_bytes": 536870912
+    },
+    "precision": 64,
+    "seed": 21,
+    "solver": "h01_staggered_calcium_implicit",
+    "substeps": 160
+  },
+  "topology": {
+    "active_cells": [
+      "3761379470",
+      "5173982155",
+      "5013648003",
+      "2001418787",
+      "3571083397",
+      "4010150634",
+      "4197933517",
+      "6833911543",
+      "5439194879",
+      "4437316933",
+      "3111823553",
+      "1669770671",
+      "751294744",
+      "2252715458",
+      "1684504313",
+      "2848552900",
+      "2103991145"
+    ],
+    "active_contacts": [],
+    "blocked_contacts": [
+      {
+        "annotation_id": "65017731",
+        "blockers": [
+          "pre: source component has no soma; no cable connection to soma is supplied"
+        ],
+        "connection_type": "EI",
+        "construction_ready": false,
+        "dale_sign": 1,
+        "endpoints_verified": true,
+        "endpoints_within_box": true,
+        "post_cell": "3680152874",
+        "post_index": 46,
+        "post_nearest_offset": [
+          0,
+          0,
+          0
+        ],
+        "post_placement": {
+          "ambiguous": false,
+          "cable_location": [
+            570,
+            0.5532983093930511
+          ],
+          "component": 0,
+          "distance_um": 0.19477670018428433,
+          "has_soma": true,
+          "position_um": [
+            3170.576,
+            1266.976,
+            14.256
+          ],
+          "source_swc_sha256": "bfb44cad0bbe675a878da0c31bad0e8c1a84df23c9a6a010fb6f04093e5e7e3a"
+        },
+        "post_proofread_label": "3680152874",
+        "post_voxel": [
+          396322,
+          158372,
+          432
+        ],
+        "pre_cell": "3519995546",
+        "pre_index": 44,
+        "pre_nearest_offset": [
+          0,
+          0,
+          0
+        ],
+        "pre_placement": {
+          "ambiguous": false,
+          "cable_location": [
+            658,
+            0.5340677325045128
+          ],
+          "component": 55,
+          "distance_um": 0.20808430201015324,
+          "has_soma": false,
+          "position_um": [
+            3170.4880000000003,
+            1266.944,
+            14.256
+          ],
+          "source_swc_sha256": "ca5849e1d502834030ce4d081891bf211203d3b8bd847887ee8df420dfba7443"
+        },
+        "pre_proofread_label": "3519995546",
+        "pre_voxel": [
+          396311,
+          158368,
+          432
+        ],
+        "type": 2
+      }
+    ],
+    "contacts": {},
+    "instances": {
+      "1669770671": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "1669770671",
+        "synthetic": false
+      },
+      "1684504313": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "1684504313",
+        "synthetic": false
+      },
+      "2001418787": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "2001418787",
+        "synthetic": false
+      },
+      "2103991145": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "2103991145",
+        "synthetic": false
+      },
+      "2252715458": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "2252715458",
+        "synthetic": false
+      },
+      "2848552900": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "2848552900",
+        "synthetic": false
+      },
+      "3111823553": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "3111823553",
+        "synthetic": false
+      },
+      "3571083397": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "3571083397",
+        "synthetic": false
+      },
+      "3761379470": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "3761379470",
+        "synthetic": false
+      },
+      "4010150634": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "4010150634",
+        "synthetic": false
+      },
+      "4197933517": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "4197933517",
+        "synthetic": false
+      },
+      "4437316933": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "4437316933",
+        "synthetic": false
+      },
+      "5013648003": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "5013648003",
+        "synthetic": false
+      },
+      "5173982155": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "5173982155",
+        "synthetic": false
+      },
+      "5439194879": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "5439194879",
+        "synthetic": false
+      },
+      "6833911543": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "6833911543",
+        "synthetic": false
+      },
+      "751294744": {
+        "created_stage": "source",
+        "parent_id": null,
+        "source_id": "751294744",
+        "synthetic": false
+      }
+    },
+    "mutations": [],
+    "next_id": 0,
+    "schema": "h01-topology-v1",
+    "sources": {
+      "1669770671": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          3253,
+          0.3834894046956251
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          3253,
+          0.3834894046956924
+        ],
+        "source_sha256": "2cba669e3d5a3704359874f7d8cdcbddb54cbf9e764c8e7e03746081596c1f93",
+        "source_tags": [
+          "L2",
+          "pyramidal",
+          "neuron",
+          "sparsely-spiny"
+        ]
+      },
+      "1684504313": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          5095,
+          0.33333333333333365
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          5095,
+          0.3333333333333326
+        ],
+        "source_sha256": "741501bbd5b04fa92cb9f3bdccfd9e415fed2f48a96500495eaaecdd55f61fb8",
+        "source_tags": [
+          "L2",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "2001418787": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l4-pyramidal-allen-527952884",
+        "output_site": [
+          292,
+          0.2576130836426984
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 14.9970627156,
+          "channel_prefix": "H01L2",
+          "initial_mv": -80.81838607788086,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+          "mode": "candidate",
+          "name": "h01-l4-allen-527952884:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004325404210761702,
+              [
+                [
+                  "Im",
+                  0.0003408221448736093
+                ],
+                [
+                  "Ih",
+                  0.005766004813494249
+                ],
+                [
+                  "NaTs",
+                  2.053808334514681
+                ],
+                [
+                  "Nap",
+                  0.0019835830648151534
+                ],
+                [
+                  "K_P",
+                  8.370143738944957e-05
+                ],
+                [
+                  "K_T",
+                  0.0005156799865624617
+                ],
+                [
+                  "SK",
+                  0.48416836488227766
+                ],
+                [
+                  "Kv3_1",
+                  0.44920028925755756
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009610538621567574
+                ],
+                [
+                  "Ca_LVA",
+                  0.009648645320742421
+                ]
+              ],
+              [
+                175.16982466877238,
+                7.4272125002753e-05
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.0002680384185644075,
+              [],
+              null
+            ],
+            [
+              "dend",
+              1.5826204667213606,
+              1.6307512951158188e-05,
+              [],
+              null
+            ],
+            [
+              "apic",
+              1.5826204667213606,
+              1.037799308786824e-07,
+              [],
+              null
+            ]
+          ],
+          "reversal_mv": -80.81838607788086,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 527952884; model 626170709; fit SHA256 1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          292,
+          0.2576130836427241
+        ],
+        "source_sha256": "576f1c30b778f6ad277219b9cf9ce5380afadb9ab3f69ed549f3be74ac7fb676",
+        "source_tags": [
+          "L4",
+          "pyramidal",
+          "neuron",
+          "sparsely-spiny"
+        ]
+      },
+      "2103991145": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 1,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          3897,
+          0.6504919596683807
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          3897,
+          0.6504919596683778
+        ],
+        "source_sha256": "73d7b7fba69b0cd1805730d457cf09388943cba36026fb9a1b162deb847e6f78",
+        "source_tags": [
+          "L3",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "2252715458": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          1305,
+          1.0
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          1305,
+          1.0
+        ],
+        "source_sha256": "f706f201542e2d719d1a3276ca0459d84380684c4c14f3a8f52ab7567d0f8839",
+        "source_tags": [
+          "L2",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "2848552900": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          4175,
+          0.5587329105178969
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          4175,
+          0.5587329105178961
+        ],
+        "source_sha256": "fb2fbf43d639aabe1492b9518c85746135ebe20ea16ecc4eba0327d3307f5399",
+        "source_tags": [
+          "L2",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "3111823553": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          2908,
+          0.8733458887193356
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          2908,
+          0.8733458887193372
+        ],
+        "source_sha256": "8eabac427c0e14977058d2ebb1c94ba5e12ef517393542e5b686d0822ae67c8c",
+        "source_tags": [
+          "L2",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "3571083397": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          40,
+          0.18177543941930432
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          40,
+          0.18177543941930666
+        ],
+        "source_sha256": "bd8be2e54aeb71ddba331afa0b6e8ef7aa70d8eda8d6b7ca60974db267805084",
+        "source_tags": [
+          "L5",
+          "pyramidal",
+          "neuron",
+          "bipolar"
+        ]
+      },
+      "3761379470": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l4-pyramidal-allen-527952884",
+        "output_site": [
+          27,
+          0.6775962826641878
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 14.9970627156,
+          "channel_prefix": "H01L2",
+          "initial_mv": -80.81838607788086,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+          "mode": "candidate",
+          "name": "h01-l4-allen-527952884:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004325404210761702,
+              [
+                [
+                  "Im",
+                  0.0003408221448736093
+                ],
+                [
+                  "Ih",
+                  0.005766004813494249
+                ],
+                [
+                  "NaTs",
+                  2.053808334514681
+                ],
+                [
+                  "Nap",
+                  0.0019835830648151534
+                ],
+                [
+                  "K_P",
+                  8.370143738944957e-05
+                ],
+                [
+                  "K_T",
+                  0.0005156799865624617
+                ],
+                [
+                  "SK",
+                  0.48416836488227766
+                ],
+                [
+                  "Kv3_1",
+                  0.44920028925755756
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009610538621567574
+                ],
+                [
+                  "Ca_LVA",
+                  0.009648645320742421
+                ]
+              ],
+              [
+                175.16982466877238,
+                7.4272125002753e-05
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.0002680384185644075,
+              [],
+              null
+            ],
+            [
+              "dend",
+              1.5826204667213606,
+              1.6307512951158188e-05,
+              [],
+              null
+            ],
+            [
+              "apic",
+              1.5826204667213606,
+              1.037799308786824e-07,
+              [],
+              null
+            ]
+          ],
+          "reversal_mv": -80.81838607788086,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 527952884; model 626170709; fit SHA256 1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          27,
+          0.6775962826641886
+        ],
+        "source_sha256": "6406bac3f4a2ab48ad236a466fb2772c19904c0b48f2082bc61204740037b309",
+        "source_tags": [
+          "L4",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "4010150634": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l4-pyramidal-allen-527952884",
+        "output_site": [
+          729,
+          0.5912326654163765
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 14.9970627156,
+          "channel_prefix": "H01L2",
+          "initial_mv": -80.81838607788086,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+          "mode": "candidate",
+          "name": "h01-l4-allen-527952884:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004325404210761702,
+              [
+                [
+                  "Im",
+                  0.0003408221448736093
+                ],
+                [
+                  "Ih",
+                  0.005766004813494249
+                ],
+                [
+                  "NaTs",
+                  2.053808334514681
+                ],
+                [
+                  "Nap",
+                  0.0019835830648151534
+                ],
+                [
+                  "K_P",
+                  8.370143738944957e-05
+                ],
+                [
+                  "K_T",
+                  0.0005156799865624617
+                ],
+                [
+                  "SK",
+                  0.48416836488227766
+                ],
+                [
+                  "Kv3_1",
+                  0.44920028925755756
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009610538621567574
+                ],
+                [
+                  "Ca_LVA",
+                  0.009648645320742421
+                ]
+              ],
+              [
+                175.16982466877238,
+                7.4272125002753e-05
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.0002680384185644075,
+              [],
+              null
+            ],
+            [
+              "dend",
+              1.5826204667213606,
+              1.6307512951158188e-05,
+              [],
+              null
+            ],
+            [
+              "apic",
+              1.5826204667213606,
+              1.037799308786824e-07,
+              [],
+              null
+            ]
+          ],
+          "reversal_mv": -80.81838607788086,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 527952884; model 626170709; fit SHA256 1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          729,
+          0.5912326654163472
+        ],
+        "source_sha256": "18f346c122bebe7ef0d4bdbad3087b397837e8954083e6fb07aa025b9cb339db",
+        "source_tags": [
+          "L4",
+          "pyramidal",
+          "neuron",
+          "sparsely-spiny"
+        ]
+      },
+      "4197933517": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          1725,
+          0.07206449885855577
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          1725,
+          0.0720644988585615
+        ],
+        "source_sha256": "1940842d29e25767c307407104076c88e99ce810b1d48be0838aa1d06d4906ec",
+        "source_tags": [
+          "L5",
+          "neuron",
+          "excitatory/spiny-with-atypical-tree",
+          "bipolar"
+        ]
+      },
+      "4437316933": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          1048,
+          1.0
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          1048,
+          1.0
+        ],
+        "source_sha256": "886d36c05f4c31333f3d2b436f695fe6e8ed53d5f01f720f1b5cbb1163fd8768",
+        "source_tags": [
+          "L2",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "5013648003": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          1349,
+          0.2714959804297997
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          1349,
+          0.27149598042979756
+        ],
+        "source_sha256": "1f28ce91bd91105334242765e95b9ce6954fb6001dbb7b5912590be24b78e00d",
+        "source_tags": [
+          "L5",
+          "neuron",
+          "excitatory/spiny-with-atypical-tree"
+        ]
+      },
+      "5173982155": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 3,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          50,
+          0.8194803871372486
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          50,
+          0.8194803871372486
+        ],
+        "source_sha256": "451720ea9b8d5d6f2614b07cafff4b5b518512cdc0d61216425f1509ea33bdda",
+        "source_tags": [
+          "L5",
+          "neuron",
+          "excitatory/spiny-with-atypical-tree"
+        ]
+      },
+      "5439194879": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l4-pyramidal-allen-527952884",
+        "output_site": [
+          1446,
+          0.3059718876085609
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 14.9970627156,
+          "channel_prefix": "H01L2",
+          "initial_mv": -80.81838607788086,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+          "mode": "candidate",
+          "name": "h01-l4-allen-527952884:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004325404210761702,
+              [
+                [
+                  "Im",
+                  0.0003408221448736093
+                ],
+                [
+                  "Ih",
+                  0.005766004813494249
+                ],
+                [
+                  "NaTs",
+                  2.053808334514681
+                ],
+                [
+                  "Nap",
+                  0.0019835830648151534
+                ],
+                [
+                  "K_P",
+                  8.370143738944957e-05
+                ],
+                [
+                  "K_T",
+                  0.0005156799865624617
+                ],
+                [
+                  "SK",
+                  0.48416836488227766
+                ],
+                [
+                  "Kv3_1",
+                  0.44920028925755756
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009610538621567574
+                ],
+                [
+                  "Ca_LVA",
+                  0.009648645320742421
+                ]
+              ],
+              [
+                175.16982466877238,
+                7.4272125002753e-05
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.0002680384185644075,
+              [],
+              null
+            ],
+            [
+              "dend",
+              1.5826204667213606,
+              1.6307512951158188e-05,
+              [],
+              null
+            ],
+            [
+              "apic",
+              1.5826204667213606,
+              1.037799308786824e-07,
+              [],
+              null
+            ]
+          ],
+          "reversal_mv": -80.81838607788086,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 527952884; model 626170709; fit SHA256 1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          1446,
+          0.3059718876088032
+        ],
+        "source_sha256": "8315dd7fc939a50ac547cacaad2fad0b42e0819a52a07d761c05fc10c7cb78f7",
+        "source_tags": [
+          "L4",
+          "pyramidal",
+          "neuron"
+        ]
+      },
+      "6833911543": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 1,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          2679,
+          0.3158275604787752
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          2679,
+          0.3158275604787753
+        ],
+        "source_sha256": "705300cc07b9e00d185fd4d765bc069298caf0733a0c1c17e84360a5c99f344d",
+        "source_tags": [
+          "L5",
+          "neuron",
+          "excitatory/spiny-with-atypical-tree",
+          "bipolar"
+        ]
+      },
+      "751294744": {
+        "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+        "compartment_policy": "custom; original H01 codes retained in source_rows",
+        "component": 0,
+        "donor": "l2-pyramidal-allen-541563728",
+        "output_site": [
+          3729,
+          0.17110468572081783
+        ],
+        "polarity": "E",
+        "profile": {
+          "axial_ohm_cm": 94.62299222737664,
+          "channel_prefix": "H01L2",
+          "initial_mv": -83.97993469238281,
+          "limitations": [
+            "Borrowed donor and mechanisms; not measured H01 physiology.",
+            "Candidate selection is not physiological qualification.",
+            "E onset and rising-phase errors remain; I early intervals remain too short."
+          ],
+          "metadata_sha256": "926efb3d5ae93b324bd653698d1c7d3fd478d9b94db1143b4eb933c5fcfa0f3a",
+          "mode": "candidate",
+          "name": "h01-l2-kv3-ninety-ca133:candidate:v1",
+          "polarity": "E",
+          "potassium_reversal_mv": -107.0,
+          "regions": [
+            [
+              "soma",
+              1.0,
+              0.0004214870638616726,
+              [
+                [
+                  "Im",
+                  0.0003009224287506406
+                ],
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ],
+                [
+                  "NaTs",
+                  3.8142926608978067
+                ],
+                [
+                  "Nap",
+                  0.00027834876277937903
+                ],
+                [
+                  "K_P",
+                  0.0002294964697530516
+                ],
+                [
+                  "K_T",
+                  1.1414657313560486e-08
+                ],
+                [
+                  "SK",
+                  0.0029986173243412404
+                ],
+                [
+                  "Kv3_1",
+                  0.3687667632247488
+                ],
+                [
+                  "Ca_HVA",
+                  0.0009983602924910323
+                ],
+                [
+                  "Ca_LVA",
+                  0.00824261450980065
+                ]
+              ],
+              [
+                657.0460049891833,
+                0.0008762096311710155
+              ]
+            ],
+            [
+              "axon",
+              1.0,
+              0.00028089935810004884,
+              [],
+              null
+            ],
+            [
+              "dend",
+              2.3031548608821226,
+              3.626643561453563e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ],
+            [
+              "apic",
+              2.3031548608821226,
+              4.119170292066434e-05,
+              [
+                [
+                  "Ih",
+                  9.994138594205759e-05
+                ]
+              ],
+              null
+            ]
+          ],
+          "reversal_mv": -87.97993469238281,
+          "sodium_reversal_mv": 53.0,
+          "source": "Allen specimen 541563728; model 626170538; fit SHA256 2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        },
+        "region_basis": "Source soma/axon/AIS samples extend halfway along adjacent edges; remaining cable gets dendrite properties. Myelin is not modeled. This is the existing inferred electrical partition, not measured channel placement.",
+        "soma_site": [
+          3729,
+          0.17110468572081858
+        ],
+        "source_sha256": "6368e97bbe10382b3c6516812ca3e54349ce7f6bb0ab7275cd1d64cff94bc4b0",
+        "source_tags": [
+          "L2",
+          "pyramidal",
+          "neuron"
+        ]
+      }
+    }
+  }
+}
