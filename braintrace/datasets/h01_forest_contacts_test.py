@@ -126,7 +126,9 @@ def test_clone_and_contact_in_place_do_not_recompile(runs):
         with brainstate.environ.context(t=0.*u.ms):
             jax.block_until_ready(advance())
         compiled_before = len([m for m in records if 'ompil' in m])
-        shapes_before = jax.tree.map(lambda x: x.shape, {k: v.value for k, v in brainstate.graph.states(forest).items()})
+        def shapes():
+            return {k: np.shape(u.get_mantissa(v.value)) for k, v in brainstate.graph.states(forest).items()}
+        shapes_before = shapes()
         slot = forest.free_slot(0)
         forest.activate(slot)
         row = step.contact_table.free_row()
@@ -135,7 +137,7 @@ def test_clone_and_contact_in_place_do_not_recompile(runs):
         with brainstate.environ.context(t=DT_MS*u.ms):
             jax.block_until_ready(advance())
         compiled_after = len([m for m in records if 'ompil' in m])
-        shapes_after = jax.tree.map(lambda x: x.shape, {k: v.value for k, v in brainstate.graph.states(forest).items()})
+        shapes_after = shapes()
     logging.getLogger().removeHandler(handler)
     assert compiled_before >= 1 and compiled_after == compiled_before
     assert shapes_after == shapes_before
