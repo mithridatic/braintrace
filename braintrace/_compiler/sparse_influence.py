@@ -129,8 +129,9 @@ class SparseInfluence:
             One declaration per block: ``('segments', offsets, labels)`` splits
             the block's last axis at ``offsets`` into segments owned by
             ``labels``; ``('block', reads, feeds)`` keeps the block whole,
-            ``reads`` naming the segment labels that may influence it and
-            ``feeds`` the labels it may influence (``None`` for all).
+            ``reads`` naming the labels (segments or other blocks' ``feeds``)
+            that may influence it and ``feeds`` the labels it may influence
+            (``None`` for all).
         output_labels : sequence of collections
             Labels each ETP output position belongs to; an output seeds only
             the segments and blocks of its labels.
@@ -186,7 +187,8 @@ class SparseInfluence:
                 for other in members[parent]:
                     _, psegment, powner, _ = virtual[other]
                     if segment is None and psegment is None:
-                        keep = True
+                        keep = (owner[0] is None or powner[1] is None
+                                or bool(set(owner[0]) & set(powner[1])))
                     elif segment is None:
                         keep = owner[0] is None or powner in owner[0]
                     elif psegment is None:
