@@ -146,3 +146,34 @@ def test_explicit_implicit_solver_is_forwarded(run_fixture, monkeypatch):
     monkeypatch.setattr(sys,'argv',sys.argv+['--solver','h01_staggered_calcium_implicit'])
     example.main()
     assert captured['solver'] == 'h01_staggered_calcium_implicit'
+
+
+def test_per_cell_currents_and_pulse_timing_are_forwarded(run_fixture, monkeypatch, tmp_path):
+    _,_,network = run_fixture
+    captured = {}
+    def build(*args, **kwargs):
+        captured.update(kwargs)
+        return network, dict(cells={'one':{'n_compartments':1}})
+    currents = tmp_path/'currents.json'
+    currents.write_text(json.dumps({'one': .09, 'absent': .31}))
+    monkeypatch.setattr(example,'make_h01_network',build)
+    monkeypatch.setattr(sys,'argv',sys.argv+['--current-na','1','--currents-json',str(currents),
+                                            '--pulse-delay-ms','2','--pulse-duration-ms','38'])
+    example.main()
+    assert captured['currents_na'] == {'one': .09}
+    assert captured['pulse_delay_ms'] == 2. and captured['pulse_duration_ms'] == 38.
+
+
+@pytest.mark.parametrize('arguments', [['--pulse-delay-ms','-1'], ['--pulse-duration-ms','0'], ['--pulse-duration-ms','nan']])
+def test_invalid_pulse_settings_fail_before_execution(run_fixture, monkeypatch, arguments):
+    monkeypatch.setattr(sys, 'argv', [*sys.argv, *arguments])
+    with pytest.raises(SystemExit):
+        example.main()
+
+
+def test_nonfinite_current_override_fails_before_execution(run_fixture, monkeypatch, tmp_path):
+    currents = tmp_path/'currents.json'
+    currents.write_text('{"one": "0.1"}')
+    monkeypatch.setattr(sys, 'argv', [*sys.argv, '--currents-json', str(currents)])
+    with pytest.raises(SystemExit):
+        example.main()

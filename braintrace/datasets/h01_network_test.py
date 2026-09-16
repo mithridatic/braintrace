@@ -65,7 +65,8 @@ def test_fragment_contact_retained_but_not_simulated(arguments):
 
 @pytest.mark.parametrize("key,value", [("excitatory_weight_us", -1.), ("inhibitory_weight_us", np.nan),
     ("delay_ms", -1.), ("max_cv_length_um", 0.), ("currents_na", {"99": 1.}),
-    ("currents_na", {"12": np.inf})])
+    ("currents_na", {"12": np.inf}), ("pulse_delay_ms", -1.), ("pulse_duration_ms", 0.),
+    ("pulse_duration_ms", np.nan)])
 def test_bad_parameters_rejected(arguments, key, value):
     with pytest.raises(ValueError):
         make_h01_network(**arguments, **{key: value})

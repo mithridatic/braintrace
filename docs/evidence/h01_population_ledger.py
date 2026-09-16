@@ -26,6 +26,8 @@ Six terms, read from decision evidence:
 A term with no supporting evidence is reported as 0.0 with its cause, never omitted.
 """
 
+import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -45,6 +47,9 @@ ANATOMY = "h01-e-morphology/stage-1-decision.json"
 ANATOMY_CORRECTION = "h01-human-unity-20260914/conversion-correction.json"
 DRIVEN_DECISION = "h01-driven-window-20260915/driven-window-decision.json"
 TRANSFER_DECISION = "h01-driven-window-20260915/anatomy-transfer-decision.json"
+KEEP_DECISION = "h01-keep-drop/decision.json"
+KEEP_NOTE = ("No keep/drop decision has been recorded; the six terms describe the full 104-cell "
+             "population and no cell has been kept or dropped.")
 
 CELLS = 104
 B3_KEY = "l2-pyramidal-allen-541563728"
@@ -218,8 +223,35 @@ def product(terms, assume=()):
     return {"value_pct": 100. * value, "assumptions": assumed, "factors": used}
 
 
-def report():
+def kept_cells(keep_decision=KEEP_DECISION):
+    """The keep/drop decision (docs/specs/2026-09-16-h01-keep-drop.md) when one is recorded.
+
+    Parameters
+    ----------
+    keep_decision : str or Path
+        Decision file written by ``h01_anatomy_transfer_decision.py --keep --phase final``;
+        relative paths resolve against this directory.
+
+    Returns
+    -------
+    dict or None
+        The kept list with its counts, per-donor tallies, rule and scope, plus the decision
+        path and sha256, or None when no decision file exists.
+    """
+    path = Path(keep_decision)
+    path = path if path.is_absolute() else HERE / path
+    if not path.exists():
+        return None
+    raw = path.read_bytes()
+    dec = json.loads(raw.decode("utf-8"))
+    return {"decision": str(keep_decision), "sha256": hashlib.sha256(raw).hexdigest(),
+            "kept": sorted(dec["kept"]), "counts": dec["counts"], "by_donor": dec["by_donor"],
+            "rule": dec["rule"], "scope": dec["scope"]}
+
+
+def report(keep_decision=KEEP_DECISION):
     terms = ledger()
+    kept = kept_cells(keep_decision)
     return {
         "scope": ("What a single accuracy percentage for the 104 H01 cells would have to be a "
                   "product of. No H01 cell has electrophysiology, so every term is a transfer "
@@ -233,18 +265,26 @@ def report():
                  "working simulation and setting the two unqualified terms to one. It is quoted only with "
                  "its assumptions attached; it also assumes the three rejected donors score like "
                  "the one donor that was scored; valid anatomy-transfer evidence remains unavailable."),
+        "kept_cells": kept,
+        "kept_cells_note": None if kept else KEEP_NOTE,
     }
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Regenerate the population accuracy ledger.")
+    parser.add_argument("--keep-decision", default=KEEP_DECISION,
+                        help="keep/drop decision JSON; relative to docs/evidence (default: %(default)s)")
+    args, _ = parser.parse_known_args(argv)
     out = HERE / "h01-population-accuracy-ledger.json"
-    out.write_text(json.dumps(report(), indent=2) + "\n", encoding="utf-8")
-    r = report()
+    r = report(args.keep_decision)
+    out.write_text(json.dumps(r, indent=2) + "\n", encoding="utf-8")
     for t in r["terms"]:
         print(f"{t['term']:<18} {t['value']:.3f}  measured={t['measured']}")
     print(f"as measured: {r['product_as_measured']['value_pct']:.2f} percent")
     print(f"with two terms assumed: "
           f"{r['product_if_construction_counts_as_simulation']['value_pct']:.2f} percent")
+    kept = r["kept_cells"]
+    print(f"kept cells: {kept['counts']['kept']} of {kept['counts']['total']}" if kept else r["kept_cells_note"])
     print(f"wrote {out}")
 
 

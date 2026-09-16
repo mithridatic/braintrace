@@ -5,7 +5,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from docs.evidence.h01_population_control_gate import audit_controls, CONTROLS
+from docs.evidence.h01_population_control_gate import ATOL_MV, audit_controls, CONTROLS
 from docs.evidence.h01_population_runtime_gate_test import evidence
 
 
@@ -82,3 +82,26 @@ def test_control_failures(controls, defect):
     result = audit_controls(reference,runs)
     assert result['status'] == 'failed'
     assert result['failures']
+
+
+def test_nondeterministic_accumulation_below_tolerance_passes(controls):
+    reference, runs = controls
+    runs['e_only'][2]['cell_103_voltage'][0, 0] += 9e-7
+    result = audit_controls(reference, runs)
+    assert result['status'] == 'passed', result
+    assert result['tolerance_mv'] == ATOL_MV == 1e-5
+    assert result['max_abs_difference_mv'] == pytest.approx(9e-7)
+
+
+def test_difference_above_tolerance_fails_with_the_receiver_message(controls):
+    reference, runs = controls
+    runs['e_only'][2]['cell_103_voltage'][0, 0] += 2e-5
+    result = audit_controls(reference, runs)
+    assert result['status'] == 'failed'
+    assert 'e_only: change outside removed receivers: cell_103_voltage' in result['failures']
+    assert result['max_abs_difference_mv'] == pytest.approx(2e-5)
+
+
+def test_identical_controls_report_zero_difference(controls):
+    result = audit_controls(*controls)
+    assert result['max_abs_difference_mv'] == 0.

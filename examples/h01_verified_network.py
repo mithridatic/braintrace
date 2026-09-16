@@ -46,6 +46,10 @@ def main():
     parser.add_argument("--dt-ms", type=float, default=.000625)  # qualified step, docs/evidence/h01-timestep-ladder.json
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--current-na", type=float, default=0., help="Same assumed soma pulse for each incident cell.")
+    parser.add_argument("--currents-json", type=Path,
+                        help="JSON {cell_id: nA} of per-cell soma pulse amplitudes; listed cells override --current-na.")
+    parser.add_argument("--pulse-delay-ms", type=float, default=2., help="Soma pulse onset shared by all cells.")
+    parser.add_argument("--pulse-duration-ms", type=float, default=3., help="Soma pulse length shared by all cells.")
     parser.add_argument("--solver", default="h01_staggered_scan", choices=["h01_staggered_scan", "staggered", "h01_staggered_calcium_implicit"])
     args = parser.parse_args()
     if args.disconnected:
@@ -56,6 +60,12 @@ def main():
         parser.error("--cells must be positive")
     if not np.isfinite([args.duration_ms, args.dt_ms, args.current_na]).all() or args.duration_ms < 0 or args.dt_ms <= 0:
         parser.error("duration must be nonnegative, dt positive, and all inputs finite")
+    if (not np.isfinite([args.pulse_delay_ms, args.pulse_duration_ms]).all() or args.pulse_delay_ms < 0
+            or args.pulse_duration_ms <= 0):
+        parser.error("pulse onset must be nonnegative and pulse length positive")
+    overrides = json.loads(args.currents_json.read_text(encoding="utf-8")) if args.currents_json else {}
+    if not all(isinstance(value, (int, float)) and np.isfinite(value) for value in overrides.values()):
+        parser.error("every --currents-json amplitude must be a finite number")
     if args.init_only and args.duration_ms:
         parser.error("--init-only excludes --duration-ms")
     if not args.heartbeat_s > 0:
@@ -90,7 +100,8 @@ def main():
         emit = lambda message: print(f"[{time.perf_counter()-started:.1f}s] {message}", flush=True)
         network, evidence = make_h01_network(topology, H01Archive(args.cache/"proofread104.zip"),
             H01Annotations(args.cache), max_cv_length_um=args.max_cv_um, solver=args.solver, **options,
-            currents_na={identity: args.current_na for identity in plan["simulated_cell_ids"]}, progress=emit)
+            currents_na={identity: float(overrides.get(identity, args.current_na)) for identity in plan["simulated_cell_ids"]},
+            pulse_delay_ms=args.pulse_delay_ms, pulse_duration_ms=args.pulse_duration_ms, progress=emit)
         print("Built", len(evidence["cells"]), "cells and", len(network.projections), "projections", flush=True)
         evidence["execution"] = "constructed; not simulated"
         evidence["construction_seconds"] = time.perf_counter()-started

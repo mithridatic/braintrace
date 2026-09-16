@@ -233,7 +233,7 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
                      include_isolated=False, cells=None, components=None,
                      excitatory_weight_us=.01, inhibitory_weight_us=.02,
                      delay_ms=.5, max_cv_length_um=10., currents_na=None, progress=None,
-                     solver="h01_staggered_scan"):
+                     solver="h01_staggered_scan", pulse_delay_ms=2., pulse_duration_ms=3.):
     """Construct the cells incident on verified and placed H01 synapses.
 
     Parameters
@@ -277,12 +277,16 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
         Positive spatial discretization setting.
     currents_na : dict, optional
         Soma pulse amplitudes keyed by source cell ID; unspecified cells get
-        zero input. Pulses start at 2 ms and last 3 ms.
+        zero input. Pulses start at ``pulse_delay_ms`` and last
+        ``pulse_duration_ms``.
     progress : callable, optional
         Receives a message before each construction stage. It does not alter
         the model or numerical settings.
     solver : str, optional
         BrainCell integrator. Default is ``"h01_staggered_scan"``.
+    pulse_delay_ms, pulse_duration_ms : float, optional
+        Onset (nonnegative) and length (positive) of every soma pulse, shared
+        by all cells. Defaults reproduce the historical 2-5 ms probe.
 
     Returns
     -------
@@ -306,6 +310,9 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
     control = _resolve_control(control, disconnected)
     if not np.isfinite(values).all() or min(values[:3]) < 0 or max_cv_length_um <= 0:
         raise ValueError("Invalid conductance, delay, or compartment length.")
+    if (not np.isfinite([pulse_delay_ms, pulse_duration_ms]).all() or pulse_delay_ms < 0
+            or pulse_duration_ms <= 0):
+        raise ValueError("Pulse onset must be nonnegative and pulse length positive.")
     if topology["archive_sha256"] != ARCHIVE_SHA256:
         raise ValueError("Topology uses a different archive.")
     nodes = {n["cell_id"]: n for n in topology["nodes"]}
@@ -348,7 +355,7 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
         cell, record = make_h01_ei_cell(imported[identity], annotations,
             polarity=polarity, donor=donors[identity],
             regions=_regions(imported[identity]), region_basis=basis,
-            current_na=currents.get(identity, 0.), delay_ms=2., duration_ms=3.,
+            current_na=currents.get(identity, 0.), delay_ms=pulse_delay_ms, duration_ms=pulse_duration_ms,
             max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
         cells_built[identity], records[identity] = cell, record
     weights = (excitatory_weight_us, inhibitory_weight_us)
@@ -374,5 +381,7 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False, cont
         enabled_contacts=[e["annotation_id"] for e in edge_records if e["enabled"]],
         removed_contacts=[e["annotation_id"] for e in edge_records if not e["enabled"]],
         isolated_cells=isolated,
+        probe=dict(delay_ms=float(pulse_delay_ms), duration_ms=float(pulse_duration_ms),
+                   currents_na={identity: float(currents.get(identity, 0.)) for identity in identities}),
         qualification="Verified anatomical subset with assumed synapse dynamics and unqualified candidate cells.",
         topology_audit_sha256=topology.get("endpoint_audit_sha256"))

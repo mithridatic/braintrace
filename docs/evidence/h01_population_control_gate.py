@@ -5,6 +5,7 @@ import numpy as np
 from docs.evidence.h01_population_runtime_gate import audit_runtime
 
 CONTROLS = ('ei', 'e_only', 'i_only', 'disconnected')
+ATOL_MV = 1e-5  # GPU atomic_add in the DHS kernel leaves ~9e-7 mV run-to-run differences
 
 
 def audit_controls(reference, runs):
@@ -23,12 +24,13 @@ def audit_controls(reference, runs):
     dict
         Delivery observations and failures, scoped to two disjoint pairs.
     """
-    failures, observations = [], []
+    failures, observations, largest = [], [], [0.]
 
     def result():
         return dict(status='failed' if failures else 'passed', failures=failures,
                     scope='delivery and control isolation only', observations=observations,
-                    physiology_qualified=False, functional_inhibition_qualified=False)
+                    physiology_qualified=False, functional_inhibition_qualified=False,
+                    tolerance_mv=ATOL_MV, max_abs_difference_mv=largest[0])
 
     if set(runs) != set(CONTROLS):
         failures.append('exactly four named controls are required')
@@ -53,7 +55,9 @@ def audit_controls(reference, runs):
         receivers = {edge['post_cell'] for edge in build['contacts'] if not edge['enabled']}
         for name, values in arrays.items():
             if name != 'time_ms' and name.split('_', 2)[1] not in receivers:
-                if not np.array_equal(values, baseline[name]):
+                difference = np.abs(np.asarray(values, float)-np.asarray(baseline[name], float))
+                largest[0] = max(largest[0], float(np.nanmax(difference)) if difference.size else 0.)
+                if not np.allclose(values, baseline[name], rtol=0., atol=ATOL_MV):
                     failures.append(control+': change outside removed receivers: '+name)
         times = np.asarray(arrays['time_ms'])
         dt = plan['dt_ms']

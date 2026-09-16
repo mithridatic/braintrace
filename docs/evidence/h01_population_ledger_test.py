@@ -128,3 +128,41 @@ def test_cli_retains_all_six_terms_and_unavailable_transfer(tmp_path, monkeypatc
     assert len(record['terms']) == 6
     assert record['terms'][-1]['measured'] is False
     assert record['product_as_measured']['value_pct'] == 0
+
+
+def _decision(tmp_path):
+    path = tmp_path / "decision.json"
+    path.write_text(json.dumps({
+        "kept": ["300", "100"], "dropped": {"200": "count_in_band"}, "missing": [],
+        "counts": {"kept": 2, "dropped": 1, "missing": 0, "total": 3},
+        "by_donor": {"l4-pyramidal-allen-527952884": {"kept": 2, "dropped": 1}},
+        "rule": "five rules", "scope": "a transfer reading", "cells": {}}), encoding="utf-8")
+    return path
+
+
+def test_kept_cells_reads_a_recorded_decision(tmp_path):
+    path = _decision(tmp_path)
+    kept = pl.kept_cells(path)
+    assert kept["kept"] == ["100", "300"] and kept["counts"]["kept"] == 2
+    assert kept["by_donor"]["l4-pyramidal-allen-527952884"] == {"kept": 2, "dropped": 1}
+    assert kept["rule"] == "five rules" and kept["scope"] == "a transfer reading"
+    assert kept["decision"] == str(path) and len(kept["sha256"]) == 64
+    r = pl.report(path)
+    assert r["kept_cells"] == kept and r["kept_cells_note"] is None
+    assert [t["term"] for t in r["terms"]] == [t["term"] for t in pl.ledger()]
+
+
+def test_kept_cells_is_null_with_a_note_when_no_decision_exists(tmp_path):
+    assert pl.kept_cells(tmp_path / "absent.json") is None
+    r = pl.report(tmp_path / "absent.json")
+    assert r["kept_cells"] is None and "No keep/drop decision" in r["kept_cells_note"]
+    assert len(r["terms"]) == 6 and r["product_as_measured"] == pl.product(pl.ledger())
+
+
+def test_cli_flag_names_the_decision_file(tmp_path, monkeypatch):
+    original = pl.HERE
+    monkeypatch.setattr(pl, '_read', lambda name: json.loads((original / name).read_text()))
+    monkeypatch.setattr(pl, 'HERE', tmp_path)
+    pl.main(["--keep-decision", str(_decision(tmp_path))])
+    record = json.loads((tmp_path / 'h01-population-accuracy-ledger.json').read_text())
+    assert record["kept_cells"]["counts"]["kept"] == 2 and len(record["terms"]) == 6
