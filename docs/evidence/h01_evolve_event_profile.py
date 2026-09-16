@@ -468,7 +468,7 @@ def _arm_command(args):
     substeps = int(round(EVENT_MS/args.dt_ms))
     report = dict(status='running', arm=args.name, settings=dict(dt_ms=args.dt_ms, substeps=substeps,
         max_cv_length_um=args.max_cv_length_um, precision=args.precision,
-        checkpoint_substeps=not args.no_checkpoint, cell_index=args.cell_index), stages={}, memory={})
+        checkpoint_substeps=not args.no_checkpoint, cell_index=args.cell_index, fused=args.fused), stages={}, memory={})
 
     def save():
         (args.output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
@@ -500,7 +500,7 @@ def _arm_command(args):
                                           contacts=len(topology.to_dict()['active_contacts']))
             archive = stage('archive_open', adapter._archive)
             network, records = stage('build_network', lambda: build_network(topology, archive,
-                solver=settings['solver'], max_cv_length_um=args.max_cv_length_um))
+                solver=settings['solver'], max_cv_length_um=args.max_cv_length_um, fused=args.fused))
             report['cells'] = len(topology.to_dict()['active_cells'])
             report['compartments'] = int(sum(r['n_compartments'] for r in records.values()))
             del records
@@ -858,6 +858,7 @@ def _parser():
     arm.add_argument('--max-cv-length-um', type=float, default=10.)
     arm.add_argument('--precision', type=int, choices=(32, 64), default=64)
     arm.add_argument('--no-checkpoint', action='store_true')
+    arm.add_argument('--fused', action='store_true', help='one forest population (spec 2026-09-16-h01-fused-population)')
     arm.add_argument('--events', type=int, default=21)
     arm.add_argument('--cell-index', type=int, default=None)
     arm.add_argument('--mutate', choices=('add-contact', 'clone'), default=None,
