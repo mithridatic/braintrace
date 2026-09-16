@@ -1,0 +1,80 @@
+{
+ "cell_id": "1684504313",
+ "role": "control; recorded, not a gate",
+ "proofread": {
+  "archive": "proofread104.zip",
+  "components": 267,
+  "nodes": 63526,
+  "soma_nodes": 48,
+  "cable_um": 18150.58586245378,
+  "largest_component": 0,
+  "largest_nodes": 37401,
+  "largest_has_soma": true,
+  "types": {
+   "-1": 50964,
+   "0": 934,
+   "1": 11498,
+   "2": 32,
+   "3": 48,
+   "4": 1,
+   "5": 47,
+   "1001": 2
+  },
+  "soma_components": [
+   0,
+   234,
+   8
+  ]
+ },
+ "c3": {
+  "archive": "c3-control-1684504313.zip",
+  "components": 24,
+  "nodes": 28642,
+  "soma_nodes": 197,
+  "cable_um": 8644.620097771896,
+  "largest_component": 0,
+  "largest_nodes": 28386,
+  "largest_has_soma": true,
+  "types": {
+   "-1": 4172,
+   "0": 2327,
+   "1": 21746,
+   "2": 12,
+   "3": 197,
+   "4": 2,
+   "5": 186
+  },
+  "soma_components": [
+   0
+  ]
+ },
+ "c3_over_proofread": {
+  "components": 0.0898876404494382,
+  "nodes": 0.45087050971255865,
+  "soma_nodes": 4.104166666666667,
+  "cable_um": 0.4762722351378265
+ },
+ "note": "C3 is the release's sparse skeleton of the non-proofread segment; the proofread SWC is a denser skeleton of the corrected one. Node and component counts are expected to differ.",
+ "pipeline": {
+  "archive": "c3-control-1684504313.zip",
+  "archive_sha256": "b40eabead0c5fac0f5ca8fb4fcdaadd44195a53cd46b5f4fd15dcccd33418b9d",
+  "import": {
+   "component": 0,
+   "source_segments": 28385,
+   "imported_segments": 28385,
+   "missing_segments": 0,
+   "extra_segments": 0,
+   "passed": true,
+   "seconds": 1.9266886096447706
+  },
+  "construct": {
+   "component": 0,
+   "component_nodes": 28386,
+   "n_compartments": 5151,
+   "construction_seconds": 1.4474858529865742,
+   "init_seconds": 1.2912725070491433,
+   "passed": true,
+   "error": null
+  }
+ }
+}
