@@ -148,7 +148,9 @@ Initial scoring pass against the 3,600 s cap, by scope (fixed cost included):
   the pinned `updates = 128`, a release-gate quantity this change leaves alone; the dry run
   prints the admitted update count so the decision is explicit.
 - The initial scoring pass: `score_tasks <= 8` at the pinned dt (3,547 s), `<= 56` at dt 0.005
-  (3,556 s), with `--screen-tasks` below `score_tasks`.
+  (3,556 s), with `--screen-tasks` below `score_tasks` (`PipelineConfig` rejects a screen
+  that is not a proper subset of the scope, so the default screen of 64 cannot silently
+  turn a small scope into an unscreened lineage with a different stage order).
 - A screened operation arm's scoring (770 events, 1,542 s / 556 s) fits; its block does not.
 
 ## 6. What changed (worktree `campaign/h01-event-budget-20260916`)
@@ -195,3 +197,11 @@ python -m examples.pp_prop.example21_event_budget evolve --arc-root var/arc-agi-
   table shows as two rows.
 - The terminal evaluation (400 evaluation tasks, not scoped) is not in the tables; it is
   only reached after the configured rounds close.
+- `Example21ArcAdapter._score_runtime` chooses its scoring bucket lengths by whether the
+  scored set is the whole manifest, so a scoped complete-scope pass compiles the
+  screen-sized program rather than the 416-query one; the H01 adapter's `score_queries`
+  stacks whatever queries it is given. The fixed cost charged per stage (497 s / 418 s) was
+  measured for the unscoped programs and is carried unchanged.
+- Byte-identity check: the one current-schema local receipt
+  (`var/example21-evolve-ops8/run-state.json`) reproduces its recorded `config_sha256`
+  through the new `PipelineConfig.from_dict`, exactly as under the previous coordinator.

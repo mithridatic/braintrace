@@ -20,6 +20,7 @@ from examples.pp_prop.example21_evolve import (
     DEFAULT_OPTIMIZER,
     DEFAULT_PATIENCE,
     DEFAULT_ROUNDS,
+    DEFAULT_SCREEN_TASKS,
     DEFAULT_UPDATES,
     PROOF_UPDATES,
     CandidateAttempt,
@@ -3633,8 +3634,12 @@ def test_score_scope_is_receipted_only_when_set_and_keeps_default_digests() -> N
     assert score_scope_ids(manifest, scoped) == manifest.task_ids[:8]
     # The screen is a proper subset of the scope, never of the whole corpus.
     assert screen_task_ids(manifest, scoped) == manifest.task_ids[:2]
-    assert screen_task_ids(manifest, PipelineConfig(score_tasks=8)) == ()
-    assert screen_task_ids(manifest, PipelineConfig(score_tasks=8, screen_tasks=8)) == ()
+    assert screen_task_ids(manifest, PipelineConfig(score_tasks=8, screen_tasks=0)) == ()
+    # The default screen (64) must not silently unscreen a small scope.
+    for screen in (8, DEFAULT_SCREEN_TASKS):
+        with pytest.raises(ValueError, match="proper subset of score tasks"):
+            PipelineConfig(score_tasks=8, screen_tasks=screen)
+    assert PipelineConfig(score_tasks=400).screens
 
     with pytest.raises(ValueError, match="score_tasks"):
         PipelineConfig(score_tasks=401)
@@ -3710,5 +3715,5 @@ def test_scoped_lineage_rejects_a_complete_corpus_initial_score(tmp_path: Path) 
         )
     with pytest.raises(ValueError, match="training lineage"):
         RunState.initial(
-            PipelineConfig(score_tasks=8), _manifest(), _candidate("initial")
+            PipelineConfig(score_tasks=8, screen_tasks=0), _manifest(), _candidate("initial")
         )

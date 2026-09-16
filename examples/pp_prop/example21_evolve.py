@@ -431,8 +431,9 @@ class PipelineConfig:
         Event budget scope: leading training tasks that every complete-scope
         score of the lineage covers (initial scoring, the trained parent,
         ``round-score``, mastery).  ``0`` means the complete training corpus.
-        A nonzero value is persisted in every run receipt so a scoped score is
-        never mistaken for a complete-corpus score.
+        A nonzero value must exceed ``screen_tasks`` unless screening is off,
+        and is persisted in every run receipt so a scoped score is never
+        mistaken for a complete-corpus score.
     """
 
     optimizer: str = DEFAULT_OPTIMIZER
@@ -484,6 +485,13 @@ class PipelineConfig:
             raise ValueError(
                 "Evolution score tasks must fall between zero and "
                 f"{EXPECTED_ARC_TASKS}; correct score_tasks."
+            )
+        if self.scoped and self.screens and self.screen_tasks >= self.score_tasks:
+            # The default screen (64) would otherwise silently turn a small
+            # scope into an unscreened lineage with a different stage order.
+            raise ValueError(
+                "Evolution screen tasks must be a proper subset of score tasks; "
+                "lower screen_tasks below score_tasks or pass screen_tasks=0."
             )
         if self.optimizer != DEFAULT_OPTIMIZER:
             raise ValueError(
