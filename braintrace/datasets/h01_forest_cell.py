@@ -33,13 +33,18 @@ class _ForestSpike:
     base: object
     output_cv_ids: tuple
     n_cv: int
+    mask: object = None
+
+    def __init__(self, base, output_cv_ids, n_cv):
+        mask = np.zeros(int(n_cv), dtype=bool)
+        mask[list(output_cv_ids)] = True
+        for name, value in (('base', base), ('output_cv_ids', tuple(output_cv_ids)), ('n_cv', int(n_cv)), ('mask', mask)):
+            object.__setattr__(self, name, value)
 
     def __call__(self, voltage):
         if voltage.shape[-1] != self.n_cv:
             raise ValueError('Forest output mask no longer matches the mesh')
-        mask = np.zeros(self.n_cv, dtype=bool)
-        mask[list(self.output_cv_ids)] = True
-        return self.base(voltage)*mask
+        return self.base(voltage)*self.mask
 
 
 def _source_layouts(cell):
@@ -56,8 +61,10 @@ def _copy_states(source, target, point_offset, point_index):
     """Copy every state array of ``source`` into ``target`` at the offset points."""
     targets = brainstate.graph.states(target)
     for path, state in brainstate.graph.states(source).items():
-        if len(path) != 1 or path not in targets:   # a node's own states, not its bound children's
+        if len(path) != 1:   # a node's own states; bound children are copied through their own layouts
             continue
+        if path not in targets:
+            raise ValueError(f'Source state {path!r} of {type(source).__name__} has no forest counterpart')
         destination = targets[path]
         value, incoming = destination.value, state.value
         if not hasattr(u.get_mantissa(value), 'shape') or u.get_mantissa(value).shape[-1:] != (target.varshape[-1],):
