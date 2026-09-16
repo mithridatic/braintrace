@@ -494,8 +494,13 @@ def _arm_command(args):
                 topology = _single_cell_topology(topology, args.cell_index)
             if args.mutate:
                 cells = topology.to_dict()['active_cells']
-                topology = (topology.add_contact(cells[0], cells[1], stage='profile') if args.mutate == 'add-contact'
-                            else topology.clone(cells[0], stage='profile'))
+                if args.mutate == 'add-contact':
+                    topology = topology.add_contact(cells[0], cells[1], stage='profile')
+                elif args.mutate == 'clone-all':
+                    for identity in cells:
+                        topology = topology.clone(identity, stage='profile')
+                else:
+                    topology = topology.clone(cells[0], stage='profile')
                 report['mutation'] = dict(kind=args.mutate, cells=len(topology.to_dict()['active_cells']),
                                           contacts=len(topology.to_dict()['active_contacts']))
             archive = stage('archive_open', adapter._archive)
@@ -861,7 +866,7 @@ def _parser():
     arm.add_argument('--fused', action='store_true', help='one forest population (spec 2026-09-16-h01-fused-population)')
     arm.add_argument('--events', type=int, default=21)
     arm.add_argument('--cell-index', type=int, default=None)
-    arm.add_argument('--mutate', choices=('add-contact', 'clone'), default=None,
+    arm.add_argument('--mutate', choices=('add-contact', 'clone', 'clone-all'), default=None,
                      help='apply one grow mutation to the manifest topology before building (recompile cost)')
     arm.add_argument('--profile', action='store_true', help='trace one whole ARC event (CUPTI may drop events)')
     arm.add_argument('--profile-substep', type=int, default=0, help='trace this many single cable substeps')
