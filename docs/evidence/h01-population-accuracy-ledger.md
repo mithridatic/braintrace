@@ -1,5 +1,22 @@
 # The population accuracy ledger
 
+## 2026-09-16 update: keep/drop over the 104 cells, kept set recorded
+
+Regenerated from [h01-population-accuracy-ledger.json](h01-population-accuracy-ledger.json) after
+the keep/drop pass ([spec](../specs/2026-09-16-h01-keep-drop.md),
+[decision](h01-keep-drop/decision.json), [record](h01-keep-drop/README.md)). The JSON now carries a
+`kept_cells` field: 17 of 104 cells (13 on the L2 donor, 4 on the L4 donor, none on PV or SST) hold
+their donor's rest, count and return under the donor's step protocol, each confirmed by a dt-half
+repeat. The six terms and their denominators are unchanged; the two readings below stay as measured
+on the 104-cell population.
+
+On the kept set alone (17 cells, 107,537 compartments, each cell driven with its donor's primary
+current from 2 to 40 ms): build gate PASS, runtime gate 4/4 PASS, refinement gate PASS (17/17,
+worst 0.0014 mV, no event timing error), and the control term is delivery-unobservable because every
+construction-ready contact lost an endpoint to the drop list; the four controls agree to 3.3e-6 mV.
+[Decision](h01-keep-drop/kept-driven-window-decision.json). This does not change `driven_window`
+below, which is defined on the 104-cell network.
+
 ## 2026-09-15 update: two terms now have readings
 
 Regenerated from [h01-population-accuracy-ledger.json](h01-population-accuracy-ledger.json) after
