@@ -87,7 +87,10 @@ def test_forest_parameters_are_the_source_parameters(pair):
                       if n is not None and getattr(n, 'mechanism', None) == 'NaTg')
         np.testing.assert_array_equal(g[offsets[index]:offsets[index+1]], np.asarray(source.g_max.to_decimal(u.mS/u.cm**2))[0])
     opening = np.asarray(node.phase_factors['m'][0])[0]
-    assert opening[offsets[0]:offsets[1]].max() == .5 and opening[offsets[1]:offsets[2]].min() == 1.
+    painted = np.zeros(len(opening), dtype=bool)
+    painted[[l.point_index for l in cells[0]._runtime.layouts
+             if getattr(cells[0]._runtime.layout_mechanisms[l.id], 'name', None) == 'pv_NaTg'][0]] = True
+    assert (opening[painted] == .5).all() and (opening[~painted] == 1.).all()
 
 
 def test_forest_voltages_equal_per_cell_voltages(pair):
