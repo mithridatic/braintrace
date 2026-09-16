@@ -1,5 +1,5 @@
 {
-  "id": "doc_3392e483-fb1",
+  "id": "doc_c72edbf6-e79",
   "title": "H01 C3 partner expansion: campaign prerequisites",
   "graph": {
     "classes": [
@@ -173,10 +173,10 @@
       {
         "id": "io_graph",
         "type": "Intermediate objective",
-        "text": "A: C3 neuron synapse graph and ranked partners of the kept 17 (box, /workspace/venv-c3). h01_c3_cell_table.py; h01_c3_neuron_graph.py over all 166 export shards keeping neuron-to-neuron rows; h01_c3_partner_rank.py -> top 20 E + top 20 I by synapse count with the kept set.",
+        "text": "A: C3 synapse graph and ranked partners of the kept 17 (box, /workspace/venv-c3). h01_c3_cell_table.py; h01_c3_neuron_graph.py (C3 neuron_id join, superseded) and h01_c3_kept_partner_graph.py (kept cells by proofread base-segment ownership) over all 166 export shards; h01_c3_partner_rank.py -> top 20 E + top 20 I by AXON-presynaptic synapse count with the kept set.",
         "status": "refuted",
         "confidence": null,
-        "notes": "Prediction: every kept cell has a neuron partner (NSI 300-2,300); at least 40 partners with two or more synapses to the kept set. Falsifier: fewer than 20 partners in total. Identity is the export's C3 neuron_id, so the proofread voxel-verification gate that excluded 120 of 123 edges does not apply. Result 2026-09-16: 85 partners in total (falsifier not tripped), 4 with >= 2 synapses to the kept set, one kept cell without a partner; eligible E 72 / I 12 -> 20 E + 12 I candidates. Graph rows are 0.42 percent of the table's summed NSI: nearly all presynaptic sites onto tabulated cells belong to untabulated axon fragments.\n\nEvidence: docs/evidence/h01-c3-candidates.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/evidence/h01-full-export-join-progress.json; docs/evidence/h01-cellmatrix-mapping-audit.json",
+        "notes": "Prediction: every kept cell has a neuron partner (NSI 300-2,300); at least 40 partners with two or more synapses to the kept set. Falsifier: fewer than 20 partners in total. Measured twice. Join 1 (C3 neuron_id both sides; h01-c3-candidates-c3id-only.json): 85 partners, 4 with >= 2 to the kept set, one kept cell without a partner, 20 E + 12 I; defective because a C3 soma-bearing segment carries almost none of its own axon, so no kept axon output was counted and the top partners were soma/dendrite-presynaptic rows. Join 2 (base-segment ownership; h01-c3-kept-partner-graph.json.gz, 378 rows, 17.2 min): kept -> tabulated 167 rows (102 AXON-pre), tabulated -> kept 90 (27 AXON-pre), kept -> kept 0; 910 kept-axon synapses land on untabulated segments and 32,823 untabulated fragments synapse onto the kept cells. AXON-pre only: 91 partners (falsifier not tripped), 2 with >= 2 to the kept set (14 either direction), kept cells 2001418787 and 3571083397 without a partner; eligible E 61 / I 28 -> 20 E + 20 I candidates (h01-c3-candidates.json). Refuted under both joins; the pool handed to B and C is the join-2 list.\n\nEvidence: docs/evidence/h01-c3-candidates.json; docs/evidence/h01-c3-kept-partner-graph.json.gz; docs/evidence/h01-c3-candidates-c3id-only.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/evidence/h01-full-export-join-progress.json; docs/evidence/h01-cellmatrix-mapping-audit.json",
         "evidence": [
           {
             "id": "io_graph_ev0",
@@ -188,6 +188,22 @@
           },
           {
             "id": "io_graph_ev1",
+            "title": "docs/evidence/h01-c3-kept-partner-graph.json.gz",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-c3-kept-partner-graph.json.gz",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_graph_ev2",
+            "title": "docs/evidence/h01-c3-candidates-c3id-only.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-c3-candidates-c3id-only.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_graph_ev3",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
@@ -195,7 +211,7 @@
             "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "io_graph_ev2",
+            "id": "io_graph_ev4",
             "title": "docs/evidence/h01-full-export-join-progress.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-full-export-join-progress.json",
@@ -203,7 +219,7 @@
             "origin": "repository file inspected 2026-09-12"
           },
           {
-            "id": "io_graph_ev3",
+            "id": "io_graph_ev5",
             "title": "docs/evidence/h01-cellmatrix-mapping-audit.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
             "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-graph/docs/evidence/h01-cellmatrix-mapping-audit.json",
