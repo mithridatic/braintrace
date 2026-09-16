@@ -3,7 +3,6 @@
 import json
 from pathlib import Path
 
-import h5py
 import numpy as np
 
 from docs.evidence.h01_isolation_repeatability import (
@@ -43,6 +42,8 @@ CELLS = {
 
 def nwb_sweep(path, sweep):
     """Junction-corrected voltage in mV and time in ms of one NWB sweep."""
+    import h5py  # noqa: PLC0415 - optional; only NWB sources need it
+
     with h5py.File(path, "r") as nwb:
         group = nwb[f"acquisition/timeseries/Sweep_{sweep}"]
         voltage = group["data"][()].astype(np.float64)*1000.+JUNCTION_MV
