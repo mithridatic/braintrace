@@ -9,11 +9,93 @@ from braincell.mech import MechanismProbe, StateProbe, Synapse
 from braincell.network import pairs
 import brainunit as u
 
+from braintrace.datasets.h01 import H01Archive
 from braintrace.datasets.h01_ei_cell import make_h01_ei_cell
 from braintrace.datasets.h01_network import _regions, _register_cell
 from braintrace.datasets.h01_biology import H01SpatialManifest
 from braintrace.datasets.h01_spine_assembly import assembled_location
 from .h01_topology import H01Topology
+
+
+def is_archive_set(archive):
+    """Tell a multi-archive resolver from a single archive.
+
+    Parameters
+    ----------
+    archive : object
+        ``H01Archive`` (loads by cell and component) or ``H01ArchiveSet`` (also
+        needs the source's ``archive_sha256``; exposes ``archives()``).
+
+    Returns
+    -------
+    bool
+        True when ``archive`` resolves sources by archive digest.
+    """
+    return callable(getattr(archive, 'archives', None))
+
+
+def load_source(archive, identity, component, archive_sha256):
+    """Load one source component from a single archive or an archive set.
+
+    Parameters
+    ----------
+    archive : H01Archive or H01ArchiveSet
+        Single archive (the digest is not consulted) or a set keyed by digest.
+    identity : str
+        Source cell identifier.
+    component : int
+        Explicit component suffix.
+    archive_sha256 : str
+        Digest of the archive the source was imported from.
+
+    Returns
+    -------
+    H01Component
+        Loaded component.
+
+    Raises
+    ------
+    KeyError
+        If an archive set holds no archive with ``archive_sha256``.
+    """
+    if is_archive_set(archive):
+        return archive.load(identity, component, archive_sha256)
+    return archive.load(identity, component=component)
+
+
+def _open_archive(path, digest):
+    # Transitional shim until the H01ArchiveSet reader lands: the pinned-only reader
+    # takes no expected digest. Remove once ``H01Archive(path, expected_sha256=...)`` exists.
+    import inspect
+    if 'expected_sha256' in inspect.signature(H01Archive).parameters:
+        return H01Archive(path, expected_sha256=digest)
+    return H01Archive(path)
+
+
+def open_archives(asset_root, digests):
+    """Open every content-addressed archive asset; one gives an archive, more a set.
+
+    Parameters
+    ----------
+    asset_root : path-like
+        Content-addressed asset directory (files named by SHA256).
+    digests : sequence of str
+        Archive digests listed in a manifest or checkpoint.
+
+    Returns
+    -------
+    H01Archive or H01ArchiveSet
+        Single archive for one digest, otherwise a set resolving by digest.
+    """
+    from pathlib import Path
+    digests = list(dict.fromkeys(digests))
+    if not digests:
+        raise ValueError('A manifest must list at least one morphology archive asset')
+    archives = [_open_archive(Path(asset_root)/digest, digest) for digest in digests]
+    if len(archives) == 1:
+        return archives[0]
+    from braintrace.datasets.h01 import H01ArchiveSet
+    return H01ArchiveSet(archives)
 
 
 def topology_from_evidence(evidence, contact_audit, archive):
@@ -25,8 +107,9 @@ def topology_from_evidence(evidence, contact_audit, archive):
         Successful source network construction evidence.
     contact_audit : dict
         Verified anatomical contact audit, including blocked fragments.
-    archive : H01Archive
-        Checksum-verified source morphology archive.
+    archive : H01Archive or H01ArchiveSet
+        Checksum-verified source morphology archive, or a set resolved per
+        source by the evidence's ``measured_anatomy.archive_sha256``.
 
     Returns
     -------
@@ -39,7 +122,7 @@ def topology_from_evidence(evidence, contact_audit, archive):
         record = evidence['cells'][identity]
         anatomy = record['measured_anatomy']
         component = int(anatomy['member'].split('.')[-2])
-        imported = archive.load(identity, component=component)
+        imported = load_source(archive, identity, component, anatomy['archive_sha256'])
         if imported.source_sha256 != anatomy['source_sha256']:
             raise ValueError('Source morphology differs from construction evidence')
         soma = imported.anatomy().soma_location().evaluate(imported.morphology).points[0]
@@ -78,8 +161,9 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
     ----------
     topology : H01Topology
         Immutable source profiles and active instance/contact identities.
-    archive : H01Archive
-        Verified immutable morphology source.
+    archive : H01Archive or H01ArchiveSet
+        Verified immutable morphology source, or a set resolved per source by
+        its ``archive_sha256``.
     solver : str, optional
         Pinned integration algorithm.
     max_cv_length_um : float, optional
@@ -108,7 +192,8 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         source_id = doc['instances'][identity]['source_id']
         source = doc['sources'][source_id]
         if source_id not in loaded:
-            loaded[source_id] = archive.load(source_id, component=source['component'])
+            loaded[source_id] = load_source(archive, source_id, source['component'],
+                                            source.get('archive_sha256'))
         imported = loaded[source_id]
         if imported.source_sha256 != source['source_sha256']:
             raise ValueError('Immutable H01 source digest changed')

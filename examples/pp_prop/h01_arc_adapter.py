@@ -11,12 +11,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from braintrace.datasets.h01 import H01Archive
 from braintrace.datasets.h01_network_init import process_rss_mb
 from .example21_arc_adapter import Example21ArcAdapter, direct_query_metrics
 from .h01_arc_execution import score_queries
 from .h01_checkpoint import load_checkpoint
 from .h01_episode_recovery import recovery_checkpoint, run_episodes
+from .h01_runtime import open_archives
 from .h01_session import H01Session
 from .h01_topology import H01Topology
 
@@ -47,11 +47,11 @@ class H01ArcAdapter(Example21ArcAdapter):
         self._manifest_identity = _hash(self.document)
 
     def _archive(self):
-        source = next(iter(self.initial_topology.to_dict()['sources'].values()))
-        digest = source['archive_sha256']
-        if digest not in self.document['assets']:
-            raise ValueError('H01 source archive is not listed in immutable assets')
-        return H01Archive(self.asset_root/digest)
+        """Open every archive asset the manifest lists; sources resolve by their digest."""
+        for source in self.initial_topology.to_dict()['sources'].values():
+            if source.get('archive_sha256') not in self.document['assets']:
+                raise ValueError('H01 source archive is not listed in immutable assets')
+        return open_archives(self.asset_root, self.document['assets'])
 
     def _fresh_runtime(self):
         return H01Session.build(self.initial_topology, self._archive(), self._model().PPPropEpisodeTrainer,

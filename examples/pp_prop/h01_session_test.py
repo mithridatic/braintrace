@@ -193,3 +193,12 @@ def test_invalid_biology_rejected_before_spatial_session_build(imported, schema)
         settings['biology'] = dict(schema=schema)
         with pytest.raises(ValueError, match='manifest'):
             H01Session.build(_manifest(imported), None, None, settings=settings)
+
+
+def test_restore_requires_every_source_archive_among_the_verified_assets(tmp_path, monkeypatch):
+    from .h01_checkpoint_test import _save
+    from . import h01_session as implementation
+    path, digest, _ = _save(tmp_path)
+    monkeypatch.setattr(implementation, 'open_archives', lambda *args: pytest.fail('opened before the inventory check'))
+    with pytest.raises(ValueError, match='absent from the verified asset inventory'):
+        H01Session.restore(path, tmp_path/'assets', None)

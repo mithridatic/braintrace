@@ -163,3 +163,92 @@ def test_release_handoff_clears_loaded_components_without_a_global_geometry_cach
     h01._GLOBAL_LOADED_COMPONENTS['x'] = object()
     release_shared_construction_data()
     assert h01._GLOBAL_LOADED_COMPONENTS == {}
+
+
+class _ArchiveSet:
+    """Minimal stand-in for ``braintrace.datasets.h01.H01ArchiveSet`` keyed by digest."""
+
+    def __init__(self, by_digest):
+        self.by_digest, self.calls = by_digest, []
+
+    def archives(self):
+        return dict(self.by_digest)
+
+    def load(self, identity, component, archive_sha256):
+        self.calls.append((identity, component, archive_sha256))
+        if archive_sha256 not in self.by_digest:
+            raise KeyError('No archive with digest '+str(archive_sha256))
+        return self.by_digest[archive_sha256].load(identity, component=component)
+
+
+def _two_archive_topology(imported):
+    from dataclasses import replace
+    doc = _manifest(imported).to_dict()
+    doc['sources']['12']['archive_sha256'] = 'a'*64
+    other = replace(imported, neuron_id='77')
+    doc['sources']['77'] = dict(doc['sources']['12'], archive_sha256='b'*64)
+    doc['instances']['77'] = dict(source_id='77', parent_id=None, synthetic=False, created_stage='source')
+    doc['active_cells'] = ['12', '77']
+    return H01Topology.from_dict(doc), other
+
+
+def test_two_archive_topology_resolves_each_source_from_its_own_archive(imported):
+    from .h01_runtime import is_archive_set, load_source
+    topology, other = _two_archive_topology(imported)
+    seen = []
+    first = SimpleNamespace(load=lambda identity, component: seen.append(('a', identity)) or imported)
+    second = SimpleNamespace(load=lambda identity, component: seen.append(('b', identity)) or other)
+    archives = _ArchiveSet({'a'*64: first, 'b'*64: second})
+    assert is_archive_set(archives) and not is_archive_set(first)
+    with brainstate.environ.context(precision=64):
+        _, records = build_network(topology, archives)
+    assert sorted(records) == ['12', '77']
+    assert seen == [('a', '12'), ('b', '77')]
+    assert archives.calls == [('12', 0, 'a'*64), ('77', 0, 'b'*64)]
+    assert load_source(first, '12', 0, 'ignored') is imported and seen[-1] == ('a', '12')
+
+
+def test_source_digest_absent_from_the_archive_set_raises(imported):
+    topology, _ = _two_archive_topology(imported)
+    archives = _ArchiveSet({'a'*64: SimpleNamespace(load=lambda identity, component: imported)})
+    with brainstate.environ.context(precision=64), pytest.raises(KeyError, match='b'*8):
+        build_network(topology, archives)
+
+
+def test_evidence_topology_loads_each_cell_through_its_recorded_archive_digest(imported):
+    from dataclasses import replace
+    other = replace(imported, neuron_id='77')
+    archives = _ArchiveSet({'a'*64: SimpleNamespace(load=lambda identity, component: imported),
+                            'b'*64: SimpleNamespace(load=lambda identity, component: other)})
+    with brainstate.environ.context(precision=64):
+        _, records = build_network(_manifest(imported), SimpleNamespace(load=lambda *a, **k: imported))
+    record = records['12']
+    record['measured_anatomy'] = dict(record['measured_anatomy'], archive_sha256='a'*64)
+    second = dict(record, measured_anatomy=dict(record['measured_anatomy'], archive_sha256='b'*64,
+                                                member='77.0.swc'))
+    evidence = dict(simulated_cell_ids=['12', '77'], cells={'12': record, '77': second}, contacts=[],
+                    blocked_contacts=[])
+    topology = topology_from_evidence(evidence, {'contacts': []}, archives).to_dict()
+    assert archives.calls == [('12', 0, 'a'*64), ('77', 0, 'b'*64)]
+    assert topology['sources']['12']['archive_sha256'] == 'a'*64
+    assert topology['sources']['77']['archive_sha256'] == 'b'*64
+    evidence['cells']['77']['measured_anatomy']['archive_sha256'] = 'c'*64
+    with pytest.raises(KeyError, match='c'*8):
+        topology_from_evidence(evidence, {'contacts': []}, archives)
+
+
+def test_open_archives_gives_one_archive_or_a_digest_keyed_set(monkeypatch, tmp_path):
+    from braintrace.datasets import h01
+    from . import h01_runtime
+    opened = []
+    monkeypatch.setattr(h01_runtime, 'H01Archive', lambda path, expected_sha256: opened.append(
+        (path.name, expected_sha256)) or SimpleNamespace(path=path, sha256=expected_sha256))
+    monkeypatch.setattr(h01, 'H01ArchiveSet', lambda archives: SimpleNamespace(archives=lambda: list(archives)),
+                        raising=False)
+    single = h01_runtime.open_archives(tmp_path, ['a'*64])
+    assert single.sha256 == 'a'*64 and not h01_runtime.is_archive_set(single)
+    both = h01_runtime.open_archives(tmp_path, ['a'*64, 'b'*64, 'a'*64])
+    assert h01_runtime.is_archive_set(both) and [a.sha256 for a in both.archives()] == ['a'*64, 'b'*64]
+    assert opened == [('a'*64, 'a'*64), ('a'*64, 'a'*64), ('b'*64, 'b'*64)]
+    with pytest.raises(ValueError, match='at least one'):
+        h01_runtime.open_archives(tmp_path, [])

@@ -265,3 +265,22 @@ def test_interrupted_recovery_reports_committed_schedule_cursor(tmp_path, monkey
     with pytest.raises(RuntimeError, match='interrupted') as error:
         adapter._train_scheduled(runtime, schedule, context, candidate, 'add')
     assert error.value.executed_updates == 127
+
+
+def test_adapter_opens_every_archive_asset_the_manifest_lists(tmp_path, monkeypatch):
+    from . import h01_arc_adapter as implementation
+    from .h01_topology import H01Topology
+    adapter, _ = _candidate(tmp_path)
+    document = adapter.initial_topology.to_dict()
+    for identity, digest in zip(document['sources'], ('a'*64, 'b'*64, 'a'*64)):
+        document['sources'][identity]['archive_sha256'] = digest
+    adapter.initial_topology = H01Topology.from_dict(document)
+    adapter.document['assets'] = ['a'*64, 'b'*64]
+    opened = []
+    monkeypatch.setattr(implementation, 'open_archives', lambda root, digests: opened.append((root, list(digests))) or 'set')
+    assert adapter._archive() == 'set'
+    assert opened == [(adapter.asset_root, ['a'*64, 'b'*64])]
+    adapter.document['assets'] = ['a'*64]
+    with pytest.raises(ValueError, match='not listed in immutable assets'):
+        adapter._archive()
+    assert len(opened) == 1

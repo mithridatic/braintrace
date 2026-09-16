@@ -14,12 +14,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from braintrace.datasets.h01 import H01Archive
 from braintrace.datasets.h01_biology import H01SpatialManifest
 from braintrace.datasets.h01_network_init import init_h01_network_states
 from .h01_arc_model import H01ArcModel
 from .h01_checkpoint import load_checkpoint, save_checkpoint, restore_optimizer
-from .h01_runtime import build_network
+from .h01_runtime import build_network, open_archives
 from .h01_muon import POLICY, model_optimizer
 from .h01_remap import remap_mutation, remap_optimizer_group
 
@@ -91,8 +90,8 @@ class H01Session:
         ----------
         topology : H01Topology
             Active topology with immutable source profiles.
-        archive : H01Archive
-            Verified source morphology archive.
+        archive : H01Archive or H01ArchiveSet
+            Verified source morphology archive, or a set resolved per source digest.
         trainer_type : type
             Example 21's PPPropEpisodeTrainer.
         settings : dict, optional
@@ -302,11 +301,10 @@ class H01Session:
         from pathlib import Path
         loaded = load_checkpoint(path, asset_root=asset_root, expected_sha256=expected_sha256)
         metadata = loaded['metadata']
-        source = next(iter(loaded['topology'].to_dict()['sources'].values()))
-        digest = source['archive_sha256']
-        if digest not in metadata['assets']:
-            raise ValueError('Source archive is absent from the verified asset inventory')
-        archive = H01Archive(Path(asset_root)/digest)
+        for source in loaded['topology'].to_dict()['sources'].values():
+            if source.get('archive_sha256') not in metadata['assets']:
+                raise ValueError('Source archive is absent from the verified asset inventory')
+        archive = open_archives(Path(asset_root), metadata['assets'])
         result = cls.build(loaded['topology'], archive, trainer_type, settings=metadata['settings'],
             assets=metadata['assets'], parameters=loaded['parameters'],
             input_pattern=(loaded['input_indices'], loaded['input_indptr']), progress=progress)
@@ -321,8 +319,8 @@ class H01Session:
         ----------
         topology : H01Topology
             Permitted child topology.
-        archive : H01Archive
-            Verified morphology source.
+        archive : H01Archive or H01ArchiveSet
+            Verified morphology source, or a set resolved per source digest.
         progress : callable, optional
             Construction progress callback.
         release_parent : bool, optional
