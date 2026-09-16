@@ -34,6 +34,7 @@ LOSS_ABSOLUTE_IMPROVEMENT = 1e-6
 LOSS_RELATIVE_IMPROVEMENT = 1e-4
 EXPECTED_ARC_TASKS = 400
 DEFAULT_SCREEN_TASKS = 64
+DEFAULT_SCORE_TASKS = 0
 STATE_SCHEMA_VERSION = 2
 OPEN_STAGES = frozenset(
     {
@@ -426,6 +427,12 @@ class PipelineConfig:
     screen_tasks : int, optional
         Training tasks in the intra-round screen subset.  ``0`` scores every
         operation on the complete training corpus.
+    score_tasks : int, optional
+        Event budget scope: leading training tasks that every complete-scope
+        score of the lineage covers (initial scoring, the trained parent,
+        ``round-score``, mastery).  ``0`` means the complete training corpus.
+        A nonzero value is persisted in every run receipt so a scoped score is
+        never mistaken for a complete-corpus score.
     """
 
     optimizer: str = DEFAULT_OPTIMIZER
@@ -437,6 +444,7 @@ class PipelineConfig:
     max_checkpoint_bytes: int = DEFAULT_MAX_CHECKPOINT_BYTES
     operations_per_stage: int = 1
     screen_tasks: int = DEFAULT_SCREEN_TASKS
+    score_tasks: int = DEFAULT_SCORE_TASKS
 
     def __post_init__(self) -> None:
         numeric = {
@@ -452,6 +460,8 @@ class PipelineConfig:
         ]
         if type(self.screen_tasks) is not int:
             invalid_types.append("screen_tasks")
+        if type(self.score_tasks) is not int:
+            invalid_types.append("score_tasks")
         if type(self.operations_per_stage) is not int:
             invalid_types.append("operations_per_stage")
         if invalid_types:
@@ -469,6 +479,11 @@ class PipelineConfig:
             raise ValueError(
                 "Evolution screen tasks must fall between zero and "
                 f"{EXPECTED_ARC_TASKS}; correct screen_tasks."
+            )
+        if not 0 <= self.score_tasks <= EXPECTED_ARC_TASKS:
+            raise ValueError(
+                "Evolution score tasks must fall between zero and "
+                f"{EXPECTED_ARC_TASKS}; correct score_tasks."
             )
         if self.optimizer != DEFAULT_OPTIMIZER:
             raise ValueError(
@@ -527,6 +542,10 @@ class PipelineConfig:
             "operations_per_stage": self.operations_per_stage,
             "screen_tasks": self.screen_tasks,
         }
+        if self.score_tasks != DEFAULT_SCORE_TASKS:
+            # Emitted only when set, so the digest of every existing
+            # complete-corpus run and its receipts is unchanged.
+            record["score_tasks"] = self.score_tasks
         return record
 
     @classmethod
@@ -563,6 +582,9 @@ class PipelineConfig:
             screen_tasks=_json_integer(
                 document.get("screen_tasks", DEFAULT_SCREEN_TASKS), "screen_tasks"
             ),
+            score_tasks=_json_integer(
+                document.get("score_tasks", DEFAULT_SCORE_TASKS), "score_tasks"
+            ),
         )
 
     @property
@@ -589,6 +611,52 @@ class PipelineConfig:
 
         return self.screen_tasks > 0
 
+    @property
+    def scoped(self) -> bool:
+        """Return whether complete-scope scores cover a task prefix only.
+
+        Returns
+        -------
+        bool
+            True when a nonzero ``score_tasks`` budgets every scoring pass.
+        """
+
+        return self.score_tasks > 0
+
+
+def score_scope_ids(
+    manifest: CorpusManifest, config: PipelineConfig
+) -> tuple[str, ...]:
+    """Return the complete-scope task order of one lineage.
+
+    Parameters
+    ----------
+    manifest : CorpusManifest
+        Sorted, digest-bound training corpus.
+    config : PipelineConfig
+        Lineage configuration supplying the event-budget scope.
+
+    Returns
+    -------
+    tuple of str
+        The manifest order when the lineage is unscoped or the requested scope
+        is not a proper subset of the corpus; otherwise the leading
+        ``score_tasks`` manifest identifiers.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> len(score_scope_ids(manifest, PipelineConfig(score_tasks=8)))
+        8
+        >>> score_scope_ids(manifest, PipelineConfig()) == manifest.task_ids
+        True
+    """
+
+    if not config.scoped or config.score_tasks >= len(manifest.task_ids):
+        return tuple(manifest.task_ids)
+    return tuple(manifest.task_ids[: config.score_tasks])
+
 
 def screen_task_ids(
     manifest: CorpusManifest, config: PipelineConfig
@@ -606,8 +674,9 @@ def screen_task_ids(
     -------
     tuple of str
         Leading manifest identifiers.  Empty when screening is disabled or the
-        requested size would not be a proper subset of the corpus, so a screen
-        that cannot save any work never costs a scope transition.
+        requested size would not be a proper subset of the lineage's complete
+        scope (the corpus, or its ``score_tasks`` prefix), so a screen that
+        cannot save any work never costs a scope transition.
 
     Examples
     --------
@@ -618,9 +687,10 @@ def screen_task_ids(
         2
     """
 
-    if not config.screens or config.screen_tasks >= len(manifest.task_ids):
+    scope = score_scope_ids(manifest, config)
+    if not config.screens or config.screen_tasks >= len(scope):
         return ()
-    return tuple(manifest.task_ids[: config.screen_tasks])
+    return tuple(scope[: config.screen_tasks])
 
 
 @dataclass(frozen=True)
@@ -1827,7 +1897,7 @@ class RunState:
             raise ValueError(
                 "Run lifecycle counters are inconsistent; recover run-state.json."
             )
-        task_ids = self.training_manifest.task_ids
+        task_ids = score_scope_ids(self.training_manifest, self.config)
         screen_ids = screen_task_ids(self.training_manifest, self.config)
         if (
             self.accepted.score.task_ids not in (task_ids, screen_ids)
@@ -2438,7 +2508,8 @@ class PipelineStore:
             "stage_repeat_index": before.stage_repeats,
             "score_scope": (
                 "full"
-                if selected.score.task_ids == before.training_manifest.task_ids
+                if selected.score.task_ids
+                == score_scope_ids(before.training_manifest, before.config)
                 else "screen"
             ),
             "sequence_before": before.sequence,
@@ -2817,7 +2888,7 @@ def _run_evolution(
         _emit_resume(progress_reporter, state)
     else:
         initial = adapter.initialize(config, store.output_dir)
-        _require_candidate(initial, config, manifest.task_ids)
+        _require_candidate(initial, config, score_scope_ids(manifest, config))
         initial = _persist_or_restore_selected(
             adapter,
             store,
@@ -2913,9 +2984,31 @@ def _stage_context(
         state.config,
         operation_index=state.operation_index,
         score_task_ids=(
-            screen_task_ids(state.training_manifest, state.config) if screened else ()
+            screen_task_ids(state.training_manifest, state.config)
+            if screened
+            else _budget_scope_ids(state)
         ),
     )
+
+
+def _budget_scope_ids(state: RunState) -> tuple[str, ...]:
+    """Return the complete-scope task order an unscreened stage must score.
+
+    Parameters
+    ----------
+    state : RunState
+        Lifecycle position supplying manifest and configuration.
+
+    Returns
+    -------
+    tuple of str
+        Empty for an unscoped lineage, whose adapters score the complete
+        corpus when given no subset; the ``score_tasks`` prefix otherwise.
+    """
+
+    if not state.config.scoped:
+        return ()
+    return score_scope_ids(state.training_manifest, state.config)
 
 
 def _run_parent_training(
@@ -3154,7 +3247,9 @@ def _is_full_score(state: RunState, candidate: CandidateSnapshot) -> bool:
         True when the score covers every training task in manifest order.
     """
 
-    return candidate.score.task_ids == state.training_manifest.task_ids
+    return candidate.score.task_ids == score_scope_ids(
+        state.training_manifest, state.config
+    )
 
 
 def _reached_mastery(state: RunState, candidate: CandidateSnapshot) -> bool:
@@ -3469,7 +3564,8 @@ def _validate_progress_transition(
         raise ProgressConflictError("Progress operation evidence is inconsistent.")
     expected_scope = (
         "full"
-        if after.accepted.score.task_ids == before.training_manifest.task_ids
+        if after.accepted.score.task_ids
+        == score_scope_ids(before.training_manifest, before.config)
         else "screen"
     )
     if _json_string(document["score_scope"], "progress.score_scope") != expected_scope:
@@ -3947,7 +4043,7 @@ def _allowed_score_scopes(state: RunState) -> tuple[tuple[str, ...], ...]:
         Complete-corpus order, plus the screen subset when screening is on.
     """
 
-    full = state.training_manifest.task_ids
+    full = score_scope_ids(state.training_manifest, state.config)
     screen = screen_task_ids(state.training_manifest, state.config)
     return (full,) if not screen else (full, screen)
 
@@ -3970,7 +4066,7 @@ def _rescore_scope_ids(state: RunState, stage: str) -> tuple[str, ...]:
 
     if RESCORE_STAGES[stage] == "screen":
         return screen_task_ids(state.training_manifest, state.config)
-    return state.training_manifest.task_ids
+    return score_scope_ids(state.training_manifest, state.config)
 
 
 def _verify_rescore_evidence(

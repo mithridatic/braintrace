@@ -971,7 +971,7 @@ class Example21ArcAdapter:
             raise ValueError(
                 "Production evolution requires Muon and exactly 128 updates per block."
             )
-        self.training_manifest()
+        manifest = self.training_manifest()
         runtime = self._fresh_runtime()
         path = self._candidate_path(Path(output_dir), "initial")
         candidate = self._write_runtime(
@@ -980,9 +980,31 @@ class Example21ArcAdapter:
             candidate_id="initial",
             path=path,
             topology_changed=False,
+            task_ids=self._budget_scope_ids(manifest, config),
         )
         self._record_lineage(candidate, None)
         return candidate
+
+    def _budget_scope_ids(self, manifest: Any, config: Any) -> tuple[str, ...]:
+        """Return the event-budget scope one complete-scope score must cover.
+
+        Parameters
+        ----------
+        manifest : CorpusManifest
+            Training corpus whose order is authoritative.
+        config : PipelineConfig
+            Lineage configuration; ``score_tasks`` names the scope.
+
+        Returns
+        -------
+        tuple of str
+            Empty for an unscoped lineage (the complete corpus), otherwise the
+            leading ``score_tasks`` manifest identifiers.
+        """
+
+        if not getattr(config, "score_tasks", 0):
+            return ()
+        return self._evolve().score_scope_ids(manifest, config)
 
     def restore(self, candidate: Any) -> Any:
         """Verify a persisted checkpoint without changing its recorded score.
@@ -1651,6 +1673,7 @@ class Example21ArcAdapter:
             candidate_id=candidate_id,
             path=path,
             topology_changed=False,
+            task_ids=getattr(context, "score_task_ids", ()),
         )
         self._record_lineage(candidate, parent.checkpoint_sha256)
         return candidate
