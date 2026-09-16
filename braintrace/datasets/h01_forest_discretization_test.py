@@ -39,8 +39,8 @@ def test_geometry_and_point_mechanisms_are_kept(discretizations):
 
 
 def test_canonical_layouts_carry_the_parameter_union(discretizations):
-    canonical = canonical_declarations(discretizations)
-    forest, _, _ = fuse_discretizations(discretizations)
+    forest, _, canonical = fuse_discretizations(discretizations)
+    assert canonical == canonical_declarations(discretizations)
     keys = {canonical_key(m) for d in discretizations for cv in d.cvs for m in cv.density_mech}
     assert set(canonical) == keys
     natg = canonical[('channel', 'H01PV_NaTg', 'pv_NaTg')]
