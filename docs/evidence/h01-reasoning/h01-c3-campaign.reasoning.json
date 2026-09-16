@@ -1,5 +1,5 @@
 {
-  "id": "doc_5c73e2fb-52c",
+  "id": "doc_ff8d10dd-eb3",
   "title": "H01 C3 partner expansion: campaign prerequisites",
   "graph": {
     "classes": [
@@ -147,7 +147,7 @@
             "id": "goal_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -155,7 +155,7 @@
             "id": "goal_ev1",
             "title": "docs/evidence/h01-keep-drop/decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-keep-drop/decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-keep-drop/decision.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -163,7 +163,7 @@
             "id": "goal_ev2",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -174,31 +174,39 @@
         "id": "io_graph",
         "type": "Intermediate objective",
         "text": "A: C3 neuron synapse graph and ranked partners of the kept 17 (box, /workspace/venv-c3). h01_c3_cell_table.py; h01_c3_neuron_graph.py over all 166 export shards keeping neuron-to-neuron rows; h01_c3_partner_rank.py -> top 20 E + top 20 I by synapse count with the kept set.",
-        "status": "unverified",
+        "status": "refuted",
         "confidence": null,
-        "notes": "Prediction: every kept cell has a neuron partner (NSI 300-2,300); at least 40 partners with two or more synapses to the kept set. Falsifier: fewer than 20 partners in total. Identity is the export's C3 neuron_id, so the proofread voxel-verification gate that excluded 120 of 123 edges does not apply.\n\nEvidence: docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/evidence/h01-full-export-join-progress.json; docs/evidence/h01-cellmatrix-mapping-audit.json",
+        "notes": "Prediction: every kept cell has a neuron partner (NSI 300-2,300); at least 40 partners with two or more synapses to the kept set. Falsifier: fewer than 20 partners in total. Identity is the export's C3 neuron_id, so the proofread voxel-verification gate that excluded 120 of 123 edges does not apply. Result 2026-09-16: 85 partners in total (falsifier not tripped), 4 with >= 2 synapses to the kept set, one kept cell without a partner; eligible E 72 / I 12 -> 20 E + 12 I candidates. Graph rows are 0.42 percent of the table's summed NSI: nearly all presynaptic sites onto tabulated cells belong to untabulated axon fragments.\n\nEvidence: docs/evidence/h01-c3-candidates.json; docs/specs/2026-09-16-h01-c3-partner-expansion.md; docs/evidence/h01-full-export-join-progress.json; docs/evidence/h01-cellmatrix-mapping-audit.json",
         "evidence": [
           {
             "id": "io_graph_ev0",
-            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "title": "docs/evidence/h01-c3-candidates.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-c3-candidates.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "io_graph_ev1",
-            "title": "docs/evidence/h01-full-export-join-progress.json",
+            "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-full-export-join-progress.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
           {
             "id": "io_graph_ev2",
+            "title": "docs/evidence/h01-full-export-join-progress.json",
+            "text": "Source file for this node; numbers on the node are copied from it.",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-full-export-join-progress.json",
+            "stance": "context",
+            "origin": "repository file inspected 2026-09-12"
+          },
+          {
+            "id": "io_graph_ev3",
             "title": "docs/evidence/h01-cellmatrix-mapping-audit.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-cellmatrix-mapping-audit.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-cellmatrix-mapping-audit.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -217,7 +225,7 @@
             "id": "io_skel_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -236,7 +244,7 @@
             "id": "io_gate_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -244,7 +252,7 @@
             "id": "io_gate_ev1",
             "title": "docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-driven-window-20260915/anatomy-transfer-decision.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -263,7 +271,7 @@
             "id": "io_net_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -271,7 +279,7 @@
             "id": "io_net_ev1",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -290,7 +298,7 @@
             "id": "datum_fire_ev0",
             "title": "docs/h01-causal-model.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/h01-causal-model.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/h01-causal-model.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -298,7 +306,7 @@
             "id": "datum_fire_ev1",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -317,7 +325,7 @@
             "id": "datum_rest_ev0",
             "title": "docs/evidence/h01-keep-drop/donor-rest.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-keep-drop/donor-rest.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-keep-drop/donor-rest.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -325,7 +333,7 @@
             "id": "datum_rest_ev1",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -344,7 +352,7 @@
             "id": "datum_syn_ev0",
             "title": "docs/evidence/h01-ie-synapse-literature.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-ie-synapse-literature.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-ie-synapse-literature.json",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -352,7 +360,7 @@
             "id": "datum_syn_ev1",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "context",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -371,7 +379,7 @@
             "id": "ob_archive_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -390,7 +398,7 @@
             "id": "ob_partners_ev0",
             "title": "docs/evidence/h01-full-export-join-progress.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-full-export-join-progress.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-full-export-join-progress.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           },
@@ -398,7 +406,7 @@
             "id": "ob_partners_ev1",
             "title": "docs/evidence/h01-cellmatrix-mapping-audit.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-cellmatrix-mapping-audit.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-cellmatrix-mapping-audit.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -417,7 +425,7 @@
             "id": "ob_box_ev0",
             "title": "docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/specs/2026-09-16-h01-c3-partner-expansion.md",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }
@@ -436,7 +444,7 @@
             "id": "ob_runtime_ev0",
             "title": "docs/evidence/h01-keep-drop/evolve/evolve-record.json",
             "text": "Source file for this node; numbers on the node are copied from it.",
-            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-manifest/docs/evidence/h01-keep-drop/evolve/evolve-record.json",
+            "uri": "file:///C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/c3-skeletons/docs/evidence/h01-keep-drop/evolve/evolve-record.json",
             "stance": "supports",
             "origin": "repository file inspected 2026-09-12"
           }

@@ -28,6 +28,7 @@ REST = "docs/evidence/h01-keep-drop/donor-rest.json"
 SYN = "docs/evidence/h01-ie-synapse-literature.json"
 MAPPING = "docs/evidence/h01-cellmatrix-mapping-audit.json"
 JOIN = "docs/evidence/h01-full-export-join-progress.json"
+C3CAND = "docs/evidence/h01-c3-candidates.json"
 CM = "docs/h01-causal-model.md"
 
 COLORS = {
@@ -50,7 +51,7 @@ def build_nodes():
         n("goal", G, "Goal: Example 21's H01 backend starts from a connected human E/I core: kept pyramidal cells, interneurons that hold a test-to-failure gate at the deployed donor densities, and anatomical synapses among them, in one two-archive manifest.",
           "Outcome condition only: it does not claim Example 21 learns and it does not repair the Y7 anatomy-transfer condition. No donor is imported, nothing is fitted, no density or anatomy is tuned; the 87 dropped cells stay dropped.", [SPEC, KEEPDROP, CM], "unverified"),
         n("io_graph", IO, "A: C3 neuron synapse graph and ranked partners of the kept 17 (box, /workspace/venv-c3). h01_c3_cell_table.py; h01_c3_neuron_graph.py over all 166 export shards keeping neuron-to-neuron rows; h01_c3_partner_rank.py -> top 20 E + top 20 I by synapse count with the kept set.",
-          "Prediction: every kept cell has a neuron partner (NSI 300-2,300); at least 40 partners with two or more synapses to the kept set. Falsifier: fewer than 20 partners in total. Identity is the export's C3 neuron_id, so the proofread voxel-verification gate that excluded 120 of 123 edges does not apply.", [SPEC, JOIN, MAPPING], "unverified"),
+          "Prediction: every kept cell has a neuron partner (NSI 300-2,300); at least 40 partners with two or more synapses to the kept set. Falsifier: fewer than 20 partners in total. Identity is the export's C3 neuron_id, so the proofread voxel-verification gate that excluded 120 of 123 edges does not apply. Result 2026-09-16: 85 partners in total (falsifier not tripped), 4 with >= 2 synapses to the kept set, one kept cell without a partner; eligible E 72 / I 12 -> 20 E + 12 I candidates. Graph rows are 0.42 percent of the table's summed NSI: nearly all presynaptic sites onto tabulated cells belong to untabulated axon fragments.", [C3CAND, SPEC, JOIN, MAPPING], "refuted"),
         n("io_skel", IO, "B: candidate C3 skeletons written as proofread-format SWC (type = subcompartment label - 100; x,y,z in 32/32/33 nm voxels; radius nm), archived with sha256 and non-proofread provenance. H01Archive accepts an explicit digest; H01ArchiveSet resolves a source by archive_sha256. Import audit through the unchanged path.",
           "Prediction: 40 of 40 import, construct, initialise. Control: kept cell 1684504313 exported from C3 beside its proofread SWC (28,643 vs 63,526 nodes), recorded, not a gate.", [SPEC], "unverified"),
         n("io_gate", IO, "C: test-to-failure on the 40 candidates and the 17 kept cells (box, two chains): the donor step run, a ramp run (--ramp-na, 0 to 3x the donor test current) reading rheobase and block current, the dt-half repeat. decision.json under docs/evidence/h01-c3-keep-drop/.",
