@@ -82,6 +82,26 @@ def audit_soma(component, polarity):
     return dict(soma_location=points, electrical_regions_valid=True, soma_inside_region=inside)
 
 
+def selected_component(row, soma_bearing):
+    """The inventory row's largest component, or its largest soma-bearing one when asked and it differs.
+
+    Parameters
+    ----------
+    row : dict
+        One ``cells`` entry of ``h01-population-components.json``.
+    soma_bearing : bool
+        Prefer the first (largest) entry of ``soma_components`` when the largest lacks a soma.
+
+    Returns
+    -------
+    int
+        Component suffix to load.
+    """
+    if soma_bearing and not row.get('largest_has_soma', True) and row.get('soma_components'):
+        return row['soma_components'][0]
+    return row['largest_component']
+
+
 def main():
     """Write a checkpointed import audit.
 
@@ -97,6 +117,8 @@ def main():
     parser.add_argument('--topology', type=Path, help='Also check soma/region membership using these cell polarities.')
     parser.add_argument('--expected-sha256', help='Archive digest other than the pinned proofread release.')
     parser.add_argument('--source', help='Source label recorded for a non-proofread archive.')
+    parser.add_argument('--soma-bearing', action='store_true',
+                        help='Audit the largest soma-bearing component when the largest component lacks a soma.')
     args = parser.parse_args()
     archive = H01Archive(args.archive, expected_sha256=args.expected_sha256, source=args.source)
     inventory = json.loads(args.components.read_text())
@@ -112,11 +134,12 @@ def main():
     expected = len(inventory['cells'])
     started = time.perf_counter()
     for row in inventory['cells']:
-        record = dict(cell_id=row['cell_id'], component=row['largest_component'])
+        selected = selected_component(row, args.soma_bearing)
+        record = dict(cell_id=row['cell_id'], component=selected)
         tick = time.perf_counter()
         try:
             with heartbeat('import '+row['cell_id'], lambda message: print(message, flush=True), seconds=30):
-                component = archive.load(row['cell_id'], component=row['largest_component'])
+                component = archive.load(row['cell_id'], component=selected)
             record.update(audit_geometry(component), source_sha256=component.source_sha256)
             if polarities is not None:
                 record.update(audit_soma(component, polarities[row['cell_id']]))

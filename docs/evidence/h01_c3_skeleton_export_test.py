@@ -43,6 +43,7 @@ class FakeFetcher:
 
 def test_label_to_type_matches_the_proofread_code_table():
     assert [label_to_type(l) for l in (0, 100, 101, 103, 105, 1100, 1103)] == [-1, 0, 1, 3, 5, 1000, 1003]
+    assert [label_to_type(l) for l in (99, 106, 1106, 7)] == [-1, -1, -1, -1]
 
 
 def test_components_are_split_largest_first_and_singletons_kept_for_the_caller():
@@ -104,6 +105,7 @@ def test_export_cell_record_counts_components_vertices_labels_and_cable():
     assert record["vertices"] == 9 and record["vertices_written"] == 8
     assert record["edges"] == 7 and record["edges_dropped"] == 1
     assert record["label_counts"] == {"0": 1, "99": 1, "100": 1, "101": 3, "103": 3}
+    assert record["unknown_labels_written_as_unclassified"] == {"99": 1}
     assert record["parts"][0]["soma_vertices"] == 2 and record["parts"][0]["root_label"] == 103
     assert record["parts"][1]["root_radius_nm"] == 400.0
     assert record["cable_um"] == pytest.approx(1.29 + (320 + 320 * np.sqrt(2)) / 1000)

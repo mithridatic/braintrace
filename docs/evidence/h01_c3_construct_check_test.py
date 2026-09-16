@@ -20,10 +20,11 @@ def test_resolve_role_prefers_overrides_then_record_then_tags():
 def test_candidate_index_and_plan_take_the_largest_component_per_inventory_cell():
     candidates = module.candidate_index({"candidates": [{"c3_id": 5, "polarity": "I", "donor": "d"}, 7, {"x": 1}]})
     assert list(candidates) == ["5"]
-    inventory = {"cells": [{"cell_id": "5", "largest_component": 2}, {"cell_id": "6", "largest_component": 0}]}
+    inventory = {"cells": [{"cell_id": "5", "largest_component": 2, "largest_has_soma": True, "soma_components": [2]},
+                           {"cell_id": "6", "largest_component": 0, "largest_has_soma": False, "soma_components": [4]}]}
     jobs = module.plan(inventory, candidates)
-    assert jobs[0] == {"cell_id": "5", "component": 2, "polarity": "I", "donor": "d"}
-    assert jobs[1]["polarity"] == "E" and jobs[1]["component"] == 0
+    assert jobs[0] == {"cell_id": "5", "component": 2, "component_selection": "largest", "polarity": "I", "donor": "d"}
+    assert jobs[1]["polarity"] == "E" and jobs[1]["component"] == 4 and jobs[1]["component_selection"] == "largest_soma_bearing"
     assert module.plan(inventory, candidates, "E", "z")[0]["donor"] == "z"
 
 
@@ -70,3 +71,43 @@ def test_load_annotations_uses_the_c3_table_when_given(tmp_path):
     assert annotations.metadata("9").tags == ("L2", "pyramidal")
     with pytest.raises(OSError):
         module.load_annotations(tmp_path)
+
+
+def test_select_component_takes_the_largest_soma_bearing_component():
+    assert module.select_component({"largest_component": 0, "largest_has_soma": True, "soma_components": [0]}) == (0, "largest")
+    row = {"largest_component": 0, "largest_has_soma": False, "soma_components": [3, 7]}
+    assert module.select_component(row) == (3, "largest_soma_bearing")
+    row = {"largest_component": 1, "largest_has_soma": False, "soma_components": []}
+    assert module.select_component(row) == (1, "no_soma_component")
+
+
+def test_production_builder_wires_import_build_register_and_init(monkeypatch):
+    """The closure's call sequence, with the BrainCell-side functions replaced by recorders."""
+    import contextlib
+    import sys
+    import types
+
+    calls = []
+    fake_braincell = types.SimpleNamespace(Network=lambda name: calls.append(("network", name)) or object())
+    fake_brainstate = types.SimpleNamespace(environ=types.SimpleNamespace(context=lambda **kw: contextlib.nullcontext()))
+    ei_cell = types.ModuleType("braintrace.datasets.h01_ei_cell")
+    ei_cell.make_h01_ei_cell = lambda imported, annotations, **kw: (
+        calls.append(("make", kw["polarity"], kw["donor"], kw["max_cv_length_um"], kw["solver"])) or ("cell", {"n_compartments": 12}))
+    network = types.ModuleType("braintrace.datasets.h01_network")
+    network._regions = lambda imported: calls.append(("regions",)) or {}
+    network._register_cell = lambda net, identity, cell, evidence, imported, sites, current, emit: calls.append(("register", identity))
+    init = types.ModuleType("braintrace.datasets.h01_network_init")
+    init.init_h01_network_states = lambda net, progress, heartbeat_seconds: calls.append(("init",))
+    init.process_rss_mb = lambda: 123.0
+    for name, mod in [("braincell", fake_braincell), ("brainstate", fake_brainstate), (ei_cell.__name__, ei_cell),
+                      (network.__name__, network), (init.__name__, init)]:
+        monkeypatch.setitem(sys.modules, name, mod)
+    imported = types.SimpleNamespace(source_rows=[1, 2, 3], source_sha256="abc")
+    archive = types.SimpleNamespace(load=lambda cell_id, component: imported)
+    build = module.production_builder(archive, object(), 10., "solver-x", 0.1, lambda m: None)
+    record = build({"cell_id": "9", "component": 2, "polarity": "E", "donor": "d"})
+    assert record["component_nodes"] == 3 and record["source_sha256"] == "abc"
+    assert record["n_compartments"] == 12 and record["rss_mb"] == 123.0
+    assert record["construction_seconds"] >= 0 and record["init_seconds"] >= 0
+    assert [c[0] for c in calls] == ["regions", "make", "network", "register", "init"]
+    assert calls[1] == ("make", "E", "d", 10., "solver-x") and calls[3] == ("register", "9")

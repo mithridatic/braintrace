@@ -12,7 +12,8 @@ write the rows the proofread importer expects::
     id type x y z radius parent
 
 with ``x, y, z`` in 32 / 32 / 33 nm skeleton voxels, ``radius`` in nm, ``type``
-= subcompartment label - 100 (0 unlabelled -> -1), ``parent`` -1 at the root.
+= subcompartment label - 100 for the released vocabulary (0 unlabelled and any
+value outside it -> -1, counted in the provenance), ``parent`` -1 at the root.
 Members are ``{c3_id}.{k}.swc`` with ``k`` in descending component size. The
 archive's sha256 and a per-cell provenance record (non-proofread) are written
 beside it. Nothing here is proofread; the import audit and the gate filter it.
@@ -34,6 +35,10 @@ C3_VOLUME = "precomputed://https://storage.googleapis.com/h01-release/data/20210
 SUBCOMPARTMENTS = C3_VOLUME + "/subcompartments"
 SWC_VOXEL_NM = np.array([32.0, 32.0, 33.0])
 SOMA_LABEL = 103
+# Released subcompartment vocabulary: 100 axon, 101 dendrite, 102 astrocyte, 103 soma, 104 cilium, 105 AIS,
+# 1100-1105 myelin variants. These map to the proofread SWC codes by ``label - 100``; anything else
+# (0 unlabelled, or a value outside the vocabulary such as the 99 seen on kept cells) is written as -1.
+KNOWN_LABELS = frozenset(range(100, 106)) | frozenset(range(1100, 1106))
 SOURCE = "h01-release 20210601 c3 skeletons + subcompartments; non-proofread"
 ROOT_POLICY = "soma-labelled vertex of largest radius, else largest radius; BFS tree"
 ZIP_DATE = (2026, 9, 16, 0, 0, 0)
@@ -51,9 +56,9 @@ class Skeleton:
 
 
 def label_to_type(label):
-    """SWC type code for one subcompartment label: ``label - 100``; 0 (unlabelled) -> -1."""
+    """SWC type code for one subcompartment label: ``label - 100`` inside the vocabulary, else -1."""
     label = int(label)
-    return -1 if label == 0 else label - 100
+    return label - 100 if label in KNOWN_LABELS else -1
 
 
 def split_components(skeleton):
@@ -268,6 +273,8 @@ def export_cell(fetcher, c3_id):
               "singletons_dropped": singletons, "vertices": int(len(skeleton.vertices)),
               "vertices_written": written, "edges": int(len(skeleton.edges)), "edges_dropped": dropped_edges,
               "label_counts": {str(k): int(v) for k, v in sorted(Counter(labels.tolist()).items())},
+              "unknown_labels_written_as_unclassified": {str(k): int(v) for k, v in sorted(Counter(labels.tolist()).items())
+                                                        if k != 0 and k not in KNOWN_LABELS},
               "cable_um": cable, "parts": parts, "source": SOURCE,
               "seconds": time.perf_counter() - started}
     return members, record
@@ -345,7 +352,8 @@ def run(ids, output, provenance, fetcher, stage=None, log=print):
                 "volume": C3_VOLUME, "subcompartments": SUBCOMPARTMENTS,
                 "label_resolution_nm": fetcher.resolution_nm, "label_mip": getattr(fetcher, "mip", 0),
                 "swc_layout": {"position": "32/32/33 nm skeleton voxels (nm / [32, 32, 33])", "radius": "nm",
-                               "type": "subcompartment label - 100; 0 (unlabelled) -> -1", "root_parent": -1,
+                               "type": "subcompartment label - 100 for labels 100-105 and 1100-1105; "
+                                       "0 (unlabelled) and any other value -> -1", "root_parent": -1,
                                "member": "{c3_id}.{k}.swc, k in descending component size"},
                 "root_policy": ROOT_POLICY, "singleton_components": "dropped (importer rejects them)",
                 "generated": time.strftime("%Y-%m-%dT%H:%M:%S"), "seconds": time.perf_counter() - started,

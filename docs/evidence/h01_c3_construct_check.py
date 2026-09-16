@@ -59,12 +59,31 @@ def candidate_index(document):
     return index
 
 
+def select_component(row):
+    """The largest soma-bearing component of an inventory row (the scope the audit names).
+
+    Returns
+    -------
+    tuple
+        ``(component, selection)``: ``"largest"`` when the largest component carries the
+        soma, ``"largest_soma_bearing"`` when a smaller soma-bearing component is taken
+        instead, ``"no_soma_component"`` when none exists (the largest is returned and the
+        builder is expected to fail on it).
+    """
+    if not row.get("soma_components"):
+        return row["largest_component"], "no_soma_component"
+    if row.get("largest_has_soma", True):
+        return row["largest_component"], "largest"
+    return row["soma_components"][0], "largest_soma_bearing"
+
+
 def plan(inventory, candidates, polarity=None, donor=None):
-    """One job per inventory cell: cell_id, component, polarity, donor."""
+    """One job per inventory cell: cell_id, component (largest soma-bearing), polarity, donor."""
     jobs = []
     for row in inventory["cells"]:
         role = resolve_role(candidates.get(row["cell_id"], {}), polarity, donor)
-        jobs.append({"cell_id": row["cell_id"], "component": row["largest_component"],
+        component, selection = select_component(row)
+        jobs.append({"cell_id": row["cell_id"], "component": component, "component_selection": selection,
                      "polarity": role[0], "donor": role[1]})
     return jobs
 

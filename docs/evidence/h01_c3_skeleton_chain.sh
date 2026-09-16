@@ -27,7 +27,7 @@ echo "$(date -u +%FT%TZ) exported $SHA" >> "$R/chain.log"
 PYTHONPATH=. "$V14" $OUT/h01_population_components.py --archive "$ZIP" --no-network \
   --output $OUT/h01-c3-candidates-components > "$R/components.log" 2>&1
 PYTHONPATH=. "$V14" $OUT/h01_population_import_audit.py --archive "$ZIP" --components $OUT/h01-c3-candidates-components.json \
-  --output $OUT/h01-c3-candidates-import.json --expected-sha256 "$SHA" --source $LABEL > "$R/import.log" 2>&1
+  --output $OUT/h01-c3-candidates-import.json --expected-sha256 "$SHA" --source $LABEL --soma-bearing > "$R/import.log" 2>&1
 echo "$(date -u +%FT%TZ) import audit done" >> "$R/chain.log"
 PYTHONPATH=. "$V14" $OUT/h01_c3_construct_check.py --archive "$ZIP" --expected-sha256 "$SHA" --source $LABEL \
   --components $OUT/h01-c3-candidates-components.json --candidates "$CAND" \
@@ -39,7 +39,7 @@ echo "$(date -u +%FT%TZ) construct check done" >> "$R/chain.log"
 CSHA=$(python3 -c "import json;print(json.load(open('$R/c3-control-archive.json'))['archive_sha256'])")
 PYTHONPATH=. "$V14" $OUT/h01_population_components.py --archive "$CTRL" --no-network --output "$R/c3-control-components" > "$R/control-components.log" 2>&1
 PYTHONPATH=. "$V14" $OUT/h01_population_import_audit.py --archive "$CTRL" --components "$R/c3-control-components.json" \
-  --output "$R/c3-control-import.json" --expected-sha256 "$CSHA" --source c3_control_1684504313 > "$R/control-import.log" 2>&1
+  --output "$R/c3-control-import.json" --expected-sha256 "$CSHA" --source c3_control_1684504313 --soma-bearing > "$R/control-import.log" 2>&1
 PYTHONPATH=. "$V14" $OUT/h01_c3_construct_check.py --archive "$CTRL" --expected-sha256 "$CSHA" --source c3_control_1684504313 \
   --components "$R/c3-control-components.json" --cell-table "$CACHE/c3-segment-properties.json" \
   --polarity E --donor l2-pyramidal-allen-541563728 --output "$R/c3-control-construct.json" > "$R/control-construct.log" 2>&1
