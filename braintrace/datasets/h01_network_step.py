@@ -46,11 +46,10 @@ class H01NetworkStep(brainstate.nn.Module):
             from .h01_forest_contacts import ForestContactTable
             self.contact_table = ForestContactTable(self.forest, spec['capacity'], dt_ms=dt_ms,
                                                     max_delay_ms=spec['max_delay_ms'])
-            point_of_cv = np.asarray(self.forest.runtime.node_tree.cv_to_mid_node_id)
             for row, contact in enumerate(spec['rows']):
-                self.contact_table.write(row, pre=contact['pre'], kind=contact['kind'],
-                    post_point=int(point_of_cv[self.forest.soma_cv_ids[contact['post']]]),
-                    weight_us=contact['weight_us'], delay_ms=contact['delay_ms'], identity=contact.get('identity'))
+                self.contact_table.write(row, pre=contact['pre'], kind=contact['kind'], post_cell=contact['post'],
+                    forest=self.forest, weight_us=contact['weight_us'], delay_ms=contact['delay_ms'],
+                    identity=contact.get('identity'))
             self.forest.contact_table = self.contact_table
         if self.forest is not None and getattr(self.forest, 'contacts', ()):
             from dataclasses import replace

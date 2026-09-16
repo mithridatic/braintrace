@@ -257,8 +257,7 @@ class H01ArcModel(brainstate.nn.Module):
         row = self.contact_table.free_row()
         if row is None:
             raise ValueError('The contact table is full; raise the contact capacity')
-        point = int(np.asarray(self.forest.runtime.node_tree.cv_to_mid_node_id)[self.forest.soma_cv_ids[post]])
-        self.contact_table.write(row, pre=pre, post_point=point, kind=kind, weight_us=weight_us,
+        self.contact_table.write(row, pre=pre, post_cell=post, forest=self.forest, kind=kind, weight_us=weight_us,
                                  delay_ms=delay_ms, identity=identity)
         from braintrace.datasets.h01_forest_contacts import host_write
         host_write(self.recurrent_weight, row, float(weight_us))

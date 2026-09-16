@@ -124,13 +124,24 @@ class ForestContactTable(brainstate.nn.Module):
             raise ValueError(f'Point {point} carries no {list(KINDS)[kind]} contact synapse')
         return int(where[0])
 
+    def soma_point(self, forest, kind, cell):
+        """The kind's synapse point on ``cell`` (its soma; the site the shared synapses were placed at)."""
+        points = self.point_index[int(kind)]
+        mine = points[np.asarray(forest.cell_of_point)[points] == int(cell)]
+        if len(mine) == 1:
+            return int(mine[0])
+        soma = int(np.asarray(forest.runtime.node_tree.cv_to_mid_node_id)[forest.soma_cv_ids[int(cell)]])
+        if soma in mine:
+            return soma
+        raise ValueError(f'Cell {cell} carries {len(mine)} {list(KINDS)[int(kind)]} contact synapses; none at its soma')
+
     def free_row(self):
         """First dormant row, or ``None`` when the table is full."""
         active = np.asarray(self.active.value)
         free = np.flatnonzero(active == 0.)
         return int(free[0]) if len(free) else None
 
-    def write(self, row, *, pre, post_point, kind, weight_us, delay_ms, identity=None):
+    def write(self, row, *, pre, kind, weight_us, delay_ms, post_point=None, post_cell=None, forest=None, identity=None):
         """Activate one contact row in place.
 
         Parameters
@@ -139,19 +150,28 @@ class ForestContactTable(brainstate.nn.Module):
             Table row.
         pre : int
             Presynaptic forest cell.
-        post_point : int
-            Postsynaptic point (a soma point carrying the shared synapses).
         kind : int
             0 excitatory, 1 inhibitory.
         weight_us : float
             Initial conductance magnitude.
         delay_ms : float
             Delay; must not exceed ``max_delay_ms``.
+        post_point : int, optional
+            Postsynaptic point carrying the shared synapses; or give
+            ``post_cell`` with ``forest`` to use that cell's soma synapse.
+        post_cell : int, optional
+            Postsynaptic forest cell (with ``forest``).
+        forest : H01ForestCell, optional
+            Needed with ``post_cell``.
         identity : str, optional
             Topology contact identity, recorded in ``rows``.
         """
         if delay_ms > self.max_delay_ms+1e-12 or delay_ms < 0.:
             raise ValueError('Contact delay outside the table capacity')
+        if post_point is None:
+            if post_cell is None or forest is None:
+                raise ValueError('Give post_point, or post_cell with the forest')
+            post_point = self.soma_point(forest, kind, post_cell)
         steps = int(math.ceil(delay_ms/self.dt_ms-1e-9))
         row = int(row)
         host_write(self.pre, row, int(pre))
