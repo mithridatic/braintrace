@@ -160,7 +160,8 @@ def test_static_model_forward_and_gradients_equal_per_cell(static_pair):
     reference, rlearner, wide, wlearner = static_pair
     rng = np.random.default_rng(1)
     with brainstate.environ.context(precision=64):
-        events = [jnp.asarray(rng.normal(size=441)*3., dtype=jnp.float64) for _ in range(2)]
+        # 16 events = 1.6 ms: cell 0 fires under its clamp and the 0.5 ms contact reaches cell 1 in the window.
+        events = [jnp.asarray(rng.normal(size=441)*3., dtype=jnp.float64) for _ in range(16)]
         reference.reset_episode(rlearner)
         wide.reset_episode(wlearner)
         soma_r = np.asarray(brainstate.transform.for_loop(lambda e: reference.update(e), jnp.stack(events)))
