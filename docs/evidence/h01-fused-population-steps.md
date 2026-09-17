@@ -103,21 +103,35 @@ jitted substep and the jitted ARC event run with **0 XLA compiles** and unchange
 model forward (2 events) and gradients equal the per-cell model (dormant slots and unused rows:
 zero gradient); a full slot table raises.
 
-Box arms (fused, dt 0.005, contended):
+Box arms, back to back in one queue (`b2b-*`, fused, dt 0.005, contended by the state check
+and the chains, so comparable with each other only):
 
-| Arm | Cells active / laid out / compartments | forward s/event | GPU busy ms/substep | launches/substep | while loops | forward compile |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `fused-dt0005` (dynamic, no contacts) | 17 / 17 / 107,537 | 0.129 | 4.69 | 327 | 8 | 5.4 s |
-| `static17` (slots 1, capacity 64) | 17 / 17 / 107,537 | 0.103 | 3.81 | 339 | 8 | 5.0 s |
-| `static17-clone1` (slots 2, one clone + one contact written) | 18 / 34 / 215,074 | see receipts | | | | |
-| `static34` (slots 2, every cell cloned) | 34 / 34 / 215,074 | 0.180 | 8.71 | 337 | 8 | 8.1 s |
+| Arm | Cells active / laid out / compartments | forward s/event | GPU busy ms/substep | launches/substep | while loops | forward compile | peak device |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `b2b-fused17` (dynamic path, no contacts) | 17 / 17 / 107,537 | 0.1025 | 3.81 | 327 | 8 | 4.9 s | 88 MiB |
+| `b2b-static17` (slots 1, capacity 64, no contacts) | 17 / 17 / 107,537 | 0.1027 | 3.80 | 339 | 8 | 2.9 s | 91 MiB |
+| `b2b-static17-clone1` (slots 2, one clone + one contact written) | 18 / 34 / 215,074 | 0.2245 | 10.95 | 337 | 8 | 4.7 s | 169 MiB |
+| `b2b-static34` (slots 2, every cell cloned) | 34 / 34 / 215,074 | 0.2267 | 10.93 | 337 | 8 | 4.3 s | 169 MiB |
 
-The static table adds 12 launches per substep over the dynamic path (339 against 327) and
-they do not grow with contacts or clones; at capacity 34 the substep integrates 215,074
-compartments always, so "17 + 1 clone" costs what 34 costs (that is the price of static
-shapes; capacity is a setting). `static17-mutate-after` clones one cell and writes one contact
-*after* the forward program compiled: see the receipt for compiles after the mutation (0
-expected) and the seconds per event after it.
+The static table costs 12 launches per substep over the dynamic path (339 against 327) and
+nothing in time at 17 cells (0.1027 against 0.1025 s); launches do not move with contacts or
+clones. At capacity 34 the substep integrates 215,074 compartments whether 18 or 34 cells are
+active, so "17 + 1 clone" costs what 34 costs (0.2245 against 0.2267 s, 2.2x the 17-cell
+event for 2x the compartments): the price of static shapes, and capacity is a setting.
+
+`static17-mutate-after`: the forward program compiled and settled (0 compiles on the third
+call), then one clone and one contact were written in place; the next three events compiled
+**0** programs (`compiles_after_mutation: 0`) and ran at 0.176 / 0.181 / 0.182 s (34 laid
+out). `static17-c3-learner` (slots 1, capacity 64, 3 contacts written in place as the chain
+0 -> 1 -> 2 -> 3 before compiling): learner compiles (44.8 s), warm 2-event update 2.49 s,
+eligibility 23,451,754 elements / 187.6 MB / **7 colours**. That is the segmented layout's
+storage rule showing: the factor width is the widest segment row, and a chain of three
+contacts gives cell 3 a row of seven outputs (its drive, the three contact magnitudes and
+the three upstream drives), so every position is stored at width 7 (7 x 26.8 MB) and seven
+JVP colours run per substep; the per-cell path would store the same rows with less padding
+(rows 1, 3, 5, 7 at their own cells) at the same colour count. Storage and colours now scale
+with the depth of the contact graph, not with the cell count; a ragged per-segment store
+would remove the padding.
 
 ## Full-state parity and the timestep (J's amendment)
 
