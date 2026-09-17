@@ -160,8 +160,10 @@ def test_static_model_forward_and_gradients_equal_per_cell(static_pair):
     reference, rlearner, wide, wlearner = static_pair
     rng = np.random.default_rng(1)
     with brainstate.environ.context(precision=64):
-        # 16 events = 1.6 ms: cell 0 fires under its clamp and the 0.5 ms contact reaches cell 1 in the window.
-        events = [jnp.asarray(rng.normal(size=441)*3., dtype=jnp.float64) for _ in range(16)]
+        # 24 events = 2.4 ms: cell 0 crosses 0 mV at event 13 (1.3 ms), so the 0.5 ms contact reaches
+        # cell 1 at 1.8 ms; at 16 events the spike sits in the ring buffer undelivered and the
+        # contact magnitudes carry no credit (recurrent gradient exactly zero on both models).
+        events = [jnp.asarray(rng.normal(size=441)*3., dtype=jnp.float64) for _ in range(24)]
         reference.reset_episode(rlearner)
         wide.reset_episode(wlearner)
         soma_r = np.asarray(brainstate.transform.for_loop(lambda e: reference.update(e), jnp.stack(events)))
