@@ -117,9 +117,10 @@ def _static_model(slots, capacity):
     for cell in cells:
         cell.init_state()
     forest = H01ForestCell(cells, slots=slots)
+    # A chain 0 -> 1 -> 2: the segment of cell 2 is reached only through cell 1's segment.
     forest.contact_spec = dict(capacity=capacity, max_delay_ms=DELAY_MS, rows=[
         dict(pre=0, post=1, kind=0, weight_us=WEIGHT_US, delay_ms=DELAY_MS),
-        dict(pre=0, post=2, kind=1, weight_us=WEIGHT_US, delay_ms=DELAY_MS)])
+        dict(pre=1, post=2, kind=1, weight_us=WEIGHT_US, delay_ms=DELAY_MS)])
     network = braincell.Network(name='forest')
     network.add_population('forest', forest)
     return H01ArcModel(network, IDS, dt_ms=DT_MS, checkpoint_substeps=False, input_pattern=_pattern(3*slots))
@@ -131,8 +132,8 @@ def _percell_shared_model():
     network = braincell.Network(name='percell')
     for index, cell in enumerate(cells):
         network.add_population(f'cell_{index}', cell)
-    for name, kind, post in (('e', 'contact_exc', 1), ('i', 'contact_inh', 2)):
-        network.add_edges(name=name, pre='cell_0', post=f'cell_{post}', method=pairs([(0, 0)]))
+    for name, kind, pre, post in (('e', 'contact_exc', 0, 1), ('i', 'contact_inh', 1, 2)):
+        network.add_edges(name=name, pre=f'cell_{pre}', post=f'cell_{post}', method=pairs([(0, 0)]))
         network.add_projection(name=name, edges=name, synapse=kind, weight=WEIGHT_US*u.uS, delay=DELAY_MS*u.ms)
     return H01ArcModel(network, IDS, dt_ms=DT_MS, checkpoint_substeps=False, input_pattern=_pattern(3))
 
@@ -176,6 +177,7 @@ def test_static_model_forward_and_gradients_equal_per_cell(static_pair):
     assert np.abs(got['readout_weight'][3:]).max() == 0.   # dormant slots carry no credit
     np.testing.assert_allclose(got['recurrent'][:2], expected['recurrent'], rtol=0., atol=1e-9*max(scale('recurrent'), 1e-12))
     assert np.abs(got['recurrent'][2:]).max() == 0.
+    assert np.abs(expected['recurrent']).max() > 0.   # the chain delivered: contact magnitudes carry credit
     layout = wlearner.graph.layout
     assert layout.slots is not None and layout.color_count <= rlearner.graph.layout.color_count
 
@@ -190,7 +192,7 @@ def test_static_model_clone_and_contact_in_place(static_pair):
         clone = wide.clone(0)
         row = wide.add_contact(clone, 2, kind=0, weight_us=.03)
         assert clone == 3 and row == 2
-        assert wide.sparse_structure_signature() == ((0, 0, 1, 0), (1, 0, 2, 1), (2, 3, 2, 0))
+        assert wide.sparse_structure_signature() == ((0, 0, 1, 0), (1, 1, 2, 1), (2, 3, 2, 0))
         import logging
         records = []
 
