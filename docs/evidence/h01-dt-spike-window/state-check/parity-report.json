@@ -1,0 +1,1804 @@
+{
+  "status": "pass",
+  "settings": {
+    "reference_dt_ms": 0.000625,
+    "ladder_dt_ms": [
+      0.005,
+      0.0025,
+      0.00125
+    ],
+    "window_ms": 40.0,
+    "frame_ms": 0.5,
+    "contacts": 3,
+    "contact_weight_us": 0.05,
+    "pulse_delay_ms": 2.0,
+    "fused": true,
+    "precision": 64,
+    "mode": "parity",
+    "labels": {
+      "percell": 0.000625,
+      "fused": 0.000625
+    },
+    "reference": "percell",
+    "pairs": [
+      [
+        "fused",
+        "percell"
+      ]
+    ]
+  },
+  "stages": {
+    "build_all": 80.31445547565818,
+    "lockstep_seconds": 2965.7943408172578
+  },
+  "cells": [
+    "3761379470",
+    "5173982155",
+    "5013648003",
+    "2001418787",
+    "3571083397",
+    "4010150634",
+    "4197933517",
+    "6833911543",
+    "5439194879",
+    "4437316933",
+    "3111823553",
+    "1669770671",
+    "751294744",
+    "2252715458",
+    "1684504313",
+    "2848552900",
+    "2103991145"
+  ],
+  "contacts_table": {
+    "synthetic-contact-0": {
+      "pre": "3761379470",
+      "post": "5173982155",
+      "reversal_mv": 0.0,
+      "tau_ms": 2.0,
+      "delay_ms": 0.5,
+      "weight_us": 0.05
+    },
+    "synthetic-contact-1": {
+      "pre": "5173982155",
+      "post": "5013648003",
+      "reversal_mv": 0.0,
+      "tau_ms": 2.0,
+      "delay_ms": 0.5,
+      "weight_us": 0.05
+    },
+    "synthetic-contact-2": {
+      "pre": "5013648003",
+      "post": "2001418787",
+      "reversal_mv": 0.0,
+      "tau_ms": 2.0,
+      "delay_ms": 0.5,
+      "weight_us": 0.05
+    }
+  },
+  "compartments": 107537,
+  "sites": {
+    "3761379470": {
+      "soma": 49,
+      "ais": 27,
+      "distal": 738,
+      "distance_um": {
+        "soma": 21.832574631062496,
+        "ais": 4.278933447872964,
+        "distal": 263.58887675145587
+      }
+    },
+    "5173982155": {
+      "soma": 1714,
+      "ais": 1618,
+      "distal": 3092,
+      "distance_um": {
+        "soma": 111.79924277390992,
+        "ais": 7.242297715051946,
+        "distal": 540.3764545809859
+      }
+    },
+    "5013648003": {
+      "soma": 7665,
+      "ais": 5976,
+      "distal": 6594,
+      "distance_um": {
+        "soma": 105.31183156154124,
+        "ais": 13.037015157576967,
+        "distal": 490.8293357818476
+      }
+    },
+    "2001418787": {
+      "soma": 9142,
+      "ais": 8973,
+      "distal": 9762,
+      "distance_um": {
+        "soma": 157.12227642181094,
+        "ais": 50.4854560206561,
+        "distal": 410.53563491545185
+      }
+    },
+    "3571083397": {
+      "soma": 12266,
+      "ais": 12194,
+      "distal": 13875,
+      "distance_um": {
+        "soma": 49.93102783830025,
+        "ais": 3.173428358023862,
+        "distal": 315.902586660363
+      }
+    },
+    "4010150634": {
+      "soma": 17190,
+      "ais": 15337,
+      "distal": 17783,
+      "distance_um": {
+        "soma": 152.86641598149922,
+        "ais": 4.021790711625801,
+        "distal": 830.5442671130137
+      }
+    },
+    "4197933517": {
+      "soma": 20710,
+      "ais": 22748,
+      "distal": 21691,
+      "distance_um": {
+        "soma": 128.64367513523865,
+        "ais": 8.52106000057989,
+        "distal": 435.84811293458046
+      }
+    },
+    "6833911543": {
+      "soma": 26077,
+      "ais": 22762,
+      "distal": 23427,
+      "distance_um": {
+        "soma": 93.65517240657863,
+        "ais": 6.13494934686544,
+        "distal": 514.2066580182826
+      }
+    },
+    "5439194879": {
+      "soma": 29295,
+      "ais": 26959,
+      "distal": 30081,
+      "distance_um": {
+        "soma": 196.24436292170464,
+        "ais": 4.6337549222084595,
+        "distal": 643.418614783483
+      }
+    },
+    "4437316933": {
+      "soma": 32082,
+      "ais": 37709,
+      "distal": 32321,
+      "distance_um": {
+        "soma": 178.3352627349507,
+        "ais": 16.060908036885195,
+        "distal": 368.09937439283135
+      }
+    },
+    "3111823553": {
+      "soma": 41038,
+      "ais": 46985,
+      "distal": 42423,
+      "distance_um": {
+        "soma": 196.1505059762633,
+        "ais": 5.042816620052482,
+        "distal": 519.1683667856388
+      }
+    },
+    "1669770671": {
+      "soma": 51352,
+      "ais": 47063,
+      "distal": 49206,
+      "distance_um": {
+        "soma": 360.97843582090707,
+        "ais": 3.0752109310360285,
+        "distal": 616.6099932878161
+      }
+    },
+    "751294744": {
+      "soma": 60512,
+      "ais": 65958,
+      "distal": 59009,
+      "distance_um": {
+        "soma": 217.15634154171818,
+        "ais": 36.699751099794035,
+        "distal": 527.4506667405872
+      }
+    },
+    "2252715458": {
+      "soma": 68001,
+      "ais": 77059,
+      "distal": 69244,
+      "distance_um": {
+        "soma": 175.3692013060305,
+        "ais": 13.80709115157819,
+        "distal": 599.8588747854637
+      }
+    },
+    "1684504313": {
+      "soma": 83616,
+      "ais": 87508,
+      "distal": 83001,
+      "distance_um": {
+        "soma": 326.70787184491434,
+        "ais": 64.52613285141034,
+        "distal": 698.5254928613044
+      }
+    },
+    "2848552900": {
+      "soma": 92212,
+      "ais": 97016,
+      "distal": 93323,
+      "distance_um": {
+        "soma": 217.72346238132624,
+        "ais": 30.23307859430894,
+        "distal": 584.812778763498
+      }
+    },
+    "2103991145": {
+      "soma": 101523,
+      "ais": 107535,
+      "distal": 104017,
+      "distance_um": {
+        "soma": 74.15480126626656,
+        "ais": 4.606255746723579,
+        "distal": 579.0916273159785
+      }
+    }
+  },
+  "forest_offsets": {
+    "cv": [
+      0,
+      1608,
+      5969,
+      8774,
+      12190,
+      15335,
+      18801,
+      22757,
+      26823,
+      30972,
+      37973,
+      47061,
+      55875,
+      66469,
+      77090,
+      87619,
+      97377,
+      107537
+    ],
+    "point": [
+      0,
+      2876,
+      9444,
+      14458,
+      20262,
+      25985,
+      31387,
+      38553,
+      45930,
+      52913,
+      66221,
+      82470,
+      98256,
+      117923,
+      137755,
+      157229,
+      176075,
+      195598
+    ]
+  },
+  "variables": {
+    "V": {
+      "axis": "cv",
+      "unit": "mV",
+      "shape": [
+        1,
+        107537
+      ]
+    },
+    "calcium.Ci": {
+      "axis": "point",
+      "unit": "mM",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "calcium.pv_Ca_HVA.h": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "calcium.pv_Ca_HVA.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "calcium.pv_Ca_LVA.h": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "calcium.pv_Ca_LVA.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "syn_synthetic-contact-0.g": {
+      "axis": "contact",
+      "unit": "uS",
+      "shape": [
+        1,
+        1
+      ]
+    },
+    "syn_synthetic-contact-1.g": {
+      "axis": "contact",
+      "unit": "uS",
+      "shape": [
+        1,
+        1
+      ]
+    },
+    "syn_synthetic-contact-2.g": {
+      "axis": "contact",
+      "unit": "uS",
+      "shape": [
+        1,
+        1
+      ]
+    },
+    "pv_Ih.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "potassium.pv_Im.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "potassium.pv_K_P.h": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "potassium.pv_K_P.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "potassium.pv_K_T.h": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "potassium.pv_K_T.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "potassium.pv_Kv3_1.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "potassium.pv_SK.z": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "sodium.pv_NaTs.h": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "sodium.pv_NaTs.m": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "sodium.pv_Nap.h": {
+      "axis": "point",
+      "unit": "1",
+      "shape": [
+        1,
+        195598
+      ]
+    },
+    "axial_rate": {
+      "axis": "cv",
+      "unit": "mV/ms",
+      "shape": [
+        1,
+        107537
+      ]
+    },
+    "syn_current": {
+      "axis": "contact",
+      "unit": "nA",
+      "shape": [
+        1,
+        3
+      ]
+    }
+  },
+  "percell_absent_positions": {},
+  "site_order": [
+    [
+      "3761379470",
+      "soma"
+    ],
+    [
+      "3761379470",
+      "ais"
+    ],
+    [
+      "3761379470",
+      "distal"
+    ],
+    [
+      "5173982155",
+      "soma"
+    ],
+    [
+      "5173982155",
+      "ais"
+    ],
+    [
+      "5173982155",
+      "distal"
+    ],
+    [
+      "5013648003",
+      "soma"
+    ],
+    [
+      "5013648003",
+      "ais"
+    ],
+    [
+      "5013648003",
+      "distal"
+    ],
+    [
+      "2001418787",
+      "soma"
+    ],
+    [
+      "2001418787",
+      "ais"
+    ],
+    [
+      "2001418787",
+      "distal"
+    ],
+    [
+      "3571083397",
+      "soma"
+    ],
+    [
+      "3571083397",
+      "ais"
+    ],
+    [
+      "3571083397",
+      "distal"
+    ],
+    [
+      "4010150634",
+      "soma"
+    ],
+    [
+      "4010150634",
+      "ais"
+    ],
+    [
+      "4010150634",
+      "distal"
+    ],
+    [
+      "4197933517",
+      "soma"
+    ],
+    [
+      "4197933517",
+      "ais"
+    ],
+    [
+      "4197933517",
+      "distal"
+    ],
+    [
+      "6833911543",
+      "soma"
+    ],
+    [
+      "6833911543",
+      "ais"
+    ],
+    [
+      "6833911543",
+      "distal"
+    ],
+    [
+      "5439194879",
+      "soma"
+    ],
+    [
+      "5439194879",
+      "ais"
+    ],
+    [
+      "5439194879",
+      "distal"
+    ],
+    [
+      "4437316933",
+      "soma"
+    ],
+    [
+      "4437316933",
+      "ais"
+    ],
+    [
+      "4437316933",
+      "distal"
+    ],
+    [
+      "3111823553",
+      "soma"
+    ],
+    [
+      "3111823553",
+      "ais"
+    ],
+    [
+      "3111823553",
+      "distal"
+    ],
+    [
+      "1669770671",
+      "soma"
+    ],
+    [
+      "1669770671",
+      "ais"
+    ],
+    [
+      "1669770671",
+      "distal"
+    ],
+    [
+      "751294744",
+      "soma"
+    ],
+    [
+      "751294744",
+      "ais"
+    ],
+    [
+      "751294744",
+      "distal"
+    ],
+    [
+      "2252715458",
+      "soma"
+    ],
+    [
+      "2252715458",
+      "ais"
+    ],
+    [
+      "2252715458",
+      "distal"
+    ],
+    [
+      "1684504313",
+      "soma"
+    ],
+    [
+      "1684504313",
+      "ais"
+    ],
+    [
+      "1684504313",
+      "distal"
+    ],
+    [
+      "2848552900",
+      "soma"
+    ],
+    [
+      "2848552900",
+      "ais"
+    ],
+    [
+      "2848552900",
+      "distal"
+    ],
+    [
+      "2103991145",
+      "soma"
+    ],
+    [
+      "2103991145",
+      "ais"
+    ],
+    [
+      "2103991145",
+      "distal"
+    ]
+  ],
+  "progress_steps": 64000,
+  "ranges": {
+    "V": 131.06182861328125,
+    "calcium.Ci": 0.0010210268665105104,
+    "calcium.pv_Ca_HVA.h": 0.05130612850189209,
+    "calcium.pv_Ca_HVA.m": 0.9297606348991394,
+    "calcium.pv_Ca_LVA.h": 0.2761322855949402,
+    "calcium.pv_Ca_LVA.m": 0.8913623690605164,
+    "syn_synthetic-contact-0.g": 0.04025153070688248,
+    "syn_synthetic-contact-1.g": 0.044372815638780594,
+    "syn_synthetic-contact-2.g": 0.0478297583758831,
+    "pv_Ih.m": 0.06719551980495453,
+    "potassium.pv_Im.m": 0.9999237656593323,
+    "potassium.pv_K_P.h": 0.0719957947731018,
+    "potassium.pv_K_P.m": 0.420148104429245,
+    "potassium.pv_K_T.h": 0.8383423686027527,
+    "potassium.pv_K_T.m": 0.7121903300285339,
+    "potassium.pv_Kv3_1.m": 0.1392337679862976,
+    "potassium.pv_SK.z": 0.9877703189849854,
+    "sodium.pv_NaTs.h": 0.953118622303009,
+    "sodium.pv_NaTs.m": 0.9990783333778381,
+    "sodium.pv_Nap.h": 0.019404590129852295,
+    "axial_rate": 401570299904.0,
+    "syn_current": 4.502588748931885
+  },
+  "files": {
+    "sites.npz": {
+      "sha256": "b04bca0ff51a4c2ba91d0c4a8aa9ccc7cbfd952720cb36ce07afec16b14bf8d7",
+      "bytes": 721203046
+    },
+    "frames.npz": {
+      "sha256": "83daf455eeddcb159e57a0ccafaaeb149b1a5cc457f57171af3f4b126a019124",
+      "bytes": 668589924
+    },
+    "end_values.npz": {
+      "sha256": "34aece6a11516120b448976559364a20275b573d9e852d0fad1542944fc5f686",
+      "bytes": 23806867
+    }
+  },
+  "spikes": {
+    "percell": {
+      "3761379470": [
+        21.56625
+      ],
+      "5173982155": [
+        12.021875,
+        22.751875000000002
+      ],
+      "5013648003": [
+        12.41125,
+        19.045,
+        24.0675
+      ],
+      "2001418787": [
+        13.39375,
+        20.080000000000002,
+        25.208750000000002
+      ],
+      "3571083397": [
+        17.625,
+        34.28875
+      ],
+      "4010150634": [
+        38.035625
+      ],
+      "4197933517": [
+        15.113125,
+        30.8975
+      ],
+      "6833911543": [
+        15.590625000000001,
+        28.74125
+      ],
+      "5439194879": [
+        37.198125
+      ],
+      "4437316933": [
+        17.77625,
+        25.62375,
+        35.29625
+      ],
+      "3111823553": [
+        11.611875,
+        21.2525
+      ],
+      "1669770671": [
+        15.93875,
+        24.7375,
+        38.04
+      ],
+      "751294744": [
+        26.40875,
+        37.938125
+      ],
+      "2252715458": [
+        17.073125,
+        26.504375
+      ],
+      "1684504313": [
+        26.59
+      ],
+      "2848552900": [
+        22.69875,
+        36.445
+      ],
+      "2103991145": [
+        26.404375
+      ]
+    },
+    "fused": {
+      "3761379470": [
+        21.56625
+      ],
+      "5173982155": [
+        12.021875,
+        22.751875000000002
+      ],
+      "5013648003": [
+        12.41125,
+        19.045,
+        24.0675
+      ],
+      "2001418787": [
+        13.39375,
+        20.080000000000002,
+        25.208750000000002
+      ],
+      "3571083397": [
+        17.625,
+        34.28875
+      ],
+      "4010150634": [
+        38.035625
+      ],
+      "4197933517": [
+        15.113125,
+        30.8975
+      ],
+      "6833911543": [
+        15.590625000000001,
+        28.74125
+      ],
+      "5439194879": [
+        37.198125
+      ],
+      "4437316933": [
+        17.77625,
+        25.62375,
+        35.29625
+      ],
+      "3111823553": [
+        11.611875,
+        21.2525
+      ],
+      "1669770671": [
+        15.93875,
+        24.7375,
+        38.04
+      ],
+      "751294744": [
+        26.40875,
+        37.938125
+      ],
+      "2252715458": [
+        17.073125,
+        26.504375
+      ],
+      "1684504313": [
+        26.59
+      ],
+      "2848552900": [
+        22.69875,
+        36.445
+      ],
+      "2103991145": [
+        26.404375
+      ]
+    }
+  },
+  "index": {
+    "fused-vs-percell": {
+      "V": {
+        "unit": "mV",
+        "near_spike": {
+          "max_abs": 9.221068921760889e-07,
+          "max_rel_to_range": 7.035663258574789e-09,
+          "at_ms": 37.5,
+          "at_position": 29312
+        },
+        "between_spikes": {
+          "max_abs": 3.05108699194534e-07,
+          "max_rel_to_range": 2.3279752954981702e-09,
+          "at_ms": 38.5,
+          "at_position": 27466
+        },
+        "end": {
+          "max_abs": 1.881882383258926e-07,
+          "reference_end_min": -81.82350477411113,
+          "reference_end_max": -22.72865593240573
+        }
+      },
+      "calcium.Ci": {
+        "unit": "mM",
+        "near_spike": {
+          "max_abs": 3.2046834261799384e-14,
+          "max_rel_to_range": 3.1386866803342335e-11,
+          "at_ms": 38.0,
+          "at_position": 49861
+        },
+        "between_spikes": {
+          "max_abs": 3.760353302611347e-14,
+          "max_rel_to_range": 3.6829131788302826e-11,
+          "at_ms": 38.5,
+          "at_position": 49869
+        },
+        "end": {
+          "max_abs": 2.3774886681766916e-14,
+          "reference_end_min": 0.0001,
+          "reference_end_max": 0.001121026841361757
+        }
+      },
+      "calcium.pv_Ca_HVA.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 3.507705237382197e-11,
+          "max_rel_to_range": 6.836815288553371e-10,
+          "at_ms": 37.5,
+          "at_position": 49869
+        },
+        "between_spikes": {
+          "max_abs": 2.1299628727433628e-11,
+          "max_rel_to_range": 4.15147845868903e-10,
+          "at_ms": 38.5,
+          "at_position": 48397
+        },
+        "end": {
+          "max_abs": 9.052092408978751e-12,
+          "reference_end_min": 0.07913696365923108,
+          "reference_end_max": 0.7870768093568884
+        }
+      },
+      "calcium.pv_Ca_HVA.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.0649721993161165e-08,
+          "max_rel_to_range": 1.1454262090066278e-08,
+          "at_ms": 37.5,
+          "at_position": 46988
+        },
+        "between_spikes": {
+          "max_abs": 4.4084029759972054e-09,
+          "max_rel_to_range": 4.7414386139024155e-09,
+          "at_ms": 38.5,
+          "at_position": 48398
+        },
+        "end": {
+          "max_abs": 2.4041604262947658e-09,
+          "reference_end_min": 1.1520396876773011e-06,
+          "reference_end_max": 0.9923841297007808
+        }
+      },
+      "calcium.pv_Ca_LVA.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 7.963943393640704e-11,
+          "max_rel_to_range": 2.884104398180752e-10,
+          "at_ms": 38.0,
+          "at_position": 46120
+        },
+        "between_spikes": {
+          "max_abs": 7.184123435033385e-11,
+          "max_rel_to_range": 2.601696291889537e-10,
+          "at_ms": 38.5,
+          "at_position": 46104
+        },
+        "end": {
+          "max_abs": 3.322989106102625e-11,
+          "reference_end_min": 7.811483306372579e-07,
+          "reference_end_max": 0.2591172523640692
+        }
+      },
+      "calcium.pv_Ca_LVA.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 4.658286201220108e-09,
+          "max_rel_to_range": 5.226029685468859e-09,
+          "at_ms": 37.5,
+          "at_position": 46912
+        },
+        "between_spikes": {
+          "max_abs": 3.5667238051928507e-09,
+          "max_rel_to_range": 4.001429641855005e-09,
+          "at_ms": 38.5,
+          "at_position": 48398
+        },
+        "end": {
+          "max_abs": 5.310538675473708e-10,
+          "reference_end_min": 0.0008380354758304796,
+          "reference_end_max": 0.9987289837369187
+        }
+      },
+      "syn_synthetic-contact-0.g": {
+        "unit": "uS",
+        "near_spike": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 11.0,
+          "at_position": 0
+        },
+        "between_spikes": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 0.0,
+          "at_position": 0
+        },
+        "end": {
+          "max_abs": 0.0,
+          "reference_end_min": 6.378310717083709e-06,
+          "reference_end_max": 6.378310717083709e-06
+        }
+      },
+      "syn_synthetic-contact-1.g": {
+        "unit": "uS",
+        "near_spike": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 11.0,
+          "at_position": 0
+        },
+        "between_spikes": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 0.0,
+          "at_position": 0
+        },
+        "end": {
+          "max_abs": 0.0,
+          "reference_end_min": 1.1592778247024296e-05,
+          "reference_end_max": 1.1592778247024296e-05
+        }
+      },
+      "syn_synthetic-contact-2.g": {
+        "unit": "uS",
+        "near_spike": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 11.0,
+          "at_position": 0
+        },
+        "between_spikes": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 0.0,
+          "at_position": 0
+        },
+        "end": {
+          "max_abs": 0.0,
+          "reference_end_min": 2.4150086039679874e-05,
+          "reference_end_max": 2.4150086039679874e-05
+        }
+      },
+      "pv_Ih.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 8.532479583989172e-11,
+          "max_rel_to_range": 1.2697988807521728e-09,
+          "at_ms": 37.5,
+          "at_position": 49869
+        },
+        "between_spikes": {
+          "max_abs": 3.1615932094553045e-11,
+          "max_rel_to_range": 4.705065484473253e-10,
+          "at_ms": 38.5,
+          "at_position": 48398
+        },
+        "end": {
+          "max_abs": 1.028618856757646e-11,
+          "reference_end_min": 1.1470272452712186e-05,
+          "reference_end_max": 0.06971002239029478
+        }
+      },
+      "potassium.pv_Im.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 7.425825732099156e-09,
+          "max_rel_to_range": 7.42639187818753e-09,
+          "at_ms": 37.5,
+          "at_position": 46988
+        },
+        "between_spikes": {
+          "max_abs": 8.814817764601912e-10,
+          "max_rel_to_range": 8.815489807655062e-10,
+          "at_ms": 40.0,
+          "at_position": 49868
+        },
+        "end": {
+          "max_abs": 8.814817764601912e-10,
+          "reference_end_min": 8.484418239950798e-05,
+          "reference_end_max": 0.9990889488055994
+        }
+      },
+      "potassium.pv_K_P.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 6.148270781380916e-11,
+          "max_rel_to_range": 8.539763746976452e-10,
+          "at_ms": 37.5,
+          "at_position": 49844
+        },
+        "between_spikes": {
+          "max_abs": 3.140165905080039e-11,
+          "max_rel_to_range": 4.36159627791654e-10,
+          "at_ms": 38.5,
+          "at_position": 48398
+        },
+        "end": {
+          "max_abs": 1.3488765659985802e-11,
+          "reference_end_min": 0.007325140014281564,
+          "reference_end_max": 0.938038640780411
+        }
+      },
+      "potassium.pv_K_P.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 2.482020367011728e-09,
+          "max_rel_to_range": 5.907489146912746e-09,
+          "at_ms": 37.5,
+          "at_position": 49869
+        },
+        "between_spikes": {
+          "max_abs": 6.104362570980015e-10,
+          "max_rel_to_range": 1.4529073216390104e-09,
+          "at_ms": 38.5,
+          "at_position": 48398
+        },
+        "end": {
+          "max_abs": 1.18122289727296e-10,
+          "reference_end_min": 0.009311925916445413,
+          "reference_end_max": 0.7269994785064112
+        }
+      },
+      "potassium.pv_K_T.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.6602530461540255e-09,
+          "max_rel_to_range": 1.9803997845428397e-09,
+          "at_ms": 37.5,
+          "at_position": 52839
+        },
+        "between_spikes": {
+          "max_abs": 1.3396661557862899e-09,
+          "max_rel_to_range": 1.5979940963965389e-09,
+          "at_ms": 38.5,
+          "at_position": 48398
+        },
+        "end": {
+          "max_abs": 4.1116282600839327e-10,
+          "reference_end_min": 0.0013585199504289591,
+          "reference_end_max": 0.8455946223747892
+        }
+      },
+      "potassium.pv_K_T.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 4.944386677863122e-09,
+          "max_rel_to_range": 6.942507458174874e-09,
+          "at_ms": 37.5,
+          "at_position": 52839
+        },
+        "between_spikes": {
+          "max_abs": 2.375444729807441e-09,
+          "max_rel_to_range": 3.3354071652619444e-09,
+          "at_ms": 38.5,
+          "at_position": 49869
+        },
+        "end": {
+          "max_abs": 1.5009351539418958e-09,
+          "reference_end_min": 0.2312061414172578,
+          "reference_end_max": 0.834890219726592
+        }
+      },
+      "potassium.pv_Kv3_1.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.3290634148788172e-09,
+          "max_rel_to_range": 9.545553741026487e-09,
+          "at_ms": 37.5,
+          "at_position": 49869
+        },
+        "between_spikes": {
+          "max_abs": 2.2835341950688814e-10,
+          "max_rel_to_range": 1.640072109011379e-09,
+          "at_ms": 38.5,
+          "at_position": 49869
+        },
+        "end": {
+          "max_abs": 1.520763098783462e-10,
+          "reference_end_min": 3.134960575206422e-05,
+          "reference_end_max": 0.12699040085875374
+        }
+      },
+      "potassium.pv_SK.z": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 3.1041835768519377e-12,
+          "max_rel_to_range": 3.1426167775943498e-12,
+          "at_ms": 25.0,
+          "at_position": 11772
+        },
+        "between_spikes": {
+          "max_abs": 7.614145425272056e-12,
+          "max_rel_to_range": 7.708416905152822e-12,
+          "at_ms": 40.0,
+          "at_position": 9640
+        },
+        "end": {
+          "max_abs": 7.614145425272056e-12,
+          "reference_end_min": 0.0009098213063332166,
+          "reference_end_max": 0.9886801090992667
+        }
+      },
+      "sodium.pv_NaTs.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 2.4905926210294638e-09,
+          "max_rel_to_range": 2.6130982678855596e-09,
+          "at_ms": 37.5,
+          "at_position": 52839
+        },
+        "between_spikes": {
+          "max_abs": 1.5449098667019712e-09,
+          "max_rel_to_range": 1.6208998864894949e-09,
+          "at_ms": 38.5,
+          "at_position": 51598
+        },
+        "end": {
+          "max_abs": 1.1831966517661385e-09,
+          "reference_end_min": 1.670142184809518e-05,
+          "reference_end_max": 0.9340721090891108
+        }
+      },
+      "sodium.pv_NaTs.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 2.054942171980656e-08,
+          "max_rel_to_range": 2.0568378908118152e-08,
+          "at_ms": 37.5,
+          "at_position": 52839
+        },
+        "between_spikes": {
+          "max_abs": 8.608497914508462e-09,
+          "max_rel_to_range": 8.616439399104496e-09,
+          "at_ms": 39.0,
+          "at_position": 49869
+        },
+        "end": {
+          "max_abs": 6.59241461420379e-09,
+          "reference_end_min": 0.0013747959750587536,
+          "reference_end_max": 0.9991336819743326
+        }
+      },
+      "sodium.pv_Nap.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.633659874045179e-11,
+          "max_rel_to_range": 8.418935226732431e-10,
+          "at_ms": 37.5,
+          "at_position": 46938
+        },
+        "between_spikes": {
+          "max_abs": 9.668821299158026e-12,
+          "max_rel_to_range": 4.982749563096092e-10,
+          "at_ms": 38.5,
+          "at_position": 48398
+        },
+        "end": {
+          "max_abs": 3.9580561050911456e-12,
+          "reference_end_min": 0.007539734558373393,
+          "reference_end_max": 0.9711608885082443
+        }
+      },
+      "axial_rate": {
+        "unit": "mV/ms",
+        "near_spike": {
+          "max_abs": 2970.05322265625,
+          "max_rel_to_range": 7.396097827369891e-09,
+          "at_ms": 37.5,
+          "at_position": 27367
+        },
+        "between_spikes": {
+          "max_abs": 918.3182373046875,
+          "max_rel_to_range": 2.286818117585444e-09,
+          "at_ms": 38.5,
+          "at_position": 27367
+        },
+        "end": {
+          "max_abs": 241.81146240234375,
+          "reference_end_min": -6431.093982277904,
+          "reference_end_max": 259779805910.34262
+        }
+      },
+      "syn_current": {
+        "unit": "nA",
+        "near_spike": {
+          "max_abs": 1.532322602137981e-10,
+          "max_rel_to_range": 3.403203551515742e-11,
+          "at_ms": 24.0,
+          "at_position": 1
+        },
+        "between_spikes": {
+          "max_abs": 3.3362201889985954e-14,
+          "max_rel_to_range": 7.40956008871568e-15,
+          "at_ms": 32.0,
+          "at_position": 2
+        },
+        "end": {
+          "max_abs": 4.602221381766469e-15,
+          "reference_end_min": -0.001958794037614025,
+          "reference_end_max": -0.0003159072120610916
+        }
+      }
+    }
+  },
+  "region_points": {
+    "leak": 107537,
+    "sodium": 1965,
+    "potassium": 1965,
+    "calcium": 1965,
+    "pv_Im": 1965,
+    "pv_Ih": 87735,
+    "pv_NaTs": 1965,
+    "pv_Nap": 1965,
+    "pv_K_P": 1965,
+    "pv_K_T": 1965,
+    "pv_SK": 1965,
+    "pv_Kv3_1": 1965,
+    "pv_Ca_HVA": 1965,
+    "pv_Ca_LVA": 1965
+  },
+  "index_all_points": {
+    "fused-vs-percell": {
+      "V": {
+        "unit": "mV",
+        "near_spike": {
+          "max_abs": 9.221068921760889e-07,
+          "max_rel_to_range": 7.035663258574789e-09,
+          "at_ms": 37.5,
+          "at_position": 29312
+        },
+        "between_spikes": {
+          "max_abs": 3.05108699194534e-07,
+          "max_rel_to_range": 2.3279752954981702e-09,
+          "at_ms": 38.5,
+          "at_position": 27466
+        },
+        "end": {
+          "max_abs": 1.881882383258926e-07,
+          "reference_end_min": -81.82350477411113,
+          "reference_end_max": -22.72865593240573
+        }
+      },
+      "calcium.Ci": {
+        "unit": "mM",
+        "near_spike": {
+          "max_abs": 3.2046834261799384e-14,
+          "max_rel_to_range": 3.1386866803342335e-11,
+          "at_ms": 38.0,
+          "at_position": 49861
+        },
+        "between_spikes": {
+          "max_abs": 3.760353302611347e-14,
+          "max_rel_to_range": 3.6829131788302826e-11,
+          "at_ms": 38.5,
+          "at_position": 49869
+        },
+        "end": {
+          "max_abs": 2.3774886681766916e-14,
+          "reference_end_min": 0.0001,
+          "reference_end_max": 0.001121026841361757
+        }
+      },
+      "calcium.pv_Ca_HVA.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 3.59856588971752e-11,
+          "max_rel_to_range": 5.0794650579139244e-11,
+          "at_ms": 37.5,
+          "at_position": 47086
+        },
+        "between_spikes": {
+          "max_abs": 2.1478596679003203e-11,
+          "max_rel_to_range": 3.0317572240586915e-11,
+          "at_ms": 38.5,
+          "at_position": 48465
+        },
+        "end": {
+          "max_abs": 1.0649481296809427e-11,
+          "reference_end_min": 0.07913696365923108,
+          "reference_end_max": 0.7870768093568884
+        }
+      },
+      "calcium.pv_Ca_HVA.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.4984843588194963e-08,
+          "max_rel_to_range": 1.509985009732835e-08,
+          "at_ms": 37.5,
+          "at_position": 47090
+        },
+        "between_spikes": {
+          "max_abs": 4.742476189534273e-09,
+          "max_rel_to_range": 4.778874008970721e-09,
+          "at_ms": 38.5,
+          "at_position": 48465
+        },
+        "end": {
+          "max_abs": 2.4041604262947658e-09,
+          "reference_end_min": 1.1520396876773011e-06,
+          "reference_end_max": 0.9923841297007808
+        }
+      },
+      "calcium.pv_Ca_LVA.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 8.051360966820909e-11,
+          "max_rel_to_range": 2.829816480846351e-10,
+          "at_ms": 37.5,
+          "at_position": 50428
+        },
+        "between_spikes": {
+          "max_abs": 7.227114739993823e-11,
+          "max_rel_to_range": 2.5401181843021233e-10,
+          "at_ms": 38.5,
+          "at_position": 48467
+        },
+        "end": {
+          "max_abs": 4.4162590251417555e-11,
+          "reference_end_min": 7.811483306372579e-07,
+          "reference_end_max": 0.2591172523640692
+        }
+      },
+      "calcium.pv_Ca_LVA.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 5.084172638447626e-09,
+          "max_rel_to_range": 5.0938635153895575e-09,
+          "at_ms": 37.5,
+          "at_position": 48235
+        },
+        "between_spikes": {
+          "max_abs": 3.709323070921755e-09,
+          "max_rel_to_range": 3.716393364551506e-09,
+          "at_ms": 38.5,
+          "at_position": 48465
+        },
+        "end": {
+          "max_abs": 5.376550871183383e-10,
+          "reference_end_min": 0.0008380354758304796,
+          "reference_end_max": 0.9987289837369187
+        }
+      },
+      "syn_synthetic-contact-0.g": {
+        "unit": "uS",
+        "near_spike": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 11.0,
+          "at_position": 0
+        },
+        "between_spikes": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 0.0,
+          "at_position": 0
+        },
+        "end": {
+          "max_abs": 0.0,
+          "reference_end_min": 6.378310717083709e-06,
+          "reference_end_max": 6.378310717083709e-06
+        }
+      },
+      "syn_synthetic-contact-1.g": {
+        "unit": "uS",
+        "near_spike": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 11.0,
+          "at_position": 0
+        },
+        "between_spikes": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 0.0,
+          "at_position": 0
+        },
+        "end": {
+          "max_abs": 0.0,
+          "reference_end_min": 1.1592778247024296e-05,
+          "reference_end_max": 1.1592778247024296e-05
+        }
+      },
+      "syn_synthetic-contact-2.g": {
+        "unit": "uS",
+        "near_spike": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 11.0,
+          "at_position": 0
+        },
+        "between_spikes": {
+          "max_abs": 0.0,
+          "max_rel_to_range": 0.0,
+          "at_ms": 0.0,
+          "at_position": 0
+        },
+        "end": {
+          "max_abs": 0.0,
+          "reference_end_min": 2.4150086039679874e-05,
+          "reference_end_max": 2.4150086039679874e-05
+        }
+      },
+      "pv_Ih.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 9.69477415013742e-11,
+          "max_rel_to_range": 1.3445032971728827e-09,
+          "at_ms": 37.5,
+          "at_position": 47090
+        },
+        "between_spikes": {
+          "max_abs": 3.2260430438135757e-11,
+          "max_rel_to_range": 4.473983036693551e-10,
+          "at_ms": 38.5,
+          "at_position": 48465
+        },
+        "end": {
+          "max_abs": 1.3192631015401801e-11,
+          "reference_end_min": 1.1470272452712186e-05,
+          "reference_end_max": 0.06971002239029478
+        }
+      },
+      "potassium.pv_Im.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.6583788564616952e-08,
+          "max_rel_to_range": 1.658504500622222e-08,
+          "at_ms": 37.5,
+          "at_position": 47090
+        },
+        "between_spikes": {
+          "max_abs": 8.814817764601912e-10,
+          "max_rel_to_range": 8.815485603783479e-10,
+          "at_ms": 40.0,
+          "at_position": 49868
+        },
+        "end": {
+          "max_abs": 8.814817764601912e-10,
+          "reference_end_min": 8.484418239950798e-05,
+          "reference_end_max": 0.9990889488055994
+        }
+      },
+      "potassium.pv_K_P.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 6.338685132334376e-11,
+          "max_rel_to_range": 6.806485093463847e-11,
+          "at_ms": 37.5,
+          "at_position": 47087
+        },
+        "between_spikes": {
+          "max_abs": 3.1758928820124765e-11,
+          "max_rel_to_range": 3.4102762810518386e-11,
+          "at_ms": 38.5,
+          "at_position": 48471
+        },
+        "end": {
+          "max_abs": 1.573419172729018e-11,
+          "reference_end_min": 0.007325140014281564,
+          "reference_end_max": 0.938038640780411
+        }
+      },
+      "potassium.pv_K_P.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 2.794354969637425e-09,
+          "max_rel_to_range": 3.887804021980693e-09,
+          "at_ms": 37.5,
+          "at_position": 47090
+        },
+        "between_spikes": {
+          "max_abs": 6.311176026230214e-10,
+          "max_rel_to_range": 8.780779752326759e-10,
+          "at_ms": 38.5,
+          "at_position": 48465
+        },
+        "end": {
+          "max_abs": 1.1812414935086224e-10,
+          "reference_end_min": 0.009311925916445413,
+          "reference_end_max": 0.7269994785064112
+        }
+      },
+      "potassium.pv_K_T.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.7308472433086308e-09,
+          "max_rel_to_range": 2.0163254172847384e-09,
+          "at_ms": 37.5,
+          "at_position": 50428
+        },
+        "between_spikes": {
+          "max_abs": 1.370523583510419e-09,
+          "max_rel_to_range": 1.5965715906493023e-09,
+          "at_ms": 38.5,
+          "at_position": 48465
+        },
+        "end": {
+          "max_abs": 5.833271643496118e-10,
+          "reference_end_min": 0.0013585199504289591,
+          "reference_end_max": 0.8455946223747892
+        }
+      },
+      "potassium.pv_K_T.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 6.4608745020677816e-09,
+          "max_rel_to_range": 9.050354299392309e-09,
+          "at_ms": 37.5,
+          "at_position": 48235
+        },
+        "between_spikes": {
+          "max_abs": 2.4167783330142356e-09,
+          "max_rel_to_range": 3.3854086114616956e-09,
+          "at_ms": 38.5,
+          "at_position": 47090
+        },
+        "end": {
+          "max_abs": 1.5023947641523705e-09,
+          "reference_end_min": 0.2312061414172578,
+          "reference_end_max": 0.834890219726592
+        }
+      },
+      "potassium.pv_Kv3_1.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 0.0026432322338223457,
+          "max_rel_to_range": 0.018984115771394763,
+          "at_ms": 18.5,
+          "at_position": 13804
+        },
+        "between_spikes": {
+          "max_abs": 0.005384249612689018,
+          "max_rel_to_range": 0.03867054006131106,
+          "at_ms": 25.5,
+          "at_position": 9304
+        },
+        "end": {
+          "max_abs": 0.0032499106600880623,
+          "reference_end_min": 3.134960575206422e-05,
+          "reference_end_max": 0.12699040085875374
+        }
+      },
+      "potassium.pv_SK.z": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 3.1041835768519377e-12,
+          "max_rel_to_range": 3.1426167775943498e-12,
+          "at_ms": 25.0,
+          "at_position": 11772
+        },
+        "between_spikes": {
+          "max_abs": 7.614145425272056e-12,
+          "max_rel_to_range": 7.708416905152822e-12,
+          "at_ms": 40.0,
+          "at_position": 9640
+        },
+        "end": {
+          "max_abs": 7.614145425272056e-12,
+          "reference_end_min": 0.0009098213063332166,
+          "reference_end_max": 0.9886801090992667
+        }
+      },
+      "sodium.pv_NaTs.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 2.509539021033902e-09,
+          "max_rel_to_range": 2.6278140342917962e-09,
+          "at_ms": 37.5,
+          "at_position": 49179
+        },
+        "between_spikes": {
+          "max_abs": 1.6275861769443623e-09,
+          "max_rel_to_range": 1.7042945983089965e-09,
+          "at_ms": 38.5,
+          "at_position": 49452
+        },
+        "end": {
+          "max_abs": 1.1831966517661385e-09,
+          "reference_end_min": 1.670142184809518e-05,
+          "reference_end_max": 0.9340721090891108
+        }
+      },
+      "sodium.pv_NaTs.m": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 0.2309972643852234,
+          "max_rel_to_range": 0.23120814245914875,
+          "at_ms": 23.0,
+          "at_position": 3105
+        },
+        "between_spikes": {
+          "max_abs": 0.21478307247161865,
+          "max_rel_to_range": 0.21497914856262834,
+          "at_ms": 13.0,
+          "at_position": 80407
+        },
+        "end": {
+          "max_abs": 0.07808902114629745,
+          "reference_end_min": 0.0013747959750587536,
+          "reference_end_max": 0.9991336819743326
+        }
+      },
+      "sodium.pv_Nap.h": {
+        "unit": "1",
+        "near_spike": {
+          "max_abs": 1.6877277353444242e-11,
+          "max_rel_to_range": 1.7513696882172653e-11,
+          "at_ms": 37.5,
+          "at_position": 47089
+        },
+        "between_spikes": {
+          "max_abs": 9.752310070609838e-12,
+          "max_rel_to_range": 1.0120056624107355e-11,
+          "at_ms": 38.5,
+          "at_position": 48469
+        },
+        "end": {
+          "max_abs": 4.865441383117286e-12,
+          "reference_end_min": 0.007539734558373393,
+          "reference_end_max": 0.9711608885082443
+        }
+      },
+      "axial_rate": {
+        "unit": "mV/ms",
+        "near_spike": {
+          "max_abs": 2970.05322265625,
+          "max_rel_to_range": 7.396097827369891e-09,
+          "at_ms": 37.5,
+          "at_position": 27367
+        },
+        "between_spikes": {
+          "max_abs": 918.3182373046875,
+          "max_rel_to_range": 2.286818117585444e-09,
+          "at_ms": 38.5,
+          "at_position": 27367
+        },
+        "end": {
+          "max_abs": 241.81146240234375,
+          "reference_end_min": -6431.093982277904,
+          "reference_end_max": 259779805910.34262
+        }
+      },
+      "syn_current": {
+        "unit": "nA",
+        "near_spike": {
+          "max_abs": 1.532322602137981e-10,
+          "max_rel_to_range": 3.403203551515742e-11,
+          "at_ms": 24.0,
+          "at_position": 1
+        },
+        "between_spikes": {
+          "max_abs": 3.3362201889985954e-14,
+          "max_rel_to_range": 7.40956008871568e-15,
+          "at_ms": 32.0,
+          "at_position": 2
+        },
+        "end": {
+          "max_abs": 4.602221381766469e-15,
+          "reference_end_min": -0.001958794037614025,
+          "reference_end_max": -0.0003159072120610916
+        }
+      }
+    }
+  },
+  "ranges_all_points": {
+    "V": 131.06182861328125,
+    "calcium.Ci": 0.0010210268665105104,
+    "calcium.pv_Ca_HVA.h": 0.7084537148475647,
+    "calcium.pv_Ca_HVA.m": 0.992383599281311,
+    "calcium.pv_Ca_LVA.h": 0.284518837928772,
+    "calcium.pv_Ca_LVA.m": 0.9980975389480591,
+    "syn_synthetic-contact-0.g": 0.04025153070688248,
+    "syn_synthetic-contact-1.g": 0.044372815638780594,
+    "syn_synthetic-contact-2.g": 0.0478297583758831,
+    "pv_Ih.m": 0.07210673391819,
+    "potassium.pv_Im.m": 0.9999242424964905,
+    "potassium.pv_K_P.h": 0.9312714338302612,
+    "potassium.pv_K_P.m": 0.718748927116394,
+    "potassium.pv_K_T.h": 0.8584166169166565,
+    "potassium.pv_K_T.m": 0.7138808369636536,
+    "potassium.pv_Kv3_1.m": 0.13923388719558716,
+    "potassium.pv_SK.z": 0.9877703189849854,
+    "sodium.pv_NaTs.h": 0.9549911022186279,
+    "sodium.pv_NaTs.m": 0.999087929725647,
+    "sodium.pv_Nap.h": 0.9636616110801697,
+    "axial_rate": 401570299904.0,
+    "syn_current": 4.502588748931885
+  },
+  "index_masked": {
+    "calcium.Ci": 1965,
+    "calcium.pv_Ca_HVA.h": 1965,
+    "calcium.pv_Ca_HVA.m": 1965,
+    "calcium.pv_Ca_LVA.h": 1965,
+    "calcium.pv_Ca_LVA.m": 1965,
+    "pv_Ih.m": 87735,
+    "potassium.pv_Im.m": 1965,
+    "potassium.pv_K_P.h": 1965,
+    "potassium.pv_K_P.m": 1965,
+    "potassium.pv_K_T.h": 1965,
+    "potassium.pv_K_T.m": 1965,
+    "potassium.pv_Kv3_1.m": 1965,
+    "potassium.pv_SK.z": 1965,
+    "sodium.pv_NaTs.h": 1965,
+    "sodium.pv_NaTs.m": 1965,
+    "sodium.pv_Nap.h": 1965
+  }
+}

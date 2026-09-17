@@ -100,8 +100,16 @@ class SparseIOGraph:
         raw = self.inputs(*args)
         output = jnp.zeros(self.output_size, dtype=self.operations[0].y.aval.dtype)
         hidden = tuple(raw[i] for i in self.state_input_indices)
+        structure = None
+        declare = getattr(model, 'sparse_structure', None)
+        if callable(declare):
+            # A model may declare how its state blocks split into independent
+            # segments (e.g. the cells of a fused population); see
+            # SparseInfluence.build_segmented. None keeps whole blocks.
+            structure = declare(tuple(self.state_paths), tuple(value.shape for value in hidden),
+                                tuple((op.start, op.stop) for op in self.operations))
         self.layout = analyze_transition(lambda y, h: self.transition(y, h, raw),
-                                         output, hidden, max_bytes=max_bytes)
+                                         output, hidden, max_bytes=max_bytes, structure=structure)
 
     def inputs(self, *args):
         """Flatten current inputs and model state for the extracted program.

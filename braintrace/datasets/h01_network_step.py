@@ -38,12 +38,30 @@ class H01NetworkStep(brainstate.nn.Module):
         self.cells = tuple(pop.cell for pop in network.populations.values())
         self.setup = network._run_setup(dt=dt_ms*u.ms, delay_quantization="ceil",
                                         event_backend="auto", brainevent_backend="jax_raw")
+        self.forest = self.cells[0] if len(self.cells) == 1 and hasattr(self.cells[0], 'forest_offsets') else None
+        self.contact_table = None
+        self.contact_magnitude = None
+        spec = getattr(self.forest, 'contact_spec', None)
+        if spec is not None:
+            from .h01_forest_contacts import ForestContactTable
+            self.contact_table = ForestContactTable(self.forest, spec['capacity'], dt_ms=dt_ms,
+                                                    max_delay_ms=spec['max_delay_ms'])
+            for row, contact in enumerate(spec['rows']):
+                self.contact_table.write(row, pre=contact['pre'], kind=contact['kind'], post_cell=contact['post'],
+                    forest=self.forest, weight_us=contact['weight_us'], delay_ms=contact['delay_ms'],
+                    identity=contact.get('identity'))
+            self.forest.contact_table = self.contact_table
+        if self.forest is not None and getattr(self.forest, 'contacts', ()):
+            from dataclasses import replace
+            from .h01_forest_delivery import forest_delivery
+            blocks, ops = forest_delivery(self.forest, self.forest.contacts, dt_ms=dt_ms)
+            self.setup = replace(self.setup, delivery_blocks=blocks, delivery_ops=ops)
         self.delivery = create_delivery_state(self.setup.delivery_blocks,
                                               populations=network.populations,
                                               delivery_ops=self.setup.delivery_ops)
         self.ring_buffers = self.delivery.ring_buffers
         self.ring_cursors = self.delivery.ring_cursors
-        self.has_delivery = bool(self.setup.delivery_blocks)
+        self.has_delivery = bool(self.setup.delivery_blocks) or self.contact_table is not None
         self.has_synapses = any(any(getattr(l, "kind", "").startswith("synapse") for l in getattr(cell._runtime, "layouts", ())) for cell in self.cells)
         self._dt = self.dt_ms * u.ms
         self.tick = brainstate.ShortTermState(jnp.asarray(0, dtype=jnp.int32))
@@ -79,7 +97,9 @@ class H01NetworkStep(brainstate.nn.Module):
         """
         dt = self._dt
         with brainstate.environ.context(dt=dt, t=self.tick.value*dt):
-            if self.has_delivery:
+            if self.contact_table is not None:
+                self.contact_table.write_arrivals(self.forest)
+            elif self.has_delivery:
                 write_arrivals(self.setup.delivery_blocks, self.delivery,
                                populations=self.network.populations)
             if self.has_synapses:
@@ -94,7 +114,14 @@ class H01NetworkStep(brainstate.nn.Module):
                 self.chemistry.update(potassium_current)
             snapshots = {name: pop.cell.sample_probes()
                          for name, pop in self.network.populations.items()} if sample_probes else None
-            if self.has_delivery:
+            if self.contact_table is not None:
+                magnitude = self.contact_table.weight.value if self.contact_magnitude is None else self.contact_magnitude()
+                self.contact_table.enqueue(self.forest, magnitude)
+            elif self.has_delivery and self.forest is not None:
+                from .h01_forest_delivery import enqueue_forest_events
+                enqueue_forest_events(self.setup.delivery_blocks, self.delivery, self.forest)
+                advance_delivery_state(self.delivery)
+            elif self.has_delivery:
                 enqueue_future_events(self.setup.delivery_blocks, self.delivery,
                                       populations=self.network.populations)
                 advance_delivery_state(self.delivery)
@@ -116,3 +143,5 @@ class H01NetworkStep(brainstate.nn.Module):
         self.tick.value = jnp.zeros_like(self.tick.value)
         for state in self.ring_buffers + self.ring_cursors:
             state.value = u.math.zeros_like(state.value)
+        if self.contact_table is not None:
+            self.contact_table.reset_state()

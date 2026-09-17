@@ -7,8 +7,48 @@ import numpy as np
 
 
 def _zeros(layout, dtype):
-    return tuple(jnp.zeros(shape + (len(row),), dtype=dtype)
-                 for shape, row in zip(layout.shapes, layout.outputs))
+    return tuple(jnp.zeros(shape + (width,), dtype=dtype)
+                 for shape, width in zip(layout.shapes, layout.widths))
+
+
+def _get_slot_tables(layout):
+    """Per block ``(slots, slot_color, valid)`` tables of a segmented layout (cached)."""
+    pre = getattr(layout, "_sparse_io_slots", None)
+    if pre is not None:
+        return pre
+    colors_np = np.asarray(layout.colors, dtype=np.int32)
+    tables = []
+    for shape, row, table in zip(layout.shapes, layout.outputs, layout.slots):
+        if table is None:
+            table = np.broadcast_to(np.asarray(row, dtype=np.int32), shape + (len(row),))
+        valid = table >= 0
+        slot_color = np.where(valid, colors_np[np.where(valid, table, 0)], 0).astype(np.int32)
+        tables.append((np.ascontiguousarray(table), slot_color, valid))
+    pre = tuple(tables)
+    try:
+        object.__setattr__(layout, "_sparse_io_slots", pre)
+    except (AttributeError, TypeError):
+        pass
+    return pre
+
+
+def _slot_seeds(factors, layout, scale):
+    """Colour-major hidden seeds ``(C, *shape)`` from slot-table factors."""
+    seeds = []
+    for factor, (_, slot_color, valid) in zip(factors, _get_slot_tables(layout)):
+        onehot = (jnp.asarray(slot_color)[None] == jnp.arange(layout.color_count)[(slice(None),)+(None,)*slot_color.ndim])
+        onehot = onehot & jnp.asarray(valid)[None]
+        seeds.append(jnp.sum(jnp.where(onehot, scale*factor[None], 0.), axis=-1))
+    return tuple(seeds)
+
+
+def _slot_results(tangents, layout, dtype):
+    """Gather each slot's colour tangent back into slot-table factors."""
+    result = []
+    for tangent, (_, slot_color, valid) in zip(tangents, _get_slot_tables(layout)):
+        gathered = jnp.take_along_axis(jnp.moveaxis(tangent, 0, -1), jnp.asarray(slot_color), axis=-1)
+        result.append(jnp.where(jnp.asarray(valid), gathered, 0.).astype(dtype))
+    return tuple(result)
 
 
 def _get_layout_precomputed(layout):
@@ -64,6 +104,12 @@ def instant_factors(tail, output, layout):
         raise ValueError('ETP output shape does not match sparse layout')
     if not layout.color_count:
         return _zeros(layout, output.dtype)
+    if layout.slots is not None:
+        colors_np, out_mask_np, _ = _get_layout_precomputed(layout)
+        masks = out_mask_np if out_mask_np is not None else np.ones((1, len(colors_np)), dtype=bool)
+        out_seeds = jnp.asarray(masks, dtype=output.dtype)
+        tangents = jax.vmap(lambda o: jax.jvp(tail, (output,), (o,))[1])(out_seeds)
+        return _slot_results(tangents, layout, output.dtype)
 
     if layout.color_count == 1:
         out_seed = jnp.ones_like(output)
@@ -124,11 +170,15 @@ def propagate_factors(transition, state, factors, layout):
     """
     if len(state) != len(layout.shapes) or len(factors) != len(state):
         raise ValueError('State and factor blocks must match sparse layout')
-    for value, factor, shape, row in zip(state, factors, layout.shapes, layout.outputs):
-        if value.shape != shape or factor.shape != shape + (len(row),):
+    for value, factor, shape, width in zip(state, factors, layout.shapes, layout.widths):
+        if value.shape != shape or factor.shape != shape + (width,):
             raise ValueError('State or factor shape does not match sparse layout')
     if not layout.color_count:
         return tuple(jnp.zeros_like(factor) for factor in factors)
+    if layout.slots is not None:
+        seeds = _slot_seeds(factors, layout, 1.)
+        tangents = jax.vmap(lambda h: jax.jvp(transition, (state,), (h,))[1])(seeds)
+        return _slot_results(tangents, layout, factors[0].dtype if factors else jnp.float32)
 
     if layout.color_count == 1:
         hid_seeds = tuple(
@@ -201,6 +251,15 @@ def contract_factors(factors, cotangents, layout):
         raise ValueError('Factor and cotangent blocks must match sparse layout')
     dtype = jnp.result_type(*[f.dtype for f in factors]) if factors else jnp.float32
     result = jnp.zeros(len(layout.colors), dtype=dtype)
+    if layout.slots is not None:
+        for factor, cotangent, shape, (slots, _, valid) in zip(factors, cotangents, layout.shapes, _get_slot_tables(layout)):
+            if factor.shape != slots.shape or cotangent.shape != shape:
+                raise ValueError('Factor or cotangent shape does not match sparse layout')
+            if not slots.size:
+                continue
+            target = jnp.asarray(np.where(valid, slots, len(layout.colors)).reshape(-1))
+            result = result.at[target].add((factor*cotangent[..., None]).reshape(-1), mode='drop')
+        return result
     for factor, cotangent, shape, row in zip(factors, cotangents, layout.shapes, layout.outputs):
         if factor.shape != shape + (len(row),) or cotangent.shape != shape:
             raise ValueError('Factor or cotangent shape does not match sparse layout')
@@ -238,6 +297,14 @@ def advance_factors(transition, output, state, factors, layout, decay):
     """
     if not layout.color_count:
         return _zeros(layout, output.dtype)
+    if layout.slots is not None:
+        colors_np, out_mask_np, _ = _get_layout_precomputed(layout)
+        masks = out_mask_np if out_mask_np is not None else np.ones((1, len(colors_np)), dtype=bool)
+        out_seeds = (1.0-decay)*jnp.asarray(masks, dtype=output.dtype)
+        hidden_seeds = _slot_seeds(factors, layout, decay)
+        tangents = jax.vmap(lambda o, h: jax.jvp(transition, (output, state), (o, h))[1], in_axes=(0, 0))(
+            out_seeds, hidden_seeds)
+        return _slot_results(tangents, layout, output.dtype)
 
     if layout.color_count == 1:
         out_seed = (1.0 - decay) * jnp.ones_like(output)

@@ -1,0 +1,14 @@
+[2026-09-16T21:42:04Z] start fused-dt0005 --fused --dt-ms 0.005 --events 21 --profile-substep 5 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 
+[2026-09-16T21:43:23Z] end fused-dt0005 exit 0
+[2026-09-16T21:44:00Z] start percell-dt0005 --dt-ms 0.005 --events 21 --profile-substep 5 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 
+[2026-09-16T21:46:28Z] end percell-dt0005 exit 0
+[2026-09-16T21:46:28Z] start fused-pinned --fused --dt-ms 0.000625 --events 21 --profile-substep 5 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 
+[2026-09-16T21:48:06Z] end fused-pinned exit 0
+[2026-09-16T21:48:06Z] start percell-pinned --dt-ms 0.000625 --events 21 --profile-substep 5 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 
+[2026-09-16T21:52:59Z] end percell-pinned exit 0
+QUEUE2-DONE
+[2026-09-16T21:53:19Z] start fused-clone --fused --mutate clone --dt-ms 0.005 --events 3 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 
+[2026-09-16T21:54:29Z] end fused-clone exit 0
+[2026-09-16T21:54:29Z] start fused-learner --fused --dt-ms 0.005 --events 3 --learner --train-events 2 --train-steps 2 XLA_FLAGS=--xla_gpu_force_compilation_parallelism=8 
+[2026-09-16T21:56:28Z] end fused-learner exit 0
+QUEUE3-DONE

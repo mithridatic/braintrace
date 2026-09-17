@@ -189,14 +189,25 @@ def _backsub(diags, solves, lowers, indices):
     return res_v
 
 
-def _solve_raw(d, s, low, up, levels, jumps, edges, *, use_gpu=True):
-    """Use the tree solve with an exact implicit linear derivative on raw arrays."""
+def _solve_raw(d, s, low, up, levels, jumps, edges, *, use_gpu=True, forest=None):
+    """Use the tree solve with an exact implicit linear derivative on raw arrays.
+
+    ``forest`` is an optional ``(packs, roots)`` schedule from
+    :func:`h01_dhs_forest.build_schedule`; when given, the contraction runs once
+    over every tree of a fused population instead of the single-tree schedule.
+    """
     children_edges, parents_edges = edges[:, 0], edges[:, 1]
     children, parents, valid = levels
     low_c = low[children]
     up_c = up[children]
     contraction = None
-    if use_gpu and isinstance(edges, np.ndarray) and d.ndim == 2 and low.ndim == 1:
+    if forest is not None and d.ndim == 2 and low.ndim == 1:
+        from .h01_dhs_forest import solve as forest_solve
+        packs, roots = forest
+        contraction = ()
+        contracted_solve = lambda diagonal, right, lower, upper, _: forest_solve(   # noqa: E731
+            diagonal, right, lower, upper, packs, roots)
+    elif use_gpu and isinstance(edges, np.ndarray) and d.ndim == 2 and low.ndim == 1:
         from .h01_dhs_contraction import prepare, solve as contracted_solve
         contraction = prepare(edges, d.shape[-1]-1)
 
@@ -244,10 +255,10 @@ def _solve_raw(d, s, low, up, levels, jumps, edges, *, use_gpu=True):
     return jax.lax.custom_linear_solve(matvec, s, solve=solve, transpose_solve=transpose_solve)
 
 
-def _solve(diags, solves, lowers, uppers, levels, jumps, edges):
+def _solve(diags, solves, lowers, uppers, levels, jumps, edges, forest=None):
     """Use the original tree solve with an exact implicit linear derivative."""
     d, s, low, up = map(u.get_mantissa, (diags, solves, lowers, uppers))
-    result = _solve_raw(d, s, low, up, levels, jumps, edges)
+    result = _solve_raw(d, s, low, up, levels, jumps, edges, forest=forest)
     unit = u.get_unit(solves)/u.get_unit(diags)
     return u.Quantity(result, unit) if unit != u.UNITLESS else result
 
@@ -270,7 +281,8 @@ def _voltage_step(target, t, dt, *args):
         dt=dt, static_source=source, static_cache=cache,
         edge_point_current=original._edge_point_current(target, t=t, static_source=source))
     solution = _solve(numeric.diags, numeric.solves, numeric.lowers, numeric.uppers,
-                      levels, source.backsub_indices_np, source.edges_np)
+                      levels, source.backsub_indices_np, source.edges_np,
+                      forest=getattr(runtime, 'h01_dhs_forest', None))
     target.V.value = original._restore_midpoint_voltage(solution,
         dynamic_rows=source.dynamic_rows_np, target_shape=target.V.value.shape)
 

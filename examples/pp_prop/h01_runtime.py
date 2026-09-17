@@ -220,7 +220,8 @@ def topology_from_evidence(evidence, contact_audit, archive):
 
 
 def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
-                  max_cv_length_um=10., progress=None, environment_potassium=False, biology=None):
+                  max_cv_length_um=10., progress=None, environment_potassium=False, biology=None,
+                  fused=False, slots=1, contact_capacity=None, max_delay_ms=.5):
     """Build real selected cables and placed conductance contacts for a topology.
 
     Parameters
@@ -240,12 +241,28 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
         Declare external K pools; caller must bind chemistry after initialization.
     biology : H01SpatialManifest or dict or None, optional
         Explicit topology-pinned spine additions and contact-head assignments.
+    fused : bool, optional
+        Register the cells as one forest population
+        (``braintrace.datasets.h01_forest_cell.H01ForestCell``): every cell is
+        built and initialized as usual, then fused so that each mechanism runs
+        as one kernel over all compartments. Spec:
+        docs/specs/2026-09-16-h01-fused-population.md. Contacts are delivered
+        inside the forest (``h01_forest_delivery``) from each pre cell's output CV.
+    slots, contact_capacity, max_delay_ms : int, int or None, float, optional
+        Static capacity (spec section 3, fused only): ``slots`` copies of every
+        cell (slot 0 active, the rest dormant clone slots) and, when
+        ``contact_capacity`` is given, a fixed contact table delivered through
+        two shared soma synapses per cell (``h01_forest_contacts``) instead of
+        one BrainCell projection per contact; ``max_delay_ms`` bounds the delays
+        the table can hold. Mutations then write into the padding.
 
     Returns
     -------
     tuple
         BrainCell network and per-instance construction records. Initialization
-        is separate so its time and memory can be measured independently.
+        is separate so its time and memory can be measured independently; on the
+        fused path the source cells are initialized here and the forest in
+        ``init_state``. Records carry ``forest`` offsets when fused.
     """
     doc = topology.to_dict()
     manifest = None if biology is None else H01SpatialManifest(
@@ -279,7 +296,13 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
             record['biology_manifest_sha256'] = manifest.sha256
             record['declared_spine_origins'] = {row['identity']: row['origin']
                 for row in biological['cells'][identity]['spines']}
-    for identity in doc['active_contacts']:
+    static = fused and contact_capacity is not None
+    if static:
+        from braintrace.datasets.h01_forest_contacts import KINDS, contact_kind
+        for identity in doc['active_cells']:
+            source = doc['sources'][doc['instances'][identity]['source_id']]
+            _place_shared_synapses(cells[identity], assembled_location(records[identity], source['soma_site']), KINDS)
+    for identity in () if static else doc['active_contacts']:
         edge = doc['contacts'][identity]
         record = records[edge['post']]
         mapped_site = assembled_location(record, edge['post_site'])
@@ -308,13 +331,67 @@ def build_network(topology, archive, *, solver='h01_staggered_calcium_implicit',
                        {identity: assembled_location(records[identity], site)}, 0., emit)
         if manifest is not None:
             records[identity]['original_output_site'] = list(site)
-    for identity in doc['active_contacts']:
+    if fused:
+        network = _fuse_populations(network, doc, records, solver, emit, slots=slots,
+                                    contact_capacity=contact_capacity, max_delay_ms=max_delay_ms)
+    for identity in () if fused else doc['active_contacts']:
         edge, name = doc['contacts'][identity], 'syn_'+identity
         network.add_edges(name=name, pre='cell_'+edge['pre'], post='cell_'+edge['post'], method=pairs([(0, 0)]))
         network.add_projection(name=name, edges=name, synapse=name,
             weight=edge['initial_weight_us']*u.uS, delay=edge['delay_ms']*u.ms)
     release_shared_construction_data()
     return network, records
+
+
+def _place_shared_synapses(cell, site, kinds):
+    """Place the two static-capacity contact synapses at ``site`` (nearest CV midpoint)."""
+    from braintrace.datasets.h01_network import _nearest_cv
+    branch, x = site
+    bounds = cell.cv_policy.resolve_cv_bounds(cell.morpho)[int(branch)]
+    midpoints = [(lo+hi)/2. for lo, hi in bounds]
+    location = AtLocation(int(branch), midpoints[_nearest_cv(midpoints, x)])
+    for kind in kinds.values():
+        cell.place(location, Synapse('ExpSyn', name=kind['name'], e=kind['reversal_mv']*u.mV,
+                                     tau=kind['tau_ms']*u.ms, weight=1.*u.uS))
+
+
+def _fuse_populations(network, doc, records, solver, emit, *, slots=1, contact_capacity=None, max_delay_ms=.5):
+    """Initialize every registered cell and return a network with one forest population."""
+    from braintrace.datasets.h01_forest_cell import H01ForestCell
+    from braintrace.datasets.h01_forest_delivery import ForestContact
+    cells = []
+    for identity in doc['active_cells']:
+        cell = network.populations['cell_'+identity].cell
+        emit('Initializing source cell '+identity)
+        cell.init_state()
+        cells.append(cell)
+    forest = H01ForestCell(cells, solver=solver, slots=slots)
+    order = {identity: index for index, identity in enumerate(doc['active_cells'])}
+    if contact_capacity is None:
+        forest.contacts = tuple(ForestContact(pre=order[doc['contacts'][identity]['pre']], synapse='syn_'+identity,
+            weight_us=float(doc['contacts'][identity]['initial_weight_us']), delay_ms=float(doc['contacts'][identity]['delay_ms']))
+            for identity in doc['active_contacts'])
+    else:
+        from braintrace.datasets.h01_forest_contacts import contact_kind
+        if len(doc['active_contacts']) > int(contact_capacity):
+            raise ValueError('More active contacts than the static contact capacity')
+        rows = []
+        for identity in doc['active_contacts']:
+            edge = doc['contacts'][identity]
+            source = doc['sources'][doc['instances'][edge['post']]['source_id']]
+            if list(edge['post_site']) != list(source['soma_site']):
+                raise ValueError('Static contacts target the post soma only (spec section 3)')
+            rows.append(dict(identity=identity, pre=order[edge['pre']], post=order[edge['post']],
+                             kind=contact_kind(float(edge['reversal_mv']), float(edge['tau_ms'])),
+                             weight_us=float(edge['initial_weight_us']), delay_ms=float(edge['delay_ms'])))
+        forest.contact_spec = dict(capacity=int(contact_capacity), max_delay_ms=float(max_delay_ms), rows=rows)
+    for index, identity in enumerate(doc['active_cells']):
+        records[identity]['forest'] = dict(index=index, cv_offset=int(forest.forest_offsets.cv[index]),
+            point_offset=int(forest.forest_offsets.point[index]), soma_cv=int(forest.soma_cv_ids[index]),
+            output_cv=int(forest.output_cv_ids[index]), slots=int(slots))
+    fused = braincell.Network(name='h01_evolved_forest')
+    fused.add_population('forest', forest)
+    return fused
 
 
 def release_shared_construction_data():

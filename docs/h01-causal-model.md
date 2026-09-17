@@ -33,6 +33,7 @@ without supplying a complete explanation of a human-model difference.
 | B3 fires too often at low input and rises too fast at every input | The recording is read at a pipette through a bridge, a neutralisation and an acquisition filter, the model at its membrane; measured from the recording's own step edges and noise floor, that chain takes 3 to 11 percent off a rise and a tenth of a millivolt off a threshold, so the fit's spike-1 rise of 639 V/s reads 570 to 615 against the recorded 348 and the rise stays the largest element, 135 to 162 repeat spreads. Rise rate falls as membrane load rises. Although the cable load contributes, at the recorded cell's own load it covers about a tenth of the rise difference and cannot supply the count. The recorded cell's take-off is set by the trajectory that reaches it: it falls as the approach quickens and rises after a spike. The fit's somatic take-off is one voltage at every approach and every spike, but at its initiation site, 45 um down a 1 um stub, the take-off slides with the approach by the recorded amount; the soma reads the arrival of that spike at one voltage. Thickening the stub alone, every channel held, makes the fit's somatic take-off slide with the approach by the recorded amount (-2.1 to -3.4 mV against the recorded -2.2), so the approach signature is a matter of the coupling between the soma and the site, an input, and not of a channel; in every dose tested the coupling also took the onset outside the recorded band, least at twice the stub's diameter with the density held, so the split did not separate the reading of the spike from the spike itself. Every lever that only changes the somatic inward current is a rise lever in this fit: on the thickened geometry the somatic sodium density moves the rise (655 to 505 V/s from 0.9 to 0.5) without moving the take-off or the count, but the recorded rise lies below the range read. What a spike leaves behind is a per-spike step: +1.9 mV in full after one spike, not recovering measurably within 0.73 s and gone within 2.7 s, with no counterpart at either site. The base is not the family for the rise: a second, independently fitted human L2/3 model (Toronto HL23PYR) rises at 600 V/s through the chain like B3, and the two share only their sodium equations; it does produce the first-interval threshold step (+1.4 mV) that B3 lacks, though not the accumulation that follows it. See Y4. |
 | Historical component develops invalid calcium | Its frozen-current update produces negative calcium, making the next Nernst evaluation invalid. An implicit update repairs that route, but does not repair extreme voltage or qualify anatomy. See Y5. |
 | Population runtime, functional inhibition, and additional donor mismatches | Construction, delivery, or count discrepancies alone do not explain these outcomes. The required response or isolating evidence remains missing. See Y5 and Y6. |
+| Coarser cable timesteps move every state variable first-order in dt | Every spike is reproduced and shifted <= 0.064 ms at dt 0.005, and every gate, calcium and synaptic state differs from the pinned step by 1.4-1.8x its own dt-half difference; the slow non-resetting states (calcium, SK z, Ca_HVA h, Nap h) drift to the end of the window. Not an artefact of any one variable: the pinned 0.000625 ms stays. See Y5, "Population execution cost and the cable timestep". |
 
 For each account below, **conditions** define the tested boundary; **mechanism**
 connects states and currents to behavior; **test** names the discriminating evidence;
@@ -782,6 +783,64 @@ Evidence: [ledger](evidence/h01-population-accuracy-ledger.md),
 [forward pass](evidence/h01-arc-probe-104.json),
 [timestep ladder](evidence/h01-ready-cell7196644737-implicit-decision.json),
 [anatomy transfer](evidence/h01-e-morphology/stage-1-decision.json).
+
+### Population execution cost and the cable timestep (2026-09-16)
+
+**Established.** The 17-cell Example 21 runtime was launch-bound: each cell was its own
+BrainCell population, so one cable substep issued 17 kernel sets (5,104 stream launches,
+136 while loops) and the device did 12.7 M compartment-updates per second. One forest
+population (`H01ForestCell`: the 17 discretizations concatenated, one runtime node per
+mechanism with per-point donor parameters, one axial contraction over the forest) runs the
+same equations with the same parameters at every compartment: soma voltages agree with the
+per-cell path to 7e-10 mV over 21 events at both timesteps, and the substep issues 327
+launches in 8 while loops. Forward cost fell from 0.180 to at most 0.129 s per event at
+dt 0.005 (measured under GPU contention); compiles fell 6-10x. The remaining substep time
+is the per-mechanism channel kernels, still unattributed behind command buffers.
+
+**Established.** Across a 40 ms window in which every kept cell fires, coarser cable
+timesteps reproduce every spike count and shift each spike first-order in dt (<= 0.064,
+0.029, 0.0087 ms at dt 0.005, 0.0025, 0.00125). A pointwise 1 mV band across a spike
+upstroke is a spike-time band of about 3 us, which none of those timesteps meets; the pinned
+0.000625 ms remains the session default.
+
+**Established (2026-09-17, every state variable).** With the same network (kept manifest plus
+three synthetic E contacts) run in lockstep at dt 0.000625, 0.005, 0.0025 and 0.00125 and
+every floating-point state compared element by element every 0.005 ms (membrane voltage,
+every gate of every mechanism, intracellular calcium, the synaptic conductances and
+currents, the axial term of dV/dt), every variable converges first-order in dt: between
+spikes and at the end of the 40 ms window, the dt 0.005-against-0.000625 difference is
+1.42-1.78x the dt 0.005-against-0.0025 difference on all 22 quantities (V 2.98 against
+1.71 mV; calcium 7.7e-6 against 5.2e-6 mM; SK z 9.9e-3 against 6.6e-3; NaTs m 4.7e-2 against
+3.3e-2), and the slow variables that do not reset on a spike (calcium, SK z, Ca_HVA h, Nap h)
+carry their maximum at the end of the window. The rule put to the ladder was "dt 0.005
+becomes the default only if no variable drifts between spikes beyond its dt-half
+difference"; every variable does, so the pinned 0.000625 ms stays the session default and
+the kept manifest is unchanged. Per-variable, per-site traces with the raw difference in the
+variable's own units are the record; the +-1 ms spike mask leaves the AHP tail of a shifted
+spike in the between-spike column (the 2.98 mV on V sits 1.2 ms after a spike), which bounds
+that column from above and does not move the ratio.
+
+**Established (2026-09-17).** Contacts deliver inside the forest (one delivery block per
+contact on the fused spike at the pre cell's output compartment): the 17 cells with three
+synthetic E contacts agree with the per-cell path to 2.2e-6 mV over 33 spikes at the pinned
+timestep, spike counts and times identical; three synthetic cells with one E and one I contact
+agree to 3.9e-14 mV. The pp-prop learner runs on the forest at the per-cell eligibility size
+once the sparse layout is told the per-cell block structure (`forest_offsets`; 26.8 MB and
+one colour at 17 cells, 53.5 MB at 34, gradients equal to the per-cell learner to 1.4e-17), and
+pre-provisioned clone slots plus a fixed contact table give a substep whose launches (339)
+and compiled program do not change under a clone or a new contact (0 recompiles after
+mutation), at the cost of integrating every laid-out slot whether active or not.
+
+**Not established.** The uncontended fused timing and the spiking-window gate on the fused
+path (the keep chains still share the device); the per-mechanism channel kernels behind
+the command buffers (one kernel for all of them); the session-level in-place mutation
+(`H01Session.mutate` still rebuilds from the topology); the factor width of a deep contact
+chain on the segmented layout (7 colours for a 3-deep chain).
+
+Evidence: [fused population profile](evidence/h01-fused-population-profile.md),
+[fused population steps](evidence/h01-fused-population-steps.md),
+[dt spike window](evidence/h01-dt-spike-window.md),
+[spec](specs/2026-09-16-h01-fused-population.md).
 
 ## Y6. Additional donor fits do not reproduce all recorded counts
 

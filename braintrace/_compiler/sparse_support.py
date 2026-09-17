@@ -135,7 +135,7 @@ def _evaluate(closed, args):
     return [read(var) for var in program.outvars]
 
 
-def analyze_transition(transition, output, state, *, max_bytes=2**30):
+def analyze_transition(transition, output, state, *, max_bytes=2**30, structure=None):
     """Infer conservative sparse factors from the actual transition program.
 
     Parameters
@@ -148,6 +148,9 @@ def analyze_transition(transition, output, state, *, max_bytes=2**30):
         Floating-point recurrent state samples, including cable and delay state.
     max_bytes : int, optional
         Maximum output-factor storage, checked after temporal support closure.
+    structure : tuple, optional
+        ``(blocks, output_labels)`` segment declaration for
+        :meth:`SparseInfluence.build_segmented`; ``None`` keeps whole blocks.
 
     Returns
     -------
@@ -165,6 +168,32 @@ def analyze_transition(transition, output, state, *, max_bytes=2**30):
     """
     if output.ndim != 1 or any(not np.issubdtype(v.dtype, np.inexact) for v in (output, *state)):
         raise ValueError('Sparse transition needs a flat output and floating-point state arrays')
+    shapes, seeds, parents, itemsize = analyze_dependencies(transition, output, state)
+    if structure is not None:
+        blocks, output_labels = structure
+        return SparseInfluence.build_segmented(shapes, seeds, parents, blocks, output_labels,
+            output_size=output.size, itemsize=itemsize, max_bytes=max_bytes)
+    return SparseInfluence.build(shapes, seeds, parents, output_size=output.size,
+                                  itemsize=itemsize, max_bytes=max_bytes)
+
+
+def analyze_dependencies(transition, output, state):
+    """Block-level instantaneous and temporal dependencies of a transition.
+
+    Parameters
+    ----------
+    transition, output, state
+        As for :func:`analyze_transition`.
+
+    Returns
+    -------
+    tuple
+        ``(shapes, seeds, parents, itemsize)``: state block shapes, the ETP
+        output positions that reach each block within one transition, the
+        blocks whose entry value reaches each block, and the factor item size.
+    """
+    if output.ndim != 1 or any(not np.issubdtype(v.dtype, np.inexact) for v in (output, *state)):
+        raise ValueError('Sparse transition needs a flat output and floating-point state arrays')
     program = jax.make_jaxpr(transition)(output, state)
     shapes = tuple(tuple(value.shape) for value in state)
     if tuple(tuple(var.aval.shape) for var in program.jaxpr.outvars) != shapes:
@@ -176,5 +205,4 @@ def analyze_transition(transition, output, state, *, max_bytes=2**30):
     seeds = [{i for i in range(n) if value.union & (1 << i)} for value in support]
     parents = [{i for i in range(len(state)) if value.union & (1 << (n+i))} for value in support]
     itemsize = max(np.dtype(value.dtype).itemsize for value in (output, *state))
-    return SparseInfluence.build(shapes, seeds, parents, output_size=n,
-                                  itemsize=itemsize, max_bytes=max_bytes)
+    return shapes, seeds, parents, itemsize

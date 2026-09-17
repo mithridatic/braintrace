@@ -266,10 +266,20 @@ def model_optimizer(model, parameters, *, inherited_slots=None):
     """
     populations = list(model.stepper.network.populations)
     count = model.neuron_count
-    contacts = [(block.source.synapse, block.source.pre_population, block.source.post_population)
-                for block in model.stepper.setup.delivery_blocks]
-    slots = contact_slots(contacts, inherited_slots)
-    coords = [(slots[key], populations.index(pre), populations.index(post)) for key, pre, post in contacts]
+    table = getattr(model, 'contact_table', None)
+    if table is not None:
+        # Static capacity: one plane coordinate per table row; dormant rows sit at (0, 0)
+        # on their own planes so the recurrent parameter keeps its fixed length.
+        cells = {row: (int(np.asarray(table.pre.value)[row]), int(table.post_cell(model.forest, row)))
+                 for row in table.rows}
+        contacts = [(f'static-row-{row}', *cells.get(row, (0, 0))) for row in range(table.capacity)]
+        slots = contact_slots(contacts, inherited_slots)
+        coords = [(slots[key], pre, post) for key, pre, post in contacts]
+    else:
+        contacts = [(block.source.synapse, block.source.pre_population, block.source.post_population)
+                    for block in model.stepper.setup.delivery_blocks]
+        slots = contact_slots(contacts, inherited_slots)
+        coords = [(slots[key], populations.index(pre), populations.index(post)) for key, pre, post in contacts]
     recurrent = EdgeLayout((max(slots.values(), default=0)+1, count, count),
                            np.asarray(coords, dtype=int).reshape(-1, 3))
     from .h01_remap import encoder_keys

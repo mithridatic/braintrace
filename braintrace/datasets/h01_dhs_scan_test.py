@@ -143,3 +143,40 @@ def test_circuit_events_and_conductance_match_original(imported):
             np.testing.assert_allclose(a.traces[role][name].to_decimal(unit), b.traces[role][name].to_decimal(unit),
                 rtol=1e-10, atol=1e-9)
     assert np.asarray(a.traces["E"]["synaptic_conductance"].to_decimal(u.uS)).max() > 0
+
+
+def test_forest_schedule_solves_two_trees_like_the_dense_oracle():
+    """``_solve(..., forest=)`` runs the fused-population contraction with exact gradients."""
+    from .h01_dhs_forest import build_schedule
+    from .h01_dhs_scan import _prepare_levels, _solve
+    parent = [0, 0, 1, 1, 4, 4, 5, 5, 4]   # rows 0-3 one tree, rows 4-8 a second tree rooted at 4
+    n = len(parent)
+    edges = np.asarray([(c, p) for c, p in enumerate(parent) if c != p], dtype=np.int32)
+    depth = np.zeros(n, dtype=int)
+    for child in range(n):
+        if parent[child] != child:
+            depth[child] = depth[parent[child]]+1
+    levels_np = [np.flatnonzero(depth == d) for d in range(int(depth.max()), 0, -1)]
+    ordered = np.asarray([(c, parent[c]) for level in levels_np for c in level], dtype=np.int32)
+    offsets = np.r_[0, np.cumsum([len(level) for level in levels_np])].astype(np.int32)
+    lookup = np.asarray([p if p != c else n for c, p in enumerate(parent)]+[n], dtype=np.int32)
+    jumps = original._build_backsub_indices(lookup, n_nodes=n)
+    forest = build_schedule(edges, n)
+    with brainstate.environ.context(precision=64):
+        levels = _prepare_levels(ordered, offsets, n)
+        d = jnp.linspace(2., 3., n+1)[None]
+        rhs = jnp.arange(n+1, dtype=float)[None]/10
+        low = jnp.array([0., -.1, -.2, -.1, 0., -.3, -.2, -.1, -.25, 0.])
+        up = 1.3*low
+        def sparse(d, rhs, low, up):
+            return _solve(d, rhs, low, up, levels, jumps, ordered, forest=forest)
+        def dense(d, rhs, low, up):
+            matrix = jnp.diag(d[0]).at[edges[:, 0], edges[:, 1]].set(low[edges[:, 0]])
+            matrix = matrix.at[edges[:, 1], edges[:, 0]].set(up[edges[:, 0]])
+            return jnp.linalg.solve(matrix, rhs.T).T
+        args = (d, rhs, low, up)
+        np.testing.assert_allclose(sparse(*args), dense(*args), rtol=1e-13, atol=1e-13)
+        actual = jax.jacrev(sparse, argnums=(1, 2))(*args)
+        expected = jax.jacrev(dense, argnums=(1, 2))(*args)
+        for a, e in zip(actual, expected):
+            np.testing.assert_allclose(a, e, rtol=1e-12, atol=1e-12)

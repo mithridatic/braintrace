@@ -1,0 +1,186 @@
+{
+  "status": "pass",
+  "arm": "pinned",
+  "settings": {
+    "dt_ms": 0.000625,
+    "substeps": 160,
+    "window_ms": 40.0,
+    "events": 400,
+    "pulse_delay_ms": 2.0,
+    "currents": "docs/evidence/h01-keep-drop/kept-currents.json",
+    "precision": 64,
+    "manifest": "docs/evidence/h01-keep-drop/arc-manifest/manifest.json"
+  },
+  "stages": {
+    "manifest_load": 0.0028048884123563766,
+    "archive_open": 0.07054220139980316,
+    "build_network": 21.19240395259112,
+    "init_state": 26.260689133778214,
+    "model_setup": 2.4423440266400576,
+    "first_event_compile_and_run": 50.01629498321563
+  },
+  "cells": [
+    "3761379470",
+    "5173982155",
+    "5013648003",
+    "2001418787",
+    "3571083397",
+    "4010150634",
+    "4197933517",
+    "6833911543",
+    "5439194879",
+    "4437316933",
+    "3111823553",
+    "1669770671",
+    "751294744",
+    "2252715458",
+    "1684504313",
+    "2848552900",
+    "2103991145"
+  ],
+  "current_na": [
+    0.09,
+    0.31,
+    0.31,
+    0.09,
+    0.31,
+    0.09,
+    0.31,
+    0.31,
+    0.09,
+    0.31,
+    0.31,
+    0.31,
+    0.31,
+    0.31,
+    0.31,
+    0.31,
+    0.31
+  ],
+  "compartments": 107537,
+  "forward": {
+    "events": 400,
+    "seconds_per_event_median": 5.5549573339521885,
+    "total_seconds": 2176.4838118916377
+  },
+  "soma_min_mv": -84.0446241344161,
+  "soma_max_mv": 44.68583808468004,
+  "finite": true,
+  "spikes": {
+    "3761379470": {
+      "soma_crossings": [
+        21.56625
+      ],
+      "output_site_events": 1
+    },
+    "5173982155": {
+      "soma_crossings": [
+        12.021875,
+        26.505625000000002
+      ],
+      "output_site_events": 2
+    },
+    "5013648003": {
+      "soma_crossings": [
+        12.41125,
+        22.838125
+      ],
+      "output_site_events": 2
+    },
+    "2001418787": {
+      "soma_crossings": [
+        26.63625
+      ],
+      "output_site_events": 1
+    },
+    "3571083397": {
+      "soma_crossings": [
+        17.625,
+        34.28875
+      ],
+      "output_site_events": 2
+    },
+    "4010150634": {
+      "soma_crossings": [
+        38.035625
+      ],
+      "output_site_events": 1
+    },
+    "4197933517": {
+      "soma_crossings": [
+        15.113125,
+        30.8975
+      ],
+      "output_site_events": 2
+    },
+    "6833911543": {
+      "soma_crossings": [
+        15.590625000000001,
+        28.74125
+      ],
+      "output_site_events": 2
+    },
+    "5439194879": {
+      "soma_crossings": [
+        37.198125
+      ],
+      "output_site_events": 1
+    },
+    "4437316933": {
+      "soma_crossings": [
+        17.77625,
+        25.62375,
+        35.29625
+      ],
+      "output_site_events": 3
+    },
+    "3111823553": {
+      "soma_crossings": [
+        11.611875,
+        21.2525
+      ],
+      "output_site_events": 2
+    },
+    "1669770671": {
+      "soma_crossings": [
+        15.93875,
+        24.7375,
+        38.04
+      ],
+      "output_site_events": 3
+    },
+    "751294744": {
+      "soma_crossings": [
+        26.40875,
+        37.938125
+      ],
+      "output_site_events": 2
+    },
+    "2252715458": {
+      "soma_crossings": [
+        17.073125,
+        26.504375
+      ],
+      "output_site_events": 2
+    },
+    "1684504313": {
+      "soma_crossings": [
+        26.59
+      ],
+      "output_site_events": 1
+    },
+    "2848552900": {
+      "soma_crossings": [
+        22.69875,
+        36.445
+      ],
+      "output_site_events": 2
+    },
+    "2103991145": {
+      "soma_crossings": [
+        26.404375
+      ],
+      "output_site_events": 1
+    }
+  }
+}
