@@ -132,51 +132,59 @@ rows in a different order) and identical spike counts. Unit test: two synthetic 
 cells with different densities -> forest voltages equal the per-cell voltages to 1e-12 mV
 over 100 substeps; the same with one contact.
 
-Cloning: a clone adds no kernel launches (the fused kernels are over all points already);
-it still changes array shapes until lever 3, so it recompiles once per mutation as today.
+Contacts on the fused path (implemented, `h01_forest_delivery.py`): one BrainCell
+`DeliveryBlock` per contact whose target is the contact's placed synapse layout in the forest;
+the presynaptic spike is the forest spike at the pre cell's output CV, the same value
+`population_spike` returns for that cell on the per-cell path. Ring buffers, arrivals and the
+model's trainable magnitudes are the per-cell code. Parity: 0 / 3.9e-14 mV on the synthetic
+pair, 2.2e-6 mV on the 17 cells with 3 synthetic contacts over 33 spikes.
 
-## 3. Lever 3: static capacity (no recompile per mutation)
+Learner on the forest (implemented): the sparse pp-prop layout gets a declared segmentation
+(`SparseInfluence.build_segmented`, `model.sparse_structure`): the block-level program analysis
+still decides which blocks and ETP outputs interact; the model declares that cable blocks split
+per cell at `forest_offsets` and that each contact's ring buffer reads `{pre, contact}` and
+feeds `{post, contact}`, its synapse states `post`. Segments and blocks carry `(reads, feeds)`
+ports; a parent reaches a child only where feeds meet reads. Factors are stored per position
+through a slot table; JVP colours are the per-cell conflict structure. On the 17 cells the
+layout is element-for-element the per-cell one (3,344,642 / 26.8 MB / 1 colour; 27.2 MB at 18
+cells, 53.5 MB at 34: 1.57 MB per cell, the 512 MB limit at about 325 cells) and the
+gradients equal the per-cell learner's (1.4e-17 on `input`, 0 elsewhere). A changed contact
+graph needs a learner recompile (`sparse_structure_signature`); a clone into a declared slot
+does not.
 
-Capacity is set once from the evolve caps: `max_neurons` (4,096) -> compartment capacity
-`C_cv` = `max_neurons x mean compartments per source cell` rounded up to a multiple of 1,024,
-point capacity `C_pt` likewise, and `max_recurrent_edges` (65,536) -> contact capacity
-`C_syn`. The forest is allocated at capacity from the start: padded CVs are isolated
-(no edges, DHS row `diag=1, lowers=uppers=0, solve=0`, the existing sentinel treatment),
-`g_max=0` on every channel, `cm` and `area` positive so `I/C` is finite, `V` at rest, masked
-out of spike output, probes and readout. Every array a mutation writes becomes runtime
-input instead of a traced constant:
+## 3. Lever 3: static capacity (implemented as pre-provisioned slots)
 
-- `H01ForestState`: per-point parameter vectors (`g_max`, `E`, phase factors, `h_slope`,
-  calcium constants), `C`, `cv_area`/`point_area`, the DHS pack (`diag`, `lowers`, `uppers`,
-  contraction stage tables, backsub jumps, `dynamic_rows`, `row_capacitance`), the clamp
-  points, `soma_cv_ids`, `output_cv_ids` and the active masks, all held as
-  `brainstate.ShortTermState`s of fixed shape. The H01 channel classes (`_PVChannel`,
-  `_L2Channel`, `PVCalcium`, and `H01SodiumFixed`/`H01PotassiumFixed` registered in this repo)
-  read their parameters through properties backed by those states, so a write is a device
-  `.at[].set` and the compiled step is unchanged. Contraction stage tables are padded to
-  capacity width per stage with sentinel entries (`valid=False`, parent = sentinel).
-- Contacts (`h01_forest_delivery.py`): one table of `C_syn` rows (`pre_cell`, `post_point`,
-  `delay_substeps`, `weight`, `reversal`, `tau`, `active`) and one ring buffer
-  `(max_delay_substeps, C_syn)`; per substep: gather pre-cell spikes -> enqueue at the delay
-  slot -> pop the current slot -> segment-add the conductance jumps onto the post points of
-  one `ExpSyn` layout of `C_syn` active points; masked rows deliver zero. This replaces the
-  `braincell` network delivery blocks (which allocate per contact and per population) for the
-  fused path only. `H01ArcModel.recurrent_weight` is the `weight` column (capacity length,
-  masked), so the learner's parameter shapes are fixed too.
-- `clone(parent)`: copy the parent's compartment rows (`cv_offset .. +n_cv`) and point rows
-  into the next free rows of every state, add the offset to the copied edge endpoints in the
-  stage tables and the backsub jumps, append the clone's soma/output/clamp ids, mark active.
-  `add_contact`: write one contact row. `prune`: clear the active flag. Zero kernel launches
-  are added, zero recompiles happen: checked by `jax.log_compiles` around one forward event
-  after each mutation (0 compile messages) and by the per-substep launch count before/after
-  a clone (equal). `H01Topology`/`H01Session.mutate` still produce the child topology and the
-  checkpoint; the fused runtime applies the mutation in place instead of rebuilding.
+Rather than padding compartment arrays with anonymous rows and re-parameterising them at
+clone time, every source cell is laid out `slots` times (`H01ForestCell(cells, slots=K)`,
+`build_network(fused=True, slots=K, contact_capacity=C)`): slot 0 is active, the other slots
+are dormant copies of the same anatomy, parameters and initial state, integrated every
+substep and masked out of the drive, the spike output and the readout by the forest's
+`active` state. A clone (`H01ArcModel.clone(parent)`) activates the next dormant slot of the
+parent's source cell in place. Contacts live in `ForestContactTable` (`h01_forest_contacts.py`):
+two shared BrainCell synapses per cell at the soma (`contact_exc` 0 mV / 2 ms, `contact_inh`
+-80 mV / 5 ms, the two kinds `H01Topology.add_contact` creates; anatomical contacts must be
+one of them and target the post soma), a table of `C` rows (pre cell, target point, kind,
+delay, weight, active; all states) and one ring buffer `(depth, C)`; `add_contact(pre, post,
+kind)` writes one row. Mutations write through the host with the array's device placement
+preserved (`host_write`), so the jitted step keeps its input signature. `H01ArcModel.
+recurrent_weight` is the table's weight column (length `C`, dormant rows zero gradient), the
+encoder and readout span all `N x K` cells (dormant rows masked, zero gradient), and the
+segmented learner declares the table's rows as ring-buffer segments.
 
-Gate: the lever 2 gate on the padded forest (identical voltages to the unpadded forest, max
-|dV| <= 1e-9 mV), plus: after `clone`, the clone's soma trace equals its parent's under the
-same drive to 1e-9 mV; after `add_contact` with weight 0 nothing changes; the padded-capacity
-forward event costs no more than 1.1x the unpadded one at 17 cells (masked rows are real
-rows: this is the price of static shapes; capacity is sized to the evolve caps, not more).
+What this buys and costs: zero recompiles and constant launches per substep for any clone
+or contact within capacity (measured: 337-339 launches at 17, 17+1 and 34 cells; 0 compiles
+after mutation), at the price that the substep always integrates every slot (34 laid out
+costs what 34 active costs: 0.225 s/event against 0.103 s at 17, dt 0.005). Capacity is a
+setting per run, not the evolve caps (4,096 cells would be 26 M compartments, 15 GB of
+state). Not done: `H01Session.mutate` still rebuilds from the topology; the in-place path is
+reachable at the model level and needs the session/checkpoint integration (remap of the
+optimizer state is unnecessary when shapes do not change, so that integration is smaller
+than the current one).
+
+Gate (met): static forest against BrainCell per-population projections 1e-12 mV; dormant
+copies equal their source; after `activate` + one table write the jitted substep and the
+jitted ARC event run with 0 XLA compiles and unchanged shapes; model forward and gradients
+equal the per-cell model (chain 0 -> 1 -> 2).
 
 ## 4. Lever 4: precision 32 (later, its own check)
 
