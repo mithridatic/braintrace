@@ -484,7 +484,7 @@ def _plot(args):
             axes[0, 0].legend(fontsize=7)
             axes[-1, 0].set_xlabel('ms')
             fig.suptitle(f'{identity}: {pair[0]} against {pair[1]}, overlay and raw difference (own units)', fontsize=10)
-            fig.tight_layout()
+            fig.tight_layout(rect=(0, 0, 1, .995))
             fig.savefig(args.plots/f'{identity}-{pair[0]}-vs-{pair[1]}.png', dpi=110)
             plt.close(fig)
     if contact_names:
