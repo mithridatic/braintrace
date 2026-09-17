@@ -462,7 +462,7 @@ def _plot(args):
             # Two rows per variable: the overlay (reference solid, coarse dashed) and, under it on
             # its own axis, the raw difference coarse minus reference in the variable's own unit.
             fig, axes = plt.subplots(2*len(names), 3, figsize=(15, 2.6*len(names)), sharex=True, squeeze=False,
-                                     gridspec_kw=dict(height_ratios=[2, 1]*len(names), hspace=.08))
+                                     gridspec_kw=dict(height_ratios=[2, 1]*len(names)))
             for row, name in enumerate(names):
                 unit = report["variables"][name]["unit"]
                 for col, site in enumerate(('soma', 'ais', 'distal')):
