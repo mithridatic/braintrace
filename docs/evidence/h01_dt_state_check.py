@@ -459,24 +459,28 @@ def _plot(args):
     args.plots.mkdir(parents=True, exist_ok=True)
     for identity in args.cells or report['cells']:
         for pair in [tuple(p) for p in report['settings']['pairs']]:
-            fig, axes = plt.subplots(len(names), 3, figsize=(15, 2.2*len(names)), sharex=True, squeeze=False)
+            # Two rows per variable: the overlay (reference solid, coarse dashed) and, under it on
+            # its own axis, the raw difference coarse minus reference in the variable's own unit.
+            fig, axes = plt.subplots(2*len(names), 3, figsize=(15, 2.6*len(names)), sharex=True, squeeze=False,
+                                     gridspec_kw=dict(height_ratios=[2, 1]*len(names), hspace=.08))
             for row, name in enumerate(names):
+                unit = report["variables"][name]["unit"]
                 for col, site in enumerate(('soma', 'ais', 'distal')):
                     index = order.index((identity, site))
-                    ax = axes[row, col]
+                    ax, diff_ax = axes[2*row, col], axes[2*row+1, col]
                     a = sites[f'{pair[1]}/{name}'][:, index]
                     b = sites[f'{pair[0]}/{name}'][:, index]
                     ax.plot(time_ms, a, lw=.8, label=str(pair[1]))
                     ax.plot(time_ms, b, lw=.8, ls='--', label=str(pair[0]))
-                    twin = ax.twinx()
-                    twin.plot(time_ms, b-a, lw=.6, color='crimson', alpha=.7)
-                    twin.set_ylabel('diff', color='crimson', fontsize=7)
-                    twin.tick_params(labelsize=6)
+                    diff_ax.plot(time_ms, b-a, lw=.6, color='crimson')
+                    diff_ax.axhline(0., lw=.4, color='gray')
                     if row == 0:
                         ax.set_title(f'{identity} {site} (cv {report["sites"][identity][site]}, {report["sites"][identity]["distance_um"][site]:.0f} um)', fontsize=8)
                     if col == 0:
-                        ax.set_ylabel(f'{name} [{report["variables"][name]["unit"]}]', fontsize=7)
+                        ax.set_ylabel(f'{name} [{unit}]', fontsize=7)
+                        diff_ax.set_ylabel(f'{pair[0]} - {pair[1]} [{unit}]', color='crimson', fontsize=6)
                     ax.tick_params(labelsize=6)
+                    diff_ax.tick_params(labelsize=6)
             axes[0, 0].legend(fontsize=7)
             axes[-1, 0].set_xlabel('ms')
             fig.suptitle(f'{identity}: {pair[0]} against {pair[1]}, overlay and raw difference (own units)', fontsize=10)
