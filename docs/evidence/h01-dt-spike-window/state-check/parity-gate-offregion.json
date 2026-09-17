@@ -1,0 +1,146 @@
+{
+  "calcium.Ci": {
+    "differing_positions": 0,
+    "max_diff": 3.760353302611347e-14,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "calcium.pv_Ca_HVA.h": {
+    "differing_positions": 0,
+    "max_diff": 3.59856588971752e-11,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "calcium.pv_Ca_HVA.m": {
+    "differing_positions": 557,
+    "max_diff": 1.4984843588194963e-08,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 68,
+    "differing_inside_percell_region": 68,
+    "max_diff_inside_any_region": 1.0649721993161165e-08,
+    "max_diff_outside_both": 1.4984843588194963e-08
+  },
+  "calcium.pv_Ca_LVA.h": {
+    "differing_positions": 0,
+    "max_diff": 8.051360966820909e-11,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "calcium.pv_Ca_LVA.m": {
+    "differing_positions": 0,
+    "max_diff": 5.084172638447626e-09,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "pv_Ih.m": {
+    "differing_positions": 0,
+    "max_diff": 9.69477415013742e-11,
+    "forest_region_points": 87735,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "potassium.pv_Im.m": {
+    "differing_positions": 131,
+    "max_diff": 1.6583788564616952e-08,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 1.6583788564616952e-08
+  },
+  "potassium.pv_K_P.h": {
+    "differing_positions": 0,
+    "max_diff": 6.338685132334376e-11,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "potassium.pv_K_P.m": {
+    "differing_positions": 0,
+    "max_diff": 2.794354969637425e-09,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "potassium.pv_K_T.h": {
+    "differing_positions": 0,
+    "max_diff": 1.7308472433086308e-09,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "potassium.pv_K_T.m": {
+    "differing_positions": 0,
+    "max_diff": 6.4608745020677816e-09,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "potassium.pv_Kv3_1.m": {
+    "differing_positions": 82256,
+    "max_diff": 0.005384249612689018,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.005384249612689018
+  },
+  "potassium.pv_SK.z": {
+    "differing_positions": 0,
+    "max_diff": 7.614145425272056e-12,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "sodium.pv_NaTs.h": {
+    "differing_positions": 0,
+    "max_diff": 2.509539021033902e-09,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  },
+  "sodium.pv_NaTs.m": {
+    "differing_positions": 95269,
+    "max_diff": 0.2309972643852234,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 82,
+    "differing_inside_percell_region": 82,
+    "max_diff_inside_any_region": 2.054942171980656e-08,
+    "max_diff_outside_both": 0.2309972643852234
+  },
+  "sodium.pv_Nap.h": {
+    "differing_positions": 0,
+    "max_diff": 1.6877277353444242e-11,
+    "forest_region_points": 1965,
+    "differing_inside_forest_region": 0,
+    "differing_inside_percell_region": 0,
+    "max_diff_inside_any_region": 0.0,
+    "max_diff_outside_both": 0.0
+  }
+}
