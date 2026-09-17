@@ -1,0 +1,124 @@
+{
+  "block": {
+    "advancing_events_from_cursor_0": 35648,
+    "floor_advancing_events": 24704,
+    "floor_seconds": 326105.3847939605,
+    "updates": 128
+  },
+  "cap_seconds": 3600.0,
+  "config": {
+    "max_checkpoint_bytes": 33554432,
+    "max_neurons": 4096,
+    "max_recurrent_edges": 65536,
+    "operations_per_stage": 1,
+    "optimizer": "muon",
+    "patience": 1,
+    "rounds": 1,
+    "screen_tasks": 2,
+    "updates": 128
+  },
+  "corpus": {
+    "advancing_events": 116128,
+    "max_advancing_per_query": 705,
+    "mean_advancing_per_query": 279.15384615384613,
+    "min_advancing_per_query": 193,
+    "queries": 416,
+    "tasks": 400
+  },
+  "costs": {
+    "fixed_seconds": 497.20272340718657,
+    "forward_seconds_per_event": 1.3567346297204494,
+    "learner_seconds_per_event": 13.18038301775232
+  },
+  "first_round_seconds": 2819327.5332524776,
+  "largest_score_tasks_under_cap": 8,
+  "schema": "example21-event-budget-v1",
+  "scope": {
+    "score_tasks": 400,
+    "screen_tasks": 2
+  },
+  "stages": [
+    {
+      "events": 116128,
+      "fits_cap": false,
+      "scoring_events": 116128,
+      "scoring_queries": 416,
+      "seconds": 158052.08180358354,
+      "stage": "initialize",
+      "update_events": 0,
+      "updates": 0
+    },
+    {
+      "events": 151776,
+      "fits_cap": false,
+      "scoring_events": 116128,
+      "scoring_queries": 416,
+      "seconds": 627906.3756204182,
+      "stage": "train",
+      "update_events": 35648,
+      "updates": 128
+    },
+    {
+      "events": 770,
+      "fits_cap": true,
+      "scoring_events": 770,
+      "scoring_queries": 2,
+      "seconds": 1541.8883882919326,
+      "stage": "round-screen",
+      "update_events": 0,
+      "updates": 0
+    },
+    {
+      "events": 36482,
+      "fits_cap": false,
+      "scoring_events": 770,
+      "scoring_queries": 2,
+      "seconds": 472239.72671826277,
+      "stage": "edge-arm0",
+      "update_events": 35712,
+      "updates": 128
+    },
+    {
+      "events": 36482,
+      "fits_cap": false,
+      "scoring_events": 770,
+      "scoring_queries": 2,
+      "seconds": 472239.72671826277,
+      "stage": "edge-arm1",
+      "update_events": 35712,
+      "updates": 128
+    },
+    {
+      "events": 35906,
+      "fits_cap": false,
+      "scoring_events": 770,
+      "scoring_queries": 2,
+      "seconds": 464647.82610003743,
+      "stage": "neuron-arm0",
+      "update_events": 35136,
+      "updates": 128
+    },
+    {
+      "events": 35906,
+      "fits_cap": false,
+      "scoring_events": 770,
+      "scoring_queries": 2,
+      "seconds": 464647.82610003743,
+      "stage": "neuron-arm1",
+      "update_events": 35136,
+      "updates": 128
+    },
+    {
+      "events": 116128,
+      "fits_cap": false,
+      "scoring_events": 116128,
+      "scoring_queries": 416,
+      "seconds": 158052.08180358354,
+      "stage": "round-score",
+      "update_events": 0,
+      "updates": 0
+    }
+  ],
+  "training_manifest_sha256": "d748c05ab14fc19e903e2386b607530079ce87020d9369129d65f38429a805a6",
+  "updates_under_cap": 1
+}

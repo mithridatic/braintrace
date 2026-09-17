@@ -270,7 +270,8 @@ class H01ArcAdapter(Example21ArcAdapter):
         runtime = self._train_scheduled(runtime, schedule, context, parent, 'training')
         identity = context.stage_id+'-training'
         candidate = self._write_runtime(runtime, role='training', candidate_id=identity,
-            path=self._candidate_path(context.output_dir, identity), topology_changed=False)
+            path=self._candidate_path(context.output_dir, identity), topology_changed=False,
+            task_ids=getattr(context, 'score_task_ids', ()))
         self._record_lineage(candidate, parent.checkpoint_sha256)
         return candidate
 

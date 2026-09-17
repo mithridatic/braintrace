@@ -20,6 +20,7 @@ from examples.pp_prop.example21_evolve import (
     DEFAULT_OPTIMIZER,
     DEFAULT_PATIENCE,
     DEFAULT_ROUNDS,
+    DEFAULT_SCREEN_TASKS,
     DEFAULT_UPDATES,
     PROOF_UPDATES,
     CandidateAttempt,
@@ -40,6 +41,7 @@ from examples.pp_prop.example21_evolve import (
     OPERATION_STAGES,
     RESCORE_STAGES,
     STATE_SCHEMA_VERSION,
+    score_scope_ids,
     screen_task_ids,
     select_candidate,
 )
@@ -3610,3 +3612,108 @@ def test_rescore_evidence_admits_an_ownership_refresh_but_not_a_model_change() -
         verify(replace(parent, score=_rescored(parent.score, manifest.task_ids[:64])))
     with pytest.raises(ValueError, match="rescore is non-finite"):
         verify(replace(parent, score=_score(0, finite=False)))
+
+
+def test_score_scope_is_receipted_only_when_set_and_keeps_default_digests() -> None:
+    manifest = _manifest()
+    default = PipelineConfig()
+    assert "score_tasks" not in default.to_dict()
+    assert default.score_tasks == 0 and not default.scoped
+    legacy = {key: value for key, value in default.to_dict().items()}
+    assert PipelineConfig.from_dict(legacy) == default
+    assert PipelineConfig.from_dict(legacy).digest == default.digest
+
+    scoped = PipelineConfig(score_tasks=8, screen_tasks=2)
+    assert scoped.to_dict()["score_tasks"] == 8
+    assert PipelineConfig.from_dict(scoped.to_dict()) == scoped
+    assert scoped.digest != default.digest
+    assert scoped.scoped
+
+    assert score_scope_ids(manifest, default) == manifest.task_ids
+    assert score_scope_ids(manifest, PipelineConfig(score_tasks=400)) == manifest.task_ids
+    assert score_scope_ids(manifest, scoped) == manifest.task_ids[:8]
+    # The screen is a proper subset of the scope, never of the whole corpus.
+    assert screen_task_ids(manifest, scoped) == manifest.task_ids[:2]
+    assert screen_task_ids(manifest, PipelineConfig(score_tasks=8, screen_tasks=0)) == ()
+    # The default screen (64) must not silently unscreen a small scope.
+    for screen in (8, DEFAULT_SCREEN_TASKS):
+        with pytest.raises(ValueError, match="proper subset of score tasks"):
+            PipelineConfig(score_tasks=8, screen_tasks=screen)
+    assert PipelineConfig(score_tasks=400).screens
+
+    with pytest.raises(ValueError, match="score_tasks"):
+        PipelineConfig(score_tasks=401)
+    with pytest.raises(ValueError, match="score_tasks"):
+        PipelineConfig(score_tasks=-1)
+    with pytest.raises(TypeError, match="score_tasks"):
+        PipelineConfig(score_tasks=8.0)  # type: ignore[arg-type]
+
+
+class _ScopedAdapter(_Adapter):
+    """Fake adapter whose complete-scope scores follow the configured budget."""
+
+    def initialize(self, config: PipelineConfig, output_dir: Path) -> CandidateSnapshot:
+        self.calls.append(("initialize", config.optimizer, config.updates))
+        return _scoped(
+            _candidate("initial", topology_changed=False),
+            score_scope_ids(_manifest(), config),
+        )
+
+    def train_parent(self, parent, schedule, context):
+        self.calls.append(("train-scope", context.stage, context.score_task_ids))
+        return super().train_parent(parent, schedule, context)
+
+
+def test_scoped_lineage_scores_every_stage_within_the_budget(tmp_path: Path) -> None:
+    config = PipelineConfig(rounds=1, score_tasks=8, screen_tasks=2)
+    adapter = _ScopedAdapter()
+    state = run_evolution(adapter, tmp_path, config=config, history_plotter=_history_plotter)
+    scope = _manifest().task_ids[:8]
+    screen = _manifest().task_ids[:2]
+
+    assert state.closed
+    assert state.accepted.score.task_ids == scope
+    assert state.round_entry.score.task_ids == scope
+    train = next(call for call in adapter.calls if call[0] == "train-scope")
+    assert train[2] == scope
+    rescores = [call for call in adapter.calls if call[0] == "rescore"]
+    assert [call[2] for call in rescores] == ["round-screen", "round-score"]
+
+    persisted = json.loads((tmp_path / "run-state.json").read_text())
+    assert persisted["config"]["score_tasks"] == 8
+    assert persisted["config_sha256"] == config.digest
+    assert persisted["accepted"]["score"]["task_ids"] == list(scope)
+    records = [
+        json.loads(line) for line in (tmp_path / "progress.jsonl").read_text().splitlines()
+    ]
+    scopes = {record["stage"]: record["score_scope"] for record in records}
+    assert scopes["train"] == "full" and scopes["round-score"] == "full"
+    assert scopes["round-screen"] == "screen" and scopes["edge"] == "screen"
+    solved = [record["solved_task_ids"] for record in records if record["stage"] == "edge"]
+    assert all(set(ids) <= set(screen) for ids in solved)
+
+    # A scoped run resumes only under the same scope, and is never a corpus score.
+    with pytest.raises(ResumeMismatchError, match="configuration"):
+        run_evolution(
+            _ScopedAdapter(),
+            tmp_path,
+            config=PipelineConfig(rounds=1, screen_tasks=2),
+            history_plotter=_history_plotter,
+        )
+    assert run_evolution(
+        _ScopedAdapter(), tmp_path, config=config, history_plotter=_history_plotter
+    ) == state
+
+
+def test_scoped_lineage_rejects_a_complete_corpus_initial_score(tmp_path: Path) -> None:
+    with pytest.raises(PipelineError, match="does not match"):
+        run_evolution(
+            _Adapter(),
+            tmp_path,
+            config=PipelineConfig(rounds=1, score_tasks=8, screen_tasks=2),
+            history_plotter=_history_plotter,
+        )
+    with pytest.raises(ValueError, match="training lineage"):
+        RunState.initial(
+            PipelineConfig(score_tasks=8, screen_tasks=0), _manifest(), _candidate("initial")
+        )
