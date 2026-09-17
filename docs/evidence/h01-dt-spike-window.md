@@ -183,3 +183,50 @@ Under the coordinator's proposed contract (identical spike counts and spike-time
 0.1 ms against dt-half) dt 0.005 passes on the spikes (33 / 33, shift <= 0.064 ms against
 0.000625 and <= 0.035 ms against 0.0025) and carries the first-order state drift above; J's
 call.
+
+## Decision against the dt-half rule (2026-09-17)
+
+The rule put to this ladder: dt 0.005 / 20 substeps becomes the session default only if no
+state variable drifts between spikes beyond its own dt-half difference (dt 0.005 against
+0.0025). Read from `ladder-report.json` (`index`), between-spike and end-of-window maxima in
+the variable's own units, and their ratio:
+
+| variable | unit | between: dt 0.005 vs 0.000625 | dt 0.005 vs 0.0025 (dt-half) | ratio | end: dt 0.005 vs 0.000625 / dt-half | ratio |
+|---|---|---:|---:|---:|---:|---:|
+| V | mV | 2.98e+00 | 1.71e+00 | 1.74 | 7.98e-01 / 4.58e-01 | 1.74 |
+| calcium.Ci | mM | 7.68e-06 | 5.18e-06 | 1.48 | 7.68e-06 / 5.18e-06 | 1.48 |
+| calcium.pv_Ca_HVA.h | 1 | 2.45e-04 | 1.67e-04 | 1.47 | 2.42e-04 / 1.65e-04 | 1.47 |
+| calcium.pv_Ca_HVA.m | 1 | 1.95e-02 | 1.15e-02 | 1.69 | 9.42e-03 / 6.36e-03 | 1.48 |
+| calcium.pv_Ca_LVA.h | 1 | 8.68e-04 | 5.94e-04 | 1.46 | 4.82e-04 / 3.28e-04 | 1.47 |
+| calcium.pv_Ca_LVA.m | 1 | 1.74e-02 | 1.20e-02 | 1.45 | 8.81e-03 / 5.98e-03 | 1.47 |
+| syn_synthetic-contact-0.g | uS | 2.18e-07 | 2.17e-19 | (a) | 3.99e-09 / 2.03e-20 | (a) |
+| syn_synthetic-contact-1.g | uS | 5.93e-07 | 3.68e-09 | (a) | 1.09e-08 / 6.74e-11 | (a) |
+| syn_synthetic-contact-2.g | uS | 2.17e-05 | 1.51e-05 | 1.44 | 3.97e-07 / 2.76e-07 | 1.44 |
+| pv_Ih.m | 1 | 2.08e-04 | 1.43e-04 | 1.46 | 1.58e-04 / 1.08e-04 | 1.46 |
+| potassium.pv_Im.m | 1 | 1.49e-02 | 8.60e-03 | 1.73 | 4.98e-03 / 2.83e-03 | 1.76 |
+| potassium.pv_K_P.h | 1 | 3.25e-04 | 2.21e-04 | 1.47 | 3.23e-04 / 2.19e-04 | 1.47 |
+| potassium.pv_K_P.m | 1 | 5.10e-03 | 3.40e-03 | 1.50 | 2.04e-03 / 1.38e-03 | 1.48 |
+| potassium.pv_K_T.h | 1 | 5.57e-03 | 3.81e-03 | 1.46 | 4.03e-03 / 2.74e-03 | 1.47 |
+| potassium.pv_K_T.m | 1 | 1.64e-02 | 9.40e-03 | 1.75 | 6.05e-03 / 3.46e-03 | 1.75 |
+| potassium.pv_Kv3_1.m | 1 | 5.55e-03 | 3.78e-03 | 1.47 | 8.31e-04 / 4.75e-04 | 1.75 |
+| potassium.pv_SK.z | 1 | 9.95e-03 | 6.62e-03 | 1.50 | 9.95e-03 / 6.62e-03 | 1.50 |
+| sodium.pv_NaTs.h | 1 | 8.86e-03 | 6.21e-03 | 1.43 | 2.83e-03 / 1.73e-03 | 1.64 |
+| sodium.pv_NaTs.m | 1 | 5.04e-02 | 3.35e-02 | 1.50 | 2.57e-02 / 1.47e-02 | 1.75 |
+| sodium.pv_Nap.h | 1 | 1.29e-04 | 8.76e-05 | 1.47 | 1.29e-04 / 8.76e-05 | 1.47 |
+| axial_rate | mV/ms | 4.37e+09 | 3.09e+09 | 1.42 | 2.13e+08 / 1.19e+08 | 1.78 |
+| syn_current | nA | 1.59e-03 | 1.10e-03 | 1.44 | 3.13e-05 / 2.18e-05 | 1.44 |
+
+(a) The dt 0.005 and 0.0025 copies deliver contact 0's and 1's pre spike on the same coarse
+step, so their conductances agree to 1e-19 uS; the ratio there reads the coarse arrival
+grid, not convergence, and contact 2 (whose pre spike straddles a step) shows the 1.44.
+
+Every variable's difference from the pinned step exceeds its dt-half difference, by 1.42-1.76x,
+the ratio of first-order convergence (0.875 / 0.5 = 1.75 in the limit; below it where the
+coarse-step error is not yet in the asymptotic regime). The slow states that do not reset on
+a spike (calcium, SK z, Ca_HVA h, Nap h) carry their maximum at 40 ms, a drift that halves per
+halving of dt and vanishes at no rung above the pinned one. So: `dt_ms` stays 0.000625 /
+160 substeps, `fused_population` stays `False` by default, the kept manifest stands.
+Recorded in the spec (section 6) and in `docs/h01-causal-model.md` ("Population execution
+cost and the cable timestep"). The caveat stated above holds: the +-1 ms mask leaves the AHP
+tail of a shifted spike in the between-spike column, which bounds V's column from above and
+does not move the ratio.

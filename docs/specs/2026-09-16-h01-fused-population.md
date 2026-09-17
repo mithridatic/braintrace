@@ -217,18 +217,48 @@ rebuild.
   instantaneous |dV| (per cell 0.49-17.8 mV). The ladder: dt 0.0025 shifts spikes by <= 0.029 ms
   (max |dV| 7.9 mV), dt 0.00125 by <= 0.0087 ms (2.65 mV), counts identical at every rung, so
   the pointwise 1 mV band (a spike-time band of about 3 us) fails everywhere and its edge lies
-  below 0.00125 ms: `dt_ms` stays 0.000625 and `numerical_settings()` is unchanged. Spike
-  counts plus a spike-time band would admit dt 0.00125 (2x) or 0.005 (8x); that is J's call.
-- Levers 1+2 ([h01-fused-population-profile.md](../evidence/h01-fused-population-profile.md)):
+  below 0.00125 ms. **Decision (2026-09-17, every state variable in lockstep, section "Every
+  state variable" of the evidence):** the rule put to the ladder was "dt 0.005 / 20 substeps
+  becomes the session default only if no state variable drifts between spikes beyond its own
+  dt-half difference (dt 0.005 against 0.0025)". Every variable does: between spikes, the
+  dt 0.005-against-0.000625 difference is 1.42-1.76x its dt-half difference on all 22 traced
+  quantities (V 2.98 against 1.71 mV; calcium 7.7e-6 against 5.2e-6 mM; SK z 9.9e-3 against
+  6.6e-3; NaTs m 5.0e-2 against 3.4e-2; Ca_HVA h 2.4e-4 against 1.7e-4; Nap h 1.3e-4 against
+  8.8e-5; Ih m 2.1e-4 against 1.4e-4; the two contact conductances whose dt-half pair is 1e-19
+  are the pre spike landing on the same coarse step, not agreement), which is first-order
+  convergence (0.875 / 0.5 = 1.75 in the limit), and the slow variables that do not reset on
+  a spike (calcium, SK z, Ca_HVA h, Nap h) carry their maximum at the end of the window: a
+  drift that halves per halving of dt and disappears at no rung above the pinned one. So
+  `dt_ms` stays 0.000625 / 160 substeps, `fused_population` stays `False` by default, the kept
+  manifest is not rebuilt, and the same is recorded in
+  [h01-causal-model.md](../h01-causal-model.md). Caveat carried with the numbers: the +-1 ms
+  spike mask leaves the AHP tail of a shifted spike in the "between" column (the 2.98 mV on V
+  is 1.2 ms after a spike), so the between-spike V number is an upper bound; the ratio is set
+  by the convergence order and does not move with the mask, and the slow-variable end-of-window
+  drift is not a mask artefact. What would admit dt 0.005 or 0.00125 is a different contract
+  (spike counts plus a spike-time band, as the keep tests' dt-half repeats used): J's call, not
+  a measurement.
+- Levers 1+2 ([h01-fused-population-profile.md](../evidence/h01-fused-population-profile.md),
+  steps 1-2 of [h01-fused-population-steps.md](../evidence/h01-fused-population-steps.md)):
   implemented (`H01ForestCell`, `build_network(fused=True)`, `fused_population` setting,
   default False). 5,104 -> 327 launches per substep, 136 -> 8 while loops, GPU busy 8.3 ->
   <= 2.9-4.7 ms per substep, forward 0.180 -> 0.129 s/event at dt 0.005 (fused measured under
   GPU contention, so a lower bound on the gain), voltages equal to the per-cell path to
-  7e-10 mV. Forward compile 42 -> 5-6 s, clone compile 40 -> 5.4 s, learner graph analysis
-  9.9 -> 0.6 s, learner compile 314-348 -> 36 s. Open: 90-94 % of the fused substep is
-  unattributed command-buffer time (the per-mechanism channel kernels; `pinned-nocb` unrun);
-  no contact delivery on the fused path yet (section 3's table); the sparse pp-prop layout
-  grows one colour per cell on the forest (455 MB at 17 cells, 489 MB at 18, the 512 MB
-  factor limit at 19) and must be given the per-cell block structure before training on it:
-  today the fused path is a scoring lever with an 18-cell training ceiling.
-- Lever 3: not implemented; a clone recompiles (5.4 s forward) and `add_contact` cannot run.
+  7e-10 mV (no contacts) and 2.2e-6 mV over 33 spikes with 3 synthetic E contacts at the
+  pinned dt (`h01_forest_delivery.py`; the I kind is checked at unit level only). Forward
+  compile 42 -> 5-6 s, clone compile 40 -> 5.4 s, learner graph analysis 9.9 -> 0.6 s, learner
+  compile 314-348 -> 36 s. The segmented sparse layout (`forest_offsets`, `sparse_structure`)
+  puts the learner's eligibility back at the per-cell size (26.8 MB / 1 colour at 17 cells,
+  27.2 MB at 18, 53.5 MB at 34; the 512 MB limit at about 325 cells) with gradients equal to the
+  per-cell learner (1.4e-17), so the fused path is a training lever, not only a scoring one.
+  Open: 90-94 % of the fused substep is unattributed command-buffer time (the per-mechanism
+  channel kernels, lever "one kernel", `pinned-nocb` unrun); the uncontended fused timing and
+  the spiking-window gate on the fused path at the session dt wait for the keep chains; a
+  chain of contacts widens the segmented factor store to the depth of the chain (7 colours,
+  188 MB for a 3-deep chain on 17 cells).
+- Lever 3 (step 3 of the steps evidence): implemented as pre-provisioned slots (section 3):
+  339 launches per substep at 17, 17 + 1 clone and 34 cells (12 over the dynamic path, constant
+  under mutation), 0 XLA compiles after a clone and a contact written in place, forward and
+  gradients equal to the per-cell model on a 0 -> 1 -> 2 chain. Cost: 34 laid out costs what
+  34 active costs (0.2245 s/event at 17 + 1 clone against 0.2267 at 34, dt 0.005, contended).
+  `H01Session.mutate` still rebuilds from the topology: the in-place path stops at the model.
