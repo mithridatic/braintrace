@@ -52,14 +52,14 @@ def _gradients(model, learner, events):
     params = dict(input=model.input_weight, recurrent=model.recurrent_weight,
                   readout_weight=model.readout_weight, readout_bias=model.readout_bias)
 
+    from braintrace._input_data import MultiStepData
+
     def loss(values):
         for name, state in params.items():
             state.value = values[name]
-        total = 0.
-        for event in events:
-            learner(event)
-            total = total+jnp.mean(jnp.square(model.readout()))
-        return total
+        soma = learner(MultiStepData(jnp.stack(events)))   # one window: (events, cells) soma voltages
+        logits = jnp.tanh((soma+65.)/20.)*model._active() @ values['readout_weight']+values['readout_bias']
+        return jnp.sum(jnp.mean(jnp.square(logits), axis=-1))
 
     values = {name: state.value for name, state in params.items()}
     grads = brainstate.transform.grad(loss, argnums=0)(values)
