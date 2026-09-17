@@ -255,6 +255,9 @@ def _run(args):
         sites = _site_cvs(forest0, records, cells)
         report['sites'] = sites
         report['forest_offsets'] = dict(cv=forest0.forest_offsets.cv.tolist(), point=forest0.forest_offsets.point.tolist())
+        regions = _regions(forest0)
+        np.savez_compressed(args.output/'regions.npz', **regions)
+        report['region_points'] = {name: int(len(points)) for name, points in regions.items()}
         template = _variables(models[fused_label])
         views, fused_variables = {}, {}
         for label, model in models.items():
@@ -360,7 +363,8 @@ def _run(args):
         **{f'{label}/{name}': merged[label][name] for label in merged for name in merged[label]})
     stacked = {key: np.stack([frame[key] for frame in frames]) for key in frames[0]}
     np.savez_compressed(args.output/'frames.npz', time_ms=np.asarray(frame_times), **stacked)
-    report['ranges'] = {key.split('/', 1)[1]: float(value.max()-value.min()) for key, value in stacked.items() if key.startswith('ref/')}
+    masks = _position_masks(report, regions, {key.split('/', 1)[1]: value.shape[1] for key, value in stacked.items()})
+    report['ranges'] = _ranges(stacked, masks)
     stacked = {key: value for key, value in stacked.items() if not key.startswith('ref/')}
     np.savez_compressed(args.output/'end_values.npz', **{f'{label}/{name}': value for label, row in end_values.items() for name, value in row.items()})
     report['files'] = {name: dict(sha256=hashlib.sha256((args.output/name).read_bytes()).hexdigest(), bytes=(args.output/name).stat().st_size)
@@ -368,9 +372,94 @@ def _run(args):
     soma_rows = [i for i, key in enumerate(site_index) if key[1] == 'soma']
     report['spikes'] = {label: {cells[j]: spike_times(merged[label]['V'][:, row], coarse_step).tolist()
                                 for j, row in enumerate(soma_rows)} for label in labels}
-    report['index'] = index_table(report, stacked, np.asarray(frame_times), end_values, cells, sites, point_of_cv)
+    report['index'] = index_table(report, stacked, np.asarray(frame_times), end_values, cells, sites, point_of_cv, masks)
+    report['index_masked'] = {name: int(mask.sum()) for name, mask in masks.items()}
     report['status'] = 'pass'
     save()
+
+
+def _regions(forest):
+    """Declared density region per mechanism instance: the point ids where it conducts.
+
+    Outside its region a mechanism's ``g_max`` is zero and its gates are integrated
+    for nothing; the per-cell and forest runtimes hold them at different (inert)
+    defaults there, so the index counts a gate only inside its region.
+    """
+    runtime = forest._runtime
+    regions = {}
+    for layout in runtime.layouts:
+        declaration = runtime.layout_mechanisms[layout.id]
+        name = getattr(declaration, 'instance_name', None)
+        if name and layout.target == 'density':
+            regions.setdefault(name, set()).update(int(p) for p in np.asarray(layout.point_index))
+    return {name: np.asarray(sorted(points), dtype=np.int64) for name, points in regions.items()}
+
+
+def _position_masks(report, regions, sizes):
+    """Per variable, the positions counted: a mechanism's states only inside its declared region."""
+    masks = {}
+    for name, spec in report['variables'].items():
+        if spec['axis'] != 'point' or '.' not in name or name not in sizes:
+            continue
+        instance = name.split('.')[-2]
+        if instance in regions:
+            mask = np.zeros(sizes[name], dtype=bool)
+            mask[regions[instance]] = True
+            masks[name] = mask
+    return masks
+
+
+def _ranges(stacked, masks):
+    """Reference range per variable over the window, inside the counted positions."""
+    ranges = {}
+    for key, value in stacked.items():
+        if not key.startswith('ref/'):
+            continue
+        name = key.split('/', 1)[1]
+        counted = value[:, masks[name]] if name in masks else value
+        ranges[name] = float(counted.max()-counted.min()) if counted.size else 0.
+    return ranges
+
+
+def _reindex(args):
+    """Recompute ``ranges`` and ``index`` of a finished run with the region masks.
+
+    The unmasked tables are kept as ``index_all_points`` / ``ranges_all_points``.
+    """
+    import brainstate
+    from examples.pp_prop.h01_arc_adapter import H01ArcAdapter
+    report = json.loads((args.output/'report.json').read_text())
+    frames = np.load(args.output/'frames.npz')
+    end = np.load(args.output/'end_values.npz')
+    cells = report['cells']
+    with brainstate.environ.context(precision=64):
+        adapter = H01ArcAdapter(args.arc_root, args.manifest)
+        settings = adapter.document['settings']
+        topology = adapter.initial_topology
+        for index in range(args.contacts):
+            topology = topology.add_contact(cells[index % len(cells)], cells[(index+1) % len(cells)],
+                                            stage='dt-state-check', weight_us=args.contact_weight_us)
+        model, records = _build(args, REFERENCE_DT, settings, topology, adapter._archive(), cells, fused=True)
+    forest = model.forest
+    regions = _regions(forest)
+    np.savez_compressed(args.output/'regions.npz', **regions)
+    report['region_points'] = {name: int(len(points)) for name, points in regions.items()}
+    stacked = {key: frames[key] for key in frames.files if key != 'time_ms'}
+    masks = _position_masks(report, regions, {key.split('/', 1)[1]: value.shape[1] for key, value in stacked.items()})
+    report.setdefault('index_all_points', report['index'])
+    report.setdefault('ranges_all_points', report['ranges'])
+    report['ranges'] = _ranges(stacked, masks)
+    stacked = {key: value for key, value in stacked.items() if not key.startswith('ref/')}
+    end_values = {}
+    for key in end.files:
+        label, name = key.split('/', 1)
+        end_values.setdefault(label, {})[name] = end[key]
+    point_of_cv = np.asarray(forest.runtime.node_tree.cv_to_mid_node_id)
+    report['index'] = index_table(report, stacked, np.asarray(frames['time_ms']), end_values, cells,
+                                  report['sites'], point_of_cv, masks)
+    report['index_masked'] = {name: int(mask.sum()) for name, mask in masks.items()}
+    (args.output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
+    print('reindexed', report['index_masked'])
 
 
 def _cell_of_positions(axis, forest_offsets, size, sites, cells, point_of_cv):
@@ -387,7 +476,7 @@ def _cell_of_positions(axis, forest_offsets, size, sites, cells, point_of_cv):
     return owner
 
 
-def index_table(report, stacked, frame_times, end_values, cells, sites, point_of_cv):
+def index_table(report, stacked, frame_times, end_values, cells, sites, point_of_cv, masks=None):
     """Max abs / relative / end-of-window differences per variable and pair, split around spikes.
 
     Parameters
@@ -402,6 +491,8 @@ def index_table(report, stacked, frame_times, end_values, cells, sites, point_of
         ``dt -> variable -> (positions,)`` final values.
     cells, sites, point_of_cv
         Cell order, site table and CV-to-point map.
+    masks : dict, optional
+        ``variable -> (positions,) bool``: the positions counted (``_position_masks``).
 
     Returns
     -------
@@ -429,6 +520,8 @@ def index_table(report, stacked, frame_times, end_values, cells, sites, point_of
                                 for t in spikes.values() if len(t)], axis=0) if any(len(t) for t in spikes.values()) else np.zeros(len(frame_times), bool)
             near[:] = any_close[:, None]
         magnitude = np.abs(frames)
+        if masks and name in masks:
+            magnitude = np.where(masks[name][None, :], magnitude, 0.)
         span = float(report['ranges'][name]) if name in report.get('ranges', {}) else None
         def stat(mask):
             if not mask.any():
@@ -516,6 +609,10 @@ def _parser():
     run.add_argument('--pulse-delay-ms', type=float, default=2.)
     run.add_argument('--contacts', type=int, default=3)
     run.add_argument('--contact-weight-us', type=float, default=.05)
+    reindex = sub.add_parser('reindex', help='recompute the index of a finished run, counting gates only inside their declared regions')
+    for action in run._actions:
+        if action.dest in ('manifest', 'arc_root', 'output', 'contacts', 'contact_weight_us'):
+            reindex.add_argument(*action.option_strings, type=action.type, default=action.default, required=action.required)
     plot = sub.add_parser('plot')
     plot.add_argument('--output', type=Path, required=True)
     plot.add_argument('--plots', type=Path, required=True)
@@ -534,6 +631,8 @@ def main(argv=None):
     args = _parser().parse_args(argv)
     if args.command == 'run':
         _run(args)
+    elif args.command == 'reindex':
+        _reindex(args)
     else:
         _plot(args)
 
