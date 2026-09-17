@@ -118,8 +118,8 @@ calcium, the three synaptic conductances, plus the derived synaptic currents and
 
 **The traces are the deliverable.** Per cell, per pair, one figure with every variable at
 the soma, the axon initial segment and the most distal dendritic compartment, reference
-and coarse overlaid in the variable's own units and the raw difference (coarse minus
-reference) underneath on its own axis:
+and coarse overlaid in the variable's own units and, in its own panel directly under each
+overlay, the raw difference (coarse minus reference) against time in the same unit:
 [ladder-4437316933-0.005-vs-0.000625.png](h01-dt-spike-window/state-check/plots/ladder-4437316933-0.005-vs-0.000625.png)
 (L2, three spikes), [ladder-4437316933-0.00125-vs-0.000625.png](h01-dt-spike-window/state-check/plots/ladder-4437316933-0.00125-vs-0.000625.png),
 [ladder-4437316933-0.005-vs-0.0025.png](h01-dt-spike-window/state-check/plots/ladder-4437316933-0.005-vs-0.0025.png)
@@ -148,30 +148,37 @@ one; it halves per halving. Synaptic conductances agree to 2e-7 uS (the pre spik
 moves the arrival by at most one coarse step), synaptic currents to 1.6e-3 nA between spikes.
 
 Index (max |coarse - reference| in the variable's own units; "between" = outside +-1 ms of
-any spike of that cell, with the time of the maximum; "near" = inside; "end" = at 40 ms):
+any spike of that cell, with the time of the maximum; "near" = inside; "end" = at 40 ms).
+A mechanism's gates are counted only inside its declared region (`regions.npz`,
+`region_points` in the report: 1,965 points for the PV channels and calcium, 87,735 for Ih):
+outside it `g_max` is zero and the gate is integrated for nothing, so its value there is
+inert (the reindex of 2026-09-17 moved NaTs m from 5.04e-2 to 4.69e-2 and Ca_HVA m from
+1.95e-2 to 1.39e-2; V, calcium, SK z and every ratio are unchanged; the unmasked table is
+kept as `index_all_points`):
 
 | variable | unit | dt 0.005: between (at ms) / near / end | dt 0.0025 | dt 0.00125 | dt 0.005 vs 0.0025 |
 |---|---|---|---|---|---|
 | V | mV | 2.98e+00 (36.5) / 1.38e+01 / 7.98e-01 | 1.27e+00 (36.5) / 4.54e+00 / 3.40e-01 | 4.20e-01 (36.5) / 1.36e+00 / 1.13e-01 | 1.71e+00 (21.5) / 9.26e+00 / 4.58e-01 |
 | calcium.Ci | mM | 7.68e-06 (40.0) / 4.42e-06 / 7.68e-06 | 2.50e-06 (40.0) / 1.44e-06 / 2.50e-06 | 5.31e-07 (40.0) / 3.69e-07 / 5.31e-07 | 5.18e-06 (40.0) / 2.98e-06 / 5.18e-06 |
 | calcium.pv_Ca_HVA.h | 1 | 2.45e-04 (34.5) / 2.25e-04 / 2.42e-04 | 7.82e-05 (34.5) / 9.73e-05 / 7.72e-05 | 1.62e-05 (34.5) / 3.25e-05 / 1.60e-05 | 1.67e-04 (34.5) / 1.44e-04 / 1.65e-04 |
-| calcium.pv_Ca_HVA.m | 1 | 1.95e-02 (36.5) / 1.05e-01 / 9.42e-03 | 8.32e-03 (36.5) / 4.37e-02 / 3.06e-03 | 2.77e-03 (36.5) / 1.44e-02 / 9.89e-04 | 1.15e-02 (28.5) / 6.15e-02 / 6.36e-03 |
-| calcium.pv_Ca_LVA.h | 1 | 8.68e-04 (27.0) / 9.56e-04 / 4.82e-04 | 2.74e-04 (27.0) / 3.10e-04 / 1.53e-04 | 5.71e-05 (27.0) / 6.47e-05 / 3.17e-05 | 5.94e-04 (27.0) / 6.47e-04 / 3.28e-04 |
-| calcium.pv_Ca_LVA.m | 1 | 1.74e-02 (27.5) / 2.50e-02 / 8.81e-03 | 7.04e-03 (36.5) / 1.08e-02 / 2.84e-03 | 2.36e-03 (36.5) / 3.59e-03 / 6.71e-04 | 1.20e-02 (27.5) / 1.43e-02 / 5.98e-03 |
+| calcium.pv_Ca_HVA.m | 1 | 1.39e-02 (32.5) / 1.04e-01 / 8.05e-03 | 4.90e-03 (35.5) / 4.28e-02 / 2.75e-03 | 1.63e-03 (35.5) / 1.39e-02 / 9.13e-04 | 9.49e-03 (23.0) / 6.14e-02 / 5.46e-03 |
+| calcium.pv_Ca_LVA.h | 1 | 8.68e-04 (27.0) / 9.56e-04 / 2.83e-04 | 2.74e-04 (27.0) / 3.10e-04 / 8.91e-05 | 5.71e-05 (27.0) / 6.47e-05 / 2.71e-05 | 5.94e-04 (27.0) / 6.47e-04 / 1.94e-04 |
+| calcium.pv_Ca_LVA.m | 1 | 1.73e-02 (27.5) / 2.32e-02 / 5.08e-03 | 5.40e-03 (27.5) / 9.90e-03 / 1.62e-03 | 1.11e-03 (27.5) / 3.30e-03 / 4.25e-04 | 1.19e-02 (27.5) / 1.37e-02 / 3.46e-03 |
 | syn_synthetic-contact-0.g | uS | 2.18e-07 (32.0) / 2.51e-05 / 3.99e-09 | 2.18e-07 (32.0) / 2.51e-05 / 3.99e-09 | 2.28e-18 (32.5) / 3.47e-17 / 1.19e-19 | 2.17e-19 (33.0) / 2.26e-17 / 2.03e-20 |
 | syn_synthetic-contact-1.g | uS | 5.93e-07 (32.0) / 4.16e-05 / 1.09e-08 | 5.89e-07 (32.0) / 4.13e-05 / 1.08e-08 | 1.98e-07 (32.0) / 1.39e-05 / 3.62e-09 | 3.68e-09 (32.0) / 4.92e-05 / 6.74e-11 |
 | syn_synthetic-contact-2.g | uS | 2.17e-05 (32.0) / 7.17e-04 / 3.97e-07 | 6.59e-06 (32.0) / 2.18e-04 / 1.21e-07 | 1.64e-06 (32.0) / 5.45e-05 / 3.01e-08 | 1.51e-05 (32.0) / 5.02e-04 / 2.76e-07 |
-| pv_Ih.m | 1 | 2.08e-04 (28.5) / 4.53e-04 / 1.58e-04 | 6.55e-05 (28.5) / 1.77e-04 / 5.02e-05 | 1.74e-05 (13.0) / 5.87e-05 / 1.05e-05 | 1.43e-04 (28.5) / 3.19e-04 / 1.08e-04 |
-| potassium.pv_Im.m | 1 | 1.49e-02 (13.0) / 9.10e-02 / 4.98e-03 | 6.31e-03 (13.0) / 3.70e-02 / 2.15e-03 | 2.09e-03 (13.0) / 1.18e-02 / 7.21e-04 | 8.60e-03 (13.0) / 5.40e-02 / 2.83e-03 |
-| potassium.pv_K_P.h | 1 | 3.25e-04 (35.5) / 3.96e-04 / 3.23e-04 | 1.04e-04 (35.5) / 1.71e-04 / 1.03e-04 | 2.34e-05 (36.5) / 5.73e-05 / 2.18e-05 | 2.21e-04 (35.5) / 2.24e-04 / 2.19e-04 |
-| potassium.pv_K_P.m | 1 | 5.10e-03 (25.5) / 1.73e-02 / 2.04e-03 | 1.70e-03 (25.5) / 7.46e-03 / 6.59e-04 | 3.68e-04 (25.5) / 2.48e-03 / 1.38e-04 | 3.40e-03 (25.5) / 9.84e-03 / 1.38e-03 |
-| potassium.pv_K_T.h | 1 | 5.57e-03 (30.0) / 6.33e-03 / 4.03e-03 | 1.76e-03 (29.5) / 2.08e-03 / 1.29e-03 | 5.21e-04 (36.5) / 6.95e-04 / 2.89e-04 | 3.81e-03 (30.0) / 4.25e-03 / 2.74e-03 |
-| potassium.pv_K_T.m | 1 | 1.64e-02 (36.5) / 6.27e-02 / 6.05e-03 | 7.04e-03 (36.5) / 2.60e-02 / 2.59e-03 | 2.35e-03 (36.5) / 8.57e-03 / 8.63e-04 | 9.40e-03 (36.5) / 3.71e-02 / 3.46e-03 |
-| potassium.pv_Kv3_1.m | 1 | 5.55e-03 (25.5) / 1.25e-02 / 8.31e-04 | 1.76e-03 (25.5) / 5.41e-03 / 3.56e-04 | 3.71e-04 (25.5) / 1.80e-03 / 1.19e-04 | 3.78e-03 (25.5) / 7.10e-03 / 4.75e-04 |
+| pv_Ih.m | 1 | 2.08e-04 (28.5) / 4.10e-04 / 1.58e-04 | 6.55e-05 (28.5) / 1.77e-04 / 5.02e-05 | 1.74e-05 (13.0) / 5.87e-05 / 1.05e-05 | 1.43e-04 (28.5) / 2.47e-04 / 1.08e-04 |
+| potassium.pv_Im.m | 1 | 1.48e-02 (13.0) / 9.10e-02 / 3.57e-03 | 6.26e-03 (13.0) / 3.70e-02 / 1.23e-03 | 2.07e-03 (13.0) / 1.18e-02 / 3.87e-04 | 8.54e-03 (13.0) / 5.40e-02 / 2.34e-03 |
+| potassium.pv_K_P.h | 1 | 2.92e-04 (35.0) / 3.96e-04 / 2.89e-04 | 9.18e-05 (34.5) / 1.71e-04 / 9.09e-05 | 1.88e-05 (34.5) / 5.73e-05 / 1.87e-05 | 2.00e-04 (35.0) / 2.24e-04 / 1.98e-04 |
+| potassium.pv_K_P.m | 1 | 5.10e-03 (25.5) / 1.73e-02 / 1.87e-03 | 1.70e-03 (25.5) / 7.46e-03 / 6.03e-04 | 3.68e-04 (25.5) / 2.48e-03 / 1.26e-04 | 3.40e-03 (25.5) / 9.84e-03 / 1.27e-03 |
+| potassium.pv_K_T.h | 1 | 5.09e-03 (26.0) / 6.33e-03 / 1.87e-03 | 1.63e-03 (26.0) / 2.08e-03 / 8.09e-04 | 4.45e-04 (37.0) / 6.62e-04 / 2.71e-04 | 3.46e-03 (26.0) / 4.25e-03 / 1.06e-03 |
+| potassium.pv_K_T.m | 1 | 1.64e-02 (36.5) / 5.13e-02 / 6.02e-03 | 7.04e-03 (36.5) / 1.94e-02 / 2.57e-03 | 2.35e-03 (36.5) / 6.04e-03 / 8.58e-04 | 9.40e-03 (36.5) / 3.50e-02 / 3.44e-03 |
+| potassium.pv_Kv3_1.m | 1 | 5.41e-03 (25.5) / 1.25e-02 / 8.31e-04 | 1.72e-03 (25.5) / 5.41e-03 / 3.56e-04 | 3.64e-04 (25.5) / 1.80e-03 / 1.19e-04 | 3.69e-03 (25.5) / 7.10e-03 / 4.75e-04 |
 | potassium.pv_SK.z | 1 | 9.95e-03 (40.0) / 4.21e-03 / 9.95e-03 | 3.33e-03 (40.0) / 1.31e-03 / 3.33e-03 | 7.12e-04 (40.0) / 3.09e-04 / 7.12e-04 | 6.62e-03 (40.0) / 2.90e-03 / 6.62e-03 |
-| sodium.pv_NaTs.h | 1 | 8.86e-03 (23.5) / 3.29e-02 / 2.83e-03 | 2.76e-03 (29.0) / 9.90e-03 / 1.21e-03 | 9.08e-04 (36.5) / 2.50e-03 / 4.04e-04 | 6.21e-03 (23.5) / 2.30e-02 / 1.73e-03 |
-| sodium.pv_NaTs.m | 1 | 5.04e-02 (36.5) / 1.66e-01 / 2.57e-02 | 2.15e-02 (36.5) / 6.52e-02 / 1.10e-02 | 7.13e-03 (36.5) / 2.14e-02 / 3.66e-03 | 3.35e-02 (26.5) / 1.18e-01 / 1.47e-02 |
-| sodium.pv_Nap.h | 1 | 1.29e-04 (36.5) / 1.10e-04 / 1.29e-04 | 4.11e-05 (36.5) / 4.78e-05 / 4.11e-05 | 8.59e-06 (36.5) / 1.60e-05 / 8.57e-06 | 8.76e-05 (40.0) / 7.35e-05 / 8.76e-05 |
+| sodium.pv_NaTs.h | 1 | 8.86e-03 (23.5) / 3.29e-02 / 2.35e-03 | 2.73e-03 (29.0) / 9.90e-03 / 9.98e-04 | 7.17e-04 (36.5) / 2.50e-03 / 3.32e-04 | 6.21e-03 (23.5) / 2.30e-02 / 1.35e-03 |
+| sodium.pv_NaTs.m | 1 | 4.69e-02 (26.5) / 1.66e-01 / 2.18e-02 | 1.70e-02 (37.0) / 4.82e-02 / 9.41e-03 | 5.67e-03 (37.0) / 1.19e-02 / 3.15e-03 | 3.29e-02 (26.5) / 1.18e-01 / 1.24e-02 |
+| sodium.pv_Nap.h | 1 | 1.29e-04 (36.5) / 1.10e-04 / 1.29e-04 | 4.11e-05 (36.5) / 4.78e-05 / 4.11e-05 | 8.59e-06 (36.5) / 1.60e-05 / 8.57e-06 | 8.75e-05 (37.0) / 7.35e-05 / 8.74e-05 |
+| axial_rate | mV/ms | 4.37e+09 (21.5) / 1.59e+10 / 2.13e+08 | 1.32e+09 (26.5) / 5.61e+09 / 9.36e+07 | 3.40e+08 (26.5) / 1.53e+09 / 3.16e+07 | 3.09e+09 (21.5) / 1.03e+10 / 1.19e+08 |
 | syn_current | nA | 1.59e-03 (32.0) / 2.33e-01 / 3.13e-05 | 4.84e-04 (32.0) / 7.97e-02 / 9.49e-06 | 1.21e-04 (32.0) / 2.15e-02 / 2.36e-06 | 1.10e-03 (32.0) / 1.53e-01 / 2.18e-05 |
 
 The axial rate is in `ladder-report.json` too (`axial_rate`, mV/ms per CV): its range is set
@@ -196,23 +203,23 @@ the variable's own units, and their ratio:
 | V | mV | 2.98e+00 | 1.71e+00 | 1.74 | 7.98e-01 / 4.58e-01 | 1.74 |
 | calcium.Ci | mM | 7.68e-06 | 5.18e-06 | 1.48 | 7.68e-06 / 5.18e-06 | 1.48 |
 | calcium.pv_Ca_HVA.h | 1 | 2.45e-04 | 1.67e-04 | 1.47 | 2.42e-04 / 1.65e-04 | 1.47 |
-| calcium.pv_Ca_HVA.m | 1 | 1.95e-02 | 1.15e-02 | 1.69 | 9.42e-03 / 6.36e-03 | 1.48 |
-| calcium.pv_Ca_LVA.h | 1 | 8.68e-04 | 5.94e-04 | 1.46 | 4.82e-04 / 3.28e-04 | 1.47 |
-| calcium.pv_Ca_LVA.m | 1 | 1.74e-02 | 1.20e-02 | 1.45 | 8.81e-03 / 5.98e-03 | 1.47 |
+| calcium.pv_Ca_HVA.m | 1 | 1.39e-02 | 9.49e-03 | 1.47 | 8.05e-03 / 5.46e-03 | 1.47 |
+| calcium.pv_Ca_LVA.h | 1 | 8.68e-04 | 5.94e-04 | 1.46 | 2.83e-04 / 1.94e-04 | 1.46 |
+| calcium.pv_Ca_LVA.m | 1 | 1.73e-02 | 1.19e-02 | 1.45 | 5.08e-03 / 3.46e-03 | 1.47 |
 | syn_synthetic-contact-0.g | uS | 2.18e-07 | 2.17e-19 | (a) | 3.99e-09 / 2.03e-20 | (a) |
 | syn_synthetic-contact-1.g | uS | 5.93e-07 | 3.68e-09 | (a) | 1.09e-08 / 6.74e-11 | (a) |
 | syn_synthetic-contact-2.g | uS | 2.17e-05 | 1.51e-05 | 1.44 | 3.97e-07 / 2.76e-07 | 1.44 |
 | pv_Ih.m | 1 | 2.08e-04 | 1.43e-04 | 1.46 | 1.58e-04 / 1.08e-04 | 1.46 |
-| potassium.pv_Im.m | 1 | 1.49e-02 | 8.60e-03 | 1.73 | 4.98e-03 / 2.83e-03 | 1.76 |
-| potassium.pv_K_P.h | 1 | 3.25e-04 | 2.21e-04 | 1.47 | 3.23e-04 / 2.19e-04 | 1.47 |
-| potassium.pv_K_P.m | 1 | 5.10e-03 | 3.40e-03 | 1.50 | 2.04e-03 / 1.38e-03 | 1.48 |
-| potassium.pv_K_T.h | 1 | 5.57e-03 | 3.81e-03 | 1.46 | 4.03e-03 / 2.74e-03 | 1.47 |
-| potassium.pv_K_T.m | 1 | 1.64e-02 | 9.40e-03 | 1.75 | 6.05e-03 / 3.46e-03 | 1.75 |
-| potassium.pv_Kv3_1.m | 1 | 5.55e-03 | 3.78e-03 | 1.47 | 8.31e-04 / 4.75e-04 | 1.75 |
+| potassium.pv_Im.m | 1 | 1.48e-02 | 8.54e-03 | 1.73 | 3.57e-03 / 2.34e-03 | 1.53 |
+| potassium.pv_K_P.h | 1 | 2.92e-04 | 2.00e-04 | 1.46 | 2.89e-04 / 1.98e-04 | 1.46 |
+| potassium.pv_K_P.m | 1 | 5.10e-03 | 3.40e-03 | 1.50 | 1.87e-03 / 1.27e-03 | 1.47 |
+| potassium.pv_K_T.h | 1 | 5.09e-03 | 3.46e-03 | 1.47 | 1.87e-03 / 1.06e-03 | 1.76 |
+| potassium.pv_K_T.m | 1 | 1.64e-02 | 9.40e-03 | 1.75 | 6.02e-03 / 3.44e-03 | 1.75 |
+| potassium.pv_Kv3_1.m | 1 | 5.41e-03 | 3.69e-03 | 1.47 | 8.31e-04 / 4.75e-04 | 1.75 |
 | potassium.pv_SK.z | 1 | 9.95e-03 | 6.62e-03 | 1.50 | 9.95e-03 / 6.62e-03 | 1.50 |
-| sodium.pv_NaTs.h | 1 | 8.86e-03 | 6.21e-03 | 1.43 | 2.83e-03 / 1.73e-03 | 1.64 |
-| sodium.pv_NaTs.m | 1 | 5.04e-02 | 3.35e-02 | 1.50 | 2.57e-02 / 1.47e-02 | 1.75 |
-| sodium.pv_Nap.h | 1 | 1.29e-04 | 8.76e-05 | 1.47 | 1.29e-04 / 8.76e-05 | 1.47 |
+| sodium.pv_NaTs.h | 1 | 8.86e-03 | 6.21e-03 | 1.43 | 2.35e-03 / 1.35e-03 | 1.74 |
+| sodium.pv_NaTs.m | 1 | 4.69e-02 | 3.29e-02 | 1.43 | 2.18e-02 / 1.24e-02 | 1.76 |
+| sodium.pv_Nap.h | 1 | 1.29e-04 | 8.75e-05 | 1.47 | 1.29e-04 / 8.74e-05 | 1.47 |
 | axial_rate | mV/ms | 4.37e+09 | 3.09e+09 | 1.42 | 2.13e+08 / 1.19e+08 | 1.78 |
 | syn_current | nA | 1.59e-03 | 1.10e-03 | 1.44 | 3.13e-05 / 2.18e-05 | 1.44 |
 
@@ -220,7 +227,7 @@ the variable's own units, and their ratio:
 step, so their conductances agree to 1e-19 uS; the ratio there reads the coarse arrival
 grid, not convergence, and contact 2 (whose pre spike straddles a step) shows the 1.44.
 
-Every variable's difference from the pinned step exceeds its dt-half difference, by 1.42-1.76x,
+Every variable's difference from the pinned step exceeds its dt-half difference, by 1.42-1.78x,
 the ratio of first-order convergence (0.875 / 0.5 = 1.75 in the limit; below it where the
 coarse-step error is not yet in the asymptotic regime). The slow states that do not reset on
 a spike (calcium, SK z, Ca_HVA h, Nap h) carry their maximum at 40 ms, a drift that halves per

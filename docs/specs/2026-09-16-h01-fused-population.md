@@ -221,9 +221,9 @@ rebuild.
   state variable" of the evidence):** the rule put to the ladder was "dt 0.005 / 20 substeps
   becomes the session default only if no state variable drifts between spikes beyond its own
   dt-half difference (dt 0.005 against 0.0025)". Every variable does: between spikes, the
-  dt 0.005-against-0.000625 difference is 1.42-1.76x its dt-half difference on all 22 traced
+  dt 0.005-against-0.000625 difference is 1.42-1.78x its dt-half difference on all 22 traced
   quantities (V 2.98 against 1.71 mV; calcium 7.7e-6 against 5.2e-6 mM; SK z 9.9e-3 against
-  6.6e-3; NaTs m 5.0e-2 against 3.4e-2; Ca_HVA h 2.4e-4 against 1.7e-4; Nap h 1.3e-4 against
+  6.6e-3; NaTs m 4.7e-2 against 3.3e-2; Ca_HVA h 2.4e-4 against 1.7e-4; Nap h 1.3e-4 against
   8.8e-5; Ih m 2.1e-4 against 1.4e-4; the two contact conductances whose dt-half pair is 1e-19
   are the pre spike landing on the same coarse step, not agreement), which is first-order
   convergence (0.875 / 0.5 = 1.75 in the limit), and the slow variables that do not reset on

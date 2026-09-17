@@ -138,4 +138,80 @@ would remove the padding.
 `docs/evidence/h01_dt_state_check.py`: see [h01-dt-spike-window.md](h01-dt-spike-window.md)
 (lockstep of every state variable at four timesteps and, in `--mode parity`, of the per-cell
 model against the fused model at the pinned timestep; per-compartment difference frames,
-per-site traces and plots).
+per-site traces and plots). The timestep decision is in that document ("Decision against the
+dt-half rule"): the pinned 0.000625 ms stays.
+
+### Full-state parity, per-cell against fused, pinned dt (2026-09-17)
+
+`run --mode parity --window-ms 40 --frame-ms 0.5` (Vast 50616476, `taskset -c 160-223`, the
+two keep-test chains sharing the GPU: build 80 s, 64,000 lockstep substeps in 2,966 s).
+Receipts: [parity-report.json](h01-dt-spike-window/state-check/parity-report.json)
+(`index`, `index_all_points`, spikes, file digests), plots
+[parity-4437316933-fused-vs-percell.png](h01-dt-spike-window/state-check/plots/parity-4437316933-fused-vs-percell.png)
+(three spikes), [parity-2001418787-fused-vs-percell.png](h01-dt-spike-window/state-check/plots/parity-2001418787-fused-vs-percell.png)
+(receives a contact), [parity-3761379470-fused-vs-percell.png](h01-dt-spike-window/state-check/plots/parity-3761379470-fused-vs-percell.png),
+[parity-contacts.png](h01-dt-spike-window/state-check/plots/parity-contacts.png); the full
+traces stay on the box under `/workspace/braintrace-fused/var/dtstate/parity/` (`frames.npz`
+sha256 `83daf455eedd...`, `sites.npz` `b04bca0ff51a...`, digests in the report). Same 17 cells,
+same 3 synthetic contacts as the ladder; **33 / 33 spikes at identical times**; every state
+of the forest against the per-cell states concatenated in forest order, max |fused - per-cell|
+in the variable's own units (the positions counted are a mechanism's declared region, see
+below):
+
+| variable | unit | between spikes (at ms) | within +-1 ms of a spike | at 40 ms | positions counted |
+|---|---|---:|---:|---:|---:|
+| V | mV | 3.05e-07 (38.5) | 9.22e-07 | 1.88e-07 | all |
+| calcium.Ci | mM | 3.76e-14 (38.5) | 3.20e-14 | 2.38e-14 | 1965 |
+| calcium.pv_Ca_HVA.h | 1 | 2.13e-11 (38.5) | 3.51e-11 | 9.05e-12 | 1965 |
+| calcium.pv_Ca_HVA.m | 1 | 4.41e-09 (38.5) | 1.06e-08 | 2.40e-09 | 1965 |
+| calcium.pv_Ca_LVA.h | 1 | 7.18e-11 (38.5) | 7.96e-11 | 3.32e-11 | 1965 |
+| calcium.pv_Ca_LVA.m | 1 | 3.57e-09 (38.5) | 4.66e-09 | 5.31e-10 | 1965 |
+| syn_synthetic-contact-0.g | uS | 0.0 | 0.0 | 0.0 | contact |
+| syn_synthetic-contact-1.g | uS | 0.0 | 0.0 | 0.0 | contact |
+| syn_synthetic-contact-2.g | uS | 0.0 | 0.0 | 0.0 | contact |
+| pv_Ih.m | 1 | 3.16e-11 (38.5) | 8.53e-11 | 1.03e-11 | 87735 |
+| potassium.pv_Im.m | 1 | 8.81e-10 (40.0) | 7.43e-09 | 8.81e-10 | 1965 |
+| potassium.pv_K_P.h | 1 | 3.14e-11 (38.5) | 6.15e-11 | 1.35e-11 | 1965 |
+| potassium.pv_K_P.m | 1 | 6.10e-10 (38.5) | 2.48e-09 | 1.18e-10 | 1965 |
+| potassium.pv_K_T.h | 1 | 1.34e-09 (38.5) | 1.66e-09 | 4.11e-10 | 1965 |
+| potassium.pv_K_T.m | 1 | 2.38e-09 (38.5) | 4.94e-09 | 1.50e-09 | 1965 |
+| potassium.pv_Kv3_1.m | 1 | 2.28e-10 (38.5) | 1.33e-09 | 1.52e-10 | 1965 |
+| potassium.pv_SK.z | 1 | 7.61e-12 (40.0) | 3.10e-12 | 7.61e-12 | 1965 |
+| sodium.pv_NaTs.h | 1 | 1.54e-09 (38.5) | 2.49e-09 | 1.18e-09 | 1965 |
+| sodium.pv_NaTs.m | 1 | 8.61e-09 (39.0) | 2.05e-08 | 6.59e-09 | 1965 |
+| sodium.pv_Nap.h | 1 | 9.67e-12 (38.5) | 1.63e-11 | 3.96e-12 | 1965 |
+| axial_rate | mV/ms | 9.18e+02 (38.5) | 2.97e+03 | 2.42e+02 | all (2.3e-9 of its range) |
+| syn_current | nA | 3.34e-14 (32.0) | 1.53e-10 | 4.60e-15 | contact |
+
+Every physical state agrees to float order: V to 9.2e-7 mV on a spike upstroke and 3.1e-7 mV
+between spikes, calcium to 4e-14 mM, every conducting gate to <= 2.1e-8, the three contact
+conductances exactly, the synaptic currents to 1.5e-10 nA. The difference traces in the plots
+are flat at zero at the resolution of the panel, with the float-order pulse on each upstroke
+that the soma-only check already showed (2.2e-6 mV there over the full 64,000 substeps; here
+the frames are sampled every 0.5 ms).
+
+**Off-region gates.** The unmasked index (`index_all_points`) shows two apparent outliers,
+NaTs m 0.215 and Kv3.1 m 5.4e-3, while V agrees to 1e-6 mV. They are not physical:
+[parity-gate-offregion.json](h01-dt-spike-window/state-check/parity-gate-offregion.json)
+(`var/gate_offregion3.py` on the box) splits every differing position by whether it lies
+inside the mechanism's declared region (the layout's `point_index`, 1,965 points for the PV
+channels): inside the region NaTs m differs by at most 2.05e-8 (82 positions), Ca_HVA m by
+1.06e-8, and every position with a larger difference (95,269 for NaTs m, 82,256 for Kv3.1 m)
+is outside both models' regions, where `g_max` is zero and the gate is integrated for
+nothing. The two runtimes hold those inert gates differently: the per-cell donor node
+(`_L2_NaTs`) carries its donor kinetics at every point, the forest's canonical node carries
+the class defaults off-region and the donor vectors only on-region
+(`H01ForestCell._write_parameters`), and neither value reaches a current. The index now counts
+a mechanism's gates only inside its region (`_regions`, `_position_masks`, `reindex` for
+finished runs); the ladder report was reindexed the same way (its ratios did not move).
+
+### Test repair (2026-09-17)
+
+`examples/pp_prop/h01_arc_model_forest_test.py::test_static_model_forward_and_gradients_equal_per_cell`
+was red on both backends after 1734d620: its 16-event window (1.6 ms) ended with cell 0's
+spike (0 mV crossing at event 13, 1.3 ms) still in the 0.5 ms ring buffer, so the contact
+carried exactly zero credit on both models and the "chain delivered" assertion failed while
+every parity assertion passed vacuously. The window is now 24 events (2.4 ms; the contact
+magnitude gradient is 16.3 there against 0 at 16 events); 46 / 46 forest tests pass on the box
+CPU (`h01_forest_{delivery,contacts,cell,discretization}_test.py`, `h01_dhs_forest_test.py`,
+`h01_arc_model_forest_test.py`, `sparse_influence_test.py`, `sparse_io_graph_test.py`).

@@ -809,9 +809,9 @@ every floating-point state compared element by element every 0.005 ms (membrane 
 every gate of every mechanism, intracellular calcium, the synaptic conductances and
 currents, the axial term of dV/dt), every variable converges first-order in dt: between
 spikes and at the end of the 40 ms window, the dt 0.005-against-0.000625 difference is
-1.42-1.76x the dt 0.005-against-0.0025 difference on all 22 quantities (V 2.98 against
-1.71 mV; calcium 7.7e-6 against 5.2e-6 mM; SK z 9.9e-3 against 6.6e-3; NaTs m 5.0e-2 against
-3.4e-2), and the slow variables that do not reset on a spike (calcium, SK z, Ca_HVA h, Nap h)
+1.42-1.78x the dt 0.005-against-0.0025 difference on all 22 quantities (V 2.98 against
+1.71 mV; calcium 7.7e-6 against 5.2e-6 mM; SK z 9.9e-3 against 6.6e-3; NaTs m 4.7e-2 against
+3.3e-2), and the slow variables that do not reset on a spike (calcium, SK z, Ca_HVA h, Nap h)
 carry their maximum at the end of the window. The rule put to the ladder was "dt 0.005
 becomes the default only if no variable drifts between spikes beyond its dt-half
 difference"; every variable does, so the pinned 0.000625 ms stays the session default and
